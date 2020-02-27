@@ -15,7 +15,6 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/relmapper.h"
-#include "utils/tqual.h"
 
 /*
  * If a file comparison fails, how many times to retry before admitting

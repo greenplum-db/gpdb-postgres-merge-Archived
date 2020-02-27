@@ -29,6 +29,7 @@
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
@@ -422,7 +423,7 @@ fileGetOptions(Oid foreigntableid,
 		 * pass the on_segment option to COPY, which will replace the required
 		 * placeholder "<SEGID>" in filename
 		 */
-		options = list_append_unique(options, makeDefElem("on_segment", (Node *)makeInteger(TRUE)));
+		options = list_append_unique(options, makeDefElem("on_segment", (Node *)makeInteger(true), -1));
 	}
 	else if (table->exec_location == FTEXECLOCATION_ANY)
 	{

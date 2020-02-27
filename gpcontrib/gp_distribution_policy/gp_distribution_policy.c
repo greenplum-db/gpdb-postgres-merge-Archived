@@ -25,15 +25,15 @@
 
 #include "fmgr.h"
 #include "funcapi.h"
+#include "access/heapam.h"
+#include "access/table.h"
 #include "utils/builtins.h"
 #include "utils/snapmgr.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbvars.h"
 #include "utils/lsyscache.h"
 #include "miscadmin.h"
-#include "catalog/gp_policy.h"
 #include "utils/array.h"
-#include "utils/tqual.h"
 
 
 #ifdef PG_MODULE_MAGIC
@@ -67,7 +67,7 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 				errmsg("input relation is not a heap table")));
 	}
 
-	HeapScanDesc scandesc = heap_beginscan(rel, GetActiveSnapshot(), 0, NULL);
+	TableScanDesc scandesc = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
 	HeapTuple    tuple = heap_getnext(scandesc, ForwardScanDirection);
 	TupleDesc	desc = RelationGetDescr(rel);
 

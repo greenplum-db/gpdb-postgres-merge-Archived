@@ -136,8 +136,7 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 						RelationGetRelationName(rel))));
 
 	/* Check that this relation has the right kind of storage */
-	if (rel->rd_rel->relstorage == RELSTORAGE_AOROWS ||
-		rel->rd_rel->relstorage == RELSTORAGE_AOCOLS)
+	if (RelationIsAppendOptimized(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from append-optimized relation \"%s\"",
