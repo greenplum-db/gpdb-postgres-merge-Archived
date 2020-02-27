@@ -1007,7 +1007,7 @@ GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 {
 	OidAssignment key;
 
-	Assert(RelationGetRelid(relation) == PublicationRelationId);
+	Assert(RelationGetRelid(relation) == PublicationRelRelationId);
 	Assert(indexId == PublicationRelObjectIndexId);
 	Assert(oidcolumn == Anum_pg_publication_rel_oid);
 

@@ -5229,6 +5229,17 @@ _outAlterTSDictionaryStmt(StringInfo str, const AlterTSDictionaryStmt *node)
 	WRITE_NODE_FIELD(options);
 }
 
+static void
+_outCreatePublicationStmt(StringInfo str, const CreatePublicationStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEPUBLICATIONSTMT");
+
+	WRITE_STRING_FIELD(pubname);
+	WRITE_NODE_FIELD(options);
+	WRITE_NODE_FIELD(tables);
+	WRITE_BOOL_FIELD(for_all_tables);
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outTupleDescNode(StringInfo str, const TupleDescNode *node)
@@ -6268,6 +6279,10 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_AlterTSDictionaryStmt:
 				_outAlterTSDictionaryStmt(str, obj);
+				break;
+
+			case T_CreatePublicationStmt:
+				_outCreatePublicationStmt(str, obj);
 				break;
 
 			case T_CreatePolicyStmt:

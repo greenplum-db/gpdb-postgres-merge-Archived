@@ -894,7 +894,10 @@ CreatePolicy(CreatePolicyStmt *stmt)
 									NULL);
 
 		/* MPP-6929: metadata tracking */
-		MetaTrackAddObject(PolicyRelationId, myself.objectId, GetUserId(), "CREATE", "POLICY"); } return myself;
+		MetaTrackAddObject(PolicyRelationId, myself.objectId, GetUserId(), "CREATE", "POLICY");
+	}
+
+	return myself;
 }
 
 /*

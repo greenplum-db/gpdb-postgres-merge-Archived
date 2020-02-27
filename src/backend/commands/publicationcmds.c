@@ -47,6 +47,11 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
+#include "catalog/heap.h"
+#include "catalog/oid_dispatch.h"
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
+
 /* Same as MAXNUMMESSAGES in sinvaladt.c */
 #define MAX_RELCACHE_INVAL_MSGS 4096
 
@@ -190,8 +195,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 							  &publish_update, &publish_delete,
 							  &publish_truncate);
 
-	puboid = GetNewOidWithIndex(rel, PublicationObjectIndexId,
-								Anum_pg_publication_oid);
+	puboid = GetNewOidForPublication(rel, PublicationObjectIndexId,
+									 Anum_pg_publication_oid, stmt->pubname);
 	values[Anum_pg_publication_oid - 1] = ObjectIdGetDatum(puboid);
 	values[Anum_pg_publication_puballtables - 1] =
 		BoolGetDatum(stmt->for_all_tables);
@@ -231,6 +236,19 @@ CreatePublication(CreatePublicationStmt *stmt)
 	table_close(rel, RowExclusiveLock);
 
 	InvokeObjectPostCreateHook(PublicationRelationId, puboid, 0);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackAddObject(PublicationRelationId, myself.objectId, GetUserId(), "CREATE", "PUBLICATION");
+	}
 
 	return myself;
 }
