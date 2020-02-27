@@ -279,8 +279,9 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	opfamilyoid = GetNewOidWithIndex(rel, OpfamilyOidIndexId,
-									 Anum_pg_opfamily_oid);
+	opfamilyoid = GetNewOidForOperatorFamily(rel, OpfamilyOidIndexId,
+											 Anum_pg_opfamily_oid,
+											 amoid, unconstify(char *, opfname), namespaceoid);
 	values[Anum_pg_opfamily_oid - 1] = ObjectIdGetDatum(opfamilyoid);
 	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opfName, opfname);
@@ -646,8 +647,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	opclassoid = GetNewOidWithIndex(rel, OpclassOidIndexId,
-									Anum_pg_opclass_oid);
+	opclassoid = GetNewOidForOperatorClass(rel, OpclassOidIndexId,
+										   Anum_pg_opclass_oid,
+										   amoid, opcname,namespaceoid);
 	values[Anum_pg_opclass_oid - 1] = ObjectIdGetDatum(opclassoid);
 	values[Anum_pg_opclass_opcmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opcName, opcname);
