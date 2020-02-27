@@ -30,11 +30,7 @@ static char *datasegpath(RelFileNode rnode, ForkNumber forknum,
 static int	path_cmp(const void *a, const void *b);
 static int	final_filemap_cmp(const void *a, const void *b);
 static void filemap_list_to_array(filemap_t *map);
-<<<<<<< HEAD
-static bool check_file_excluded(const char *path, const char *type);
-=======
 static bool check_file_excluded(const char *path, bool is_source);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * The contents of these directories are removed or recreated during server
@@ -79,12 +75,9 @@ static const char *excludeDirContents[] =
 	/* Contents zeroed on startup, see StartupSUBTRANS(). */
 	"pg_subtrans",
 
-<<<<<<< HEAD
-	/* Contents unique to each segment instance. */
+	/* GPDB: Contents unique to each segment instance. */
 	"pg_log",
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* end of list */
 	NULL
 };
@@ -172,25 +165,12 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 
 	Assert(map->array == NULL);
 
-	/* ignore any path matching the exclusion filters */
-	if (check_file_excluded(path, "source"))
-		return;
-
 	/*
-<<<<<<< HEAD
-	 * Pretend that pg_xlog is a directory, even if it's really a symlink.
-	 * We don't want to mess with the symlink itself, nor complain if it's a
-	 * symlink in source but not in target or vice versa.
-	 */
-	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
-		type = FILE_TYPE_DIRECTORY;
-=======
 	 * Skip any files matching the exclusion filters. This has the effect to
 	 * remove all those files on the target.
 	 */
 	if (check_file_excluded(path, true))
 		return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Pretend that pg_wal is a directory, even if it's really a symlink. We
@@ -383,19 +363,10 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	file_entry_t *entry;
 
 	/*
-<<<<<<< HEAD
-	 * Ignore any path matching the exclusion filters.  This is not actually
-	 * mandatory for target files, but this does not hurt and let's be
-	 * consistent with the source processing.
-	 */
-	if (check_file_excluded(path, "target"))
-		return;
-=======
 	 * Do not apply any exclusion filters here.  This has advantage to remove
 	 * from the target data folder all paths which have been filtered out from
 	 * the source data folder when processing the source files.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 	if (lstat(localpath, &statbuf) < 0)
@@ -609,57 +580,12 @@ process_aofile_change(RelFileNode rnode, int segno, int64 offset)
 				pg_fatal("unexpected AO file modification for directory or symbolic link \"%s\"\n", entry->path);
 		}
 
-		pg_log(PG_DEBUG, "Entry for path %s has action %d\n", entry->path, entry->action);
+		pg_log_debug("Entry for path %s has action %d\n", entry->path, entry->action);
 	}
 	else
 	{
 		/* Similar to process_block_change(), the absence of the file entry is not an error */
 	}
-}
-
-/*
- * Is this the path of file that pg_rewind can skip copying?
- */
-static bool
-check_file_excluded(const char *path, const char *type)
-{
-	char	localpath[MAXPGPATH];
-	int		excludeIdx;
-	const char	*filename;
-
-	/* check individual files... */
-	for (excludeIdx = 0; excludeFiles[excludeIdx] != NULL; excludeIdx++)
-	{
-		filename = last_dir_separator(path);
-		if (filename == NULL)
-			filename = path;
-		else
-			filename++;
-		if (strcmp(filename, excludeFiles[excludeIdx]) == 0)
-		{
-			pg_log(PG_DEBUG, "entry \"%s\" excluded from %s file list\n",
-				   path, type);
-			return true;
-		}
-	}
-
-	/*
-	 * ... And check some directories.  Note that this includes any contents
-	 * within the directories themselves.
-	 */
-	for (excludeIdx = 0; excludeDirContents[excludeIdx] != NULL; excludeIdx++)
-	{
-		snprintf(localpath, sizeof(localpath), "%s/",
-				 excludeDirContents[excludeIdx]);
-		if (strstr(path, localpath) == path)
-		{
-			pg_log(PG_DEBUG, "entry \"%s\" excluded from %s file list\n",
-				   path, type);
-			return true;
-		}
-	}
-
-	return false;
 }
 
 /*

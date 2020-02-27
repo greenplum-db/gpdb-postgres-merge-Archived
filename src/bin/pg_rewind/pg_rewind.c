@@ -38,6 +38,7 @@ static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 
 static void digestControlFile(ControlFileData *ControlFile, char *source,
 							  size_t size);
+static void greenplum_pre_syncTargetDirectory_SanityCheck(const char *argv0);
 static void syncTargetDirectory(void);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
@@ -145,11 +146,7 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "D:nPRS:", long_options, &option_index)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "D:nNP", long_options, &option_index)) != -1)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	while ((c = getopt_long(argc, argv, "D:nNPRS:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -165,17 +162,16 @@ main(int argc, char **argv)
 				dry_run = true;
 				break;
 
-<<<<<<< HEAD
 			case 'R':
 				writerecoveryconf = true;
 				break;
 
 			case 'S':
 				replication_slot = pg_strdup(optarg);
-=======
+				break;
+
 			case 'N':
 				do_sync = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 
 			case 3:
@@ -308,12 +304,8 @@ main(int argc, char **argv)
 	 */
 	if (ControlFile_target.checkPointCopy.ThisTimeLineID == ControlFile_source.checkPointCopy.ThisTimeLineID)
 	{
-<<<<<<< HEAD
-		printf(_("source and target cluster are on the same timeline: %u\n"),
+		pg_log_info("source and target cluster are on the same timeline: %u",
 			   ControlFile_source.checkPointCopy.ThisTimeLineID);
-=======
-		pg_log_info("source and target cluster are on the same timeline");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		rewind_needed = false;
 	}
 	else
@@ -459,6 +451,7 @@ main(int argc, char **argv)
 
 	if (showprogress)
 		pg_log_info("syncing target data directory");
+	greenplum_pre_syncTargetDirectory_SanityCheck(argv[0]);
 	syncTargetDirectory();
 
 	if (writerecoveryconf && connstr_source)
@@ -804,23 +797,12 @@ digestControlFile(ControlFileData *ControlFile, char *src, size_t size)
 	checkControlFile(ControlFile);
 }
 
-/*
- * Sync target data directory to ensure that modifications are safely on disk.
- *
- * We do this once, for the whole data directory, for performance reasons.  At
- * the end of pg_rewind's run, the kernel is likely to already have flushed
- * most dirty buffers to disk.  Additionally fsync_pgdata uses a two-pass
- * approach (only initiating writeback in the first pass), which often reduces
- * the overall amount of IO noticeably.
- */
 static void
-syncTargetDirectory(void)
+greenplum_pre_syncTargetDirectory_SanityCheck(const char *argv0)
 {
-<<<<<<< HEAD
 	int			ret;
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		exec_path[MAXPGPATH];
-	char		cmd[MAXCMDLEN];
 
 	/* locate initdb binary */
 	if ((ret = find_other_exec(argv0, "initdb",
@@ -842,11 +824,22 @@ syncTargetDirectory(void)
 					 "Check your installation.\n", full_path, progname);
 	}
 
-	/* only skip processing after ensuring presence of initdb */
-	if (dry_run)
-=======
+	/* All good */
+}
+
+/*
+ * Sync target data directory to ensure that modifications are safely on disk.
+ *
+ * We do this once, for the whole data directory, for performance reasons.  At
+ * the end of pg_rewind's run, the kernel is likely to already have flushed
+ * most dirty buffers to disk.  Additionally fsync_pgdata uses a two-pass
+ * approach (only initiating writeback in the first pass), which often reduces
+ * the overall amount of IO noticeably.
+ */
+static void
+syncTargetDirectory(void)
+{
 	if (!do_sync || dry_run)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return;
 
 	fsync_pgdata(datadir_target, PG_VERSION_NUM);

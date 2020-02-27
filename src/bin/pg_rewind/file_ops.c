@@ -133,10 +133,10 @@ remove_target(file_entry_t *entry)
 			break;
 
 		case FILE_TYPE_REGULAR:
-<<<<<<< HEAD
+			remove_target_file(entry->path, false);
+			break;
+
 		case FILE_TYPE_FIFO:
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			remove_target_file(entry->path, false);
 			break;
 

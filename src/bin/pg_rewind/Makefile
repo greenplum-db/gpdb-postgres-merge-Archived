@@ -22,9 +22,7 @@ OBJS	= pg_rewind.o parsexlog.o xlogreader.o datapagemap.o timeline.o \
 	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o \
 	$(WIN32RES)
 
-OBJS += compat.o
-
-EXTRA_CLEAN = xlogreader.c compat.c
+EXTRA_CLEAN = xlogreader.c
 
 REGRESS = basictest extrafiles databases pg_xlog_symlink unclean_shutdown \
 	simple_no_rewind_required ao_rewind bitmaptest \
@@ -39,11 +37,6 @@ pg_rewind: $(OBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
-	rm -f $@ && $(LN_S) $< .
-
-# compat.c is symlinked from the PostgreSQL sources.
-# GPDB_12_MERGE_FIXME: is it still needed?
-compat.c: % : $(top_srcdir)/src/bin/pg_xlogdump/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
