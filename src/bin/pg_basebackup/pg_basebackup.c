@@ -1991,8 +1991,7 @@ BaseBackup(void)
 	 */
 	if (replication_slot)
 	{
-		/* GPDB_12_MERGE_FIXME What arguments should be passed for reserve_wal and slot_exists_ok? */
-		CreateReplicationSlot(conn, replication_slot, NULL, true, true, false, true);
+		CreateReplicationSlot(conn, replication_slot, NULL, false, true, false, false);
 	}
 
 	/*
