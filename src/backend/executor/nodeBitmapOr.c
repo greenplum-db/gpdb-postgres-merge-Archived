@@ -169,7 +169,16 @@ MultiExecBitmapOr(BitmapOrState *node)
 			else
 			{
 				tbm_union(result, (TIDBitmap *)subresult);
-				tbm_generic_free(subresult);
+				/* GPDB_12_MERGE_FIXME: don't free the bitmap here, causes
+				 * assertion failure with:
+				 *
+				 * set enable_seqscan=off;
+				 * SELECT * FROM tenk1 WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+				 *
+				 * I'm not sure why that's not cool in GPDB, even though in upstream, there's
+				 * a tbm_free() call here
+				 */
+				//tbm_generic_free(subresult);
 			}
 		}
 		else
