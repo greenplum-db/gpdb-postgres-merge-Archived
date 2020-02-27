@@ -1205,15 +1205,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 * expressions into executable expression trees.  Like column defaults
 		 * and CHECK constraints, we could not have done the transformation
 		 * earlier.
-		 *
-		 * In GPDB, the dispatcher does the transformation and the QEs get
-		 * already-transformed expressions.
 		 */
-		if (Gp_role != GP_ROLE_EXECUTE)
-		{
-			stmt->partspec = transformPartitionSpec(rel, stmt->partspec,
-													&strategy);
-		}
+		stmt->partspec = transformPartitionSpec(rel, stmt->partspec,
+												&strategy);
 
 		ComputePartitionAttrs(pstate, rel, stmt->partspec->partParams,
 							  partattrs, &partexprs, partopclass,
@@ -18825,6 +18819,14 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("cannot use \"list\" partition strategy with more than one column")));
+
+	/*
+	 * In GPDB, the dispatcher does the transformation and the QEs get
+	 * already-transformed expressions. So all we had to do here was parse
+	 * the strategy name
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+		return partspec;
 
 	/*
 	 * Create a dummy ParseState and insert the target relation as its sole
