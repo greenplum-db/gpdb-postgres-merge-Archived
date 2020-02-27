@@ -922,30 +922,34 @@ CREATE VIEW gp_stat_replication AS
     (gp_segment_id integer, pid integer, usesysid oid,
      usename name, application_name text, client_addr inet, client_hostname text,
      client_port integer, backend_start timestamptz, backend_xmin xid, state text,
-     sent_location pg_lsn, write_location pg_lsn, flush_location pg_lsn,
-     replay_location pg_lsn, sync_priority integer, sync_state text)
+     sent_lsn pg_lsn, write_lsn pg_lsn, flush_lsn pg_lsn, replay_lsn pg_lsn,
+     write_lag interval, flush_lag interval, replay_lag interval,
+     sync_priority int4, sync_state text, reply_time timestamptz)
     UNION ALL
     (
         SELECT G.gp_segment_id
             , R.pid, R.usesysid, R.usename, R.application_name, R.client_addr
             , R.client_hostname, R.client_port, R.backend_start, R.backend_xmin, R.state
-	    , R.sent_location, R.write_location, R.flush_location
-	    , R.replay_location, R.sync_priority, R.sync_state, G.sync_error
+            , R.sent_lsn, R.write_lsn, R.flush_lsn, R.replay_lsn
+            , R.write_lag, R.flush_lag, R.replay_lag
+            , R.sync_priority, R.sync_state, R.reply_time
+            , G.sync_error
         FROM (
             SELECT E.*
             FROM pg_catalog.gp_segment_configuration C
             JOIN pg_catalog.gp_stat_get_segment_replication_error()
-	    AS E (gp_segment_id integer, sync_error text)
+        AS E (gp_segment_id integer, sync_error text)
             ON c.content = E.gp_segment_id
             WHERE C.role = 'm'
         ) G
         LEFT OUTER JOIN pg_catalog.gp_stat_get_segment_replication() AS R
         (gp_segment_id integer, pid integer, usesysid oid,
          usename name, application_name text, client_addr inet,
-	 client_hostname text, client_port integer, backend_start timestamptz,
-	 backend_xmin xid, state text, sent_location pg_lsn,
-	 write_location pg_lsn, flush_location pg_lsn,
-         replay_location pg_lsn, sync_priority integer, sync_state text)
+         client_hostname text, client_port integer, backend_start timestamptz,
+         backend_xmin xid, state text,
+         sent_lsn pg_lsn, write_lsn pg_lsn, flush_lsn pg_lsn, replay_lsn pg_lsn,
+         write_lag interval, flush_lag interval, replay_lag interval,
+         sync_priority int4, sync_state text, reply_time timestamptz)
          ON G.gp_segment_id = R.gp_segment_id
     );
 
