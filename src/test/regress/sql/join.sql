@@ -747,10 +747,7 @@ explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
 
 set enable_mergejoin = 0;
-<<<<<<< HEAD
 set enable_nestloop = 1;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
@@ -1872,8 +1869,6 @@ select * from
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
-<<<<<<< HEAD
-=======
 -- check dummy rels with lateral references (bug #15694)
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
@@ -1882,7 +1877,6 @@ explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl i1, int4_tbl i2 where false) ss on true;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1

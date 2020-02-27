@@ -198,8 +198,6 @@ select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
 (1 row)
 
 drop domain dia;
-<<<<<<< HEAD
-=======
 -- Test domains over composites
 create type comptype as (r float8, i float8);
 create domain dcomptype as comptype;
@@ -313,7 +311,6 @@ select conname, obj_description(oid, 'pg_constraint') from pg_constraint
 
 drop type comptype cascade;
 NOTICE:  drop cascades to type dcomptype
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test domains over arrays of composite
 create type comptype as (r float8, i float8);
 create domain dcomptypea as comptype[];
@@ -456,16 +453,11 @@ Rules:
     silly AS
     ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1[1].r = dcomptable.d1[1].r - 1::double precision, d1[1].i = dcomptable.d1[1].i + 1::double precision
   WHERE dcomptable.d1[1].i > 0::double precision
-<<<<<<< HEAD
 Distributed randomly
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 drop table dcomptable;
 drop type comptype cascade;
 NOTICE:  drop cascades to type dcomptypea
-<<<<<<< HEAD
-=======
 -- Test arrays over domains
 create domain posint as int check (value > 0);
 create table pitable (f1 posint[]);
@@ -561,7 +553,6 @@ LINE 1: update dposintatable set (f1[2])[1] = array[98];
 drop table dposintatable;
 drop domain posint cascade;
 NOTICE:  drop cascades to type dposinta
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test not-null restrictions
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
@@ -917,17 +908,11 @@ alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
 -- Likewise for domains within arrays of composite
-<<<<<<< HEAD
 create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
-=======
-create table ddtest2(f1 ddtest1[]);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
-<<<<<<< HEAD
-=======
 -- Likewise for domains within domains over composite
 create domain ddtest1d as ddtest1;
 create table ddtest2(f1 ddtest1d);
@@ -936,7 +921,6 @@ alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
 drop domain ddtest1d;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Likewise for domains within domains over array of composite
 create domain ddtest1d as ddtest1[];
 create table ddtest2(f1 ddtest1d);

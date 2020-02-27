@@ -205,8 +205,6 @@ SELECT CASE volfoo('bar') WHEN 'foo'::foodomain THEN 'is foo' ELSE 'is not foo' 
 
 ROLLBACK;
 
-<<<<<<< HEAD
-=======
 -- Test multiple evaluation of a CASE arg that is a read/write object (#14472)
 -- Wrap this in a single transaction so the transient '=' operator doesn't
 -- cause problems in concurrent sessions
@@ -248,7 +246,6 @@ SELECT
 
 ROLLBACK;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --
 -- Clean up
 --

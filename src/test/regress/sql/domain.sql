@@ -120,8 +120,6 @@ select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
 drop domain dia;
 
 
-<<<<<<< HEAD
-=======
 -- Test domains over composites
 
 create type comptype as (r float8, i float8);
@@ -181,7 +179,6 @@ select conname, obj_description(oid, 'pg_constraint') from pg_constraint
 drop type comptype cascade;
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test domains over arrays of composite
 
 create type comptype as (r float8, i float8);
@@ -199,11 +196,7 @@ create index on dcomptable (d1);
 insert into dcomptable values (array[row(1,2)]::dcomptypea);
 insert into dcomptable values (array[row(3,4), row(5,6)]::comptype[]);
 insert into dcomptable values (array[row(7,8)::comptype, row(9,10)::comptype]);
-<<<<<<< HEAD
 --insert into dcomptable values (array[row(1,2)]::dcomptypea);  -- fail on uniqueness
-=======
-insert into dcomptable values (array[row(1,2)]::dcomptypea);  -- fail on uniqueness
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 insert into dcomptable (d1[1]) values(row(9,10));
 insert into dcomptable (d1[1].r) values(11);
 
@@ -240,8 +233,6 @@ drop table dcomptable;
 drop type comptype cascade;
 
 
-<<<<<<< HEAD
-=======
 -- Test arrays over domains
 
 create domain posint as int check (value > 0);
@@ -285,7 +276,6 @@ drop table dposintatable;
 drop domain posint cascade;
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test not-null restrictions
 
 create domain dnotnull varchar(15) NOT NULL;
@@ -573,17 +563,11 @@ alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
 -- Likewise for domains within arrays of composite
-<<<<<<< HEAD
 create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
-=======
-create table ddtest2(f1 ddtest1[]);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
-<<<<<<< HEAD
-=======
 -- Likewise for domains within domains over composite
 create domain ddtest1d as ddtest1;
 create table ddtest2(f1 ddtest1d);
@@ -592,7 +576,6 @@ alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 drop domain ddtest1d;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Likewise for domains within domains over array of composite
 create domain ddtest1d as ddtest1[];
 create table ddtest2(f1 ddtest1d);
