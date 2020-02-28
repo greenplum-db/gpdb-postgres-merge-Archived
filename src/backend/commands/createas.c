@@ -416,6 +416,16 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 */
 		plan->intoClause = copyObject(stmt->into);
 
+		/*
+		 * Use a snapshot with an updated command ID to ensure this query sees
+		 * results of any previously executed queries.  (This could only
+		 * matter if the planner executed an allegedly-stable function that
+		 * changed the database contents, but let's do it anyway to be
+		 * parallel to the EXPLAIN code path.)
+		 */
+		PushCopiedSnapshot(GetActiveSnapshot());
+		UpdateActiveSnapshotCommandId();
+
 		/* Create a QueryDesc, redirecting output to our tuple receiver */
 		queryDesc = CreateQueryDesc(plan, queryString,
 									GetActiveSnapshot(), InvalidSnapshot,
@@ -434,22 +444,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	}
 	else
 	{
-		/*
-		 * Use a snapshot with an updated command ID to ensure this query sees
-		 * results of any previously executed queries.  (This could only
-		 * matter if the planner executed an allegedly-stable function that
-		 * changed the database contents, but let's do it anyway to be
-		 * parallel to the EXPLAIN code path.)
-		 */
-		PushCopiedSnapshot(GetActiveSnapshot());
-		UpdateActiveSnapshotCommandId();
-
-		/* Create a QueryDesc, redirecting output to our tuple receiver */
-		queryDesc = CreateQueryDesc(plan, queryString,
-									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, queryEnv, 0);
-
-        queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
+		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
