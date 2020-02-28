@@ -1123,8 +1123,9 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	cfgOid = GetNewOidWithIndex(cfgRel, TSConfigOidIndexId,
-								Anum_pg_ts_config_oid);
+	cfgOid = GetNewOidForTSConfig(cfgRel, TSConfigOidIndexId,
+								  Anum_pg_ts_config_oid,
+								  cfgname, namespaceoid);
 	values[Anum_pg_ts_config_oid - 1] = ObjectIdGetDatum(cfgOid);
 	namestrcpy(&cname, cfgname);
 	values[Anum_pg_ts_config_cfgname - 1] = NameGetDatum(&cname);
