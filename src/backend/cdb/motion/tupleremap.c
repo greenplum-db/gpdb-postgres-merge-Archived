@@ -527,7 +527,8 @@ TRRemapRecord(TupleRemapper *remapper, RecordRemapInfo *remapinfo,
 		{
 			Assert(remapper->typmodmap != NULL);
 			Assert(typmod >= 0);
-			Assert(typmod < remapper->typmodmapsize);
+			if (typmod >= remapper->typmodmapsize)
+				elog(ERROR, "received unknown record type with typmod %d", typmod);
 
 			remapinfo->localtypmod = remapper->typmodmap[typmod];
 			Assert(remapinfo->localtypmod >= 0);
