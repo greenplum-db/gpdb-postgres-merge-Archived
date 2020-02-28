@@ -275,9 +275,17 @@ static const FormData_pg_attribute a6 = {
 
 /*CDB*/
 static FormData_pg_attribute a8 = {
-	0, {"gp_segment_id"}, INT4OID, 0, sizeof(gpsegmentId),
-	GpSegmentIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0
+	.attname = {"gp_segment_id"},
+	.atttypid = INT4OID,
+	.attlen = sizeof(int32),
+	.attnum = GpSegmentIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a8};

@@ -547,8 +547,6 @@ typedef uint32 DistributedTransactionId;
 
 typedef uint32 CommandId;
 
-typedef int32  gpsegmentId;        /* CDB: type of gp_segment_id system col */
-
 #define FirstCommandId	((CommandId) 0)
 #define InvalidCommandId	(~(CommandId)0)
 
