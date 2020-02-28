@@ -2466,11 +2466,7 @@ NOTICE:  avg_transfn called with 3
       2 |      6
 (1 row)
 
-<<<<<<< HEAD
--- ideally these would share state, but we have to fix the OSAs first.
-=======
 -- exercise cases where OSAs share state
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 select
   percentile_cont(0.5) within group (order by a),
   percentile_disc(0.5) within group (order by a)
@@ -2481,8 +2477,6 @@ from (values(1::float8),(3),(5),(7)) t(a);
 (1 row)
 
 select
-<<<<<<< HEAD
-=======
   percentile_cont(0.25) within group (order by a),
   percentile_disc(0.5) within group (order by a)
 from (values(1::float8),(3),(5),(7)) t(a);
@@ -2493,7 +2487,6 @@ from (values(1::float8),(3),(5),(7)) t(a);
 
 -- these can't share state currently
 select
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   rank(4) within group (order by a),
   dense_rank(4) within group (order by a)
 from (values(1),(3),(5),(7)) t(a);
@@ -2600,8 +2593,6 @@ NOTICE:  sum_transfn called with 4
 (1 row)
 
 rollback;
-<<<<<<< HEAD
-=======
 -- test that the aggregate transition logic correctly handles
 -- transition / combine functions returning NULL
 -- First test the case of a normal transition function returning NULL
@@ -2730,7 +2721,6 @@ SELECT min(x ORDER BY y) FROM (VALUES(1, 2)) AS d(x,y);
    1
 (1 row)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check collation-sensitive matching between grouping expressions
 select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
   from unnest(array['a','b']) u(v)
@@ -2750,8 +2740,6 @@ select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
  ba       |    0 |     1
 (2 rows)
 
-<<<<<<< HEAD
-=======
 -- Make sure that generation of HashAggregate for uniqification purposes
 -- does not lead to array overflow due to unexpected duplicate hash keys
 -- see CAFeeJoKKu0u+A_A9R9316djW-YW3-+Gtgvy3ju655qRHR3jtdA@mail.gmail.com
@@ -2770,4 +2758,3 @@ explain (costs off)
                ->  Seq Scan on onek
 (8 rows)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -22,13 +22,9 @@ DROP ROLE IF EXISTS regress_priv_user4;
 DROP ROLE IF EXISTS regress_priv_user5;
 DROP ROLE IF EXISTS regress_priv_user6;
 
-<<<<<<< HEAD
 -- start_ignore
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 -- end_ignore
-=======
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 RESET client_min_messages;
 
@@ -140,13 +136,8 @@ SELECT * FROM atest1; -- ok
 
 -- test leaky-function protections in selfuncs
 
-<<<<<<< HEAD
--- regress_user1 will own a table and provide a view for it.
-SET SESSION AUTHORIZATION regress_user1;
-=======
 -- regress_priv_user1 will own a table and provide views for it.
 SET SESSION AUTHORIZATION regress_priv_user1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE TABLE atest12 as
   SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
@@ -160,15 +151,6 @@ CREATE FUNCTION leak(integer,integer) RETURNS boolean
 CREATE OPERATOR <<< (procedure = leak, leftarg = integer, rightarg = integer,
                      restrict = scalarltsel);
 
-<<<<<<< HEAD
--- view with leaky operator
-CREATE VIEW atest12v AS
-  SELECT * FROM atest12 WHERE b <<< 5;
-GRANT SELECT ON atest12v TO PUBLIC;
-
--- This plan should use nestloop, knowing that few rows will be selected.
-set enable_nestloop = 1;
-=======
 -- views with leaky operator
 CREATE VIEW atest12v AS
   SELECT * FROM atest12 WHERE b <<< 5;
@@ -178,18 +160,12 @@ GRANT SELECT ON atest12v TO PUBLIC;
 GRANT SELECT ON atest12sbv TO PUBLIC;
 
 -- This plan should use nestloop, knowing that few rows will be selected.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 
 -- And this one.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-<<<<<<< HEAD
-reset enable_nestloop;
-
--- Check if regress_user2 can break security.
-SET SESSION AUTHORIZATION regress_user2;
-=======
 
 -- This should also be a nestloop, but the security barrier forces the inner
 -- scan to be materialized
@@ -197,7 +173,6 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y WHERE x.a = y.b;
 
 -- Check if regress_priv_user2 can break security.
 SET SESSION AUTHORIZATION regress_priv_user2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE FUNCTION leak2(integer,integer) RETURNS boolean
   AS $$begin raise notice 'leak % %', $1, $2; return $1 > $2; end$$
@@ -249,11 +224,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
 
-<<<<<<< HEAD
--- clean up (regress_user1's objects are all dropped later)
-=======
 -- clean up (regress_priv_user1's objects are all dropped later)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 DROP FUNCTION leak2(integer, integer) CASCADE;
 
 
@@ -323,13 +294,8 @@ SELECT * FROM atestv2; -- fail (even though regress_priv_user2 can access underl
 
 -- Test column level permissions
 
-<<<<<<< HEAD
-SET SESSION AUTHORIZATION regress_user1;
-CREATE TABLE atest5 (one int, two int unique, three int, four int);
-=======
 SET SESSION AUTHORIZATION regress_priv_user1;
 CREATE TABLE atest5 (one int, two int unique, three int, four int unique);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regress_priv_user4;
 GRANT ALL (one) ON atest5 TO regress_priv_user3;
@@ -804,11 +770,7 @@ alter table mytable drop column f2;
 select has_column_privilege('mytable','f2','select');
 select has_column_privilege('mytable','........pg.dropped.2........','select');
 select has_column_privilege('mytable',2::int2,'select');
-<<<<<<< HEAD
-revoke select on table mytable from regress_user3;
-=======
 revoke select on table mytable from regress_priv_user3;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 select has_column_privilege('mytable',2::int2,'select');
 drop table mytable;
 
@@ -936,10 +898,7 @@ SELECT lo_unlink(2002);
 -- start_ignore
 -- confirm ACL setting
 SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
-<<<<<<< HEAD
 -- end_ignore
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SET SESSION AUTHORIZATION regress_priv_user3;
 
@@ -964,12 +923,9 @@ SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
 SELECT lo_put(1002, 1, 'abcd');				-- to be denied
 SELECT lo_unlink(1002);					-- to be denied
 SELECT lo_export(1001, '/dev/null');			-- to be denied
-<<<<<<< HEAD
--- end_ignore
-=======
 SELECT lo_import('/dev/null');				-- to be denied
 SELECT lo_import('/dev/null', 2003);			-- to be denied
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- end_ignore
 
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode
@@ -1151,42 +1107,28 @@ CREATE TABLE testns.t2 (f1 int);
 CREATE TABLE testns.t3 (f1 int) PARTITION BY RANGE (f1) (START (2018) END (2020) EVERY (1),DEFAULT PARTITION extra );
 CREATE TABLE testns.t4 (f1 int) inherits (testns.t1);
 
-<<<<<<< HEAD
-SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t1', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- false
-=======
 SELECT has_table_privilege('regress_priv_user1', 'testns.t1', 'SELECT'); -- false
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t1', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t4', 'SELECT'); -- false
 
 GRANT ALL ON ALL TABLES IN SCHEMA testns TO regress_priv_user1;
 
-<<<<<<< HEAD
-SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- true
-SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- true
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t1', 'SELECT'); -- true
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- true
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- true
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- true
-=======
 SELECT has_table_privilege('regress_priv_user1', 'testns.t1', 'SELECT'); -- true
 SELECT has_table_privilege('regress_priv_user1', 'testns.t2', 'SELECT'); -- true
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t1', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t4', 'SELECT'); -- true
 
 REVOKE ALL ON ALL TABLES IN SCHEMA testns FROM regress_priv_user1;
 
-<<<<<<< HEAD
-SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- false
-SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
-SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- false
-=======
 SELECT has_table_privilege('regress_priv_user1', 'testns.t1', 'SELECT'); -- false
 SELECT has_table_privilege('regress_priv_user1', 'testns.t2', 'SELECT'); -- false
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_priv_user1', 'testns.t4', 'SELECT'); -- false
 
 CREATE FUNCTION testns.priv_testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
 CREATE AGGREGATE testns.priv_testagg(int) (sfunc = int4pl, stype = int4);
@@ -1293,13 +1235,9 @@ DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
 
-<<<<<<< HEAD
 -- start_ignore
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 -- end_ignore
-=======
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 DROP GROUP regress_priv_group1;
 DROP GROUP regress_priv_group2;
