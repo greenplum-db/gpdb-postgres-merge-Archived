@@ -509,21 +509,8 @@ SELECT (p.hobbies).equipment.name, name(p.hobbies), p.name FROM ONLY person p;
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hobbies_r"
 CONTEXT:  SQL function "hobbies" during startup
 SELECT name(equipment(p.hobbies)), name(p.hobbies), p.name FROM person* p;
-<<<<<<< HEAD
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hobbies_r"
 CONTEXT:  SQL function "hobbies" during startup
-=======
-     name      |    name     | name  
----------------+-------------+-------
- advil         | posthacking | mike
- peet's coffee | posthacking | mike
- hightops      | basketball  | joe
- hightops      | basketball  | sally
- advil         | posthacking | jeff
- peet's coffee | posthacking | jeff
-(6 rows)
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
 ------

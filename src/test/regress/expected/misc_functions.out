@@ -143,15 +143,17 @@ CREATE FUNCTION my_int_eq(int, int) RETURNS bool
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1 a JOIN tenk1 b ON a.unique1 = b.unique1
 WHERE my_int_eq(a.unique2, 42);
-                  QUERY PLAN                  
-----------------------------------------------
- Hash Join
-   Hash Cond: (b.unique1 = a.unique1)
-   ->  Seq Scan on tenk1 b
-   ->  Hash
-         ->  Seq Scan on tenk1 a
-               Filter: my_int_eq(unique2, 42)
-(6 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Join
+         Hash Cond: (b.unique1 = a.unique1)
+         ->  Seq Scan on tenk1 b
+         ->  Hash
+               ->  Seq Scan on tenk1 a
+                     Filter: my_int_eq(unique2, 42)
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 -- With support function that knows it's int4eq, we get a different plan
 ALTER FUNCTION my_int_eq(int, int) SUPPORT test_support_func;

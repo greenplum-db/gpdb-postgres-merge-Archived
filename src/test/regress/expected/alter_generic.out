@@ -376,12 +376,8 @@ ROLLBACK;
 BEGIN TRANSACTION;
 CREATE ROLE regress_alter_generic_user6;
 CREATE SCHEMA alt_nsp6;
-<<<<<<< HEAD
-REVOKE ALL ON SCHEMA alt_nsp6 FROM regress_alter_user6;
-NOTICE:  no privileges could be revoked
-=======
 REVOKE ALL ON SCHEMA alt_nsp6 FROM regress_alter_generic_user6;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+NOTICE:  no privileges could be revoked
 CREATE OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree;
 SET ROLE regress_alter_generic_user6;
 ALTER OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree ADD OPERATOR 1 < (int4, int2);
@@ -731,12 +727,6 @@ drop cascades to text search dictionary alt_nsp2.alt_ts_dict2
 drop cascades to text search configuration alt_nsp2.alt_ts_conf2
 drop cascades to text search template alt_nsp2.alt_ts_temp2
 drop cascades to text search parser alt_nsp2.alt_ts_prs2
-<<<<<<< HEAD
-DROP USER regress_alter_user1;
-DROP USER regress_alter_user2;
-DROP USER regress_alter_user3;
-=======
 DROP USER regress_alter_generic_user1;
 DROP USER regress_alter_generic_user2;
 DROP USER regress_alter_generic_user3;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
