@@ -12,28 +12,17 @@ SELECT descr, substring(make_tuple_indirect(indtoasttest)::text, 1, 200) FROM in
 UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification without modifying assigned value
-<<<<<<< HEAD
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
-=======
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- modification modifying, but effectively not changing
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
 
 UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indtoasttest::text, 1, 200);
 
-<<<<<<< HEAD
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
--- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
-=======
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 -- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE indtoasttest;
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- now create a trigger that forces all Datums to be indirect ones
 CREATE FUNCTION update_using_indirect()
@@ -54,11 +43,7 @@ CREATE TRIGGER indtoasttest_update_indirect
 UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification without modifying assigned value
-<<<<<<< HEAD
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
-=======
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- modification modifying, but effectively not changing
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
@@ -67,17 +52,10 @@ UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indt
 
 INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
 
-<<<<<<< HEAD
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
--- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
-=======
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 -- check we didn't screw with main/toast tuple visibility
 VACUUM FREEZE indtoasttest;
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 DROP TABLE indtoasttest;
 DROP FUNCTION update_using_indirect();

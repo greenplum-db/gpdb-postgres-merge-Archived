@@ -24,11 +24,7 @@ UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 
 (4 rows)
 
 -- modification without modifying assigned value
-<<<<<<< HEAD
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
-=======
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,2,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
@@ -66,13 +62,8 @@ SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 (4 rows)
 
 -- check we didn't screw with main/toast tuple visibility
-<<<<<<< HEAD
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
-=======
 VACUUM FREEZE indtoasttest;
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,4,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -105,11 +96,7 @@ UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 
 (4 rows)
 
 -- modification without modifying assigned value
-<<<<<<< HEAD
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
-=======
 UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,6,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -149,13 +136,8 @@ SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 (5 rows)
 
 -- check we didn't screw with main/toast tuple visibility
-<<<<<<< HEAD
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
-=======
 VACUUM FREEZE indtoasttest;
 SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,8,--123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
