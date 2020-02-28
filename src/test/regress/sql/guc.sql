@@ -293,7 +293,10 @@ select func_with_bad_set();
 
 reset check_function_bodies;
 
-<<<<<<< HEAD
+set default_with_oids to f;
+-- Should not allow to set it to true.
+set default_with_oids to t;
+
 SET "request.header.user-agent" = 'curl/7.29.0';
 SHOW "request.header.user-agent";
 
@@ -326,8 +329,3 @@ drop table public.t1;
 drop type public.ty1;
 drop function n1.drop_table(v_schema character varying, v_table character varying);
 drop schema n1;
-=======
-set default_with_oids to f;
--- Should not allow to set it to true.
-set default_with_oids to t;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
