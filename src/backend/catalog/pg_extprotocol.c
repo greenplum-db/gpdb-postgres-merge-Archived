@@ -142,7 +142,7 @@ ExtProtocolCreate(const char *protocolName,
 
 	protOid = GetNewOidForExtprotocol(rel, ExtprotocolOidIndexId,
 									  Anum_pg_extprotocol_oid, NameStr(prtname));
-	values[Anum_pg_extprotocol_oid] = protOid;
+	values[Anum_pg_extprotocol_oid - 1] = protOid;
 	
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
