@@ -425,8 +425,9 @@ create_proc_lang(const char *languageName, bool replace,
 	else
 	{
 		/* Creating a new language */
-		langoid = GetNewOidWithIndex(rel, LanguageOidIndexId,
-									 Anum_pg_language_oid);
+		langoid = GetNewOidForLanguage(rel, LanguageOidIndexId,
+									   Anum_pg_language_oid,
+									   unconstify(char *, languageName));
 		values[Anum_pg_language_oid - 1] = ObjectIdGetDatum(langoid);
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		CatalogTupleInsert(rel, tup);
