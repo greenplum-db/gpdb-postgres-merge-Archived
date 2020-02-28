@@ -8871,7 +8871,6 @@ drop_type_any_name:
 			| TEXT_P SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
 			| TEXT_P SEARCH TEMPLATE				{ $$ = OBJECT_TSTEMPLATE; }
 			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
-			| PROTOCOL								{ $$ = OBJECT_EXTPROTOCOL; }
 		;
 
 /* object types taking name_list */
@@ -8883,6 +8882,7 @@ drop_type_name:
 			| PUBLICATION							{ $$ = OBJECT_PUBLICATION; }
 			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
 			| SERVER								{ $$ = OBJECT_FOREIGN_SERVER; }
+			| PROTOCOL								{ $$ = OBJECT_EXTPROTOCOL; }
 		;
 
 /* object types attached to a table */

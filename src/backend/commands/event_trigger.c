@@ -1163,6 +1163,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 
 		/* GPDB additions */
 		case OBJECT_EXTPROTOCOL:
+			return true;
 		case OBJECT_RESQUEUE:
 		case OBJECT_RESGROUP:
 			return false;
