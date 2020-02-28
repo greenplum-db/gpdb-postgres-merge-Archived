@@ -16,20 +16,11 @@ CREATE TABLE collate_test1 (
     b text COLLATE "C" NOT NULL
 );
 \d collate_test1
-<<<<<<< HEAD
-  Table "collate_tests.collate_test1"
- Column |  Type   |     Modifiers      
---------+---------+--------------------
- a      | integer | 
- b      | text    | collate C not null
-Distributed by: (a)
-=======
         Table "collate_tests.collate_test1"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
  b      | text    | C         | not null | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE TABLE collate_test_fail (
     a int COLLATE "C",
@@ -42,20 +33,12 @@ CREATE TABLE collate_test_like (
     LIKE collate_test1
 );
 \d collate_test_like
-<<<<<<< HEAD
-Table "collate_tests.collate_test_like"
- Column |  Type   |     Modifiers      
---------+---------+--------------------
- a      | integer | 
- b      | text    | collate C not null
-Distributed by: (a)
-=======
       Table "collate_tests.collate_test_like"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
  b      | text    | C         | not null | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Distributed by: (a)
 
 CREATE TABLE collate_test2 (
     a int,

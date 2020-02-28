@@ -428,9 +428,7 @@ insert into twoconstraints values(2, '((0,0),(1,2))')
   on conflict on constraint twoconstraints_f2_excl do nothing;  -- do nothing
 select * from twoconstraints;
 drop table twoconstraints;
-<<<<<<< HEAD
 -- end_ignore
-=======
 
 -- check handling of self-conflicts at various isolation levels
 
@@ -595,4 +593,3 @@ insert into parted_conflict values(0, 'cero', 1)
 
 drop table parted_conflict;
 drop function parted_conflict_update_func();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

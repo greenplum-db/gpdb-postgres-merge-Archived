@@ -970,7 +970,19 @@ select * from (values (2),(null),(1)) v(k) where k = k;
  1
 (2 rows)
 
-<<<<<<< HEAD
+-- Test partitioned tables with no partitions, which should be handled the
+-- same as the non-inheritance case when expanding its RTE.
+create table list_parted_tbl (a int,b int) partition by list (a);
+create table list_parted_tbl1 partition of list_parted_tbl
+  for values in (1) partition by list(b);
+explain (costs off) select * from list_parted_tbl;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+drop table list_parted_tbl;
 -- Test unsupported sorting operators
 CREATE TABLE nosort (i int);
 INSERT INTO nosort VALUES(1), (2);
@@ -1012,18 +1024,3 @@ select x, select_f(x) from (values (0), (1), (2), (3), (4), (5), (6)) r(x);
 drop table if exists select_t cascade; --ignore
 drop function if exists select_i(int); -- ignore
 drop function if exists select_f(int); -- ignore
-=======
--- Test partitioned tables with no partitions, which should be handled the
--- same as the non-inheritance case when expanding its RTE.
-create table list_parted_tbl (a int,b int) partition by list (a);
-create table list_parted_tbl1 partition of list_parted_tbl
-  for values in (1) partition by list(b);
-explain (costs off) select * from list_parted_tbl;
-        QUERY PLAN        
---------------------------
- Result
-   One-Time Filter: false
-(2 rows)
-
-drop table list_parted_tbl;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
