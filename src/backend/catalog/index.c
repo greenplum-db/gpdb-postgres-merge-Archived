@@ -2795,6 +2795,15 @@ index_build(Relation heapRelation,
 			plan_create_index_workers(RelationGetRelid(heapRelation),
 									  RelationGetRelid(indexRelation));
 
+	/*
+	 * GPDB_12_MERGE_FIXME: Parallel CREATE INDEX temporarily disabled.
+	 * In the 'partition_prune' regression test, the parallel worker
+	 * blocked waiting for the main process. I believe there's something
+	 * broken in the lock manager in GPDB with parallel workers. Need
+	 * figure that out first.
+	 */
+	indexInfo->ii_ParallelWorkers = 0;
+
 	if (indexInfo->ii_ParallelWorkers == 0)
 		ereport(DEBUG1,
 				(errmsg("building index \"%s\" on table \"%s\" serially",
