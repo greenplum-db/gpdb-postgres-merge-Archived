@@ -1221,7 +1221,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 
 		context->aocsRelOid = aocsRelOid;
 
-		aocsRel = heap_open(aocsRelOid, NoLock);
+		aocsRel = heap_open(aocsRelOid, AccessShareLock);
 		if (!RelationIsAoCols(aocsRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1236,7 +1236,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
                                   appendOnlyMetaDataSnapshot,
                                   &segrelid, NULL, NULL,
                                   NULL, NULL);
-		pg_aocsseg_rel = heap_open(segrelid, NoLock);
+		pg_aocsseg_rel = heap_open(segrelid, AccessShareLock);
 
 		context->aocsSegfileArray = GetAllAOCSFileSegInfo_pg_aocsseg_rel(
 																		 aocsRel->rd_rel->relnatts,
@@ -1245,8 +1245,8 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 																		 appendOnlyMetaDataSnapshot,
 																		 &context->totalAocsSegFiles);
 
-		heap_close(pg_aocsseg_rel, NoLock);
-		heap_close(aocsRel, NoLock);
+		heap_close(pg_aocsseg_rel, AccessShareLock);
+		heap_close(aocsRel, AccessShareLock);
 
 		/* Iteration positions. */
 		context->segfileArrayIndex = 0;

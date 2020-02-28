@@ -1113,7 +1113,7 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 
 		context->aoRelOid = aoRelOid;
 
-		aocsRel = table_open(aoRelOid, NoLock);
+		aocsRel = table_open(aoRelOid, AccessShareLock);
 		if (!RelationIsAoRows(aocsRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1122,7 +1122,7 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 
 		GetAppendOnlyEntryAuxOids(aocsRel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
-		pg_aoseg_rel = table_open(segrelid, NoLock);
+		pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 
 		context->aoSegfileArray =
 			GetAllFileSegInfo_pg_aoseg_rel(
@@ -1131,8 +1131,8 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 										   SnapshotAny, //Get ALL tuples from pg_aoseg_ % including aborted and in - progress ones.
 										   & context->totalAoSegFiles);
 
-		table_close(pg_aoseg_rel, NoLock);
-		table_close(aocsRel, NoLock);
+		table_close(pg_aoseg_rel, AccessShareLock);
+		table_close(aocsRel, AccessShareLock);
 
 		/* Iteration position. */
 		context->segfileArrayIndex = 0;
@@ -1433,7 +1433,7 @@ gp_aoseg(PG_FUNCTION_ARGS)
 
 		context->aoRelOid = aoRelOid;
 
-		aocsRel = table_open(aoRelOid, NoLock);
+		aocsRel = table_open(aoRelOid, AccessShareLock);
 		if (!RelationIsAoRows(aocsRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1442,7 +1442,7 @@ gp_aoseg(PG_FUNCTION_ARGS)
 
 		GetAppendOnlyEntryAuxOids(aocsRel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
-		pg_aoseg_rel = table_open(segrelid, NoLock);
+		pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 
 		Snapshot	snapshot;
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -1453,8 +1453,8 @@ gp_aoseg(PG_FUNCTION_ARGS)
 										   &context->totalAoSegFiles);
 		UnregisterSnapshot(snapshot);
 
-		table_close(pg_aoseg_rel, NoLock);
-		table_close(aocsRel, NoLock);
+		table_close(pg_aoseg_rel, AccessShareLock);
+		table_close(aocsRel, AccessShareLock);
 
 		/* Iteration position. */
 		context->segfileArrayIndex = 0;
