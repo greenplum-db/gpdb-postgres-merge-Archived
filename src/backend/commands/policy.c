@@ -813,8 +813,9 @@ CreatePolicy(CreatePolicyStmt *stmt)
 				 errmsg("policy \"%s\" for table \"%s\" already exists",
 						stmt->policy_name, RelationGetRelationName(target_table))));
 
-	policy_id = GetNewOidWithIndex(pg_policy_rel, PolicyOidIndexId,
-								   Anum_pg_policy_oid);
+	policy_id = GetNewOidForPolicy(pg_policy_rel, PolicyOidIndexId,
+								   Anum_pg_policy_oid,
+								   table_id, stmt->policy_name);
 	values[Anum_pg_policy_oid - 1] = ObjectIdGetDatum(policy_id);
 	values[Anum_pg_policy_polrelid - 1] = ObjectIdGetDatum(table_id);
 	values[Anum_pg_policy_polname - 1] = DirectFunctionCall1(namein,
