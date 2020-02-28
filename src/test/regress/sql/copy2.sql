@@ -452,16 +452,6 @@ DROP ROLE regress_rls_copy_user;
 DROP ROLE regress_rls_copy_user_colperms;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
-<<<<<<< HEAD
-
-CREATE TABLE check_copy_with_oids (a int) WITH OIDS;
-COPY check_copy_with_oids FROM stdin WITH (oids);
-12345	1
-12346	2
-12347	3
-\.
-SELECT oid, * from check_copy_with_oids;
-DROP TABLE check_copy_with_oids;
 
 
 -- When error reject limit is set, copy should be able to continue after hit a corrupted end-of-copy marker 
@@ -472,9 +462,3 @@ COPY copy_eoc_marker FROM stdin LOG ERRORS SEGMENT REJECT LIMIT 5;
 \.
 SELECT * FROM copy_eoc_marker;
 DROP TABLE copy_eoc_marker;
-=======
-DROP TABLE instead_of_insert_tbl;
-DROP VIEW instead_of_insert_tbl_view;
-DROP VIEW instead_of_insert_tbl_view_2;
-DROP FUNCTION fun_instead_of_insert_tbl();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

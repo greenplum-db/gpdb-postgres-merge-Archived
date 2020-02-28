@@ -387,8 +387,8 @@ static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
 						LockMethod lockMethodTable, uint32 hashcode,
 						bool wakeupNeeded);
 static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
-                                 LOCKTAG *locktag, LOCKMODE lockmode,
-                                 bool decrement_strong_lock_count);
+								 LOCKTAG *locktag, LOCKMODE lockmode,
+								 bool decrement_strong_lock_count);
 static bool setFPHoldTillEndXact(Oid relid);
 static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 										   BlockedProcsData *data);
@@ -1420,9 +1420,9 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 	 */
 	if (proclock->holdMask & LOCKBIT_ON(lockmode))
 		elog(ERROR, "lock %s on object %u/%u/%u is already held",
-				lockMethodTable->lockModeNames[lockmode],
-				lock->tag.locktag_field1, lock->tag.locktag_field2,
-				lock->tag.locktag_field3);
+			 lockMethodTable->lockModeNames[lockmode],
+			 lock->tag.locktag_field1, lock->tag.locktag_field2,
+			 lock->tag.locktag_field3);
 	return proclock;
 }
 
