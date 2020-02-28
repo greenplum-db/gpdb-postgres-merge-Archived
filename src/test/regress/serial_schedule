@@ -70,12 +70,8 @@ test: create_aggregate
 test: create_function_3
 test: create_cast
 test: constraints
-<<<<<<< HEAD
 ignore: triggers
-=======
-test: triggers
 test: select
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 test: inherit
 test: typed_table
 test: vacuum

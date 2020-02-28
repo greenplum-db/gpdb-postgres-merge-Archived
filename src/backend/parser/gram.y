@@ -4614,7 +4614,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $12;
 					n->tablespacename = $13;
 					n->if_not_exists = false;
-					n->distributedBy = (DistributedBy *) $12;
+					n->distributedBy = (DistributedBy *) $14;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
@@ -4636,7 +4636,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $15;
 					n->tablespacename = $16;
 					n->if_not_exists = true;
-					n->distributedBy = (DistributedBy *) $15;
+					n->distributedBy = (DistributedBy *) $17;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
@@ -4659,7 +4659,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $11;
 					n->tablespacename = $12;
 					n->if_not_exists = false;
-					n->distributedBy = (DistributedBy *) $11;
+					n->distributedBy = (DistributedBy *) $13;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
