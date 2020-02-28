@@ -827,20 +827,12 @@ explain (costs off)
    UNION ALL
    SELECT 2 AS t, * FROM tenk1 b) c
  WHERE t = 2;
-<<<<<<< HEAD
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Append
-         ->  Seq Scan on tenk1 b
+   ->  Seq Scan on tenk1 b
  Optimizer: Postgres query optimizer
-(4 rows)
-=======
-     QUERY PLAN      
----------------------
- Seq Scan on tenk1 b
-(1 row)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(3 rows)
 
 -- Test that we push quals into UNION sub-selects only when it's safe
 explain (costs off)
@@ -848,34 +840,20 @@ SELECT * FROM
   (SELECT 1 AS t, 2 AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-<<<<<<< HEAD
-WHERE x < 4;
-              QUERY PLAN              
---------------------------------------
- HashAggregate
-   Group Key: (1), (2)
-   ->  Append
-         ->  Result
-         ->  Result
-               One-Time Filter: false
- Optimizer: Postgres query optimizer
-(7 rows)
-=======
 WHERE x < 4
 ORDER BY x;
-                    QUERY PLAN                    
---------------------------------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  Sort
    Sort Key: (2)
-   ->  Unique
-         ->  Sort
-               Sort Key: (1), (2)
-               ->  Append
-                     ->  Result
-                     ->  Result
-                           One-Time Filter: false
+   ->  HashAggregate
+         Group Key: (1), (2)
+         ->  Append
+               ->  Result
+               ->  Result
+                     One-Time Filter: false
+ Optimizer: Postgres query optimizer
 (9 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SELECT * FROM
   (SELECT 1 AS t, 2 AS x
@@ -895,8 +873,8 @@ SELECT * FROM
    SELECT 2 AS t, 4 AS x) ss
 WHERE x < 4
 ORDER BY x;
-                          QUERY PLAN                          
---------------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Sort
    Sort Key: ss.x
    ->  Subquery Scan on ss
@@ -907,12 +885,8 @@ ORDER BY x;
                      ->  ProjectSet
                            ->  Result
                      ->  Result
-<<<<<<< HEAD
-                     ->  Result
  Optimizer: Postgres query optimizer
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-(10 rows)
+(11 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, generate_series(1,10) AS x
@@ -932,37 +906,23 @@ SELECT * FROM
   (SELECT 1 AS t, (random()*3)::int AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-<<<<<<< HEAD
-WHERE x > 3;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Subquery Scan on ss
-   Filter: (ss.x > 3)
-   ->  HashAggregate
-         Group Key: (1), ((($0 * '3'::double precision))::integer)
-         ->  Append
-               ->  Result
-                     InitPlan 1 (returns $0)
-                       ->  Result
-               ->  Result
- Optimizer: Postgres query optimizer
-=======
 WHERE x > 3
 ORDER BY x;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Sort
    Sort Key: ss.x
    ->  Subquery Scan on ss
          Filter: (ss.x > 3)
-         ->  Unique
-               ->  Sort
-                     Sort Key: (1), (((random() * '3'::double precision))::integer)
-                     ->  Append
-                           ->  Result
-                           ->  Result
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-(10 rows)
+         ->  HashAggregate
+               Group Key: (1), ((($0 * '3'::double precision))::integer)
+               ->  Append
+                     ->  Result
+                           InitPlan 1 (returns $0)
+                             ->  Result
+                     ->  Result
+ Optimizer: Postgres query optimizer
+(12 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, (random()*3)::int AS x
@@ -1092,13 +1052,15 @@ select * from
    union all
    select *, 1 as x from int8_tbl b) ss
 where (x = 0) or (q1 >= q2 and q1 <= q2);
-                 QUERY PLAN                  
----------------------------------------------
- Append
-   ->  Seq Scan on int8_tbl a
-   ->  Seq Scan on int8_tbl b
-         Filter: ((q1 >= q2) AND (q1 <= q2))
-(4 rows)
+                    QUERY PLAN                     
+---------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Append
+         ->  Seq Scan on int8_tbl a
+         ->  Seq Scan on int8_tbl b
+               Filter: ((q1 >= q2) AND (q1 <= q2))
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 select * from
   (select *, 0 as x from int8_tbl a
