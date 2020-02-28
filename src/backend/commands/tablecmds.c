@@ -16805,6 +16805,21 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (change_policy)
 			GpPolicyReplace(tarrelid, policy);
 
+		/* GPDB_12_MERGE_FIXME: The idea here is that we modify the original
+		 * command, attaching 'qe_data' to it, so that when it's dispatched,
+		 * the 'qe_data' is dispatched too. But I (Heikki) changed the way
+		 * ALTER TABLE is dispatched, so that we dispatch the *original*
+		 * command, so these changes won't be delivered to the QEs anymore.
+		 * (see commit 1b38ea7171 on the iteration_REL_12 branch). I still
+		 * that dispatching the original command is better, but we need a new
+		 * way of attaching extra information to the dispatched command.
+		 * Perhaps something generic like the OID dispatching system in
+		 * oid_dispatch.c? Or just stash the qe_data in a global variable
+		 * or something here, so that it can be attached to the statement
+		 * that's dispatched later.
+		 */
+		elog(ERROR, "GPDB_12_MERGE_FIXME: dispatching ALTER TABLE SET DISTRIBUTED BY is broken");
+
 		linitial(lprime) = lwith;
 		lsecond(lprime) = qe_data;
 		lprime = lappend(lprime, policy);
