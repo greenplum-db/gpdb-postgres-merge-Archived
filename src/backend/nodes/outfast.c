@@ -1634,6 +1634,9 @@ _outNode(StringInfo str, void *obj)
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
 				break;
+			case T_PartitionCmd:
+				_outPartitionCmd(str, obj);
+				break;
 
 			case T_CreateSchemaStmt:
 				_outCreateSchemaStmt(str, obj);

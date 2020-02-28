@@ -4142,6 +4142,17 @@ _readPartitionRangeDatum(void)
 	READ_DONE();
 }
 
+static PartitionCmd *
+_readPartitionCmd(void)
+{
+	READ_LOCALS(PartitionCmd);
+
+	READ_NODE_FIELD(name);
+	READ_NODE_FIELD(bound);
+
+	READ_DONE();
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 /*
  * parseNodeString
@@ -4430,6 +4441,8 @@ parseNodeString(void)
         return_value = _readPartitionBoundSpec();
     else if (MATCH("PARTITIONRANGEDATUM", 19))
         return_value = _readPartitionRangeDatum();
+	else if (MATCHX("PARTITIONCMD"))
+		return_value = _readPartitionCmd();
 
 	/* GPDB additions */
 	else if (MATCHX("A_ARRAYEXPR"))

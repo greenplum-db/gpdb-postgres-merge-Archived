@@ -2181,6 +2181,9 @@ readNodeBinary(void)
 			case T_PartitionRangeDatum:
 				return_value = _readPartitionRangeDatum();
 				break;
+			case T_PartitionCmd:
+				return_value = _readPartitionCmd();
+				break;
 			case T_PartitionBoundSpec:
 				return_value = _readPartitionBoundSpec();
 				break;

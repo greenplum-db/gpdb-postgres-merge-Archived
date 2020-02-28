@@ -4871,6 +4871,15 @@ _outPartitionRangeDatum(StringInfo str, const PartitionRangeDatum *node)
 }
 
 static void
+_outPartitionCmd(StringInfo str, const PartitionCmd *node)
+{
+	WRITE_NODE_TYPE("PARTITIONCMD");
+
+	WRITE_NODE_FIELD(name);
+	WRITE_NODE_FIELD(bound);
+}
+
+static void
 _outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
 {
 	WRITE_NODE_TYPE("CREATESCHEMASTMT");
@@ -6096,6 +6105,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
+				break;
+			case T_PartitionCmd:
+				_outPartitionCmd(str, obj);
 				break;
 
 			case T_CreateSchemaStmt:
