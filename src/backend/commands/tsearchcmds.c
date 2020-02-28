@@ -203,8 +203,9 @@ DefineTSParser(List *names, List *parameters)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	prsOid = GetNewOidWithIndex(prsRel, TSParserOidIndexId,
-								Anum_pg_ts_parser_oid);
+	prsOid = GetNewOidForTSParser(prsRel, TSParserOidIndexId,
+								  Anum_pg_ts_parser_oid,
+								  prsname, namespaceoid);
 	values[Anum_pg_ts_parser_oid - 1] = ObjectIdGetDatum(prsOid);
 	namestrcpy(&pname, prsname);
 	values[Anum_pg_ts_parser_prsname - 1] = NameGetDatum(&pname);
@@ -492,8 +493,9 @@ DefineTSDictionary(List *names, List *parameters)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	dictOid = GetNewOidWithIndex(dictRel, TSDictionaryOidIndexId,
-								 Anum_pg_ts_dict_oid);
+	dictOid = GetNewOidForTSDictionary(dictRel, TSDictionaryOidIndexId,
+									   Anum_pg_ts_dict_oid,
+									   dictname, namespaceoid);
 	values[Anum_pg_ts_dict_oid - 1] = ObjectIdGetDatum(dictOid);
 	namestrcpy(&dname, dictname);
 	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
@@ -808,8 +810,9 @@ DefineTSTemplate(List *names, List *parameters)
 		values[i] = ObjectIdGetDatum(InvalidOid);
 	}
 
-	tmplOid = GetNewOidWithIndex(tmplRel, TSTemplateOidIndexId,
-								 Anum_pg_ts_dict_oid);
+	tmplOid = GetNewOidForTSTemplate(tmplRel, TSTemplateOidIndexId,
+									 Anum_pg_ts_dict_oid,
+									 tmplname, namespaceoid);
 	values[Anum_pg_ts_template_oid - 1] = ObjectIdGetDatum(tmplOid);
 	namestrcpy(&dname, tmplname);
 	values[Anum_pg_ts_template_tmplname - 1] = NameGetDatum(&dname);
