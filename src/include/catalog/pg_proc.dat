@@ -10859,7 +10859,9 @@
 
 # MPP Aggregate -- array_sum -- special for prospective customer. 
 { oid => 5067, descr => 'array sum aggregate',
-   proname => 'array_sum', proisstrict => 'f', prorettype => '_int4', proargtypes => '_int4', prosrc => 'aggregate_dummy' },
+   proname => 'array_sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int4', proargtypes => '_int4',
+   prosrc => 'aggregate_dummy' },
 
 # Greenplum Analytic functions
 { oid => 6212, descr => 'perform matrix addition on two conformable matrices',
@@ -10875,35 +10877,49 @@
    proname => 'float8_matrix_accum', prorettype => '_float8', proargtypes => '_float8 _float8', prosrc => 'matrix_add' },
 
 { oid => 6216, descr => 'sum of matrixes',
-   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '_int2', prosrc => 'aggregate_dummy' },
+   proname => 'sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int8', proargtypes => '_int2',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6217, descr => 'sum of matrixes',
-   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '_int4', prosrc => 'aggregate_dummy' },
+   proname => 'sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int8', proargtypes => '_int4',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6218, descr => 'sum of matrixes',
-   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '_int8', prosrc => 'aggregate_dummy' },
+   proname => 'sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int8', proargtypes => '_int8',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6219, descr => 'sum of matrixes',
-   proname => 'sum', proisstrict => 'f', prorettype => '_float8', proargtypes => '_float8', prosrc => 'aggregate_dummy' },
+   proname => 'sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_float8', proargtypes => '_float8',
+   prosrc => 'aggregate_dummy' },
 
 # 3220 - reserved for sum(numeric[]) 
 { oid => 6225, descr => 'aggregate transition function',
    proname => 'int4_pivot_accum', proisstrict => 'f', prorettype => '_int4', proargtypes => '_int4 _text text int4', prosrc => 'int4_pivot_accum' },
 
 { oid => 6226, descr => 'pivot sum aggregate',
-   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_int4', proargtypes => '_text text int4', prosrc => 'aggregate_dummy' },
+   proname => 'pivot_sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int4', proargtypes => '_text text int4',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6227, descr => 'aggregate transition function',
    proname => 'int8_pivot_accum', proisstrict => 'f', prorettype => '_int8', proargtypes => '_int8 _text text int8', prosrc => 'int8_pivot_accum' },
 
 { oid => 6228, descr => 'pivot sum aggregate',
-   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '_text text int8', prosrc => 'aggregate_dummy' },
+   proname => 'pivot_sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_int8', proargtypes => '_text text int8',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6229, descr => 'aggregate transition function',
    proname => 'float8_pivot_accum', proisstrict => 'f', prorettype => '_float8', proargtypes => '_float8 _text text float8', prosrc => 'float8_pivot_accum' },
 
 { oid => 6230, descr => 'pivot sum aggregate',
-   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_float8', proargtypes => '_text text float8', prosrc => 'aggregate_dummy' },
+   proname => 'pivot_sum', prokind => 'a', proisstrict => 'f',
+   prorettype => '_float8', proargtypes => '_text text float8',
+   prosrc => 'aggregate_dummy' },
 
 # 3241-324? reserved for unpivot, see pivot.c 
 
@@ -10933,7 +10949,7 @@
    proname => 'gp_execution_dbid', proisstrict => 'f', provolatile => 'v', proparallel => 'u', prorettype => 'int4', proargtypes => '', prosrc => 'gp_execution_dbid' },
 
 { oid => 7169, descr => 'show append only table tuple distribution across segment databases',
-   proname => 'get_ao_distribution', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => 'regclass', proallargtypes => 'regclass', proargmodes => '{i,o,o}', proargnames => '{rel,segmentid,tupcount}', prosrc => 'get_ao_distribution', prodataaccess => 'r' },
+   proname => 'get_ao_distribution', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => 'regclass', proallargtypes => '{regclass,int4,int8}', proargmodes => '{i,o,o}', proargnames => '{rel,segmentid,tupcount}', prosrc => 'get_ao_distribution', prodataaccess => 'r' },
 
 { oid => 7171, descr => 'show append only table compression ratio',
    proname => 'get_ao_compression_ratio', provolatile => 'v', proparallel => 'u', prorettype => 'float8', proargtypes => 'regclass', prosrc => 'get_ao_compression_ratio', prodataaccess => 'r' },
@@ -11290,7 +11306,9 @@
    proname => 'gp_hyperloglog_add_item_agg_default', proisstrict => 'f', prorettype => 'gp_hyperloglog_estimator', proargtypes => 'gp_hyperloglog_estimator anyelement', proargnames => '{counter,item}', prosrc => 'gp_hyperloglog_add_item_agg_default' },
 
 { oid => 7164, descr => 'Adds every data value to a gp_hyperloglog counter and returns the counter',
-   proname => 'gp_hyperloglog_accum', proisstrict => 'f', prorettype => 'gp_hyperloglog_estimator', proargtypes => 'anyelement', prosrc => 'aggregate_dummy' },
+   proname => 'gp_hyperloglog_accum', prokind => 'a', proisstrict => 'f',
+   prorettype => 'gp_hyperloglog_estimator', proargtypes => 'anyelement',
+   prosrc => 'aggregate_dummy' },
 
 { oid => 6232, descr => 'deparse DISTRIBUTED BY clause for a given relation',
    proname => 'pg_get_table_distributedby', provolatile => 's', prorettype => 'text', proargtypes => 'oid', prosrc => 'pg_get_table_distributedby' },

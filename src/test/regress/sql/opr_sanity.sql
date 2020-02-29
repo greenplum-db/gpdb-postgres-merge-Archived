@@ -25,34 +25,6 @@
 -- It doesn't currently know about some cases, notably domains, anyelement,
 -- anynonarray, anyenum, or record, but it doesn't need to (yet).
 create function binary_coercible(oid, oid) returns bool as $$
-<<<<<<< HEAD
-SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_catalog.pg_cast where
-        castsource = $1 and casttarget = $2 and
-        castmethod = 'b' and castcontext = 'i') OR
- ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
- ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
-  EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1)) OR
- ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
-  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable READS SQL DATA;
-
--- This one ignores castcontext, so it considers only physical equivalence
--- and not whether the coercion can be invoked implicitly.
-create function physically_coercible(oid, oid) returns bool as $$
-SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_catalog.pg_cast where
-        castsource = $1 and casttarget = $2 and
-        castmethod = 'b') OR
- ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
- ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
-  EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1)) OR
- ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
-  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable READS SQL DATA;
-=======
 begin
   if $1 = $2 then return true; end if;
   if EXISTS(select 1 from pg_catalog.pg_cast where
@@ -97,7 +69,6 @@ begin
   return false;
 end
 $$ language plpgsql strict stable;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 -- **************** pg_proc ****************
@@ -164,33 +135,19 @@ WHERE p1.oid != p2.oid AND
 -- Considering only built-in procs (prolang = 12), look for multiple uses
 -- of the same internal function (ie, matching prosrc fields).  It's OK to
 -- have several entries with different pronames for the same internal function,
--- but conflicts in the number of arguments (except in the case of window 
--- functions) and other critical items should be complained of.  (We don't 
--- check data types here; see next query.) 
---
--- Note: ignore aggregate functions here, since they all point to the same dummy
--- built-in function.
---
--- Note: ignoring gp_deprecated here since the function ignores its parameters
--- always errors and never returns a value.
+-- but conflicts in the number of arguments and other critical items should
+-- be complained of.  (We don't check data types here; see next query.)
+-- Note: ignore aggregate functions here, since they all point to the same
+-- dummy built-in function.
 
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid < p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    (p1.proisagg = false OR p2.proisagg = false) AND
-    (p1.proiswindow = false OR p1.proiswindow = false) AND
-    (p1.prolang != p2.prolang OR
-     p1.proisagg != p2.proisagg OR
-     p1.proiswindow != p2.proiswindow OR
-=======
     (p1.prokind != 'a' OR p2.prokind != 'a') AND
     (p1.prolang != p2.prolang OR
      p1.prokind != p2.prokind OR
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
      p1.prosecdef != p2.prosecdef OR
      p1.proleakproof != p2.proleakproof OR
      p1.proisstrict != p2.proisstrict OR
@@ -206,164 +163,95 @@ WHERE p1.oid < p2.oid AND
 -- so treated.  Note that the expected output of this part of the test will
 -- need to be modified whenever new pairs of types are made binary-equivalent,
 -- or when new polymorphic built-in functions are added!
---
 -- Note: ignore aggregate functions here, since they all point to the same
--- dummy built-in function.
---
--- Note: ignoring gp_deprecated here since the function ignores its parameters
--- always errors and never returns a value.
+-- dummy built-in function.  Likewise, ignore range constructor functions.
 
-SELECT DISTINCT p1.prorettype::regtype, p2.prorettype::regtype
+SELECT DISTINCT p1.prorettype, p2.prorettype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.prorettype < p2.prorettype)
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[0]::regtype, p2.proargtypes[0]::regtype
+SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[1]::regtype, p2.proargtypes[1]::regtype
+SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
+SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[2] < p2.proargtypes[2])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[3]::regtype, p2.proargtypes[3]::regtype
+SELECT DISTINCT p1.proargtypes[3], p2.proargtypes[3]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[3] < p2.proargtypes[3])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[4]::regtype, p2.proargtypes[4]::regtype
+SELECT DISTINCT p1.proargtypes[4], p2.proargtypes[4]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[4] < p2.proargtypes[4])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[5]::regtype, p2.proargtypes[5]::regtype
+SELECT DISTINCT p1.proargtypes[5], p2.proargtypes[5]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[5] < p2.proargtypes[5])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[6]::regtype, p2.proargtypes[6]::regtype
+SELECT DISTINCT p1.proargtypes[6], p2.proargtypes[6]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[6] < p2.proargtypes[6])
-ORDER BY 1, 2; -- order none
+ORDER BY 1, 2;
 
-SELECT DISTINCT p1.proargtypes[7]::regtype, p2.proargtypes[7]::regtype
+SELECT DISTINCT p1.proargtypes[7], p2.proargtypes[7]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
-	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
-<<<<<<< HEAD
-    NOT p1.proisagg AND NOT p2.proisagg AND
-    NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prokind != 'a' AND p2.prokind != 'a' AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
     (p1.proargtypes[7] < p2.proargtypes[7])
-ORDER BY 1, 2; -- order none
-
--- The checks above only extend to the first 8 parameters, list any
--- functions not checked.
-SELECT proname, pronargs 
-FROM pg_proc 
-WHERE pronargs > 8 and prolang = 12 AND
-	proname NOT IN ('gp_add_segment') AND
-	proname NOT LIKE '%costestimate' AND
-    NOT proisagg AND 
-    NOT proiswindow;
-
+ORDER BY 1, 2;
 
 -- Look for functions that return type "internal" and do not have any
 -- "internal" argument.  Such a function would be a security hole since
@@ -1420,130 +1308,6 @@ FROM pg_amproc as p1
 WHERE p1.amprocfamily = 0 OR p1.amproclefttype = 0 OR p1.amprocrighttype = 0
     OR p1.amprocnum < 1 OR p1.amproc = 0;
 
--- Detect missing pg_amproc entries: should have as many support functions
--- as AM expects for each datatype combination supported by the opfamily.
-
-SELECT * FROM (
-  SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype,
-         array_agg(p3.amprocnum ORDER BY amprocnum) AS procnums
-  FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
-  WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid
-  GROUP BY p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
-) AS t
-WHERE NOT (
-  -- btree has one mandatory and one optional support function.
-  -- hash has one support function, which is mandatory.
-  -- GiST has eight support functions, one of which is optional.
-  -- GIN has six support functions. 1-3 are mandatory, 5 is optional, and
-  --   at least one of 4 and 6 must be given.
-  -- SP-GiST has five support functions, all mandatory
-  -- BRIN has four mandatory support functions, and a bunch of optionals
-  amname = 'btree' AND procnums @> '{1}' OR
-  amname = 'bitmap' AND procnums @> '{1}' OR
-  amname = 'hash' AND procnums = '{1}' OR
-  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
-  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
-  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
-);
-
--- Also, check if there are any pg_opclass entries that don't seem to have
--- pg_amproc support.
-
-SELECT * FROM (
-  SELECT amname, opcname, array_agg(amprocnum ORDER BY amprocnum) as procnums
-  FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-       LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-           amproclefttype = amprocrighttype AND amproclefttype = opcintype
-  GROUP BY amname, opcname, amprocfamily
-) AS t
-WHERE NOT (
-  -- same per-AM rules as above
-  amname = 'btree' AND procnums @> '{1}' OR
-  amname = 'bitmap' AND procnums @> '{1}' OR
-  amname = 'hash' AND procnums = '{1}' OR
-  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
-  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
-  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
-);
-
--- Unfortunately, we can't check the amproc link very well because the
--- signature of the function may be different for different support routines
--- or different base data types.
--- We can check that all the referenced instances of the same support
--- routine number take the same number of parameters, but that's about it
--- for a general check...
-
-SELECT p1.amprocfamily, p1.amprocnum,
-	p2.oid, p2.proname,
-	p3.opfname,
-	p4.amprocfamily, p4.amprocnum,
-	p5.oid, p5.proname,
-	p6.opfname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3,
-     pg_amproc AS p4, pg_proc AS p5, pg_opfamily AS p6
-WHERE p1.amprocfamily = p3.oid AND p4.amprocfamily = p6.oid AND
-    p3.opfmethod = p6.opfmethod AND p1.amprocnum = p4.amprocnum AND
-    p1.amproc = p2.oid AND p4.amproc = p5.oid AND
-    (p2.proretset OR p5.proretset OR p2.pronargs != p5.pronargs);
-
--- For btree, though, we can do better since we know the support routines
--- must be of the form cmp(lefttype, righttype) returns int4
--- or sortsupport(internal) returns void.
-
-SELECT p1.amprocfamily, p1.amprocnum,
-	p2.oid, p2.proname,
-	p3.opfname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
-WHERE p3.opfmethod IN (SELECT oid FROM pg_am WHERE amname IN ('btree', 'bitmap'))
-    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
-    (CASE WHEN amprocnum = 1
-          THEN prorettype != 'int4'::regtype OR proretset OR pronargs != 2
-               OR proargtypes[0] != amproclefttype
-               OR proargtypes[1] != amprocrighttype
-          WHEN amprocnum = 2
-          THEN prorettype != 'void'::regtype OR proretset OR pronargs != 1
-               OR proargtypes[0] != 'internal'::regtype
-          ELSE true END);
-
--- For hash we can also do a little better: the support routines must be
--- of the form hash(lefttype) returns int4.  There are several cases where
--- we cheat and use a hash function that is physically compatible with the
--- datatype even though there's no cast, so this check does find a small
--- number of entries.
-
-SELECT p1.amprocfamily, p1.amprocnum, p2.proname, p3.opfname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
-WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
-    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
-    (amprocnum != 1
-     OR proretset
-     OR prorettype != 'int4'::regtype
-     OR pronargs != 1
-     OR NOT physically_coercible(amproclefttype, proargtypes[0])
-     OR amproclefttype != amprocrighttype)
-ORDER BY 1;
-
--- We can also check SP-GiST carefully, since the support routine signatures
--- are independent of the datatype being indexed.
-
-SELECT p1.amprocfamily, p1.amprocnum,
-	p2.oid, p2.proname,
-	p3.opfname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
-WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'spgist')
-    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
-    (CASE WHEN amprocnum = 1 OR amprocnum = 2 OR amprocnum = 3 OR amprocnum = 4
-          THEN prorettype != 'void'::regtype OR proretset OR pronargs != 2
-               OR proargtypes[0] != 'internal'::regtype
-               OR proargtypes[1] != 'internal'::regtype
-          WHEN amprocnum = 5
-          THEN prorettype != 'bool'::regtype OR proretset OR pronargs != 2
-               OR proargtypes[0] != 'internal'::regtype
-               OR proargtypes[1] != 'internal'::regtype
-          ELSE true END);
-
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type
 -- members need only be stable, since they are just shorthands
@@ -1561,17 +1325,6 @@ WHERE p1.amproc = p2.oid AND
     p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';
 
--- Check for oid collisions between pg_proc/pg_type/pg_class
-SELECT *
-FROM
-  (SELECT *, count(*) over (partition by oid) as oid_count
-   FROM (select oid, 'pg_proc' as catalog, proname as name from pg_proc
-         union all
-         select oid, 'pg_type' as catalog, typname as name from pg_type
-         union all
-         select oid, 'pg_class' as catalgo, relname as name from pg_class) cats
-  ) cat_counts
-WHERE oid_count > 1;
 
 -- **************** pg_index ****************
 
@@ -1628,6 +1381,8 @@ SELECT relname, attname, attcollation
 FROM pg_class c, pg_attribute a
 WHERE c.oid = attrelid AND c.oid < 16384 AND
     c.relkind != 'v' AND  -- we don't care about columns in views
+    c.relkind != 'f' AND  -- GPDB: foreign/external tables are also OK.
+    c.relkind != 'c' AND  -- GPDB: as well as composite types
     attcollation != 0 AND
     attcollation != (SELECT oid FROM pg_collation WHERE collname = 'C');
 
