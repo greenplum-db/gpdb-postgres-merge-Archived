@@ -1859,6 +1859,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 				break;
 
 			case RTE_SUBQUERY:
+			case RTE_TABLEFUNCTION:
 				/* Recurse into subquery-in-FROM */
 				ScanQueryForLocks(rte->subquery, acquire);
 				break;

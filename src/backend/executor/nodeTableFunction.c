@@ -231,9 +231,11 @@ TableFunctionRecheck(TableFunctionState *node, TupleTableSlot *slot)
 /*
  * ExecTableFunction - wrapper around TableFunctionNext
  */
-TupleTableSlot *
-ExecTableFunction(TableFunctionState *node)
+static TupleTableSlot *
+ExecTableFunction(PlanState *pstate)
 {
+	TableFunctionState *node = castNode(TableFunctionState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) TableFunctionNext,
 					(ExecScanRecheckMtd) TableFunctionRecheck);
@@ -271,6 +273,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	scanstate = makeNode(TableFunctionState);
 	scanstate->ss.ps.plan  = (Plan *)node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecTableFunction;
 	scanstate->inputscan   = palloc0(sizeof(AnyTableData));
 	scanstate->is_firstcall = true;
 
@@ -360,7 +363,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	/* Initialize scan slot and type */
 	/* GPDB_12_MERGE_FIXME: What's the right TTSOps for this? */
 	ExecInitScanTupleSlot(estate, &scanstate->ss, resultdesc,
-						  &TTSOpsMinimalTuple);
+						  &TTSOpsHeapTuple);
 	scanstate->resultdesc = resultdesc;
 
 	/* Initialize result tuple type and projection info */
@@ -400,7 +403,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	 * Prepare for execution of the function.
 	 */
 	fmgr_info(func->funcid, &scanstate->flinfo);
-	if (scanstate->flinfo.fn_nargs == list_length(func->args))
+	if (scanstate->flinfo.fn_nargs != list_length(func->args))
 		elog(ERROR, "number of arguments between TableFunctionScan and Fmgrinfo don't match");
 	scanstate->fcinfo = palloc0(SizeForFunctionCallInfo(scanstate->flinfo.fn_nargs));
 
@@ -454,8 +457,10 @@ ExecEndTableFunction(TableFunctionState *node)
 	ExecFreeExprContext(&node->ss.ps);
 	
 	/* Clean out the tuple table */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+
 	/* End the subplans */
 	ExecEndNode(outerPlanState(node));
 }
