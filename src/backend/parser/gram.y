@@ -9142,8 +9142,6 @@ comment_type_any_name:
 			| TEXT_P SEARCH DICTIONARY			{ $$ = OBJECT_TSDICTIONARY; }
 			| TEXT_P SEARCH PARSER				{ $$ = OBJECT_TSPARSER; }
 			| TEXT_P SEARCH TEMPLATE			{ $$ = OBJECT_TSTEMPLATE; }
-			| RESOURCE QUEUE                    { $$ = OBJECT_RESQUEUE; }
-			| RESOURCE GROUP_P					{ $$ = OBJECT_RESGROUP; }
 		;
 
 /* object types taking name */
@@ -9160,6 +9158,8 @@ comment_type_name:
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
 			| SUBSCRIPTION						{ $$ = OBJECT_SUBSCRIPTION; }
 			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
+			| RESOURCE QUEUE                    { $$ = OBJECT_RESQUEUE; }
+			| RESOURCE GROUP_P					{ $$ = OBJECT_RESGROUP; }
 		;
 
 comment_text:
