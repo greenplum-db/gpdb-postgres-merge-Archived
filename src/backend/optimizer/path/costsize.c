@@ -3675,7 +3675,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 
 		foreach(hcl, hashclauses)
 		{
-			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(hcl);
+			RestrictInfo *restrictinfo = lfirst_node(RestrictInfo, hcl);
 			Expr *clause = restrictinfo->clause;
 			Selectivity thisbucketsize;
 			Selectivity thismcvfreq;
@@ -3684,8 +3684,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 			VariableStatData vardatainner;
 			VariableStatData vardataouter;
 			bool isdefault;
-
-			Assert(IsA(restrictinfo, RestrictInfo));
 
 			/**
 			 * If this is a IS NOT FALSE boolean test, we can peek underneath.
@@ -3717,7 +3715,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				{
 					/* not cached yet */
 					estimate_hash_bucket_stats(root,
-											   get_rightop(restrictinfo->clause),
+											   get_rightop(clause),
 											   virtualbuckets,
 											   &restrictinfo->right_mcvfreq,
 											   &restrictinfo->right_bucketsize,
@@ -3755,7 +3753,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				{
 					/* not cached yet */
 					estimate_hash_bucket_stats(root,
-											   get_leftop(restrictinfo->clause),
+											   get_leftop(clause),
 											   virtualbuckets,
 											   &restrictinfo->left_mcvfreq,
 											   &restrictinfo->left_bucketsize,
