@@ -305,6 +305,7 @@ AcquireRewriteLocks(Query *parsetree,
 				break;
 
 			case RTE_SUBQUERY:
+			case RTE_TABLEFUNCTION:
 
 				/*
 				 * The subquery RTE itself is all right, but we have to
