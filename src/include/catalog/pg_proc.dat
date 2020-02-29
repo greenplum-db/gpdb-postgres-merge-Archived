@@ -10969,7 +10969,7 @@
 
 # Functions to deal with SREH error logs
 { oid => 7076, descr => 'read the error log for the specified external table',
-   proname => 'gp_read_error_log', prorows => '1000', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => 'text', proallargtypes => 'text', proargmodes => '{i,o,o,o,o,o,o,o,o}', proargnames => '{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}', prosrc => 'gp_read_error_log', proexeclocation => 's' },
+   proname => 'gp_read_error_log', prorows => '1000', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => 'text', proallargtypes => '{text,timestamptz,text,text,int4,int4,text,text,bytea}', proargmodes => '{i,o,o,o,o,o,o,o,o}', proargnames => '{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}', prosrc => 'gp_read_error_log', proexeclocation => 's' },
 
 { oid => 7069, descr => 'truncate the error log for the specified external table',
    proname => 'gp_truncate_error_log', provolatile => 'v', prorettype => 'bool', proargtypes => 'text', prosrc => 'gp_truncate_error_log' },
