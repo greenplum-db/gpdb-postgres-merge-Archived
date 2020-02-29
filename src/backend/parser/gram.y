@@ -11574,12 +11574,13 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER PROTOCOL any_name RENAME TO name
+			| ALTER PROTOCOL name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_EXTPROTOCOL;
-					n->object = (Node *) $3;
+					n->object = (Node *) makeString($3);
 					n->newname = $6;
+					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
 		;

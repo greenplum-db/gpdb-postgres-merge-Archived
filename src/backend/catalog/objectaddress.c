@@ -540,6 +540,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ExtprotocolOidIndexId,
 		EXTPROTOCOLOID,
 		EXTPROTOCOLNAME,
+		Anum_pg_extprotocol_oid,
 		Anum_pg_extprotocol_ptcname,
 		InvalidAttrNumber,
 		Anum_pg_extprotocol_ptcowner,
