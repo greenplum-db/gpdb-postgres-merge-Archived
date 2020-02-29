@@ -3708,7 +3708,6 @@ _readAlterFunctionStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static DefineStmt *
 _readDefineStmt(void)
 {
@@ -3718,11 +3717,12 @@ _readDefineStmt(void)
 	READ_NODE_FIELD(defnames);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(definition);
+	READ_BOOL_FIELD(if_not_exists);
+	READ_BOOL_FIELD(replace);
 	READ_BOOL_FIELD(trusted);   /* CDB */
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static CompositeTypeStmt *
 _readCompositeTypeStmt(void)

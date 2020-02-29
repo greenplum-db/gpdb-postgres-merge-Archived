@@ -497,6 +497,7 @@ DefineAggregate(ParseState *pstate,
 		stmt->defnames = name;
 		stmt->args = orig_args;
 		stmt->definition = parameters;
+		stmt->replace = replace;
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
 									DF_WITH_SNAPSHOT|

@@ -3593,6 +3593,8 @@ _outDefineStmt(StringInfo str, const DefineStmt *node)
 	WRITE_NODE_FIELD(defnames);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(definition);
+	WRITE_BOOL_FIELD(if_not_exists);
+	WRITE_BOOL_FIELD(replace);
 	WRITE_BOOL_FIELD(trusted);  /* CDB */
 }
 

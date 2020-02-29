@@ -922,21 +922,6 @@ _readAlterDefaultPrivilegesStmt(void)
 	READ_DONE();
 }
 
-static DefineStmt *
-_readDefineStmt(void)
-{
-	READ_LOCALS(DefineStmt);
-	READ_ENUM_FIELD(kind, ObjectType); Assert(local_node->kind <= OBJECT_VIEW);
-	READ_BOOL_FIELD(oldstyle);
-	READ_NODE_FIELD(defnames);
-	READ_NODE_FIELD(args);
-	READ_NODE_FIELD(definition);
-	READ_BOOL_FIELD(trusted);   /* CDB */
-
-	READ_DONE();
-
-}
-
 static CopyStmt *
 _readCopyStmt(void)
 {
