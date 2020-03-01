@@ -182,6 +182,70 @@ transformFromClause(ParseState *pstate, List *frmList)
 }
 
 /*
+ * winref_checkspec_walker
+ */
+static bool
+winref_checkspec_walker(Node *node, void *ctx)
+{
+	winref_check_ctx *ref = (winref_check_ctx *)ctx;
+
+	if (!node)
+		return false;
+	else if (IsA(node, WindowFunc))
+	{
+		WindowFunc *winref = (WindowFunc *) node;
+
+		/*
+		 * Look at functions pointing to the interesting spec only.
+		 */
+		if (winref->winref != ref->winref)
+			return false;
+
+		if (winref->windistinct)
+		{
+			if (ref->has_order)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("DISTINCT cannot be used with window specification containing an ORDER BY clause"),
+						 parser_errposition(ref->pstate, winref->location)));
+
+			if (ref->has_frame)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("DISTINCT cannot be used with window specification containing a framing clause"),
+						 parser_errposition(ref->pstate, winref->location)));
+		}
+	}
+
+	return expression_tree_walker(node, winref_checkspec_walker, ctx);
+}
+
+/*
+ * winref_checkspec
+ *
+ * See if any WindowFuncss using this spec are DISTINCT qualified.
+ *
+ * In addition, we're going to check winrequireorder / winallowframe.
+ * You might want to do it in ParseFuncOrColumn,
+ * but we need to do this here after all the transformations
+ * (especially parent inheritance) was done.
+ */
+static bool
+winref_checkspec(ParseState *pstate, List *targetlist, Index winref,
+				 bool has_order, bool has_frame)
+{
+	winref_check_ctx ctx;
+
+	ctx.pstate = pstate;
+	ctx.winref = winref;
+	ctx.has_order = has_order;
+	ctx.has_frame = has_frame;
+
+	return expression_tree_walker((Node *) targetlist,
+								  winref_checkspec_walker, (void *) &ctx);
+}
+
+/*
  * setTargetTable
  *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
  *	  and make the special links to it in the ParseState.
@@ -3050,6 +3114,11 @@ transformWindowDefinitions(ParseState *pstate,
 											 &wc->endInRangeFunc,
 											 windef->endOffset);
 		wc->winref = winref;
+
+		/* finally, check function restriction with this spec. */
+		winref_checkspec(pstate, *targetlist, winref,
+						 PointerIsValid(wc->orderClause),
+						 wc->frameOptions != FRAMEOPTION_DEFAULTS);
 
 		result = lappend(result, wc);
 	}

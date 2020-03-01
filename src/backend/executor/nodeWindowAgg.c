@@ -264,12 +264,13 @@ initialize_windowaggregate(WindowAggState *winstate,
 	if (peraggstate->isDistinct)
 	{
 		peraggstate->distinctSortState =
-			tuplesort_begin_datum(&winstate->ss,
-								  peraggstate->distinctType,
+			tuplesort_begin_datum(peraggstate->distinctType,
 								  peraggstate->distinctLtOper,
 								  peraggstate->distinctColl,
 								  false, /* nullsFirstFlag */
-								  work_mem, false);
+								  work_mem,
+								  NULL, /* coordinate */
+								  false);
 	}
 }
 
@@ -2357,43 +2358,16 @@ ExecWindowAgg(PlanState *pstate)
 	 * Compute frame offset values, if any, during first call (or after a
 	 * rescan).  These are assumed to hold constant throughout the scan; if
 	 * user gives us a volatile expression, we'll only use its initial value.
+	 *
+	 * GPDB: We accept non-constant frame offsets, too. If they're not
+	 * constants, we'll compute them later.
 	 */
-	if (winstate->all_first)
+	if (winstate->all_first &&
+		winstate->start_offset_var_free &&
+		winstate->end_offset_var_free)
 	{
-		int			frameOptions = winstate->frameOptions;
-		ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
-		Datum		value;
-		bool		isnull;
-		int16		len;
-		bool		byval;
-
 		compute_start_end_offsets(winstate);
 
-		if (frameOptions & FRAMEOPTION_END_OFFSET)
-		{
-			Assert(winstate->endOffset != NULL);
-			value = ExecEvalExprSwitchContext(winstate->endOffset,
-											  econtext,
-											  &isnull);
-			if (isnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("frame ending offset must not be null")));
-			/* copy value into query-lifespan context */
-			get_typlenbyval(exprType((Node *) winstate->endOffset->expr),
-							&len, &byval);
-			winstate->endOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
-			{
-				/* value is known to be int8 */
-				int64		offset = DatumGetInt64(value);
-
-				if (offset < 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
-							 errmsg("frame ending offset must not be negative")));
-			}
-		}
 		winstate->all_first = false;
 	}
 
