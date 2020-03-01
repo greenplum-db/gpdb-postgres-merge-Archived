@@ -139,26 +139,6 @@ DROP TABLE copy_regression_default2;
 DROP TABLE copy_regression_default3;
 
 -- ######################################################
--- COPY with OIDS
--- ######################################################
-
-CREATE TABLE copy_regression_oids(a text) WITH OIDS;
-
-COPY copy_regression_oids from stdin with oids delimiter '|';
-50000|a text data
-50001|a text data
-\.
-COPY copy_regression_oids from stdin with oids csv;
-60000,a text data
-60001,a text data
-\.
-SELECT * FROM copy_regression_oids ORDER BY oid;
-
-DROP TABLE copy_regression_oids;
-
-
-
--- ######################################################
 -- COPY OUT
 -- ######################################################
 
@@ -836,16 +816,10 @@ INSERT INTO test_copy_on_segment VALUES (3, 'h', 'j');
 INSERT INTO test_copy_on_segment VALUES (4, 'i', 'l');
 INSERT INTO test_copy_on_segment VALUES (5, 'q', 'w');
 
-CREATE TABLE test_copy_on_segment_withoids (a int, b text, c text) WITH OIDS DISTRIBUTED BY (a,c);
-INSERT INTO test_copy_on_segment_withoids VALUES (1, 's', 'd');
-INSERT INTO test_copy_on_segment_withoids VALUES (2, 'f', 'g');
-INSERT INTO test_copy_on_segment_withoids VALUES (3, 'h', 'j');
-
 COPY test_copy_on_segment TO '/tmp/invalid_filename.txt' ON SEGMENT;
 COPY test_copy_on_segment TO '/tmp/valid_filename<SEGID>.txt' ON SEGMENT;
 COPY test_copy_on_segment TO '/tmp/valid_filename<SEGID>.bin' ON SEGMENT BINARY;
 COPY test_copy_on_segment TO '/tmp/valid_filename<SEGID>.csv' WITH ON SEGMENT CSV QUOTE '"' FORCE QUOTE a,b,c ESCAPE E'\\' NULL '\N' DELIMITER ',' HEADER IGNORE EXTERNAL PARTITIONS;
-COPY test_copy_on_segment_withoids TO '/tmp/withoids_valid_filename<SEGID>.csv' WITH ON SEGMENT OIDS CSV QUOTE '"' FORCE QUOTE a,b,c ESCAPE E'\\' NULL '\N' DELIMITER ',' IGNORE EXTERNAL PARTITIONS;
 
 CREATE TABLE test_copy_from_on_segment_txt (LIKE test_copy_on_segment) DISTRIBUTED BY (b);
 COPY test_copy_from_on_segment_txt FROM '/tmp/invalid_filename.txt' ON SEGMENT;
@@ -860,15 +834,10 @@ CREATE TABLE test_copy_from_on_segment_csv (LIKE test_copy_on_segment) DISTRIBUT
 COPY test_copy_from_on_segment_csv FROM '/tmp/valid_filename<SEGID>.csv' WITH ON SEGMENT CSV QUOTE '"' ESCAPE E'\\' NULL '\N' DELIMITER ',' HEADER IGNORE EXTERNAL PARTITIONS;
 SELECT * FROM test_copy_from_on_segment_csv ORDER BY a;
 
-CREATE TABLE test_copy_from_on_segment_withoids (LIKE test_copy_on_segment_withoids) WITH OIDS DISTRIBUTED BY (a,c);
-COPY test_copy_from_on_segment_withoids FROM '/tmp/withoids_valid_filename<SEGID>.csv' WITH ON SEGMENT OIDS CSV QUOTE '"' ESCAPE E'\\' NULL '\N' DELIMITER ',' IGNORE EXTERNAL PARTITIONS;
-SELECT * FROM test_copy_from_on_segment_withoids ORDER BY a;
-
 COPY (select * from test_copy_on_segment) TO '/tmp/invalid_filename_select.txt' ON SEGMENT;
 COPY (select * from test_copy_on_segment) TO '/tmp/valid_filename_select<SEGID>.txt' ON SEGMENT;
 COPY (select * from test_copy_on_segment) TO '/tmp/valid_filename_select<SEGID>.bin' ON SEGMENT BINARY;
 COPY test_copy_on_segment TO '/tmp/valid_filename_select<SEGID>.csv' WITH ON SEGMENT CSV QUOTE '"' FORCE QUOTE a,b,c ESCAPE E'\\' NULL '\N' DELIMITER ',' HEADER;
-COPY test_copy_on_segment_withoids TO '/tmp/withoids_valid_filename_select<SEGID>.csv' WITH ON SEGMENT OIDS CSV QUOTE '"' FORCE QUOTE a,b,c ESCAPE E'\\' NULL '\N' DELIMITER ',';
 
 delete from test_copy_from_on_segment_txt;
 COPY test_copy_from_on_segment_txt FROM '/tmp/invalid_filename_select.txt' ON SEGMENT;
@@ -882,10 +851,6 @@ SELECT * FROM test_copy_from_on_segment_binary ORDER BY a;
 delete from test_copy_from_on_segment_csv;
 COPY test_copy_from_on_segment_csv FROM '/tmp/valid_filename_select<SEGID>.csv' WITH ON SEGMENT CSV QUOTE '"' ESCAPE E'\\' NULL '\N' DELIMITER ',' HEADER;
 SELECT * FROM test_copy_from_on_segment_csv ORDER BY a;
-
-delete from  test_copy_from_on_segment_withoids;
-COPY test_copy_from_on_segment_withoids FROM '/tmp/withoids_valid_filename_select<SEGID>.csv' WITH ON SEGMENT OIDS CSV QUOTE '"' ESCAPE E'\\' NULL '\N' DELIMITER ',';
-SELECT * FROM test_copy_from_on_segment_withoids ORDER BY a;
 
 CREATE TABLE onek_copy_onsegment (
     unique1     int4,
@@ -933,11 +898,9 @@ DROP TABLE IF EXISTS test_copy_on_segment_array;
 DROP TABLE IF EXISTS test_copy_on_segment_array_1;
 DROP TABLE IF EXISTS test_copy_on_segment_2dim_array;
 DROP TABLE IF EXISTS test_copy_on_segment_2dim_array_1;
-DROP TABLE IF EXISTS test_copy_on_segment_withoids;
 DROP TABLE IF EXISTS test_copy_from_on_segment_txt;
 DROP TABLE IF EXISTS test_copy_from_on_segment_binary;
 DROP TABLE IF EXISTS test_copy_from_on_segment_csv;
-DROP TABLE IF EXISTS test_copy_from_on_segment_withoids;
 DROP TABLE IF EXISTS onek_copy_from_onsegment;
 DROP EXTERNAL TABLE IF EXISTS rm_copy_onsegment_files;
 
