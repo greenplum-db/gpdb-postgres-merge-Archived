@@ -547,10 +547,6 @@ set enable_seqscan = off;
 select * from phrase_index_test where fts @@ phraseto_tsquery('english', 'fat cat');
 set enable_seqscan = on;
 
-<<<<<<< HEAD
-COPY test_tsvector TO '/tmp/test_tsvector.txt';
-COPY test_tsvector FROM '/tmp/test_tsvector.txt';
-=======
 -- test websearch_to_tsquery function
 select websearch_to_tsquery('simple', 'I have a fat:*ABCD cat');
 select websearch_to_tsquery('simple', 'orange:**AABBCCDD');
@@ -643,4 +639,6 @@ select websearch_to_tsquery('''');
 select websearch_to_tsquery('''abc''''def''');
 select websearch_to_tsquery('\abc');
 select websearch_to_tsquery('\');
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+COPY test_tsvector TO '/tmp/test_tsvector.txt';
+COPY test_tsvector FROM '/tmp/test_tsvector.txt';

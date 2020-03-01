@@ -205,13 +205,14 @@ CREATE FUNCTION leak(integer,integer) RETURNS boolean
   LANGUAGE plpgsql immutable;
 CREATE OPERATOR <<< (procedure = leak, leftarg = integer, rightarg = integer,
                      restrict = scalarltsel);
-<<<<<<< HEAD
--- view with leaky operator
+-- views with leaky operator
 CREATE VIEW atest12v AS
   SELECT * FROM atest12 WHERE b <<< 5;
+CREATE VIEW atest12sbv WITH (security_barrier=true) AS
+  SELECT * FROM atest12 WHERE b <<< 5;
 GRANT SELECT ON atest12v TO PUBLIC;
+GRANT SELECT ON atest12sbv TO PUBLIC;
 -- This plan should use nestloop, knowing that few rows will be selected.
-set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
                          QUERY PLAN                         
 ------------------------------------------------------------
@@ -226,31 +227,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
                Filter: (b <<< 5)
  Optimizer: Postgres query optimizer
 (10 rows)
-=======
--- views with leaky operator
-CREATE VIEW atest12v AS
-  SELECT * FROM atest12 WHERE b <<< 5;
-CREATE VIEW atest12sbv WITH (security_barrier=true) AS
-  SELECT * FROM atest12 WHERE b <<< 5;
-GRANT SELECT ON atest12v TO PUBLIC;
-GRANT SELECT ON atest12sbv TO PUBLIC;
--- This plan should use nestloop, knowing that few rows will be selected.
-EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 atest12_1
-         Filter: (b <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12
-         Index Cond: (a = atest12_1.b)
-         Filter: (b <<< 5)
-(6 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- And this one.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-<<<<<<< HEAD
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -265,19 +245,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
  Optimizer: Postgres query optimizer
 (10 rows)
 
+<<<<<<< HEAD
 reset enable_nestloop;
 -- Check if regress_user2 can break security.
 SET SESSION AUTHORIZATION regress_user2;
 =======
-                    QUERY PLAN                     
----------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 y
-         Filter: (abs(a) <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12 x
-         Index Cond: (a = y.b)
-(5 rows)
-
 -- This should also be a nestloop, but the security barrier forces the inner
 -- scan to be materialized
 EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y WHERE x.a = y.b;

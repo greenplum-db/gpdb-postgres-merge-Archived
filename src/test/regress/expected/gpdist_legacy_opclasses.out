@@ -105,7 +105,7 @@ order by attno;
     27 | cdbhash_oidvector_ops
     28 | cdbhash_cash_ops
     29 | cdbhash_complex_ops
-(39 rows)
+(29 rows)
 
 insert into all_legacy_types values (
   '12345',          -- int2
