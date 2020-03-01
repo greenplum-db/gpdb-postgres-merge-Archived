@@ -232,7 +232,7 @@ test: session_reset
 # below test(s) inject faults so each of them need to be in a separate group
 test: fts_error
 
-test: psql_gp_commands pg_resetxlog dropdb_check_shared_buffer_cache gp_upgrade_cornercases
+test: psql_gp_commands pg_resetwal dropdb_check_shared_buffer_cache gp_upgrade_cornercases
 
 # Check for shmem leak for instrumentation slots
 test: instr_in_shmem_verify
