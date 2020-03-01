@@ -310,19 +310,11 @@ BEGIN
 		END IF;
 
 		-- run the query using the brin index
-<<<<<<< HEAD
-		CREATE TEMP TABLE brin_result (cid tid) distributed by (cid);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		SET enable_seqscan = 0;
 		SET enable_bitmapscan = 1;
 
 		plan_ok := false;
-<<<<<<< HEAD
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-=======
 		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			IF plan_line LIKE '%Bitmap Heap Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
@@ -335,19 +327,11 @@ BEGIN
 			INTO idx_ctids;
 
 		-- run the query using a seqscan
-<<<<<<< HEAD
-		CREATE TEMP TABLE brin_result_ss (cid tid) distributed by (cid);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		SET enable_seqscan = 1;
 		SET enable_bitmapscan = 0;
 
 		plan_ok := false;
-<<<<<<< HEAD
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-=======
 		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			IF plan_line LIKE '%Seq Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
