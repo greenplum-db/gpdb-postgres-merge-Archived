@@ -69,7 +69,7 @@ typedef enum relopt_kind
 	RELOPT_KIND_BRIN = (1 << 10),
 	RELOPT_KIND_PARTITIONED = (1 << 11),
 
-	RELOPT_KIND_BITMAP = (1 << 10),
+	RELOPT_KIND_BITMAP = (1 << 12),
 
 	/* if you add a new kind, make sure you update "last_default" too */
 	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_BITMAP,
