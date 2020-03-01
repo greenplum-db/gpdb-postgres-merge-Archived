@@ -7726,7 +7726,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 	 */
 	bool try_mpp_multistage_aggregation = false;
 	bool can_mpp_hash = false;
-	List *rollups = NIL;
 
 	/*
 	 * In PostgreSQL, partial_grouping_target and the partial/final agg
@@ -7754,22 +7753,30 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		try_mpp_multistage_aggregation = true;
 	}
 
-	/* GPDB_12_MERGE_FIXME */
-#if 0
 	if (try_mpp_multistage_aggregation)
+	{
+		PathTarget *partially_grouped_target;
+
+		if (partially_grouped_rel == NULL)
+			partially_grouped_target =
+				make_partial_grouping_target(root, grouped_rel->reltarget,
+											 extra->havingQual);
+		else
+			partially_grouped_target = partially_grouped_rel->reltarget;
+
 		cdb_create_twostage_grouping_paths(root,
 										   input_rel,
 										   grouped_rel,
 										   grouped_rel->reltarget,
-										   partially_grouped_rel->reltarget,
+										   partially_grouped_target,
                                            ((extra->flags & GROUPING_CAN_USE_SORT) != 0), /* can_sort */
 										   can_mpp_hash,
 										   dNumGroups,
 										   agg_costs,
 										   &extra->agg_partial_costs,
 										   &extra->agg_final_costs,
-										   rollups);
-#endif
+										   gd ? gd->rollups : NIL);
+	}
 }
 
 /*
