@@ -450,6 +450,9 @@ SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
 
 
 -- test brin cost estimates behave sanely based on correlation of values
+-- GPDB: set random_page_cost to the upstream default, so that this test
+-- chooses the same plans as PostgreSQL.
+set random_page_cost=4;
 CREATE TABLE brin_test (a INT, b INT);
 INSERT INTO brin_test SELECT x/100,x%100 FROM generate_series(1,10000) x(x);
 CREATE INDEX brin_test_a_idx ON brin_test USING brin (a) WITH (pages_per_range = 2);
