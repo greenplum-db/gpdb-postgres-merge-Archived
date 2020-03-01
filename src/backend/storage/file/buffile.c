@@ -811,7 +811,9 @@ BufFileSize(BufFile *file)
 {
 	int64		lastFileSize;
 
-	Assert(file->fileset != NULL);
+	// In upstream, this is only used for shared BufFiles, but in GPDB
+	// also for getting the file size for extra EXPLAIN ANALYZE stats.
+	//Assert(file->fileset != NULL);
 
 	/* Get the size of the last physical file. */
 	lastFileSize = FileSize(file->files[file->numFiles - 1]);
