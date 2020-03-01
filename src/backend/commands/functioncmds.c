@@ -2479,8 +2479,9 @@ CreateTransform(CreateTransformStmt *stmt)
 	}
 	else
 	{
-		transformid = GetNewOidWithIndex(relation, TransformOidIndexId,
-										 Anum_pg_transform_oid);
+		transformid = GetNewOidForTransform(relation, TransformOidIndexId,
+											Anum_pg_transform_oid,
+											typeid, langid);
 		values[Anum_pg_transform_oid - 1] = ObjectIdGetDatum(transformid);
 		newtuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 		CatalogTupleInsert(relation, newtuple);
