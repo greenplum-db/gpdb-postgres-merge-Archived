@@ -193,13 +193,8 @@ SELECT * FROM atest1; -- ok
 (2 rows)
 
 -- test leaky-function protections in selfuncs
-<<<<<<< HEAD
--- regress_user1 will own a table and provide a view for it.
-SET SESSION AUTHORIZATION regress_user1;
-=======
 -- regress_priv_user1 will own a table and provide views for it.
 SET SESSION AUTHORIZATION regress_priv_user1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE atest12 as
   SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
 CREATE INDEX ON atest12 (a);
