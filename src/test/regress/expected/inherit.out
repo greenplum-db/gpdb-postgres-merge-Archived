@@ -723,7 +723,7 @@ NOTICE:  merging column "tomorrow" with inherited definition
 DROP TABLE firstparent, secondparent, jointchild, thirdparent, otherchild;
 -- Test changing the type of inherited columns
 insert into d values('test','one','two','three');
-ERROR:  invalid input syntax for integer: "test"
+ERROR:  invalid input syntax for type integer: "test"
 LINE 1: insert into d values('test','one','two','three');
                              ^
 alter table z drop constraint z_pkey;
