@@ -1195,14 +1195,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
 								 sizeof(Node *));
 
-	List *newTList = (List *)
-		pullup_replace_vars((Node *) parse->targetList, &rvcontext);
-
-	if (parse->scatterClause)
-	{
-		UpdateScatterClause(parse, newTList);
-	}
-
 	/*
 	 * If we are under an outer join then non-nullable items and lateral
 	 * references may have to be turned into PlaceHolderVars.
@@ -1236,6 +1228,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	{
 		rvcontext.need_phvs = true;
 		rvcontext.wrap_non_vars = true;
+	}
+
+	List *newTList = (List *)
+		pullup_replace_vars((Node *) parse->targetList, &rvcontext);
+
+	if (parse->scatterClause)
+	{
+		UpdateScatterClause(parse, newTList);
 	}
 
 	/*

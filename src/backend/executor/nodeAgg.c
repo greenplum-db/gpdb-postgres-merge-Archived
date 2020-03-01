@@ -567,7 +567,6 @@ advance_transition_function(AggState *aggstate,
 							AggStatePerTrans pertrans,
 							AggStatePerGroup pergroupstate)
 {
-
 	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
 	MemoryContext oldContext;
 	Datum		newVal;
@@ -2294,12 +2293,42 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/*
 	 * initialize source tuple type.
 	 */
+	aggstate->ss.ps.outerops =
+		ExecGetResultSlotOps(outerPlanState(&aggstate->ss),
+							 &aggstate->ss.ps.outeropsfixed);
+	aggstate->ss.ps.outeropsset = true;
+
 	ExecCreateScanSlotFromOuterPlan(estate, &aggstate->ss,
-									ExecGetResultSlotOps(outerPlanState(&aggstate->ss), NULL));
+									aggstate->ss.ps.outerops);
 	scanDesc = aggstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
-	if (node->chain)
+
+	/*
+	 * If there are more than two phases (including a potential dummy phase
+	 * 0), input will be resorted using tuplesort. Need a slot for that.
+	 */
+	if (numPhases > 2)
+	{
 		aggstate->sort_slot = ExecInitExtraTupleSlot(estate, scanDesc,
 													 &TTSOpsMinimalTuple);
+
+		/*
+		 * The output of the tuplesort, and the output from the outer child
+		 * might not use the same type of slot. In most cases the child will
+		 * be a Sort, and thus return a TTSOpsMinimalTuple type slot - but the
+		 * input can also be be presorted due an index, in which case it could
+		 * be a different type of slot.
+		 *
+		 * XXX: For efficiency it would be good to instead/additionally
+		 * generate expressions with corresponding settings of outerops* for
+		 * the individual phases - deforming is often a bottleneck for
+		 * aggregations with lots of rows per group. If there's multiple
+		 * sorts, we know that all but the first use TTSOpsMinimalTuple (via
+		 * the nodeAgg.c internal tuplesort).
+		 */
+		if (aggstate->ss.ps.outeropsfixed &&
+			aggstate->ss.ps.outerops != &TTSOpsMinimalTuple)
+			aggstate->ss.ps.outeropsfixed = false;
+	}
 
 	/*
 	 * Initialize result type, slot and projection.
@@ -3328,6 +3357,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		palloc0(sizeof(Tuplesortstate *) * numGroupingSets);
 }
 
+
 static Datum
 GetAggInitVal(Datum textInitVal, Oid transtype)
 {
@@ -3637,6 +3667,7 @@ ExecReScanAgg(AggState *node)
 /***********************************************************************
  * API exposed to aggregate functions
  ***********************************************************************/
+
 
 /*
  * AggCheckCallContext - test if a SQL function is being called as an aggregate

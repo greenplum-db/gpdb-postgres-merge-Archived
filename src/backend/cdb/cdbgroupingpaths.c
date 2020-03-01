@@ -1203,41 +1203,42 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 		List	   *hash_sortrefs;
 		ListCell   *lc;
 		Bitmapset  *common_groupcols = NULL;
-		bool		first = true;
 		int			x;
 
 		if (rollups)
 		{
-			elog(ERROR, "rollups are broken in cdb_choose_grouping_locus()");
-#if 0
 			ListCell   *lc;
+			bool		first = true;
 
-			forboth(lc, rollups)
+			foreach(lc, rollups)
 			{
 				RollupData *rollup = lfirst_node(RollupData, lc);
-				List *rlist = (List *) lfirst(lcl);
-				List *rclause = (List *) lfirst(lcc);
-				List *last_list = (List *) llast(rlist);
-				Bitmapset *this_groupcols = NULL;
+				ListCell   *lc2;
 
-				this_groupcols = NULL;
-				foreach (lc, last_list)
+				foreach(lc2, rollup->gsets)
 				{
-					SortGroupClause *sc = list_nth(rclause, lfirst_int(lc));
+					List	   *colidx_lists = (List *) lfirst(lc2);
+					ListCell   *lc3;
+					Bitmapset *this_groupcols = NULL;
 
-					this_groupcols = bms_add_member(this_groupcols, sc->tleSortGroupRef);
-				}
+					foreach(lc3, colidx_lists)
+					{
+						int			colidx = lfirst_int(lc3);
+						SortGroupClause *sc = list_nth(rollup->groupClause, colidx);
 
-				if (first)
-					common_groupcols = this_groupcols;
-				else
-				{
-					common_groupcols = bms_int_members(common_groupcols, this_groupcols);
-					bms_free(this_groupcols);
+						this_groupcols = bms_add_member(this_groupcols, sc->tleSortGroupRef);
+					}
+
+					if (first)
+						common_groupcols = this_groupcols;
+					else
+					{
+						common_groupcols = bms_int_members(common_groupcols, this_groupcols);
+						bms_free(this_groupcols);
+					}
+					first = false;
 				}
-				first = false;
 			}
-#endif
 		}
 		else
 		{
