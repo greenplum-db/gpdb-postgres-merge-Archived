@@ -193,12 +193,12 @@ INSERT INTO abs_opclass_test VALUES
   (1, 'one', 1);
 -- Test deparsing of the non-default opclass
 \d abs_opclass_test
-Table "public.abs_opclass_test"
- Column |  Type   | Modifiers 
---------+---------+-----------
- i      | integer | 
- t      | text    | 
- j      | integer | 
+          Table "public.abs_opclass_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ i      | integer |           |          | 
+ t      | text    |           |          | 
+ j      | integer |           |          | 
 Distributed by: (i abs_int_hash_ops, t, j abs_int_hash_ops)
 
 --

@@ -32,12 +32,12 @@ WARNING:  column "action" has type "unknown"
 DETAIL:  Proceeding with relation creation anyway.
 -- "action" has no type.
 \d ctas_baz
-   Table "public.ctas_baz"
- Column |  Type   | Modifiers 
---------+---------+-----------
- action | unknown | 
- a      | integer | 
- b      | integer | 
+              Table "public.ctas_baz"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ action | text    |           |          | 
+ a      | integer |           |          | 
+ b      | integer |           |          | 
 Distributed by: (a)
 
 select action, b from ctas_baz order by 1,2 limit 5;
@@ -72,12 +72,12 @@ select action::text, b from ctas_baz order by 1,2 limit 5;
 
 alter table ctas_baz alter column action type text;
 \d ctas_baz
-   Table "public.ctas_baz"
- Column |  Type   | Modifiers 
---------+---------+-----------
- action | text    | 
- a      | integer | 
- b      | integer | 
+              Table "public.ctas_baz"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ action | text    |           |          | 
+ a      | integer |           |          | 
+ b      | integer |           |          | 
 Distributed by: (a)
 
 select action, b from ctas_baz order by 1,2 limit 5;
