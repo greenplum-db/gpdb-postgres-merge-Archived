@@ -2756,7 +2756,11 @@ BeginCopyToForExternalTable(Relation extrel, List *options)
 
 	Assert(rel_is_external_table(RelationGetRelid(extrel)));
 
-	cstate = BeginCopy(false, extrel, NULL, NULL, InvalidOid, NIL, options, NULL);
+	cstate = BeginCopy(NULL, false, extrel,
+					   NULL, /* raw_query */
+					   InvalidOid,
+					   NIL, options,
+					   RelationGetDescr(extrel));
 	cstate->dispatch_mode = COPY_DIRECT;
 
 	/*
