@@ -136,6 +136,8 @@
 
 const char *synthetic_sql = "(internally generated SQL command)";
 
+static SetDistributionDispatchInfo *qe_data = NULL;
+
 /*
  * ON COMMIT action list
  */
@@ -3960,6 +3962,12 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 	AlterTableStmt *origstmt = stmt;
 	stmt = copyObject(stmt);
 
+	/*
+	 * Make the extra information provided by the QE available to the
+	 * ATExecSetDistributedBy() calls.
+	 */
+	qe_data = stmt->qe_data;
+
 	/* Caller is required to provide an adequate lock. */
 	rel = relation_open(relid, NoLock);
 
@@ -3971,8 +3979,12 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 	{
 		/*
 		 * Some ALTER TABLE commands rewrite the table, and cause new OIDs
-		 * and/or relfilenodes to be assigned.
+		 * and/or relfilenodes to be assigned. In that case,
+		 * ATExecSetDistributedDispatchInfo needs to dispatch some extra
+		 * information to the QEs. It stashed it in 'qe_data', include it
+		 * in the statement that's being dispatched.
 		 */
+		origstmt->qe_data = qe_data;
 		CdbDispatchUtilityStatement((Node *) origstmt,
 									DF_CANCEL_ON_ERROR |
 									DF_WITH_SNAPSHOT |
@@ -3980,6 +3992,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
+	qe_data = NULL;
 }
 
 /*
@@ -4333,69 +4346,6 @@ ATController(AlterTableStmt *parsetree,
 
 	/* Phase 2: update system catalogs */
 	ATRewriteCatalogs(&wqueue, lockmode);
-
-	/*
-	 * Build list of tables OIDs that we performed SET DISTRIBUTED BY on.
-	 *
-	 * If we've recursed (i.e., expanded) an ALTER TABLE SET DISTRIBUTED
-	 * command from a master table to its children, then we need to extract
-	 * the list of tables that we created a temporary table for, from each of
-	 * the sub commands, and put them in the master command. This is because
-	 * we only dispatch the command on the master table to the segments, not
-	 * each expanded command. We expect the segments to do the same expansion.
-	 */
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		AlterTableCmd *masterCmd = NULL; /* the command which was expanded */
-		SetDistributionCmd *masterSetCmd = NULL;
-		ListCell *lc;
-
-		/*
-		 * Iterate over the work queue looking for SET WITH DISTRIBUTED
-		 * statements.
-		 */
-		foreach(lc, wqueue)
-		{
-			ListCell *lc2;
-			AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(lc);
-
-			/* AT_PASS_MISC is used for SET DISTRIBUTED BY */
-			List *subcmds = (List *)tab->subcmds[AT_PASS_MISC];
-
-			foreach(lc2, subcmds)
-			{
-				AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc2);
-
-				if (cmd->subtype == AT_SetDistributedBy)
-				{
-					if (!masterCmd)
-					{
-						masterCmd = cmd;
-						masterSetCmd = lsecond((List *)cmd->def);
-						continue;
-					}
-
-					/*
-					 * cmd->def stores the data we're sending to the QEs.
-					 * The second element is where we stash QE data to drive
-					 * the command.
-					 */
-					List *data = (List *)cmd->def;
-					SetDistributionCmd *qeData = lsecond(data);
-
-					int qeBackendId = qeData->backendId;
-					if (qeBackendId != 0)
-					{
-						if (masterSetCmd->backendId == 0)
-							masterSetCmd->backendId = qeBackendId;
-
-						List *qeRelids = qeData->relids;
-						masterSetCmd->relids = list_concat(masterSetCmd->relids, qeRelids);
-					}
-				}
-			}
-		}
-	}
 
 	/* Phase 3: scan/rewrite tables as needed */
 	ATRewriteTables(parsetree, &wqueue, lockmode);
@@ -16085,8 +16035,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 		CommandCounterIncrement(); /* see the effects of the command */
 
 		/*
-		 * Step (d) - tell the seg nodes about the temporary relation. This
-		 * involves stomping on the node we've been given
+		 * Step (d) - tell the seg nodes about the temporary relation.
 		 */
 		if (rootCmd == cmd)
 			spec->backendId = MyBackendId;
@@ -16201,7 +16150,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	Datum		newOptions = PointerGetDatum(NULL);
 	bool		change_policy = false;
 	int			numsegments;
-	SetDistributionCmd *qe_data = NULL; 
 	bool 				save_optimizer_replicated_table_insert;
 	Oid					relationOid = InvalidOid;
 	AutoStatsCmdType 	cmdType = AUTOSTATS_CMDTYPE_SENTINEL;
@@ -16224,7 +16172,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	Assert(PointerIsValid(node));
 	Assert(IsA(node, List));
 
-	lprime = (List *)node;
+	lprime = (List *) node;
 
 	/* 
 	 * First element is the WITH clause, second element is the actual
@@ -16348,8 +16296,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					 * (see the non-random distribution case below for why.
 					 */
 					heap_close(rel, NoLock);
-					lsecond(lprime) = makeNode(SetDistributionCmd);
-					lprime = lappend(lprime, policy);
+					if (!qe_data)
+						qe_data = makeNode(SetDistributionDispatchInfo);
 					goto l_distro_fini;
 				}
 			}
@@ -16378,8 +16326,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				 * (see the non-random distribution case below for why.
 				 */
 				heap_close(rel, NoLock);
-				lsecond(lprime) = makeNode(SetDistributionCmd);
-				lprime = lappend(lprime, policy);
+				if (!qe_data)
+					qe_data = makeNode(SetDistributionDispatchInfo);
 				goto l_distro_fini;
 			}
 
@@ -16534,10 +16482,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 								buf.data)));
 						heap_close(rel, NoLock);
 						/* Tell QEs to do nothing */
-						linitial(lprime) = NULL;
-						lsecond(lprime) = makeNode(SetDistributionCmd);
-						lprime = lappend(lprime, NULL);
-
+						if (!qe_data)
+							qe_data = makeNode(SetDistributionDispatchInfo);
 						return;
 						/* don't goto l_distro_fini -- didn't do anything! */
 					}
@@ -16663,23 +16609,28 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		}
 
 		/*
-		 * Step (d) - tell the seg nodes about the temporary relation. This
-		 * involves stomping on the node we've been given
+		 * Step (d) - tell the seg nodes about the temporary relation. We use
+		 * the global 'qe_data' variable to pass this information up to the
+		 * caller, so that it can be included when the command is dispatched.
 		 */
-		qe_data = makeNode(SetDistributionCmd);
-		qe_data->backendId = MyBackendId;
-		qe_data->relids = list_make1_oid(tarrelid); 
+		if (!qe_data)
+			qe_data = makeNode(SetDistributionDispatchInfo);
+		if (qe_data->backendId == 0)
+			qe_data->backendId = MyBackendId;
+		qe_data->relids = lappend_oid(qe_data->relids, tarrelid);
 	}
 	else
 	{
 		int			backend_id;
 		bool		reorg = false;
 
-		Assert(list_length(lprime) >= 2);
-
-		lwith = linitial(lprime);
-		qe_data = lsecond(lprime);
-		policy = lthird(lprime);
+		/*
+		 * Extract the already-transformed representation of the DistributedBy
+		 * policy that the QD should have included for us.
+		 */
+		if (qe_data == NULL)
+			elog(ERROR, "did not receive dispatch info for SET DISTRIBUTED BY from QD");
+		policy = qe_data->policy;
 
 		if (policy)
 			GpPolicyReplace(RelationGetRelid(rel), policy);
@@ -16805,24 +16756,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (change_policy)
 			GpPolicyReplace(tarrelid, policy);
 
-		/* GPDB_12_MERGE_FIXME: The idea here is that we modify the original
-		 * command, attaching 'qe_data' to it, so that when it's dispatched,
-		 * the 'qe_data' is dispatched too. But I (Heikki) changed the way
-		 * ALTER TABLE is dispatched, so that we dispatch the *original*
-		 * command, so these changes won't be delivered to the QEs anymore.
-		 * (see commit 1b38ea7171 on the iteration_REL_12 branch). I still
-		 * that dispatching the original command is better, but we need a new
-		 * way of attaching extra information to the dispatched command.
-		 * Perhaps something generic like the OID dispatching system in
-		 * oid_dispatch.c? Or just stash the qe_data in a global variable
-		 * or something here, so that it can be attached to the statement
-		 * that's dispatched later.
-		 */
-		elog(ERROR, "GPDB_12_MERGE_FIXME: dispatching ALTER TABLE SET DISTRIBUTED BY is broken");
-
-		linitial(lprime) = lwith;
-		lsecond(lprime) = qe_data;
-		lprime = lappend(lprime, policy);
+		qe_data->policy = policy;
 	}
 
 	/* Step (h) Drop the table */

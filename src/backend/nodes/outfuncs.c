@@ -3343,6 +3343,7 @@ _outAlterTableStmt(StringInfo str, const AlterTableStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(cmds);
 	WRITE_ENUM_FIELD(relkind, ObjectType);
+	WRITE_NODE_FIELD(qe_data);
 }
 
 static void
@@ -3363,10 +3364,11 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 }
 
 static void
-_outSetDistributionCmd(StringInfo str, const SetDistributionCmd *node)
+_outSetDistributionDispatchInfo(StringInfo str, const SetDistributionDispatchInfo *node)
 {
 	WRITE_NODE_TYPE("SETDISTRIBUTIONCMD");
 
+	WRITE_NODE_FIELD(policy);
 	WRITE_INT_FIELD(backendId);
 	WRITE_NODE_FIELD(relids);
 }
@@ -4108,7 +4110,7 @@ _outQuery(StringInfo str, const Query *node)
 			case T_TruncateStmt:
 			case T_AlterTableStmt:
 			case T_AlterTableCmd:
-			case T_SetDistributionCmd:
+			case T_SetDistributionDispatchInfo:
 			case T_ViewStmt:
 			case T_RuleStmt:
 
@@ -5883,8 +5885,8 @@ outNode(StringInfo str, const void *obj)
 			case T_AlterTableCmd:
 				_outAlterTableCmd(str, obj);
 				break;
-			case T_SetDistributionCmd:
-				_outSetDistributionCmd(str, obj);
+			case T_SetDistributionDispatchInfo:
+				_outSetDistributionDispatchInfo(str, obj);
 				break;
 
 			case T_CreateRoleStmt:

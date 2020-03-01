@@ -2284,8 +2284,8 @@ readNodeBinary(void)
 			case T_AlterTableCmd:
 				return_value = _readAlterTableCmd();
 				break;
-			case T_SetDistributionCmd:
-				return_value = _readSetDistributionCmd();
+			case T_SetDistributionDispatchInfo:
+				return_value = _readSetDistributionDispatchInfo();
 				break;
 
 			case T_CreateRoleStmt:

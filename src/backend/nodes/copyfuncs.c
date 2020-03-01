@@ -3823,6 +3823,7 @@ _copyAlterTableStmt(const AlterTableStmt *from)
 	COPY_NODE_FIELD(cmds);
 	COPY_SCALAR_FIELD(relkind);
 	COPY_SCALAR_FIELD(missing_ok);
+	COPY_NODE_FIELD(qe_data);
 
 	return newnode;
 }
@@ -3857,11 +3858,12 @@ _copyAlterCollationStmt(const AlterCollationStmt *from)
 	return newnode;
 }
 
-static SetDistributionCmd *
-_copySetDistributionCmd(const SetDistributionCmd *from)
+static SetDistributionDispatchInfo *
+_copySetDistributionDispatchInfo(const SetDistributionDispatchInfo *from)
 {
-	SetDistributionCmd *newnode = makeNode(SetDistributionCmd);
+	SetDistributionDispatchInfo *newnode = makeNode(SetDistributionDispatchInfo);
 
+	COPY_NODE_FIELD(policy);
 	COPY_SCALAR_FIELD(backendId);
 	COPY_NODE_FIELD(relids);
 
@@ -6239,8 +6241,8 @@ copyObjectImpl(const void *from)
 		case T_AlterCollationStmt:
 			retval = _copyAlterCollationStmt(from);
 			break;
-		case T_SetDistributionCmd:
-			retval = _copySetDistributionCmd(from);
+		case T_SetDistributionDispatchInfo:
+			retval = _copySetDistributionDispatchInfo(from);
 			break;
 		case T_AlterDomainStmt:
 			retval = _copyAlterDomainStmt(from);

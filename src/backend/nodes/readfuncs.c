@@ -903,6 +903,7 @@ _readAlterTableStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(cmds);
 	READ_ENUM_FIELD(relkind, ObjectType);
+	READ_NODE_FIELD(qe_data);
 
 	READ_DONE();
 }
@@ -926,11 +927,12 @@ _readAlterTableCmd(void)
 	READ_DONE();
 }
 
-static SetDistributionCmd *
-_readSetDistributionCmd(void)
+static SetDistributionDispatchInfo *
+_readSetDistributionDispatchInfo(void)
 {
-	READ_LOCALS(SetDistributionCmd);
+	READ_LOCALS(SetDistributionDispatchInfo);
 
+	READ_NODE_FIELD(policy);
 	READ_INT_FIELD(backendId);
 	READ_NODE_FIELD(relids);
 
@@ -4569,8 +4571,8 @@ parseNodeString(void)
 		return_value = _readRuleStmt();
 	else if (MATCHX("SEGFILEMAPNODE"))
 		return_value = _readSegfileMapNode();
-	else if (MATCHX("SETDISTRIBUTIONCMD"))
-		return_value = _readSetDistributionCmd();
+	else if (MATCHX("SETDISTRIBUTIONDISPATCHINFO"))
+		return_value = _readSetDistributionDispatchInfo();
 	else if (MATCHX("SINGLEROWERRORDESC"))
 		return_value = _readSingleRowErrorDesc();
 	else if (MATCHX("SLICETABLE"))

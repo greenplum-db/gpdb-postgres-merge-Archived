@@ -1431,8 +1431,8 @@ _outNode(StringInfo str, void *obj)
 			case T_AlterTableCmd:
 				_outAlterTableCmd(str, obj);
 				break;
-			case T_SetDistributionCmd:
-				_outSetDistributionCmd(str, obj);
+			case T_SetDistributionDispatchInfo:
+				_outSetDistributionDispatchInfo(str, obj);
 				break;
 
 			case T_CreateRoleStmt:

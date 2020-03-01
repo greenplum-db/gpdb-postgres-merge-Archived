@@ -1872,6 +1872,14 @@ typedef enum DropBehavior
  *	Alter Table
  * ----------------------
  */
+typedef struct SetDistributionDispatchInfo
+{
+	NodeTag		type;
+	GpPolicy   *policy;
+	int	        backendId;     /* backend ID on QD */
+	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
+} SetDistributionDispatchInfo;
+
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
@@ -1879,6 +1887,8 @@ typedef struct AlterTableStmt
 	List	   *cmds;			/* list of subcommands */
 	ObjectType	relkind;		/* type of object */
 	bool		missing_ok;		/* skip error if table missing */
+
+	SetDistributionDispatchInfo *qe_data;
 } AlterTableStmt;
 
 typedef enum AlterTableType
@@ -2001,14 +2011,6 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	Bitmapset	*ps_leaf;
 #endif
 } AlterTableCmd;
-
-
-typedef struct SetDistributionCmd
-{
-	NodeTag		type;
-	int	        backendId;     /* backend ID on QD */
-	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
-} SetDistributionCmd;
 
 /* ----------------------
  * Alter Collation

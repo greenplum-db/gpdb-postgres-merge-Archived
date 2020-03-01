@@ -1159,6 +1159,7 @@ _equalAlterTableStmt(const AlterTableStmt *a, const AlterTableStmt *b)
 	COMPARE_NODE_FIELD(cmds);
 	COMPARE_SCALAR_FIELD(relkind);
 	COMPARE_SCALAR_FIELD(missing_ok);
+	COMPARE_NODE_FIELD(qe_data);
 
 	/* No need to compare AT workspace fields.  */
 
@@ -1183,8 +1184,9 @@ _equalAlterTableCmd(const AlterTableCmd *a, const AlterTableCmd *b)
 }
 
 static bool
-_equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *b)
+_equalSetDistributionDispatchInfo(const SetDistributionDispatchInfo *a, const SetDistributionDispatchInfo *b)
 {
+	COMPARE_NODE_FIELD(policy);
 	COMPARE_SCALAR_FIELD(backendId);
 	COMPARE_NODE_FIELD(relids);
 
@@ -3520,8 +3522,8 @@ equal(const void *a, const void *b)
 		case T_AlterTableCmd:
 			retval = _equalAlterTableCmd(a, b);
 			break;
-		case T_SetDistributionCmd:
-			retval = _equalSetDistributionCmd(a, b);
+		case T_SetDistributionDispatchInfo:
+			retval = _equalSetDistributionDispatchInfo(a, b);
 			break;
 		case T_AlterCollationStmt:
 			retval = _equalAlterCollationStmt(a, b);
