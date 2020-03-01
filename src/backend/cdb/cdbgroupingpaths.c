@@ -408,8 +408,23 @@ add_twostage_group_agg_path(PlannerInfo *root,
 	 */
 	if (parse->groupingSets)
 	{
-		Index groupref;
-		GroupingSetId *gsetid = makeNode(GroupingSetId);
+		Index		groupref;
+		GroupingSetId *gsetid;
+
+		/* GPDB_12_MERGE_FIXME: For now, bail out if there are any unsortable
+		 * refs. PostgreSQL supports hashing with grouping sets nowadays, but
+		 * the code in this file hasn't been updated to deal with it yet.
+		 */
+		ListCell   *lc;
+		foreach(lc, parse->groupClause)
+		{
+			SortGroupClause *gc = lfirst_node(SortGroupClause, lc);
+
+			if (!OidIsValid(gc->sortop))
+				return;
+		}
+
+		gsetid = makeNode(GroupingSetId);
 
 		grouping_sets_tlist = copyObject(root->processed_tlist);
 		groupref = add_gsetid_tlist(grouping_sets_tlist);
@@ -493,6 +508,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 											  estimate_num_groups_across_segments(ctx->dNumGroups,
 																				  path->rows,
 																				  getgpsegmentCount()));
+		initial_agg_path->pathtarget = grouping_sets_partial_target;
 
 		motion_pathkeys = NIL;
 	}

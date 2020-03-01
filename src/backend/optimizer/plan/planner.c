@@ -4890,6 +4890,22 @@ consider_groupingsets_paths(PlannerInfo *root,
 			strat = AGG_MIXED;
 		}
 
+		/*
+		 * Unless the input happens to be suitable distributed, we
+		 * need to redistribute it.
+		 */
+		{
+			CdbPathLocus locus;
+			bool		need_redistribute;
+
+			locus = cdb_choose_grouping_locus(root, path,
+											  parse->groupClause,
+											  new_rollups,
+											  &need_redistribute);
+			if (need_redistribute)
+				path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+		}
+
 		add_path(grouped_rel, (Path *)
 				 create_groupingsets_path(root,
 										  grouped_rel,

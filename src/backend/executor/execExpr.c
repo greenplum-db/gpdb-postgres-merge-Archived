@@ -822,6 +822,19 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
+		case T_GroupingSetId:
+			{
+				if (!state->parent || !IsA(state->parent, AggState) ||
+					!IsA(state->parent->plan, Agg))
+					elog(ERROR, "GroupingSetId found in non-Agg plan node");
+
+				scratch.opcode = EEOP_GROUPING_SET_ID;
+				scratch.d.grouping_set_id.parent = (AggState *) state->parent;
+
+				ExprEvalPushStep(state, &scratch);
+				break;
+			}
+
 		case T_WindowFunc:
 			{
 				WindowFunc *wfunc = (WindowFunc *) node;

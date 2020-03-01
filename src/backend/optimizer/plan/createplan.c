@@ -2424,7 +2424,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 		plan = make_agg(build_path_tlist(root, &best_path->path),
 						best_path->qual,
 						best_path->aggstrategy,
-						AGGSPLIT_SIMPLE,
+						best_path->aggsplit,
 						false, /* streaming */
 						numGroupCols,
 						top_grpColIdx,

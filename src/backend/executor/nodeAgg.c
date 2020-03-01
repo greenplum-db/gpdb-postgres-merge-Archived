@@ -1131,6 +1131,7 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 		Bitmapset  *grouped_cols = aggstate->phase->grouped_cols[currentSet];
 
 		aggstate->grouped_cols = grouped_cols;
+		aggstate->gset_id = aggstate->phase->gset_id[currentSet];
 
 		if (TTS_EMPTY(slot))
 		{
@@ -2177,6 +2178,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	int			j = 0;
 	bool		use_hashing = (node->aggstrategy == AGG_HASHED ||
 							   node->aggstrategy == AGG_MIXED);
+	int			numgsets = 0;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -2192,7 +2194,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->aggs = NIL;
 	aggstate->numaggs = 0;
 	aggstate->numtrans = 0;
-	aggstate->numgsets = 0;
 	aggstate->aggstrategy = node->aggstrategy;
 	aggstate->aggsplit = node->aggsplit;
 	aggstate->maxsets = 0;
@@ -2380,6 +2381,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->phases[0].numsets = 0;
 		aggstate->phases[0].gset_lengths = palloc(numHashes * sizeof(int));
 		aggstate->phases[0].grouped_cols = palloc(numHashes * sizeof(Bitmapset *));
+		aggstate->phases[0].gset_id      = palloc(numHashes * sizeof(int));
 	}
 
 	phase = 0;
@@ -2425,6 +2427,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				cols = bms_add_member(cols, aggnode->grpColIdx[j]);
 
 			phasedata->grouped_cols[i] = cols;
+			phasedata->gset_id[i] = numgsets++;
 
 			all_grouped_cols = bms_add_members(all_grouped_cols, cols);
 			continue;
@@ -2440,6 +2443,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			{
 				phasedata->gset_lengths = palloc(num_sets * sizeof(int));
 				phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
+				phasedata->gset_id = palloc(num_sets * sizeof(int));
 
 				i = 0;
 				foreach(l, aggnode->groupingSets)
@@ -2452,6 +2456,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 						cols = bms_add_member(cols, aggnode->grpColIdx[j]);
 
 					phasedata->grouped_cols[i] = cols;
+					phasedata->gset_id[i] = numgsets++;
 					phasedata->gset_lengths[i] = current_length;
 
 					++i;
@@ -2466,6 +2471,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 				phasedata->gset_lengths = NULL;
 				phasedata->grouped_cols = NULL;
+				phasedata->gset_id = NULL;
 			}
 
 			/*

@@ -1917,6 +1917,25 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
+			case EEOP_GROUPING_SET_ID:
+				{
+					AggState *aggstate = op->d.grouping_set_id.parent;
+					LLVMValueRef v_gset_id_p;
+					LLVMValueRef v_gset_id;
+
+					/* Copy aggstate->gset_id to the result */
+					v_gset_id_p = l_ptr_const(&aggstate->gset_id,
+											  l_ptr(LLVMInt32Type()));
+					v_gset_id = LLVMBuildLoad(b, v_gset_id_p, "v_gset_id");
+
+					/* and store result */
+					LLVMBuildStore(b, v_gset_id, v_resvaluep);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
+
+					LLVMBuildBr(b, opblocks[i + 1]);
+					break;
+				}
+
 			case EEOP_WINDOW_FUNC:
 				{
 					WindowFuncExprState *wfunc = op->d.window_func.wfstate;

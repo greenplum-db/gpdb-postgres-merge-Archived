@@ -2661,9 +2661,6 @@ typedef struct AggState
 #define FIELDNO_AGGSTATE_CURRENT_SET 20
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */
-	int			group_id;		/* GROUP_ID in current projection */
-	int			gset_id;		/* GROUP_ID in current projection */
-	int			numgsets;		/* number of grouping sets */
 	List	   *all_grouped_cols;	/* list of all grouped cols in DESC order */
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
@@ -2687,6 +2684,10 @@ typedef struct AggState
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */
+
+	int			gset_id;		/* GROUP_ID in current projection. This is passed
+								 * to GroupingSetId expressions, similar to the
+								 * 'grouped_cols' value. */
 
 	/* if input tuple has an AggExprId, save the Attribute Number */
 	Index       AggExprId_AttrNum;
