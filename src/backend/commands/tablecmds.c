@@ -15937,7 +15937,11 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("unsupported ALTER command for foreign table")));
 
-		relation_close(rel, NoLock);
+		// GPDB_12_MERGE_FIXME: Previously, we closed the relation here, but
+		// now we're getting an assertion failure later, when the caller tries
+		// to close it. Like in ATExecSetDistributedBy(), it seems wrong to close
+		// here. But was there some problem in keeping it open? Investigate.
+		//relation_close(rel, NoLock);
 	}
 	else
 	{
