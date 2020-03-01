@@ -693,15 +693,12 @@ SELECT xpath('/nosuchtag', '<root/>');
  {}
 (1 row)
 
-<<<<<<< HEAD
-=======
 SELECT xpath('root', '<root/>');
    xpath   
 -----------
  {<root/>}
 (1 row)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE

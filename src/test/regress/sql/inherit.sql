@@ -409,8 +409,6 @@ DROP TABLE test_foreign_constraints_inh;
 DROP TABLE test_foreign_constraints;
 DROP TABLE test_primary_constraints;
 
-<<<<<<< HEAD
-=======
 -- Test foreign key behavior
 create table inh_fk_1 (a int primary key);
 insert into inh_fk_1 values (1), (2), (3);
@@ -423,7 +421,6 @@ select * from inh_fk_1 order by 1;
 select * from inh_fk_2 order by 1, 2;
 drop table inh_fk_1, inh_fk_2, inh_fk_2_child;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test that parent and child CHECK constraints can be created in either order
 create table p1(f1 int);
 create table p1_c1() inherits(p1);
@@ -656,8 +653,6 @@ insert into cnullchild values(null);
 select * from cnullparent;
 select * from cnullparent where f1 = 2;
 drop table cnullparent cascade;
-<<<<<<< HEAD
-=======
 
 --
 -- Check use of temporary tables with inheritance trees
@@ -863,4 +858,3 @@ explain (costs off) select * from range_parted order by a,b,c;
 explain (costs off) select * from range_parted order by a desc,b desc,c desc;
 
 drop table range_parted;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -1188,18 +1188,11 @@ CREATE TABLE test_ex_constraints (
 );
 CREATE TABLE test_ex_constraints_inh () INHERITS (test_ex_constraints);
 \d+ test_ex_constraints
-<<<<<<< HEAD
-                 Table "public.test_ex_constraints"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
- dkey   | inet   |           | main    |              | 
-=======
                            Table "public.test_ex_constraints"
  Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+--------+-----------+----------+---------+---------+--------------+-------------
  c      | circle |           |          |         | plain   |              | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ dkey   | inet   |           |          |         | main    |              | 
 Indexes:
     "test_ex_constraints_dkey_c_excl" EXCLUDE USING gist (dkey inet_ops WITH =, c WITH &&)
 Child tables: test_ex_constraints_inh
@@ -1207,34 +1200,20 @@ Distributed by: (dkey)
 
 ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_dkey_c_excl;
 \d+ test_ex_constraints
-<<<<<<< HEAD
-                 Table "public.test_ex_constraints"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
- dkey   | inet   |           | main    |              | 
-=======
                            Table "public.test_ex_constraints"
  Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+--------+-----------+----------+---------+---------+--------------+-------------
  c      | circle |           |          |         | plain   |              | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ dkey   | inet   |           |          |         | main    |              | 
 Child tables: test_ex_constraints_inh
 Distributed by: (dkey)
 
 \d+ test_ex_constraints_inh
-<<<<<<< HEAD
-               Table "public.test_ex_constraints_inh"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
- dkey   | inet   |           | main    |              | 
-=======
                          Table "public.test_ex_constraints_inh"
  Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+--------+-----------+----------+---------+---------+--------------+-------------
  c      | circle |           |          |         | plain   |              | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ dkey   | inet   |           |          |         | main    |              | 
 Inherits: test_ex_constraints
 Distributed by: (dkey)
 
@@ -1285,8 +1264,6 @@ Distributed by: (id1)
 DROP TABLE test_foreign_constraints_inh;
 DROP TABLE test_foreign_constraints;
 DROP TABLE test_primary_constraints;
-<<<<<<< HEAD
-=======
 -- Test foreign key behavior
 create table inh_fk_1 (a int primary key);
 insert into inh_fk_1 values (1), (2), (3);
@@ -1312,7 +1289,6 @@ select * from inh_fk_2 order by 1, 2;
 (4 rows)
 
 drop table inh_fk_1, inh_fk_2, inh_fk_2_child;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test that parent and child CHECK constraints can be created in either order
 create table p1(f1 int);
 create table p1_c1() inherits(p1);
@@ -1865,8 +1841,6 @@ select * from cnullparent where f1 = 2;
 
 drop table cnullparent cascade;
 NOTICE:  drop cascades to table cnullchild
-<<<<<<< HEAD
-=======
 --
 -- Check use of temporary tables with inheritance trees
 --
@@ -2464,4 +2438,3 @@ explain (costs off) select * from range_parted order by a desc,b desc,c desc;
 (3 rows)
 
 drop table range_parted;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

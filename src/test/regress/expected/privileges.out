@@ -9,17 +9,6 @@ set optimizer=off;
 -- Clean up in case a prior regression run failed
 -- Suppress NOTICE messages when users/groups don't exist
 SET client_min_messages TO 'warning';
-<<<<<<< HEAD
-DROP ROLE IF EXISTS regress_group1;
-DROP ROLE IF EXISTS regress_group2;
-DROP ROLE IF EXISTS regress_user1;
-DROP ROLE IF EXISTS regress_user2;
-DROP ROLE IF EXISTS regress_user3;
-DROP ROLE IF EXISTS regress_user4;
-DROP ROLE IF EXISTS regress_user5;
-DROP ROLE IF EXISTS regress_user6;
--- start_ignore
-=======
 DROP ROLE IF EXISTS regress_priv_group1;
 DROP ROLE IF EXISTS regress_priv_group2;
 DROP ROLE IF EXISTS regress_priv_user1;
@@ -28,7 +17,7 @@ DROP ROLE IF EXISTS regress_priv_user3;
 DROP ROLE IF EXISTS regress_priv_user4;
 DROP ROLE IF EXISTS regress_priv_user5;
 DROP ROLE IF EXISTS regress_priv_user6;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- start_ignore
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  lo_unlink 
 -----------
@@ -1664,13 +1653,9 @@ SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_meta
  2001 | regress_priv_user2 | {regress_priv_user2=rw/regress_priv_user2,regress_priv_user3=rw/regress_priv_user2}
 (6 rows)
 
-<<<<<<< HEAD
 -- end_ignore
-SET SESSION AUTHORIZATION regress_user3;
--- start_ignore
-=======
 SET SESSION AUTHORIZATION regress_priv_user3;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- start_ignore
 SELECT loread(lo_open(1001, x'40000'::int), 32);
    loread   
 ------------
@@ -2340,10 +2325,7 @@ DROP TABLE atest6;
 DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
-<<<<<<< HEAD
 -- start_ignore
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  lo_unlink 
 -----------
@@ -2354,14 +2336,9 @@ SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3
          1
 (5 rows)
 
-<<<<<<< HEAD
 -- end_ignore
-DROP GROUP regress_group1;
-DROP GROUP regress_group2;
-=======
 DROP GROUP regress_priv_group1;
 DROP GROUP regress_priv_group2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- these are needed to clean up permissions
 REVOKE USAGE ON LANGUAGE sql FROM regress_priv_user1;
 DROP OWNED BY regress_priv_user1;

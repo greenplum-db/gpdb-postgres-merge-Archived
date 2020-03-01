@@ -223,23 +223,13 @@ DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
 ERROR:  foreign-data wrapper "nonexistent" does not exist
 DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 NOTICE:  foreign-data wrapper "nonexistent" does not exist, skipping
-<<<<<<< HEAD
 \dew+ :NO_BUILTINS
-                                                        List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW Options          | Description 
-------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
- dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
- foo        | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
- postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |                              | 
-=======
-\dew+
                                                              List of foreign-data wrappers
     Name    |           Owner           |     Handler      |        Validator         | Access privileges |         FDW options          | Description 
 ------------+---------------------------+------------------+--------------------------+-------------------+------------------------------+-------------
  dummy      | regress_foreign_data_user | -                | -                        |                   |                              | useless
  foo        | regress_test_role_super   | test_fdw_handler | -                        |                   | (b '3', c '4', a '2', d '5') | 
  postgresql | regress_foreign_data_user | -                | postgresql_fdw_validator |                   |                              | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (3 rows)
 
 DROP ROLE regress_test_role_super;                          -- ERROR
@@ -1313,11 +1303,7 @@ CREATE USER MAPPING FOR regress_unprivileged_role SERVER s10 OPTIONS (user 'secr
 -- owner of server can see some option fields
 \deu+
                  List of user mappings
-<<<<<<< HEAD
- Server |         User name         |    FDW Options    
-=======
  Server |         User name         |    FDW options    
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --------+---------------------------+-------------------
  s10    | public                    | ("user" 'secret')
  s10    | regress_unprivileged_role | 
@@ -1334,11 +1320,7 @@ RESET ROLE;
 -- superuser can see all option fields
 \deu+
                   List of user mappings
-<<<<<<< HEAD
- Server |         User name         |     FDW Options     
-=======
  Server |         User name         |     FDW options     
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --------+---------------------------+---------------------
  s10    | public                    | ("user" 'secret')
  s10    | regress_unprivileged_role | ("user" 'secret')
@@ -1355,11 +1337,7 @@ RESET ROLE;
 SET ROLE regress_unprivileged_role;
 \deu+
               List of user mappings
-<<<<<<< HEAD
- Server |         User name         | FDW Options 
-=======
  Server |         User name         | FDW options 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --------+---------------------------+-------------
  s10    | public                    | 
  s10    | regress_unprivileged_role | 
@@ -1872,72 +1850,8 @@ Check constraints:
     "fd_pt1chk2" CHECK (c2 <> ''::text)
     "fd_pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-
--- OID system column
-ALTER TABLE pt1 SET WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-\d+ pt1
-                          Table "public.pt1"
- Column |  Type   | Modifiers | Storage  | Stats target | Description 
---------+---------+-----------+----------+--------------+-------------
- c1     | integer | not null  | plain    | 10000        | 
- c2     | text    |           | extended |              | 
- c3     | date    |           | plain    |              | 
-Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text)
-Child tables: ft2
-Has OIDs: yes
-
-\d+ ft2
-                             Foreign table "public.ft2"
- Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
---------+---------+-----------+-------------+----------+--------------+-------------
- c1     | integer | not null  |             | plain    |              | 
- c2     | text    |           |             | extended |              | 
- c3     | date    |           |             | plain    |              | 
-Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text)
-Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Has OIDs: yes
-
-ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
-ERROR:  cannot drop inherited column "oid"
-ALTER TABLE pt1 SET WITHOUT OIDS;
-\d+ pt1
-                          Table "public.pt1"
- Column |  Type   | Modifiers | Storage  | Stats target | Description 
---------+---------+-----------+----------+--------------+-------------
- c1     | integer | not null  | plain    | 10000        | 
- c2     | text    |           | extended |              | 
- c3     | date    |           | plain    |              | 
-Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text)
-Child tables: ft2
-
-\d+ ft2
-                             Foreign table "public.ft2"
- Column |  Type   | Modifiers | FDW Options | Storage  | Stats target | Description 
---------+---------+-----------+-------------+----------+--------------+-------------
- c1     | integer | not null  |             | plain    |              | 
- c2     | text    |           |             | extended |              | 
- c3     | date    |           |             | plain    |              | 
-Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text)
-Server: s0
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- changes name of an attribute recursively
 ALTER TABLE fd_pt1 RENAME COLUMN c1 TO f1;

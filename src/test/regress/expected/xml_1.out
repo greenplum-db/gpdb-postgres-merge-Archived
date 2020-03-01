@@ -618,15 +618,12 @@ LINE 1: SELECT xpath('/nosuchtag', '<root/>');
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
-<<<<<<< HEAD
-=======
 SELECT xpath('root', '<root/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('root', '<root/>');
                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE
