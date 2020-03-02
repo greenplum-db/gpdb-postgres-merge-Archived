@@ -7,10 +7,10 @@
 -- s/Executor memory: (\d+)\w bytes avg x \d+ workers, \d+\w bytes max \(seg\d+\)\./Executor memory: ####K bytes avg x #### workers, ####K bytes max (seg#)./
 -- m/Work_mem: \d+\w bytes max\./
 -- s/Work_mem: \d+\w bytes max\. */Work_mem: ###K bytes max./
--- m/Execution time: \d+\.\d+ ms/
--- s/Execution time: \d+\.\d+ ms/Execution time: ##.### ms/
--- m/Planning time: \d+\.\d+ ms/
--- s/Planning time: \d+\.\d+ ms/Planning time: ##.### ms/
+-- m/Execution Time: \d+\.\d+ ms/
+-- s/Execution Time: \d+\.\d+ ms/Execution Time: ##.### ms/
+-- m/Planning Time: \d+\.\d+ ms/
+-- s/Planning Time: \d+\.\d+ ms/Planning Time: ##.### ms/
 -- m/cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+/
 -- s/\(cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+\)/(cost=##.###..##.### rows=### width=###)/
 -- m/Memory used:  \d+\w?B/
