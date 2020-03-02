@@ -2364,14 +2364,14 @@ SELECT *, generate_series(1,2) FROM multi_args( TABLE(SELECT 1::int, 'hello'::te
  1 | hello |               2
 (2 rows)
 
--- Note the extra "Result" node when the srf is in the select list
+-- Note the extra "ProjectSet" node when the srf is in the select list
 explain SELECT *, generate_series(1,2) FROM multi_args( TABLE(SELECT 1::int, 'hello'::text), 2);
                                  QUERY PLAN                                 
 ----------------------------------------------------------------------------
- Result  (cost=0.00..0.04 rows=8 width=36)
-   ->  Table Function Scan on multi_args  (cost=0.00..0.04 rows=4 width=36)
-         ->  Result  (cost=0.00..0.01 rows=1 width=0)
- Settings:  gp_segments_for_planner=8
+ ProjectSet  (cost=0.00..0.04 rows=2 width=40)
+   ->  Table Function Scan on multi_args  (cost=0.00..0.02 rows=1 width=36)
+         ->  Result  (cost=0.00..0.01 rows=1 width=36)
+ Optimizer: Postgres query optimizer
 (4 rows)
 
 explain SELECT * FROM multi_args( TABLE(SELECT 1::int, 'hello'::text), 2);
@@ -2384,7 +2384,9 @@ explain SELECT * FROM multi_args( TABLE(SELECT 1::int, 'hello'::text), 2);
 
 -- Error: don't support sets as arguments that are not TableValueExpr
 SELECT * FROM multi_args( TABLE(SELECT 1::int, 'hello'::text), generate_series(1,2));
-ERROR:  set-valued function called in context that cannot accept a set
+ERROR:  set-returning functions must appear at top level of FROM
+LINE 1: ... multi_args( TABLE(SELECT 1::int, 'hello'::text), generate_s...
+                                                             ^
 -- And use it with a CTAS as well
 explain CREATE TABLE example_out AS SELECT * FROM multi_args( TABLE(SELECT 1::int, 'hello'::text), 2);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column(s) named 'a' as the Greenplum Database data distribution key for this table.
