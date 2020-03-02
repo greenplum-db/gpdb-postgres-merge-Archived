@@ -666,7 +666,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <boolean> opt_if_not_exists
 %type <ival>	generated_when override_kind
-%type <partspec>	PartitionSpec OptPartitionSpec
+%type <partspec>	PartitionSpec OptFirstPartitionSpec OptSecondPartitionSpec
 %type <str>			part_strategy
 %type <partelem>	part_elem
 %type <list>		part_params
@@ -847,6 +847,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  * NULLS_LA and WITH_LA are needed to make the grammar LALR(1).
  */
 %token		NOT_LA NULLS_LA WITH_LA
+%token		PARTITION_TAIL
 
 
 /* Precedence: lowest to highest */
@@ -4597,19 +4598,24 @@ copy_generic_opt_arg_list_item:
  * to re-implement a variable like that. In upstream syntax PARTITION BY must come
  * before WITH */
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptPartitionSpec table_access_method_clause OptWith
+			OptInherit OptFirstPartitionSpec table_access_method_clause OptWith
 			OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
 					n->relation = $4;
 					n->tableElts = $6;
 					n->inhRelations = $8;
-					n->partspec = $9;
+					if ($9 && $15)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@15)));
+					n->partspec = $9 ? $9 : $15;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
-					n->accessMethod = $10;
+					//n->accessMethod = $10;
 					n->options = $11;
 					n->oncommit = $12;
 					n->tablespacename = $13;
@@ -4619,16 +4625,21 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
-			OptTableElementList ')' OptInherit OptPartitionSpec table_access_method_clause
+			OptTableElementList ')' OptInherit OptFirstPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
 					n->relation = $7;
 					n->tableElts = $9;
 					n->inhRelations = $11;
-					n->partspec = $12;
+					if ($12 && $18)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@18)));
+					n->partspec = $12 ? $12 : $18;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->accessMethod = $13;
@@ -4641,16 +4652,21 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF any_name
-			OptTypedTableElementList OptPartitionSpec table_access_method_clause
+			OptTypedTableElementList OptFirstPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
 					n->relation = $4;
 					n->tableElts = $7;
 					n->inhRelations = NIL;
-					n->partspec = $8;
+					if ($8 && $14)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@14)));
+					n->partspec = $8 ? $8 : $14;
 					n->ofTypename = makeTypeNameFromNameList($6);
 					n->ofTypename->location = @6;
 					n->constraints = NIL;
@@ -4664,16 +4680,21 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
-			OptTypedTableElementList OptPartitionSpec table_access_method_clause
+			OptTypedTableElementList OptFirstPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
 					n->relation = $7;
 					n->tableElts = $10;
 					n->inhRelations = NIL;
-					n->partspec = $11;
+					if ($11 && $17)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@17)));
+					n->partspec = $11 ? $11 : $17;
 					n->ofTypename = makeTypeNameFromNameList($9);
 					n->ofTypename->location = @9;
 					n->constraints = NIL;
@@ -4687,9 +4708,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
-			OptTypedTableElementList PartitionBoundSpec OptPartitionSpec
+			OptTypedTableElementList PartitionBoundSpec OptFirstPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4697,7 +4718,12 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $8;
 					n->inhRelations = list_make1($7);
 					n->partbound = $9;
-					n->partspec = $10;
+					if ($10 && $16)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@16)));
+					n->partspec = $10 ? $10 : $16;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->accessMethod = $11;
@@ -4710,9 +4736,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
-			qualified_name OptTypedTableElementList PartitionBoundSpec OptPartitionSpec
+			qualified_name OptTypedTableElementList PartitionBoundSpec OptFirstPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
-			OptDistributedBy
+			OptDistributedBy OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4720,7 +4746,12 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $11;
 					n->inhRelations = list_make1($10);
 					n->partbound = $12;
-					n->partspec = $13;
+					if ($13 && $19)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("only one PARTITION BY clause is allowed"),
+								 parser_errposition(@19)));
+					n->partspec = $13 ? $13 : $19;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->accessMethod = $14;
@@ -5399,12 +5430,73 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-/* Optional partition key specification */
-OptPartitionSpec: PartitionSpec	{ $$ = $1; }
-			| /*EMPTY*/			{ $$ = NULL; }
+/*
+ * For historical reasons, in GPDB the PARTITION BY clause can also be given
+ * at the end of CREATE TABLE. OptTailPartitionSpec is identical to
+ * OptPartitionSpec, but it's used at the end of CreateStmt rules,
+ * after all the other options. We have to play some bison tricks to avoid
+ * shift/reduce conflicts.
+ *
+ * The CREATE TABLE syntax looks like this:
+ *
+ * CREATE TABLE name (...)
+ *   [PARTITION BY ...] [optional WITH/USING/INHERITS clauses] [PARTITION BY ...]
+ *
+ * This produces a shift/reduce conflict: if there are no WITH/USING/INHERITS
+ * options, it is ambiguous which [PARTITION BY ...] rule should capture the
+ * PARTITION BY clause.
+ *
+ * To work around that, we set the 'tail_partition_tie_in' flag before doing
+ * lookahead. It instructs the scanner to return the special PARTITION_TAIL
+ * token if the next word is "PARTITION", instead of the usual PARTITION
+ * token. This allows us to avoid ambiguity in the CreateStmt rules: as far
+ * as bison is concerned, "PARTITION BY" and "PARTITION_TAIL BY" look
+ * different, even though the actual user-visible syntax is the same.
+ *
+ * I think the proper way to solve this would be to play with %prec
+ * declarations. However, I couldn't get it to work. Furthermore, since this
+ * is a GPDB extension, it's good to avoid changing the upstream rules,
+ * because that always makes merging with upstream harder. This is a fairly
+ * isolated work-around, even if it's a bit ugly.
+ */
+
+/* Optional partition key specification (at the position where PostgreSQL has it) */
+OptFirstPartitionSpec: PartitionSpec
+				{
+					$$ = $1;
+
+					pg_yyget_extra(yyscanner)->tail_partition_magic = true;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NULL;
+
+					pg_yyget_extra(yyscanner)->tail_partition_magic = true;
+				}
 		;
 
-PartitionSpec: PARTITION BY part_strategy '(' part_params ')'
+OptSecondPartitionSpec:
+			PARTITION_TAIL BY part_strategy '(' part_params ')'
+				{
+					PartitionSpec *n = makeNode(PartitionSpec);
+
+					n->strategy = $3;
+					n->partParams = $5;
+					n->location = @1;
+
+					$$ = n;
+
+					pg_yyget_extra(yyscanner)->tail_partition_magic = false;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NULL;
+
+					pg_yyget_extra(yyscanner)->tail_partition_magic = false;
+				}
+		;
+
+PartitionSpec: PARTITION  BY part_strategy '(' part_params ')'
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 
@@ -5990,8 +6082,7 @@ TabPartitionByType:
 		;
 
 OptTabPartitionBy:
-			PARTITION BY 
-            TabPartitionByType '(' columnList ')'
+			PartitionSpec
 			opt_list_subparts
             OptTabPartitionSpec						
 				{
@@ -6000,17 +6091,15 @@ OptTabPartitionBy:
 #if 0
 					PartitionBy *n = makeNode(PartitionBy); 
 						
-					n->partType = $3;
-					n->keys     = $5; 
-					n->subPart  = $7;
+					n->subPart  = $2;
 					if (PointerIsValid(n->subPart) &&
 						!IsA(n->subPart, PartitionBy))
 						parser_yyerror("syntax error");
 
-					n->partSpec = $8;
+					n->partSpec = $3;
 					n->partDepth = 0;
 					n->partQuiet = PART_VERBO_NODISTRO;
-					n->location  = @3;
+					n->location  = @1;
 					n->partDefault = NULL;
 					$$ = (Node *)n;
 #endif

@@ -71,6 +71,7 @@ raw_parser(const char *str)
 
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;
+	yyextra.tail_partition_magic = false;
 
 	/* initialize the bison parser */
 	parser_init(&yyextra);
@@ -125,6 +126,19 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	}
 	else
 		cur_token = core_yylex(&(lvalp->core_yystype), llocp, yyscanner);
+
+	/*
+	 * Check for special handling of PARTITION keyword. (see
+	 * OptFirstPartitionSpec rule in the grammar)
+	 */
+	if (yyextra->tail_partition_magic)
+	{
+		if (cur_token == PARTITION)
+		{
+			yyextra->tail_partition_magic = false;
+			return PARTITION_TAIL;
+		}
+	}
 
 	/*
 	 * If this token isn't one that requires lookahead, just return it.  If it
