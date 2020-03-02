@@ -1737,13 +1737,9 @@ explain (costs off)
   order by a.q1, a.q2, x.q1, x.q2, ss.z;
 select * from int8_tbl a,
   int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)
-<<<<<<< HEAD
-    on x.q2 = ss.z;
---end_ignore
-=======
     on x.q2 = ss.z
   order by a.q1, a.q2, x.q1, x.q2, ss.z;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+--end_ignore
 
 -- lateral reference to a join alias variable
 select * from (select f1/2 as x from int4_tbl) ss1 join int4_tbl i4 on x = f1,

@@ -2233,7 +2233,6 @@ explain (costs off)
 select * from int8_tbl i1 left join (int8_tbl i2 join
   (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
 order by 1, 2;
-<<<<<<< HEAD
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -2255,19 +2254,6 @@ order by 1, 2;
                            ->  Seq Scan on int8_tbl i1
  Optimizer: Postgres query optimizer
 (18 rows)
-=======
-                QUERY PLAN                 
--------------------------------------------
- Sort
-   Sort Key: i1.q1, i1.q2
-   ->  Hash Left Join
-         Hash Cond: (i1.q2 = i2.q2)
-         ->  Seq Scan on int8_tbl i1
-         ->  Hash
-               ->  Seq Scan on int8_tbl i2
-                     Filter: (q1 = 123)
-(8 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 select * from int8_tbl i1 left join (int8_tbl i2 join
   (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
@@ -2849,7 +2835,6 @@ create temp table tidv (idv mycomptype);
 create index on tidv (idv);
 explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
-<<<<<<< HEAD
                            QUERY PLAN                           
 ----------------------------------------------------------------
  Merge Join
@@ -2878,27 +2863,6 @@ select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
                Index Cond: (idv = a.idv)
  Optimizer: Postgres query optimizer
 (7 rows)
-=======
-                        QUERY PLAN                        
-----------------------------------------------------------
- Merge Join
-   Merge Cond: (a.idv = b.idv)
-   ->  Index Only Scan using tidv_idv_idx on tidv a
-   ->  Materialize
-         ->  Index Only Scan using tidv_idv_idx on tidv b
-(5 rows)
-
-set enable_mergejoin = 0;
-explain (costs off)
-select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
-                     QUERY PLAN                     
-----------------------------------------------------
- Nested Loop
-   ->  Seq Scan on tidv a
-   ->  Index Only Scan using tidv_idv_idx on tidv b
-         Index Cond: (idv = a.idv)
-(4 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 rollback;
 --
