@@ -535,7 +535,7 @@ typedef enum NodeTag
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
 	T_SetDistributionDispatchInfo,
-	T_ExpandStmtSpec,
+	T_ExpandDispatchInfo,
 	T_AOVacuumPhaseConfig,
 	T_GpPartitionSpec,
 	T_GpPartitionElem,

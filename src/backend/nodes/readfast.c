@@ -886,10 +886,10 @@ _readColumnReferenceStorageDirective(void)
 	READ_DONE();
 }
 
-static ExpandStmtSpec *
-_readExpandStmtSpec(void)
+static ExpandDispatchInfo *
+_readExpandDispatchInfo(void)
 {
-	READ_LOCALS(ExpandStmtSpec);
+	READ_LOCALS(ExpandDispatchInfo);
 
 	READ_OID_FIELD(backendId);
 
@@ -2184,8 +2184,8 @@ readNodeBinary(void)
 			case T_ColumnReferenceStorageDirective:
 				return_value = _readColumnReferenceStorageDirective();
 				break;
-			case T_ExpandStmtSpec:
-				return_value = _readExpandStmtSpec();
+			case T_ExpandDispatchInfo:
+				return_value = _readExpandDispatchInfo();
 				break;
 			case T_SegfileMapNode:
 				return_value = _readSegfileMapNode();

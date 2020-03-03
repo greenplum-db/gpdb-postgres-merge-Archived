@@ -4077,10 +4077,10 @@ _copyTableLikeClause(const TableLikeClause *from)
 	return newnode;
 }
 
-static ExpandStmtSpec *
-_copyExpandStmtSpec(const ExpandStmtSpec *from)
+static ExpandDispatchInfo *
+_copyExpandDispatchInfo(const ExpandDispatchInfo *from)
 {
-	ExpandStmtSpec *newnode = makeNode(ExpandStmtSpec);
+	ExpandDispatchInfo *newnode = makeNode(ExpandDispatchInfo);
 
 	COPY_SCALAR_FIELD(backendId);
 
@@ -6335,8 +6335,8 @@ copyObjectImpl(const void *from)
 		case T_CreateStmt:
 			retval = _copyCreateStmt(from);
 			break;
-		case T_ExpandStmtSpec:
-			retval = _copyExpandStmtSpec(from);
+		case T_ExpandDispatchInfo:
+			retval = _copyExpandDispatchInfo(from);
 			break;
 		case T_ExtTableTypeDesc:
 			retval = _copyExtTableTypeDesc(from);

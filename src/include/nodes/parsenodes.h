@@ -1896,6 +1896,13 @@ typedef struct SetDistributionDispatchInfo
 	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
 } SetDistributionDispatchInfo;
 
+typedef struct ExpandDispatchInfo
+{
+	NodeTag				type;
+	/* for ctas method */
+	int					backendId;
+} ExpandDispatchInfo;
+
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
@@ -1904,7 +1911,7 @@ typedef struct AlterTableStmt
 	ObjectType	relkind;		/* type of object */
 	bool		missing_ok;		/* skip error if table missing */
 
-	SetDistributionDispatchInfo *qe_data;
+	Node	   *qe_data;		/* SetDistributionDispatchInfo or ExpandDispatchInfo */
 } AlterTableStmt;
 
 typedef enum AlterTableType
@@ -2505,13 +2512,6 @@ typedef struct GpPartitionSpec			/* a Partition Specification */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
 } GpPartitionSpec;
-
-typedef struct ExpandStmtSpec
-{
-	NodeTag				type;
-	/* for ctas method */
-	Oid					backendId;
-} ExpandStmtSpec;
 
 /* ----------------------
  *		Create/Drop TableSpace Statements

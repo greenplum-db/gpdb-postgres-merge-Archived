@@ -3366,11 +3366,18 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 static void
 _outSetDistributionDispatchInfo(StringInfo str, const SetDistributionDispatchInfo *node)
 {
-	WRITE_NODE_TYPE("SETDISTRIBUTIONCMD");
+	WRITE_NODE_TYPE("SETDISTRIBUTIONDISPATCHINFO");
 
 	WRITE_NODE_FIELD(policy);
 	WRITE_INT_FIELD(backendId);
 	WRITE_NODE_FIELD(relids);
+}
+
+static void
+_outExpandDispatchInfo(StringInfo str, const ExpandDispatchInfo *node)
+{
+	WRITE_NODE_TYPE("EXPANDDISPATCHINFO");
+	WRITE_OID_FIELD(backendId);
 }
 
 static void
@@ -3567,13 +3574,6 @@ _outAlterFunctionStmt(StringInfo str, const AlterFunctionStmt *node)
 	WRITE_ENUM_FIELD(objtype,ObjectType);
 	WRITE_NODE_FIELD(func);
 	WRITE_NODE_FIELD(actions);
-}
-
-static void
-_outExpandStmtSpec(StringInfo str, const ExpandStmtSpec *node)
-{
-	WRITE_NODE_TYPE("EXPANDSTMTSPEC");
-	WRITE_OID_FIELD(backendId);
 }
 
 static void
@@ -5787,8 +5787,8 @@ outNode(StringInfo str, const void *obj)
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;
-			case T_ExpandStmtSpec:
-				_outExpandStmtSpec(str, obj);
+			case T_ExpandDispatchInfo:
+				_outExpandDispatchInfo(str, obj);
 				break;
 			case T_SegfileMapNode:
 				_outSegfileMapNode(str, obj);

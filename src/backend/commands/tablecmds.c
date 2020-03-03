@@ -136,7 +136,7 @@
 
 const char *synthetic_sql = "(internally generated SQL command)";
 
-static SetDistributionDispatchInfo *qe_data = NULL;
+static Node *qe_data = NULL;
 
 /*
  * ON COMMIT action list
@@ -3984,7 +3984,8 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 		 * and/or relfilenodes to be assigned. In that case,
 		 * ATExecSetDistributedDispatchInfo needs to dispatch some extra
 		 * information to the QEs. It stashed it in 'qe_data', include it
-		 * in the statement that's being dispatched.
+		 * in the statement that's being dispatched. And ATExecExpandTable
+		 * does a similar thing.
 		 */
 		origstmt->qe_data = qe_data;
 		CdbDispatchUtilityStatement((Node *) origstmt,
@@ -15916,13 +15917,6 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 	tab = linitial(*wqueue);
 	rootCmd = (AlterTableCmd *)linitial(tab->subcmds[AT_PASS_MISC]);
 
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		/* only rootCmd is dispatched to QE, we can store */
-		if (rootCmd == cmd)
-			rootCmd->def = (Node*)makeNode(ExpandStmtSpec);
-	}
-
 	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		if (rel_is_external_table(relid))
@@ -15962,7 +15956,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 	Datum				newOptions;
 	Oid					tmprelid;
 	Oid					relid = RelationGetRelid(rel);
-	ExpandStmtSpec		*spec = (ExpandStmtSpec *)rootCmd->def;
+	ExpandDispatchInfo *spec;
 
 	/*--
 	 * a) Ensure that the proposed policy is sensible
@@ -16043,11 +16037,22 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 		/*
 		 * Step (d) - tell the seg nodes about the temporary relation.
 		 */
-		if (rootCmd == cmd)
-			spec->backendId = MyBackendId;
+		/* store the dispatch info dummy  */
+		spec = makeNode(ExpandDispatchInfo);
+		spec->backendId = MyBackendId;
+		qe_data = (Node *) spec;
 	}
 	else
 	{
+		if (Gp_role == GP_ROLE_EXECUTE)
+		{
+			if (!qe_data || !IsA(qe_data, ExpandDispatchInfo))
+				elog(ERROR, "did not receive EXPAND TABLE dispatch info from QD");
+			spec = (ExpandDispatchInfo *) qe_data;
+		}
+		else
+			elog(ERROR, "cannot perform EXPAND TABLE in utility mode");
+
 		tmprv = make_temp_table_name(rel, spec->backendId);
 	}
 
@@ -16078,7 +16083,12 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 	 * the cache, we keep the lock though. ATRewriteCatalogs() knows
 	 * that we've closed the relation here.
 	 */
-	heap_close(rel, NoLock);
+	// GPDB_12_MERGE_FIXME: Previously, we closed the relation here, but
+	// now we're getting an assertion failure later, when the caller tries
+	// to close it. Like in ATExecSetDistributedBy(), it seems wrong to close
+	// here. But was there some problem in keeping it open? Investigate.
+	//relation_close(rel, NoLock);
+	//heap_close(rel, NoLock);
 	rel = NULL;
 	tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 	swap_relation_files(relid, tmprelid,
@@ -16159,6 +16169,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	bool 				save_optimizer_replicated_table_insert;
 	Oid					relationOid = InvalidOid;
 	AutoStatsCmdType 	cmdType = AUTOSTATS_CMDTYPE_SENTINEL;
+	SetDistributionDispatchInfo *qe_info;
 
 	/* Can't ALTER TABLE SET system catalogs */
 	if (IsSystemRelation(rel))
@@ -16303,7 +16314,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					 */
 					heap_close(rel, NoLock);
 					if (!qe_data)
-						qe_data = makeNode(SetDistributionDispatchInfo);
+						qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 					goto l_distro_fini;
 				}
 			}
@@ -16333,7 +16344,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				 */
 				heap_close(rel, NoLock);
 				if (!qe_data)
-					qe_data = makeNode(SetDistributionDispatchInfo);
+					qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 				goto l_distro_fini;
 			}
 
@@ -16489,7 +16500,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						heap_close(rel, NoLock);
 						/* Tell QEs to do nothing */
 						if (!qe_data)
-							qe_data = makeNode(SetDistributionDispatchInfo);
+							qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 						return;
 						/* don't goto l_distro_fini -- didn't do anything! */
 					}
@@ -16620,10 +16631,11 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 * caller, so that it can be included when the command is dispatched.
 		 */
 		if (!qe_data)
-			qe_data = makeNode(SetDistributionDispatchInfo);
-		if (qe_data->backendId == 0)
-			qe_data->backendId = MyBackendId;
-		qe_data->relids = lappend_oid(qe_data->relids, tarrelid);
+			qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
+		qe_info = (SetDistributionDispatchInfo *) qe_data;
+		if (qe_info->backendId == 0)
+			qe_info->backendId = MyBackendId;
+		qe_info->relids = lappend_oid(qe_info->relids, tarrelid);
 	}
 	else
 	{
@@ -16636,26 +16648,27 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 */
 		if (qe_data == NULL)
 			elog(ERROR, "did not receive dispatch info for SET DISTRIBUTED BY from QD");
-		policy = qe_data->policy;
+		qe_info = (SetDistributionDispatchInfo *) qe_data;
+		policy = qe_info->policy;
 
 		if (policy)
 			GpPolicyReplace(RelationGetRelid(rel), policy);
 
 		/* Set to random distribution on master with no reorganisation */
-		if (!reorg && qe_data->backendId == 0)
+		if (!reorg && qe_info->backendId == 0)
 		{
 			/* caller expects rel to be closed for this AT type */
 			heap_close(rel, NoLock);
 			goto l_distro_fini;			
 		}
 
-		if (!list_member_oid(qe_data->relids, tarrelid))
+		if (!list_member_oid(qe_info->relids, tarrelid))
 		{
 			heap_close(rel, NoLock);
 			goto l_distro_fini;			
 		}
 
-		backend_id = qe_data->backendId;
+		backend_id = qe_info->backendId;
 		tmprv = make_temp_table_name(rel, backend_id);
 
 		newOptions = new_rel_opts(rel);
@@ -16762,7 +16775,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (change_policy)
 			GpPolicyReplace(tarrelid, policy);
 
-		qe_data->policy = policy;
+		qe_info->policy = policy;
 	}
 
 	/* Step (h) Drop the table */

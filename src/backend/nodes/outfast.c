@@ -1327,8 +1327,8 @@ _outNode(StringInfo str, void *obj)
 			case T_RoleSpec:
 				_outRoleSpec(str, obj);
 				break;
-			case T_ExpandStmtSpec:
-				_outExpandStmtSpec(str, obj);
+			case T_ExpandDispatchInfo:
+				_outExpandDispatchInfo(str, obj);
 				break;
 
 			case T_SegfileMapNode:
