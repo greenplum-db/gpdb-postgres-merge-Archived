@@ -52,25 +52,17 @@ CREATE TABLE persons2 OF person_type (
 ERROR:  UNIQUE or PRIMARY KEY definitions are incompatible with each other
 HINT:  When there are multiple PRIMARY KEY / UNIQUE constraints, they must have at least one column in common.
 \d persons2
-<<<<<<< HEAD
 -- These are added for Greenplum, as the previous table creation statement
 -- should have failed.
 CREATE TABLE gppersons1 OF person_type (
     id WITH OPTIONS PRIMARY KEY
 );
 \d gppersons1
-  Table "public.gppersons1"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | not null
- name   | text    | 
-=======
               Table "public.persons2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  id     | integer |           | not null | 
  name   | text    |           |          | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Indexes:
     "gppersons1_pkey" PRIMARY KEY, btree (id)
 Typed table of type: person_type
@@ -80,11 +72,11 @@ CREATE TABLE gppersons2 OF person_type (
     UNIQUE (name)
 );
 \d gppersons2
-  Table "public.gppersons2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | 
- name   | text    | 
+             Table "public.gppersons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ name   | text    |           |          | 
 Indexes:
     "gppersons2_name_key" UNIQUE CONSTRAINT, btree (name)
 Typed table of type: person_type
