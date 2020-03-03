@@ -29,11 +29,12 @@ DROP INDEX CONCURRENTLY "tbl_drop_index4";
 DROP INDEX CONCURRENTLY "tbl_drop_index1";
 \d tbl_drop_ind_concur
 Table "public.tbl_drop_ind_concur"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
- dk     | text | 
+       Table "public.tbl_drop_ind_concur"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
+ dk     | text |           |          | 
 Distributed by: (dk)
 
 DROP TABLE tbl_drop_ind_concur;
