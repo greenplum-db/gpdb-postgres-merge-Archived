@@ -1070,12 +1070,12 @@ select bus_name,
 from locations
 order by locid, country_code;
 \d+ decode_view;
-                    View "public.decode_view"
-    Column    |     Type     | Modifiers | Storage  | Description 
---------------+--------------+-----------+----------+-------------
- bus_name     | text         |           | extended | 
- country_code | character(2) |           | extended | 
- region       | text         |           | extended | 
+                               View "public.decode_view"
+    Column    |     Type     | Collation | Nullable | Default | Storage  | Description 
+--------------+--------------+-----------+----------+---------+----------+-------------
+ bus_name     | text         |           |          |         | extended | 
+ country_code | character(2) |           |          |         | extended | 
+ region       | text         |           |          |         | extended | 
 View definition:
  SELECT locations.bus_name,
     locations.country_code,

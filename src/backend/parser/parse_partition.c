@@ -27,6 +27,10 @@ static List *generateRangePartitions(ParseState *pstate, CreateStmt *cstmt,
 									 Relation parentrel,
 									 GpPartitionElem *elem,
 									 const char *queryString);
+static List *generateListPartition(ParseState *pstate, CreateStmt *cstmt,
+								   Relation parentrel,
+								   GpPartitionElem *elem,
+								   const char *queryString);
 static List *generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
 									  Relation parentrel,
 									  GpPartitionElem *elem,
@@ -62,7 +66,15 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 		List	   *new_parts;
 
 		if (elem->boundSpec)
-			new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString);
+		{
+			if (IsA(elem->boundSpec, GpPartitionBoundSpec))
+				new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString);
+			else
+			{
+				Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
+				new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString);
+			}
+		}
 		else if (elem->isDefault)
 		{
 			new_parts = generateDefaultPartition(pstate, cstmt, parentrel, elem, queryString);
@@ -267,6 +279,63 @@ generateRangePartitions(ParseState *pstate,
 	}
 
 	return result;
+}
+
+static List *
+generateListPartition(ParseState *pstate, CreateStmt *cstmt,
+					  Relation parentrel,
+					  GpPartitionElem *elem,
+					  const char *queryString)
+{
+	GpPartitionValuesSpec *gpvaluesspec;
+	PartitionBoundSpec *boundspec;
+	CreateStmt *childstmt;
+	char	   *partname;
+	PartitionKey partkey;
+	ListCell   *lc;
+	List	  *listdatums;
+
+	gpvaluesspec = (GpPartitionValuesSpec *) elem->boundSpec;
+	Assert(gpvaluesspec);
+
+	partkey = RelationGetPartitionKey(parentrel);
+
+	boundspec = makeNode(PartitionBoundSpec);
+	boundspec->strategy = PARTITION_STRATEGY_LIST;
+	boundspec->is_default = false;
+	/* GPDB_12_MERGE_FIXME: The syntax is a list in a list, to support
+	 * list-partitioned tables with multiple partitioning keys. But
+	 * PostgreSQL doesn't support that. Not sure what to do about that.
+	 * Add support for it to PostgreSQL? Simplify the grammar to not
+	 * allow that?
+	 */
+	listdatums = NIL;
+	foreach (lc, gpvaluesspec->partValues)
+	{
+		List	   *thisvalue = lfirst(lc);
+
+		if (list_length(thisvalue) != 1)
+			elog(ERROR, "VALUES specification with more than one column not allowed");
+
+		listdatums = lappend(listdatums, linitial(thisvalue));
+	}
+
+	boundspec->listdatums = listdatums;
+	boundspec->location = -1;
+
+	/*
+	 * GPDB_12_MERGE_FIXME: this way of choosing the partition rel name
+	 * is different from what it used to be.
+	 */
+	if (!elem->partName)
+		elog(ERROR, "list partition must have a name");
+	partname = psprintf("%s_prt_%s", RelationGetRelationName(parentrel), elem->partName);
+
+	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
+
+	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
+
+	return list_make1(childstmt);
 }
 
 static List *
