@@ -537,6 +537,11 @@ typedef enum NodeTag
 	T_SetDistributionDispatchInfo,
 	T_ExpandStmtSpec,
 	T_AOVacuumPhaseConfig,
+	T_GpPartitionSpec,
+	T_GpPartitionElem,
+	T_GpPartitionRangeItem,
+	T_GpPartitionBoundSpec,
+	T_GpPartitionValuesSpec,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

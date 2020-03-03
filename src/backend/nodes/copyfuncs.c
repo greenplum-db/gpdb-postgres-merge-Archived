@@ -5519,6 +5519,7 @@ _copyPartitionSpec(const PartitionSpec *from)
 
 	COPY_STRING_FIELD(strategy);
 	COPY_NODE_FIELD(partParams);
+	COPY_NODE_FIELD(gpPartSpec);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -5560,6 +5561,63 @@ _copyPartitionCmd(const PartitionCmd *from)
 
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(bound);
+
+	return newnode;
+}
+
+static GpPartitionSpec *
+_copyGpPartitionSpec(const GpPartitionSpec *from)
+{
+	GpPartitionSpec *newnode = makeNode(GpPartitionSpec);
+
+	COPY_NODE_FIELD(partElem);
+	COPY_NODE_FIELD(enc_clauses);
+	COPY_NODE_FIELD(subSpec);
+	COPY_SCALAR_FIELD(istemplate);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static GpPartitionElem *
+_copyGpPartitionElem(const GpPartitionElem *from)
+{
+	GpPartitionElem *newnode = makeNode(GpPartitionElem);
+
+	COPY_STRING_FIELD(partName);
+	COPY_NODE_FIELD(boundSpec);
+	COPY_NODE_FIELD(subSpec);
+	COPY_SCALAR_FIELD(isDefault);
+	COPY_NODE_FIELD(storeAttr);
+	COPY_SCALAR_FIELD(partno);
+	COPY_SCALAR_FIELD(rrand);
+	COPY_NODE_FIELD(colencs);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static GpPartitionBoundSpec *
+_copyGpPartitionBoundSpec(const GpPartitionBoundSpec *from)
+{
+	GpPartitionBoundSpec *newnode = makeNode(GpPartitionBoundSpec);
+
+	COPY_NODE_FIELD(partStart);
+	COPY_NODE_FIELD(partEnd);
+	COPY_NODE_FIELD(partEvery);
+	COPY_STRING_FIELD(pWithTnameStr);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static GpPartitionValuesSpec *
+_copyGpPartitionValuesSpec(const GpPartitionValuesSpec *from)
+{
+	GpPartitionValuesSpec *newnode = makeNode(GpPartitionValuesSpec);
+
+	COPY_NODE_FIELD(partValues);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -6768,6 +6826,18 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PartitionCmd:
 			retval = _copyPartitionCmd(from);
+			break;
+		case T_GpPartitionSpec:
+			retval = _copyGpPartitionSpec(from);
+			break;
+		case T_GpPartitionElem:
+			retval = _copyGpPartitionElem(from);
+			break;
+		case T_GpPartitionBoundSpec:
+			retval = _copyGpPartitionBoundSpec(from);
+			break;
+		case T_GpPartitionValuesSpec:
+			retval = _copyGpPartitionValuesSpec(from);
 			break;
 		case T_CdbProcess:
 			retval = _copyCdbProcess(from);

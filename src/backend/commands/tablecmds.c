@@ -631,6 +631,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	ListCell   *listptr;
 	AttrNumber	attnum;
 	bool		partitioned;
+	GpPartitionSpec *gpPartSpec = NULL;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
 	ObjectAddress address;
@@ -1365,7 +1366,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
 	 */
-	relation_close(rel, NoLock);
+	if (!gpPartSpec)
+		relation_close(rel, NoLock);
 
 	return address;
 }
@@ -18754,6 +18756,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	newspec->strategy = partspec->strategy;
 	newspec->partParams = NIL;
 	newspec->location = partspec->location;
+	newspec->gpPartSpec = partspec->gpPartSpec;
 
 	/* Parse partitioning strategy name */
 	if (pg_strcasecmp(partspec->strategy, "hash") == 0)

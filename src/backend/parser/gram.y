@@ -607,8 +607,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <str>		OptTableSpace OptConsTableSpace
 %type <rolespec> OptTableSpaceOwner
 %type <node>    DistributedBy OptDistributedBy 
-%type <ival>	TabPartitionByType OptTabPartitionRangeInclusive
-%type <node>	OptTabPartitionBy TabSubPartitionBy TabSubPartition
+%type <ival>	OptTabPartitionRangeInclusive
+%type <node>	TabSubPartitionBy TabSubPartition
 				tab_part_val tab_part_val_no_paran
 %type <node>	opt_list_subparts
 %type <ival>	opt_check_option
@@ -620,9 +620,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <node> 	TabPartitionBoundarySpec OptTabPartitionBoundarySpec  /* PartitionBoundSpec */
 %type <list> 	TabPartitionBoundarySpecValList
 				part_values_or_spec_list
-%type <node> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
-				OptTabPartitionBoundarySpecEnd        /* PartitionRangeItem */
-%type <node> 	OptTabPartitionBoundarySpecEvery      /* PartitionRangeItem */
+%type <list> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
+				OptTabPartitionBoundarySpecEnd
+%type <list>	OptTabPartitionBoundarySpecEvery
 %type <str> 	TabPartitionNameDecl TabSubPartitionNameDecl
 				TabPartitionDefaultNameDecl TabSubPartitionDefaultNameDecl 
 %type <node>	opt_table_partition_split_into
@@ -3772,7 +3772,6 @@ alter_table_partition_cmd:
                     pelem->location  = @3;
                     pelem->isDefault = false; /* not default */
                     pelem->storeAttr = $4;
-                    pelem->AddPartDesc = NULL;
 #endif
 					pc->arg1 = (Node *) pelem;
 					
@@ -3812,7 +3811,6 @@ alter_table_partition_cmd:
                     pelem->location  = @5;
                     pelem->isDefault = true;
                     pelem->storeAttr = $6;
-                    pelem->AddPartDesc = NULL;
 #endif
 					pc->arg1 = (Node *) pelem;
                     pc->location = @5;
@@ -3851,7 +3849,6 @@ alter_table_partition_cmd:
                     pelem->location  = @4;
                     pelem->isDefault = false;
                     pelem->storeAttr = $5;
-                    pelem->AddPartDesc = NULL;
 #endif
                     pc->arg1 = (Node *) pelem;
 
@@ -4090,7 +4087,6 @@ alter_table_partition_cmd:
                     pelem->location  = @4;
                     pelem->isDefault = true;
                     pelem->storeAttr = NULL;
-                    pelem->AddPartDesc = NULL;
 #endif
 					pc->arg1 = (Node *) pelem;
 
@@ -5461,8 +5457,9 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
  */
 
 /* Optional partition key specification (at the position where PostgreSQL has it) */
-OptFirstPartitionSpec: PartitionSpec
+OptFirstPartitionSpec: PartitionSpec OptTabPartitionSpec
 				{
+					$1->gpPartSpec = (GpPartitionSpec *) $2;
 					$$ = $1;
 
 					pg_yyget_extra(yyscanner)->tail_partition_magic = true;
@@ -5476,12 +5473,13 @@ OptFirstPartitionSpec: PartitionSpec
 		;
 
 OptSecondPartitionSpec:
-			PARTITION_TAIL BY part_strategy '(' part_params ')'
+			PARTITION_TAIL BY part_strategy '(' part_params ')' OptTabPartitionSpec
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 
 					n->strategy = $3;
 					n->partParams = $5;
+					n->gpPartSpec = (GpPartitionSpec *) $7;
 					n->location = @1;
 
 					$$ = n;
@@ -5671,15 +5669,11 @@ OptTabPartitionStorageAttr: WITH definition TABLESPACE name
 
 OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionSpec *n = makeNode(PartitionSpec); 
-                        n->partElem  = $2;
-                        n->subSpec   = NULL;
-                        n->location  = @2;
-                        $$ = (Node *)n;
-#endif
+					GpPartitionSpec *n = makeNode(GpPartitionSpec);
+					n->partElem  = $2;
+					n->subSpec   = NULL;
+					n->location  = @2;
+					$$ = (Node *) n;
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -5737,67 +5731,47 @@ TabPartitionBoundarySpecValList:
               tab_part_val				{ $$ = lappend($1, $3); }
 		;
 
-/* GPDB_12_MERGE_FIXME: We don't have these PART_EDGE_* constants anymore */
-
+/*
+ * GPDB_12_MERGE_FIXME: We don't have these PART_EDGE_* constants anymore
+ * In PostgreSQL, the RANGE START is always inclusive and the RANGE END
+ * exclusive
+ */
 OptTabPartitionRangeInclusive:
-			INCLUSIVE			{ /* $$ = PART_EDGE_INCLUSIVE; */ }
-			| EXCLUSIVE			{ /* $$ = PART_EDGE_EXCLUSIVE; */ }
-			| /*EMPTY*/			{ /* $$ = PART_EDGE_UNSPECIFIED; */ }
+			INCLUSIVE			{ $$ = PART_EDGE_INCLUSIVE; }
+			| EXCLUSIVE			{ $$ = PART_EDGE_EXCLUSIVE; }
+			| /*EMPTY*/			{ $$ = PART_EDGE_UNSPECIFIED; }
 		;
 
 TabPartitionBoundarySpecStart:
 			START 
-            '(' TabPartitionBoundarySpecValList ')'
+            '(' expr_list ')'
 			OptTabPartitionRangeInclusive
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionRangeItem *n = makeNode(PartitionRangeItem); 
-                        n->partRangeVal  = $3;
-                        if (!($5))
-                            n->partedge = PART_EDGE_INCLUSIVE;
-                        else
-                            n->partedge = $5;
-                        n->location  = @1;
-                        $$ = (Node *)n;
-#endif
+						/* GPDB_12_MERGE_FIXME */
+					if (($5) && ($5) != PART_EDGE_INCLUSIVE)
+						ereport(ERROR,
+								(errmsg("exclusive START partition boundary is no longer supported"),
+								 parser_errposition(@5)));
+					$$ = $3;
 				}
             ;
 
 TabPartitionBoundarySpecEnd:
 			END_P 
-            '(' TabPartitionBoundarySpecValList ')'
+            '(' expr_list ')'
 			OptTabPartitionRangeInclusive
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionRangeItem *n = makeNode(PartitionRangeItem); 
-                        n->partRangeVal  = $3;
-                        if (!($5))
-                            n->partedge = PART_EDGE_EXCLUSIVE;
-                        else
-                            n->partedge = $5;
-                        n->location  = @1;
-                        $$ = (Node *)n;
-#endif
+					/* GPDB_12_MERGE_FIXME */
+					if (($5) && ($5) != PART_EDGE_EXCLUSIVE)
+						ereport(ERROR,
+								(errmsg("inclusive END partition boundary is no longer supported"),
+								 parser_errposition(@5)));
+					$$ = $3;
 				}
             ;
 
 OptTabPartitionBoundarySpecEvery:
-            EVERY '(' TabPartitionBoundarySpecValList ')' 
-				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionRangeItem *n = makeNode(PartitionRangeItem); 
-                        n->partRangeVal  = $3;
-                        n->location  = @1;
-
-                        $$ = (Node *)n;
-#endif
-				}
+			EVERY '(' expr_list ')'					{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NULL; }
             ;
 
@@ -5810,48 +5784,34 @@ OptTabPartitionBoundarySpecEnd:
 TabPartitionBoundarySpec:
 			part_values_clause
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionValuesSpec *n = makeNode(PartitionValuesSpec); 
+					GpPartitionValuesSpec *n = makeNode(GpPartitionValuesSpec); 
 
-                        n->partValues = $1;
-                        n->location  = @1;
-                        $$ = (Node *)n;
-#endif
+					n->partValues = $1;
+					n->location  = @1;
+					$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpecStart
               OptTabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery  
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionBoundSpec *n = makeNode(PartitionBoundSpec); 
-                        n->partStart = $1;
-                        n->partEnd   = $2;
-                        n->partEvery = $3;
-                        n->everyGenList = NIL; 
-						n->pWithTnameStr = NULL;
-                        n->location  = @1;
-                        $$ = (Node *)n;
-#endif
+					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec);
+					n->partStart = $1;
+					n->partEnd   = $2;
+					n->partEvery = $3;
+					n->pWithTnameStr = NULL;
+					n->location  = @1;
+					$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery	
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionBoundSpec *n = makeNode(PartitionBoundSpec); 
-                        n->partStart = NULL;
-                        n->partEnd   = $1;
-                        n->partEvery = $2;
-                        n->everyGenList = NIL; 
-						n->pWithTnameStr = NULL;
-                        n->location  = @1;
-                        $$ = (Node *)n;
-#endif
+					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec); 
+					n->partStart = NULL;
+					n->partEnd   = $1;
+					n->partEvery = $2;
+					n->pWithTnameStr = NULL;
+					n->location  = @1;
+					$$ = (Node *)n;
 				}
             ;
 
@@ -5914,10 +5874,7 @@ TabPartitionElem:
 			OptTabPartitionColumnEncList
 			OptTabSubPartitionSpec 
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
                         n->subSpec   = $5;
@@ -5925,9 +5882,7 @@ TabPartitionElem:
                         n->isDefault = 0;
                         n->storeAttr = $3;
                         n->colencs   = $4;
-                        n->AddPartDesc = NULL;
                         $$ = (Node *)n;
-#endif
 				}
 
 /* allow boundary spec for default partition in parser, but complain later */
@@ -5937,10 +5892,7 @@ TabPartitionElem:
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
                         n->subSpec   = $5;
@@ -5949,17 +5901,13 @@ TabPartitionElem:
                         n->storeAttr = $3;
                         n->colencs   = $4;
                         $$ = (Node *)n;
-#endif
 				}
 			| TabPartitionBoundarySpec 
               OptTabPartitionStorageAttr
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem); 
                         n->partName  = NULL;
                         n->boundSpec = $1;
                         n->subSpec   = $4;
@@ -5967,9 +5915,7 @@ TabPartitionElem:
                         n->isDefault = 0;
                         n->storeAttr = $2;
                         n->colencs   = $3;
-                        n->AddPartDesc = NULL;
                         $$ = (Node *)n;
-#endif
 				}
 			| column_reference_storage_directive
 				{
@@ -5983,10 +5929,7 @@ TabSubPartitionElem:
 			OptTabPartitionColumnEncList
             OptTabSubPartitionSpec
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem);
                         n->partName  = $1;
                         n->boundSpec = $2;
                         n->subSpec   = $5;
@@ -5994,9 +5937,7 @@ TabSubPartitionElem:
                         n->isDefault = 0;
                         n->storeAttr = $3;
                         n->colencs   = $4;
-                        n->AddPartDesc = NULL;
                         $$ = (Node *)n;
-#endif
 				}
 /* allow boundary spec for default partition in parser, but complain later */
 			| TabSubPartitionDefaultNameDecl OptTabPartitionBoundarySpec	
@@ -6004,10 +5945,7 @@ TabSubPartitionElem:
 			  OptTabPartitionColumnEncList
               OptTabSubPartitionSpec
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem);
                         n->partName  = $1;
                         n->boundSpec = $2;
                         n->subSpec   = $5;
@@ -6015,19 +5953,14 @@ TabSubPartitionElem:
                         n->isDefault = true;
                         n->storeAttr = $3;
                         n->colencs   = $4;
-                        n->AddPartDesc = NULL;
                         $$ = (Node *)n;
-#endif
 				}
 			| TabPartitionBoundarySpec
               OptTabPartitionStorageAttr
 			  OptTabPartitionColumnEncList
  			  OptTabSubPartitionSpec	
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
- * the old GPDB one. */
-#if 0
-                        PartitionElem *n = makeNode(PartitionElem); 
+                        GpPartitionElem *n = makeNode(GpPartitionElem); 
                         n->partName  = NULL;
                         n->boundSpec = $1;
                         n->subSpec   = $4;
@@ -6035,9 +5968,7 @@ TabSubPartitionElem:
                         n->isDefault = false;
                         n->colencs   = $3;
                         n->storeAttr = $2;
-                        n->AddPartDesc = NULL;
                         $$ = (Node *)n;
-#endif
 				}
 			| column_reference_storage_directive
 				{
@@ -6066,45 +5997,6 @@ TabSubPartitionDefaultNameDecl: DEFAULT SUBPARTITION PartitionColId
 				{
 					$$ = $3;
 				}
-		;
-
-TabPartitionByType:
-			RANGE 				{ $$ = PARTITION_STRATEGY_RANGE; }
-			| LIST				{ $$ = PARTITION_STRATEGY_LIST; }
-			| /*EMPTY*/
-				{
-					$$ = PARTITION_STRATEGY_RANGE; 
-
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("PARTITION BY must specify RANGE or LIST")));
-				}
-		;
-
-OptTabPartitionBy:
-			PartitionSpec
-			opt_list_subparts
-            OptTabPartitionSpec						
-				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-#if 0
-					PartitionBy *n = makeNode(PartitionBy); 
-						
-					n->subPart  = $2;
-					if (PointerIsValid(n->subPart) &&
-						!IsA(n->subPart, PartitionBy))
-						parser_yyerror("syntax error");
-
-					n->partSpec = $3;
-					n->partDepth = 0;
-					n->partQuiet = PART_VERBO_NODISTRO;
-					n->location  = @1;
-					n->partDefault = NULL;
-					$$ = (Node *)n;
-#endif
-				}
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 TabSubPartitionTemplate:
@@ -6152,7 +6044,7 @@ opt_list_subparts: TabSubPartition { $$ = $1; }
 
 
 TabSubPartitionBy: SUBPARTITION BY
-			TabPartitionByType '(' columnList ')'
+			part_strategy '(' part_params ')'
 				{
 /* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
  * the old GPDB one. */
@@ -6261,7 +6153,7 @@ CreateStatsStmt:
  *****************************************************************************/
 
 CreateAsStmt:
-		CREATE OptTemp TABLE create_as_target AS SelectStmt opt_with_data OptDistributedBy OptTabPartitionBy
+		CREATE OptTemp TABLE create_as_target AS SelectStmt opt_with_data OptDistributedBy OptFirstPartitionSpec
 				{
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ctas->query = $6;

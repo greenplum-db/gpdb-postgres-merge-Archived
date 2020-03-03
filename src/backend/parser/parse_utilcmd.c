@@ -153,9 +153,6 @@ static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
 static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
 										   Relation parent);
 static void validateInfiniteBounds(ParseState *pstate, List *blist);
-static Const *transformPartitionBoundValue(ParseState *pstate, Node *con,
-										   const char *colName, Oid colType, int32 colTypmod,
-										   Oid partCollation);
 
 static DistributedBy *getLikeDistributionPolicy(TableLikeClause *e);
 static bool co_explicitly_disabled(List *opts);
@@ -498,11 +495,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	result = lappend(cxt.blist, stmt);
 	result = list_concat(result, cxt.alist);
-		/* GPDB_12_MERGE_FIXME */
-#if 0
-	if (stmt->partitionBy && !stmt->is_part_child)
-		result = list_concat(result, save_root_partition_alist);
-#endif
 	result = list_concat(result, save_alist);
 
 	MemoryContextDelete(cxt.tempCtx);
@@ -5846,7 +5838,7 @@ validateInfiniteBounds(ParseState *pstate, List *blist)
 /*
  * Transform one constant in a partition bound spec
  */
-static Const *
+Const *
 transformPartitionBoundValue(ParseState *pstate, Node *val,
 							 const char *colName, Oid colType, int32 colTypmod,
 							 Oid partCollation)

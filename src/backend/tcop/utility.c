@@ -1154,6 +1154,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				{
 					List	   *stmts;
 					ListCell   *l;
+					List	   *more_stmts = NIL;
 
 					/* Run parse analysis ... */
 					/*
@@ -1175,6 +1176,7 @@ ProcessUtilitySlow(ParseState *pstate,
 													queryString);
 
 					/* ... and do it */
+			process_more_stmts:
 					foreach(l, stmts)
 					{
 						Node	   *stmt = (Node *) lfirst(l);
@@ -1209,6 +1211,15 @@ ProcessUtilitySlow(ParseState *pstate,
 													 relKind,
 													 ((CreateStmt *) stmt)->ownerid, NULL,
 													 queryString, false, true, NULL);
+
+							if (cstmt->partspec && cstmt->partspec->gpPartSpec)
+							{
+								List *parts;
+
+								parts = generatePartitions(cstmt, address.objectId, cstmt->partspec->gpPartSpec, queryString);
+								more_stmts = list_concat(more_stmts, parts);
+							}
+
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
@@ -1321,6 +1332,12 @@ ProcessUtilitySlow(ParseState *pstate,
 						/* Need CCI between commands */
 						if (lnext(l) != NULL)
 							CommandCounterIncrement();
+					}
+					if (more_stmts)
+					{
+						stmts = more_stmts;
+						more_stmts = NIL;
+						goto process_more_stmts;
 					}
 
 					/*

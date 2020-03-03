@@ -850,6 +850,8 @@ typedef struct PartitionSpec
 	char	   *strategy;		/* partitioning strategy ('hash', 'list' or
 								 * 'range') */
 	List	   *partParams;		/* List of PartitionElems */
+
+	struct GpPartitionSpec *gpPartSpec;
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
@@ -1869,6 +1871,20 @@ typedef enum DropBehavior
 } DropBehavior;
 
 /* ----------------------
+ *		Compound utility
+ *
+ * ----------------------
+ */
+typedef struct CompoundUtilityStmt
+{
+	NodeTag		type;
+
+	List	   *schemaElts;		/* schema components (list of parsenodes) */
+
+} CompoundUtilityStmt;
+
+
+/* ----------------------
  *	Alter Table
  * ----------------------
  */
@@ -2419,45 +2435,23 @@ typedef struct Constraint
 /* ----------
  * Definitions for Table Partition clauses in CreateStmt
  *
- * GPDB_12_MERGE_FIXME: We don't need this anymore, right?
+ * These are GPDB extensions to the PostgreSQL syntax, to allow specifying
+ * partitions as part of the CREATE TABLE command that creates the
+ * partitioned table. For example:
+ *
+ * create table foo_p (i int, j int)
+ * partition by range(j) (start(1) end(10) every(1));
+ *
+ * The "partition by range(j)" is PostgreSQL syntax, but the "(start(1)
+ * end(10) every(1)" is GPDB specific.
  * ----------
  */
-#if 0
-typedef enum PartitionByType			/* types of Partitions */
-{
-	PARTTYP_RANGE,
-	PARTTYP_LIST
-} PartitionByType;
-
-typedef enum PartitionByVerbosity		/* control Partition messaging */
-{
-	PART_VERBO_NORMAL, 		/* normal (all messages) */
-	PART_VERBO_NODISTRO, 	/* NO DISTRIBution policy messages */
-	PART_VERBO_NOPARTNAME   /* NO distro or partition name messages
-							   (for SET SUBPARTITION TEMPLATE) */
-} PartitionByVerbosity;
-
-typedef struct PartitionBy			/* the Partition By clause */
-{
-	NodeTag				type;
-	PartitionByType		partType;
-	List			   *keys;		/* key columns (Partition By ...) */
-	List			   *keyopclass;	/* opclass for each key */
-	Node			   *subPart;	/* optional subpartn (PartitionBy ptr) */
-	Node			   *partSpec;	/* specification or template */
-	Node			   *partDefault;/* DEFAULT partition (if exists) */
-	int				    partDepth;	/* depth (starting at zero) */
-	RangeVar		   *parentRel;	/* parent relation */
-	bool				bKeepMe;    /* keep the top-level pby [nefarious] */
-	int				    partQuiet;	/* PartitionByVerbosity */
-	int					location;	/* token location, or -1 if unknown */
-} PartitionBy;
 
 /*
  * An element in a partition configuration. This represents a single clause --
  * or perhaps an expansion of a single clause.
  */
-typedef struct PartitionElem
+typedef struct GpPartitionElem
 {
 	NodeTag				type;
 	char			   *partName;	/* partition name (optional) */
@@ -2465,53 +2459,44 @@ typedef struct PartitionElem
 	Node			   *subSpec;	/* subpartition spec */
 	bool                isDefault;	/* TRUE if default partition declaration */
 	Node			   *storeAttr;	/* storage clause attributes */
-	char			   *AddPartDesc;/* set by tablecmds.c:atpxAddPart */
 	int					partno;		/* number of the partition element */
 	long				rrand;		/* if not zero, "random" id for relname */
 	List			   *colencs;	/* column encoding clauses */
 	int					location;	/* token location, or -1 if unknown */
-} PartitionElem;
+} GpPartitionElem;
 
-typedef enum PartitionEdgeBounding
+/* GPDB_12_MERGE_FIXME: In PostgreSQL, the lower boundary is always inclusive
+ * and the upper boundary is exclusive. The legacy syntax was more flexible.
+ */
+typedef enum GpPartitionEdgeBounding
 {
 	PART_EDGE_UNSPECIFIED,
 	PART_EDGE_INCLUSIVE,
 	PART_EDGE_EXCLUSIVE
-} PartitionEdgeBounding;
-
-/* a "Range Item" is the "values" portition of a LIST partition, or
- * the "values" of a START, END, or EVERY spec in a RANGE partition */
-typedef struct PartitionRangeItem
-{
-	NodeTag				type;
-	List			   *partRangeVal;	/*  value */
-	PartitionEdgeBounding partedge;		/* inclusive/exclusive ? */
-	int					everycount;		/* if EVERY, how many in the set */
-	int					location;		/* token location, or -1 if unknown */
-} PartitionRangeItem;
+} GpPartitionEdgeBounding;
 
 /* partition boundary specification */
-typedef struct PartitionBoundSpec
+typedef struct GpPartitionBoundSpec
 {
 	NodeTag				type;
-	Node			   *partStart;		/* start of range */
-	Node			   *partEnd;		/* end */
-	Node 			   *partEvery;		/* every specification */
-	List 			   *everyGenList;	/* generated EVERY partitions */
+
+	List			   *partStart;		/* start of range */
+	List			   *partEnd;		/* end */
+	List 			   *partEvery;		/* every specification */
 	/* MPP-6297: check for WITH (tablename=name) clause */
 	char			   *pWithTnameStr;	/* and disable EVERY if tname set */
 	int					location;		/* token location, or -1 if unknown */
-} PartitionBoundSpec;
+} GpPartitionBoundSpec;
 
 /* VALUES clause specification */
-typedef struct PartitionValuesSpec
+typedef struct GpPartitionValuesSpec
 {
 	NodeTag				type;
 	List			   *partValues;		/* VALUES clause for LIST partition */
 	int					location;
-} PartitionValuesSpec;
+} GpPartitionValuesSpec;
 
-typedef struct PartitionSpec			/* a Partition Specification */
+typedef struct GpPartitionSpec			/* a Partition Specification */
 {
 	NodeTag				type;
 	List			   *partElem;		/* partition element list */
@@ -2519,9 +2504,7 @@ typedef struct PartitionSpec			/* a Partition Specification */
 	Node			   *subSpec;		/* subpartition spec */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
-} PartitionSpec;
-
-#endif // GPDB_12_MERGE_FIXME: end of legacy partitionging stuff
+} GpPartitionSpec;
 
 typedef struct ExpandStmtSpec
 {
