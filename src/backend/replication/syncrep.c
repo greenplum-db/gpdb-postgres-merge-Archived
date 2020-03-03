@@ -628,12 +628,7 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	 * Quick exit if we are not managing a sync standby or there are not
 	 * enough synchronous standbys.
 	 */
-	if (IS_QUERY_DISPATCHER())
-	{
-		if (list_length(sync_standbys) == 0)
-			return false;
-	}
-	else if (!(*am_sync) ||
+	if (!(*am_sync) ||
 		SyncRepConfig == NULL ||
 		list_length(sync_standbys) < SyncRepConfig->num_sync)
 	{
@@ -777,42 +772,19 @@ cmp_lsn(const void *a, const void *b)
  * On return, *am_sync is set to true if this walsender is connecting to
  * sync standby. Otherwise it's set to false.
  */
+/*
+ * GPDB_12_MERGE_FIXME: This always returns an empty list for QD, which
+ * effectively makes the replication asynchronous between QD and standby. But
+ * at least we're not crashing when trying to access SyncRepConfig. If you want
+ * to make the replication synchronous then check out these commits: b8f98fc
+ * and 7f6066e.
+ */
 List *
 SyncRepGetSyncStandbys(bool *am_sync)
 {
-	List	   *result = NIL;
-	bool		syncStandbyPresent;
-	int			i;
-	volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
-								 * rearrangement */
-
 	/* Set default result */
 	if (am_sync != NULL)
 		*am_sync = false;
-
-	/* GPDB_12_MERGE_FIXME: Should this be in SyncRepGetSyncStandbysQuorum()
-	 * instead? */
-	if (IS_QUERY_DISPATCHER())
-	{
-		for (i = 0; i < max_wal_senders; i++)
-		{
-			walsnd = &WalSndCtl->walsnds[i];
-			SpinLockAcquire(&walsnd->mutex);
-			syncStandbyPresent = (walsnd->pid != 0)
-				&& ((walsnd->state == WALSNDSTATE_STREAMING)
-				|| (walsnd->state == WALSNDSTATE_CATCHUP &&
-				walsnd->caughtup_within_range));
-			SpinLockRelease(&walsnd->mutex);
-
-			if (syncStandbyPresent)
-			{
-				result = lappend_int(result, i);
-				if (am_sync)
-					*am_sync = true;
-				return result;
-			}
-		}
-	}
 
 	/* Quick exit if sync replication is not requested */
 	if (SyncRepConfig == NULL)
