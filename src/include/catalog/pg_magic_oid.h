@@ -43,13 +43,16 @@
  * more painful, however, since some user-defined OIDs will appear in
  * on-disk data; such a change would probably break pg_upgrade.
  *
+ * GPDB: we have some more built-in entries, so bumped FirstBoostrapObjectId
+ * from 1200 to 12500.
+ *
  * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
  * and resume with 16384.  This minimizes the odds of OID conflict, by not
  * reassigning OIDs that might have been assigned during initdb.
  * ----------
  */
 #define FirstGenbkiObjectId		10000
-#define FirstBootstrapObjectId	12000
+#define FirstBootstrapObjectId	12500
 #define FirstNormalObjectId		16384
 
 /*

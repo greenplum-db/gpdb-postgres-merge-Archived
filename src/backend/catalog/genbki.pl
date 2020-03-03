@@ -223,6 +223,17 @@ foreach my $row (@{ $catalog_data{pg_opfamily} })
 	# There is no unique name, so we need to combine access method
 	# and opfamily name.
 	my $key = sprintf "%s/%s", $row->{opfmethod}, $row->{opfname};
+
+	# GPDB: Normally, we assign OIDs only later, and we don't put
+	# auto-assigned OIDs in the lookup tables, but auto-generated bitmap
+	# opfamilies, with no hard-coded OIDs are referenced by name from the
+	# other (auto-generated) entries in pg_class, pg_amop and pg_amproc.
+	if (!($row->{oid}))
+	{
+		$row->{oid} = $GenbkiNextOid;
+		$GenbkiNextOid++;
+	}
+
 	$opfoids{$key} = $row->{oid};
 }
 

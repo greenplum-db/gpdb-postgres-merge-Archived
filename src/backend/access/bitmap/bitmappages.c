@@ -21,6 +21,7 @@
 #include "access/tupdesc.h"
 #include "access/bitmap.h"
 #include "access/bitmap_private.h"
+#include "catalog/pg_collation.h"
 #include "miscadmin.h"
 #include "parser/parse_oper.h"
 #include "storage/bufmgr.h"
@@ -475,9 +476,11 @@ build_hash_key(const void *key, Size keysize pg_attribute_unused())
         }
         else
         {
-            hashkey ^= DatumGetUInt32(FunctionCall1(&cur_bmbuild->hash_funcs[i], k[i]));
+			hashkey ^= DatumGetUInt32(FunctionCall1Coll(&cur_bmbuild->hash_funcs[i],
+														/* GPDB_12_MERGE_FIXME: always use default collation. Is that OK? */
+														DEFAULT_COLLATION_OID,
+														k[i]));
         }
-
 	}
 	return hashkey;
 }
@@ -527,7 +530,11 @@ build_match_key(const void *key1, const void *key2, Size keysize pg_attribute_un
             /* do the real comparison */
             Datum attr1 = k1[i];
             Datum attr2 = k2[i];
-            if (!DatumGetBool(FunctionCall2(&cur_bmbuild->eq_funcs[i], attr1, attr2)))
+			if (!DatumGetBool(FunctionCall2Coll(&cur_bmbuild->eq_funcs[i],
+												/* GPDB_12_MERGE_FIXME: always use default collation. Is that OK? */
+												DEFAULT_COLLATION_OID,
+												attr1,
+												attr2)))
             {
                 result = 1;     /* they aren't equal */
                 break;

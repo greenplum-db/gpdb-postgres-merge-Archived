@@ -216,11 +216,22 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	indattrs = tupDesc->natts - 2;
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = indattrs;
+	indexInfo->ii_NumIndexKeyAttrs = indattrs;
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_Predicate = make_ands_implicit(NULL);
+	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_PredicateState = NULL;
+	indexInfo->ii_ExclusionOps = NULL;
+	indexInfo->ii_ExclusionProcs = NULL;
+	indexInfo->ii_ExclusionStrats = NULL;
 	indexInfo->ii_Unique = true;
+	indexInfo->ii_ReadyForInserts = true;
+	indexInfo->ii_Concurrent = false;
+	indexInfo->ii_BrokenHotChain = false;
+	indexInfo->ii_ParallelWorkers = 0;
+	indexInfo->ii_Am = BTREE_AM_OID;
+	indexInfo->ii_AmCache = NULL;
+	indexInfo->ii_Context = CurrentMemoryContext;
 
 	classObjectId = (Oid *) palloc(indattrs * sizeof(Oid));
 	coloptions = (int16 *) palloc(indattrs * sizeof(int16));
