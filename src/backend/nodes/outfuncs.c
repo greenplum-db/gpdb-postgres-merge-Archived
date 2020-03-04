@@ -3128,6 +3128,9 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
 
+	WRITE_NODE_FIELD(part_idx_oids);
+	WRITE_NODE_FIELD(part_idx_names);
+
 	/*
 	 * Some extra checks to make sure we didn't get lost
 	 * during serialization/deserialization

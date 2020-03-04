@@ -4044,6 +4044,9 @@ CopyCreateStmtFields(const CreateStmt *from, CreateStmt *newnode)
 	COPY_SCALAR_FIELD(ownerid);
 	COPY_SCALAR_FIELD(buildAoBlkdir);
 	COPY_NODE_FIELD(attr_encodings);
+
+	COPY_NODE_FIELD(part_idx_oids);
+	COPY_NODE_FIELD(part_idx_names);
 }
 
 static CreateStmt *

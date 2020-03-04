@@ -1194,12 +1194,45 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				generateClonedIndexStmt(NULL, idxRel,
 										attmap, RelationGetDescr(parent)->natts,
 										&constraintOid);
+
+			/*
+			 * In QE, we cannot independently choose index names. We must use
+			 * the same names as were chosen in the QD. The QD stashed the
+			 * names in the CreateStmt->part_idx_oids/names lists, dig them
+			 * up from there.
+			 */
+			if (Gp_role == GP_ROLE_EXECUTE)
+			{
+				ListCell   *lc_oid,
+						   *lc_name;
+
+				forboth(lc_oid, stmt->part_idx_oids,
+						lc_name, stmt->part_idx_names)
+				{
+					if (lfirst_oid(lc_oid) == RelationGetRelid(idxRel))
+					{
+						idxstmt->idxname = strVal(lfirst(lc_name));
+						break;
+					}
+				}
+				if (!idxstmt->idxname)
+					elog(ERROR, "did not receive index name from QD for index %s on partition %s",
+						 RelationGetRelationName(idxRel),
+						 RelationGetRelationName(rel));
+			}
+
 			DefineIndex(RelationGetRelid(rel),
 						idxstmt,
 						InvalidOid,
 						RelationGetRelid(idxRel),
 						constraintOid,
 						false, false, false, false, false);
+
+			if (Gp_role == GP_ROLE_DISPATCH)
+			{
+				stmt->part_idx_oids = lappend_oid(stmt->part_idx_oids, RelationGetRelid(idxRel));
+				stmt->part_idx_names = lappend(stmt->part_idx_names, makeString(idxstmt->idxname));
+			}
 
 			index_close(idxRel, AccessShareLock);
 		}
