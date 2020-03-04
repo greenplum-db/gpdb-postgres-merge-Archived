@@ -62,30 +62,40 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 
 	foreach(lc, gpPartSpec->partElem)
 	{
-		GpPartitionElem *elem = lfirst_node(GpPartitionElem, lc);
-		List	   *new_parts;
+		Node	   *n = lfirst(lc);
 
-		if (elem->boundSpec)
+		if (IsA(n, GpPartitionElem))
 		{
-			if (IsA(elem->boundSpec, GpPartitionBoundSpec))
-				new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString);
+			GpPartitionElem *elem = (GpPartitionElem *) n;
+			List	   *new_parts;
+
+			if (elem->boundSpec)
+			{
+				if (IsA(elem->boundSpec, GpPartitionBoundSpec))
+					new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString);
+				else
+				{
+					Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
+					new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString);
+				}
+			}
+			else if (elem->isDefault)
+			{
+				new_parts = generateDefaultPartition(pstate, cstmt, parentrel, elem, queryString);
+			}
 			else
 			{
-				Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
-				new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString);
+				/* GPDB_12_MERGE_FIXME: which cases are we not handling yet? */
+				elog(ERROR, "unexpected GpPartitionElem");
 			}
-		}
-		else if (elem->isDefault)
-		{
-			new_parts = generateDefaultPartition(pstate, cstmt, parentrel, elem, queryString);
-		}
-		else
-		{
-			/* GPDB_12_MERGE_FIXME: which cases are we not handling yet? */
-			elog(ERROR, "unexpected GpPartitionElem");
-		}
 
-		result = list_concat(result, new_parts);
+			result = list_concat(result, new_parts);
+		}
+		else if (IsA(n, ColumnReferenceStorageDirective))
+		{
+			/* GPDB_12_MERGE_FIXME */
+			elog(ERROR, "column storage directives not implemented yet");
+		}
 	}
 
 	free_parsestate(pstate);
