@@ -19177,9 +19177,22 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 
 		/* Grab a work queue entry. */
 		tab = ATGetQueueEntry(wqueue, scanrel);
-		Assert(tab->partition_constraint == NULL);
-		tab->partition_constraint = (Expr *) linitial(partConstraint);
-		tab->validate_default = validate_default;
+
+		if (Gp_role == GP_ROLE_EXECUTE)
+		{
+			/*
+			 * In the QE, we receive these from the QD. We should reach
+			 * the same conclusions if we re-did the work here.
+			 */
+			Assert(equal(tab->partition_constraint, linitial(partConstraint)));
+			Assert(tab->validate_default == validate_default);
+		}
+		else
+		{
+			Assert(tab->partition_constraint == NULL);
+			tab->partition_constraint = (Expr *) linitial(partConstraint);
+			tab->validate_default = validate_default;
+		}
 	}
 	else if (scanrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
