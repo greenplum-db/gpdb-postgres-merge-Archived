@@ -40,6 +40,8 @@
 #include "utils/ruleutils.h"
 #include "utils/syscache.h"
 
+#include "cdb/cdbvars.h"
+
 /*
  * When qsort'ing partition bounds after reading from the catalog, each bound
  * is represented with one of the following structs.
@@ -1253,7 +1255,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 	 */
 	if (PartConstraintImpliedByRelConstraint(default_rel, def_part_constraints))
 	{
-		ereport(INFO,
+		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : INFO,
 				(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
 						RelationGetRelationName(default_rel))));
 		return;
