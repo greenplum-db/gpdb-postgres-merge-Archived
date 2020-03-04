@@ -3384,6 +3384,33 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 }
 
 static void
+wrapStringList(List *list)
+{
+	ListCell *lc;
+
+	foreach(lc, list)
+	{
+		char	   *str = (char *) lfirst(lc);
+
+		lfirst(lc) = makeString(str);
+	}
+}
+
+static void
+unwrapStringList(List *list)
+{
+	ListCell *lc;
+
+	foreach(lc, list)
+	{
+		Value	   *val = (Value *) lfirst(lc);
+
+		lfirst(lc) = strVal(val);
+		pfree(val);
+	}
+}
+
+static void
 _outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 {
 	ListCell   *lc;
@@ -3428,24 +3455,15 @@ _outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 	/* node->changedContraintDefs is a list of naked strings, so
 	 * we can't use WRITE_NODE_FIELD on it. Temporarily wrap them in Values.
 	 */
-	foreach(lc, node->changedConstraintDefs)
-	{
-		char	   *str = (char *) lfirst(lc);
-
-		lfirst(lc) = makeString(str);
-	}
+	wrapStringList(node->changedConstraintDefs);
 	WRITE_NODE_FIELD(changedConstraintDefs);
 	/* unwrap them again */
-	foreach(lc, node->changedConstraintDefs)
-	{
-		Value	   *val = (Value *) lfirst(lc);
-
-		lfirst(lc) = strVal(val);
-		pfree(val);
-	}
+	unwrapStringList(node->changedConstraintDefs);
 
 	WRITE_NODE_FIELD(changedIndexOids);
+	wrapStringList(node->changedIndexDefs);
 	WRITE_NODE_FIELD(changedIndexDefs);
+	unwrapStringList(node->changedIndexDefs);
 }
 
 static void

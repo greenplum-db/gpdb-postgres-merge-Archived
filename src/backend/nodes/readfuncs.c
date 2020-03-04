@@ -933,6 +933,19 @@ _readAlterTableCmd(void)
 	READ_DONE();
 }
 
+static void
+unwrapStringList(List *list)
+{
+	ListCell *lc;
+
+	foreach(lc, list)
+	{
+		Value	   *val = (Value *) lfirst(lc);
+
+		lfirst(lc) = strVal(val);
+		pfree(val);
+	}
+}
 
 static AlteredTableInfo *
 _readAlteredTableInfo(void)
@@ -960,17 +973,10 @@ _readAlteredTableInfo(void)
 	READ_NODE_FIELD(changedConstraintOids);
 	READ_NODE_FIELD(changedConstraintDefs);
 	/* The QD sends changedConstraintDefs wrapped in Values. Unwrap them. */
-	ListCell   *lc;
-	foreach(lc, local_node->changedConstraintDefs)
-	{
-		Value	   *val = (Value *) lfirst(lc);
-
-		lfirst(lc) = strVal(val);
-		pfree(val);
-	}
-
+	unwrapStringList(local_node->changedConstraintDefs);
 	READ_NODE_FIELD(changedIndexOids);
 	READ_NODE_FIELD(changedIndexDefs);
+	unwrapStringList(local_node->changedIndexDefs);
 
 	READ_DONE();
 }

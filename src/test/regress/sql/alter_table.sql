@@ -660,8 +660,6 @@ insert into atacc1 (test) values (2);
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try to create duplicates via alter table using - should fail
--- this errors out in Greenplum for a different reason: we don't support
--- SET DATA TYPE on an indexed column yet
 alter table atacc1 alter column test type integer using 0;
 drop table atacc1;
 
