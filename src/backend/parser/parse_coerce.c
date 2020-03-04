@@ -118,7 +118,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 	result = coerce_type_typmod(result,
 								targettype, targettypmod,
 								ccontext, cformat, location,
-								(result != expr && !IsA(result, Const)));
+								(result != expr && !IsA(result, Const) && !IsA(result, Var)));
 
 	if (expr != origexpr)
 	{
