@@ -5983,25 +5983,6 @@ select * from
  Settings: optimizer=off
 (17 rows)
 
--- check handling of nested appendrels inside LATERAL
-select * from
-  ((select 2 as v) union all (select 3 as v)) as q1
-  cross join lateral
-  ((select * from
-      ((select 4 as v) union all (select 5 as v)) as q3)
-   union all
-   (select q1.v)
-  ) as q2;
- v | v 
----+---
- 2 | 4
- 2 | 5
- 2 | 2
- 3 | 4
- 3 | 5
- 3 | 3
-(6 rows)
-
 -- check dummy rels with lateral references (bug #15694)
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
