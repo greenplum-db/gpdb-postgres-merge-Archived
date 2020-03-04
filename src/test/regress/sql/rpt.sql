@@ -123,13 +123,13 @@ CREATE TABLE parent_part (
 CREATE TABLE child (
         salary          int4,
         manager         name
-) INHERITS (parent_rep) WITH OIDS;
+) INHERITS (parent_rep);
 
 -- replicated table can not have parents, should fail
 CREATE TABLE child (
         salary          int4,
         manager         name
-) INHERITS (parent_part) WITH OIDS DISTRIBUTED REPLICATED;
+) INHERITS (parent_part) DISTRIBUTED REPLICATED;
 
 drop table if exists parent_rep;
 drop table if exists parent_part;
