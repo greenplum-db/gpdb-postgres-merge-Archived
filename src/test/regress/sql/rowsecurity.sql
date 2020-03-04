@@ -180,16 +180,11 @@ ALTER TABLE category ENABLE ROW LEVEL SECURITY;
 
 -- cannot delete PK referenced by invisible FK
 SET SESSION AUTHORIZATION regress_rls_bob;
-<<<<<<< HEAD
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
+SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
 -- GPDB: referential integrity checks are not enforced
 -- start_ignore
 -- DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 -- end_ignore
-=======
-SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid ORDER BY d.did, c.cid;
-DELETE FROM category WHERE cid = 33;    -- fails with FK violation
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -532,12 +527,6 @@ SELECT * FROM rec1;    -- fail, mutual recursion via views
 SET SESSION AUTHORIZATION regress_rls_bob;
 
 DROP VIEW rec1v, rec2v CASCADE;
-<<<<<<< HEAD
--- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
--- GUCs in QEs.
-SET client_min_messages TO 'notice';
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
@@ -1044,12 +1033,6 @@ DROP TABLE test_qual_pushdown;
 RESET SESSION AUTHORIZATION;
 
 DROP TABLE t1 CASCADE;
-<<<<<<< HEAD
--- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
--- GUCs in QEs.
-SET client_min_messages TO 'notice';
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE TABLE t1 (a integer);
 
