@@ -102,7 +102,6 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
-
 -- test copy force quote
 create temp table copytest4 (id int, id1 int);
 insert into copytest4 values (1,2);
