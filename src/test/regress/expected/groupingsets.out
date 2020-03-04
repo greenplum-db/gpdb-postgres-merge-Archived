@@ -723,19 +723,25 @@ select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 or
 
 explain (costs off)
   select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 order by a;
-                   QUERY PLAN                   
-------------------------------------------------
- GroupAggregate
-   Group Key: a
-   Group Key: ()
-   Filter: (a IS DISTINCT FROM 1)
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: a
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sort
+   Sort Key: a
+   ->  Finalize GroupAggregate
+         Group Key: (GROUPINGSET_ID()), a
+         Filter: (a IS DISTINCT FROM 1)
          ->  Sort
-               Sort Key: a
-               ->  Seq Scan on gstest2
+               Sort Key: (GROUPINGSET_ID()), a
+               ->  Gather Motion 3:1  (slice1; segments: 3)
+                     ->  Partial GroupAggregate
+                           Group Key: a
+                           Group Key: ()
+                           Filter: (a IS DISTINCT FROM 1)
+                           ->  Sort
+                                 Sort Key: a
+                                 ->  Seq Scan on gstest2
  Optimizer: Postgres query optimizer
-(10 rows)
+(16 rows)
 
 select v.c, (select count(*) from gstest2 group by () having v.c)
   from (values (false),(true)) v(c) order by v.c;
@@ -1138,13 +1144,15 @@ select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),a)
 
 explain (costs off)
   select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),a);
-           QUERY PLAN           
---------------------------------
- HashAggregate
-   Hash Key: a, b
-   Hash Key: a
-   ->  Seq Scan on gstest_empty
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  HashAggregate
+         Hash Key: a, b
+         Hash Key: a
+         ->  Seq Scan on gstest_empty
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),());
  a | b | sum | count 
@@ -1162,15 +1170,17 @@ select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),()
 
 explain (costs off)
   select a, b, sum(v), count(*) from gstest_empty group by grouping sets ((a,b),(),(),());
-           QUERY PLAN           
---------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  MixedAggregate
    Hash Key: a, b
    Group Key: ()
    Group Key: ()
    Group Key: ()
-   ->  Seq Scan on gstest_empty
-(6 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Seq Scan on gstest_empty
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 select sum(v), count(*) from gstest_empty group by grouping sets ((),(),());
  sum | count 
@@ -1182,14 +1192,20 @@ select sum(v), count(*) from gstest_empty group by grouping sets ((),(),());
 
 explain (costs off)
   select sum(v), count(*) from gstest_empty group by grouping sets ((),(),());
-           QUERY PLAN           
---------------------------------
- Aggregate
-   Group Key: ()
-   Group Key: ()
-   Group Key: ()
-   ->  Seq Scan on gstest_empty
-(5 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Finalize GroupAggregate
+   Group Key: (GROUPINGSET_ID())
+   ->  Sort
+         Sort Key: (GROUPINGSET_ID())
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Partial Aggregate
+                     Group Key: ()
+                     Group Key: ()
+                     Group Key: ()
+                     ->  Seq Scan on gstest_empty
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 -- check that functionally dependent cols are not nulled
 select a, d, grouping(a,b,c)
@@ -1207,13 +1223,15 @@ explain (costs off)
   select a, d, grouping(a,b,c)
     from gstest3
    group by grouping sets ((a,b), (a,c));
-        QUERY PLAN         
----------------------------
- HashAggregate
-   Hash Key: a, b
-   Hash Key: a, c
-   ->  Seq Scan on gstest3
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  HashAggregate
+         Hash Key: a, b
+         Hash Key: a, c
+         ->  Seq Scan on gstest3
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 -- simple rescan tests
 select a, b, sum(v.x)
@@ -1318,20 +1336,23 @@ select a, b, sum(c), sum(sum(c)) over (order by a,b) as rsum
 explain (costs off)
   select a, b, sum(c), sum(sum(c)) over (order by a,b) as rsum
     from gstest2 group by cube (a,b) order by rsum, a, b;
-                 QUERY PLAN                  
----------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Sort
-   Sort Key: (sum((sum(c))) OVER (?)), a, b
+   Sort Key: (sum((sum(gstest2.c))) OVER (?)), gstest2.a, gstest2.b
    ->  WindowAgg
+         Order By: gstest2.a, gstest2.b
          ->  Sort
-               Sort Key: a, b
+               Sort Key: gstest2.a, gstest2.b
                ->  MixedAggregate
-                     Hash Key: a, b
-                     Hash Key: a
-                     Hash Key: b
+                     Hash Key: gstest2.a, gstest2.b
+                     Hash Key: gstest2.a
+                     Hash Key: gstest2.b
                      Group Key: ()
-                     ->  Seq Scan on gstest2
-(11 rows)
+                     ->  Gather Motion 3:1  (slice1; segments: 3)
+                           ->  Seq Scan on gstest2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)
@@ -1504,8 +1525,8 @@ explain (costs off)
          count(hundred), count(thousand), count(twothousand),
          count(*)
     from tenk1 group by grouping sets (unique1,twothousand,thousand,hundred,ten,four,two);
-          QUERY PLAN           
--------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  MixedAggregate
    Hash Key: two
    Hash Key: four
@@ -1516,10 +1537,13 @@ explain (costs off)
      Group Key: twothousand
    Sort Key: thousand
      Group Key: thousand
-   ->  Sort
-         Sort Key: unique1
-         ->  Seq Scan on tenk1
-(13 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: unique1
+         ->  Sort
+               Sort Key: unique1
+               ->  Seq Scan on tenk1
+ Optimizer: Postgres query optimizer
+(16 rows)
 
 explain (costs off)
   select unique1,
@@ -1527,18 +1551,21 @@ explain (costs off)
          count(hundred), count(thousand), count(twothousand),
          count(*)
     from tenk1 group by grouping sets (unique1,hundred,ten,four,two);
-          QUERY PLAN           
--------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  MixedAggregate
    Hash Key: two
    Hash Key: four
    Hash Key: ten
    Hash Key: hundred
    Group Key: unique1
-   ->  Sort
-         Sort Key: unique1
-         ->  Seq Scan on tenk1
-(9 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: unique1
+         ->  Sort
+               Sort Key: unique1
+               ->  Seq Scan on tenk1
+ Optimizer: Postgres query optimizer
+(12 rows)
 
 set work_mem = '384kB';
 explain (costs off)
@@ -1547,8 +1574,8 @@ explain (costs off)
          count(hundred), count(thousand), count(twothousand),
          count(*)
     from tenk1 group by grouping sets (unique1,twothousand,thousand,hundred,ten,four,two);
-          QUERY PLAN           
--------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  MixedAggregate
    Hash Key: two
    Hash Key: four
@@ -1558,10 +1585,13 @@ explain (costs off)
    Group Key: unique1
    Sort Key: twothousand
      Group Key: twothousand
-   ->  Sort
-         Sort Key: unique1
-         ->  Seq Scan on tenk1
-(12 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: unique1
+         ->  Sort
+               Sort Key: unique1
+               ->  Seq Scan on tenk1
+ Optimizer: Postgres query optimizer
+(15 rows)
 
 -- check collation-sensitive matching between grouping expressions
 -- (similar to a check for aggregates, but there are additional code
