@@ -835,6 +835,19 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
+		case T_AggExprId:
+			{
+				if (!state->parent || !IsA(state->parent, TupleSplitState) ||
+					!IsA(state->parent->plan, TupleSplit))
+					elog(ERROR, "AggExprId found in non-TupleSplit plan node");
+
+				scratch.opcode = EEOP_AGGEXPR_ID;
+				scratch.d.agg_expr_id.parent = (TupleSplitState *) state->parent;
+
+				ExprEvalPushStep(state, &scratch);
+				break;
+			}
+
 		case T_WindowFunc:
 			{
 				WindowFunc *wfunc = (WindowFunc *) node;

@@ -3022,12 +3022,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 					 * find the Var.
 					 */
 				TargetEntry *expr = (TargetEntry *)lfirst(l);
-				
+
 				/* All exprs should be calculated before TupleSplit */
-				Assert(IsA(expr,Var));
-				
-				Var *var = (Var *)expr;
-				
+				Assert(IsA(expr->expr,Var));
+
+				Var *var = (Var *) expr->expr;
+
 				args_attr_num = bms_add_member(args_attr_num, var->varattno);
 			}
 			

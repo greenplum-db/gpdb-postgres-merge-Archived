@@ -17,6 +17,8 @@
 #include "optimizer/optimizer.h"
 #include "utils/memutils.h"
 
+static TupleTableSlot *ExecTupleSplit(PlanState *pstate);
+
 /* -----------------
  * ExecInitTupleSplit
  *
@@ -36,6 +38,7 @@ ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags)
 	tup_spl_state = makeNode(TupleSplitState);
 	tup_spl_state->ss.ps.plan = (Plan *) node;
 	tup_spl_state->ss.ps.state = estate;
+	tup_spl_state->ss.ps.ExecProcNode = ExecTupleSplit;
 
 	ExecAssignExprContext(estate, &tup_spl_state->ss.ps);
 
@@ -113,8 +116,10 @@ ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags)
  *      the DQAs exprs). Each output tuple only contain one DQA expr and
  *      all GROUP BY exprs.
  */
-struct TupleTableSlot *ExecTupleSplit(TupleSplitState *node)
+static TupleTableSlot *
+ExecTupleSplit(PlanState *pstate)
 {
+	TupleSplitState *node = castNode(TupleSplitState, pstate);
 	TupleTableSlot  *result;
 	ExprContext     *econtext;
 	TupleSplit      *plan;

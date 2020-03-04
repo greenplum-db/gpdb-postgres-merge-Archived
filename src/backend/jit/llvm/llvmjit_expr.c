@@ -1936,6 +1936,25 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_AGGEXPR_ID:
+				{
+					TupleSplitState *tsstate = op->d.agg_expr_id.parent;
+					LLVMValueRef v_currentExprId_p;
+					LLVMValueRef v_currentExprId;
+
+					/* Copy tsstate->currentExprId to the result */
+					v_currentExprId_p = l_ptr_const(&tsstate->currentExprId,
+											  l_ptr(LLVMInt32Type()));
+					v_currentExprId = LLVMBuildLoad(b, v_gset_id_p, "v_currentExprId");
+
+					/* and store result */
+					LLVMBuildStore(b, v_currentExprId, v_resvaluep);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
+
+					LLVMBuildBr(b, opblocks[i + 1]);
+					break;
+				}
+
 			case EEOP_WINDOW_FUNC:
 				{
 					WindowFuncExprState *wfunc = op->d.window_func.wfstate;

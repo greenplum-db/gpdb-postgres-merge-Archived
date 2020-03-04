@@ -217,6 +217,7 @@ typedef enum ExprEvalOp
 	EEOP_AGGREF,
 	EEOP_GROUPING_FUNC,
 	EEOP_GROUPING_SET_ID,
+	EEOP_AGGEXPR_ID,
 	EEOP_WINDOW_FUNC,
 	EEOP_SUBPLAN,
 	EEOP_ALTERNATIVE_SUBPLAN,
@@ -579,6 +580,12 @@ typedef struct ExprEvalStep
 		{
 			AggState   *parent; /* parent Agg */
 		}			grouping_set_id;
+
+		/* for EEOP_AGGEXPR_ID */
+		struct
+		{
+			TupleSplitState *parent; /* parent TupleSplit */
+		}			agg_expr_id;
 
 		/* for EEOP_WINDOW_FUNC */
 		struct
