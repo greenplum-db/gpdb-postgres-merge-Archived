@@ -782,6 +782,7 @@ ExecSquelchNode(PlanState *node)
 		case T_IndexOnlyScanState:
 		case T_DynamicBitmapIndexScanState:
 		case T_BitmapIndexScanState:
+		case T_TableFuncScanState:
 		case T_ValuesScanState:
 		case T_TidScanState:
 		case T_TableFunctionState:

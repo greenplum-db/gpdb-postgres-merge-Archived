@@ -3070,6 +3070,14 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
  * create_tablefunction_path
  *	  Creates a path corresponding to a sequential scan of a table function,
  *	  returning the pathnode.
+ *
+ * NB: This is a GPDB specific thing, to support this syntax:
+ *
+ *   SELECT * FROM multiset_5( TABLE( SELECT * from example) ) order by a, b;
+ *
+ * Despite the similar name, this is completely different from the upstream
+ * create_tablefuncscan_path() function below! The other function deals with
+ * XMLTABLE and similar functions.
  */
 TableFunctionScanPath *
 create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
@@ -3134,6 +3142,7 @@ create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parallel_safe = rel->consider_parallel;
 	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
+	CdbPathLocus_MakeGeneral(&pathnode->locus);
 
 	cost_tablefuncscan(pathnode, root, rel, pathnode->param_info);
 

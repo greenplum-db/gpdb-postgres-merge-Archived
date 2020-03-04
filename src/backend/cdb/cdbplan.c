@@ -536,6 +536,18 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_TableFuncScan:
+			{
+				TableFuncScan *scan = (TableFuncScan *) node;
+				TableFuncScan *newscan;
+
+				FLATCOPY(newscan, scan, TableFuncScan);
+				MUTATE(newscan->tablefunc, scan->tablefunc, TableFunc *);
+				SCANMUTATE(newscan, scan);
+				return (Node *) newscan;
+			}
+			break;
+
 		case T_WorkTableScan:
 			{
 				WorkTableScan *wts = (WorkTableScan *) node;

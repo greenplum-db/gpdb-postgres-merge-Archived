@@ -447,6 +447,7 @@ DirectDispatchUpdateContentIdsFromPlan(PlannerInfo *root, Plan *plan)
 			break;
 		case T_TidScan:
 		case T_FunctionScan:
+		case T_TableFuncScan:
 		case T_WorkTableScan:
 			DisableTargetedDispatch(&dispatchInfo);
 			break;
