@@ -50,37 +50,20 @@ drop view vw_ord;
 -- Backward scan not supported in GPDB, which makes this a lot less
 -- interesting than in PostgreSQL.
 begin;
-<<<<<<< HEAD
-declare foo scroll cursor for select * from rows from(generate_series(1,5),generate_series(1,2)) with ordinality as g(i,j,o);
-fetch all from foo;
---fetch backward all from foo;
-fetch all from foo;
-fetch next from foo;
-fetch next from foo;
---fetch prior from foo;
---fetch absolute 1 from foo;
-fetch next from foo;
-fetch next from foo;
-fetch next from foo;
---fetch prior from foo;
---fetch prior from foo;
---fetch prior from foo;
-=======
 declare rf_cur scroll cursor for select * from rows from(generate_series(1,5),generate_series(1,2)) with ordinality as g(i,j,o);
 fetch all from rf_cur;
-fetch backward all from rf_cur;
+--fetch backward all from rf_cur;
 fetch all from rf_cur;
 fetch next from rf_cur;
 fetch next from rf_cur;
-fetch prior from rf_cur;
-fetch absolute 1 from rf_cur;
+--fetch prior from rf_cur;
+--fetch absolute 1 from rf_cur;
 fetch next from rf_cur;
 fetch next from rf_cur;
 fetch next from rf_cur;
-fetch prior from rf_cur;
-fetch prior from rf_cur;
-fetch prior from rf_cur;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+--fetch prior from rf_cur;
+--fetch prior from rf_cur;
+--fetch prior from rf_cur;
 commit;
 
 -- function with implicit LATERAL
@@ -129,51 +112,7 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- sql, proretset = t, prorettype = b
-<<<<<<< HEAD
-CREATE FUNCTION getfoo3(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo3(1) AS t1;
-SELECT * FROM getfoo3(1) WITH ORDINALITY AS t1(v,o);
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo3(1);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo3(1) WITH ORDINALITY AS t1(v,o);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-
--- sql, proretset = f, prorettype = c
-CREATE FUNCTION getfoo4(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo4(1) AS t1;
-SELECT * FROM getfoo4(1) WITH ORDINALITY AS t1(a,b,c,o);
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo4(1);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo4(1) WITH ORDINALITY AS t1(a,b,c,o);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-
--- sql, proretset = t, prorettype = c
-CREATE FUNCTION getfoo5(int) RETURNS setof foo AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo5(1) AS t1;
-SELECT * FROM getfoo5(1) WITH ORDINALITY AS t1(a,b,c,o);
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo5(1);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo5(1) WITH ORDINALITY AS t1(a,b,c,o);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-
--- sql, proretset = f, prorettype = record
-CREATE FUNCTION getfoo6(int) RETURNS RECORD AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo6(1) AS t1(fooid int, foosubid int, fooname text);
-SELECT * FROM ROWS FROM( getfoo6(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo6(1) AS
-(fooid int, foosubid int, fooname text);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS
-  SELECT * FROM ROWS FROM( getfoo6(1) AS (fooid int, foosubid int, fooname text) )
-=======
-CREATE FUNCTION getrngfunc3(int) RETURNS setof text AS 'SELECT rngfuncname FROM rngfunc WHERE rngfuncid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getrngfunc3(int) RETURNS setof text AS 'SELECT rngfuncname FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getrngfunc3(1) AS t1;
 SELECT * FROM getrngfunc3(1) WITH ORDINALITY AS t1(v,o);
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc3(1);
@@ -184,7 +123,7 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- sql, proretset = f, prorettype = c
-CREATE FUNCTION getrngfunc4(int) RETURNS rngfunc AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getrngfunc4(int) RETURNS rngfunc AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getrngfunc4(1) AS t1;
 SELECT * FROM getrngfunc4(1) WITH ORDINALITY AS t1(a,b,c,o);
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc4(1);
@@ -195,7 +134,7 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- sql, proretset = t, prorettype = c
-CREATE FUNCTION getrngfunc5(int) RETURNS setof rngfunc AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getrngfunc5(int) RETURNS setof rngfunc AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getrngfunc5(1) AS t1;
 SELECT * FROM getrngfunc5(1) WITH ORDINALITY AS t1(a,b,c,o);
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc5(1);
@@ -206,7 +145,7 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- sql, proretset = f, prorettype = record
-CREATE FUNCTION getrngfunc6(int) RETURNS RECORD AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getrngfunc6(int) RETURNS RECORD AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getrngfunc6(1) AS t1(rngfuncid int, rngfuncsubid int, rngfuncname text);
 SELECT * FROM ROWS FROM( getrngfunc6(1) AS (rngfuncid int, rngfuncsubid int, rngfuncname text) ) WITH ORDINALITY;
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc6(1) AS
@@ -215,24 +154,12 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 CREATE VIEW vw_getrngfunc AS
   SELECT * FROM ROWS FROM( getrngfunc6(1) AS (rngfuncid int, rngfuncsubid int, rngfuncname text) )
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                 WITH ORDINALITY;
 SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- sql, proretset = t, prorettype = record
-<<<<<<< HEAD
-CREATE FUNCTION getfoo7(int) RETURNS setof record AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo7(1) AS t1(fooid int, foosubid int, fooname text);
-SELECT * FROM ROWS FROM( getfoo7(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo7(1) AS
-(fooid int, foosubid int, fooname text);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS
-  SELECT * FROM ROWS FROM( getfoo7(1) AS (fooid int, foosubid int, fooname text) )
-=======
-CREATE FUNCTION getrngfunc7(int) RETURNS setof record AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getrngfunc7(int) RETURNS setof record AS 'SELECT * FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getrngfunc7(1) AS t1(rngfuncid int, rngfuncsubid int, rngfuncname text);
 SELECT * FROM ROWS FROM( getrngfunc7(1) AS (rngfuncid int, rngfuncsubid int, rngfuncname text) ) WITH ORDINALITY;
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc7(1) AS
@@ -241,7 +168,6 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 CREATE VIEW vw_getrngfunc AS
   SELECT * FROM ROWS FROM( getrngfunc7(1) AS (rngfuncid int, rngfuncsubid int, rngfuncname text) )
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                 WITH ORDINALITY;
 SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
@@ -258,18 +184,7 @@ SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
 
 -- plpgsql, proretset = f, prorettype = c
-<<<<<<< HEAD
-CREATE FUNCTION getfoo9(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ; RETURN footup; END;' LANGUAGE plpgsql;
-SELECT * FROM getfoo9(1) AS t1;
-SELECT * FROM getfoo9(1) WITH ORDINALITY AS t1(a,b,c,o);
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo9(1);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo9(1) WITH ORDINALITY AS t1(a,b,c,o);
-SELECT * FROM vw_getfoo;
-DROP VIEW vw_getfoo;
-=======
-CREATE FUNCTION getrngfunc9(int) RETURNS rngfunc AS 'DECLARE rngfunctup rngfunc%ROWTYPE; BEGIN SELECT * into rngfunctup FROM rngfunc WHERE rngfuncid = $1; RETURN rngfunctup; END;' LANGUAGE plpgsql;
+CREATE FUNCTION getrngfunc9(int) RETURNS rngfunc AS 'DECLARE rngfunctup rngfunc%ROWTYPE; BEGIN SELECT * into rngfunctup FROM rngfunc WHERE rngfuncid = $1 ORDER BY rngfuncname DESC /* ORDER BY to force the Joe row to be returned */ ; RETURN rngfunctup; END;' LANGUAGE plpgsql;
 SELECT * FROM getrngfunc9(1) AS t1;
 SELECT * FROM getrngfunc9(1) WITH ORDINALITY AS t1(a,b,c,o);
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc9(1);
@@ -278,7 +193,6 @@ DROP VIEW vw_getrngfunc;
 CREATE VIEW vw_getrngfunc AS SELECT * FROM getrngfunc9(1) WITH ORDINALITY AS t1(a,b,c,o);
 SELECT * FROM vw_getrngfunc;
 DROP VIEW vw_getrngfunc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- mix 'n match kinds, to exercise expandRTE and related logic
 
