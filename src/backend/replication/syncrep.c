@@ -230,7 +230,13 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 * condition but we'll be fetching that cache line anyway so it's likely
 	 * to be a low cost check.
 	 */
-	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
+	/*
+	 * GPDB_12_MERGE_FIXME: We used to only exit early for segments, but this
+	 * is now blocking master even if we use an asynchronous standby. Look at
+	 * commit 7f6066eaac03 for more details of how to change to synchronous
+	 * standby. Probably should be done in master branch.
+	 */
+	if (!WalSndCtl->sync_standbys_defined ||
 		lsn <= WalSndCtl->lsn[mode])
 	{
 		elogif(debug_walrepl_syncrep, LOG,
