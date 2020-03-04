@@ -81,6 +81,7 @@ select prop,
 
 select prop,
        pg_index_column_has_property('onek_hundred'::regclass, 1, prop) as btree,
+       pg_index_column_has_property('hash_i4_index'::regclass, 1, prop) as hash,
        pg_index_column_has_property('gcircleind'::regclass, 1, prop) as gist,
        pg_index_column_has_property('sp_radix_ind'::regclass, 1, prop) as spgist_radix,
        pg_index_column_has_property('sp_quad_ind'::regclass, 1, prop) as spgist_quad,
@@ -92,20 +93,6 @@ select prop,
                     'bogus']::text[])
          with ordinality as u(prop,ord)
  order by ord;
-<<<<<<< HEAD
-        prop        | btree | gist | spgist | gin | brin 
---------------------+-------+------+--------+-----+------
- asc                | t     | f    | f      | f   | f
- desc               | f     | f    | f      | f   | f
- nulls_first        | f     | f    | f      | f   | f
- nulls_last         | t     | f    | f      | f   | f
- orderable          | t     | f    | f      | f   | f
- distance_orderable | f     | t    | f      | f   | f
- returnable         | t     | f    | t      | f   | f
- search_array       | t     | f    | f      | f   | f
- search_nulls       | t     | t    | t      | f   | t
- bogus              |       |      |        |     | 
-=======
         prop        | btree | hash | gist | spgist_radix | spgist_quad | gin | brin 
 --------------------+-------+------+------+--------------+-------------+-----+------
  asc                | t     | f    | f    | f            | f           | f   | f
@@ -118,11 +105,11 @@ select prop,
  search_array       | t     | f    | f    | f            | f           | f   | f
  search_nulls       | t     | f    | t    | t            | t           | f   | t
  bogus              |       |      |      |              |             |     | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (10 rows)
 
 select prop,
        pg_index_has_property('onek_hundred'::regclass, prop) as btree,
+       pg_index_has_property('hash_i4_index'::regclass, prop) as hash,
        pg_index_has_property('gcircleind'::regclass, prop) as gist,
        pg_index_has_property('sp_radix_ind'::regclass, prop) as spgist,
        pg_index_has_property('botharrayidx'::regclass, prop) as gin,
@@ -132,13 +119,13 @@ select prop,
                     'bogus']::text[])
          with ordinality as u(prop,ord)
  order by ord;
-     prop      | btree | gist | spgist | gin | brin 
----------------+-------+------+--------+-----+------
- clusterable   | t     | t    | f      | f   | f
- index_scan    | t     | t    | t      | f   | f
- bitmap_scan   | t     | t    | t      | t   | t
- backward_scan | t     | f    | f      | f   | f
- bogus         |       |      |        |     | 
+     prop      | btree | hash | gist | spgist | gin | brin 
+---------------+-------+------+------+--------+-----+------
+ clusterable   | t     | f    | t    | f      | f   | f
+ index_scan    | t     | t    | t    | t      | f   | f
+ bitmap_scan   | t     | t    | t    | t      | t   | t
+ backward_scan | t     | t    | f    | f      | f   | f
+ bogus         |       |      |      |        |     | 
 (5 rows)
 
 select amname, prop, pg_indexam_has_property(a.oid, prop) as p
@@ -154,6 +141,7 @@ select amname, prop, pg_indexam_has_property(a.oid, prop) as p
  bitmap | can_unique    | t
  bitmap | can_multi_col | t
  bitmap | can_exclude   | t
+ bitmap | can_include   | f
  bitmap | bogus         | 
  brin   | can_order     | f
  brin   | can_unique    | f
@@ -191,11 +179,7 @@ select amname, prop, pg_indexam_has_property(a.oid, prop) as p
  spgist | can_exclude   | t
  spgist | can_include   | f
  spgist | bogus         | 
-<<<<<<< HEAD
-(35 rows)
-=======
-(36 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(41 rows)
 
 --
 -- additional checks for pg_index_column_has_property
