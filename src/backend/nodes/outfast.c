@@ -1327,9 +1327,6 @@ _outNode(StringInfo str, void *obj)
 			case T_RoleSpec:
 				_outRoleSpec(str, obj);
 				break;
-			case T_ExpandDispatchInfo:
-				_outExpandDispatchInfo(str, obj);
-				break;
 
 			case T_SegfileMapNode:
 				_outSegfileMapNode(str, obj);
@@ -1431,8 +1428,14 @@ _outNode(StringInfo str, void *obj)
 			case T_AlterTableCmd:
 				_outAlterTableCmd(str, obj);
 				break;
-			case T_SetDistributionDispatchInfo:
-				_outSetDistributionDispatchInfo(str, obj);
+			case T_AlteredTableInfo:
+				_outAlteredTableInfo(str, obj);
+				break;
+			case T_NewConstraint:
+				_outNewConstraint(str, obj);
+				break;
+			case T_NewColumnValue:
+				_outNewColumnValue(str, obj);
 				break;
 
 			case T_CreateRoleStmt:

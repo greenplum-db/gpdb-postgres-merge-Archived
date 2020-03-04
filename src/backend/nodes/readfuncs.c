@@ -49,7 +49,9 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
+
 #include "cdb/cdbgang.h"
+#include "nodes/altertablenodes.h"
 #include "utils/builtins.h"
 
 /*
@@ -903,7 +905,8 @@ _readAlterTableStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(cmds);
 	READ_ENUM_FIELD(relkind, ObjectType);
-	READ_NODE_FIELD(qe_data);
+	READ_INT_FIELD(lockmode);
+	READ_NODE_FIELD(wqueue);
 
 	READ_DONE();
 }
@@ -924,17 +927,69 @@ _readAlterTableCmd(void)
 	READ_NODE_FIELD(partoids);
 	READ_BOOL_FIELD(missing_ok);
 
+	READ_INT_FIELD(backendId);
+	READ_NODE_FIELD(policy);
+
 	READ_DONE();
 }
 
-static SetDistributionDispatchInfo *
-_readSetDistributionDispatchInfo(void)
-{
-	READ_LOCALS(SetDistributionDispatchInfo);
 
-	READ_NODE_FIELD(policy);
-	READ_INT_FIELD(backendId);
-	READ_NODE_FIELD(relids);
+static AlteredTableInfo *
+_readAlteredTableInfo(void)
+{
+	READ_LOCALS(AlteredTableInfo);
+
+	READ_OID_FIELD(relid);
+	READ_CHAR_FIELD(relkind);
+	/* oldDesc is omitted */
+
+	for (int i = 0; i < AT_NUM_PASSES; i++)
+		READ_NODE_FIELD(subcmds[i]);
+
+	READ_NODE_FIELD(constraints);
+	READ_NODE_FIELD(newvals);
+	READ_BOOL_FIELD(verify_new_notnull);
+	READ_INT_FIELD(rewrite);
+	READ_BOOL_FIELD(dist_opfamily_changed);
+	READ_OID_FIELD(new_opclass);
+	READ_OID_FIELD(newTableSpace);
+	READ_BOOL_FIELD(chgPersistence);
+	READ_CHAR_FIELD(newrelpersistence);
+	READ_NODE_FIELD(partition_constraint);
+	READ_BOOL_FIELD(validate_default);
+	READ_NODE_FIELD(changedConstraintOids);
+	READ_NODE_FIELD(changedConstraintDefs);
+	READ_NODE_FIELD(changedIndexOids);
+	READ_NODE_FIELD(changedIndexDefs);
+
+	READ_DONE();
+}
+
+static NewConstraint *
+_readNewConstraint(void)
+{
+	READ_LOCALS(NewConstraint);
+
+	READ_STRING_FIELD(name);
+	READ_ENUM_FIELD(contype, ConstrType);
+	READ_OID_FIELD(refrelid);
+	READ_OID_FIELD(refindid);
+	READ_OID_FIELD(conid);
+	READ_NODE_FIELD(qual);
+	/* can't serialize qualstate */
+
+	READ_DONE();
+}
+
+static NewColumnValue *
+_readNewColumnValue(void)
+{
+	READ_LOCALS(NewColumnValue);
+
+	READ_INT_FIELD(attnum);
+	READ_NODE_FIELD(expr);
+	/* can't serialize exprstate */
+	READ_BOOL_FIELD(is_generated);
 
 	READ_DONE();
 }
@@ -4473,6 +4528,12 @@ parseNodeString(void)
 		return_value = _readAlterSeqStmt();
 	else if (MATCHX("ALTERTABLECMD"))
 		return_value = _readAlterTableCmd();
+	else if (MATCHX("ALTEREDTABLEINFO"))
+		return_value = _readAlteredTableInfo();
+	else if (MATCHX("NEWCONSTRAINT"))
+		return_value = _readNewConstraint();
+	else if (MATCHX("NEWCOLUMNVALUE"))
+		return_value = _readNewColumnValue();
 	else if (MATCHX("ALTERTABLESTMT"))
 		return_value = _readAlterTableStmt();
 	else if (MATCHX("ALTERTYPESTMT"))
@@ -4571,8 +4632,6 @@ parseNodeString(void)
 		return_value = _readRuleStmt();
 	else if (MATCHX("SEGFILEMAPNODE"))
 		return_value = _readSegfileMapNode();
-	else if (MATCHX("SETDISTRIBUTIONDISPATCHINFO"))
-		return_value = _readSetDistributionDispatchInfo();
 	else if (MATCHX("SINGLEROWERRORDESC"))
 		return_value = _readSingleRowErrorDesc();
 	else if (MATCHX("SLICETABLE"))
@@ -4770,4 +4829,5 @@ readBoolCols(int numCols)
 
 	return bool_vals;
 }
+
 #endif /* COMPILING_BINARY_FUNCS */

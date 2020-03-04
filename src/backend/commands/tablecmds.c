@@ -126,6 +126,7 @@
 #include "access/bitmap_private.h"
 #include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
+#include "nodes/altertablenodes.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
@@ -135,8 +136,6 @@
 #include "postmaster/autostats.h"
 
 const char *synthetic_sql = "(internally generated SQL command)";
-
-static Node *qe_data = NULL;
 
 /*
  * ON COMMIT action list
@@ -163,87 +162,8 @@ static List *on_commits = NIL;
 /*
  * State information for ALTER TABLE
  *
- * The pending-work queue for an ALTER TABLE is a List of AlteredTableInfo
- * structs, one for each table modified by the operation (the named table
- * plus any child tables that are affected).  We save lists of subcommands
- * to apply to this table (possibly modified by parse transformation steps);
- * these lists will be executed in Phase 2.  If a Phase 3 step is needed,
- * necessary information is stored in the constraints and newvals lists.
- *
- * Phase 2 is divided into multiple passes; subcommands are executed in
- * a pass determined by subcommand type.
+ * In GPDB, these are in nodes/altertablenodes.h
  */
-
-#define AT_PASS_UNSET			-1	/* UNSET will cause ERROR */
-#define AT_PASS_DROP			0	/* DROP (all flavors) */
-#define AT_PASS_ALTER_TYPE		1	/* ALTER COLUMN TYPE */
-#define AT_PASS_OLD_INDEX		2	/* re-add existing indexes */
-#define AT_PASS_OLD_CONSTR		3	/* re-add existing constraints */
-/* We could support a RENAME COLUMN pass here, but not currently used */
-#define AT_PASS_ADD_COL			4	/* ADD COLUMN */
-#define AT_PASS_COL_ATTRS		5	/* set other column attributes */
-#define AT_PASS_ADD_INDEX		6	/* ADD indexes */
-#define AT_PASS_ADD_CONSTR		7	/* ADD constraints, defaults */
-#define AT_PASS_MISC			8	/* other stuff */
-#define AT_NUM_PASSES			9
-
-typedef struct AlteredTableInfo
-{
-	/* Information saved before any work commences: */
-	Oid			relid;			/* Relation to work on */
-	char		relkind;		/* Its relkind */
-	TupleDesc	oldDesc;		/* Pre-modification tuple descriptor */
-	/* Information saved by Phase 1 for Phase 2: */
-	List	   *subcmds[AT_NUM_PASSES]; /* Lists of AlterTableCmd */
-	/* Information saved by Phases 1/2 for Phase 3: */
-	List	   *constraints;	/* List of NewConstraint */
-	List	   *newvals;		/* List of NewColumnValue */
-	bool		verify_new_notnull; /* T if we should recheck NOT NULL */
-	int			rewrite;		/* Reason for forced rewrite, if any */
-	bool		dist_opfamily_changed; /* T if changing datatype of distribution key column and new opclass is in different opfamily than old one */
-	Oid			new_opclass;		/* new opclass, if changing a distribution key column */
-	Oid			newTableSpace;	/* new tablespace; 0 means no change */
-	Oid			exchange_relid;	/* for EXCHANGE, the exchanged in rel */
-	bool		chgPersistence; /* T if SET LOGGED/UNLOGGED is used */
-	char		newrelpersistence;	/* if above is true */
-	Expr	   *partition_constraint;	/* for attach partition validation */
-	/* true, if validating default due to some other attach/detach */
-	bool		validate_default;
-	/* Objects to rebuild after completing ALTER TYPE operations */
-	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
-	List	   *changedConstraintDefs;	/* string definitions of same */
-	List	   *changedIndexOids;	/* OIDs of indexes to rebuild */
-	List	   *changedIndexDefs;	/* string definitions of same */
-} AlteredTableInfo;
-
-/* Struct describing one new constraint to check in Phase 3 scan */
-/* Note: new NOT NULL constraints are handled elsewhere */
-typedef struct NewConstraint
-{
-	char	   *name;			/* Constraint name, or NULL if none */
-	ConstrType	contype;		/* CHECK or FOREIGN */
-	Oid			refrelid;		/* PK rel, if FOREIGN */
-	Oid			refindid;		/* OID of PK's index, if FOREIGN */
-	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
-	Node	   *qual;			/* Check expr or CONSTR_FOREIGN Constraint */
-	ExprState  *qualstate;		/* Execution state for CHECK expr */
-} NewConstraint;
-
-/*
- * Struct describing one new column value that needs to be computed during
- * Phase 3 copy (this could be either a new column with a non-null default, or
- * a column that we're changing the type of).  Columns without such an entry
- * are just copied from the old table during ATRewriteTable.  Note that the
- * expr is an expression over *old* table values, except when is_generated
- * is true; then it is an expression over columns of the *new* tuple.
- */
-typedef struct NewColumnValue
-{
-	AttrNumber	attnum;			/* which column */
-	Expr	   *expr;			/* expression to compute */
-	ExprState  *exprstate;		/* execution state */
-	bool		is_generated;	/* is it a GENERATED expression? */
-} NewColumnValue;
 
 /*
  * Error-reporting support for RemoveRelations
@@ -3961,14 +3881,6 @@ void
 AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 {
 	Relation	rel;
-	AlterTableStmt *origstmt = stmt;
-	stmt = copyObject(stmt);
-
-	/*
-	 * Make the extra information provided by the QE available to the
-	 * ATExecSetDistributedBy() calls.
-	 */
-	qe_data = stmt->qe_data;
 
 	/* Caller is required to provide an adequate lock. */
 	rel = relation_open(relid, NoLock);
@@ -3979,23 +3891,13 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/*
-		 * Some ALTER TABLE commands rewrite the table, and cause new OIDs
-		 * and/or relfilenodes to be assigned. In that case,
-		 * ATExecSetDistributedDispatchInfo needs to dispatch some extra
-		 * information to the QEs. It stashed it in 'qe_data', include it
-		 * in the statement that's being dispatched. And ATExecExpandTable
-		 * does a similar thing.
-		 */
-		origstmt->qe_data = qe_data;
-		CdbDispatchUtilityStatement((Node *) origstmt,
+		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
 									DF_WITH_SNAPSHOT |
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-	qe_data = NULL;
 }
 
 /*
@@ -4337,11 +4239,38 @@ ATController(AlterTableStmt *parsetree,
 	cdb_sync_oid_to_segments();
 
 	/* Phase 1: preliminary examination of commands, create work queue */
-	foreach(lcmd, cmds)
+	/*
+	 * In QE, we receive an already-prepped work queue from the QD.
+	 */
+	if (parsetree && parsetree->wqueue)
 	{
-		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+		ListCell   *lc;
 
-		ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode);
+		Assert(Gp_role == GP_ROLE_EXECUTE);
+		wqueue = parsetree->wqueue;
+
+		foreach (lc, wqueue)
+		{
+			/*
+			 * The old tuple descriptors are not dispatched, so fetch
+			 * them here.
+			 */
+			AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(lc);
+			Relation rel;
+
+			rel = table_open(tab->relid, lockmode);
+			tab->oldDesc = CreateTupleDescCopyConstr(RelationGetDescr(rel));
+			table_close(rel, NoLock);
+		}
+	}
+	else
+	{
+		foreach(lcmd, cmds)
+		{
+			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+
+			ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode);
+		}
 	}
 
 	/* Close the relation, but keep lock until commit */
@@ -4352,6 +4281,15 @@ ATController(AlterTableStmt *parsetree,
 
 	/* Phase 3: scan/rewrite tables as needed */
 	ATRewriteTables(parsetree, &wqueue, lockmode);
+
+	/*
+	 * In QD, include the work queue in the command for dispatching,
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && parsetree)
+	{
+		parsetree->lockmode = lockmode;
+		parsetree->wqueue = wqueue;
+	}
 }
 
 /*
@@ -15959,7 +15897,6 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 	Datum				newOptions;
 	Oid					tmprelid;
 	Oid					relid = RelationGetRelid(rel);
-	ExpandDispatchInfo *spec;
 
 	/*--
 	 * a) Ensure that the proposed policy is sensible
@@ -16040,24 +15977,22 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 		/*
 		 * Step (d) - tell the seg nodes about the temporary relation.
 		 */
-		/* store the dispatch info dummy  */
-		spec = makeNode(ExpandDispatchInfo);
-		spec->backendId = MyBackendId;
-		qe_data = (Node *) spec;
+		/*
+		 * Store the dispatch info in the command so that it gets sent to the QEs.
+		 * We add one to it, so that '0' isn't a valid value. Makes it easier
+		 * to sanity check that it's set in the QEs.
+		 */
+		cmd->backendId = MyBackendId + 1;
+	}
+	else if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		if (cmd->backendId <= 0)
+			elog(ERROR, "did not receive backend ID info from QD for EXPAND TABLE");
+
+		tmprv = make_temp_table_name(rel, cmd->backendId - 1);
 	}
 	else
-	{
-		if (Gp_role == GP_ROLE_EXECUTE)
-		{
-			if (!qe_data || !IsA(qe_data, ExpandDispatchInfo))
-				elog(ERROR, "did not receive EXPAND TABLE dispatch info from QD");
-			spec = (ExpandDispatchInfo *) qe_data;
-		}
-		else
-			elog(ERROR, "cannot perform EXPAND TABLE in utility mode");
-
-		tmprv = make_temp_table_name(rel, spec->backendId);
-	}
+		elog(ERROR, "cannot perform EXPAND TABLE in utility mode");
 
 	/*
 	 * Step (e) - Correct ownership on temporary table:
@@ -16172,7 +16107,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	bool 				save_optimizer_replicated_table_insert;
 	Oid					relationOid = InvalidOid;
 	AutoStatsCmdType 	cmdType = AUTOSTATS_CMDTYPE_SENTINEL;
-	SetDistributionDispatchInfo *qe_info;
 
 	/* Can't ALTER TABLE SET system catalogs */
 	if (IsSystemRelation(rel))
@@ -16316,8 +16250,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					 * (see the non-random distribution case below for why.
 					 */
 					heap_close(rel, NoLock);
-					if (!qe_data)
-						qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 					goto l_distro_fini;
 				}
 			}
@@ -16346,8 +16278,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				 * (see the non-random distribution case below for why.
 				 */
 				heap_close(rel, NoLock);
-				if (!qe_data)
-					qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 				goto l_distro_fini;
 			}
 
@@ -16502,8 +16432,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 								buf.data)));
 						heap_close(rel, NoLock);
 						/* Tell QEs to do nothing */
-						if (!qe_data)
-							qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
 						return;
 						/* don't goto l_distro_fini -- didn't do anything! */
 					}
@@ -16633,12 +16561,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 * the global 'qe_data' variable to pass this information up to the
 		 * caller, so that it can be included when the command is dispatched.
 		 */
-		if (!qe_data)
-			qe_data = (Node *) makeNode(SetDistributionDispatchInfo);
-		qe_info = (SetDistributionDispatchInfo *) qe_data;
-		if (qe_info->backendId == 0)
-			qe_info->backendId = MyBackendId;
-		qe_info->relids = lappend_oid(qe_info->relids, tarrelid);
+		cmd->backendId = MyBackendId + 1;
 	}
 	else
 	{
@@ -16649,29 +16572,20 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 * Extract the already-transformed representation of the DistributedBy
 		 * policy that the QD should have included for us.
 		 */
-		if (qe_data == NULL)
-			elog(ERROR, "did not receive dispatch info for SET DISTRIBUTED BY from QD");
-		qe_info = (SetDistributionDispatchInfo *) qe_data;
-		policy = qe_info->policy;
+		policy = cmd->policy;
 
 		if (policy)
 			GpPolicyReplace(RelationGetRelid(rel), policy);
 
 		/* Set to random distribution on master with no reorganisation */
-		if (!reorg && qe_info->backendId == 0)
+		if (!reorg && cmd->backendId == 0)
 		{
 			/* caller expects rel to be closed for this AT type */
 			heap_close(rel, NoLock);
 			goto l_distro_fini;			
 		}
 
-		if (!list_member_oid(qe_info->relids, tarrelid))
-		{
-			heap_close(rel, NoLock);
-			goto l_distro_fini;			
-		}
-
-		backend_id = qe_info->backendId;
+		backend_id = cmd->backendId - 1;
 		tmprv = make_temp_table_name(rel, backend_id);
 
 		newOptions = new_rel_opts(rel);
@@ -16778,7 +16692,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (change_policy)
 			GpPolicyReplace(tarrelid, policy);
 
-		qe_info->policy = policy;
+		cmd->policy = policy;
 	}
 
 	/* Step (h) Drop the table */

@@ -42,7 +42,9 @@
 #include "nodes/plannodes.h"
 #include "utils/datum.h"
 #include "utils/rel.h"
+
 #include "cdb/cdbgang.h"
+#include "nodes/altertablenodes.h"
 
 
 /*
@@ -3343,7 +3345,19 @@ _outAlterTableStmt(StringInfo str, const AlterTableStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(cmds);
 	WRITE_ENUM_FIELD(relkind, ObjectType);
-	WRITE_NODE_FIELD(qe_data);
+
+	WRITE_INT_FIELD(lockmode);
+	/*
+	 * AlteredTableInfos are not Nodes in upstream, so make sure the node tags
+	 * are set correctly before trying to serialize them.
+	 */
+	ListCell   *lc;
+	foreach(lc, node->wqueue)
+	{
+		AlteredTableInfo *e = (AlteredTableInfo *) lfirst(lc);
+		e->type = T_AlteredTableInfo;
+	}
+	WRITE_NODE_FIELD(wqueue);
 }
 
 static void
@@ -3361,23 +3375,80 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 	WRITE_BOOL_FIELD(part_expanded);
 	WRITE_NODE_FIELD(partoids);
 	WRITE_BOOL_FIELD(missing_ok);
-}
 
-static void
-_outSetDistributionDispatchInfo(StringInfo str, const SetDistributionDispatchInfo *node)
-{
-	WRITE_NODE_TYPE("SETDISTRIBUTIONDISPATCHINFO");
-
-	WRITE_NODE_FIELD(policy);
 	WRITE_INT_FIELD(backendId);
-	WRITE_NODE_FIELD(relids);
+	WRITE_NODE_FIELD(policy);
 }
 
 static void
-_outExpandDispatchInfo(StringInfo str, const ExpandDispatchInfo *node)
+_outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 {
-	WRITE_NODE_TYPE("EXPANDDISPATCHINFO");
-	WRITE_OID_FIELD(backendId);
+	ListCell   *lc;
+
+	WRITE_NODE_TYPE("ALTEREDTABLEINFO");
+
+	WRITE_OID_FIELD(relid);
+	WRITE_CHAR_FIELD(relkind);
+	/* oldDesc is omitted */
+
+	for (int i = 0; i < AT_NUM_PASSES; i++)
+		WRITE_NODE_FIELD(subcmds[i]);
+
+	/*
+	 * These aren't Nodes in upstream, so make sure the node tags
+	 * are set correctly before trying to serialize them.
+	 */
+	foreach(lc, node->constraints)
+	{
+		NewConstraint *e = (NewConstraint *) lfirst(lc);
+		e->type = T_NewConstraint;
+	}
+	foreach(lc, node->newvals)
+	{
+		NewColumnValue *e = (NewColumnValue *) lfirst(lc);
+		e->type = T_NewColumnValue;
+	}
+
+	WRITE_NODE_FIELD(constraints);
+	WRITE_NODE_FIELD(newvals);
+	WRITE_BOOL_FIELD(verify_new_notnull);
+	WRITE_INT_FIELD(rewrite);
+	WRITE_BOOL_FIELD(dist_opfamily_changed);
+	WRITE_OID_FIELD(new_opclass);
+	WRITE_OID_FIELD(newTableSpace);
+	WRITE_BOOL_FIELD(chgPersistence);
+	WRITE_CHAR_FIELD(newrelpersistence);
+	WRITE_NODE_FIELD(partition_constraint);
+	WRITE_BOOL_FIELD(validate_default);
+	WRITE_NODE_FIELD(changedConstraintOids);
+	WRITE_NODE_FIELD(changedConstraintDefs);
+	WRITE_NODE_FIELD(changedIndexOids);
+	WRITE_NODE_FIELD(changedIndexDefs);
+}
+
+static void
+_outNewConstraint(StringInfo str, const NewConstraint *node)
+{
+	WRITE_NODE_TYPE("NEWCONSTRAINT");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_ENUM_FIELD(contype, ConstrType);
+	WRITE_OID_FIELD(refrelid);
+	WRITE_OID_FIELD(refindid);
+	WRITE_OID_FIELD(conid);
+	WRITE_NODE_FIELD(qual);
+	/* can't serialize qualstate */
+}
+
+static void
+_outNewColumnValue(StringInfo str, const NewColumnValue *node)
+{
+	WRITE_NODE_TYPE("NEWCOLUMNVALUE");
+
+	WRITE_INT_FIELD(attnum);
+	WRITE_NODE_FIELD(expr);
+	/* can't serialize exprstate */
+	WRITE_BOOL_FIELD(is_generated);
 }
 
 static void
@@ -4110,7 +4181,6 @@ _outQuery(StringInfo str, const Query *node)
 			case T_TruncateStmt:
 			case T_AlterTableStmt:
 			case T_AlterTableCmd:
-			case T_SetDistributionDispatchInfo:
 			case T_ViewStmt:
 			case T_RuleStmt:
 
@@ -5787,9 +5857,6 @@ outNode(StringInfo str, const void *obj)
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;
-			case T_ExpandDispatchInfo:
-				_outExpandDispatchInfo(str, obj);
-				break;
 			case T_SegfileMapNode:
 				_outSegfileMapNode(str, obj);
 				break;
@@ -5885,8 +5952,14 @@ outNode(StringInfo str, const void *obj)
 			case T_AlterTableCmd:
 				_outAlterTableCmd(str, obj);
 				break;
-			case T_SetDistributionDispatchInfo:
-				_outSetDistributionDispatchInfo(str, obj);
+			case T_AlteredTableInfo:
+				_outAlteredTableInfo(str, obj);
+				break;
+			case T_NewConstraint:
+				_outNewConstraint(str, obj);
+				break;
+			case T_NewColumnValue:
+				_outNewColumnValue(str, obj);
 				break;
 
 			case T_CreateRoleStmt:

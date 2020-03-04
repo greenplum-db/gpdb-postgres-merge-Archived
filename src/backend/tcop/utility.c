@@ -1362,7 +1362,10 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * lock on (for example) a relation on which we have no
 					 * permissions.
 					 */
-					lockmode = AlterTableGetLockLevel(atstmt->cmds);
+					if (Gp_role == GP_ROLE_EXECUTE)
+						lockmode = atstmt->lockmode;
+					else
+						lockmode = AlterTableGetLockLevel(atstmt->cmds);
 					relid = AlterTableLookupRelation(atstmt, lockmode);
 
 					if (OidIsValid(relid))

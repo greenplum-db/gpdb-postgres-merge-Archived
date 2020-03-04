@@ -1888,21 +1888,6 @@ typedef struct CompoundUtilityStmt
  *	Alter Table
  * ----------------------
  */
-typedef struct SetDistributionDispatchInfo
-{
-	NodeTag		type;
-	GpPolicy   *policy;
-	int	        backendId;     /* backend ID on QD */
-	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
-} SetDistributionDispatchInfo;
-
-typedef struct ExpandDispatchInfo
-{
-	NodeTag				type;
-	/* for ctas method */
-	int					backendId;
-} ExpandDispatchInfo;
-
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
@@ -1911,7 +1896,8 @@ typedef struct AlterTableStmt
 	ObjectType	relkind;		/* type of object */
 	bool		missing_ok;		/* skip error if table missing */
 
-	Node	   *qe_data;		/* SetDistributionDispatchInfo or ExpandDispatchInfo */
+	int			lockmode;
+	List	   *wqueue;
 } AlterTableStmt;
 
 typedef enum AlterTableType
@@ -2025,14 +2011,14 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	List	   *partoids;		/* If applicable, OIDs of partition part tables */
 	bool		missing_ok;		/* skip error if missing? */
 
-	/* GPDB_12_MERGE_FIXME: dead? */
-#if 0
-	/* addition info for partition table */
-	Bitmapset	*ps_none;
-	Bitmapset	*ps_root;
-	Bitmapset	*ps_interior;
-	Bitmapset	*ps_leaf;
-#endif
+	/*
+	 * Extra information dispatched from QD to QEs in AT_SetDistributedBy and
+	 * AT_ExpandTable
+	 */
+	int	        backendId;     /* backend ID on QD, if a temporary table was created */
+
+	GpPolicy   *policy;
+
 } AlterTableCmd;
 
 /* ----------------------

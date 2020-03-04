@@ -886,16 +886,6 @@ _readColumnReferenceStorageDirective(void)
 	READ_DONE();
 }
 
-static ExpandDispatchInfo *
-_readExpandDispatchInfo(void)
-{
-	READ_LOCALS(ExpandDispatchInfo);
-
-	READ_OID_FIELD(backendId);
-
-	READ_DONE();
-}
-
 static AlterDomainStmt *
 _readAlterDomainStmt(void)
 {
@@ -2184,9 +2174,6 @@ readNodeBinary(void)
 			case T_ColumnReferenceStorageDirective:
 				return_value = _readColumnReferenceStorageDirective();
 				break;
-			case T_ExpandDispatchInfo:
-				return_value = _readExpandDispatchInfo();
-				break;
 			case T_SegfileMapNode:
 				return_value = _readSegfileMapNode();
 				break;
@@ -2284,8 +2271,14 @@ readNodeBinary(void)
 			case T_AlterTableCmd:
 				return_value = _readAlterTableCmd();
 				break;
-			case T_SetDistributionDispatchInfo:
-				return_value = _readSetDistributionDispatchInfo();
+			case T_AlteredTableInfo:
+				return_value = _readAlteredTableInfo();
+				break;
+			case T_NewConstraint:
+				return_value = _readNewConstraint();
+				break;
+			case T_NewColumnValue:
+				return_value = _readNewColumnValue();
 				break;
 
 			case T_CreateRoleStmt:
