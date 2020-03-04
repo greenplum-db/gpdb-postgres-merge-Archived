@@ -800,9 +800,6 @@ DefineIndex(Oid relationId,
 		/* Need the real tablespace id for dispatch */
 		if (!OidIsValid(tablespaceId)) 
 			tablespaceId = MyDatabaseTableSpace;
-
-		if (shouldDispatch)
-			stmt->tableSpace = get_tablespace_name(tablespaceId);
 	}
 
 	/* Check tablespace permissions */
@@ -1527,6 +1524,7 @@ DefineIndex(Oid relationId,
 								childStmt->idxname = strVal(list_nth(stmt->part_idx_names, i));
 								break;
 							}
+							i++;
 						}
 						if (!childStmt->idxname)
 							elog(ERROR, "no index name received from QD for partition %u", childRelid);
@@ -1616,6 +1614,9 @@ DefineIndex(Oid relationId,
 			/* make sure the QE uses the same index name that we chose */
 			stmt->oldNode = InvalidOid;
 			Assert(stmt->relation != NULL);
+
+			stmt->tableSpace = get_tablespace_name(tablespaceId);
+
 			CdbDispatchUtilityStatement((Node *) stmt,
 										DF_CANCEL_ON_ERROR |
 										DF_WITH_SNAPSHOT |
