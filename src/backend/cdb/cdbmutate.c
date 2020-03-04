@@ -1901,7 +1901,7 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 							  int createplan_flags)
 {
 	CdbMotionPath *motionpath;
-	GroupResultPath *resultpath;
+	Path	   *resultpath;
 	Result	   *resultplan;
 	Relation	rel;
 	GpPolicy   *targetPolicy;
@@ -1920,15 +1920,15 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		return NULL;
 	motionpath = (CdbMotionPath *) subpath;
 
-	if (!IsA(motionpath->subpath, GroupResultPath))
+	if (!IsA(motionpath->subpath, GroupResultPath) &&
+		!IsA(motionpath->subpath, ProjectionPath))
+		return NULL;
+	resultpath = motionpath->subpath;
+
+	if (contain_mutable_functions((Node *) resultpath->pathtarget->exprs))
 		return NULL;
 
-	resultpath = (GroupResultPath *) motionpath->subpath;
-
-	if (contain_mutable_functions((Node *) resultpath->path.pathtarget->exprs))
-		return NULL;
-
-	resultplan = (Result *) create_plan_recurse(subroot, (Path *) resultpath, createplan_flags);
+	resultplan = (Result *) create_plan_recurse(subroot, resultpath, createplan_flags);
 	if (!IsA(resultplan, Result))
 		return NULL;
 
