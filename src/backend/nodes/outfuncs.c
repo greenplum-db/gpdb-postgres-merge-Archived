@@ -3424,7 +3424,26 @@ _outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 	WRITE_NODE_FIELD(partition_constraint);
 	WRITE_BOOL_FIELD(validate_default);
 	WRITE_NODE_FIELD(changedConstraintOids);
+
+	/* node->changedContraintDefs is a list of naked strings, so
+	 * we can't use WRITE_NODE_FIELD on it. Temporarily wrap them in Values.
+	 */
+	foreach(lc, node->changedConstraintDefs)
+	{
+		char	   *str = (char *) lfirst(lc);
+
+		lfirst(lc) = makeString(str);
+	}
 	WRITE_NODE_FIELD(changedConstraintDefs);
+	/* unwrap them again */
+	foreach(lc, node->changedConstraintDefs)
+	{
+		Value	   *val = (Value *) lfirst(lc);
+
+		lfirst(lc) = strVal(val);
+		pfree(val);
+	}
+
 	WRITE_NODE_FIELD(changedIndexOids);
 	WRITE_NODE_FIELD(changedIndexDefs);
 }

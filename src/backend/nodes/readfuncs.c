@@ -959,6 +959,16 @@ _readAlteredTableInfo(void)
 	READ_BOOL_FIELD(validate_default);
 	READ_NODE_FIELD(changedConstraintOids);
 	READ_NODE_FIELD(changedConstraintDefs);
+	/* The QD sends changedConstraintDefs wrapped in Values. Unwrap them. */
+	ListCell   *lc;
+	foreach(lc, local_node->changedConstraintDefs)
+	{
+		Value	   *val = (Value *) lfirst(lc);
+
+		lfirst(lc) = strVal(val);
+		pfree(val);
+	}
+
 	READ_NODE_FIELD(changedIndexOids);
 	READ_NODE_FIELD(changedIndexDefs);
 

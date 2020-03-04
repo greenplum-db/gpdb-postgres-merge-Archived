@@ -12775,6 +12775,13 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 	Relation	rel;
 
 	/*
+	 * In the QE, don't add items to the work queues. They were already
+	 * added in the QD, and we don't want to do them twice.
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+		return;
+
+	/*
 	 * We expect that we will get only ALTER TABLE and CREATE INDEX
 	 * statements. Hence, there is no need to pass them through
 	 * parse_analyze() or the rewriter, but instead we need to pass them
