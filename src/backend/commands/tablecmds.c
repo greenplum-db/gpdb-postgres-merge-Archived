@@ -4291,9 +4291,9 @@ ATController(AlterTableStmt *parsetree,
 			AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(lc);
 			Relation rel;
 
-			rel = table_open(tab->relid, lockmode);
+			rel = relation_open(tab->relid, lockmode);
 			tab->oldDesc = CreateTupleDescCopyConstr(RelationGetDescr(rel));
-			table_close(rel, NoLock);
+			relation_close(rel, NoLock);
 		}
 	}
 	else
