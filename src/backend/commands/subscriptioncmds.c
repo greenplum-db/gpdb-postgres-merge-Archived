@@ -390,7 +390,13 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	publications = stmt->publication;
 
 	/* Load the library providing us libpq calls. */
-	load_file("libpqwalreceiver", false);
+	/*
+	 * In GPDB, we build libpqwalreceiver functions, as well as a copy of
+	 * libpq into the backend itself, to support QD-QE communication. See
+	 * src/backend/libpq.
+	 */
+	if (!WalReceiverFunctions)
+		libpqwalreceiver_PG_init();
 
 	/* Check the connection info string. */
 	walrcv_check_conninfo(conninfo);

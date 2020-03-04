@@ -26,8 +26,7 @@ CREATE TABLE addr_nsp.parttable (
 	a int PRIMARY KEY
 ) PARTITION BY RANGE (a);
 CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
--- GPDB: Materialized views are not supported.
--- CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
+CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
 CREATE TYPE addr_nsp.gencomptype AS (a int);
 CREATE TYPE addr_nsp.genenum AS ENUM ('one', 'two');
 CREATE FOREIGN TABLE addr_nsp.genftable (a int) SERVER addr_fserv;
@@ -150,8 +149,7 @@ WITH objects (type, name, args) AS (VALUES
 				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
 				-- toast table
 				('view', '{addr_nsp, genview}', '{}'),
--- GPDB: Materialized views are not supported.
---				('materialized view', '{addr_nsp, genmatview}', '{}'),
+				('materialized view', '{addr_nsp, genmatview}', '{}'),
 				('foreign table', '{addr_nsp, genftable}', '{}'),
 				('table column', '{addr_nsp, gentable, b}', '{}'),
 				('foreign table column', '{addr_nsp, genftable, a}', '{}'),

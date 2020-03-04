@@ -23,8 +23,7 @@ CREATE TABLE addr_nsp.parttable (
 	a int PRIMARY KEY
 ) PARTITION BY RANGE (a);
 CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
--- GPDB: Materialized views are not supported.
--- CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
+CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
 CREATE TYPE addr_nsp.gencomptype AS (a int);
 CREATE TYPE addr_nsp.genenum AS ENUM ('one', 'two');
 CREATE FOREIGN TABLE addr_nsp.genftable (a int) SERVER addr_fserv;
@@ -380,8 +379,7 @@ WITH objects (type, name, args) AS (VALUES
 				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
 				-- toast table
 				('view', '{addr_nsp, genview}', '{}'),
--- GPDB: Materialized views are not supported.
---				('materialized view', '{addr_nsp, genmatview}', '{}'),
+				('materialized view', '{addr_nsp, genmatview}', '{}'),
 				('foreign table', '{addr_nsp, genftable}', '{}'),
 				('table column', '{addr_nsp, gentable, b}', '{}'),
 				('foreign table column', '{addr_nsp, genftable, a}', '{}'),
@@ -456,6 +454,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  table                     | addr_nsp   | parttable         | addr_nsp.parttable                                                   | t
  index                     | addr_nsp   | parttable_pkey    | addr_nsp.parttable_pkey                                              | t
  view                      | addr_nsp   | genview           | addr_nsp.genview                                                     | t
+ materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview                                                  | t
  foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
  foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a                                                 | t
  role                      |            | regress_addr_user | regress_addr_user                                                    | t
@@ -485,14 +484,10 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-<<<<<<< HEAD
-(41 rows)
-=======
  subscription              |            | regress_addr_sub  | regress_addr_sub                                                     | t
  publication               |            | addr_pub          | addr_pub                                                             | t
  publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
 (49 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 ---
 --- Cleanup resources
