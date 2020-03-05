@@ -615,24 +615,6 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * nodes and compute their children's paths.
 	 */
 	rellist = plan_union_children(root, op, refnames_tlist, &tlist_list);
-
-	/* GPDB_96_MERGE_FIXME: We should use the new pathified upper planner
-	 * infrastructure for this. I think we should create multiple Paths,
-	 * representing different kinds of PSETOP_* implementations, and
-	 * let the "add_path()" choose the cheapest one.
-	 */
-	/* CDB: Decide on approach, condition argument plans to suit. */
-	if ( Gp_role == GP_ROLE_DISPATCH )
-	{
-		optype = choose_setop_type(pathlist);
-		adjust_setop_arguments(root, pathlist, tlist_list, optype);
-	}
-	else if (Gp_role == GP_ROLE_UTILITY ||
-			 Gp_role == GP_ROLE_EXECUTE) /* MPP-2928 */
-	{
-		optype = PSETOP_SEQUENTIAL_QD;
-	}
-
 	/*
 	 * Generate tlist for Append plan node.
 	 *
@@ -673,6 +655,24 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP, relids);
 	result_rel->reltarget = create_pathtarget(root, tlist);
 	result_rel->consider_parallel = consider_parallel;
+
+
+	/* GPDB_96_MERGE_FIXME: We should use the new pathified upper planner
+	 * infrastructure for this. I think we should create multiple Paths,
+	 * representing different kinds of PSETOP_* implementations, and
+	 * let the "add_path()" choose the cheapest one.
+	 */
+	/* CDB: Decide on approach, condition argument plans to suit. */
+	if ( Gp_role == GP_ROLE_DISPATCH )
+	{
+		optype = choose_setop_type(pathlist);
+		adjust_setop_arguments(root, pathlist, tlist_list, optype);
+	}
+	else if (Gp_role == GP_ROLE_UTILITY ||
+		Gp_role == GP_ROLE_EXECUTE) /* MPP-2928 */
+	{
+		optype = PSETOP_SEQUENTIAL_QD;
+	}
 
 	/*
 	 * Append the child results together.
