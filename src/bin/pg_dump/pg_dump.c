@@ -154,7 +154,6 @@ char		g_comment_end[10];
 
 static const CatalogId nilCatalogId = {0, 0};
 
-<<<<<<< HEAD
 const char *EXT_PARTITION_NAME_POSTFIX = "_external_partition__";
 
 /* pg_class.relstorage value used in GPDB 6.x and below to mark external tables. */
@@ -166,16 +165,8 @@ static bool gp_partitioning_available = false;
 /* flag indicating whether or not this GP database supports column encoding */
 static bool gp_attribute_encoding_available = false;
 
-/*
- * Macro for producing quoted, schema-qualified name of a dumpable object.
- * Note implicit dependence on "fout"; we should get rid of that argument.
- */
-#define fmtQualifiedDumpable(obj) \
-	fmtQualifiedId(fout->remoteVersion, \
-				   (obj)->dobj.namespace->dobj.name, \
-				   (obj)->dobj.name)
 static DumpId binary_upgrade_dumpid;
-=======
+
 /* override for standard extra_float_digits setting */
 static bool have_extra_float_digits = false;
 static int	extra_float_digits;
@@ -192,7 +183,6 @@ static int	extra_float_digits;
 #define fmtQualifiedDumpable(obj) \
 	fmtQualifiedId((obj)->dobj.namespace->dobj.name, \
 				   (obj)->dobj.name)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void help(const char *progname);
 static void setup_connection(Archive *AH,
@@ -321,25 +311,15 @@ static void dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 							   const char *dbname, Oid dboid);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
-<<<<<<< HEAD
 static void binary_upgrade_set_namespace_oid(Archive *fout,
 								PQExpBuffer upgrade_buffer,
 								Oid pg_namespace_oid);
-static void dumpSearchPath(Archive *AH);
-static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
-								PQExpBuffer upgrade_buffer, Oid pg_type_oid,
-								Oid pg_type_ns_oid, char *pg_type_name);
-static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
-								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
 static bool binary_upgrade_set_type_oids_for_ao(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid,
 								 char *ao_aux_typname);
 static bool binary_upgrade_set_type_oids_by_rel_oid_impl(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid,
 								 char *typname_override);
-static void binary_upgrade_set_pg_class_oids(Archive *fout,
-								 PQExpBuffer upgrade_buffer,
-								 Oid pg_class_oid, bool is_index);
 static void binary_upgrade_set_pg_class_oids_for_ao(Archive *fout,
 								 PQExpBuffer upgrade_buffer,
 								 Oid pg_class_oid, bool is_index,
@@ -348,12 +328,6 @@ static void binary_upgrade_set_pg_class_oids_impl(Archive *fout,
 								 PQExpBuffer upgrade_buffer,
 								 Oid pg_class_oid, bool is_index,
 								 char *relname_override);
-static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
-								DumpableObject *dobj,
-								const char *objtype,
-								const char *objname,
-								const char *objnamespace);
-=======
 static void dumpSearchPath(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 													 PQExpBuffer upgrade_buffer,
@@ -369,7 +343,6 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 											const char *objtype,
 											const char *objname,
 											const char *objnamespace);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static bool nonemptyReloptions(const char *reloptions);
@@ -974,11 +947,7 @@ main(int argc, char **argv)
 		|| numWorkers > MAXIMUM_WAIT_OBJECTS
 #endif
 		)
-<<<<<<< HEAD
-		exit_horribly(NULL, "invalid number of parallel jobs\n");
-=======
 		fatal("invalid number of parallel jobs");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Parallel backup only in the directory archive format so far */
 	if (archiveFormat != archDirectory && numWorkers > 1)
@@ -1002,11 +971,7 @@ main(int argc, char **argv)
 	 * We allow the server to be back to 8.0, and up to any minor release of
 	 * our own major version.  (See also version check in pg_dumpall.c.)
 	 */
-<<<<<<< HEAD
 	fout->minRemoteVersion = 80200;	/* we can handle back to 8.2 */
-=======
-	fout->minRemoteVersion = 80000;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	fout->maxRemoteVersion = (PG_VERSION_NUM / 100) * 100 + 99;
 
 	fout->numWorkers = numWorkers;
@@ -1413,11 +1378,7 @@ help(const char *progname)
 
 	printf(_("\nIf no database name is supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void
@@ -1428,12 +1389,7 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	PGconn	   *conn = GetConnection(AH);
 	const char *std_strings;
 
-<<<<<<< HEAD
-	if (AH->remoteVersion >= 70300)
-		PQclear(ExecuteSqlQueryForSingleRow(AH, ALWAYS_SECURE_SEARCH_PATH_SQL));
-=======
 	PQclear(ExecuteSqlQueryForSingleRow(AH, ALWAYS_SECURE_SEARCH_PATH_SQL));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Set the client encoding if requested.
@@ -2449,18 +2405,10 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 			 * for the partition table, so that we can reload data through the
 			 * root table.
 			 */
-<<<<<<< HEAD
-			if (insertStmt == NULL)
-			{
-				insertStmt = createPQExpBuffer();
-				appendPQExpBuffer(insertStmt, "INSERT INTO %s ",
-								  fmtQualifiedDumpable(tbinfo));
-=======
 			if (dopt->load_via_partition_root && tbinfo->ispartition)
 				targettab = getRootTableInfo(tbinfo);
 			else
 				targettab = tbinfo;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			appendPQExpBuffer(insertStmt, "INSERT INTO %s ",
 							  fmtQualifiedDumpable(targettab));
@@ -8528,16 +8476,9 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			!tbinfo->interesting)
 			continue;
 
-<<<<<<< HEAD
-		if (g_verbose)
-			write_msg(NULL, "reading indexes for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
-=======
 		pg_log_info("reading indexes for table \"%s.%s\"",
 					tbinfo->dobj.namespace->dobj.name,
 					tbinfo->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * The point of the messy-looking outer join is to find a constraint
@@ -9029,10 +8970,6 @@ getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 				i_consrc;
 	int			ntups;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	query = createPQExpBuffer();
 
 	if (fout->remoteVersion >= 90100)
@@ -9265,16 +9202,9 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 			continue;
 
-<<<<<<< HEAD
-		if (g_verbose)
-			write_msg(NULL, "reading triggers for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
-=======
 		pg_log_info("reading triggers for table \"%s.%s\"",
 					tbinfo->dobj.namespace->dobj.name,
 					tbinfo->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		resetPQExpBuffer(query);
 		if (fout->remoteVersion >= 90000)
@@ -9553,14 +9483,11 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	int			i_initrlanacl;
 	int			i_lanowner;
 
-<<<<<<< HEAD
 	/*
 	 * The laninline column was added in upstream 90000 but was backported to
 	 * Greenplum 5, so the check needs to go further back than 90000.
 	 */
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (fout->remoteVersion >= 90600)
 	{
 		PQExpBuffer acl_subquery = createPQExpBuffer();
@@ -11475,13 +11402,10 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 	int			ncomments;
 	PQExpBuffer query;
 	PQExpBuffer tag;
-<<<<<<< HEAD
-=======
 
 	/* do nothing, if --no-comments is supplied */
 	if (dopt->no_comments)
 		return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Comments are SCHEMA not data */
 	if (dopt->dataOnly)
@@ -14578,13 +14502,8 @@ dumpCast(Archive *fout, CastInfo *cast)
 	{
 		funcInfo = findFuncByOid(cast->castfunc);
 		if (funcInfo == NULL)
-<<<<<<< HEAD
-			exit_horribly(NULL, "could not find function definition for function with OID %u\n",
-						  cast->castfunc);
-=======
 			fatal("could not find function definition for function with OID %u",
 				  cast->castfunc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	defqry = createPQExpBuffer();
@@ -15089,11 +15008,7 @@ convertRegProcReference(Archive *fout, const char *proc)
  * getFormattedOperatorName - retrieve the operator name for the
  * given operator OID (presented in string form).
  *
-<<<<<<< HEAD
- * Returns an allocated string, or NULL if the given OID is InvalidOid.
-=======
  * Returns an allocated string, or NULL if the given OID is invalid.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Caller is responsible for free'ing result string.
  *
  * What we produce has the format "OPERATOR(schema.oprname)".  This is only
@@ -16644,11 +16559,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &agginfo->aggfn.dobj,
 										"AGGREGATE", aggsig,
-<<<<<<< HEAD
-								   agginfo->aggfn.dobj.namespace->dobj.name);
-=======
 										agginfo->aggfn.dobj.namespace->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (agginfo->aggfn.dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, agginfo->aggfn.dobj.catId,
@@ -17227,15 +17138,9 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 					  fmtQualifiedDumpable(cfginfo));
 
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
-        binary_upgrade_extension_member(q, &cfginfo->dobj,
-                                        "TEXT SEARCH CONFIGURATION", qcfgname,
-                                        cfginfo->dobj.namespace->dobj.name);
-=======
 		binary_upgrade_extension_member(q, &cfginfo->dobj,
 										"TEXT SEARCH CONFIGURATION", qcfgname,
 										cfginfo->dobj.namespace->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (cfginfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, cfginfo->dobj.catId, cfginfo->dobj.dumpId,
@@ -19251,8 +19156,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				char tmpExtTable[500] = {0};
 				relname = pg_strdup(PQgetvalue(res, i, i_relname));
 				snprintf(tmpExtTable, sizeof(tmpExtTable), "%s%s", relname, EXT_PARTITION_NAME_POSTFIX);
-				char *qualTmpExtTable = pg_strdup(fmtQualifiedId(fout->remoteVersion,
-																 tbinfo->dobj.namespace->dobj.name,
+				char *qualTmpExtTable = pg_strdup(fmtQualifiedId(tbinfo->dobj.namespace->dobj.name,
 																 tmpExtTable));
 
 				appendPQExpBuffer(q, "ALTER TABLE %s ", qualrelname);
