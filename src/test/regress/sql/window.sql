@@ -252,13 +252,7 @@ SELECT sum(unique1) over (w range between current row and unbounded following),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
 
-<<<<<<< HEAD
--- fails on PostgreSQL: not implemented yet
--- Has been implemented in GPDB.
-SELECT sum(unique1) over (order by four range between 2::int8 preceding and 1::int2 preceding),
-=======
 SELECT sum(unique1) over (w range between unbounded preceding and current row exclude current row),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	unique1, four
 FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
 
@@ -290,9 +284,8 @@ SELECT * FROM v_window;
 
 SELECT pg_get_viewdef('v_window');
 
-<<<<<<< HEAD
 reset search_path;
-=======
+
 CREATE OR REPLACE TEMP VIEW v_window AS
 	SELECT i, sum(i) over (order by i rows between 1 preceding and 1 following
 	exclude current row) as sum_rows FROM generate_series(1, 10) i;
@@ -807,7 +800,6 @@ WITH cte (x) AS (
 SELECT x, (sum(x) over w)
 FROM cte
 WINDOW w AS (ORDER BY x groups between 1 preceding and 1 following);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
@@ -891,22 +883,6 @@ SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
     depname
 FROM empsalary GROUP BY depname;
 
--- Test Sort node collapsing
-EXPLAIN (COSTS OFF)
-SELECT * FROM
-  (SELECT depname,
-          sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
-          min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
-   FROM empsalary) emp
-WHERE depname = 'sales';
-
--- Test Sort node reordering
-EXPLAIN (COSTS OFF)
-SELECT
-  lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
-  lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
-FROM empsalary;
-
 -- Test pushdown of quals into a subquery containing window functions
 
 -- pushdown is safe because all PARTITION BY clauses include depname:
@@ -927,7 +903,6 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE depname = 'sales';
 
-<<<<<<< HEAD
 -- pushdown is unsafe because the subquery contains window functions and the qual is volatile:
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -937,7 +912,6 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE depname = 'sales' OR RANDOM() > 0.5;
 
-=======
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -953,7 +927,6 @@ SELECT
   lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
   lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
 FROM empsalary;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- cleanup
 DROP TABLE empsalary;

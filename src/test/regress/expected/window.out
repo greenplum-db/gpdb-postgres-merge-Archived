@@ -7,8 +7,6 @@ CREATE TEMPORARY TABLE empsalary (
     salary int,
     enroll_date date
 );
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'depname' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 INSERT INTO empsalary VALUES
 ('develop', 10, 5200, '2007-08-01'),
 ('sales', 1, 5000, '2006-10-01'),
@@ -206,35 +204,6 @@ SELECT dense_rank() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 
 (10 rows)
 
 SELECT percent_rank() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
-<<<<<<< HEAD
-   percent_rank    | ten | four 
--------------------+-----+------
-                 0 |   1 |    3
-                 1 |   3 |    3
-                 0 |   0 |    0
-                 0 |   0 |    0
-                 1 |   4 |    0
-                 0 |   1 |    1
-                 0 |   1 |    1
- 0.666666666666667 |   7 |    1
-                 1 |   9 |    1
-                 0 |   0 |    2
-(10 rows)
-
-SELECT cume_dist() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
-     cume_dist     | ten | four 
--------------------+-----+------
-               0.5 |   1 |    3
-                 1 |   3 |    3
- 0.666666666666667 |   0 |    0
- 0.666666666666667 |   0 |    0
-                 1 |   4 |    0
-               0.5 |   1 |    1
-               0.5 |   1 |    1
-              0.75 |   7 |    1
-                 1 |   9 |    1
-                 1 |   0 |    2
-=======
     percent_rank    | ten | four 
 --------------------+-----+------
                   0 |   0 |    0
@@ -262,7 +231,6 @@ SELECT cume_dist() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 W
                   1 |   0 |    2
                 0.5 |   1 |    3
                   1 |   3 |    3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (10 rows)
 
 SELECT ntile(3) OVER (ORDER BY ten, four), ten, four FROM tenk1 WHERE unique2 < 10;
@@ -1102,13 +1070,6 @@ FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
   10 |       3 |    3
 (10 rows)
 
-<<<<<<< HEAD
--- fails on PostgreSQL: not implemented yet
--- Has been implemented in GPDB.
-SELECT sum(unique1) over (order by four range between 2::int8 preceding and 1::int2 preceding),
-	unique1, four
-FROM tenk1 WHERE unique1 < 10;
-=======
 SELECT sum(unique1) over (w range between unbounded preceding and current row exclude current row),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
@@ -1129,7 +1090,6 @@ FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
 SELECT sum(unique1) over (w range between unbounded preceding and current row exclude group),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  sum | unique1 | four 
 -----+---------+------
      |       0 |    0
@@ -1138,12 +1098,6 @@ FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
   12 |       5 |    1
   12 |       9 |    1
   12 |       1 |    1
-<<<<<<< HEAD
-  27 |       2 |    2
-  27 |       6 |    2
-  23 |       7 |    3
-  23 |       3 |    3
-=======
   27 |       6 |    2
   27 |       2 |    2
   35 |       3 |    3
@@ -1165,7 +1119,6 @@ FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
   29 |       2 |    2
   38 |       3 |    3
   42 |       7 |    3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (10 rows)
 
 SELECT first_value(unique1) over w,
@@ -1232,9 +1185,7 @@ SELECT pg_get_viewdef('v_window');
     FROM generate_series(1, 10) i(i);
 (1 row)
 
-<<<<<<< HEAD
 reset search_path;
-=======
 CREATE OR REPLACE TEMP VIEW v_window AS
 	SELECT i, sum(i) over (order by i rows between 1 preceding and 1 following
 	exclude current row) as sum_rows FROM generate_series(1, 10) i;
@@ -2891,7 +2842,6 @@ WINDOW w AS (ORDER BY x groups between 1 preceding and 1 following);
  49 |  96
 (26 rows)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
  count 
@@ -2911,14 +2861,18 @@ explain (costs off)
 select f1, sum(f1) over (partition by f1 order by f2
                          range between 1 preceding and 1 following)
 from t1 where f1 = f2;
-           QUERY PLAN            
----------------------------------
- WindowAgg
-   ->  Sort
-         Sort Key: f1
-         ->  Seq Scan on t1
-               Filter: (f1 = f2)
-(5 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  WindowAgg
+         Partition By: f1
+         Order By: f2
+         ->  Sort
+               Sort Key: f1
+               ->  Seq Scan on t1
+                     Filter: (f1 = f2)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select f1, sum(f1) over (partition by f1 order by f2
                          range between 1 preceding and 1 following)
@@ -2957,14 +2911,18 @@ explain (costs off)
 select f1, sum(f1) over (partition by f1 order by f2
                          groups between 1 preceding and 1 following)
 from t1 where f1 = f2;
-           QUERY PLAN            
----------------------------------
- WindowAgg
-   ->  Sort
-         Sort Key: f1
-         ->  Seq Scan on t1
-               Filter: (f1 = f2)
-(5 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  WindowAgg
+         Partition By: f1
+         Order By: f2
+         ->  Sort
+               Sort Key: f1
+               ->  Seq Scan on t1
+                     Filter: (f1 = f2)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select f1, sum(f1) over (partition by f1 order by f2
                          groups between 1 preceding and 1 following)
@@ -3071,52 +3029,6 @@ FROM empsalary GROUP BY depname;
  14600 |          3 |              | sales
 (3 rows)
 
--- Test Sort node collapsing
-EXPLAIN (COSTS OFF)
-SELECT * FROM
-  (SELECT depname,
-          sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
-          min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
-   FROM empsalary) emp
-WHERE depname = 'sales';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Subquery Scan on emp
-   ->  Gather Motion 1:1  (slice1; segments: 1)
-         Merge Key: empsalary.empno, empsalary.enroll_date
-         ->  WindowAgg
-               Order By: empsalary.empno
-               ->  WindowAgg
-                     Partition By: empsalary.empno
-                     Order By: empsalary.enroll_date
-                     ->  Sort
-                           Sort Key: empsalary.empno, empsalary.enroll_date
-                           ->  Seq Scan on empsalary
-                                 Filter: ((depname)::text = 'sales'::text)
- Optimizer: Postgres query optimizer
-(13 rows)
-
--- Test Sort node reordering
-EXPLAIN (COSTS OFF)
-SELECT
-  lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
-  lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
-FROM empsalary;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
-   ->  WindowAgg
-         Partition By: depname
-         Order By: salary, enroll_date
-         ->  WindowAgg
-               Partition By: depname
-               Order By: salary, enroll_date, empno
-               ->  Sort
-                     Sort Key: depname, salary, enroll_date, empno
-                     ->  Seq Scan on empsalary
- Optimizer: Postgres query optimizer
-(11 rows)
-
 -- Test pushdown of quals into a subquery containing window functions
 -- pushdown is safe because all PARTITION BY clauses include depname:
 EXPLAIN (COSTS OFF)
@@ -3126,7 +3038,6 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-<<<<<<< HEAD
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Subquery Scan on emp
@@ -3141,18 +3052,6 @@ WHERE depname = 'sales';
                                  Filter: ((depname)::text = 'sales'::text)
  Optimizer: Postgres query optimizer
 (11 rows)
-=======
-                                QUERY PLAN                                
---------------------------------------------------------------------------
- Subquery Scan on emp
-   ->  WindowAgg
-         ->  WindowAgg
-               ->  Sort
-                     Sort Key: (((empsalary.depname)::text || 'A'::text))
-                     ->  Seq Scan on empsalary
-                           Filter: ((depname)::text = 'sales'::text)
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- pushdown is unsafe because there's a PARTITION BY clause without depname:
 EXPLAIN (COSTS OFF)
@@ -3162,7 +3061,6 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-<<<<<<< HEAD
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Subquery Scan on emp
@@ -3208,20 +3106,6 @@ WHERE depname = 'sales' OR RANDOM() > 0.5;
                                  ->  Seq Scan on empsalary
  Optimizer: Postgres query optimizer
 (14 rows)
-=======
-                      QUERY PLAN                       
--------------------------------------------------------
- Subquery Scan on emp
-   Filter: ((emp.depname)::text = 'sales'::text)
-   ->  WindowAgg
-         ->  Sort
-               Sort Key: empsalary.enroll_date
-               ->  WindowAgg
-                     ->  Sort
-                           Sort Key: empsalary.depname
-                           ->  Seq Scan on empsalary
-(9 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
@@ -3231,16 +3115,23 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Subquery Scan on emp
-   ->  WindowAgg
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         Merge Key: empsalary.empno, empsalary.enroll_date
          ->  WindowAgg
-               ->  Sort
-                     Sort Key: empsalary.empno, empsalary.enroll_date
-                     ->  Seq Scan on empsalary
-                           Filter: ((depname)::text = 'sales'::text)
-(7 rows)
+               Partition By: empsalary.depname
+               Order By: empsalary.empno
+               ->  WindowAgg
+                     Partition By: empsalary.depname, empsalary.empno
+                     Order By: empsalary.enroll_date
+                     ->  Sort
+                           Sort Key: empsalary.empno, empsalary.enroll_date
+                           ->  Seq Scan on empsalary
+                                 Filter: ((depname)::text = 'sales'::text)
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 -- Test Sort node reordering
 EXPLAIN (COSTS OFF)
@@ -3248,14 +3139,20 @@ SELECT
   lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
   lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
 FROM empsalary;
-                         QUERY PLAN                          
--------------------------------------------------------------
- WindowAgg
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  WindowAgg
-         ->  Sort
-               Sort Key: depname, salary, enroll_date, empno
-               ->  Seq Scan on empsalary
-(5 rows)
+         Partition By: depname
+         Order By: salary, enroll_date
+         ->  WindowAgg
+               Partition By: depname
+               Order By: salary, enroll_date, empno
+               ->  Sort
+                     Sort Key: depname, salary, enroll_date, empno
+                     ->  Seq Scan on empsalary
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 -- cleanup
 DROP TABLE empsalary;
