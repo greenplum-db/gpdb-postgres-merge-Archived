@@ -251,15 +251,7 @@ CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 COMMENT ON SERVER s1 IS 'foreign server';
 CREATE USER MAPPING FOR current_user SERVER s1;
-<<<<<<< HEAD
 \dew+ :NO_BUILTINS
-=======
-CREATE USER MAPPING FOR current_user SERVER s1;				-- ERROR
-ERROR:  user mapping for "regress_foreign_data_user" already exists for server "s1"
-CREATE USER MAPPING IF NOT EXISTS FOR current_user SERVER s1; -- NOTICE
-NOTICE:  user mapping for "regress_foreign_data_user" already exists for server "s1", skipping
-\dew+
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                                                 List of foreign-data wrappers
     Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
 ------------+---------------------------+---------+--------------------------+-------------------+-------------+-------------
