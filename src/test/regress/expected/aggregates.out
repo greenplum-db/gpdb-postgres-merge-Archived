@@ -1162,65 +1162,35 @@ explain (costs off) select a,c from t1 group by a,c,d;
 explain (costs off) select *
 from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
 group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.y,t2.z;
-<<<<<<< HEAD
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  GroupAggregate
+   ->  HashAggregate
          Group Key: t1.a, t1.b, t2.x, t2.y
-         ->  Sort
-               Sort Key: t1.a, t1.b
-               ->  Hash Join
-                     Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
-                     ->  Seq Scan on t2
-                     ->  Hash
-                           ->  Seq Scan on t1
+         ->  Hash Join
+               Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
+               ->  Seq Scan on t2
+               ->  Hash
+                     ->  Seq Scan on t1
  Optimizer: Postgres query optimizer
-(11 rows)
-=======
-                      QUERY PLAN                      
-------------------------------------------------------
- HashAggregate
-   Group Key: t1.a, t1.b, t2.x, t2.y
-   ->  Hash Join
-         Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
-         ->  Seq Scan on t2
-         ->  Hash
-               ->  Seq Scan on t1
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(9 rows)
 
 -- Test case where t1 can be optimized but not t2
 explain (costs off) select t1.*,t2.x,t2.z
 from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
 group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.z;
-<<<<<<< HEAD
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  GroupAggregate
+   ->  HashAggregate
          Group Key: t1.a, t1.b, t2.x, t2.z
-         ->  Sort
-               Sort Key: t1.a, t1.b, t2.z
-               ->  Hash Join
-                     Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
-                     ->  Seq Scan on t2
-                     ->  Hash
-                           ->  Seq Scan on t1
+         ->  Hash Join
+               Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
+               ->  Seq Scan on t2
+               ->  Hash
+                     ->  Seq Scan on t1
  Optimizer: Postgres query optimizer
-(11 rows)
-=======
-                      QUERY PLAN                      
-------------------------------------------------------
- HashAggregate
-   Group Key: t1.a, t1.b, t2.x, t2.z
-   ->  Hash Join
-         Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
-         ->  Seq Scan on t2
-         ->  Hash
-               ->  Seq Scan on t1
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(9 rows)
 
 -- Cannot optimize when PK is deferrable
 explain (costs off) select * from t3 group by a,b,c;
@@ -2663,14 +2633,16 @@ EXPLAIN (COSTS OFF, VERBOSE)
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Finalize Aggregate
    Output: variance(unique1), sum((unique1)::bigint), regr_count((unique1)::double precision, (unique1)::double precision)
-   ->  Gather
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          Output: (PARTIAL variance(unique1)), (PARTIAL sum((unique1)::bigint)), (PARTIAL regr_count((unique1)::double precision, (unique1)::double precision))
          Workers Planned: 4
          ->  Partial Aggregate
                Output: PARTIAL variance(unique1), PARTIAL sum((unique1)::bigint), PARTIAL regr_count((unique1)::double precision, (unique1)::double precision)
-               ->  Parallel Seq Scan on public.tenk1
+               ->  Seq Scan on public.tenk1
                      Output: unique1, unique2, two, four, ten, twenty, hundred, thousand, twothousand, fivethous, tenthous, odd, even, stringu1, stringu2, string4
-(9 rows)
+ Optimizer: Postgres query optimizer
+ Settings: enable_indexonlyscan=off, min_parallel_table_scan_size=0, parallel_setup_cost=0, parallel_tuple_cost=0
+(10 rows)
 
 SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8) FROM tenk1;
        variance       |   sum    | regr_count 
