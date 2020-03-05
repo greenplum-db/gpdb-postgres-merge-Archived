@@ -7780,6 +7780,11 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		else
 			partially_grouped_target = partially_grouped_rel->reltarget;
 
+		can_mpp_hash = (parse->groupClause != NIL &&
+			parse->groupingSets == NIL &&
+			agg_costs->numPureOrderedAggs == 0 &&
+			grouping_is_hashable(parse->groupClause));
+		
 		cdb_create_twostage_grouping_paths(root,
 										   input_rel,
 										   grouped_rel,
