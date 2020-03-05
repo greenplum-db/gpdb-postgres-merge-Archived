@@ -15,7 +15,10 @@ ftsmessagehandler.t: \
     $(MOCK_DIR)/backend/tcop/dest_mock.o \
     $(MOCK_DIR)/backend/postmaster/postmaster_mock.o \
     $(MOCK_DIR)/backend/access/transam/xlog_mock.o \
-    $(MOCK_DIR)/backend/replication/slot_mock.o
+    $(MOCK_DIR)/backend/replication/slot_mock.o \
+    $(MOCK_DIR)/backend/access/hash/hash_mock.o \
+    $(MOCK_DIR)/backend/utils/fmgr/fmgr_mock.o
+
 
 ftsprobe.t: \
     $(MOCK_DIR)/backend/fts/fts_mock.o \
