@@ -378,16 +378,22 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- HashSetOp Except
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Index Only Scan using tenk1_unique1 on tenk1
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
-                     Filter: (unique2 <> 10)
-(7 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  HashSetOp Except
+         ->  Append
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                     Hash Key: "*SELECT* 1".unique1
+                     ->  Subquery Scan on "*SELECT* 1"
+                           ->  Seq Scan on tenk1
+               ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                     Hash Key: "*SELECT* 2".unique2
+                     ->  Subquery Scan on "*SELECT* 2"
+                           ->  Seq Scan on tenk1 tenk1_1
+                                 Filter: (unique2 <> 10)
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
@@ -401,17 +407,24 @@ select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
                                         QUERY PLAN                                        
 ------------------------------------------------------------------------------------------
- Aggregate
-   ->  Subquery Scan on ss
-         ->  SetOp Intersect
-               ->  Sort
-                     Sort Key: "*SELECT* 2".fivethous
-                     ->  Append
-                           ->  Subquery Scan on "*SELECT* 2"
-                                 ->  Seq Scan on tenk1
-                           ->  Subquery Scan on "*SELECT* 1"
-                                 ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
-(10 rows)
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Subquery Scan on ss
+                     ->  SetOp Intersect
+                           ->  Sort
+                                 Sort Key: "*SELECT* 2".fivethous
+                                 ->  Append
+                                       ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                                             Hash Key: "*SELECT* 2".fivethous
+                                             ->  Subquery Scan on "*SELECT* 2"
+                                                   ->  Seq Scan on tenk1
+                                       ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                             Hash Key: "*SELECT* 1".unique1
+                                             ->  Subquery Scan on "*SELECT* 1"
+                                                   ->  Seq Scan on tenk1 tenk1_1
+ Optimizer: Postgres query optimizer
+(17 rows)
 
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
@@ -422,18 +435,24 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- SetOp Except
-   ->  Sort
-         Sort Key: "*SELECT* 1".unique1
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Index Only Scan using tenk1_unique1 on tenk1
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
-                           Filter: (unique2 <> 10)
-(9 rows)
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  SetOp Except
+         ->  Sort
+               Sort Key: "*SELECT* 1".unique1
+               ->  Append
+                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                           Hash Key: "*SELECT* 1".unique1
+                           ->  Subquery Scan on "*SELECT* 1"
+                                 ->  Seq Scan on tenk1
+                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                           Hash Key: "*SELECT* 2".unique2
+                           ->  Subquery Scan on "*SELECT* 2"
+                                 ->  Seq Scan on tenk1 tenk1_1
+                                       Filter: (unique2 <> 10)
+ Optimizer: Postgres query optimizer
+(15 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
