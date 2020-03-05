@@ -81,7 +81,8 @@ static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 static void ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 								  ExprEvalStep *scratch,
 								  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
-								  int transno, int setno, int setoff, bool ishash);
+								  int transno, int setno, int setoff, bool ishash,
+								  bool nullcheck);
 
 
 /*
@@ -2993,10 +2994,13 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
  * check for filters, evaluate aggregate input, check that that input is not
  * NULL for a strict transition function, and then finally invoke the
  * transition for each of the concurrently computed grouping sets.
+ *
+ * If nullcheck is true, the generated code will check for a NULL pointer to
+ * the array of AggStatePerGroup, and skip evaluation if so.
  */
 ExprState *
 ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
-				  bool doSort, bool doHash)
+				  bool doSort, bool doHash, bool nullcheck)
 {
 	ExprState  *state = makeNode(ExprState);
 	PlanState  *parent = &aggstate->ss.ps;
@@ -3269,7 +3273,8 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			for (setno = 0; setno < processGroupingSets; setno++)
 			{
 				ExecBuildAggTransCall(state, aggstate, &scratch, trans_fcinfo,
-									  pertrans, transno, setno, setoff, false);
+									  pertrans, transno, setno, setoff, false,
+									  nullcheck);
 				setoff++;
 			}
 		}
@@ -3287,7 +3292,8 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			for (setno = 0; setno < numHashes; setno++)
 			{
 				ExecBuildAggTransCall(state, aggstate, &scratch, trans_fcinfo,
-									  pertrans, transno, setno, setoff, true);
+									  pertrans, transno, setno, setoff, true,
+									  nullcheck);
 				setoff++;
 			}
 		}
@@ -3335,16 +3341,29 @@ static void
 ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 					  ExprEvalStep *scratch,
 					  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
-					  int transno, int setno, int setoff, bool ishash)
+					  int transno, int setno, int setoff, bool ishash,
+					  bool nullcheck)
 {
 	int			adjust_init_jumpnull = -1;
 	int			adjust_strict_jumpnull = -1;
 	ExprContext *aggcontext;
+	int adjust_jumpnull = -1;
 
 	if (ishash)
 		aggcontext = aggstate->hashcontext;
 	else
 		aggcontext = aggstate->aggcontexts[setno];
+
+	/* add check for NULL pointer? */
+	if (nullcheck)
+	{
+		scratch->opcode = EEOP_AGG_PLAIN_PERGROUP_NULLCHECK;
+		scratch->d.agg_plain_pergroup_nullcheck.setoff = setoff;
+		/* adjust later */
+		scratch->d.agg_plain_pergroup_nullcheck.jumpnull = -1;
+		ExprEvalPushStep(state, scratch);
+		adjust_jumpnull = state->steps_len - 1;
+	}
 
 	/*
 	 * If the initial value for the transition state doesn't exist in the
@@ -3422,6 +3441,16 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 
 		Assert(as->d.agg_strict_trans_check.jumpnull == -1);
 		as->d.agg_strict_trans_check.jumpnull = state->steps_len;
+	}
+
+	/* fix up jumpnull */
+	if (adjust_jumpnull != -1)
+	{
+		ExprEvalStep *as = &state->steps[adjust_jumpnull];
+
+		Assert(as->opcode == EEOP_AGG_PLAIN_PERGROUP_NULLCHECK);
+		Assert(as->d.agg_plain_pergroup_nullcheck.jumpnull == -1);
+		as->d.agg_plain_pergroup_nullcheck.jumpnull = state->steps_len;
 	}
 }
 
