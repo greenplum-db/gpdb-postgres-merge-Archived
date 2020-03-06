@@ -3482,52 +3482,6 @@ dumpDatabase(Archive *fout)
 
 		PQclear(lo_res);
 
-<<<<<<< HEAD
-		/*
-		 * pg_largeobject_metadata
-		 */
-		if (fout->remoteVersion >= 90000)
-		{
-			resetPQExpBuffer(loFrozenQry);
-			resetPQExpBuffer(loOutQry);
-
-			if (fout->remoteVersion >= 90300)
-				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, relminmxid\n"
-								  "FROM pg_catalog.pg_class\n"
-								  "WHERE oid = %u;\n",
-								  LargeObjectMetadataRelationId);
-			else
-				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, 0 AS relminmxid\n"
-								  "FROM pg_catalog.pg_class\n"
-								  "WHERE oid = %u;\n",
-								  LargeObjectMetadataRelationId);
-
-			lo_res = ExecuteSqlQueryForSingleRow(fout, loFrozenQry->data);
-
-			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
-			i_relminmxid = PQfnumber(lo_res, "relminmxid");
-
-			appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata relfrozenxid and relminmxid\n");
-			appendPQExpBufferStr(loOutQry, "SET allow_system_table_mods = true;\n");
-			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
-							  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
-							  "WHERE oid = %u;\n",
-							  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
-							  atoi(PQgetvalue(lo_res, 0, i_relminmxid)),
-							  LargeObjectMetadataRelationId);
-			appendPQExpBuffer(loOutQry, "RESET allow_system_table_mods;\n");
-			ArchiveEntry(fout, nilCatalogId, createDumpId(),
-						 "pg_largeobject_metadata", NULL, NULL, "",
-						 false, "pg_largeobject_metadata", SECTION_PRE_DATA,
-						 loOutQry->data, "", NULL,
-						 NULL, 0,
-						 NULL, NULL);
-
-			PQclear(lo_res);
-		}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		destroyPQExpBuffer(loFrozenQry);
 		destroyPQExpBuffer(loOutQry);
 	}
