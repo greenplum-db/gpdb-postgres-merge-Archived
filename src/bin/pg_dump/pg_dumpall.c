@@ -1796,30 +1796,17 @@ dumpTablespaces(PGconn *conn)
 							  fspcname, spcoptions);
 
 		if (!skip_acls &&
-<<<<<<< HEAD
-			!buildACLCommands(fspcname, NULL, NULL, "TABLESPACE", spcacl, rspcacl,
-							  spcowner, "", server_version, buf))
-		{
-			fprintf(stderr, _("%s: could not parse ACL list (%s) for tablespace \"%s\"\n"),
-					progname, spcacl, spcname);
-=======
 			!buildACLCommands(fspcname, NULL, NULL, "TABLESPACE",
 							  spcacl, rspcacl,
 							  spcowner, "", server_version, buf))
 		{
 			pg_log_error("could not parse ACL list (%s) for tablespace \"%s\"",
 						 spcacl, spcname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			PQfinish(conn);
 			exit_nicely(1);
 		}
 
-<<<<<<< HEAD
-		/* Set comments */
-		if (spccomment && strlen(spccomment))
-=======
 		if (!no_comments && spccomment && spccomment[0] != '\0')
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			appendPQExpBuffer(buf, "COMMENT ON TABLESPACE %s IS ", fspcname);
 			appendStringLiteralConn(buf, spccomment, conn);
@@ -1957,60 +1944,12 @@ expand_dbname_patterns(PGconn *conn,
 	PQExpBuffer query;
 	PGresult   *res;
 
-<<<<<<< HEAD
-	/* Need "ORDER BY" here to keep order consistency cross pg_dump call */
-	printfPQExpBuffer(buf, "SELECT rolname, datname, unnest(setconfig) "
-					  "FROM pg_db_role_setting, pg_authid, pg_database "
-		  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid ORDER BY 1,2,3");
-	res = executeQuery(conn, buf->data);
-=======
 	if (patterns->head == NULL)
 		return;					/* nothing to do */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	query = createPQExpBuffer();
 
 	/*
-<<<<<<< HEAD
-	 * Variables that are marked GUC_LIST_QUOTE were already fully quoted by
-	 * flatten_set_variable_args() before they were put into the setconfig
-	 * array.  However, because the quoting rules used there aren't exactly
-	 * like SQL's, we have to break the list value apart and then quote the
-	 * elements as string literals.  (The elements may be double-quoted as-is,
-	 * but we can't just feed them to the SQL parser; it would do the wrong
-	 * thing with elements that are zero-length or longer than NAMEDATALEN.)
-	 *
-	 * Variables that are not so marked should just be emitted as simple
-	 * string literals.  If the variable is not known to
-	 * variable_is_guc_list_quote(), we'll do that; this makes it unsafe to
-	 * use GUC_LIST_QUOTE for extension variables.
-	 */
-	if (variable_is_guc_list_quote(mine))
-	{
-		char	  **namelist;
-		char	  **nameptr;
-
-		/* Parse string into list of identifiers */
-		/* this shouldn't fail really */
-		if (SplitGUCList(pos + 1, ',', &namelist))
-		{
-			for (nameptr = namelist; *nameptr; nameptr++)
-			{
-				if (nameptr != namelist)
-					appendPQExpBufferStr(buf, ", ");
-				appendStringLiteralConn(buf, *nameptr, conn);
-			}
-		}
-		pg_free(namelist);
-	}
-	else
-		appendStringLiteralConn(buf, pos + 1, conn);
-	appendPQExpBufferStr(buf, ";\n");
-
-	fprintf(OPF, "%s", buf->data);
-	destroyPQExpBuffer(buf);
-	free(mine);
-=======
 	 * The loop below runs multiple SELECTs, which might sometimes result in
 	 * duplicate entries in the name list, but we don't care, since all we're
 	 * going to do is test membership of the list.
@@ -2034,7 +1973,6 @@ expand_dbname_patterns(PGconn *conn,
 	}
 
 	destroyPQExpBuffer(query);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2046,9 +1984,6 @@ dumpDatabases(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-<<<<<<< HEAD
-	res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1");
-=======
 	/*
 	 * Skip databases marked not datallowconn, since we'd be unable to connect
 	 * to them anyway.  This must agree with dropDBs().
@@ -2068,7 +2003,6 @@ dumpDatabases(PGconn *conn)
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Databases\n--\n\n");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
