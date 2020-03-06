@@ -3916,19 +3916,7 @@ dumpBlobs(Archive *fout, void *arg pg_attribute_unused())
 	int			i;
 	int			cnt;
 
-<<<<<<< HEAD
-	/*
-	 * Do not dump out blob data in binary-upgrade mode, pg_upgrade will copy
-	 * the pg_largeobject table over entirely from the old cluster.
-	 */
-	if (fout->dopt->binary_upgrade)
-		return 1;
-
-	if (g_verbose)
-		write_msg(NULL, "saving large objects\n");
-=======
 	pg_log_info("saving large objects");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Currently, we re-fetch all BLOB OIDs using a cursor.  Consider scanning
@@ -4057,16 +4045,9 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 			polinfo->polwithcheck = NULL;
 		}
 
-<<<<<<< HEAD
-		if (g_verbose)
-			write_msg(NULL, "reading policies for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
-=======
 		pg_log_info("reading policies for table \"%s.%s\"",
 					tbinfo->dobj.namespace->dobj.name,
 					tbinfo->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		resetPQExpBuffer(query);
 
@@ -8568,16 +8549,6 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
-<<<<<<< HEAD
-		if (!tbinfo->hastriggers ||
-			!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
-			continue;
-
-		if (g_verbose)
-			write_msg(NULL, "reading foreign key constraints for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
-=======
 		/*
 		 * For partitioned tables, foreign keys have no triggers so they must
 		 * be included anyway in case some foreign keys are defined.
@@ -8590,7 +8561,6 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 		pg_log_info("reading foreign key constraints for table \"%s.%s\"",
 					tbinfo->dobj.namespace->dobj.name,
 					tbinfo->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		resetPQExpBuffer(query);
 		if (fout->remoteVersion >= 110000)
@@ -21077,12 +21047,7 @@ getDependencies(Archive *fout)
 	DumpableObject *dobj,
 			   *refdobj;
 
-<<<<<<< HEAD
-	if (g_verbose)
-		write_msg(NULL, "reading dependency data\n");
-=======
 	pg_log_info("reading dependency data");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	query = createPQExpBuffer();
 
