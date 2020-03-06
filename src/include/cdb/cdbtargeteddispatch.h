@@ -27,7 +27,7 @@
 
 extern void FinalizeDirectDispatchDataForSlice(PlanSlice *slice);
 extern void DirectDispatchUpdateContentIdsFromPlan(PlannerInfo *root, Plan *plan);
-extern void DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
+extern bool DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
 													GpPolicy *targetPolicy, Oid *hashfuncs);
 
 extern void MergeDirectDispatchCalculationInfo(DirectDispatchInfo *to, DirectDispatchInfo *from);

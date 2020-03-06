@@ -2068,22 +2068,27 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		for (i = 0; i < numHashAttrs; i++)
 			hashAttrs[i] = targetPolicy->attrs[i];
 
-		if (subroot->config->gp_enable_direct_dispatch)
+		/*
+		 * GPDB_12_MERGE_FIXME: since the partitioning is not like the old way,
+		 * this SRI optimization only has the direct dispatch now.
+		 *
+		 * Return NULL if direct dispatch fails. Note: refactor this function,
+		 * after the partitioning settled.
+		 */
+		if (!subroot->config->gp_enable_direct_dispatch ||
+			!DirectDispatchUpdateContentIdsForInsert(subroot,
+													 &resultplan->plan,
+													 targetPolicy,
+													 hashFuncs))
 		{
-			DirectDispatchUpdateContentIdsForInsert(subroot,
-													&resultplan->plan,
-													targetPolicy,
-													hashFuncs);
-
-			/*
-			 * we now either have a hash-code, or we've marked the plan
-			 * non-directed.
-			 */
+			resultplan = NULL;
 		}
-
-		resultplan->numHashFilterCols = numHashAttrs;
-		resultplan->hashFilterColIdx = hashAttrs;
-		resultplan->hashFilterFuncs = hashFuncs;
+		else
+		{
+			resultplan->numHashFilterCols = numHashAttrs;
+			resultplan->hashFilterColIdx = hashAttrs;
+			resultplan->hashFilterFuncs = hashFuncs;
+		}
 	}
 	else
 		resultplan = NULL;
