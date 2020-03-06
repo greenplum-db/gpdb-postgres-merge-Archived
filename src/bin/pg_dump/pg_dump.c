@@ -2184,25 +2184,6 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 				tbinfo->dobj.namespace->dobj.name, classname);
 
 	/*
-<<<<<<< HEAD
-	 * If possible, specify the column list explicitly so that we have no
-	 * possibility of retrieving data in the wrong column order.  (The default
-	 * column ordering of COPY will not be what we want in certain corner
-	 * cases involving ADD COLUMN and inheritance.)
-	 */
-	if (fout->remoteVersion >= 70300)
-		column_list = fmtCopyColumnList(tbinfo, clistBuf);
-	else
-		error_unsupported_server_version(fout);
-
-	if (oids && hasoids)
-	{
-		appendPQExpBuffer(q, "COPY %s %s WITH OIDS TO stdout;",
-						  fmtQualifiedDumpable(tbinfo),
-						  column_list);
-	}
-	else if (tdinfo->filtercond)
-=======
 	 * Specify the column list explicitly so that we have no possibility of
 	 * retrieving data in the wrong column order.  (The default column
 	 * ordering of COPY will not be what we want in certain corner cases
@@ -2211,7 +2192,6 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	column_list = fmtCopyColumnList(tbinfo, clistBuf);
 
 	if (tdinfo->filtercond)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/* Note: this syntax is only supported in 8.2 and up */
 		appendPQExpBufferStr(q, "COPY (SELECT ");
@@ -2616,16 +2596,9 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 
 		/* must use 2 steps here 'cause fmtId is nonreentrant */
 		appendPQExpBuffer(copyBuf, "COPY %s ",
-<<<<<<< HEAD
-						  fmtQualifiedDumpable(tbinfo));
-		appendPQExpBuffer(copyBuf, "%s %sFROM stdin;\n",
-						  fmtCopyColumnList(tbinfo, clistBuf),
-					  (tdinfo->oids && tbinfo->hasoids) ? "WITH OIDS " : "");
-=======
 						  copyFrom);
 		appendPQExpBuffer(copyBuf, "%s FROM stdin;\n",
 						  fmtCopyColumnList(tbinfo, clistBuf));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		copyStmt = copyBuf->data;
 	}
 	else
@@ -3130,16 +3103,6 @@ dumpDatabase(Archive *fout)
 				minmxid;
 	char	   *qdatname;
 
-<<<<<<< HEAD
-	datname = PQdb(conn);
-	qdatname = pg_strdup(fmtId(datname));
-
-	if (g_verbose)
-		write_msg(NULL, "saving database definition\n");
-
-	/* Get the database owner and parameters from pg_database */
-	if (fout->remoteVersion >= 90300)
-=======
 	pg_log_info("saving database definition");
 
 	/*
@@ -3187,7 +3150,6 @@ dumpDatabase(Archive *fout)
 						  username_subquery);
 	}
 	else if (fout->remoteVersion >= 90300)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, datname, "
 						  "(%s datdba) AS dba, "
