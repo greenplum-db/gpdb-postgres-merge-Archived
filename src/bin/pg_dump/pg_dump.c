@@ -5413,54 +5413,6 @@ getNamespaces(Archive *fout, int *numNamespaces)
 	int			i_initnspacl;
 	int			i_initrnspacl;
 
-<<<<<<< HEAD
-/* 
- * GPDB: does not support versions that far back. Keep the code to facilitate
- * future merge effords with upstream.
- */
-#if 0
-	/*
-	 * Before 7.3, there are no real namespaces; create two dummy entries, one
-	 * for user stuff and one for system stuff.
-	 */
-	if (fout->remoteVersion < 70300)
-	{
-		nsinfo = (NamespaceInfo *) pg_malloc(2 * sizeof(NamespaceInfo));
-
-		nsinfo[0].dobj.objType = DO_NAMESPACE;
-		nsinfo[0].dobj.catId.tableoid = 0;
-		nsinfo[0].dobj.catId.oid = 0;
-		AssignDumpId(&nsinfo[0].dobj);
-		nsinfo[0].dobj.name = pg_strdup("public");
-		nsinfo[0].rolname = pg_strdup("");
-		nsinfo[0].nspacl = pg_strdup("");
-		nsinfo[0].rnspacl = pg_strdup("");
-		nsinfo[0].initnspacl = pg_strdup("");
-		nsinfo[0].initrnspacl = pg_strdup("");
-
-		selectDumpableNamespace(&nsinfo[0], fout);
-
-		nsinfo[1].dobj.objType = DO_NAMESPACE;
-		nsinfo[1].dobj.catId.tableoid = 0;
-		nsinfo[1].dobj.catId.oid = 1;
-		AssignDumpId(&nsinfo[1].dobj);
-		nsinfo[1].dobj.name = pg_strdup("pg_catalog");
-		nsinfo[1].rolname = pg_strdup("");
-		nsinfo[1].nspacl = pg_strdup("");
-		nsinfo[1].rnspacl = pg_strdup("");
-		nsinfo[1].initnspacl = pg_strdup("");
-		nsinfo[1].initrnspacl = pg_strdup("");
-
-		selectDumpableNamespace(&nsinfo[1], fout);
-
-		*numNamespaces = 2;
-
-		return nsinfo;
-	}
-#endif /* Disabled upstream code */
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	query = createPQExpBuffer();
 
 	/*
@@ -5576,27 +5528,9 @@ findNamespace(Archive *fout, Oid nsoid)
 {
 	NamespaceInfo *nsinfo;
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		nsinfo = findNamespaceByOid(nsoid);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-
-	if (nsinfo == NULL)
-	{
-		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
-		exit_nicely(1);
-	}
-
-=======
 	nsinfo = findNamespaceByOid(nsoid);
 	if (nsinfo == NULL)
 		fatal("schema with OID %u does not exist", nsoid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return nsinfo;
 }
 
@@ -6071,22 +6005,6 @@ getOperators(Archive *fout, int *numOprs)
 	 * system-defined operators at dump-out time.
 	 */
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
-						  "oprnamespace, "
-						  "(%s oprowner) AS rolname, "
-						  "oprkind, "
-						  "oprcode::oid AS oprcode "
-						  "FROM pg_operator",
-						  username_subquery);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
 					  "oprnamespace, "
 					  "(%s oprowner) AS rolname, "
@@ -6094,7 +6012,6 @@ getOperators(Archive *fout, int *numOprs)
 					  "oprcode::oid AS oprcode "
 					  "FROM pg_operator",
 					  username_subquery);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -6396,26 +6313,11 @@ getOpclasses(Archive *fout, int *numOpclasses)
 	 * system-defined opclasses at dump-out time.
 	 */
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, opcname, "
-						  "opcnamespace, "
-						  "(%s opcowner) AS rolname "
-						  "FROM pg_opclass",
-						  username_subquery);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	appendPQExpBuffer(query, "SELECT tableoid, oid, opcname, "
 					  "opcnamespace, "
 					  "(%s opcowner) AS rolname "
 					  "FROM pg_opclass",
 					  username_subquery);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -9894,77 +9796,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			 */
 			appendPQExpBuffer(q,
 							  "CASE WHEN a.attcollation <> t.typcollation "
-<<<<<<< HEAD
-						   "THEN a.attcollation ELSE 0 END AS attcollation, "
-							" %s "
-							  "NULL AS attfdwoptions "
-			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
-							  "ON a.atttypid = t.oid "
-							  " %s "
-							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
-							  "AND a.attnum > 0::pg_catalog.int2 "
-							  "ORDER BY a.attrelid, a.attnum",
-							  (gp_attribute_encoding_available ?
-							   "pg_catalog.array_to_string(e.attoptions, ',') AS attencoding, " : ""),
-							  (gp_attribute_encoding_available ?
-							   "LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum " : ""),
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 90000)
-		{
-			/* attoptions is new in 9.0 */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "a.attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, a.attisdropped, "
-							  "a.attlen, a.attalign, a.attislocal, "
-				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-						"array_to_string(a.attoptions, ', ') AS attoptions, "
-							  "0 AS attcollation, "
-							  " %s "
-							  "NULL AS attfdwoptions "
-			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
-							  "ON a.atttypid = t.oid "
-							  " %s "
-							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
-							  "AND a.attnum > 0::pg_catalog.int2 "
-							  "ORDER BY a.attrelid, a.attnum",
-							  (gp_attribute_encoding_available ?
-								"pg_catalog.array_to_string(e.attoptions, ',') AS attencoding, " : ""),
-							  (gp_attribute_encoding_available ?
-								"LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum " : ""),
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 70300)
-		{
-			/* need left join here to not fail on dropped columns ... */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "a.attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, a.attisdropped, "
-							  "a.attlen, a.attalign, a.attislocal, "
-							  "a.attndims, a.attbyval, "		/* Added for dropped column reconstruction */
-				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-							  "'' AS attoptions, 0 AS attcollation, "
-				);
-			if (gp_attribute_encoding_available)
-				appendPQExpBuffer(q, "pg_catalog.array_to_string(e.attoptions, ',') as attencoding, ");
-
-			appendPQExpBuffer(q, "NULL AS attfdwoptions "
-			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
-							  "ON a.atttypid = t.oid "
-				);
-			if (gp_attribute_encoding_available)
-				appendPQExpBuffer(q, "	 LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum ");
-			appendPQExpBuffer(q,
-							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
-							  "AND a.attnum > 0::pg_catalog.int2 "
-							  "ORDER BY a.attrelid, a.attnum",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			error_unsupported_server_version(fout);
-		}
-=======
 							  "THEN a.attcollation ELSE 0 END AS attcollation,\n");
 		}
 		else
@@ -9986,7 +9817,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 						  "AND a.attnum > 0::pg_catalog.int2\n"
 						  "ORDER BY a.attnum",
 						  tbinfo->dobj.catId.oid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
@@ -10119,23 +9949,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "WHERE adrelid = '%u'::pg_catalog.oid",
 							  tbinfo->dobj.catId.oid);
 
-<<<<<<< HEAD
-			resetPQExpBuffer(q);
-			if (fout->remoteVersion >= 70300)
-			{
-				appendPQExpBuffer(q, "SELECT tableoid, oid, adnum, "
-						   "pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc "
-								  "FROM pg_catalog.pg_attrdef "
-								  "WHERE adrelid = '%u'::pg_catalog.oid",
-								  tbinfo->dobj.catId.oid);
-			}
-			else
-			{
-				error_unsupported_server_version(fout);
-			}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
 			numDefaults = PQntuples(res);
@@ -11492,22 +11305,9 @@ collectComments(Archive *fout, CommentItem **items)
 
 	query = createPQExpBuffer();
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		appendPQExpBufferStr(query, "SELECT description, classoid, objoid, objsubid "
-							 "FROM pg_catalog.pg_description "
-							 "ORDER BY classoid, objoid, objsubid");
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	appendPQExpBufferStr(query, "SELECT description, classoid, objoid, objsubid "
 						 "FROM pg_catalog.pg_description "
 						 "ORDER BY classoid, objoid, objsubid");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -14900,26 +14700,6 @@ getFormattedOperatorName(Archive *fout, const char *oproid)
 	if (strcmp(oproid, "0") == 0)
 		return NULL;
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		oprInfo = findOprByOid(atooid(oproid));
-		if (oprInfo == NULL)
-		{
-			write_msg(NULL, "WARNING: could not find operator with OID %s\n",
-					  oproid);
-			return NULL;
-		}
-
-		return psprintf("OPERATOR(%s.%s)",
-						fmtId(oprInfo->dobj.namespace->dobj.name),
-						oprInfo->dobj.name);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	oprInfo = findOprByOid(atooid(oproid));
 	if (oprInfo == NULL)
 	{
@@ -14931,7 +14711,6 @@ getFormattedOperatorName(Archive *fout, const char *oproid)
 	return psprintf("OPERATOR(%s.%s)",
 					fmtId(oprInfo->dobj.namespace->dobj.name),
 					oprInfo->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -16272,25 +16051,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		return;
 	}
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		/* If using 7.3's regproc or regtype, data is already quoted */
-		appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
-						  aggtransfn,
-						  aggtranstype);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-
-	if (strcmp(aggtransspace, "0") != 0)
-	{
-		appendPQExpBuffer(details, ",\n    SSPACE = %s",
-						  aggtransspace);
-	}
-=======
 	/* identify default modify flag for aggkind (must match DefineAggregate) */
 	defaultfinalmodify = (aggkind == AGGKIND_NORMAL) ? AGGMODIFY_READ_ONLY : AGGMODIFY_READ_WRITE;
 	/* replace omitted flags for old versions */
@@ -16302,7 +16062,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	/* regproc and regtype output is already sufficiently quoted */
 	appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
 					  aggtransfn, aggtranstype);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (strcmp(aggtransspace, "0") != 0)
 	{
@@ -20721,20 +20480,9 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		else
 			appendPQExpBufferStr(query, "    FOR EACH STATEMENT\n    ");
 
-<<<<<<< HEAD
-		/* In 7.3, result of regproc is already quoted */
-		if (fout->remoteVersion >= 70300)
-			appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
-							  tginfo->tgfname);
-		else
-		{
-			error_unsupported_server_version(fout);
-		}
-=======
 		/* regproc output is already sufficiently quoted */
 		appendPQExpBuffer(query, "EXECUTE FUNCTION %s(",
 						  tginfo->tgfname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
 										  &lentgargs);
@@ -21995,29 +21743,6 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	}
 
 	query = createPQExpBuffer();
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-	{
-		appendPQExpBuffer(query, "SELECT pg_catalog.format_type('%u'::pg_catalog.oid, NULL)",
-						  oid);
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-
-	res = ExecuteSqlQueryForSingleRow(fout, query->data);
-
-	if (fout->remoteVersion >= 70300)
-	{
-		/* already quoted */
-		result = pg_strdup(PQgetvalue(res, 0, 0));
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	appendPQExpBuffer(query, "SELECT pg_catalog.format_type('%u'::pg_catalog.oid, NULL)",
 					  oid);
 
@@ -22025,7 +21750,6 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 
 	/* result of format_type is already quoted */
 	result = pg_strdup(PQgetvalue(res, 0, 0));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	PQclear(res);
 	destroyPQExpBuffer(query);
