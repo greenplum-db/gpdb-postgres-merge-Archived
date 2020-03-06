@@ -3486,70 +3486,6 @@ dumpDatabase(Archive *fout)
 		destroyPQExpBuffer(loOutQry);
 	}
 
-<<<<<<< HEAD
-	/* Compute correct tag for archive entry */
-	appendPQExpBuffer(labelq, "DATABASE %s", qdatname);
-
-	/* Dump DB comment if any */
-	if (fout->remoteVersion >= 80200)
-	{
-		/*
-		 * 8.2 and up keep comments on shared objects in a shared table, so we
-		 * cannot use the dumpComment() code used for other database objects.
-		 * Be careful that the ArchiveEntry parameters match that function.
-		 */
-		char	   *comment = PQgetvalue(res, 0, PQfnumber(res, "description"));
-
-		if (comment && *comment)
-		{
-			resetPQExpBuffer(dbQry);
-
-			/*
-			 * Generates warning when loaded into a differently-named
-			 * database.
-			 */
-			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", qdatname);
-			appendStringLiteralAH(dbQry, comment, fout);
-			appendPQExpBufferStr(dbQry, ";\n");
-
-			ArchiveEntry(fout, nilCatalogId, createDumpId(),
-						 labelq->data, NULL, NULL, dba,
-						 false, "COMMENT", SECTION_NONE,
-						 dbQry->data, "", NULL,
-						 &(dbDumpId), 1,
-						 NULL, NULL);
-		}
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-
-	/* Dump shared security label. */
-	if (!dopt->no_security_labels && fout->remoteVersion >= 90200)
-	{
-		PGresult   *shres;
-		PQExpBuffer seclabelQry;
-
-		seclabelQry = createPQExpBuffer();
-
-		buildShSecLabelQuery(conn, "pg_database", dbCatId.oid, seclabelQry);
-		shres = ExecuteSqlQuery(fout, seclabelQry->data, PGRES_TUPLES_OK);
-		resetPQExpBuffer(seclabelQry);
-		emitShSecLabels(conn, shres, seclabelQry, "DATABASE", datname);
-		if (seclabelQry->len > 0)
-			ArchiveEntry(fout, nilCatalogId, createDumpId(),
-						 labelq->data, NULL, NULL, dba,
-						 false, "SECURITY LABEL", SECTION_NONE,
-						 seclabelQry->data, "", NULL,
-						 &(dbDumpId), 1,
-						 NULL, NULL);
-		destroyPQExpBuffer(seclabelQry);
-		PQclear(shres);
-	}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PQclear(res);
 
 	free(qdatname);
@@ -3822,11 +3758,6 @@ getBlobs(Archive *fout)
 							 "NULL::oid AS rlomacl, NULL::oid AS initlomacl, "
 							 "NULL::oid AS initrlomacl "
 							 " FROM pg_largeobject");
-<<<<<<< HEAD
-	else
-		error_unsupported_server_version(fout);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = ExecuteSqlQuery(fout, blobQry->data, PGRES_TUPLES_OK);
 
@@ -4008,13 +3939,9 @@ dumpBlobs(Archive *fout, void *arg pg_attribute_unused())
 			"DECLARE bloboid CURSOR FOR "
 			"SELECT oid FROM pg_largeobject_metadata ORDER BY 1";
 	else
-<<<<<<< HEAD
-		error_unsupported_server_version(fout);
-=======
 		blobQry =
 			"DECLARE bloboid CURSOR FOR "
 			"SELECT DISTINCT loid FROM pg_largeobject ORDER BY 1";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ExecuteSqlStatement(fout, blobQry);
 
@@ -5755,9 +5682,7 @@ getTypes(Archive *fout, int *numTypes)
 	}
 	else
 	{
-<<<<<<< HEAD
 		error_unsupported_server_version(fout);
-=======
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
 						  "typnamespace, NULL AS typacl, NULL as rtypacl, "
 						  "NULL AS inittypacl, NULL AS initrtypacl, "
@@ -5769,7 +5694,6 @@ getTypes(Archive *fout, int *numTypes)
 						  "typname[0] = '_' AND typelem != 0 AS isarray "
 						  "FROM pg_type",
 						  username_subquery);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -6558,9 +6482,7 @@ getAggregates(Archive *fout, int *numAggs)
 	}
 	else
 	{
-<<<<<<< HEAD
 		error_unsupported_server_version(fout);
-=======
 		appendPQExpBuffer(query, "SELECT tableoid, oid, proname AS aggname, "
 						  "pronamespace AS aggnamespace, "
 						  "CASE WHEN proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype THEN 0 ELSE 1 END AS pronargs, "
@@ -6574,7 +6496,6 @@ getAggregates(Archive *fout, int *numAggs)
 						  "AND pronamespace != "
 						  "(SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog')",
 						  username_subquery);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
