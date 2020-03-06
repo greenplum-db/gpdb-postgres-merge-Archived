@@ -323,11 +323,6 @@ ConnectDatabase(Archive *AHX,
 	PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
 										ALWAYS_SECURE_SEARCH_PATH_SQL));
 
-	/* Start strict; later phases may override this. */
-	if (PQserverVersion(AH->connection) >= 70300)
-		PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
-											ALWAYS_SECURE_SEARCH_PATH_SQL));
-
 	/*
 	 * We want to remember connection's actual password, whether or not we got
 	 * it by prompting.  So we don't just store the password variable.
