@@ -3420,34 +3420,8 @@ dumpDatabase(Archive *fout)
 						  frozenxid, minmxid);
 		appendStringLiteralAH(creaQry, datname, fout);
 		appendPQExpBufferStr(creaQry, ";\n");
-<<<<<<< HEAD
 
 		appendPQExpBuffer(creaQry, "RESET allow_system_table_mods;\n");
-	}
-
-	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
-					  qdatname);
-
-	dbDumpId = createDumpId();
-
-	ArchiveEntry(fout,
-				 dbCatId,		/* catalog ID */
-				 dbDumpId,		/* dump ID */
-				 datname,		/* Name */
-				 NULL,			/* Namespace */
-				 NULL,			/* Tablespace */
-				 dba,			/* Owner */
-				 false,			/* with oids */
-				 "DATABASE",	/* Desc */
-				 SECTION_PRE_DATA,		/* Section */
-				 creaQry->data, /* Create */
-				 delQry->data,	/* Del */
-				 NULL,			/* Copy */
-				 NULL,			/* Deps */
-				 0,				/* # Deps */
-				 NULL,			/* Dumper */
-				 NULL);			/* Dumper Arg */
-=======
 	}
 
 	if (creaQry->len > 0)
@@ -3459,7 +3433,6 @@ dumpDatabase(Archive *fout)
 								  .createStmt = creaQry->data,
 								  .dropStmt = delQry->data,
 								  .deps = &dbDumpId));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * pg_largeobject comes from the old system intact, so set its
