@@ -1027,7 +1027,6 @@ main(int argc, char **argv)
 	if (fout->remoteVersion >= 80100)
 		username_subquery = "SELECT rolname FROM pg_catalog.pg_roles WHERE oid =";
 	else
-<<<<<<< HEAD
 		error_unsupported_server_version(fout);
 
 	/*
@@ -1039,9 +1038,6 @@ main(int argc, char **argv)
 	 * Remember whether or not this GP database supports column encoding.
 	 */
 	gp_attribute_encoding_available = testAttributeEncodingSupport(fout);
-=======
-		username_subquery = "SELECT usename FROM pg_catalog.pg_user WHERE usesysid =";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* check the version for the synchronized snapshots feature */
 	if (numWorkers > 1 && fout->remoteVersion < 90200
@@ -1054,8 +1050,6 @@ main(int argc, char **argv)
 	if (dumpsnapshot && fout->remoteVersion < 90200)
 		fatal("Exported snapshots are not supported by this server version.");
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Find the last built-in OID, if needed (prior to 8.1)
 	 *
@@ -1068,7 +1062,6 @@ main(int argc, char **argv)
 
 	pg_log_info("last built-in OID is %u", g_last_builtin_oid);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Expand schema selection patterns into OID lists */
 	if (schema_include_patterns.head != NULL)
 	{
@@ -1135,12 +1128,6 @@ main(int argc, char **argv)
 			getTableDataFKConstraints();
 	}
 
-<<<<<<< HEAD
-	/*
-	 * In binary-upgrade mode, we do not have to worry about the actual blob
-	 * data or the associated metadata that resides in the pg_largeobject and
-	 * pg_largeobject_metadata tables, respectivly.
-=======
 	if (dopt.schemaOnly && dopt.sequence_data)
 		getTableData(&dopt, tblinfo, numTables, RELKIND_SEQUENCE);
 
@@ -1148,7 +1135,6 @@ main(int argc, char **argv)
 	 * In binary-upgrade mode, we do not have to worry about the actual blob
 	 * data or the associated metadata that resides in the pg_largeobject and
 	 * pg_largeobject_metadata tables, respectively.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 *
 	 * However, we do need to collect blob information as there may be
 	 * comments or other information on blobs that we do need to dump out.
@@ -1181,18 +1167,7 @@ main(int argc, char **argv)
 	 * the initial sort is mostly for cosmetic purposes: we sort by name to
 	 * ensure that logically identical schemas will dump identically.
 	 */
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70300)
-		sortDumpableObjectsByTypeName(dobjs, numObjs);
-	else
-		error_unsupported_server_version(fout);
-
-	/* If we do a parallel dump, we want the largest tables to go first */
-	if (archiveFormat == archDirectory && numWorkers > 1)
-		sortDataAndIndexObjectsBySize(dobjs, numObjs);
-=======
 	sortDumpableObjectsByTypeName(dobjs, numObjs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	sortDumpableObjects(dobjs, numObjs,
 						boundaryObjs[0].dumpId, boundaryObjs[1].dumpId);
