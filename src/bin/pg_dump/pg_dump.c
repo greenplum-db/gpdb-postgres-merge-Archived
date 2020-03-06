@@ -3425,6 +3425,8 @@ dumpDatabase(Archive *fout)
 		appendPQExpBuffer(creaQry, "ALTER DATABASE %s IS_TEMPLATE = true;\n",
 						  qdatname);
 
+		appendPQExpBuffer(delQry, "SET allow_system_table_mods = true;\n");
+
 		/*
 		 * The backend won't accept DROP DATABASE on a template database.  We
 		 * can deal with that by removing the template marking before the DROP
@@ -3436,6 +3438,7 @@ dumpDatabase(Archive *fout)
 							 "SET datistemplate = false WHERE datname = ");
 		appendStringLiteralAH(delQry, datname, fout);
 		appendPQExpBufferStr(delQry, ";\n");
+		appendPQExpBuffer(delQry, "RESET allow_system_table_mods;\n");
 	}
 
 	/* Add database-specific SET options */
@@ -3665,8 +3668,6 @@ dumpDatabase(Archive *fout)
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);
 	destroyPQExpBuffer(labelq);
-<<<<<<< HEAD
-=======
 }
 
 /*
@@ -3738,8 +3739,16 @@ dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 		PQclear(res);
 	}
 
+	/*
+	 * If we're upgrading from GPDB 5 or below, use the legacy hash ops.
+	 */
+	if (binary_upgrade && server_version < 90400)
+	{
+		makeAlterConfigCommand(conn, "gp_use_legacy_hashops=on",
+							   "DATABASE", dbname, NULL, NULL);
+	}
+
 	destroyPQExpBuffer(buf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
