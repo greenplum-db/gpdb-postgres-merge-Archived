@@ -793,7 +793,7 @@ gp_vmem_protect_limit = 8192  #Virtual memory limit (in MB).
 #include_dir = ''			# include files ending in '.conf' from
 					# a directory, e.g., 'conf.d'
 #include_if_exists = ''			# include file only if it exists
-#include = ''				# include file
+#include = 'special.conf'				# include file
 
 
 #------------------------------------------------------------------------------
