@@ -1899,13 +1899,8 @@ SELECT * FROM y;
 (17 rows)
 
 -- data-modifying WITH containing INSERT...ON CONFLICT DO UPDATE
-<<<<<<< HEAD
-CREATE TABLE z AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i DISTRIBUTED BY (k);
-ALTER TABLE z ADD UNIQUE (k);
-=======
 CREATE TABLE withz AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i;
 ALTER TABLE withz ADD UNIQUE (k);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 WITH t AS (
     INSERT INTO withz SELECT i, 'insert'
     FROM generate_series(0, 16) i
@@ -1983,16 +1978,8 @@ upsert_cte AS (
 INSERT INTO withz VALUES(2, 'Red') ON CONFLICT (k) DO
 UPDATE SET (k, v) = (SELECT k, v FROM upsert_cte WHERE upsert_cte.k = withz.k)
 RETURNING k, v;
-<<<<<<< HEAD
 ERROR:  modification of distribution columns in OnConflictUpdate is not supported
-DROP TABLE z;
-=======
- k | v 
----+---
-(0 rows)
-
 DROP TABLE withz;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check that run to completion happens in proper ordering
 TRUNCATE TABLE y;
 INSERT INTO y SELECT generate_series(1, 3);

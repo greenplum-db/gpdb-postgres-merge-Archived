@@ -870,13 +870,8 @@ SELECT a BETWEEN 0 AND 4200 FROM t LIMIT 10;
 SELECT * FROM y;
 
 -- data-modifying WITH containing INSERT...ON CONFLICT DO UPDATE
-<<<<<<< HEAD
-CREATE TABLE z AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i DISTRIBUTED BY (k);
-ALTER TABLE z ADD UNIQUE (k);
-=======
 CREATE TABLE withz AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i;
 ALTER TABLE withz ADD UNIQUE (k);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 WITH t AS (
     INSERT INTO withz SELECT i, 'insert'
