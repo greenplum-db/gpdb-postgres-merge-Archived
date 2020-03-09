@@ -194,8 +194,6 @@
   opcintype => 'circle', opckeytype => 'box' },
 { opcmethod => 'gin', opcname => 'array_ops', opcfamily => 'gin/array_ops',
   opcintype => 'anyarray', opckeytype => 'anyelement' },
-{ opcmethod => 'gin', opcname => '_complex_ops', opcfamily => 'gin/array_ops',
-  opcintype => '_complex', opckeytype => 'complex' },
 { opcmethod => 'btree', opcname => 'uuid_ops', opcfamily => 'btree/uuid_ops',
   opcintype => 'uuid' },
 { opcmethod => 'hash', opcname => 'uuid_ops', opcfamily => 'hash/uuid_ops',
