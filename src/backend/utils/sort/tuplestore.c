@@ -1052,10 +1052,6 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * Back up to fetch previously-returned tuple's ending length
 			 * word. If seek fails, assume we are at start of file.
 			 */
-
-			ereport(ERROR, (errmsg("Backward scanning of tuplestores are not supported at this time")));
-			return NULL;
-#if 0
 			if (BufFileSeek(state->myfile, 0, -(long) sizeof(unsigned int),
 							SEEK_CUR) != 0)
 			{
@@ -1111,7 +1107,6 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 						 errmsg("could not seek in tuplestore temporary file: %m")));
 			tup = READTUP(state, tuplen);
 			return tup;
-#endif
 
 		default:
 			elog(ERROR, "invalid tuplestore state");
@@ -1599,34 +1594,6 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
 	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
 	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-
-#ifdef GPDB_12_MERGE_FIXME
-	/*
-	 * GPDB_12_MERGE_FIXME: this got introduced in gpdb commit 70298b393ba
-	 * and it does not seem to be needed in 12. Keep around to verify that
-	 * there are no regressions
-	 */
-	
-	/*
-	 * CDB: in backward mode the passed-in len is the trailing length, it does
-	 * not contain the leading bit as the leading length used in forward mode.
-	 * The leading bit is necessary to determine the tuple type, a memory tuple
-	 * or a heap tuple, so we must re-read the leading length to make this
-	 * decision.
-	 */
-	if (state->backward)
-	{
-		TSReadPointer *readptr = &state->readptrs[state->activeptr];
-
-		if (BufFileSeek(state->myfile, readptr->file,
-						-(long) sizeof(unsigned int), SEEK_CUR) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not seek in tuplestore temporary file: %m")));
-
-		len = getlen(state, false);
-	}
-#endif
 
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
