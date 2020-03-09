@@ -7403,7 +7403,8 @@ xact_redo(XLogReaderState *record)
 		xl_xact_parsed_commit parsed;
 
 		ParseCommitRecord(XLogRecGetInfo(record), xlrec, &parsed);
-		xact_redo_distributed_commit(&parsed, parsed.twophase_xid,
+		Assert(parsed.twophase_xid == InvalidTransactionId);
+		xact_redo_distributed_commit(&parsed, XLogRecGetXid(record),
 									 record->EndRecPtr, XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_FORGET)
