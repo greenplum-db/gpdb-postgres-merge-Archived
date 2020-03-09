@@ -360,7 +360,7 @@ heap_fill_tuple(TupleDesc tupleDesc,
 
 	Assert((data - start) == data_size);
 
-	return data - start;
+	return data_size;
 }
 
 /* ----------------------------------------------------------------

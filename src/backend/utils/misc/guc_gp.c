@@ -132,6 +132,7 @@ bool		Debug_appendonly_print_compaction = false;
 bool		Debug_resource_group = false;
 bool		Debug_bitmap_print_insert = false;
 bool		Test_print_direct_dispatch_info = false;
+bool        Test_print_prefetch_joinqual = false;
 bool		Test_copy_qd_qe_split = false;
 bool		gp_permit_relation_node_change = false;
 int			gp_max_local_distributed_cache = 1024;
@@ -153,7 +154,7 @@ bool		Debug_datumstream_write_use_small_initial_buffers = false;
 bool		gp_create_table_random_default_distribution = true;
 bool		gp_allow_non_uniform_partitioning_ddl = true;
 bool		gp_enable_exchange_default_partition = false;
-int			dtx_phase2_retry_count = 0;
+int			dtx_phase2_retry_second = 0;
 
 bool		log_dispatch_stats = false;
 
@@ -170,9 +171,6 @@ bool		debug_walrepl_rcv = false;
 bool		debug_basebackup = false;
 
 int rep_lag_avoidance_threshold = 0;
-
-/* Latch mechanism debug GUCs */
-bool		debug_latch = false;
 
 bool		gp_keep_all_xlog = false;
 
@@ -1401,6 +1399,17 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
+		{"test_print_prefetch_joinqual", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("For testing purposes, print information about if we prefetch join qual."),
+			NULL,
+			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&Test_print_prefetch_joinqual,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"test_copy_qd_qe_split", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("For testing purposes, print information about which columns are parsed in QD and which in QE."),
 			NULL,
@@ -1562,17 +1571,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&debug_basebackup,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"debug_latch", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Print debug messages for latch mechanism."),
-			NULL,
-			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&debug_latch,
 		false,
 		NULL, NULL, NULL
 	},
@@ -3919,15 +3917,16 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"dtx_phase2_retry_count", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Maximum number of retries during two phase commit after which master PANICs."),
+		{"dtx_phase2_retry_second", PGC_SUSET, GP_ARRAY_TUNING,
+			gettext_noop("Maximum number of timeout during two phase commit after which master PANICs."),
 			NULL,
-			GUC_SUPERUSER_ONLY |  GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+			GUC_SUPERUSER_ONLY |  GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_UNIT_S
 		},
-		&dtx_phase2_retry_count,
-		10, 0, INT_MAX,
+		&dtx_phase2_retry_second,
+		60, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
+
 
 	{
 		/* Can't be set in postgresql.conf */

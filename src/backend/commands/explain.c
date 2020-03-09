@@ -1469,9 +1469,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					break;
 			}
 			break;
-		case T_Repeat:
-			pname = sname = "Repeat";
-			break;
 		case T_Append:
 			pname = sname = "Append";
 			break;
@@ -2466,9 +2463,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_Hash:
 			show_hash_info(castNode(HashState, planstate), es);
-			break;
-		case T_Repeat:
-			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		case T_Motion:
 			{

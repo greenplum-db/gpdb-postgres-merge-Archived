@@ -280,28 +280,6 @@ _copyResult(const Result *from)
 }
 
 /*
- * _copyRepeat
- */
-static Repeat *
-_copyRepeat(const Repeat *from)
-{
-	Repeat *newnode = makeNode(Repeat);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPlanFields((Plan *)from, (Plan *)newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(repeatCountExpr);
-	COPY_SCALAR_FIELD(grouping);
-
-	return newnode;
-}
-
-/*
  * _copyProjectSet
  */
 static ProjectSet *
@@ -5827,9 +5805,6 @@ copyObjectImpl(const void *from)
 			break;
 		case T_Result:
 			retval = _copyResult(from);
-			break;
-		case T_Repeat:
-			retval = _copyRepeat(from);
 			break;
 		case T_ProjectSet:
 			retval = _copyProjectSet(from);

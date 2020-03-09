@@ -302,7 +302,7 @@ GetExtTableEntryIfExists(Oid relid)
 		if(locationNull)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("got invalid pg_exttable tuple. location and command are both NULL")));
+					 errmsg("invalid pg_exttable tuple, location and command are both NULL")));
 
 		extentry->command = NULL;
 	}
@@ -340,7 +340,7 @@ GetExtTableEntryIfExists(Oid relid)
 
 	if (isNull)
 	{
-		/* options list is always populated (url or ON X) */
+		/* options array is always populated, {} if no options set */
 		elog(ERROR, "could not find options for external protocol");
 	}
 	else

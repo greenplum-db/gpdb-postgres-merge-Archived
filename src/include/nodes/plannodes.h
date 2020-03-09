@@ -356,36 +356,6 @@ typedef struct Result
 } Result;
 
 /* ----------------
- * Repeat node -
- *   Repeatly output the results of the subplan.
- *
- * The repetition for each result tuple from the subplan is determined
- * by the value from a specified column.
- * ----------------
- */
-typedef struct Repeat
-{
-	Plan		plan;
-
-	/*
-	 * An expression to represent the number of times an input tuple to
-	 * be repeatly outputted by this node.
-	 *
-	 * Currently, this expression should result in an integer.
-	 */
-	List	   *repeatCountExpr;
-
-	/*
-	 * The GROUPING value. This is used for grouping extension
-	 * distinct-qualified queries. The distinct-qualified plan generated
-	 * through cdbgroup.c may have a Join Plan node on the top, which
-	 * can not properly handle GROUPING values. We let the Repeat
-	 * node to handle this case.
-	 */
-	uint64		grouping;
-} Repeat;
-
-/* ----------------
  *	 ProjectSet node -
  *		Apply a projection that includes set-returning functions to the
  *		output tuples of the outer plan.

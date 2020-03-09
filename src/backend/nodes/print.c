@@ -577,8 +577,6 @@ plannode_type(Plan *p)
 			return "HASH";
 		case T_Motion:
 			return "MOTION";
-		case T_Repeat:
-			return "REPEAT";
 		case T_ForeignScan:
 			return "FOREIGNSCAN";
 		case T_SplitUpdate:

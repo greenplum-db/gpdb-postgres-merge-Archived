@@ -80,9 +80,6 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
-/* version string we expect back from postgres */
-#define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
-
 static const char *const auth_methods_host[] = {
 	"trust", "reject", "scram-sha-256", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
@@ -144,11 +141,6 @@ static const char *authmethodlocal = NULL;
 static bool debug = false;
 static bool noclean = false;
 
-/**
- * Build the minimal set of files needed for a mirror db.  Note that this could be removed
- *  eventually if we do a smarter copy of files from primary (with postgresql.conf updates)
- */
-static bool forMirrorOnly = false;
 static bool do_sync = true;
 static bool sync_only = false;
 static bool show_setting = false;
@@ -246,9 +238,6 @@ static const char *const subdirs[] = {
 static char bin_path[MAXPGPATH];
 static char backend_exec[MAXPGPATH];
 
-static char **add_assignment(char **lines, const char *varname, const char *fmt, ...)
-                /* This extension allows gcc to check the format string */
-                pg_attribute_printf(3, 4);
 static char **replace_token(char **lines,
 							const char *token, const char *replacement);
 
@@ -363,98 +352,6 @@ escape_quotes(const char *src)
 	}
 	return result;
 }
-
-/*
- * add_assignment
- *
- * Returns a copy of the array of lines, with an additional line inserted:
- * an assignment (maybe commented out) to the specified configuration variable.
- *
- * If there is already an assignment to the variable, that setting remains in
- * effect, taking precedence over the caller's requested setting, which is
- * inserted as a comment.  Else the caller's requested assignment is inserted.
- */
-static char **
-add_assignment(char **lines, const char *varname, const char *fmt, ...)
-{
-	va_list		args;
-	int			isrc;
-    int         iinsert = -1;
-    int         j;
-    int         varnamelen = strlen(varname);
-	char	  **result;
-    char        buf[200];
-    char       *bufp = buf;
-    char       *bufe = buf + sizeof(buf) - 3;
-    bool        superseded = false;
-
-    /* Look for an assignment to the given variable, maybe commented out. */
-    for (isrc = 0; lines[isrc] != NULL; isrc++)
-    {
-        char   *cp = lines[isrc];
-        bool    comment = false;
-
-        while (isspace((unsigned char)*cp))
-            cp++;
-
-        if (*cp == '#')
-        {
-            cp++;
-            comment = true;
-            while (isspace((unsigned char)*cp))
-                cp++;
-        }
-
-        if (0 != strncmp(cp, varname, varnamelen))
-            continue;
-        cp += varnamelen;
-        while (isspace((unsigned char)*cp))
-            cp++;
-        if (*cp != '=')
-            continue;
-
-        /* Found assignment (or commented-out assignment) to given varname. */
-        if (!comment)
-            superseded = true;
-        if (iinsert < 0)
-            iinsert = isrc;
-    }
-
-    if (iinsert < 0)
-    {
-        /* No assignment found? Insert at the end. */
-        iinsert = isrc;
-    }
-
-    /* Build assignment. */
-    va_start(args, fmt);
-    if (superseded)
-        bufp += snprintf(bufp, bufe-bufp, "#");
-    bufp += snprintf(bufp, bufe-bufp, "%s = ", varname);
-    bufp += vsnprintf(bufp, bufe-bufp, fmt, args);
-	va_end(args);
-
-    /* Tab to align comments */
-    j = (int)(bufp - buf);
-    do
-    {
-        *bufp++ = '\t';
-        j += 8;
-    } while (j < 40);
-
-    /* Append comment. */
-    bufp += snprintf(bufp, bufe-bufp, "# inserted by initdb\n");
-
-    /* Make a copy of the ptr array, opening up a hole after the chosen line. */
-    result = (char **)pg_malloc((isrc + 2) * sizeof(char *));
-    memcpy(result, lines, iinsert * sizeof(lines[0]));
-    memcpy(result+iinsert+1, lines+iinsert, (isrc - iinsert + 1) * sizeof(lines[0]));
-
-    /* Insert assignment. */
-    result[iinsert] = pg_strdup(buf);
-
-    return result;
-}                               /* add_assignment */
 
 /*
  * Escape a field value to be inserted into the BKI data.
@@ -1101,7 +998,6 @@ test_config_settings(void)
 	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
 
-	status = 0;
 	for (i = 0; i < connslen; i++)
 	{
 		test_conns = trial_conns[i];
@@ -1221,14 +1117,16 @@ setup_config(void)
 
 	conflines = readfile(conf_file);
 
-	conflines = add_assignment(conflines, "max_connections", "%d", n_connections);
+	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
+	conflines = replace_token(conflines, "#max_connections = 200", repltok);
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
-		conflines = add_assignment(conflines, "shared_buffers", "%dMB",
-								   (n_buffers * (BLCKSZ / 1024)) / 1024);
+		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB",
+				 (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
-		conflines = add_assignment(conflines, "shared_buffers", "%dkB",
-								   n_buffers * (BLCKSZ / 1024));
+		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
+				 n_buffers * (BLCKSZ / 1024));
+	conflines = replace_token(conflines, "#shared_buffers = 128MB", repltok);
 
 #ifdef HAVE_UNIX_SOCKETS
 	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
@@ -1239,12 +1137,10 @@ setup_config(void)
 	conflines = replace_token(conflines, "#unix_socket_directories = '/tmp'",
 							  repltok);
 
-	/* Upd comment to document the default port configured by --with-pgport */
-	if (DEF_PGPORT != 5432)
-	{
-		snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
-		conflines = replace_token(conflines, "#port = 5432", repltok);
-	}
+#if DEF_PGPORT != 5432
+	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
+	conflines = replace_token(conflines, "#port = 5432", repltok);
+#endif
 
 	/* set default max_wal_size and min_wal_size */
 	snprintf(repltok, sizeof(repltok), "min_wal_size = %s",
@@ -1259,28 +1155,32 @@ setup_config(void)
 			 escape_quotes(lc_messages));
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
 
-	conflines = add_assignment(conflines, "lc_monetary", "'%s'",
-							   escape_quotes(lc_monetary));
+	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'",
+			 escape_quotes(lc_monetary));
+	conflines = replace_token(conflines, "#lc_monetary = 'C'", repltok);
 
-	conflines = add_assignment(conflines, "lc_numeric", "'%s'",
-							   escape_quotes(lc_numeric));
+	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'",
+			 escape_quotes(lc_numeric));
+	conflines = replace_token(conflines, "#lc_numeric = 'C'", repltok);
 
-	conflines = add_assignment(conflines, "lc_time", "'%s'",
-							   escape_quotes(lc_time));
+	snprintf(repltok, sizeof(repltok), "lc_time = '%s'",
+			 escape_quotes(lc_time));
+	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
 	switch (locale_date_order(lc_time))
 	{
 		case DATEORDER_YMD:
-			conflines = add_assignment(conflines, "datestyle", "'iso, ymd'");
+			strcpy(repltok, "datestyle = 'iso, ymd'");
 			break;
 		case DATEORDER_DMY:
-			conflines = add_assignment(conflines, "datestyle", "'iso, dmy'");
+			strcpy(repltok, "datestyle = 'iso, dmy'");
 			break;
 		case DATEORDER_MDY:
 		default:
-			conflines = add_assignment(conflines, "datestyle", "'iso, mdy'");
+			strcpy(repltok, "datestyle = 'iso, mdy'");
 			break;
 	}
+	conflines = replace_token(conflines, "#datestyle = 'iso, mdy'", repltok);
 
 	snprintf(repltok, sizeof(repltok),
 			 "default_text_search_config = 'pg_catalog.%s'",
@@ -1311,11 +1211,18 @@ setup_config(void)
 							  repltok);
 #endif
 
+#if 0
+/*
+ * GPDB_12_MERGE_FIXME: the bgwriter section is missing from the sample
+ * configuration used for this, should we keep that off the default config
+ * or was it all an omission?
+ */
 #if DEFAULT_BGWRITER_FLUSH_AFTER > 0
 	snprintf(repltok, sizeof(repltok), "#bgwriter_flush_after = %dkB",
 			 DEFAULT_BGWRITER_FLUSH_AFTER * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#bgwriter_flush_after = 0",
 							  repltok);
+#endif
 #endif
 
 #if DEFAULT_CHECKPOINT_FLUSH_AFTER > 0
@@ -1352,8 +1259,15 @@ setup_config(void)
 								  "log_file_mode = 0640");
 	}
 
-	conflines = add_assignment(conflines, "include", "'%s'",
-							   GP_INTERNAL_AUTO_CONF_FILE_NAME);
+#ifdef WIN32
+	conflines = replace_token(conflines,
+							  "#update_process_title = on",
+							  "#update_process_title = off");
+#endif
+
+	snprintf(repltok, sizeof(repltok), "include = '%s'",
+			 GP_INTERNAL_AUTO_CONF_FILE_NAME);
+	conflines = replace_token(conflines, "#include = 'special.conf'", repltok);
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
@@ -2594,7 +2508,7 @@ setlocales(void)
  * usual decimal, octal, or hexadecimal formats.
  */
 static long
-parse_long(const char *value, bool blckszUnit, const char* optname)
+parse_long(const char *value, bool blckszUnit, const char *optname)
 {
     long    val;
     char   *endptr;
@@ -2696,7 +2610,6 @@ usage(const char *progname)
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -S, --sync-only           only sync data directory\n"));
-	printf(_("  -m, --formirror           only create data needed to start the backend in mirror mode\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("      --gp-version          output Greenplum version information, then exit\n"));
@@ -3282,68 +3195,60 @@ initialize_data_directory(void)
 	/* Now create all the text config files */
 	setup_config();
 
-	if ( ! forMirrorOnly)
-	{
-		/* Bootstrap template1 */
-		bootstrap_template1();
+	/* Bootstrap template1 */
+	bootstrap_template1();
 
-		/*
-		 * Make the per-database PG_VERSION for template1 only after init'ing it
-		 */
-		write_version_file("base/1");
+	/*
+	 * Make the per-database PG_VERSION for template1 only after init'ing it
+	 */
+	write_version_file("base/1");
 
-		/*
-		 * Create the stuff we don't need to use bootstrap mode for, using a
-		 * backend running in simple standalone mode.
-		 */
-		fputs(_("performing post-bootstrap initialization ... "), stdout);
-		fflush(stdout);
-	
-		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" %s template1 >%s",
-				 backend_exec, backend_options,
-				 DEVNULL);
-	
-		PG_CMD_OPEN;
-	
-		setup_auth(cmdfd);
-	
-		setup_depend(cmdfd);
+	/*
+	 * Create the stuff we don't need to use bootstrap mode for, using a
+	 * backend running in simple standalone mode.
+	 */
+	fputs(_("performing post-bootstrap initialization ... "), stdout);
+	fflush(stdout);
 
-		/*
-		 * Note that no objects created after setup_depend() will be "pinned".
-		 * They are all droppable at the whim of the DBA.
-		 */
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
 
-		setup_sysviews(cmdfd);
-	
-		setup_description(cmdfd);
-	
+	PG_CMD_OPEN;
+
+	setup_auth(cmdfd);
+
+	setup_depend(cmdfd);
+
+	setup_sysviews(cmdfd);
+
+	setup_description(cmdfd);
+
 #if 0
-		setup_collation(cmdfd);
+	setup_collation(cmdfd);
 #endif
-	
-		setup_dictionary(cmdfd);
 
-		setup_privileges(cmdfd);
+	setup_dictionary(cmdfd);
 
-		setup_schema(cmdfd);
-	
-		load_plpgsql(cmdfd);
-	
-		/* sets up the Greenplum Database admin schema */
-		setup_cdb_schema(cmdfd);
-	
-		vacuum_db(cmdfd);
-	
-		make_template0(cmdfd);
-	
-		make_postgres(cmdfd);
-	
-		PG_CMD_CLOSE;
-	
-		check_ok();
-	}
+	setup_privileges(cmdfd);
+
+	setup_schema(cmdfd);
+
+	load_plpgsql(cmdfd);
+
+	/* sets up the Greenplum Database admin schema */
+	setup_cdb_schema(cmdfd);
+
+	vacuum_db(cmdfd);
+
+	make_template0(cmdfd);
+
+	make_postgres(cmdfd);
+
+	PG_CMD_CLOSE;
+
+	check_ok();
 }
 
 
@@ -3391,7 +3296,6 @@ main(int argc, char *argv[])
 	 * their short version value
 	 */
 	int			c;
-	int			option_index;
 	char	   *effective_user;
 	PQExpBuffer start_db_cmd;
 	char		pg_ctl_path[MAXPGPATH];
@@ -3429,27 +3333,8 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:kL:nNU:WA:sST:X:g", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:kL:nNU:WA:sST:X:g", long_options, NULL)) != -1)
 	{
-        const char *optname;
-        char        shortopt[2];
-
-        /* CDB: Get option name for error reporting.  On Solaris, getopt_long
-         * may leave garbage in option_index after parsing a short option, so
-         * check carefully.
-         */
-        if (isalpha(c))
-        {
-            shortopt[0] = (char)c;
-            shortopt[1] = '\0';
-            optname = shortopt;
-        }
-        else if (option_index >= 0 &&
-                 option_index < sizeof(long_options)/sizeof(long_options[0]) - 1)
-            optname = long_options[option_index].name;
-        else
-            optname = "?!?";
-
 		switch (c)
 		{
 			case 'A':
@@ -3486,9 +3371,6 @@ main(int argc, char *argv[])
 			case 'd':
 				debug = true;
 				printf(_("Running in debug mode.\n"));
-				break;
-			case 'm':
-				forMirrorOnly = true;
 				break;
 			case 'n':
 				noclean = true;
@@ -3543,10 +3425,10 @@ main(int argc, char *argv[])
 				xlog_dir = pg_strdup(optarg);
 				break;
 			case 1001:
-                n_connections = parse_long(optarg, false, optname);
+				n_connections = parse_long(optarg, false, "max_connection");
 				break;
 			case 1003:
-                n_buffers = parse_long(optarg, true, optname);
+				n_buffers = parse_long(optarg, true, "shared_buffers");
 				break;
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);

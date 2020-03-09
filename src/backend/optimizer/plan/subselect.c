@@ -3096,7 +3096,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 		case T_ShareInputScan:
 		case T_Unique:
 		case T_SetOp:
-		case T_Repeat:
 		case T_SplitUpdate:
 		case T_TupleSplit:
 			/* no node-type-specific fields need fixing */

@@ -34,7 +34,6 @@ OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        nodeTableFuncscan.o
 
 OBJS += nodeMotion.o \
-       nodeRepeat.o \
        nodeShareInputScan.o \
        nodeTableFunction.o \
        nodeSequence.o \

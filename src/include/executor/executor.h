@@ -645,8 +645,7 @@ extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 /* Share input utilities defined in execUtils.c */
 extern ShareNodeEntry * ExecGetShareNodeEntry(EState *estate, int shareid, bool fCreate);
 
-extern bool ExecPrefetchJoinQual(JoinState *node);
-extern bool ShouldPrefetchJoinQual(EState *estate, Join *join);
+extern void ExecPrefetchJoinQual(JoinState *node);
 
 /* ResultRelInfo and Append Only segment assignment */
 void ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping);

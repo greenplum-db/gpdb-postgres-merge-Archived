@@ -139,6 +139,8 @@
 /* Returns true if doing null-fill on inner relation */
 #define HJ_FILL_INNER(hjstate)	((hjstate)->hj_NullOuterTupleSlot != NULL)
 
+extern bool Test_print_prefetch_joinqual;
+
 static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *outerNode,
 												 HashJoinState *hjstate,
 												 uint32 *hashvalue);
@@ -368,8 +370,11 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				 *
 				 * See ExecPrefetchJoinQual() for details.
 				 */
-				if (node->prefetch_joinqual && ExecPrefetchJoinQual(&node->js))
+				if (node->prefetch_joinqual)
+				{
+					ExecPrefetchJoinQual(&node->js);
 					node->prefetch_joinqual = false;
+				}
 
 				/*
 				 * We just scanned the entire inner side and built the hashtable
@@ -787,7 +792,12 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * the fix to MPP-989)
 	 */
 	hjstate->prefetch_inner = node->join.prefetch_inner;
-	hjstate->prefetch_joinqual = ShouldPrefetchJoinQual(estate, &node->join);
+	hjstate->prefetch_joinqual = node->join.prefetch_joinqual;
+
+	if (Test_print_prefetch_joinqual && hjstate->prefetch_joinqual)
+		elog(NOTICE,
+			 "prefetch join qual in slice %d of plannode %d",
+			 currentSliceId, ((Plan *) node)->plan_node_id);
 
 	/*
 	 * initialize child nodes
@@ -1201,6 +1211,20 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 			BufFileClose(hashtable->outerBatchFile[curbatch]);
 		hashtable->outerBatchFile[curbatch] = NULL;
 	}
+	else	/* we just finished the first batch */
+	{
+		/*
+		 * Reset some of the skew optimization state variables, since we no
+		 * longer need to consider skew tuples after the first batch. The
+		 * memory context reset we are about to do will release the skew
+		 * hashtable itself.
+		 */
+		hashtable->skewEnabled = false;
+		hashtable->skewBucket = NULL;
+		hashtable->skewBucketNums = NULL;
+		hashtable->nSkewBuckets = 0;
+		hashtable->spaceUsedSkew = 0;
+	}
 
 	/*
 	 * If we want to keep the hash table around, for re-scan, then write
@@ -1219,20 +1243,6 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		hashtable->innerBatchFile[curbatch] == NULL)
 	{
 		SpillCurrentBatch(hjstate);
-	}
-	else						/* we just finished the first batch */
-	{
-		/*
-		 * Reset some of the skew optimization state variables, since we no
-		 * longer need to consider skew tuples after the first batch. The
-		 * memory context reset we are about to do will release the skew
-		 * hashtable itself.
-		 */
-		hashtable->skewEnabled = false;
-		hashtable->skewBucket = NULL;
-		hashtable->skewBucketNums = NULL;
-		hashtable->nSkewBuckets = 0;
-		hashtable->spaceUsedSkew = 0;
 	}
 
 	/*

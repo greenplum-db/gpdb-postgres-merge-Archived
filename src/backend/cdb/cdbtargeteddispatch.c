@@ -496,7 +496,6 @@ DirectDispatchUpdateContentIdsFromPlan(PlannerInfo *root, Plan *plan)
 			break;
 		case T_WindowAgg:
 		case T_TableFunctionScan:
-		case T_Repeat:
 		case T_RecursiveUnion:
 			/* no change to dispatchInfo */
 			break;

@@ -947,9 +947,6 @@ _outNode(StringInfo str, void *obj)
 			case T_Result:
 				_outResult(str, obj);
 				break;
-			case T_Repeat:
-				_outRepeat(str, obj);
-				break;
 			case T_ProjectSet:
 				_outProjectSet(str, obj);
 				break;

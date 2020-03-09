@@ -23,8 +23,9 @@
 #define MAX_PRE_AUTH_DELAY (60)
 /*
  * One connection must be reserved for FTS to always able to probe
- * primary. So, this acts as lower limit on reserved superuser connections.
-*/
+ * primary. So, this acts as lower limit on reserved superuser connections on
+ * primaries.
+ */
 #define RESERVED_FTS_CONNECTIONS (1)
 
 
@@ -320,7 +321,7 @@ extern bool Debug_resource_group;
 extern bool gp_create_table_random_default_distribution;
 extern bool gp_allow_non_uniform_partitioning_ddl;
 extern bool gp_enable_exchange_default_partition;
-extern int  dtx_phase2_retry_count;
+extern int  dtx_phase2_retry_second;
 
 /* WAL replication debug gucs */
 extern bool debug_walrepl_snd;
@@ -329,9 +330,6 @@ extern bool debug_walrepl_rcv;
 extern bool debug_basebackup;
 
 extern int rep_lag_avoidance_threshold;
-
-/* Latch mechanism debug GUCs */
-extern bool debug_latch;
 
 extern bool gp_maintenance_mode;
 extern bool gp_maintenance_conn;

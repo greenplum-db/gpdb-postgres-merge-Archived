@@ -930,6 +930,8 @@ appendonly_index_validate_scan(Relation heapRelation,
 
 		if (HeapTupleIsHeapOnly(heapTuple))
 		{
+			/* GPDB_12_MERGE_FIXME: root_offsets unitialized */
+#if 0	
 			root_offnum = root_offsets[root_offnum - 1];
 			if (!OffsetNumberIsValid(root_offnum))
 				ereport(ERROR,
@@ -939,6 +941,9 @@ appendonly_index_validate_scan(Relation heapRelation,
 										 ItemPointerGetOffsetNumber(heapcursor),
 										 RelationGetRelationName(heapRelation))));
 			ItemPointerSetOffsetNumber(&rootTuple, root_offnum);
+#else 
+			elog(ERROR, "GPDB_12_MERGE_FIXME");
+#endif
 		}
 
 		/*

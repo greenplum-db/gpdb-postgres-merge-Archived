@@ -498,17 +498,6 @@ _outResult(StringInfo str, const Result *node)
 }
 
 static void
-_outRepeat(StringInfo str, const Repeat *node)
-{
-	WRITE_NODE_TYPE("REPEAT");
-
-	_outPlanInfo(str, (Plan *) node);
-
-	WRITE_NODE_FIELD(repeatCountExpr);
-	WRITE_UINT64_FIELD(grouping);
-}
-
-static void
 _outProjectSet(StringInfo str, const ProjectSet *node)
 {
 	WRITE_NODE_TYPE("PROJECTSET");
@@ -5343,9 +5332,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_Result:
 				_outResult(str, obj);
-				break;
-			case T_Repeat:
-				_outRepeat(str, obj);
 				break;
 			case T_ProjectSet:
 				_outProjectSet(str, obj);

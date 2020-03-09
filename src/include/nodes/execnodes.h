@@ -1388,20 +1388,6 @@ typedef struct ResultState
 } ResultState;
 
 /* ----------------
- *	 RepeatState information
- * ----------------
- */
-typedef struct RepeatState
-{
-	PlanState	ps;				/* its first field is NodeTag */
-
-	bool		repeat_done;	/* are we done? */
-	TupleTableSlot *slot;		/* The current tuple */
-	int			repeat_count;	/* The number of repeats for the current tuple */
-	ExprState  *expr_state;		/* The state to evaluate the expression */
-} RepeatState;
-
-/* ----------------
  *	 ProjectSetState information
  *
  * Note: at least one of the "elems" will be a SetExprState; the rest are
