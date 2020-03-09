@@ -2,16 +2,12 @@
 -- PARALLEL
 --
 
-<<<<<<< HEAD
 -- GPDB_96_MERGE_FIXME: We don't support parallel query. These tests won't actually
 -- generate any parallel plans. Should we pay attention to the parallel restrictions
 -- when creating MPP plans? For example, should we force parallel restricted functions
 -- to run in the QD?
 
-create or replace function parallel_restricted(int) returns int as
-=======
 create function sp_parallel_restricted(int) returns int as
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   $$begin return $1; end$$ language plpgsql parallel restricted;
 
 -- Serializable isolation would disable parallel query, so explicitly use an
