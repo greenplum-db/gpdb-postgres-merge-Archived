@@ -23,7 +23,6 @@ COMMIT;
 -- fail - invalid connection string
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'testconn' PUBLICATION testpub;
 ERROR:  invalid connection string syntax: missing "=" after "testconn" in connection info string
-
 -- fail - duplicate publications
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION foo, testpub, foo WITH (connect = false);
 ERROR:  publication name "foo" used more than once
