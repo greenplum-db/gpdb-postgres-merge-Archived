@@ -25,11 +25,13 @@ SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
 
 SET enable_bitmapscan TO off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                   QUERY PLAN                   
-------------------------------------------------
- Index Only Scan using tbl_gist_idx on tbl_gist
-   Index Cond: (c4 <@ '(10,10),(1,1)'::box)
-(2 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using tbl_gist_idx on tbl_gist
+         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SET enable_bitmapscan TO default;
 DROP TABLE tbl_gist;
@@ -60,11 +62,13 @@ SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
 
 SET enable_bitmapscan TO off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                   QUERY PLAN                   
-------------------------------------------------
- Index Only Scan using tbl_gist_idx on tbl_gist
-   Index Cond: (c4 <@ '(10,10),(1,1)'::box)
-(2 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using tbl_gist_idx on tbl_gist
+         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SET enable_bitmapscan TO default;
 DROP TABLE tbl_gist;
@@ -140,17 +144,21 @@ DROP TABLE tbl_gist;
 /*
  * 6. EXCLUDE constraint.
  */
-CREATE TABLE tbl_gist (c1 int, c2 int, c3 int, c4 box, EXCLUDE USING gist (c4 WITH &&) INCLUDE (c1, c2, c3));
+CREATE TABLE tbl_gist (c1 int, c2 int, c3 int, c4 box, EXCLUDE USING gist (c4 WITH &&) INCLUDE (c1, c2, c3)
+) DISTRIBUTED REPLICATED;
 INSERT INTO tbl_gist SELECT x, 2*x, 3*x, box(point(x,x+1),point(2*x,2*x+1)) FROM generate_series(1,10) AS x;
 ERROR:  conflicting key value violates exclusion constraint "tbl_gist_c4_c1_c2_c3_excl"
 DETAIL:  Key (c4)=((4,5),(2,3)) conflicts with existing key (c4)=((2,3),(1,2)).
 INSERT INTO tbl_gist SELECT x, 2*x, 3*x, box(point(3*x,2*x),point(3*x+1,2*x+1)) FROM generate_series(1,10) AS x;
+set enable_seqscan=off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                         QUERY PLAN                          
--------------------------------------------------------------
- Index Only Scan using tbl_gist_c4_c1_c2_c3_excl on tbl_gist
-   Index Cond: (c4 <@ '(10,10),(1,1)'::box)
-(2 rows)
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   ->  Index Only Scan using tbl_gist_c4_c1_c2_c3_excl on tbl_gist
+         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 \d tbl_gist
               Table "public.tbl_gist"
@@ -162,5 +170,6 @@ EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,
  c4     | box     |           |          | 
 Indexes:
     "tbl_gist_c4_c1_c2_c3_excl" EXCLUDE USING gist (c4 WITH &&) INCLUDE (c1, c2, c3)
+Distributed Replicated
 
 DROP TABLE tbl_gist;
