@@ -2113,6 +2113,7 @@ left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
 -- are present as join quals, and not plain quals.
 set enable_nestloop to 0;
 set enable_hashjoin to 0;
+set enable_mergejoin to 1;
 set enable_sort to 0;
 
 -- create indexes that will be preferred over the PKs to perform the join

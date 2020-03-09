@@ -4757,13 +4757,15 @@ select i8.* from int8_tbl i8 left join (select f1 from int4_tbl group by f1) i4
 explain (costs off)
 select 1 from (select a.id FROM a left join b on a.b_id = b.id) q,
 			  lateral generate_series(1, q.id) gs(i) where q.id = gs.i;
-                QUERY PLAN                 
--------------------------------------------
- Nested Loop
-   ->  Seq Scan on a
-   ->  Function Scan on generate_series gs
-         Filter: (a.id = i)
-(4 rows)
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Nested Loop
+         ->  Seq Scan on a
+         ->  Function Scan on generate_series gs
+               Filter: (a.id = i)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 rollback;
 create temp table parent (k int primary key, pd int);
@@ -5077,7 +5079,6 @@ from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 =
 explain (costs off)
   select unique2, x.*
   from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on true;
-<<<<<<< HEAD
                 QUERY PLAN                
 -------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -5088,15 +5089,6 @@ explain (costs off)
                ->  Seq Scan on int4_tbl x
  Optimizer: Postgres query optimizer
 (7 rows)
-=======
-                  QUERY PLAN                   
------------------------------------------------
- Nested Loop Left Join
-   ->  Seq Scan on int4_tbl x
-   ->  Index Scan using tenk1_unique1 on tenk1
-         Index Cond: (unique1 = x.f1)
-(4 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- check scoping of lateral versus parent references
 -- the first of these should return int8_tbl.q2, the second int8_tbl.q1
@@ -5955,30 +5947,38 @@ select * from
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl where false) ss on true;
-              QUERY PLAN              
---------------------------------------
- Nested Loop Left Join
+                 QUERY PLAN                 
+--------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: i8.q1, i8.q2, f1, (i8.q2)
-   ->  Seq Scan on public.int8_tbl i8
-         Output: i8.q1, i8.q2
-   ->  Result
-         Output: f1, i8.q2
-         One-Time Filter: false
-(7 rows)
+   ->  Nested Loop Left Join
+         Output: i8.q1, i8.q2, f1, (i8.q2)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+         ->  Result
+               Output: f1, i8.q2
+               One-Time Filter: false
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(11 rows)
 
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl i1, int4_tbl i2 where false) ss on true;
-               QUERY PLAN                
------------------------------------------
- Nested Loop Left Join
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: i8.q1, i8.q2, f1, f1, (i8.q2)
-   ->  Seq Scan on public.int8_tbl i8
-         Output: i8.q1, i8.q2
-   ->  Result
-         Output: f1, f1, i8.q2
-         One-Time Filter: false
-(7 rows)
+   ->  Nested Loop Left Join
+         Output: i8.q1, i8.q2, f1, f1, (i8.q2)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+         ->  Result
+               Output: f1, f1, i8.q2
+               One-Time Filter: false
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(11 rows)
 
 -- check handling of nested appendrels inside LATERAL
 select * from
@@ -6258,35 +6258,45 @@ analyze j3;
 -- ensure join is properly marked as unique
 explain (verbose, costs off)
 select * from j1 inner join j2 on j1.id = j2.id;
-            QUERY PLAN             
------------------------------------
- Hash Join
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: j1.id, j2.id
-   Inner Unique: true
-   Hash Cond: (j1.id = j2.id)
-   ->  Seq Scan on public.j1
-         Output: j1.id
-   ->  Hash
-         Output: j2.id
-         ->  Seq Scan on public.j2
+   ->  Hash Join
+         Output: j1.id, j2.id
+         Inner Unique: true
+         Hash Cond: (j1.id = j2.id)
+         ->  Seq Scan on public.j1
+               Output: j1.id
+         ->  Hash
                Output: j2.id
-(10 rows)
+               ->  Seq Scan on public.j2
+                     Output: j2.id
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(14 rows)
 
 -- ensure join is not unique when not an equi-join
 explain (verbose, costs off)
 select * from j1 inner join j2 on j1.id > j2.id;
-            QUERY PLAN             
------------------------------------
- Nested Loop
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: j1.id, j2.id
-   Join Filter: (j1.id > j2.id)
-   ->  Seq Scan on public.j1
-         Output: j1.id
-   ->  Materialize
-         Output: j2.id
-         ->  Seq Scan on public.j2
+   ->  Nested Loop
+         Output: j1.id, j2.id
+         Join Filter: (j1.id > j2.id)
+         ->  Seq Scan on public.j1
+               Output: j1.id
+         ->  Materialize
                Output: j2.id
-(9 rows)
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     Output: j2.id
+                     ->  Seq Scan on public.j2
+                           Output: j2.id
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(15 rows)
 
 -- ensure non-unique rel is not chosen as inner
 explain (verbose, costs off)
@@ -6359,17 +6369,23 @@ select * from j1 full join j2 on j1.id = j2.id;
 -- a clauseless (cross) join can't be unique
 explain (verbose, costs off)
 select * from j1 cross join j2;
-            QUERY PLAN             
------------------------------------
- Nested Loop
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: j1.id, j2.id
-   ->  Seq Scan on public.j1
-         Output: j1.id
-   ->  Materialize
-         Output: j2.id
-         ->  Seq Scan on public.j2
+   ->  Nested Loop
+         Output: j1.id, j2.id
+         ->  Seq Scan on public.j1
+               Output: j1.id
+         ->  Materialize
                Output: j2.id
-(8 rows)
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     Output: j2.id
+                     ->  Seq Scan on public.j2
+                           Output: j2.id
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(14 rows)
 
 -- ensure a natural join is marked as unique
 explain (verbose, costs off)
@@ -6464,17 +6480,23 @@ inner join j2 on j1.id1 = j2.id1;
 explain (verbose, costs off)
 select * from j1
 inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Nested Loop
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: j1.id1, j1.id2, j2.id1, j2.id2
-   Inner Unique: true
-   Join Filter: ((j1.id1 = j2.id1) AND (j1.id2 = j2.id2))
-   ->  Seq Scan on public.j2
-         Output: j2.id1, j2.id2
-   ->  Seq Scan on public.j1
-         Output: j1.id1, j1.id2
-(8 rows)
+   ->  Hash Join
+         Output: j1.id1, j1.id2, j2.id1, j2.id2
+         Inner Unique: true
+         Hash Cond: ((j1.id1 = j2.id1) AND (j1.id2 = j2.id2))
+         ->  Seq Scan on public.j1
+               Output: j1.id1, j1.id2
+         ->  Hash
+               Output: j2.id1, j2.id2
+               ->  Seq Scan on public.j2
+                     Output: j2.id1, j2.id2
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(14 rows)
 
 -- ensure we don't detect the join to be unique when quals are not part of the
 -- join condition
@@ -6514,6 +6536,7 @@ left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
 -- are present as join quals, and not plain quals.
 set enable_nestloop to 0;
 set enable_hashjoin to 0;
+set enable_mergejoin to 1;
 set enable_sort to 0;
 -- create indexes that will be preferred over the PKs to perform the join
 create index j1_id1_idx on j1 (id1) where id1 % 1000 = 1;
@@ -6524,14 +6547,16 @@ analyze j2;
 explain (costs off) select * from j1
 inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
 where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
-               QUERY PLAN                
------------------------------------------
- Merge Join
-   Merge Cond: (j1.id1 = j2.id1)
-   Join Filter: (j1.id2 = j2.id2)
-   ->  Index Scan using j1_id1_idx on j1
-   ->  Index Scan using j2_id1_idx on j2
-(5 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Merge Join
+         Merge Cond: (j1.id1 = j2.id1)
+         Join Filter: (j1.id2 = j2.id2)
+         ->  Index Scan using j1_id1_idx on j1
+         ->  Index Scan using j2_id1_idx on j2
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 select * from j1
 inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
