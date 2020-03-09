@@ -2,6 +2,19 @@
 -- ROWTYPES
 --
 
+-- start_ignore
+-- GPDB: With the default settings, the planner chooses different plans some
+-- of the queries than in upstream. That is because:
+-- 1) Default large (different as PG's) random_page_cost makes planner
+--    incline to seq scan.
+-- 2) Low vis fraction estimation (pg_class.relallvisible) on GP causes higher
+--    index only scan cost so bitmap index scan outperforms index only scan.
+--
+-- Set 'random_page_cost' to match the upstream default value here. In
+-- addition, some tests do 'enable_sort=off' or 'enable_bitmapscan=off'.
+set random_page_cost = 4;
+-- end_ignore
+
 -- Make both a standalone composite type and a table rowtype
 
 create type complex_t as (r float8, i float8);
@@ -110,6 +123,7 @@ where (unique1, unique2) < any (select ten, ten from tenk1 where hundred < 3)
 order by 1;
 
 -- Also check row comparison with an indexable condition
+set enable_sort=off;
 explain (costs off)
 select thousand, tenthous from tenk1
 where (thousand, tenthous) >= (997, 5000)
@@ -118,6 +132,7 @@ order by thousand, tenthous;
 select thousand, tenthous from tenk1
 where (thousand, tenthous) >= (997, 5000)
 order by thousand, tenthous;
+reset enable_sort;
 
 explain (costs off)
 select thousand, tenthous, four from tenk1
@@ -128,6 +143,7 @@ select thousand, tenthous, four from tenk1
 where (thousand, tenthous, four) > (998, 5000, 3)
 order by thousand, tenthous;
 
+set enable_sort=off;
 explain (costs off)
 select thousand, tenthous from tenk1
 where (998, 5000) < (thousand, tenthous)
@@ -136,6 +152,7 @@ order by thousand, tenthous;
 select thousand, tenthous from tenk1
 where (998, 5000) < (thousand, tenthous)
 order by thousand, tenthous;
+reset enable_sort;
 
 explain (costs off)
 select thousand, hundred from tenk1
@@ -423,13 +440,6 @@ select row_to_json(ss) from
 select row_to_json(ss) from
   (select q1 as a, q2 as b from int8_tbl offset 0) as ss(x,y);
 
--- GPDB: Make the plan same as PG's to make further merge and testing easy.
--- PG plan is index only scan, while GP plan is seq scan without the guc
--- settings below. That is because:
--- 1) Default large (different as PG's) random_page_cost makes planner incline to seq scan.
--- 2) Low vis fraction estimation (pg_class.relallvisible) on GP causes higher
---    index only scan cost so bitmap index scan outperforms index only scan.
-set random_page_cost = 4;
 set enable_bitmapscan = off;
 explain (costs off)
 select row_to_json(q) from
@@ -445,7 +455,6 @@ select row_to_json(q) from
   (select thousand as x, tenthous as y from tenk1
    where thousand = 42 and tenthous < 2000 offset 0) q(a,b);
 -- GPDB: restore to the default or previously set values.
-reset random_page_cost;
 reset enable_bitmapscan;
 
 create temp table tt1 as select * from int8_tbl order by 1 limit 2;
