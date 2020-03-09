@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-drop table if exists test;
-create table test (a integer);
-insert into test select a from generate_series(1,100) a;
-
-\echo -- start_ignore
-select * from test where ctid='(0,10)' and gp_segment_id=1;
-\echo -- end_ignore
-drop table if exists test;
-create table test (a integer);
-insert into test select a from generate_series(1,100) a;
-
-\echo -- start_ignore
-select * from test where ctid in ('(0,10)', '(0,20)');
-\echo -- end_ignore
-=======
 -- tests for tidscans
 
 CREATE TABLE tidscan(id integer);
@@ -111,4 +95,3 @@ SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid;
 RESET enable_hashjoin;
 
 DROP TABLE tidscan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
