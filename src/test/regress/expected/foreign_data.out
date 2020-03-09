@@ -251,6 +251,10 @@ CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 COMMENT ON SERVER s1 IS 'foreign server';
 CREATE USER MAPPING FOR current_user SERVER s1;
+CREATE USER MAPPING FOR current_user SERVER s1;				-- ERROR
+ERROR:  user mapping for "regress_foreign_data_user" already exists for server "s1"
+CREATE USER MAPPING IF NOT EXISTS FOR current_user SERVER s1; -- NOTICE
+NOTICE:  user mapping for "regress_foreign_data_user" already exists for server "s1", skipping
 \dew+ :NO_BUILTINS
                                                 List of foreign-data wrappers
     Name    |           Owner           | Handler |        Validator         | Access privileges | FDW options | Description 
@@ -451,15 +455,9 @@ ALTER SERVER s1 OWNER TO regress_test_indirect;
 RESET ROLE;
 DROP ROLE regress_test_indirect;                            -- ERROR
 ERROR:  role "regress_test_indirect" cannot be dropped because some objects depend on it
-<<<<<<< HEAD
-DETAIL:  owner of server s1
-privileges for foreign-data wrapper foo
-\des+ :NO_BUILTINS
-=======
 DETAIL:  privileges for foreign-data wrapper foo
 owner of server s1
-\des+
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+\des+ :NO_BUILTINS
                                                                                  List of foreign servers
  Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW options              | Description 
 ------+---------------------------+----------------------+-------------------------------------------------------+--------+---------+--------------------------------------+-------------
@@ -1343,17 +1341,10 @@ SET ROLE regress_unprivileged_role;
 (9 rows)
 
 RESET ROLE;
-<<<<<<< HEAD
 \set VERBOSITY terse
 DROP SERVER s10 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 \set VERBOSITY default
-=======
-DROP SERVER s10 CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for public on server s10
-drop cascades to user mapping for regress_unprivileged_role on server s10
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
   BEGIN
@@ -1492,27 +1483,13 @@ NOTICE:  merging column "c3" with inherited definition
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Child tables: ft3
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
-Child tables: ct3,
-              ft3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Child tables: ft3
 
 -- start_ignore
 -- GPDB: ct3 is not created.
 \d+ ct3
-                                    Table "public.ct3"
- Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+----------+--------------+-------------
- c1     | integer |           | not null |         | plain    |              | 
- c2     | text    |           |          |         | extended |              | 
- c3     | date    |           |          |         | plain    |              | 
-Inherits: ft2
 -- end_ignore
 \d+ ft3
                                        Foreign table "public.ft3"
@@ -1557,32 +1534,13 @@ Child tables: ft2
  c7     | integer |           | not null |         |             | plain    |              | 
  c8     | integer |           |          |         |             | plain    |              | 
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Child tables: ft3
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
-Child tables: ct3,
-              ft3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Child tables: ft3
 
 -- start_ignore
 -- GPDB: ct3 is not created.
 \d+ ct3
-                                    Table "public.ct3"
- Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+----------+--------------+-------------
- c1     | integer |           | not null |         | plain    |              | 
- c2     | text    |           |          |         | extended |              | 
- c3     | date    |           |          |         | plain    |              | 
- c4     | integer |           |          |         | plain    |              | 
- c5     | integer |           |          | 0       | plain    |              | 
- c6     | integer |           |          |         | plain    |              | 
- c7     | integer |           | not null |         | plain    |              | 
- c8     | integer |           |          |         | plain    |              | 
-Inherits: ft2
 -- end_ignore
 \d+ ft3
                                        Foreign table "public.ft3"
@@ -1639,16 +1597,9 @@ Child tables: ft2
  c7     | integer |           |          |         |             | plain    |              | 
  c8     | text    |           |          |         |             | external |              | 
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Child tables: ft3
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
-Child tables: ct3,
-              ft3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Child tables: ft3
 
 -- drop attributes recursively
 ALTER TABLE fd_pt1 DROP COLUMN c4;
@@ -1673,16 +1624,9 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Child tables: ft3
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
-Child tables: ct3,
-              ft3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Child tables: ft3
 
 -- add constraints recursively
 ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk1 CHECK (c1 > 0) NO INHERIT;
@@ -1721,16 +1665,9 @@ Child tables: ft2
 Check constraints:
     "fd_pt1chk2" CHECK (c2 <> ''::text)
 Server: s0
-<<<<<<< HEAD
-FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
-Child tables: ft3
-=======
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
-Child tables: ct3,
-              ft3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Child tables: ft3
 
 DROP FOREIGN TABLE ft2; -- ERROR
 ERROR:  cannot drop foreign table ft2 because other objects depend on it
@@ -1778,18 +1715,7 @@ Inherits: fd_pt1
 ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk1 CASCADE;
 ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk2 CASCADE;
 -- NOT VALID case
-<<<<<<< HEAD
 SET gp_autostats_mode=NONE; -- GPDB: don't analyze after insert
-INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
-\d+ pt1
-                          Table "public.pt1"
- Column |  Type   | Modifiers | Storage  | Stats target | Description 
---------+---------+-----------+----------+--------------+-------------
- c1     | integer | not null  | plain    | 10000        | 
- c2     | text    |           | extended |              | 
- c3     | date    |           | plain    |              | 
-=======
 INSERT INTO fd_pt1 VALUES (1, 'fd_pt1'::text, '1994-01-01'::date);
 ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
 \d+ fd_pt1
@@ -1799,7 +1725,6 @@ ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Check constraints:
     "fd_pt1chk3" CHECK (c2 <> ''::text) NOT VALID
 Child tables: ft2
@@ -2128,19 +2053,9 @@ owner of user mapping for regress_test_role on server s6
 DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public on server t1
 DROP USER MAPPING FOR regress_test_role SERVER s6;
-<<<<<<< HEAD
 \set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
-=======
-DROP FOREIGN DATA WRAPPER foo CASCADE;
-NOTICE:  drop cascades to 5 other objects
-DETAIL:  drop cascades to server s4
-drop cascades to user mapping for regress_foreign_data_user on server s4
-drop cascades to server s6
-drop cascades to server s9
-drop cascades to user mapping for regress_unprivileged_role on server s9
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 \set VERBOSITY default

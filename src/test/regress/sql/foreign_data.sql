@@ -131,15 +131,10 @@ CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 COMMENT ON SERVER s1 IS 'foreign server';
 CREATE USER MAPPING FOR current_user SERVER s1;
-<<<<<<< HEAD
-\dew+ :NO_BUILTINS
-\des+ :NO_BUILTINS
-=======
 CREATE USER MAPPING FOR current_user SERVER s1;				-- ERROR
 CREATE USER MAPPING IF NOT EXISTS FOR current_user SERVER s1; -- NOTICE
-\dew+
-\des+
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+\dew+ :NO_BUILTINS
+\des+ :NO_BUILTINS
 \deu+
 DROP FOREIGN DATA WRAPPER foo;                              -- ERROR
 SET ROLE regress_test_role;
@@ -587,13 +582,9 @@ RESET ROLE;
 SET ROLE regress_unprivileged_role;
 \deu+
 RESET ROLE;
-<<<<<<< HEAD
 \set VERBOSITY terse
 DROP SERVER s10 CASCADE;
 \set VERBOSITY default
-=======
-DROP SERVER s10 CASCADE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
@@ -750,16 +741,10 @@ ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk1 CASCADE;
 ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk2 CASCADE;
 
 -- NOT VALID case
-<<<<<<< HEAD
 SET gp_autostats_mode=NONE; -- GPDB: don't analyze after insert
-INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
-\d+ pt1
-=======
 INSERT INTO fd_pt1 VALUES (1, 'fd_pt1'::text, '1994-01-01'::date);
 ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
 \d+ fd_pt1
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 \d+ ft2
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
 ALTER TABLE fd_pt1 VALIDATE CONSTRAINT fd_pt1chk3;
@@ -884,10 +869,7 @@ DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER t1 CASCADE;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
-<<<<<<< HEAD
 \set VERBOSITY terse
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 DROP SERVER s8 CASCADE;
 \set VERBOSITY default

@@ -12,14 +12,10 @@ VACUUM;
 
 SELECT relname, relhasindex
    FROM pg_class c LEFT JOIN pg_namespace n ON n.oid = relnamespace
-<<<<<<< HEAD
-   WHERE relkind = 'r' AND (nspname ~ '^pg_temp_') IS NOT TRUE
+   WHERE relkind IN ('r', 'p') AND (nspname ~ '^pg_temp_') IS NOT TRUE
    AND relname NOT LIKE 'gp_%'
    AND relname NOT LIKE '__gp_%'
    AND relname <> 'pg_resqueue'
-=======
-   WHERE relkind IN ('r', 'p') AND (nspname ~ '^pg_temp_') IS NOT TRUE
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
    ORDER BY relname;
 
 -- restore normal output mode
