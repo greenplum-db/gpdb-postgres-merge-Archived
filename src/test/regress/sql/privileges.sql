@@ -7,6 +7,7 @@
 -- end_matchsubs
 
 set optimizer=off;
+set enable_nestloop=on;
 -- Clean up in case a prior regression run failed
 
 -- Suppress NOTICE messages when users/groups don't exist
@@ -160,7 +161,6 @@ GRANT SELECT ON atest12v TO PUBLIC;
 GRANT SELECT ON atest12sbv TO PUBLIC;
 
 -- This plan should use nestloop, knowing that few rows will be selected.
-set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 
 -- And this one.
@@ -183,20 +183,6 @@ CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
 -- This should not show any "leak" notices before failing.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 
-<<<<<<< HEAD
--- This plan should use hashjoin, as it will expect many rows to be selected.
-EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-
--- Now regress_user1 grants sufficient access to regress_user2.
-SET SESSION AUTHORIZATION regress_user1;
-GRANT SELECT (a, b) ON atest12 TO PUBLIC;
-SET SESSION AUTHORIZATION regress_user2;
-
--- Now regress_user2 will also get a good row estimate.
-set enable_nestloop = 1;
-EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-reset enable_nestloop;
-=======
 -- These plans should continue to use a nestloop, since they execute with the
 -- privileges of the view owner.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
@@ -217,7 +203,6 @@ SET SESSION AUTHORIZATION regress_priv_user2;
 
 -- regress_priv_user2 should continue to get a good row estimate.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- But not for this, due to lack of table-wide permissions needed
 -- to make use of the expression index's statistics.
@@ -295,7 +280,7 @@ SELECT * FROM atestv2; -- fail (even though regress_priv_user2 can access underl
 -- Test column level permissions
 
 SET SESSION AUTHORIZATION regress_priv_user1;
-CREATE TABLE atest5 (one int, two int unique, three int, four int unique);
+CREATE TABLE atest5 (one int, two int unique, three int, four int unique) distributed replicated;
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regress_priv_user4;
 GRANT ALL (one) ON atest5 TO regress_priv_user3;
