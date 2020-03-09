@@ -1,7 +1,14 @@
 --
 -- Test inheritance features
 --
-CREATE TABLE a (dummy serial, aa TEXT);
+
+-- start_ignore
+-- Change random_pag_cost to match upstream's default, to get the same plans
+-- as in upstream.
+set random_page_cost = 4;
+-- end_ignore
+
+CREATE TABLE a (aa TEXT);
 CREATE TABLE b (bb TEXT) INHERITS (a);
 CREATE TABLE c (cc TEXT) INHERITS (a);
 CREATE TABLE d (dd TEXT) INHERITS (b,c,a);
@@ -524,24 +531,18 @@ select min(1-id) from matest0;
 reset enable_indexscan;
 
 set enable_seqscan = off;  -- plan with fewest seqscans should be merge
-<<<<<<< HEAD
+set enable_parallel_append = off; -- Don't let parallel-append interfere
 -- GPDB_92_MERGE_FIXME: the cost of bitmap scan is not correct?
 -- the cost of merge append with index scan is bigger than the cost
 -- of append with bitmapscan + sort
 set enable_bitmapscan = off; 
-=======
-set enable_parallel_append = off; -- Don't let parallel-append interfere
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 explain (verbose, costs off) select * from matest0 order by 1-id;
 select * from matest0 order by 1-id;
 explain (verbose, costs off) select min(1-id) from matest0;
 select min(1-id) from matest0;
 reset enable_seqscan;
-<<<<<<< HEAD
-reset enable_bitmapscan;
-=======
 reset enable_parallel_append;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+reset enable_bitmapscan;
 
 drop table matest0 cascade;
 
