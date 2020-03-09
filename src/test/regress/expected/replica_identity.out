@@ -5,7 +5,6 @@ CREATE TABLE test_replica_identity (
        nonkey text,
        CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
-<<<<<<< HEAD
 ) distributed by (keya);
 -- GPDB has a habit of naming the indexes that back constraints differently,
 -- at CREATE TABLE. Rename the constraints, and then rename them back. That
@@ -14,18 +13,11 @@ ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_defer;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_nondefer TO x;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_nondefer;
-=======
-) ;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
 CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
-<<<<<<< HEAD
-ERROR:  hash indexes are not supported
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE UNIQUE INDEX test_replica_identity_expr ON test_replica_identity (keya, keyb, (3));
 CREATE UNIQUE INDEX test_replica_identity_partial ON test_replica_identity (keya, keyb) WHERE keyb != '3';
 -- default is 'd'/DEFAULT for user created tables
@@ -59,7 +51,7 @@ ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_iden
 ERROR:  index "test_replica_identity_nonkey" cannot be used as replica identity because column "nonkey" is nullable
 -- fail, hash indexes cannot do uniqueness
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_hash;
-ERROR:  index "test_replica_identity_hash" for table "test_replica_identity" does not exist
+ERROR:  cannot use non-unique index "test_replica_identity_hash" as replica identity
 -- fail, expression index
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_expr;
 ERROR:  cannot use expression index "test_replica_identity_expr" as replica identity
@@ -105,6 +97,7 @@ Indexes:
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
 Distributed by: (keya)
 
@@ -135,6 +128,7 @@ Indexes:
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
 Distributed by: (keya)
 
@@ -183,12 +177,10 @@ Indexes:
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
 Replica Identity: FULL
-<<<<<<< HEAD
 Distributed by: (keya)
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
