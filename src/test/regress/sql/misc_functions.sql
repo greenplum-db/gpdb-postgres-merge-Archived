@@ -2,6 +2,10 @@
 -- num_nulls()
 --
 
+-- GPDB: Persuade the planner to produce the same plans as in upstream.
+set enable_nestloop=on;
+set random_page_cost=4;
+
 SELECT num_nonnulls(NULL);
 SELECT num_nonnulls('1');
 SELECT num_nonnulls(NULL::text);
