@@ -644,12 +644,16 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
-                     QUERY PLAN                      
------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Limit
-   ->  Index Scan using ggpolygonind on gpolygon_tbl
-         Order By: (f1 <-> '(0,0)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: ((f1 <-> '(0,0)'::point))
+         ->  Limit
+               ->  Index Scan using ggpolygonind on gpolygon_tbl
+                     Order By: (f1 <-> '(0,0)'::point)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
                        f1                        

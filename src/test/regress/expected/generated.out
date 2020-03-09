@@ -472,11 +472,13 @@ SELECT * FROM gtest22c WHERE b = 4;
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 6;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_expr_idx on gtest22c
-   Index Cond: ((b * 3) = 6)
-(2 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Scan using gtest22c_expr_idx on gtest22c
+         Index Cond: ((b * 3) = 6)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM gtest22c WHERE b * 3 = 6;
  a | b 
@@ -485,11 +487,13 @@ SELECT * FROM gtest22c WHERE b * 3 = 6;
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_pred_idx on gtest22c
-   Index Cond: (a = 1)
-(2 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   ->  Index Scan using gtest22c_pred_idx on gtest22c
+         Index Cond: (a = 1)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
  a | b 
@@ -786,6 +790,7 @@ CREATE TABLE gtest28b (LIKE gtest28a INCLUDING GENERATED);
  b      | integer |           |          | 
  c      | integer |           |          | 
  x      | integer |           |          | generated always as (b * 2) stored
+Distributed randomly
 
                            Table "public.gtest28b"
  Column |  Type   | Collation | Nullable |              Default               
@@ -793,4 +798,5 @@ CREATE TABLE gtest28b (LIKE gtest28a INCLUDING GENERATED);
  b      | integer |           |          | 
  c      | integer |           |          | 
  x      | integer |           |          | generated always as (b * 2) stored
+Distributed randomly
 

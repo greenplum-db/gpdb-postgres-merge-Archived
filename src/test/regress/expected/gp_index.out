@@ -28,7 +28,6 @@ DROP INDEX CONCURRENTLY IF EXISTS "tbl_drop_index3";
 DROP INDEX CONCURRENTLY "tbl_drop_index4";
 DROP INDEX CONCURRENTLY "tbl_drop_index1";
 \d tbl_drop_ind_concur
-Table "public.tbl_drop_ind_concur"
        Table "public.tbl_drop_ind_concur"
  Column | Type | Collation | Nullable | Default 
 --------+------+-----------+----------+---------

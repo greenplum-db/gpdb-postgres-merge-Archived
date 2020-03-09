@@ -44,10 +44,6 @@ SELECT a,b,c FROM update_test ORDER BY a,b,c;
 UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
   WHERE update_test.b = v.j;
 
--- fail, wrong data type:
-UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
-  WHERE update_test.b = v.j;
-
 --
 -- Test multiple-set-clause syntax
 --

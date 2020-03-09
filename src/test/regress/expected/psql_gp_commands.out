@@ -12,7 +12,7 @@
 
 \dx+ gp_inject*
                        Objects in extension "gp_inject_fault"
-                                 Object Description                                 
+                                 Object description                                 
 ------------------------------------------------------------------------------------
  function force_mirrors_to_catch_up()
  function gp_inject_fault(text,text,integer)

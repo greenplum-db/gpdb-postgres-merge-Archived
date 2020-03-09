@@ -452,11 +452,7 @@ select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
 ------------------------------------------------------------------------------------------------------
  ProjectSet
    Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
-<<<<<<< HEAD
- Optimizer: Postgres query optimizer
-=======
    ->  Result
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (3 rows)
 
 select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
@@ -477,11 +473,7 @@ order by s2 desc;
    Sort Key: (generate_series(((random() * '0.1'::double precision))::integer, 2)) DESC
    ->  ProjectSet
          Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
-<<<<<<< HEAD
- Optimizer: Postgres query optimizer
-=======
          ->  Result
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (6 rows)
 
 select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2

@@ -539,7 +539,6 @@ explain (costs off)
  Optimizer: Postgres query optimizer
 (4 rows)
 
-
 -- this could be converted, but isn't at present
 explain (costs off)
   select * from tenk1 where unique1 = unique1 or unique2 = unique2;
@@ -550,5 +549,4 @@ explain (costs off)
          Filter: ((unique1 = unique1) OR (unique2 = unique2))
  Optimizer: Postgres query optimizer
 (4 rows)
-
 

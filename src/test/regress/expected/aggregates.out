@@ -998,9 +998,10 @@ explain (costs off)
                  Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: (unique2 IS NOT NULL)
-   ->  Result
+   ->  ProjectSet
+         ->  Result
  Optimizer: Postgres query optimizer
-(10 rows)
+(11 rows)
 
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  max  | g 
