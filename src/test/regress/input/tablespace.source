@@ -218,6 +218,9 @@ CREATE INDEX test_tab_b_idx ON testschema.test_tab (b);
 \d testschema.test_tab_unique
 \d testschema.test_tab_a_idx
 \d testschema.test_tab_b_idx
+-- In GPDB; the distribution key must be included in the unique constraint,
+-- or it needs to be replicated.
+ALTER TABLE testschema.test_tab SET DISTRIBUTED REPLICATED;
 ALTER TABLE testschema.test_tab ALTER b TYPE bigint, ADD UNIQUE (c);
 \d testschema.test_tab_unique
 \d testschema.test_tab_a_idx

@@ -577,6 +577,9 @@ Tablespace: "regress_tblspace"
  b      | integer | yes  | b
 btree, for table "testschema.test_tab"
 
+-- In GPDB; the distribution key must be included in the unique constraint,
+-- or it needs to be replicated.
+ALTER TABLE testschema.test_tab SET DISTRIBUTED REPLICATED;
 ALTER TABLE testschema.test_tab ALTER b TYPE bigint, ADD UNIQUE (c);
 \d testschema.test_tab_unique
   Index "testschema.test_tab_unique"
