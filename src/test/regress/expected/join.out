@@ -4657,27 +4657,16 @@ explain (costs off)
 select id from a where id in (
 	select b.id from b left join c on b.id = c.id
 );
-<<<<<<< HEAD
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Hash Semi Join
+   ->  Hash Join
          Hash Cond: (a.id = b.id)
          ->  Seq Scan on a
          ->  Hash
                ->  Seq Scan on b
  Optimizer: Postgres query optimizer
 (7 rows)
-=======
-         QUERY PLAN         
-----------------------------
- Hash Join
-   Hash Cond: (a.id = b.id)
-   ->  Seq Scan on a
-   ->  Hash
-         ->  Seq Scan on b
-(5 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- check that join removal works for a left join when joining a subquery
 -- that is guaranteed to be unique by its GROUP BY clause
