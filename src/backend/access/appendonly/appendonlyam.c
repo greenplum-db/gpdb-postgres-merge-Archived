@@ -961,7 +961,7 @@ upgrade_tuple(AppendOnlyExecutorReadBlock *executorReadBlock,
 		/*
 		 * make a modifiable copy
 		 */
-		newtuple = memtuple_copy_to(mtup, NULL, NULL);
+		newtuple = memtuple_copy(mtup);
 	}
 
 	/*
