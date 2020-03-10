@@ -433,6 +433,8 @@ sub init
 	my $pgdata = $self->data_dir;
 	my $host   = $self->host;
 
+	print "####### HOST = $host\n";
+
 	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
 	$params{has_archiving}    = 0 unless defined $params{has_archiving};
 
@@ -448,12 +450,6 @@ sub init
 	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "restart_after_crash = off\n";
-<<<<<<< HEAD
-	print $conf "log_statement = all\n";
-	# GPDB: this GUC is not yet supported
-	# print $conf "wal_retrieve_retry_interval = '500ms'\n";
-	print $conf "port = $port\n";
-=======
 	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
 	print $conf "log_statement = all\n";
 	print $conf "log_replication_commands = on\n";
@@ -469,7 +465,6 @@ sub init
 	# XXX Neutralize any stats_temp_directory in TEMP_CONFIG.  Nodes running
 	# concurrently must not share a stats_temp_directory.
 	print $conf "stats_temp_directory = 'pg_stat_tmp'\n";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if ($params{allows_streaming})
 	{
@@ -536,14 +531,11 @@ sub append_conf
 	my $conffile = $self->data_dir . '/' . $filename;
 
 	TestLib::append_to_file($conffile, $str . "\n");
-<<<<<<< HEAD
-=======
 
 	chmod($self->group_access() ? 0640 : 0600, $conffile)
 	  or die("unable to set permissions for $conffile");
 
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
@@ -762,13 +754,6 @@ sub start
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
-<<<<<<< HEAD
-	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
-	print("### Starting node \"$name\"\n");
-	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
-		$self->logfile, '-o', "-c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
-		'start');
-=======
 	my $ret;
 
 	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
@@ -785,27 +770,20 @@ sub start
 		# Note: We set the cluster_name here, not in postgresql.conf (in
 		# sub init) so that it does not get copied to standbys.
 		$ret = TestLib::system_log('pg_ctl', '-D', $self->data_dir, '-l',
-			$self->logfile, '-o', "--cluster-name=$name", 'start');
+			$self->logfile, '-o', "--cluster-name=$name -c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
+			'start');
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if ($ret != 0)
 	{
 		print "# pg_ctl start failed; logfile:\n";
 		print TestLib::slurp_file($self->logfile);
-<<<<<<< HEAD
-		BAIL_OUT("pg_ctl start failed");
-	}
-
-	$self->_update_pid(1);
-
-	$ENV{PGOPTIONS}      = '-c gp_session_role=utility';
-=======
 		BAIL_OUT("pg_ctl start failed") unless $params{fail_ok};
 		return 0;
 	}
 
 	$self->_update_pid(1);
+	$ENV{PGOPTIONS}      = '-c gp_session_role=utility';
 	return 1;
 }
 
@@ -832,7 +810,6 @@ sub kill9
 	  or TestLib::system_or_bail('pg_ctl', 'kill', 'KILL', $self->{_pid});
 	$self->{_pid} = undef;
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
@@ -858,10 +835,7 @@ sub stop
 	print "### Stopping node \"$name\" using mode $mode\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->_update_pid(0);
-<<<<<<< HEAD
-=======
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
@@ -880,10 +854,7 @@ sub reload
 	my $name   = $self->name;
 	print "### Reloading node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
-<<<<<<< HEAD
-=======
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
@@ -903,11 +874,6 @@ sub restart
 	my $name    = $self->name;
 
 	print "### Restarting node \"$name\"\n";
-<<<<<<< HEAD
-	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
-							'restart');
-	$self->_update_pid(1);
-=======
 
 	{
 		local %ENV = %ENV;
@@ -919,7 +885,6 @@ sub restart
 
 	$self->_update_pid(1);
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
@@ -939,9 +904,6 @@ sub promote
 	my $name    = $self->name;
 	print "### Promoting node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
-<<<<<<< HEAD
-							'promote');
-=======
 		'promote');
 	return;
 }
@@ -965,7 +927,6 @@ sub logrotate
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'logrotate');
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 # Internal routine to enable streaming replication on a standby node.
@@ -988,11 +949,7 @@ primary_conninfo='$root_connstr'
 sub enable_restoring
 {
 	my ($self, $root_node) = @_;
-<<<<<<< HEAD
-	my $path = $vfs_path . $root_node->archive_dir;
-=======
 	my $path = TestLib::perl2host($root_node->archive_dir);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	my $name = $self->name;
 
 	print "### Enabling WAL restore for node \"$name\"\n";
@@ -1037,11 +994,7 @@ sub set_standby_mode
 sub enable_archiving
 {
 	my ($self) = @_;
-<<<<<<< HEAD
-	my $path   = $vfs_path. $self->archive_dir;
-=======
 	my $path   = TestLib::perl2host($self->archive_dir);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	my $name   = $self->name;
 
 	print "### Enabling WAL archiving for node \"$name\"\n";
@@ -1073,6 +1026,9 @@ sub _update_pid
 	my ($self, $is_running) = @_;
 	my $name = $self->name;
 
+	#GPDB_12_MERGE_FIXME: somehow without this fails to find the pid file
+	sleep(1);
+
 	# If we can open the PID file, read its first line and that's the PID we
 	# want.
 	if (open my $pidfile, '<', $self->data_dir . "/postmaster.pid")
@@ -1088,24 +1044,15 @@ sub _update_pid
 
 	$self->{_pid} = undef;
 	print "# No postmaster PID for node \"$name\"\n";
-<<<<<<< HEAD
-	# Complain if we expected to find a pidfile.
-	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
-=======
 
 	# Complain if we expected to find a pidfile.
 	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 =pod
 
-<<<<<<< HEAD
-=item PostgresNode->get_new_node(node_name)
-=======
 =item PostgresNode->get_new_node(node_name, %params)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 Build a new object of class C<PostgresNode> (or of a subclass, if you have
 one), assigning a free port number.  Remembers the node, to prevent its port
@@ -1114,8 +1061,6 @@ shut down when the test script exits.
 
 You should generally use this instead of C<PostgresNode::new(...)>.
 
-<<<<<<< HEAD
-=======
 =over
 
 =item port => [1,65535]
@@ -1132,7 +1077,6 @@ port.
 
 =back
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 For backwards compatibility, it is also exported as a standalone function,
 which can only create objects of class C<PostgresNode>.
 
@@ -1141,18 +1085,11 @@ which can only create objects of class C<PostgresNode>.
 sub get_new_node
 {
 	my $class = 'PostgresNode';
-<<<<<<< HEAD
-	$class = shift if 1 < scalar @_;
-	my $name  = shift;
-	my $found = 0;
-	my $port  = $last_port_assigned;
-=======
 	$class = shift if scalar(@_) % 2 != 1;
 	my ($name, %params) = @_;
 	my $port_is_forced = defined $params{port};
 	my $found          = $port_is_forced;
 	my $port = $port_is_forced ? $params{port} : $last_port_assigned;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	while ($found == 0)
 	{
@@ -1217,11 +1154,7 @@ sub get_new_node
 	}
 
 	# Lock port number found by creating a new node
-<<<<<<< HEAD
-	my $node = $class->new($name, $test_pghost, $port);
-=======
 	my $node = $class->new($name, $host, $port);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
@@ -1515,12 +1448,8 @@ sub psql
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save
-<<<<<<< HEAD
-			  if (blessed($exc_save) || $exc_save !~ /^\Q$timeout_exception\E/);
-=======
 			  if (blessed($exc_save)
 				|| $exc_save !~ /^\Q$timeout_exception\E/);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			$ret = undef;
 
@@ -1588,16 +1517,11 @@ sub psql
 
 =item $node->poll_query_until($dbname, $query [, $expected ])
 
-<<<<<<< HEAD
-Run a query once a second, until it returns 't' (i.e. SQL boolean true).
-Continues polling if psql returns an error result. Times out after 180 seconds.
-=======
 Run B<$query> repeatedly, until it returns the B<$expected> result
 ('t', or SQL boolean true, by default).
 Continues polling if B<psql> returns an error result.
 Times out after 180 seconds.
 Returns 1 if successful, 0 if timed out.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 =cut
 
@@ -1637,11 +1561,7 @@ sub poll_query_until
 	diag qq(poll_query_until timed out executing this query:
 $query
 expecting this output:
-<<<<<<< HEAD
-t
-=======
 $expected
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 last actual query output:
 $stdout
 with stderr:
@@ -2095,24 +2015,6 @@ sub pg_recvlogical_upto
 		  if $ret;
 		return $stdout;
 	}
-}
-
-sub command_warns_like
-{
-	my $self = shift;
-
-	local $ENV{PGPORT} = $self->port;
-
-	TestLib::command_warns_like(@_);
-}
-
-sub command_fails_like
-{
-	my $self = shift;
-
-	local $ENV{PGPORT} = $self->port;
-
-	TestLib::command_fails_like(@_);
 }
 
 =pod

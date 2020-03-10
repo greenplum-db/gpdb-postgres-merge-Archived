@@ -22,25 +22,11 @@ use File::Temp ();
 use IPC::Run;
 use SimpleTee;
 
-<<<<<<< HEAD
-# specify a recent enough version of Test::More  to support the note() function
-use Test::More 0.82;
-
-our @EXPORT = qw(
-  tempdir
-  tempdir_short
-  standard_initdb
-  configure_hba_for_replication
-  start_test_server
-  restart_test_server
-  psql
-=======
 # specify a recent enough version of Test::More to support the done_testing() function
 use Test::More 0.87;
 
 our @EXPORT = qw(
   generate_ascii_string
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   slurp_dir
   slurp_file
   append_to_file
@@ -59,14 +45,9 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
-<<<<<<< HEAD
-  command_warns_like
-  command_fails_like
-=======
   command_like_safe
   command_fails_like
   command_checks_all
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
   $windows_os
 );
@@ -222,7 +203,7 @@ sub system_or_bail
 {
 	if (system_log(@_) != 0)
 	{
-		BAIL_OUT("system $_[0] failed: $?");
+		BAIL_OUT("system $_[0] failed");
 	}
 	return;
 }
@@ -587,26 +568,6 @@ sub command_checks_all
 	}
 
 	return;
-}
-
-sub command_warns_like
-{
-	my ($cmd, $expected_stderr, $test_name) = @_;
-	my ($stdout, $stderr);
-	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
-	ok($result, "@$cmd exit code 0");
-	like($stderr, $expected_stderr, "$test_name: matches.");
-}
-
-sub command_fails_like
-{
-	my ($cmd, $expected_stderr, $test_name) = @_;
-	my ($stdout, $stderr);
-	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
-	ok(!$result, "expected failure: got @$cmd exit code 0");
-	like($stderr, $expected_stderr, "$test_name: not match expected stderr");
 }
 
 1;

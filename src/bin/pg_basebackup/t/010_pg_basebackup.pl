@@ -6,11 +6,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 58;
-=======
 use Test::More tests => 106;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -24,23 +20,12 @@ my $node = get_new_node('main');
 umask(0077);
 
 # Initialize node without replication settings
-<<<<<<< HEAD
-$node->init(hba_permit_replication => 0);
-
-=======
 $node->init(extra => ['--data-checksums']);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 $node->start;
 my $pgdata = $node->data_dir;
 
 $node->command_fails(['pg_basebackup', '--target-gp-dbid', '123'],
 	'pg_basebackup needs target directory specified');
-<<<<<<< HEAD
-$node->command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup", '--target-gp-dbid', '123' ],
-	'pg_basebackup fails because of hba');
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # Some Windows ANSI code pages may reject this filename, in which case we
 # quietly proceed without this bit of test coverage.
@@ -53,7 +38,7 @@ if (open my $badchars, '>>', "$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
 $node->set_replication_conf();
 system_or_bail 'pg_ctl', '-D', $pgdata, 'reload';
 
-command_fails(['pg_basebackup', '-D', "$tempdir/backup", '--target-gp-dbid', '123' ],
+command_fails(['pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup fails without specifiying the target greenplum db id');
 #
 # GPDB: The default value of max_wal_senders is 10 in GPDB
@@ -89,9 +74,6 @@ print $conf "wal_level = replica\n";
 close $conf;
 $node->restart;
 
-<<<<<<< HEAD
-$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '--target-gp-dbid', '123' ],
-=======
 # Write some files to test that they are not copied.
 foreach my $filename (
 	qw(backup_label tablespace_map postgresql.auto.conf.tmp current_logfiles.tmp)
@@ -130,8 +112,7 @@ foreach my $filename (@tempRelationFiles)
 }
 
 # Run base backup.
-$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none', '--target-gp-dbid', '123' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
 
@@ -189,15 +170,10 @@ isnt(slurp_file("$tempdir/backup/backup_label"),
 rmtree("$tempdir/backup");
 
 $node->command_ok(
-<<<<<<< HEAD
-	[   'pg_basebackup', '-D', "$tempdir/backup2", '--target-gp-dbid', '123', '--xlogdir',
-		"$tempdir/xlog2"],
-=======
 	[
 		'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
-		"$tempdir/xlog2"
+		"$tempdir/xlog2", '--target-gp-dbid', '123'
 	],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	'separate xlog directory');
 ok(-f "$tempdir/backup2/PG_VERSION", 'backup was created');
 ok(-d "$tempdir/xlog2/",             'xlog directory was created');
@@ -216,15 +192,10 @@ $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-T/foo=" ],
 	'-T with empty new directory fails');
 $node->command_fails(
-<<<<<<< HEAD
-	[   'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp',
-		"-T/foo=/bar=/baz" ],
-=======
 	[
 		'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp',
-		"-T/foo=/bar=/baz"
+		"-T/foo=/bar=/baz", '--target-gp-dbid', '123'
 	],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	'-T with multiple = fails');
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-Tfoo=/bar" ],
@@ -279,8 +250,7 @@ SKIP:
 
 	mkdir "$tempdir/tblspc1";
 	$node->safe_psql('postgres',
-					 "CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';");
-
+		"CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';");
 	$node->safe_psql('postgres',
 		"CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
 	$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft',
@@ -327,29 +297,19 @@ SKIP:
 		'plain format with tablespaces fails without tablespace mapping and target-gp-dbid as the test server dbid');
 
 	$node->command_ok(
-<<<<<<< HEAD
-		[   'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
-			'--target-gp-dbid', '1',
-			"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
-=======
 		[
 			'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
+		 	'--target-gp-dbid', '1',
 			"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1"
 		],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		'plain format with tablespaces succeeds with tablespace mapping');
 	ok(-d "$tempdir/tbackup/tblspc1/1", 'tablespace was relocated');
 	opendir(my $dh, "$pgdata/pg_tblspc") or die;
 	ok( (   grep {
 				-l "$tempdir/backup1/pg_tblspc/$_"
 				  and readlink "$tempdir/backup1/pg_tblspc/$_" eq
-<<<<<<< HEAD
 				  "$tempdir/tbackup/tblspc1/1"
-			  } readdir($dh)),
-=======
-				  "$tempdir/tbackup/tblspc1"
 			} readdir($dh)),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		"tablespace symlink was updated");
 	closedir $dh;
 
@@ -391,15 +351,10 @@ SKIP:
 	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';");
 	$node->command_ok(
-<<<<<<< HEAD
-		[   'pg_basebackup', '-D', "$tempdir/backup3", '--target-gp-dbid', '123', '-Fp',
-			"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
-=======
 		[
-			'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
+			'pg_basebackup', '-D', "$tempdir/backup3", '--target-gp-dbid', '123', '-Fp',
 			"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2"
 		],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		'mapping tablespace with = sign in path');
 	ok(-d "$tempdir/tbackup/tbl=spc2",
 		'tablespace with = sign was relocated');
@@ -463,15 +418,8 @@ $node->command_ok(
 rmtree("$tempdir/backupnoslot");
 
 $node->command_fails(
-<<<<<<< HEAD
-	[ 'pg_basebackup', '-D', "$tempdir/fail", '--target-gp-dbid', '123', '-S', 'slot1' ],
-	'pg_basebackup with replication slot fails without -X stream');
-$node->command_fails(
-	[   'pg_basebackup',             '-D',
-=======
 	[
 		'pg_basebackup',             '-D',
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		"$tempdir/backupxs_sl_fail", '-X',
 		'stream',                    '-S',
 		'slot0'
@@ -524,15 +472,10 @@ $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1', '-X', 'none' ],
 	'pg_basebackup with replication slot fails without WAL streaming');
 $node->command_ok(
-<<<<<<< HEAD
-	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl", '--target-gp-dbid', '123', '-X',
-		'stream',        '-S', 'slot1' ],
-=======
 	[
-		'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
+		'pg_basebackup', '-D', "$tempdir/backupxs_sl", '--target-gp-dbid', '123', '-X',
 		'stream',        '-S', 'slot1'
 	],
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	'pg_basebackup -X stream with replication slot runs');
 $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
@@ -541,45 +484,6 @@ like($lsn, qr!^0/[0-9A-Z]{7,8}$!, 'restart LSN of slot has advanced');
 rmtree("$tempdir/backupxs_sl");
 
 $node->command_ok(
-<<<<<<< HEAD
-	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '--target-gp-dbid', '123', '-X',
-		'stream',        '-S', 'slot1',                  '-R' ],
-	'pg_basebackup with replication slot and -R runs');
-like(
-	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
-	qr/^primary_slot_name = 'slot1'$/m,
-	'recovery.conf sets primary_slot_name');
-
-
-# Some additional GPDB tests
-my $twenty_characters = '11111111112222222222';
-my $longer_tempdir = "$tempdir/some_long_directory_path_$twenty_characters$twenty_characters$twenty_characters$twenty_characters$twenty_characters";
-my $some_backup_dir = "$tempdir/backup_dir";
-my $some_other_backup_dir = "$tempdir/other_backup_dir";
-
-mkdir "$longer_tempdir";
-mkdir "$some_backup_dir";
-$node->psql('postgres', "CREATE TABLESPACE too_long_tablespace LOCATION '$longer_tempdir';");
-$node->command_fails_like([
-	'pg_basebackup',
-	'-D', "$some_backup_dir",
-	'--target-gp-dbid', '99'],
-						  qr/symbolic link ".*" target is too long and will not be added to the backup/,
-						  'basebackup with a tablespace that has a very long location should error out with target is too long.');
-
-mkdir "$some_other_backup_dir";
-$node->command_fails_like([
-	'pg_basebackup',
-	'-D', "$some_other_backup_dir",
-	'--target-gp-dbid', '99'],
-						  qr/The symbolic link with target ".*" is too long. Symlink targets with length greater than 100 characters would be truncated./,
-						  'basebackup with a tablespace that has a very long location should error out link not added to the backup.');
-
-$node->command_fails_like([
-	'ls', "$some_other_backup_dir/pg_tblspc/*"],
-						  qr/No such file/,
-						  'tablespace directory should be empty');
-=======
 	[
 		'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X',
 		'stream',        '-S', 'slot1',                  '-R'
@@ -669,4 +573,32 @@ rmtree("$tempdir/backup_corrupt4");
 
 $node->safe_psql('postgres', "DROP TABLE corrupt1;");
 $node->safe_psql('postgres', "DROP TABLE corrupt2;");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+# Some additional GPDB tests
+my $twenty_characters = '11111111112222222222';
+my $longer_tempdir = "$tempdir/some_long_directory_path_$twenty_characters$twenty_characters$twenty_characters$twenty_characters$twenty_characters";
+my $some_backup_dir = "$tempdir/backup_dir";
+my $some_other_backup_dir = "$tempdir/other_backup_dir";
+
+mkdir "$longer_tempdir";
+mkdir "$some_backup_dir";
+$node->psql('postgres', "CREATE TABLESPACE too_long_tablespace LOCATION '$longer_tempdir';");
+$node->command_fails_like([
+	'pg_basebackup',
+	'-D', "$some_backup_dir",
+	'--target-gp-dbid', '99'],
+						  qr/symbolic link ".*" target is too long and will not be added to the backup/,
+						  'basebackup with a tablespace that has a very long location should error out with target is too long.');
+
+mkdir "$some_other_backup_dir";
+$node->command_fails_like([
+	'pg_basebackup',
+	'-D', "$some_other_backup_dir",
+	'--target-gp-dbid', '99'],
+						  qr/The symbolic link with target ".*" is too long. Symlink targets with length greater than 100 characters would be truncated./,
+						  'basebackup with a tablespace that has a very long location should error out link not added to the backup.');
+
+$node->command_fails_like([
+	'ls', "$some_other_backup_dir/pg_tblspc/*"],
+						  qr/No such file/,
+						  'tablespace directory should be empty');
