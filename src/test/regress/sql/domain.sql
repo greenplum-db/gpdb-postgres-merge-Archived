@@ -124,7 +124,10 @@ drop domain dia;
 
 create type comptype as (r float8, i float8);
 create domain dcomptype as comptype;
-create table dcomptable (d1 dcomptype unique);
+-- GPDB: just marking the column as 'unique' fails, because a unique column
+-- needs to be part of the distribution key, and composite types can't be used
+-- as distribution keys because they have no hash opclasses.
+create table dcomptable (d1 dcomptype unique) distributed replicated;
 
 insert into dcomptable values (row(1,2)::dcomptype);
 insert into dcomptable values (row(3,4)::comptype);

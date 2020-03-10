@@ -201,7 +201,10 @@ drop domain dia;
 -- Test domains over composites
 create type comptype as (r float8, i float8);
 create domain dcomptype as comptype;
-create table dcomptable (d1 dcomptype unique);
+-- GPDB: just marking the column as 'unique' fails, because a unique column
+-- needs to be part of the distribution key, and composite types can't be used
+-- as distribution keys because they have no hash opclasses.
+create table dcomptable (d1 dcomptype unique) distributed replicated;
 insert into dcomptable values (row(1,2)::dcomptype);
 insert into dcomptable values (row(3,4)::comptype);
 insert into dcomptable values (row(1,2)::dcomptype);  -- fail on uniqueness
@@ -261,13 +264,15 @@ select * from dcomptable;
 
 explain (verbose, costs off)
   update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
  Update on public.dcomptable
    ->  Seq Scan on public.dcomptable
-         Output: ROW(((d1).r - '1'::double precision), ((d1).i + '1'::double precision)), ctid
+         Output: ROW(((d1).r - '1'::double precision), ((d1).i + '1'::double precision)), ctid, gp_segment_id
          Filter: ((dcomptable.d1).i > '0'::double precision)
-(4 rows)
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(6 rows)
 
 create rule silly as on delete to dcomptable do instead
   update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
@@ -282,6 +287,7 @@ Rules:
     silly AS
     ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1.r = (dcomptable.d1).r - 1::double precision, d1.i = (dcomptable.d1).i + 1::double precision
   WHERE (dcomptable.d1).i > 0::double precision
+Distributed Replicated
 
 drop table dcomptable;
 drop type comptype cascade;
@@ -402,14 +408,15 @@ select * from dcomptable;
 explain (verbose, costs off)
   update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
     where d1[1].i > 0;
-                                                        QUERY PLAN                                                         
----------------------------------------------------------------------------------------------------------------------------
+                                                          QUERY PLAN                                                           
+-------------------------------------------------------------------------------------------------------------------------------
  Update on public.dcomptable
    ->  Seq Scan on public.dcomptable
          Output: (d1[1].r := (d1[1].r - '1'::double precision))[1].i := (d1[1].i + '1'::double precision), ctid, gp_segment_id
          Filter: (dcomptable.d1[1].i > '0'::double precision)
  Optimizer: Postgres query optimizer
-(5 rows)
+ Settings: optimizer=off
+(6 rows)
 
 create rule silly as on delete to dcomptable do instead
   update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
