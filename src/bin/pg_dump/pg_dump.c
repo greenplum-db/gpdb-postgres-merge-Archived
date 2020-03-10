@@ -9439,13 +9439,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_attoptions;
 	int			i_attcollation;
 	int			i_attfdwoptions;
-<<<<<<< HEAD
-	int			i_attndims;
-	int			i_attbyval;
-	int			i_attencoding;
-=======
 	int			i_attmissingval;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	int			i_attencoding;
+
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -9512,48 +9508,22 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			appendPQExpBuffer(q,
 							  "'' AS attidentity,\n");
 
+		appendPQExpBuffer(q,
+						  "pg_catalog.array_to_string(e.attoptions, ',') AS attencoding,\n");
+
 		if (fout->remoteVersion >= 90200)
-<<<<<<< HEAD
-		{
-			/*
-			 * attfdwoptions is new in 9.2.
-			 */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "a.attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, a.attisdropped, "
-							  "a.attlen, a.attalign, a.attislocal, "
-				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-						"array_to_string(a.attoptions, ', ') AS attoptions, "
-							  "CASE WHEN a.attcollation <> t.typcollation "
-						   "THEN a.attcollation ELSE 0 END AS attcollation, "
-						   "pg_catalog.array_to_string(e.attoptions, ',') AS attencoding, "
-=======
 			appendPQExpBuffer(q,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							  "pg_catalog.array_to_string(ARRAY("
 							  "SELECT pg_catalog.quote_ident(option_name) || "
 							  "' ' || pg_catalog.quote_literal(option_value) "
 							  "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
 							  "ORDER BY option_name"
-<<<<<<< HEAD
-							  "), E',\n    ') AS attfdwoptions "
-			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
-							  "ON a.atttypid = t.oid "
-							  "LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum "
-							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
-							  "AND a.attnum > 0::pg_catalog.int2 "
-							  "ORDER BY a.attrelid, a.attnum",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 90100)
-=======
 							  "), E',\n    ') AS attfdwoptions,\n");
 		else
 			appendPQExpBuffer(q,
 							  "'' AS attfdwoptions,\n");
 
 		if (fout->remoteVersion >= 90100)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			/*
 			 * Since we only want to dump COLLATE clauses for attributes whose
@@ -9579,6 +9549,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		appendPQExpBuffer(q,
 						  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 						  "ON a.atttypid = t.oid\n"
+						  "LEFT OUTER JOIN pg_catalog.pg_attribute_encoding e ON e.attrelid = a.attrelid AND e.attnum = a.attnum \n"
 						  "WHERE a.attrelid = '%u'::pg_catalog.oid "
 						  "AND a.attnum > 0::pg_catalog.int2\n"
 						  "ORDER BY a.attnum",
@@ -9606,10 +9577,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		i_attoptions = PQfnumber(res, "attoptions");
 		i_attcollation = PQfnumber(res, "attcollation");
 		i_attfdwoptions = PQfnumber(res, "attfdwoptions");
-<<<<<<< HEAD
-		i_attndims = PQfnumber(res, "attndims");
-		i_attbyval = PQfnumber(res, "attbyval");
-		i_attalign = PQfnumber(res, "attalign");
+		i_attmissingval = PQfnumber(res, "attmissingval");
 		i_attencoding = PQfnumber(res, "attencoding");
 
 		/*
@@ -9621,10 +9589,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			write_msg(NULL, "attencoding column required in table attributes query");
 			exit_nicely(1);
 		}
-
-=======
-		i_attmissingval = PQfnumber(res, "attmissingval");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) pg_malloc(ntups * sizeof(char *));
@@ -9824,22 +9788,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								  "ORDER BY conname",
 								  tbinfo->dobj.catId.oid);
 			}
-<<<<<<< HEAD
-			else if (fout->remoteVersion >= 70400)
-			{
-				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "true AS conislocal, true AS convalidated "
-								  "FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = '%u'::pg_catalog.oid "
-								  "   AND contype = 'c' "
-								  "ORDER BY conname",
-								  tbinfo->dobj.catId.oid);
-			}
-			else
-			{
-				error_unsupported_server_version(fout);
-=======
 			else
 			{
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
@@ -9850,7 +9798,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								  "   AND contype = 'c' "
 								  "ORDER BY conname",
 								  tbinfo->dobj.catId.oid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
@@ -13455,13 +13402,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	funcsig_tag = format_function_signature(fout, finfo, false);
 
-<<<<<<< HEAD
-	appendPQExpBuffer(delqry, "DROP FUNCTION %s.%s;\n",
-					  fmtId(finfo->dobj.namespace->dobj.name),
-					  funcsig);
-
-	appendPQExpBuffer(q, "CREATE FUNCTION %s.%s ",
-=======
 	if (prokind[0] == PROKIND_PROCEDURE)
 		keyword = "PROCEDURE";
 	else
@@ -13474,40 +13414,15 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, "CREATE %s %s.%s",
 					  keyword,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					  fmtId(finfo->dobj.namespace->dobj.name),
 					  funcfullsig ? funcfullsig :
 					  funcsig);
 
-<<<<<<< HEAD
-	if (funcresult)
-		appendPQExpBuffer(q, "RETURNS %s", funcresult);
-	else
-	{
-		/* switch between RETURNS SETOF RECORD and RETURNS TABLE functions */
-		if (!is_returns_table_function(nallargs, argmodes))
-		{
-			rettypename = getFormattedTypeName(fout, finfo->prorettype,
-											   zeroAsOpaque);
-			appendPQExpBuffer(q, "RETURNS %s%s",
-							  (proretset[0] == 't') ? "SETOF " : "",
-							  rettypename);
-			free(rettypename);
-		}
-		else
-		{
-			char	   *func_cols;
-			func_cols = format_table_function_columns(fout, finfo, nallargs, allargtypes,
-													  argmodes, argnames);
-			appendPQExpBuffer(q, "RETURNS TABLE %s", func_cols);
-			free(func_cols);
-		}
-=======
 	if (prokind[0] == PROKIND_PROCEDURE)
 		 /* no result type to output */ ;
 	else if (funcresult)
 		appendPQExpBuffer(q, " RETURNS %s", funcresult);
-	else
+	else if (!is_returns_table_function(nallargs, argmodes))
 	{
 		rettypename = getFormattedTypeName(fout, finfo->prorettype,
 										   zeroAsOpaque);
@@ -13515,7 +13430,15 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  (proretset[0] == 't') ? "SETOF " : "",
 						  rettypename);
 		free(rettypename);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	}
+	else
+	{
+		/* RETURNS TABLE functions */
+		char	   *func_cols;
+		func_cols = format_table_function_columns(fout, finfo, nallargs, allargtypes,
+												  argmodes, argnames);
+		appendPQExpBuffer(q, "RETURNS TABLE %s", func_cols);
+		free(func_cols);
 	}
 
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
@@ -13583,7 +13506,23 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		strcmp(prorows, "0") != 0 && strcmp(prorows, "1000") != 0)
 		appendPQExpBuffer(q, " ROWS %s", prorows);
 
-<<<<<<< HEAD
+	if (strcmp(prosupport, "-") != 0)
+	{
+		/* We rely on regprocout to provide quoting and qualification */
+		appendPQExpBuffer(q, " SUPPORT %s", prosupport);
+	}
+
+	if (proparallel != NULL && proparallel[0] != PROPARALLEL_UNSAFE)
+	{
+		if (proparallel[0] == PROPARALLEL_SAFE)
+			appendPQExpBufferStr(q, " PARALLEL SAFE");
+		else if (proparallel[0] == PROPARALLEL_RESTRICTED)
+			appendPQExpBufferStr(q, " PARALLEL RESTRICTED");
+		else if (proparallel[0] != PROPARALLEL_UNSAFE)
+			fatal("unrecognized proparallel value for function \"%s\"",
+				  finfo->dobj.name);
+	}
+
 	if (prodataaccess[0] == PRODATAACCESS_NONE)
 		appendPQExpBuffer(q, " NO SQL");
 	else if (prodataaccess[0] == PRODATAACCESS_CONTAINS)
@@ -13607,23 +13546,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		write_msg(NULL, "unrecognized proexeclocation value: %c\n", proexeclocation[0]);
 		exit_nicely(1);
-=======
-	if (strcmp(prosupport, "-") != 0)
-	{
-		/* We rely on regprocout to provide quoting and qualification */
-		appendPQExpBuffer(q, " SUPPORT %s", prosupport);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-	}
-
-	if (proparallel != NULL && proparallel[0] != PROPARALLEL_UNSAFE)
-	{
-		if (proparallel[0] == PROPARALLEL_SAFE)
-			appendPQExpBufferStr(q, " PARALLEL SAFE");
-		else if (proparallel[0] == PROPARALLEL_RESTRICTED)
-			appendPQExpBufferStr(q, " PARALLEL RESTRICTED");
-		else if (proparallel[0] != PROPARALLEL_UNSAFE)
-			fatal("unrecognized proparallel value for function \"%s\"",
-				  finfo->dobj.name);
 	}
 
 	for (i = 0; i < nconfigitems; i++)
@@ -13677,7 +13599,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, "\n    %s", asPart->data);
 
-<<<<<<< HEAD
 	/* Append callback function */
 	if (callbackfunc && callbackfunc[0] != '\0')
 		appendPQExpBuffer(q, "\n    WITH (describe = %s)", callbackfunc);
@@ -13686,12 +13607,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &finfo->dobj,
-										"FUNCTION", funcsig,
-=======
-	if (dopt->binary_upgrade)
-		binary_upgrade_extension_member(q, &finfo->dobj,
 										keyword, funcsig,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										finfo->dobj.namespace->dobj.name);
 
 	if (finfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
@@ -13706,29 +13622,17 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	/* Dump Function Comments and Security Labels */
 	if (finfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-<<<<<<< HEAD
-		dumpComment(fout, "FUNCTION", funcsig,
-=======
 		dumpComment(fout, keyword, funcsig,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					finfo->dobj.namespace->dobj.name, finfo->rolname,
 					finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	if (finfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
-<<<<<<< HEAD
-		dumpSecLabel(fout, "FUNCTION", funcsig,
-=======
 		dumpSecLabel(fout, keyword, funcsig,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 finfo->dobj.namespace->dobj.name, finfo->rolname,
 					 finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	if (finfo->dobj.dump & DUMP_COMPONENT_ACL)
-<<<<<<< HEAD
-		dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, "FUNCTION",
-=======
 		dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, keyword,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				funcsig, NULL,
 				finfo->dobj.namespace->dobj.name,
 				finfo->rolname, finfo->proacl, finfo->rproacl,
@@ -14120,15 +14024,8 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	if (strcmp(oprkind, "r") == 0 ||
 		strcmp(oprkind, "b") == 0)
 	{
-<<<<<<< HEAD
-		name = oprleft;
-
-		appendPQExpBuffer(details, ",\n    LEFTARG = %s", name);
-		appendPQExpBufferStr(oprid, name);
-=======
 		appendPQExpBuffer(details, ",\n    LEFTARG = %s", oprleft);
 		appendPQExpBufferStr(oprid, oprleft);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		appendPQExpBufferStr(oprid, "NONE");
@@ -14136,15 +14033,8 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	if (strcmp(oprkind, "l") == 0 ||
 		strcmp(oprkind, "b") == 0)
 	{
-<<<<<<< HEAD
-		name = oprright;
-
-		appendPQExpBuffer(details, ",\n    RIGHTARG = %s", name);
-		appendPQExpBuffer(oprid, ", %s)", name);
-=======
 		appendPQExpBuffer(details, ",\n    RIGHTARG = %s", oprright);
 		appendPQExpBuffer(oprid, ", %s)", oprright);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		appendPQExpBufferStr(oprid, ", NONE)");
@@ -15435,22 +15325,13 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
-<<<<<<< HEAD
-						  "aggcombinefn, aggserialfn, aggdeserialfn, "
-						  "aggmtransfn, aggminvtransfn, aggmfinalfn, "
-						  "aggmtranstype::pg_catalog.regtype, "
-						  "aggfinalextra, aggmfinalextra, "
-						  "aggsortop, "
-						  "(aggkind = 'h') AS hypothetical, "
-=======
-						  "'-' AS aggcombinefn, '-' AS aggserialfn, "
-						  "'-' AS aggdeserialfn, aggmtransfn, aggminvtransfn, "
+						  "aggcombinefn, aggserialfn, "
+						  "aggdeserialfn, aggmtransfn, aggminvtransfn, "
 						  "aggmfinalfn, aggmtranstype::pg_catalog.regtype, "
 						  "aggfinalextra, aggmfinalextra, "
 						  "'0' AS aggfinalmodify, '0' AS aggmfinalmodify, "
 						  "aggsortop, "
 						  "aggkind, "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "aggtransspace, agginitval, "
 						  "aggmtransspace, aggminitval, "
 						  "true AS convertok, "
@@ -15465,26 +15346,16 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
-<<<<<<< HEAD
-						  "aggcombinefn, aggserialfn, aggdeserialfn, aggmtransfn, "
-						  "aggminvtransfn, aggmfinalfn, aggmtranstype::pg_catalog.regtype, "
-						  "aggfinalextra, aggmfinalextra, "
-						  "aggsortop::pg_catalog.regoperator, "
-						  "(aggkind = 'h') as hypothetical, " /* aggkind was backported to GPDB6 */
-						  "aggtransspace, aggmtransspace, " /* aggtransspace was backported to GPDB6 */
-						  "agginitval, aggminitval, "
-=======
-						  "'-' AS aggcombinefn, '-' AS aggserialfn, "
-						  "'-' AS aggdeserialfn, '-' AS aggmtransfn, "
-						  "'-' AS aggminvtransfn, '-' AS aggmfinalfn, "
-						  "0 AS aggmtranstype, false AS aggfinalextra, "
-						  "false AS aggmfinalextra, "
+						  "aggcombinefn, aggserialfn, "
+						  "aggdeserialfn, aggmtransfn, "
+						  "aggminvtransfn, aggmfinalfn, "
+						  "aggmtranstype::pg_catalog.regtype, aggfinalextra, "
+						  "aggmfinalextra, "
 						  "'0' AS aggfinalmodify, '0' AS aggmfinalmodify, "
 						  "aggsortop, "
-						  "'n' AS aggkind, "
-						  "0 AS aggtransspace, agginitval, "
-						  "0 AS aggmtransspace, NULL AS aggminitval, "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  "aggkind, " /* aggkind was backported to GPDB6 */
+						  "aggtransspace, agginitval, " /* aggtransspace was backported to GPDB6 */
+						  "aggmtransspace, NULL AS aggminitval, "
 						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
@@ -15502,16 +15373,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "'-' AS aggminvtransfn, '-' AS aggmfinalfn, "
 						  "0 AS aggmtranstype, false AS aggfinalextra, "
 						  "false AS aggmfinalextra, "
-<<<<<<< HEAD
-						  "aggsortop::pg_catalog.regoperator, "
-						  "false AS hypothetical, "
-						  "0 AS aggtransspace, 0 AS aggmtransspace, "
-						  "agginitval, NULL AS aggminitval, "
-						  "'t'::boolean AS convertok, "
-						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
-						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
-					  "from pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
-=======
 						  "'0' AS aggfinalmodify, '0' AS aggmfinalmodify, "
 						  "aggsortop, "
 						  "'n' AS aggkind, "
@@ -15519,16 +15380,13 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
 						  "true AS convertok "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
 						  agginfo->aggfn.dobj.catId.oid);
 	}
 	else
 	{
-<<<<<<< HEAD
 		error_unsupported_server_version(fout);
-=======
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "'-' AS aggcombinefn, '-' AS aggserialfn, "
@@ -15546,7 +15404,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
 						  agginfo->aggfn.dobj.catId.oid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
