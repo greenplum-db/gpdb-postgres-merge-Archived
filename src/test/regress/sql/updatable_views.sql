@@ -5,6 +5,10 @@
 -- avoid bit-exact output here because operations may not be bit-exact.
 SET extra_float_digits = 0;
 
+-- GPDB: to get similar plans as upstream.
+set enable_mergejoin=on;
+set enable_nestloop=on;
+
 -- check that non-updatable views and columns are rejected with useful error
 -- messages
 
@@ -1066,8 +1070,10 @@ CREATE VIEW rw_view1 WITH (security_barrier=true) AS
 
 SELECT * FROM rw_view1;
 
+set enable_seqscan=off; -- To get the same plan in GDPB as in upstream
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
+reset enable_seqscan;
 
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
 INSERT INTO rw_view1 VALUES (2, 'New row 2');
@@ -1242,8 +1248,6 @@ INSERT INTO v1 VALUES (-1, 'invalid'); -- should fail
 
 DROP VIEW v1;
 DROP TABLE t1;
-<<<<<<< HEAD
-=======
 
 -- check that an auto-updatable view on a partitioned table works correctly
 create table uv_pt (a int, b int, v varchar) partition by range (a, b);
@@ -1537,4 +1541,3 @@ values (1, 2, default, 5, 4, default, 3), (10, 11, 'C value', 14, 13, 100, 12);
 select * from base_tab order by a;
 drop view base_tab_view;
 drop table base_tab;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
