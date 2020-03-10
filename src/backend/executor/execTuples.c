@@ -1585,7 +1585,7 @@ ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot)
 	ExecStoreVirtualTuple(slot);
 }
 
-/*
+/* --------------------------------
  * ExecFetchSlotHeapTuple - fetch HeapTuple representing the slot's content
  *
  * The returned HeapTuple represents the slot's content as closely as

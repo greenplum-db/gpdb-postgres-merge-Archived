@@ -16,6 +16,8 @@
 #include "postgres.h"
 
 #include "access/htup.h"
+#include "access/memtup.h"
+#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbmotion.h"
 #include "cdb/cdbsrlz.h"
@@ -30,8 +32,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-
-#include "access/memtup.h"
 
 /*
  * Transient record types table is sent to upsteam via a specially constructed

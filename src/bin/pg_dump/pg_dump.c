@@ -11729,9 +11729,9 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 
 	if (!dopt->binary_upgrade)
 	{
+		/* Labels with server-assigned oids */
 		for (i = 0; i < num; i++)
 		{
-			/* Labels with server-assigned oids */
 			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
 			if (i > 0)
 				appendPQExpBufferChar(q, ',');
@@ -13057,7 +13057,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 		ArchiveEntry(fout, plang->dobj.catId, plang->dobj.dumpId,
 <<<<<<< HEAD
 					 plang->dobj.name,
-				 	 NULL, NULL, plang->lanowner,
+					 NULL, NULL, plang->lanowner,
 					 false, "PROCEDURAL LANGUAGE", SECTION_PRE_DATA,
 					 defqry->data, delqry->data, NULL,
 					 NULL, 0,
@@ -13176,9 +13176,7 @@ format_function_arguments_old(Archive *fout,
 			}
 		}
 		else
-		{
 			argmode = "";
-		}
 
 		argname = argnames ? argnames[j] : (char *) NULL;
 		if (argname && argname[0] == '\0')
@@ -19873,7 +19871,7 @@ dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo)
 					tbinfo->rolname,
 					coninfo->dobj.catId, 0,
 <<<<<<< HEAD
-			 		coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
+					coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(conprefix);
 	free(qtabname);

@@ -97,7 +97,6 @@ static char role_catalog[10];
 #define PG_AUTHID "pg_authid"
 #define PG_ROLES  "pg_roles "
 
-
 static FILE *OPF;
 static char *filename = NULL;
 
@@ -2267,7 +2266,6 @@ connectDatabase(const char *dbname, const char *connection_string,
 			values[i] = dbname;
 			i++;
 		}
-
 		keywords[i] = "fallback_application_name";
 		values[i] = progname;
 		i++;

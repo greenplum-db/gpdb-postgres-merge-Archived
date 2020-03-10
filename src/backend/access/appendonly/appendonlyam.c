@@ -954,14 +954,14 @@ upgrade_tuple(AppendOnlyExecutorReadBlock *executorReadBlock,
 		/* get attribute values form mis-aligned tuple */
 		memtuple_deform_misaligned(mtup, pbind, values, isnull);
 		/* Form a new, properly-aligned, tuple */
-		newtuple = memtuple_form_to(pbind, values, isnull, NULL, NULL, true);
+		newtuple = memtuple_form(pbind, values, isnull);
 	}
 	else
 	{
 		/*
 		 * make a modifiable copy
 		 */
-		newtuple = memtuple_copy_to(mtup, NULL, NULL);
+		newtuple = memtuple_copy(mtup);
 	}
 
 	/*

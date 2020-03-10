@@ -718,7 +718,7 @@ findObjectByCatalogId(CatalogId catalogId)
  *
  * Returns NULL for unknown OID
  */
-DumpableObject *
+static DumpableObject *
 findObjectByOid(Oid oid, DumpableObject **indexArray, int numObjs)
 {
 	DumpableObject **low;
