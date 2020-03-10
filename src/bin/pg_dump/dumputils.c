@@ -28,6 +28,7 @@ static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
 				   const char *subname);
 
+
 /*
  * Build GRANT/REVOKE command(s) for an object.
  *
@@ -677,6 +678,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
 	if (subname)
 		appendPQExpBuffer(aclbuf, "(%s)", subname);
 }
+
 
 /*
  * buildShSecLabelQuery

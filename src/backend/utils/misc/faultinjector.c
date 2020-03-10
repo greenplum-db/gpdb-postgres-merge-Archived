@@ -847,7 +847,7 @@ FaultInjector_SetFaultInjection(
 				ereport(ERROR,
 						(errcode(ERRCODE_FAULT_INJECT),
 						 errmsg("fault not set, fault name:'%s'  ",
-								entryLocal->faultName)));
+								entry->faultName)));
 			}
 			break;
 		}

@@ -21,7 +21,6 @@
 
 #include "catalog/pg_class_d.h"
 
-
 /*
 * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
