@@ -815,9 +815,9 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				/* GPDB_12_MERGE_FIXME: 'P' clashes with new upstream 'P' option */
 #if 0
 			case 'P':  /* GPDB: Parent-only tables, no children */
+#endif
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
-#endif
 			case 'r':
 				if (cmd[2] == 'd' && cmd[3] == 's')
 				{

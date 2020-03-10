@@ -14,6 +14,7 @@
 
 #include <ctype.h>
 
+#include "catalog/pg_am.h"
 #include "catalog/pg_attribute_d.h"
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
@@ -4552,14 +4553,11 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	/* Show Storage type for tables */
 	if (showTables && isGPDB())
 	{
-		appendPQExpBuffer(&buf, ", CASE c.relstorage");
-		appendPQExpBuffer(&buf, " WHEN 'h' THEN '%s'", gettext_noop("heap"));
-		appendPQExpBuffer(&buf, " WHEN 'x' THEN '%s'", gettext_noop("external"));
-		appendPQExpBuffer(&buf, " WHEN 'a' THEN '%s'", gettext_noop("append only"));
-		appendPQExpBuffer(&buf, " WHEN 'v' THEN '%s'", gettext_noop("none"));
-		appendPQExpBuffer(&buf, " WHEN 'c' THEN '%s'", gettext_noop("append only columnar"));
-		appendPQExpBuffer(&buf, " WHEN 'p' THEN '%s'", gettext_noop("Apache Parquet"));
-		appendPQExpBuffer(&buf, " WHEN 'f' THEN '%s'", gettext_noop("foreign"));
+		appendPQExpBuffer(&buf, ", CASE c.relam");
+		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", HEAP_TABLE_AM_OID, gettext_noop("heap"));
+		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", APPENDOPTIMIZED_TABLE_AM_OID, gettext_noop("append only"));
+		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only"));
+		/* GPDB_12_MERGE_FIXME fill other storage types */
 		appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
 	}
 
@@ -4617,20 +4615,22 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBufferStr(&buf, "''");	/* dummy */
 	appendPQExpBufferStr(&buf, ")\n");
 
-    if (isGPDB())   /* GPDB? */
-    {
-	appendPQExpBuffer(&buf, "AND c.relstorage IN (");
-	if (showTables || showIndexes || showSeq || (showSystem && showTables))
-		appendPQExpBuffer(&buf, "'h', 'a', 'c',");
-	if (showExternal)
-		appendPQExpBuffer(&buf, "'x',");
-	if (showForeign)
-		appendPQExpBuffer(&buf, "'f',");
-	if (showViews)
-		appendPQExpBuffer(&buf, "'v',");
-	appendPQExpBuffer(&buf, "''");		/* dummy */
-	appendPQExpBuffer(&buf, ")\n");
-    }
+#if 0 /* GPDB_12_MERGE_FIXME */
+	if (isGPDB())   /* GPDB? */
+	{
+		appendPQExpBuffer(&buf, "AND c.relstorage IN (");
+		if (showTables || showIndexes || showSeq || (showSystem && showTables))
+			appendPQExpBuffer(&buf, "'h', 'a', 'c',");
+		if (showExternal)
+			appendPQExpBuffer(&buf, "'x',");
+		if (showForeign)
+			appendPQExpBuffer(&buf, "'f',");
+		if (showViews)
+			appendPQExpBuffer(&buf, "'v',");
+		appendPQExpBuffer(&buf, "''");		/* dummy */
+		appendPQExpBuffer(&buf, ")\n");
+	}
+#endif
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
