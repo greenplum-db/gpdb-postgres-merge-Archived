@@ -138,8 +138,8 @@ GROUP BY v, h ORDER BY h,v
  v1 | #null# |    | 3 +|    | 
     |        |    | 7  |    | 
  v2 |        | 3  |    |    | 
- v0 |        |    |    | -3+| 5
-    |        |    |    | 4  | 
+ v0 |        |    |    | 4 +| 5
+    |        |    |    | -3 | 
 (3 rows)
 
 \pset null ''
@@ -153,8 +153,8 @@ FROM ctv_data GROUP BY v, h ORDER BY h,v
  h1 |      | bar | 
  h2 | foo +|     | 
     | quux |     | 
- h4 |      |     | dbl+
-    |      |     | qux
+ h4 |      |     | qux+
+    |      |     | dbl
     |      |     | qux
 (5 rows)
 
@@ -167,8 +167,8 @@ FROM ctv_data GROUP BY v, h ORDER BY h,v
  v1 | baz |     | foo +|     | 
     |     |     | quux |     | 
  v2 |     | bar |      |     | 
- v0 |     |     |      | dbl+| qux
-    |     |     |      | qux | 
+ v0 |     |     |      | qux+| qux
+    |     |     |      | dbl | 
 (3 rows)
 
 -- refer to columns by quoted names, check downcasing of unquoted name
