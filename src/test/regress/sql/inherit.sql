@@ -212,6 +212,11 @@ DROP TABLE firstparent, secondparent, jointchild, thirdparent, otherchild;
 
 -- Test changing the type of inherited columns
 insert into d values('test','one','two','three');
+alter table z drop constraint z_pkey;
+alter table a alter column aa type integer using bit_length(aa);
+-- In GPDB, the table is distributed by the 'aa' column, changing its type
+-- therefore fails. Change the distribution key and try again.
+alter table a set distributed randomly;
 alter table a alter column aa type integer using bit_length(aa);
 select * from d;
 
