@@ -154,6 +154,7 @@ query_planner(PlannerInfo *root,
 				 */
 				(*qp_callback) (root, qp_extra);
 
+				if (Gp_role == GP_ROLE_DISPATCH)
 				{
 					char		exec_location;
 
@@ -165,6 +166,8 @@ query_planner(PlannerInfo *root,
 						CdbPathLocus_MakeStrewn(&result_path->locus,
 												getgpsegmentCount());
 				}
+				else
+					CdbPathLocus_MakeEntry(&result_path->locus);
 
 				return final_rel;
 			}
