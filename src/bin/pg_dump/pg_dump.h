@@ -85,15 +85,11 @@ typedef enum
 	DO_POST_DATA_BOUNDARY,
 	DO_EVENT_TRIGGER,
 	DO_REFRESH_MATVIEW,
-<<<<<<< HEAD
 	DO_BINARY_UPGRADE,
-	DO_POLICY
-=======
 	DO_POLICY,
 	DO_PUBLICATION,
 	DO_PUBLICATION_REL,
 	DO_SUBSCRIPTION
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } DumpableObjectType;
 
 /* component types of an object which can be selected for dumping */
@@ -377,12 +373,8 @@ typedef struct _tableInfo
 	char	  **attmissingval;	/* per attribute missing value */
 	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
-<<<<<<< HEAD
 	char	  **attencoding;	/* the attribute encoding values */
-	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
-=======
 	struct _attrDefInfo **attrdefs; /* DEFAULT expressions */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 	char	   *partkeydef;		/* partition key definition */
 	char	   *partbound;		/* partition bound definition */
@@ -748,13 +740,7 @@ extern void parseOidArray(const char *str, Oid *array, int arraysize);
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs,
 								DumpId preBoundaryId, DumpId postBoundaryId);
 extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
-<<<<<<< HEAD
-#if 0 /* GPDB_100_MERGE_FIXME: we don't support pre-7.3 dumps. */
-extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
-#endif
 extern void sortDataAndIndexObjectsBySize(DumpableObject **objs, int numObjs);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * version specific routines
@@ -798,7 +784,11 @@ extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 								   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
-<<<<<<< HEAD
+extern void getPublications(Archive *fout);
+extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
+								 int numTables);
+extern void getSubscriptions(Archive *fout);
+
 /* START MPP ADDITION */
 extern TypeStorageOptions *getTypeStorageOptions(Archive *fout, int *numTypes);
 extern ExtProtInfo *getExtProtocols(Archive *fout, int *numExtProtocols);
@@ -806,11 +796,5 @@ extern BinaryUpgradeInfo *getBinaryUpgradeObjects(void);
 
 extern bool	testExtProtocolSupport(Archive *fout);
 /* END MPP ADDITION */
-=======
-extern void getPublications(Archive *fout);
-extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
-								 int numTables);
-extern void getSubscriptions(Archive *fout);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* PG_DUMP_H */
