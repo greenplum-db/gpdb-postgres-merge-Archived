@@ -241,8 +241,10 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	map->gpdb4_heap_conversion_needed = old_rel->gpdb4_heap_conversion_needed;
 	map->type = old_rel->reltype;
 
+#if 0 /* GPDB_12_MERGE_FIXME - replace relstorage check which was removed */
 	/* An AO table doesn't necessarily have segment 0 at all. */
 	map->missing_seg0_ok = relstorage_is_ao(old_rel->relstorage);
+#endif
 
 	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;

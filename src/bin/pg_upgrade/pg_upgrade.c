@@ -59,7 +59,7 @@ static void set_frozenxids(bool minmxid_only);
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 
-static void copy_subdir_files(char *subdir);
+static void copy_subdir_files(const char *old_subdir, const char *new_subdir);
 
 #ifdef WIN32
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, const char *progname);
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	 * In upgrading from GPDB4, copy the pg_distributedlog over in vanilla.
 	 * The assumption that this works needs to be verified
 	 */
-	copy_subdir_files("pg_distributedlog");
+	copy_subdir_files("pg_distributedlog", "pg_distributedlog");
 
 	/* New now using xids of the old system */
 
@@ -440,7 +440,7 @@ prepare_new_cluster(void)
 	if (is_greenplum_dispatcher_mode())
 	{
 		prep_status("Analyzing all rows in the new cluster");
-		exec_prog(UTILITY_LOG_FILE, NULL, true, true
+		exec_prog(UTILITY_LOG_FILE, NULL, true, true,
 				  PG_OPTIONS_UTILITY_MODE
 				  "\"%s/vacuumdb\" %s --all --analyze %s",
 				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
@@ -810,7 +810,6 @@ set_frozenxids(bool minmxid_only)
 	{
 
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
-		char	   *escaped_datname = NULL;
 		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
 
 
@@ -881,6 +880,7 @@ set_frozenxids(bool minmxid_only)
 			PQclear(executeQueryOrDie(conn_template1,
 									  "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
 									  quote_identifier(datname)));
+		}
 	}
 
 	PQclear(dbres);
