@@ -3844,25 +3844,6 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 
 	if (binfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, binfo->dobj.catId, binfo->dobj.dumpId,
-<<<<<<< HEAD
-					 binfo->dobj.name,
-					 NULL, NULL,
-					 binfo->rolname, false,
-					 "BLOB", SECTION_PRE_DATA,
-					 cquery->data, dquery->data, NULL,
-					 NULL, 0,
-					 NULL, NULL);
-
-	/* Dump comment if any */
-	dumpComment(fout, "LARGE OBJECT", binfo->dobj.name,
-				NULL, binfo->rolname,
-				binfo->dobj.catId, 0, binfo->dobj.dumpId);
-
-	/* Dump security label if any */
-	dumpSecLabel(fout, "LARGE OBJECT", binfo->dobj.name,
-				 NULL, binfo->rolname,
-				 binfo->dobj.catId, 0, binfo->dobj.dumpId);
-=======
 					 ARCHIVE_OPTS(.tag = binfo->dobj.name,
 								  .owner = binfo->rolname,
 								  .description = "BLOB",
@@ -3881,16 +3862,9 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 		dumpSecLabel(fout, "LARGE OBJECT", binfo->dobj.name,
 					 NULL, binfo->rolname,
 					 binfo->dobj.catId, 0, binfo->dobj.dumpId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-	/*
-	 * Dump ACL if any
-	 *
-	 * Do not dump the ACL in binary-upgrade mode, however, as the ACL will be
-	 * copied over by pg_upgrade as it is part of the pg_largeobject_metadata
-	 * table.
-	 */
-	if (binfo->blobacl && !fout->dopt->binary_upgrade)
+	/* Dump ACL if any */
+	if (binfo->blobacl && (binfo->dobj.dump & DUMP_COMPONENT_ACL))
 		dumpACL(fout, binfo->dobj.catId, binfo->dobj.dumpId, "LARGE OBJECT",
 				binfo->dobj.name, NULL,
 				NULL, binfo->rolname, binfo->blobacl, binfo->rblobacl,
@@ -4205,13 +4179,8 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 
 	appendPQExpBuffer(query, "CREATE POLICY %s", fmtId(polinfo->polname));
 
-<<<<<<< HEAD
-	appendPQExpBuffer(query, " ON %s FOR %s", fmtQualifiedDumpable(tbinfo),
-					  cmd);
-=======
 	appendPQExpBuffer(query, " ON %s%s%s", fmtQualifiedDumpable(tbinfo),
 					  !polinfo->polpermissive ? " AS RESTRICTIVE" : "", cmd);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (polinfo->polroles != NULL)
 		appendPQExpBuffer(query, " TO %s", polinfo->polroles);
@@ -4787,19 +4756,16 @@ binary_upgrade_set_namespace_oid(Archive *fout, PQExpBuffer upgrade_buffer,
 static void
 binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 										 PQExpBuffer upgrade_buffer,
-<<<<<<< HEAD
 										 Oid pg_type_oid, Oid pg_type_ns_oid,
-										 char *pg_type_name)
-=======
-										 Oid pg_type_oid,
+										 char *pg_type_name,
 										 bool force_array_type)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	PGresult   *res;
 	Oid			pg_type_array_oid;
 	Oid			pg_type_array_nsoid;
 	char	   *pg_type_array_name;
+	bool		free_name = false;
 
 	simple_oid_list_append(&preassigned_oids, pg_type_oid);
 	appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
@@ -4811,26 +4777,17 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 	/* we only support old >= 8.3 for binary upgrades */
 	appendPQExpBuffer(upgrade_query,
-<<<<<<< HEAD
 					  "SELECT t.typarray, a.typname, a.typnamespace "
 					  "FROM pg_catalog.pg_type t "
 					  "     LEFT OUTER JOIN pg_catalog.pg_type a ON (t.typarray = a.oid) "
 					  "WHERE t.oid = '%u'::pg_catalog.oid;",
-=======
-					  "SELECT typarray "
-					  "FROM pg_catalog.pg_type "
-					  "WHERE oid = '%u'::pg_catalog.oid;",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					  pg_type_oid);
 
 	res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
-<<<<<<< HEAD
-	pg_type_array_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typarray")));
-	pg_type_array_nsoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typnamespace")));
-	pg_type_array_name = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typname"));
-=======
 	pg_type_array_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typarray")));
+	pg_type_array_nsoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typnamespace")));
+	pg_type_array_name = PQgetvalue(upgrade_res, 0, PQfnumber(res, "typname"));
 
 	PQclear(res);
 
@@ -4861,8 +4818,10 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 		} while (is_dup);
 
 		pg_type_array_oid = next_possible_free_oid;
+		pg_type_array_nsoid = pg_type_ns_oid;
+		pg_type_array_name = psprintf("_%s", pg_type_name);"_%s", pg_type_name);
+		free_name = true;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (OidIsValid(pg_type_array_oid))
 	{
@@ -4876,6 +4835,8 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 						  pg_type_array_name);
 	}
 
+	if (free_type_name)
+		pfree(pg_type_array_name);
 	destroyPQExpBuffer(upgrade_query);
 }
 
@@ -4947,23 +4908,16 @@ binary_upgrade_set_type_oids_by_rel_oid_impl(Archive *fout,
 	}
 
 	binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
-<<<<<<< HEAD
-											 pg_type_oid, pg_type_nsoid, pg_type_name);
-=======
-											 pg_type_oid, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+											 pg_type_oid, pg_type_nsoid,
+											 pg_type_name, false);
 
 	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
 	{
 		/* Toast tables do not have pg_type array rows */
 		Oid			pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
-<<<<<<< HEAD
-											PQfnumber(upgrade_res, "trel")));
-		Oid			pg_type_toast_nsoid = atooid(PQgetvalue(upgrade_res, 0,
-											PQfnumber(upgrade_res, "trelns")));
-=======
 														  PQfnumber(upgrade_res, "trel")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		Oid			pg_type_toast_nsoid = atooid(PQgetvalue(upgrade_res, 0,
+														  PQfnumber(upgrade_res, "trelns")));
 
 		/*
 		 * GPDB: note that we compose the toast table name using the relation
@@ -11469,22 +11423,12 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 
 	if (nspinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
-<<<<<<< HEAD
-					 nspinfo->dobj.name,
-					 NULL, NULL,
-					 nspinfo->rolname,
-					 false, "SCHEMA", SECTION_PRE_DATA,
-					 q->data, delq->data, NULL,
-					 &(binary_upgrade_dumpid), 1,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = nspinfo->dobj.name,
 								  .owner = nspinfo->rolname,
 								  .description = "SCHEMA",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Dump Schema Comments and Security Labels */
 	if (nspinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
@@ -11714,15 +11658,9 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s;\n", qualtypname);
 
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
 		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
 												 tyinfo->dobj.namespace->dobj.catId.oid,
-												 tyinfo->dobj.name);
-=======
-		binary_upgrade_set_type_oids_by_type_oid(fout, q,
-												 tyinfo->dobj.catId.oid,
-												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+												 tyinfo->dobj.name, false);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (",
 					  qualtypname);
@@ -11856,14 +11794,11 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s;\n", qualtypname);
 
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
-		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
-				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
-=======
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.namespace->dobj.catId.oid,
+												 tyinfo->dobj.name,
 												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
 					  qualtypname);
@@ -11967,16 +11902,11 @@ dumpUndefinedType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s;\n", qualtypname);
 
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
 		binary_upgrade_set_type_oids_by_type_oid(fout,
 												 q, tyinfo->dobj.catId.oid,
 												 tyinfo->dobj.namespace->dobj.catId.oid,
-												 tyinfo->dobj.name);
-=======
-		binary_upgrade_set_type_oids_by_type_oid(fout, q,
-												 tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.name,
 												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
 					  qualtypname);
@@ -12205,14 +12135,11 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	 * harmless, and in any case we'd better set the array type OID.
 	 */
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
-		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
-				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
-=======
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.namespace->dobj.catId.oid,
+												 tyinfo->dobj.name,
 												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s (\n"
@@ -12445,14 +12372,11 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	typcollation = atooid(PQgetvalue(res, 0, PQfnumber(res, "typcollation")));
 
 	if (dopt->binary_upgrade)
-<<<<<<< HEAD
-		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
-				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
-=======
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.namespace->dobj.catId.oid,
+												 tyinfo->dobj.name,
 												 true); /* force array type */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
 	qualtypname = pg_strdup(fmtQualifiedDumpable(tyinfo));
@@ -12645,14 +12569,11 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	if (dopt->binary_upgrade)
 	{
-<<<<<<< HEAD
-		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
-				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
-=======
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.namespace->dobj.catId.oid,
+												 tyinfo->dobj.name,
 												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		binary_upgrade_set_pg_class_oids(fout, q, tyinfo->typrelid, false);
 	}
 
@@ -12931,14 +12852,10 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
-<<<<<<< HEAD
-										   stinfo->baseType->dobj.catId.oid,
-										   stinfo->baseType->dobj.namespace->dobj.catId.oid,
-										   stinfo->baseType->dobj.name);
-=======
 												 stinfo->baseType->dobj.catId.oid,
+												 stinfo->baseType->dobj.namespace->dobj.catId.oid,
+												 stinfo->baseType->dobj.name,
 												 false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
 					  fmtQualifiedDumpable(stinfo));
@@ -21402,7 +21319,6 @@ testGPbackend(Archive *fout)
 }
 
 /*
-<<<<<<< HEAD
  * testPartitioningSupport - tests whether or not the current GP
  * database includes support for partitioning.
  */
@@ -21425,7 +21341,6 @@ testPartitioningSupport(Archive *fout)
 
 	return isSupported;
 }
-
 
 
 /*
@@ -21597,8 +21512,6 @@ addDistributedByOld(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_
 }
 
 /*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * getFormattedTypeName - retrieve a nicely-formatted type name for the
  * given type OID.
  *
