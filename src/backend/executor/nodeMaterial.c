@@ -300,7 +300,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 * then this node is not eager free safe.
 	 */
 	matstate->delayEagerFree =
-		((eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
+		((matstate->eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
 
 	/*
 	 * initialize child nodes
