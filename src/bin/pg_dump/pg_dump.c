@@ -11691,19 +11691,9 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			if (i == 0)
 				appendPQExpBufferStr(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
 			appendPQExpBuffer(q,
-<<<<<<< HEAD
 							  "SELECT pg_catalog.binary_upgrade_set_next_pg_enum_oid('%u'::pg_catalog.oid, '%u'::pg_catalog.oid, $$%s$$::text);\n",
 							  enum_oid, tyinfo->dobj.catId.oid, label);
-
-			appendPQExpBuffer(q, "ALTER TYPE %s.",
-							  fmtId(tyinfo->dobj.namespace->dobj.name));
-			appendPQExpBuffer(q, "%s ADD VALUE ",
-							  qtypname);
-=======
-							  "SELECT pg_catalog.binary_upgrade_set_next_pg_enum_oid('%u'::pg_catalog.oid);\n",
-							  enum_oid);
 			appendPQExpBuffer(q, "ALTER TYPE %s ADD VALUE ", qualtypname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			appendStringLiteralAH(q, label, fout);
 			appendPQExpBufferStr(q, ";\n\n");
 		}
@@ -11916,31 +11906,6 @@ dumpUndefinedType(Archive *fout, TypeInfo *tyinfo)
 										"TYPE", qtypname,
 										tyinfo->dobj.namespace->dobj.name);
 
-<<<<<<< HEAD
-	ArchiveEntry(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId,
-				 tyinfo->dobj.name,
-				 tyinfo->dobj.namespace->dobj.name,
-				 NULL,
-				 tyinfo->rolname, false,
-				 "TYPE", SECTION_PRE_DATA,
-				 q->data, delq->data, NULL,
-				 NULL, 0,
-				 NULL, NULL);
-
-	/* Dump Type Comments and Security Labels */
-	dumpComment(fout, "TYPE", qtypname,
-				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
-				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
-	dumpSecLabel(fout, "TYPE", qtypname,
-				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
-				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
-
-	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL,
-			tyinfo->dobj.namespace->dobj.name,
-			tyinfo->rolname, tyinfo->typacl, tyinfo->rtypacl,
-			tyinfo->inittypacl, tyinfo->initrtypacl);
-=======
 	if (tyinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = tyinfo->dobj.name,
@@ -11968,7 +11933,6 @@ dumpUndefinedType(Archive *fout, TypeInfo *tyinfo)
 				tyinfo->dobj.namespace->dobj.name,
 				tyinfo->rolname, tyinfo->typacl, tyinfo->rtypacl,
 				tyinfo->inittypacl, tyinfo->initrtypacl);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -12467,16 +12431,9 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 
 		appendPQExpBuffer(conprefix, "CONSTRAINT %s ON DOMAIN",
 						  fmtId(domcheck->dobj.name));
-<<<<<<< HEAD
-		appendPQExpBuffer(labelq, "ON DOMAIN %s",
-						  fmtId(qtypname));
-		if (tyinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-			dumpComment(fout, "DOMAIN", qtypname,
-=======
 
 		if (tyinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
 			dumpComment(fout, conprefix->data, qtypname,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						tyinfo->dobj.namespace->dobj.name,
 						tyinfo->rolname,
 						domcheck->dobj.catId, 0, tyinfo->dobj.dumpId);
@@ -12635,12 +12592,8 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 			/* stash separately for insertion after the CREATE TYPE */
 			appendPQExpBufferStr(dropped,
-<<<<<<< HEAD
-					  "\n-- For binary upgrade, recreate dropped column.\n");
-			appendPQExpBuffer(dropped, "SET allow_system_table_mods = true;\n");
-=======
 								 "\n-- For binary upgrade, recreate dropped column.\n");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			appendPQExpBuffer(dropped, "SET allow_system_table_mods = true;\n");
 			appendPQExpBuffer(dropped, "UPDATE pg_catalog.pg_attribute\n"
 							  "SET attlen = %s, "
 							  "attalign = '%s', attbyval = false\n"
@@ -12972,14 +12925,6 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 
 	if (plang->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, plang->dobj.catId, plang->dobj.dumpId,
-<<<<<<< HEAD
-					 plang->dobj.name,
-					 NULL, NULL, plang->lanowner,
-					 false, "PROCEDURAL LANGUAGE", SECTION_PRE_DATA,
-					 defqry->data, delqry->data, NULL,
-					 NULL, 0,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = plang->dobj.name,
 								  .owner = plang->lanowner,
 								  .description = "PROCEDURAL LANGUAGE",
@@ -12987,7 +12932,6 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 								  .createStmt = defqry->data,
 								  .dropStmt = delqry->data,
 								  ));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Dump Proc Lang Comments and Security Labels */
 	if (plang->dobj.dump & DUMP_COMPONENT_COMMENT)
@@ -13275,10 +13219,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	delqry = createPQExpBuffer();
 	asPart = createPQExpBuffer();
 
-<<<<<<< HEAD
 	/* GPDB_95_MERGE_FIXME: use isGE70 instead? */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Fetch function-specific details */
 	if (fout->remoteVersion >= 120000)
 	{
@@ -14044,20 +13985,11 @@ dumpCast(Archive *fout, CastInfo *cast)
 
 	if (cast->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, cast->dobj.catId, cast->dobj.dumpId,
-<<<<<<< HEAD
-					 labelq->data,
-					 "NULL", NULL, "",
-					 false, "CAST", SECTION_PRE_DATA,
-					 defqry->data, delqry->data, NULL,
-					 NULL, 0,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = labelq->data,
 								  .description = "CAST",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = defqry->data,
 								  .dropStmt = delqry->data));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Dump Cast Comments */
 	if (cast->dobj.dump & DUMP_COMPONENT_COMMENT)
@@ -14180,14 +14112,6 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 
 	if (transform->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, transform->dobj.catId, transform->dobj.dumpId,
-<<<<<<< HEAD
-					 labelq->data,
-					 "NULL", NULL, "",
-					 false, "TRANSFORM", SECTION_PRE_DATA,
-					 defqry->data, delqry->data, NULL,
-					 transform->dobj.dependencies, transform->dobj.nDeps,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = labelq->data,
 								  .description = "TRANSFORM",
 								  .section = SECTION_PRE_DATA,
@@ -14195,7 +14119,6 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 								  .dropStmt = delqry->data,
 								  .deps = transform->dobj.dependencies,
 								  .nDeps = transform->dobj.nDeps));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Dump Transform Comments */
 	if (transform->dobj.dump & DUMP_COMPONENT_COMMENT)
@@ -14283,6 +14206,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	}
 	else
 	{
+		error_unsupported_server_version(fout);
 		appendPQExpBuffer(query, "SELECT oprkind, "
 						  "oprcode::pg_catalog.regprocedure, "
 						  "oprleft::pg_catalog.regtype, "
@@ -14297,13 +14221,6 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  oprinfo->dobj.catId.oid);
 	}
-<<<<<<< HEAD
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
@@ -19971,11 +19888,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 												tbinfo->dobj.catId.oid);
 	}
 
-<<<<<<< HEAD
-	appendPQExpBuffer(query,
-					  "CREATE SEQUENCE %s\n",
-					  fmtQualifiedDumpable(tbinfo));
-=======
 	if (tbinfo->is_identity_sequence)
 	{
 		TableInfo  *owning_tab = findTableByOid(tbinfo->owning_tab);
@@ -20002,7 +19914,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		if (strcmp(seqtype, "bigint") != 0)
 			appendPQExpBuffer(query, "    AS %s\n", seqtype);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (fout->remoteVersion >= 80400)
 		appendPQExpBuffer(query, "    START WITH %s\n", startv);
@@ -20023,14 +19934,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					  "    CACHE %s%s",
 					  cache, (cycled ? "\n    CYCLE" : ""));
 
-<<<<<<< HEAD
-	appendPQExpBufferStr(query, ";\n");
-=======
 	if (tbinfo->is_identity_sequence)
 		appendPQExpBufferStr(query, "\n);\n");
 	else
 		appendPQExpBufferStr(query, ";\n");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* binary_upgrade:	no need to clear TOAST table oid */
 
@@ -20533,14 +20440,6 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 		appendPQExpBuffer(query,
 						  "SELECT pg_catalog.pg_get_ruledef('%u'::pg_catalog.oid)",
 						  rinfo->dobj.catId.oid);
-<<<<<<< HEAD
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
