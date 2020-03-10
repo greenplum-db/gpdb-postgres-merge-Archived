@@ -100,7 +100,6 @@ extern char *output_files[];
 #endif
 
 
-<<<<<<< HEAD
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /* OID system catalog preservation added during PG 9.0 development */
@@ -108,14 +107,7 @@ extern char *output_files[];
 /* postmaster/postgres -b (binary_upgrade) flag added during PG 9.1 development */
 /* In GPDB, it was introduced during GPDB 5.0 development. */
 #define BINARY_UPGRADE_SERVER_FLAG_CAT_VER 301607301
-=======
-/*
- * postmaster/postgres -b (binary_upgrade) flag added during PG 9.1
- * development
- */
-#define BINARY_UPGRADE_SERVER_FLAG_CAT_VER 201104251
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  *	Visibility map changed with this 9.2 commit,
  *	8f9fe6edce358f7904e0db119416b4d1080a83aa; pick later catalog version.

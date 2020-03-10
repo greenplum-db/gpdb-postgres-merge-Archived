@@ -546,24 +546,17 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 * by treating it as a user table.
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
-<<<<<<< HEAD
-			 "WITH regular_heap (reloid, indtable, toastheap) AS ("
-			 "	SELECT c.oid, i.indrelid, 0::oid "
-			 "	FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
-			 "			ON c.relnamespace = n.oid "
-			 "	LEFT OUTER JOIN pg_catalog.pg_index i "
-			 "			ON c.oid = i.indexrelid "
-			 "	WHERE relkind IN ('r', 'o', 'b', 'i'%s%s) AND "
-	/* workaround for Greenplum 4.3 bugs */
-			 " %s "
-=======
 			 "WITH regular_heap (reloid, indtable, toastheap) AS ( "
 			 "  SELECT c.oid, 0::oid, 0::oid "
 			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "         ON c.relnamespace = n.oid "
 			 "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+			 CppAsString2(RELKIND_AOSEGMENTS) ", "
+			 CppAsString2(RELKIND_AOBLOCKDIR) ", "
+	/* workaround for Greenplum 4.3 bugs */
+			 " %s "
 			 CppAsString2(RELKIND_MATVIEW) ") AND "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			 " %s "
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
 			 "      n.nspname !~ '^pg_toast_temp_' AND "
@@ -572,25 +565,15 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "                        'binary_upgrade', 'pg_toast') AND "
 			 "      c.oid >= %u::pg_catalog.oid) OR "
 			 "     (n.nspname = 'pg_catalog' AND "
-<<<<<<< HEAD
-			 "      relname IN ('pg_largeobject'%s) ))), ",
-	/* Greenplum 4.3/5X use 'm' as aovisimap which is now matview in 6X and above. */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
-			 ", 'm'" : ", 'M'",
+			 "      relname IN ('pg_largeobject') ))), ",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
-			 "" : ", 'S'",
+			 "" : ", " CppAsString2(RELKIND_SEQUENCE),
 	/* workaround for Greenplum 4.3 bugs */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) > 802) ?
-			 "" : "  AND relname NOT IN ('__gp_localid', '__gp_masterid', "
-			 		 "'__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') ",
-			FirstNormalObjectId,
-			(GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
-			", 'pg_largeobject_metadata'" : "");
-=======
-			 "      relname IN ('pg_largeobject') ))), ",
+			 "" : "  relname NOT IN ('__gp_localid', '__gp_masterid', "
+			 		 "'__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') AND ",
 			 FirstNormalObjectId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables

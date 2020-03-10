@@ -12,14 +12,10 @@
 #include "pg_upgrade.h"
 
 #include <sys/stat.h>
-<<<<<<< HEAD
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 #include "access/aomd.h"
 #include "access/appendonlytid.h"
 #include "access/htup_details.h"
-=======
-#include "catalog/pg_class_d.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/transam.h"
 
 #include "greenplum/pg_upgrade_greenplum.h"
@@ -212,11 +208,6 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 static void
 transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_frozenbit)
 {
-<<<<<<< HEAD
-=======
-	char		old_file[MAXPGPATH];
-	char		new_file[MAXPGPATH];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			segno;
 
 	/*
@@ -288,7 +279,7 @@ transfer_relfile_segment(int segno, FileNameMap *map,
 			else
 				pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						map->nspname, map->relname, old_file, new_file,
-						getErrorText());
+						strerror(errno));
 		}
 
 		/* If file is empty, just return */
@@ -323,96 +314,32 @@ transfer_relfile_segment(int segno, FileNameMap *map,
 		return true;
 	}
 
-	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+	/* Rewrite visibility map if needed */
+	if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
 	{
-		if (!is_checksum_mode(CHECKSUM_NONE) && map->type == HEAP)
-		{
-			pg_log(PG_VERBOSE, "copying and checksumming \"%s\" to \"%s\"\n", old_file, new_file);
-			if ((msg = rewriteHeapPageChecksum(old_file, new_file, map->nspname, map->relname)))
-				pg_log(PG_FATAL, "error while copying and checksumming relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						map->nspname, map->relname, old_file, new_file, pg_strdup(msg));
-		}
-		else
-<<<<<<< HEAD
-		{
-			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
-
-			/* Rewrite visibility map if needed */
-			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file);
-			else
-				msg = copyFile(old_file, new_file);
-
-		if (msg)
-			pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					map->nspname, map->relname, old_file, new_file, msg);
-=======
-			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
-
-		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s",
-				 map->old_tablespace,
-				 map->old_tablespace_suffix,
-				 map->old_db_oid,
-				 map->old_relfilenode,
-				 type_suffix,
-				 extent_suffix);
-		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
-				 map->new_tablespace,
-				 map->new_tablespace_suffix,
-				 map->new_db_oid,
-				 map->new_relfilenode,
-				 type_suffix,
-				 extent_suffix);
-
-		/* Is it an extent, fsm, or vm file? */
-		if (type_suffix[0] != '\0' || segno != 0)
-		{
-			/* Did file open fail? */
-			if (stat(old_file, &statbuf) != 0)
-			{
-				/* File does not exist?  That's OK, just return */
-				if (errno == ENOENT)
-					return;
-				else
-					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-							 map->nspname, map->relname, old_file, new_file,
-							 strerror(errno));
-			}
-
-			/* If file is empty, just return */
-			if (statbuf.st_size == 0)
-				return;
-		}
-
-		unlink(new_file);
-
-		/* Copying files might take some time, so give feedback. */
-		pg_log(PG_STATUS, "%s", old_file);
-
-		if (vm_must_add_frozenbit && strcmp(type_suffix, "_vm") == 0)
-		{
-			/* Need to rewrite visibility map format */
-			pg_log(PG_VERBOSE, "rewriting \"%s\" to \"%s\"\n",
-				   old_file, new_file);
-			rewriteVisibilityMap(old_file, new_file, map->nspname, map->relname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-		}
+		/* Need to rewrite visibility map format */
+		pg_log(PG_VERBOSE, "rewriting \"%s\" to \"%s\"\n",
+			   old_file, new_file);
+		rewriteVisibilityMap(old_file, new_file, map->nspname, map->relname);
 	}
 	else
-	{
-		pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
-
-		/* Rewrite visibility map if needed */
-		if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-			msg = rewriteVisibilityMap(old_file, new_file);
-		else
-<<<<<<< HEAD
-			msg = linkFile(old_file, new_file);
-
-		if (msg)
-			pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					map->nspname, map->relname, old_file, new_file, msg);
-	}
+		switch (user_opts.transfer_mode)
+		{
+			case TRANSFER_MODE_CLONE:
+				pg_log(PG_VERBOSE, "cloning \"%s\" to \"%s\"\n",
+					   old_file, new_file);
+				cloneFile(old_file, new_file, map->nspname, map->relname);
+				break;
+			case TRANSFER_MODE_COPY:
+				pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n",
+					   old_file, new_file);
+				copyFile(old_file, new_file, map->nspname, map->relname);
+				break;
+			case TRANSFER_MODE_LINK:
+				pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n",
+					   old_file, new_file);
+				linkFile(old_file, new_file, map->nspname, map->relname);
+		}
 
 	return true;
 }
@@ -434,24 +361,4 @@ transfer_ao_perFile(const int segno, void *ctx)
 		return false;
 
 	return true;
-=======
-			switch (user_opts.transfer_mode)
-			{
-				case TRANSFER_MODE_CLONE:
-					pg_log(PG_VERBOSE, "cloning \"%s\" to \"%s\"\n",
-						   old_file, new_file);
-					cloneFile(old_file, new_file, map->nspname, map->relname);
-					break;
-				case TRANSFER_MODE_COPY:
-					pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n",
-						   old_file, new_file);
-					copyFile(old_file, new_file, map->nspname, map->relname);
-					break;
-				case TRANSFER_MODE_LINK:
-					pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n",
-						   old_file, new_file);
-					linkFile(old_file, new_file, map->nspname, map->relname);
-			}
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

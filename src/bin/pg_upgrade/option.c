@@ -9,15 +9,6 @@
 
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
-#include "miscadmin.h"
-#include "getopt_long.h"
-
-#include "pg_upgrade.h"
-#include "greenplum/pg_upgrade_greenplum.h"
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include <time.h>
 #ifdef WIN32
 #include <io.h>
@@ -27,6 +18,7 @@
 #include "utils/pidfile.h"
 
 #include "pg_upgrade.h"
+#include "greenplum/pg_upgrade_greenplum.h"
 
 
 static void usage(void);
@@ -116,12 +108,6 @@ parseCommandLine(int argc, char *argv[])
 	if (os_user_effective_id == 0)
 		pg_fatal("%s: cannot be run as root\n", os_info.progname);
 
-<<<<<<< HEAD
-	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_fatal("cannot write to log file %s\n", INTERNAL_LOG_FILE);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rs:U:v",
 								 long_options, &optindex)) != -1)
 	{
@@ -231,16 +217,13 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			default:
-<<<<<<< HEAD
 				if (!process_greenplum_option(option, pg_strdup(optarg)))
-					pg_fatal("Try \"%s --help\" for more information.\n",
-							 os_info.progname);
+				{
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+							os_info.progname);
+					exit(1);
+				}
 				break;
-=======
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-						os_info.progname);
-				exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -279,22 +262,6 @@ parseCommandLine(int argc, char *argv[])
 
 	/* Get values from env if not already set */
 	check_required_directory(&old_cluster.bindir, "PGBINOLD", false,
-<<<<<<< HEAD
-							 "-b", "old cluster binaries reside");
-	check_required_directory(&new_cluster.bindir, "PGBINNEW", false,
-							 "-B", "new cluster binaries reside");
-	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", false,
-							 "-d", "old cluster data resides");
-	check_required_directory(&new_cluster.pgdata, "PGDATANEW", false,
-							 "-D", "new cluster data resides");
-	check_required_directory(&user_opts.socketdir, "PGSOCKETDIR", true,
-							 "-s", "sockets will be created");
-
-	/* Ensure we are only adding checksums in copy mode */
-	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
-		!is_checksum_mode(CHECKSUM_NONE))
-		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
-=======
 							 "-b", _("old cluster binaries reside"));
 	check_required_directory(&new_cluster.bindir, "PGBINNEW", false,
 							 "-B", _("new cluster binaries reside"));
@@ -304,7 +271,11 @@ parseCommandLine(int argc, char *argv[])
 							 "-D", _("new cluster data resides"));
 	check_required_directory(&user_opts.socketdir, "PGSOCKETDIR", true,
 							 "-s", _("sockets will be created"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	/* Ensure we are only adding checksums in copy mode */
+	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
+		!is_checksum_mode(CHECKSUM_NONE))
+		pg_fatal("Adding and removing checksums only supported in copy mode.\n");
 
 #ifdef WIN32
 	/*
@@ -332,47 +303,7 @@ parseCommandLine(int argc, char *argv[])
 static void
 usage(void)
 {
-<<<<<<< HEAD
-	printf(_("pg_upgrade upgrades a Greenplum cluster to a different major version.\n\
-\nUsage:\n\
-  pg_upgrade [OPTION]...\n\
-\n\
-Options:\n\
-  -b, --old-bindir=BINDIR       old cluster executable directory\n\
-  -B, --new-bindir=BINDIR       new cluster executable directory\n\
-  -c, --check                   check clusters only, don't change any data\n\
-  -d, --old-datadir=DATADIR     old cluster data directory\n\
-  -D, --new-datadir=DATADIR     new cluster data directory\n\
-  -j, --jobs                    number of simultaneous processes or threads to use\n\
-  -k, --link                    link instead of copying files to new cluster\n\
-  -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
-  -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
-  -p, --old-port=PORT           old cluster port number (default %d)\n\
-  -P, --new-port=PORT           new cluster port number (default %d)\n\
-  -r, --retain                  retain SQL and log files after success\n\
-  -s, --socketdir=DIR           socket directory to use (default CWD)\n\
-  -U, --username=NAME           cluster superuser (default \"%s\")\n\
-  -v, --verbose                 enable verbose internal logging\n\
-  -V, --version                 display version information, then exit\n\
-%s\
-  -?, --help                    show this help, then exit\n\
-\n\
-Before running pg_upgrade you must:\n\
-  create a new database cluster (using the new version of initdb)\n\
-  shutdown the postmaster servicing the old cluster\n\
-  shutdown the postmaster servicing the new cluster\n\
-\n\
-When you run pg_upgrade, you must provide the following information:\n\
-  the data directory for the old cluster  (-d DATADIR)\n\
-  the data directory for the new cluster  (-D DATADIR)\n\
-  the \"bin\" directory for the old version (-b BINDIR)\n\
-  the \"bin\" directory for the new version (-B BINDIR)\n\
-\n\
-For example:\n\
-  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n\
-or\n"), old_cluster.port, new_cluster.port, os_info.user, GREENPLUM_USAGE);
-=======
-	printf(_("pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n\n"));
+	printf(_("pg_upgrade upgrades a Greenplum cluster to a different major version.\n\n"));
 	printf(_("Usage:\n"));
 	printf(_("  pg_upgrade [OPTION]...\n\n"));
 	printf(_("Options:\n"));
@@ -409,7 +340,6 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user, GREENPLUM_USAGE);
 			 "For example:\n"
 			 "  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
 			 "or\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifndef WIN32
 	printf(_("  $ export PGDATAOLD=oldCluster/data\n"
 			 "  $ export PGDATANEW=newCluster/data\n"
