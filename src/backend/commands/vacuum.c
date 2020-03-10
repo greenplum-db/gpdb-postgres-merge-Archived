@@ -1747,7 +1747,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	Oid			aoseg_relid;
 	Oid         aoblkdir_relid;
 	Oid         aovisimap_relid;
-	bool		is_heap;
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
@@ -1929,10 +1928,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	else
 		toast_relid = InvalidOid;
 
-	is_heap = RelationIsHeap(onerel);
-	if (!is_heap)
+	if (RelationIsAppendOptimized(onerel))
 	{
-		Assert(RelationIsAppendOptimized(onerel));
 		GetAppendOnlyEntryAuxOids(RelationGetRelid(onerel), NULL,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
