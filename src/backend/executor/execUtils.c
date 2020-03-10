@@ -1149,9 +1149,9 @@ flatten_logic_exprs(Node *node)
 	if (node == NULL)
 		return NIL;
 
-	if (IsA(node, BoolExprState))
+	if (IsA(node, BoolExpr))
 	{
-		BoolExprState *be = (BoolExprState *) node;
+		BoolExpr *be = (BoolExpr *) node;
 		return flatten_logic_exprs((Node *) (be->args));
 	}
 

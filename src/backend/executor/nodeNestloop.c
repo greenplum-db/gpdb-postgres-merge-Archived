@@ -130,7 +130,8 @@ ExecNestLoop_guts(PlanState *pstate)
 			EState	   *estate = node->js.ps.state;
 
 			econtext->ecxt_outertuple = ExecInitNullTupleSlot(estate,
-															  ExecGetResultType(outerPlan));
+															  ExecGetResultType(outerPlan),
+															 &TTSOpsVirtual);
 			fake_outer_params(&(node->js));
 		}
 

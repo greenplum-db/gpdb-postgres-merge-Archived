@@ -1902,7 +1902,7 @@ add_to_exclude_list(PQExpBufferData *buf, const char *exclude)
 	{
 		fprintf(stderr, _("%s: could not process exclude \"%s\": %s\n"),
 				progname, exclude, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	appendPQExpBuffer(buf, " EXCLUDE '%s'", quoted);
 }
@@ -2409,9 +2409,9 @@ main(int argc, char **argv)
 		{"no-slot", no_argument, NULL, 2},
 		{"no-verify-checksums", no_argument, NULL, 3},
 		{"exclude", required_argument, NULL, 'E'},
-		{"exclude-from", required_argument, NULL, 2},
 		{"force-overwrite", no_argument, NULL, 128},
 		{"target-gp-dbid", required_argument, NULL, 129},
+		{"exclude-from", required_argument, NULL, 130},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2593,7 +2593,13 @@ main(int argc, char **argv)
 
 				excludes[num_exclude++] = pg_strdup(optarg);
 				break;
-			case 2:			/* --exclude-from=FILE */
+			case 128:
+				forceoverwrite = true;
+				break;
+			case 129:
+				target_gp_dbid = atoi(optarg);
+				break;
+			case 130:			/* --exclude-from=FILE */
 				if (num_exclude_from >= MAX_EXCLUDE)
 				{
 					fprintf(stderr, _("%s: too many elements in exclude-from list: max is %d"),
@@ -2602,12 +2608,6 @@ main(int argc, char **argv)
 				}
 
 				excludefroms[num_exclude_from++] = pg_strdup(optarg);
-				break;
-			case 128:
-				forceoverwrite = true;
-				break;
-			case 129:
-				target_gp_dbid = atoi(optarg);
 				break;
 			default:
 
