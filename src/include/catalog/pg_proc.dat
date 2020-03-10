@@ -10990,13 +10990,6 @@
 { oid => 7069, descr => 'truncate the error log for the specified external table',
    proname => 'gp_truncate_error_log', provolatile => 'v', prorettype => 'bool', proargtypes => 'text', prosrc => 'gp_truncate_error_log' },
 
-# elog related
-{ oid => 5044, descr => 'Insert text into the error log',
-   proname => 'gp_elog', prorettype => 'void', proargtypes => 'text', prosrc => 'gp_elog' },
-
-{ oid => 5045, descr => 'Insert text into the error log',
-   proname => 'gp_elog', prorettype => 'void', proargtypes => 'text bool', prosrc => 'gp_elog' },
-
 
 # Segment and master administration functions, see utils/gp/segadmin.c
 { oid => 5046, descr => 'Perform the catalog operations necessary for adding a new standby',
