@@ -576,11 +576,8 @@ RestoreArchive(Archive *AHX)
 							 * we simply emit the original command for DEFAULT
 							 * objects (modulo the adjustment made above).
 							 *
-<<<<<<< HEAD
-=======
 							 * Likewise, don't mess with DATABASE PROPERTIES.
 							 *
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							 * If we used CREATE OR REPLACE VIEW as a means of
 							 * quasi-dropping an ON SELECT rule, that should
 							 * be emitted unchanged as well.
@@ -593,10 +590,7 @@ RestoreArchive(Archive *AHX)
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
 							if (strcmp(te->desc, "DEFAULT") == 0 ||
-<<<<<<< HEAD
-=======
 								strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								strncmp(dropStmt, "CREATE OR REPLACE VIEW", 22) == 0)
 								appendPQExpBufferStr(ftStmt, dropStmt);
 							else
@@ -776,20 +770,6 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 
 	AH->currentTE = te;
 
-<<<<<<< HEAD
-	/* Work out what, if anything, we want from this entry */
-	reqs = te->reqs;
-
-	/*
-	 * Ignore DATABASE entry unless we should create it.  We must check this
-	 * here, not in _tocEntryRequired, because the createDB option should not
-	 * affect emitting a DATABASE entry to an archive file.
-	 */
-	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
-		reqs = 0;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Dump any relevant dump warnings to stderr */
 	if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
 	{
@@ -2845,16 +2825,6 @@ processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 }
 
 static void
-processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
-{
-	/*
-	 * te->defn should contain a command to set search_path.  We just copy it
-	 * verbatim for use later.
-	 */
-	AH->public.searchpath = pg_strdup(te->defn);
-}
-
-static void
 StrictNamesCheck(RestoreOptions *ropt)
 {
 	const char *missing_name;
@@ -3757,7 +3727,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
 			strcmp(te->desc, "SERVER") == 0 ||
-			strcmp(te->desc, "PROTOCOL") == 0)
+			strcmp(te->desc, "PROTOCOL") == 0 ||
 			strcmp(te->desc, "STATISTICS") == 0 ||
 			strcmp(te->desc, "PUBLICATION") == 0 ||
 			strcmp(te->desc, "SUBSCRIPTION") == 0)
@@ -4198,11 +4168,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 						next_work_item->dumpId,
 						next_work_item->desc, next_work_item->tag);
 
-<<<<<<< HEAD
-			/* Remove it from ready_list, and dispatch to some worker */
-			par_list_remove(next_work_item);
-=======
-o			/* Dispatch to some worker */
+			/* Dispatch to some worker */
 			DispatchJobForTocEntry(AH, pstate, next_work_item, ACT_RESTORE,
 								   mark_restore_job_done, &ready_list);
 		}
@@ -4214,7 +4180,6 @@ o			/* Dispatch to some worker */
 			 */
 			if (AH->restorePass == RESTORE_PASS_LAST)
 				break;			/* No more parallel processing is possible */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Advance to next restore pass */
 			AH->restorePass++;
@@ -4241,52 +4206,6 @@ o			/* Dispatch to some worker */
 		}
 		else
 		{
-<<<<<<< HEAD
-			/*
-			 * We have nothing ready, but at least one child is working, so
-			 * wait for some subjob to finish.
-			 */
-		}
-
-		for (;;)
-		{
-			int			nTerm = 0;
-			int			ret_child;
-			int			work_status;
-
-			/*
-			 * In order to reduce dependencies as soon as possible and
-			 * especially to reap the status of workers who are working on
-			 * items that pending items depend on, we do a non-blocking check
-			 * for ended workers first.
-			 *
-			 * However, if we do not have any other work items currently that
-			 * workers can work on, we do not busy-loop here but instead
-			 * really wait for at least one worker to terminate. Hence we call
-			 * ListenToWorkers(..., ..., do_wait = true) in this case.
-			 */
-			ListenToWorkers(AH, pstate, !next_work_item);
-
-			while ((ret_child = ReapWorkerStatus(pstate, &work_status)) != NO_SLOT)
-			{
-				nTerm++;
-				mark_work_done(AH, &ready_list, ret_child, work_status, pstate);
-			}
-
-			/*
-			 * We need to make sure that we have an idle worker before
-			 * re-running the loop. If nTerm > 0 we already have that (quick
-			 * check).
-			 */
-			if (nTerm > 0)
-				break;
-
-			/* if nobody terminated, explicitly check for an idle worker */
-			if (GetIdleWorker(pstate) != NO_SLOT)
-				break;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/*
 			 * We have nothing ready, but at least one child is working, so
 			 * wait for some subjob to finish.
