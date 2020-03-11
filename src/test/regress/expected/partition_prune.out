@@ -1889,8 +1889,8 @@ execute ab_q1 (1, 8, 3);
 (0 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 6
@@ -1900,15 +1900,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
                Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
          ->  Seq Scan on ab_a2_b3 (never executed)
                Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   (slice0)    Executor memory: 58K bytes.
-   (slice1)    Executor memory: 68K bytes avg x 3 workers, 68K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(13 rows)
+(10 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (1, 2, 3);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 3
@@ -1924,11 +1921,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (1, 2, 3);
                Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
          ->  Seq Scan on ab_a2_b3 (never executed)
                Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   (slice0)    Executor memory: 67K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(19 rows)
+(16 rows)
 
 deallocate ab_q1;
 -- Runtime pruning after optimizer pruning
@@ -1962,8 +1956,8 @@ execute ab_q1 (1, 8);
 (0 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 4
@@ -1971,15 +1965,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
                Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
          ->  Seq Scan on ab_a2_b2 (never executed)
                Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   (slice0)    Executor memory: 53K bytes.
-   (slice1)    Executor memory: 53K bytes avg x 3 workers, 53K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(11 rows)
+(8 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 2
@@ -1991,11 +1982,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
                Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
          ->  Seq Scan on ab_a3_b2 (never executed)
                Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   (slice0)    Executor memory: 61K bytes.
-   (slice1)    Executor memory: 61K bytes avg x 3 workers, 61K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(15 rows)
+(12 rows)
 
 -- Ensure a mix of PARAM_EXTERN and PARAM_EXEC Params work together at
 -- different levels of partitioning.
@@ -2027,8 +2015,8 @@ execute ab_q2 (1, 8);
 (0 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -2040,12 +2028,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
                Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
          ->  Seq Scan on ab_a2_b3 (never executed)
                Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
-   (slice0)    Executor memory: 66K bytes.
-   (slice1)    Executor memory: 63K bytes avg x 3 workers, 63K bytes max (seg0).
-   (slice2)    Executor memory: 37K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(16 rows)
+(12 rows)
 
 -- As above, but swap the PARAM_EXEC Param to the first partition level
 prepare ab_q3 (int, int) as
@@ -2076,8 +2060,8 @@ execute ab_q3 (1, 8);
 (0 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -2089,12 +2073,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
                Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
          ->  Seq Scan on ab_a3_b2 (never executed)
                Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
-   (slice0)    Executor memory: 68K bytes.
-   (slice1)    Executor memory: 66K bytes avg x 3 workers, 66K bytes max (seg0).
-   (slice2)    Executor memory: 40K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(16 rows)
+(12 rows)
 
 -- Test a backwards Append scan
 create table list_part (a int) partition by list (a);
@@ -2128,16 +2108,13 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
    ->  Seq Scan on list_part1 (actual rows=1 loops=1)
          Filter: (a = 1)
-   (slice0)    Executor memory: 36K bytes.
-   (slice1)    Executor memory: 36K bytes (seg1).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(7 rows)
+(4 rows)
 
 -- Ensure pruning does not take place when the function has a Var parameter
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=4 loops=1)
    ->  Append (actual rows=3 loops=1)
          ->  Seq Scan on list_part1 (actual rows=1 loops=1)
@@ -2148,11 +2125,8 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
                Filter: (a = list_part_fn(a))
          ->  Seq Scan on list_part4 (actual rows=1 loops=1)
                Filter: (a = list_part_fn(a))
-   (slice0)    Executor memory: 49K bytes.
-   (slice1)    Executor memory: 49K bytes avg x 3 workers, 49K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(14 rows)
+(11 rows)
 
 -- Ensure pruning does not take place when the expression contains a Var.
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
@@ -2615,21 +2589,14 @@ select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 
                Filter: ((a = $0) AND (b = $1))
          ->  Seq Scan on ab_a3_b3 (never executed)
                Filter: ((a = $0) AND (b = $1))
-   (slice0)    Executor memory: 178K bytes.
-   (slice1)    Executor memory: 91K bytes avg x 3 workers, 91K bytes max (seg0).
-   (slice2)    Executor memory: 112K bytes.
-   (slice3)    Executor memory: 43K bytes avg x 3 workers, 43K bytes max (seg0).
-   (slice4)    Executor memory: 145K bytes.
-   (slice5)    Executor memory: 38K bytes avg x 3 workers, 38K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(38 rows)
+(31 rows)
 
 -- Test run-time partition pruning with UNION ALL parents
 explain (analyze, costs off, summary off, timing off)
 select * from (select * from ab where a = 1 union all select * from ab) ab where b = (select 1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -2660,18 +2627,14 @@ select * from (select * from ab where a = 1 union all select * from ab) ab where
                      Filter: (b = $0)
                ->  Seq Scan on ab_a3_b3 (never executed)
                      Filter: (b = $0)
-   (slice0)    Executor memory: 90K bytes.
-   (slice1)    Executor memory: 87K bytes avg x 3 workers, 87K bytes max (seg0).
-   (slice2)    Executor memory: 60K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(35 rows)
+(31 rows)
 
 -- A case containing a UNION ALL with a non-partitioned child.
 explain (analyze, costs off, summary off, timing off)
 select * from (select * from ab where a = 1 union all (values(10,5)) union all select * from ab) ab where b = (select 1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice1)
      ->  Result (actual rows=1 loops=1)
@@ -2705,13 +2668,8 @@ select * from (select * from ab where a = 1 union all (values(10,5)) union all s
                      Filter: (b = $0)
                ->  Seq Scan on ab_a3_b3 (never executed)
                      Filter: (b = $0)
-   (slice0)    Executor memory: 106K bytes.
-   (slice1)    Executor memory: 66K bytes.
-   (slice2)    Executor memory: 53K bytes (seg1).
-   (slice3)    Executor memory: 75K bytes avg x 3 workers, 82K bytes max (seg1).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(39 rows)
+(34 rows)
 
 -- Another UNION ALL test, but containing a mix of exec init and exec run-time pruning.
 create table xy_1 (x int, y int);
@@ -2729,8 +2687,8 @@ union all
 ) ab where a = $1 and b = (select -10);
 -- Ensure the xy_1 subplan is not pruned.
 explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -2753,12 +2711,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
                      Filter: ((a = $1) AND (b = $0))
                ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
                      Filter: ((a = $1) AND (b = $0))
-   (slice0)    Executor memory: 122K bytes.
-   (slice1)    Executor memory: 71K bytes avg x 3 workers, 71K bytes max (seg0).
-   (slice2)    Executor memory: 65K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(27 rows)
+(23 rows)
 
 -- Ensure we see just the xy_1 row.
 execute ab_q6(100);
@@ -2819,10 +2773,8 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
                            Filter: (a = 1)
                      ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
                            Filter: (a = 1)
-   (slice0)    Executor memory: 191K bytes (seg1).  Work_mem: 17K bytes max.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(40 rows)
+(38 rows)
 
 table ab;
  a | b 
@@ -2835,8 +2787,8 @@ truncate ab;
 insert into ab values (1, 1), (1, 2), (1, 3), (2, 1);
 explain (analyze, costs off, summary off, timing off)
 update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
-                                                QUERY PLAN                                                 
------------------------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Update on ab_a1 (never executed)
    Update on ab_a1_b1
    Update on ab_a1_b2
@@ -2879,17 +2831,8 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
                                        Filter: (b = $0)
                                  ->  Seq Scan on ab_a2_b3 (never executed)
                                        Filter: (b = $0)
-   (slice0)    Executor memory: 77K bytes avg x 3 workers, 79K bytes max (seg0).
-   (slice1)    Executor memory: 160K bytes.
-   (slice2)    Executor memory: 77K bytes avg x 3 workers, 77K bytes max (seg0).  Work_mem: 17K bytes max.
-   (slice3)    Executor memory: 89K bytes avg x 3 workers, 89K bytes max (seg0).
-   (slice4)    Executor memory: 77K bytes avg x 3 workers, 77K bytes max (seg0).  Work_mem: 17K bytes max.
-   (slice5)    Executor memory: 89K bytes avg x 3 workers, 89K bytes max (seg0).
-   (slice6)    Executor memory: 77K bytes avg x 3 workers, 77K bytes max (seg0).  Work_mem: 17K bytes max.
-   (slice7)    Executor memory: 89K bytes avg x 3 workers, 89K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(52 rows)
+(43 rows)
 
 select tableoid::regclass, * from ab;
  tableoid | a | b 
@@ -2923,8 +2866,8 @@ set enable_hashjoin = off;
 set enable_mergejoin = off;
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
-                                                QUERY PLAN                                                 
------------------------------------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=6 loops=1)
    ->  Nested Loop (actual rows=2 loops=1)
          Join Filter: (tbl1.col1 > tprt_1.col1)
@@ -2938,17 +2881,13 @@ select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
          ->  Materialize (actual rows=2 loops=3)
                ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=2 loops=1)
                      ->  Seq Scan on tbl1 (actual rows=1 loops=1)
-   (slice0)    Executor memory: 48K bytes.
-   (slice1)    Executor memory: 68K bytes avg x 3 workers, 68K bytes max (seg1).  Work_mem: 17K bytes max.
-   (slice2)    Executor memory: 36K bytes avg x 3 workers, 36K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(18 rows)
+(14 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=2 loops=1)
    ->  Nested Loop (actual rows=1 loops=1)
          ->  Seq Scan on tbl1 (actual rows=1 loops=1)
@@ -2965,11 +2904,8 @@ select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
                      Filter: (tbl1.col1 = col1)
                ->  Seq Scan on tprt_6 (never executed)
                      Filter: (tbl1.col1 = col1)
-   (slice0)    Executor memory: 68K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(20 rows)
+(17 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 > tprt.col1
@@ -2997,8 +2933,8 @@ order by tbl1.col1, tprt.col1;
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
-                                                QUERY PLAN                                                 
------------------------------------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=23 loops=1)
    ->  Nested Loop (actual rows=10 loops=1)
          Join Filter: (tbl1.col1 > tprt_1.col1)
@@ -3012,17 +2948,13 @@ select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
          ->  Materialize (actual rows=5 loops=3)
                ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=5 loops=1)
                      ->  Seq Scan on tbl1 (actual rows=3 loops=1)
-   (slice0)    Executor memory: 48K bytes.
-   (slice1)    Executor memory: 68K bytes avg x 3 workers, 68K bytes max (seg1).  Work_mem: 17K bytes max.
-   (slice2)    Executor memory: 36K bytes avg x 3 workers, 36K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(18 rows)
+(14 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
    ->  Nested Loop (actual rows=2 loops=1)
          ->  Seq Scan on tbl1 (actual rows=3 loops=1)
@@ -3039,11 +2971,8 @@ select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
                      Filter: (tbl1.col1 = col1)
                ->  Seq Scan on tprt_6 (never executed)
                      Filter: (tbl1.col1 = col1)
-   (slice0)    Executor memory: 68K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(20 rows)
+(17 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 > tprt.col1
@@ -3090,8 +3019,8 @@ delete from tbl1;
 insert into tbl1 values (4400);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
-                                                QUERY PLAN                                                 
------------------------------------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
    ->  Nested Loop (actual rows=1 loops=1)
          Join Filter: (tbl1.col1 < tprt_1.col1)
@@ -3105,12 +3034,8 @@ select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
          ->  Materialize (actual rows=1 loops=3)
                ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=1 loops=1)
                      ->  Seq Scan on tbl1 (actual rows=1 loops=1)
-   (slice0)    Executor memory: 48K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg1).  Work_mem: 17K bytes max.
-   (slice2)    Executor memory: 36K bytes avg x 3 workers, 36K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(18 rows)
+(14 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 < tprt.col1
@@ -3125,8 +3050,8 @@ delete from tbl1;
 insert into tbl1 values (10000);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Nested Loop (never executed)
          ->  Seq Scan on tbl1 (actual rows=1 loops=1)
@@ -3143,11 +3068,8 @@ select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
                      Filter: (tbl1.col1 = col1)
                ->  Seq Scan on tprt_6 (never executed)
                      Filter: (tbl1.col1 = col1)
-   (slice0)    Executor memory: 68K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(20 rows)
+(17 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 = tprt.col1
@@ -3201,11 +3123,8 @@ explain (analyze, costs off, summary off, timing off) execute part_abc_q1 (1, 2,
  Gather Motion 1:1  (slice1; segments: 1) (actual rows=0 loops=1)
    ->  Seq Scan on part_abc_p1 (never executed)
          Filter: ((a = 1) AND (b = 2) AND (c = 3))
-   (slice0)    Executor memory: 36K bytes.
-   (slice1)    Executor memory: 36K bytes (seg1).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(7 rows)
+(4 rows)
 
 deallocate part_abc_q1;
 drop table part_abc;
@@ -3251,48 +3170,39 @@ execute q1 (1,2);
 (0 rows)
 
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
          ->  Seq Scan on listp_1_1 (never executed)
                Filter: (b = ANY (ARRAY[$1, $2]))
-   (slice0)    Executor memory: 51K bytes.
-   (slice1)    Executor memory: 54K bytes avg x 3 workers, 54K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
          ->  Seq Scan on listp_2_1 (never executed)
                Filter: (b = ANY (ARRAY[$1, $2]))
-   (slice0)    Executor memory: 51K bytes.
-   (slice1)    Executor memory: 51K bytes avg x 3 workers, 51K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 -- Try with no matching partitions. One subplan should remain in this case,
 -- but it shouldn't be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (0,0);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
          ->  Seq Scan on listp_1_1 (never executed)
                Filter: (b = ANY (ARRAY[$1, $2]))
-   (slice0)    Executor memory: 51K bytes.
-   (slice1)    Executor memory: 51K bytes avg x 3 workers, 51K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 deallocate q1;
 -- Test more complex cases where a not-equal condition further eliminates partitions.
@@ -3324,40 +3234,34 @@ execute q1 (1,2,3,4);
 
 -- Both partitions allowed by IN clause, but one disallowed by <> clause
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
          ->  Seq Scan on listp_1_1 (never executed)
                Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
-   (slice0)    Executor memory: 56K bytes.
-   (slice1)    Executor memory: 56K bytes avg x 3 workers, 56K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 -- Both partitions allowed by IN clause, then both excluded again by <> clauses.
 -- One subplan will remain in this case, but it should not be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
          ->  Seq Scan on listp_1_1 (never executed)
                Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
-   (slice0)    Executor memory: 56K bytes.
-   (slice1)    Executor memory: 56K bytes avg x 3 workers, 56K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 -- Ensure Params that evaluate to NULL properly prune away all partitions
 explain (analyze, costs off, summary off, timing off)
 select * from listp where a = (select null::int);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -3366,12 +3270,8 @@ select * from listp where a = (select null::int);
                Filter: (a = $0)
          ->  Seq Scan on listp_2_1 (never executed)
                Filter: (a = $0)
-   (slice0)    Executor memory: 53K bytes.
-   (slice1)    Executor memory: 52K bytes avg x 3 workers, 52K bytes max (seg0).
-   (slice2)    Executor memory: 25K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(13 rows)
+(9 rows)
 
 drop table listp;
 --
@@ -3387,8 +3287,8 @@ create table stable_qual_pruning3 partition of stable_qual_pruning
 -- comparison against a stable value requires run-time pruning
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning where a < localtimestamp;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          Subplans Removed: 1
@@ -3396,11 +3296,8 @@ select * from stable_qual_pruning where a < localtimestamp;
                Filter: (a < LOCALTIMESTAMP)
          ->  Seq Scan on stable_qual_pruning2 (never executed)
                Filter: (a < LOCALTIMESTAMP)
-   (slice0)    Executor memory: 49K bytes.
-   (slice1)    Executor memory: 54K bytes avg x 3 workers, 54K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(11 rows)
+(8 rows)
 
 -- timestamp < timestamptz comparison is only stable, not immutable
 explain (analyze, costs off, summary off, timing off)
@@ -3412,11 +3309,8 @@ select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
          Subplans Removed: 2
          ->  Seq Scan on stable_qual_pruning1 (never executed)
                Filter: (a < 'Tue Feb 01 00:00:00 2000 PST'::timestamp with time zone)
-   (slice0)    Executor memory: 46K bytes.
-   (slice1)    Executor memory: 45K bytes avg x 3 workers, 45K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 -- check ScalarArrayOp cases
 explain (analyze, costs off, summary off, timing off)
@@ -3436,11 +3330,8 @@ select * from stable_qual_pruning
  Gather Motion 1:1  (slice1; segments: 1) (actual rows=0 loops=1)
    ->  Seq Scan on stable_qual_pruning2 (never executed)
          Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000","Fri Jan 01 00:00:00 2010"}'::timestamp without time zone[]))
-   (slice0)    Executor memory: 37K bytes.
-   (slice1)    Executor memory: 37K bytes (seg1).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(7 rows)
+(4 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
@@ -3452,11 +3343,8 @@ select * from stable_qual_pruning
          Subplans Removed: 2
          ->  Seq Scan on stable_qual_pruning2 (never executed)
                Filter: (a = ANY (ARRAY['Tue Feb 01 00:00:00 2000'::timestamp without time zone, LOCALTIMESTAMP]))
-   (slice0)    Executor memory: 47K bytes.
-   (slice1)    Executor memory: 47K bytes avg x 3 workers, 47K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
@@ -3468,11 +3356,8 @@ select * from stable_qual_pruning
          Subplans Removed: 2
          ->  Seq Scan on stable_qual_pruning1 (never executed)
                Filter: (a = ANY ('{"Mon Feb 01 00:00:00 2010 PST","Wed Jan 01 00:00:00 2020 PST"}'::timestamp with time zone[]))
-   (slice0)    Executor memory: 46K bytes.
-   (slice1)    Executor memory: 45K bytes avg x 3 workers, 45K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
@@ -3484,11 +3369,8 @@ select * from stable_qual_pruning
          Subplans Removed: 2
          ->  Seq Scan on stable_qual_pruning2 (never executed)
                Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000 PST","Fri Jan 01 00:00:00 2010 PST"}'::timestamp with time zone[]))
-   (slice0)    Executor memory: 46K bytes.
-   (slice1)    Executor memory: 45K bytes avg x 3 workers, 45K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(9 rows)
+(6 rows)
 
 drop table stable_qual_pruning;
 --
@@ -3506,8 +3388,8 @@ create table mc3p2 partition of mc3p
 insert into mc3p values (0, 1, 1), (1, 1, 1), (2, 1, 1);
 explain (analyze, costs off, summary off, timing off)
 select * from mc3p where a < 3 and abs(b) = 1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
    ->  Append (actual rows=2 loops=1)
          ->  Seq Scan on mc3p0 (actual rows=1 loops=1)
@@ -3516,11 +3398,8 @@ select * from mc3p where a < 3 and abs(b) = 1;
                Filter: ((a < 3) AND (abs(b) = 1))
          ->  Seq Scan on mc3p2 (actual rows=1 loops=1)
                Filter: ((a < 3) AND (abs(b) = 1))
-   (slice0)    Executor memory: 45K bytes.
-   (slice1)    Executor memory: 44K bytes avg x 3 workers, 44K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 --
 -- Check that pruning with composite range partitioning works correctly when
@@ -3532,8 +3411,8 @@ prepare ps1 as
   select * from mc3p where a = $1 and abs(b) < (select 3);
 explain (analyze, costs off, summary off, timing off)
 execute ps1(1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -3541,20 +3420,16 @@ execute ps1(1);
          Subplans Removed: 2
          ->  Seq Scan on mc3p1 (actual rows=1 loops=1)
                Filter: ((a = $1) AND (abs(b) < $0))
-   (slice0)    Executor memory: 55K bytes.
-   (slice1)    Executor memory: 55K bytes avg x 3 workers, 55K bytes max (seg0).
-   (slice2)    Executor memory: 27K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(12 rows)
+(8 rows)
 
 deallocate ps1;
 prepare ps2 as
   select * from mc3p where a <= $1 and abs(b) < (select 3);
 explain (analyze, costs off, summary off, timing off)
 execute ps2(1);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=2 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -3564,12 +3439,8 @@ execute ps2(1);
                Filter: ((a <= $1) AND (abs(b) < $0))
          ->  Seq Scan on mc3p1 (actual rows=1 loops=1)
                Filter: ((a <= $1) AND (abs(b) < $0))
-   (slice0)    Executor memory: 58K bytes.
-   (slice1)    Executor memory: 58K bytes avg x 3 workers, 58K bytes max (seg0).
-   (slice2)    Executor memory: 30K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(14 rows)
+(10 rows)
 
 deallocate ps2;
 reset plan_cache_mode;
@@ -3582,8 +3453,8 @@ create table boolp_t partition of boolp for values in('t');
 create table boolp_f partition of boolp for values in('f');
 explain (analyze, costs off, summary off, timing off)
 select * from boolp where a = (select value from boolvalues where value);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Gather Motion 3:1  (slice3; segments: 3) (actual rows=1 loops=1)
@@ -3594,18 +3465,13 @@ select * from boolp where a = (select value from boolvalues where value);
                Filter: (a = $0)
          ->  Seq Scan on boolp_t (never executed)
                Filter: (a = $0)
-   (slice0)    Executor memory: 54K bytes.
-   (slice1)    Executor memory: 53K bytes avg x 3 workers, 53K bytes max (seg0).
-   (slice2)    Executor memory: 39K bytes.
-   (slice3)    Executor memory: 37K bytes avg x 3 workers, 37K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(16 rows)
+(11 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from boolp where a = (select value from boolvalues where not value);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Gather Motion 3:1  (slice3; segments: 3) (actual rows=1 loops=1)
@@ -3616,13 +3482,8 @@ select * from boolp where a = (select value from boolvalues where not value);
                Filter: (a = $0)
          ->  Seq Scan on boolp_t (never executed)
                Filter: (a = $0)
-   (slice0)    Executor memory: 54K bytes.
-   (slice1)    Executor memory: 51K bytes avg x 3 workers, 51K bytes max (seg0).
-   (slice2)    Executor memory: 40K bytes.
-   (slice3)    Executor memory: 37K bytes avg x 3 workers, 37K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(16 rows)
+(11 rows)
 
 drop table boolp;
 --
@@ -3682,23 +3543,19 @@ execute mt_q1(0);
 (3 rows)
 
 explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=2 loops=1)
    Merge Key: ma_test_p2.b
-   ->  Sort (actual rows=1 loops=1)
+   ->  Merge Append (actual rows=1 loops=1)
          Sort Key: ma_test_p2.b
-         ->  Append (actual rows=1 loops=1)
-               Subplans Removed: 1
-               ->  Seq Scan on ma_test_p2 (actual rows=1 loops=1)
-                     Filter: ((a >= $1) AND ((a % 10) = 5))
-               ->  Seq Scan on ma_test_p3 (actual rows=1 loops=1)
-                     Filter: ((a >= $1) AND ((a % 10) = 5))
-   (slice0)    Executor memory: 53K bytes.
-   (slice1)    Executor memory: 58K bytes avg x 3 workers, 58K bytes max (seg0).
- Memory used:  128000kB
+         Subplans Removed: 1
+         ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1 loops=1)
+               Filter: ((a >= $1) AND ((a % 10) = 5))
+         ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
+               Filter: ((a >= $1) AND ((a % 10) = 5))
  Optimizer: Postgres query optimizer
-(14 rows)
+(10 rows)
 
 execute mt_q1(15);
  a  
@@ -3708,21 +3565,17 @@ execute mt_q1(15);
 (2 rows)
 
 explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
    Merge Key: ma_test_p3.b
-   ->  Sort (actual rows=1 loops=1)
+   ->  Merge Append (actual rows=1 loops=1)
          Sort Key: ma_test_p3.b
-         ->  Append (actual rows=1 loops=1)
-               Subplans Removed: 2
-               ->  Seq Scan on ma_test_p3 (actual rows=1 loops=1)
-                     Filter: ((a >= $1) AND ((a % 10) = 5))
-   (slice0)    Executor memory: 49K bytes.
-   (slice1)    Executor memory: 48K bytes avg x 3 workers, 48K bytes max (seg0).
- Memory used:  128000kB
+         Subplans Removed: 2
+         ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
+               Filter: ((a >= $1) AND ((a % 10) = 5))
  Optimizer: Postgres query optimizer
-(12 rows)
+(8 rows)
 
 execute mt_q1(25);
  a  
@@ -3732,21 +3585,17 @@ execute mt_q1(25);
 
 -- Ensure MergeAppend behaves correctly when no subplans match
 explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    Merge Key: ma_test_p1.b
-   ->  Sort (never executed)
+   ->  Merge Append (never executed)
          Sort Key: ma_test_p1.b
-         ->  Append (never executed)
-               Subplans Removed: 2
-               ->  Seq Scan on ma_test_p1 (never executed)
-                     Filter: ((a >= $1) AND ((a % 10) = 5))
-   (slice0)    Executor memory: 49K bytes.
-   (slice1)    Executor memory: 48K bytes avg x 3 workers, 48K bytes max (seg0).
- Memory used:  128000kB
+         Subplans Removed: 2
+         ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 (never executed)
+               Filter: ((a >= $1) AND ((a % 10) = 5))
  Optimizer: Postgres query optimizer
-(12 rows)
+(8 rows)
 
 execute mt_q1(35);
  a 
@@ -3756,30 +3605,28 @@ execute mt_q1(35);
 deallocate mt_q1;
 -- ensure initplan params properly prune partitions
 explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=20 loops=1)
    Merge Key: ma_test_p1.b
-   InitPlan 1 (returns $0)  (slice2)
-     ->  Aggregate (actual rows=1 loops=1)
-           ->  Gather Motion 3:1  (slice3; segments: 3) (actual rows=10 loops=1)
-                 ->  Seq Scan on ma_test_p2 ma_test_p2_1 (actual rows=5 loops=1)
-   ->  Sort (actual rows=8 loops=1)
+   InitPlan 2 (returns $1)  (slice2)
+     ->  Result (actual rows=1 loops=1)
+           InitPlan 1 (returns $0)  (slice3)
+             ->  Limit (actual rows=1 loops=1)
+                   ->  Gather Motion 3:1  (slice4; segments: 3) (actual rows=1 loops=1)
+                         Merge Key: ma_test_p2_1.b
+                         ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test_p2_1 (actual rows=5 loops=1)
+                               Index Cond: (b IS NOT NULL)
+   ->  Merge Append (actual rows=8 loops=1)
          Sort Key: ma_test_p1.b
-         ->  Append (actual rows=8 loops=1)
-               ->  Seq Scan on ma_test_p1 (never executed)
-                     Filter: (a >= $0)
-               ->  Seq Scan on ma_test_p2 (actual rows=5 loops=1)
-                     Filter: (a >= $0)
-               ->  Seq Scan on ma_test_p3 (actual rows=4 loops=1)
-                     Filter: (a >= $0)
-   (slice0)    Executor memory: 81K bytes.
-   (slice1)    Executor memory: 67K bytes avg x 3 workers, 67K bytes max (seg0).
-   (slice2)    Executor memory: 63K bytes.
-   (slice3)    Executor memory: 38K bytes avg x 3 workers, 38K bytes max (seg0).
- Memory used:  128000kB
+         ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 (never executed)
+               Filter: (a >= $1)
+         ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=5 loops=1)
+               Filter: (a >= $1)
+         ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=4 loops=1)
+               Filter: (a >= $1)
  Optimizer: Postgres query optimizer
-(21 rows)
+(19 rows)
 
 reset enable_seqscan;
 reset enable_sort;
@@ -4244,19 +4091,15 @@ create table listp2 partition of listp for values in(2) partition by list(b);
 create table listp2_10 partition of listp2 for values in (10);
 explain (analyze, costs off, summary off, timing off)
 select * from listp where a = (select 2) and b <> 10;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
    ->  Seq Scan on listp1 (never executed)
          Filter: ((b <> 10) AND (a = $0))
-   (slice0)    Executor memory: 39K bytes.
-   (slice1)    Executor memory: 39K bytes avg x 3 workers, 39K bytes max (seg0).
-   (slice2)    Executor memory: 11K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(10 rows)
+(6 rows)
 
 --
 -- check that a partition directly accessed in a query is excluded with
