@@ -216,6 +216,7 @@ typedef enum ExprEvalOp
 	EEOP_XMLEXPR,
 	EEOP_AGGREF,
 	EEOP_GROUPING_FUNC,
+	EEOP_GROUP_ID,
 	EEOP_GROUPING_SET_ID,
 	EEOP_AGGEXPR_ID,
 	EEOP_WINDOW_FUNC,
@@ -574,6 +575,12 @@ typedef struct ExprEvalStep
 			AggState   *parent; /* parent Agg */
 			List	   *clauses;	/* integer list of column numbers */
 		}			grouping_func;
+
+		/* for EEOP_GROUP_ID */
+		struct
+		{
+			AggState   *parent; /* parent Agg */
+		}			group_id;
 
 		/* for EEOP_GROUPING_SET_ID */
 		struct

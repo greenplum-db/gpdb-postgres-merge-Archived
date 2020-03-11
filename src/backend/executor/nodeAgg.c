@@ -1131,6 +1131,7 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 		Bitmapset  *grouped_cols = aggstate->phase->grouped_cols[currentSet];
 
 		aggstate->grouped_cols = grouped_cols;
+		aggstate->group_id = aggstate->phase->group_id[currentSet];
 		aggstate->gset_id = aggstate->phase->gset_id[currentSet];
 
 		if (TTS_EMPTY(slot))
@@ -2382,6 +2383,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->phases[0].gset_lengths = palloc(numHashes * sizeof(int));
 		aggstate->phases[0].grouped_cols = palloc(numHashes * sizeof(Bitmapset *));
 		aggstate->phases[0].gset_id      = palloc(numHashes * sizeof(int));
+		aggstate->phases[0].group_id     = palloc0(numHashes * sizeof(int));
 	}
 
 	phase = 0;
@@ -2429,6 +2431,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			phasedata->grouped_cols[i] = cols;
 			phasedata->gset_id[i] = numgsets++;
 
+			if (i >= 1)
+			{
+				if (bms_equal(phasedata->grouped_cols[i], phasedata->grouped_cols[i - 1]))
+					phasedata->group_id[i] = phasedata->group_id[i - 1] + 1;
+			}
+
 			all_grouped_cols = bms_add_members(all_grouped_cols, cols);
 			continue;
 		}
@@ -2444,6 +2452,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				phasedata->gset_lengths = palloc(num_sets * sizeof(int));
 				phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
 				phasedata->gset_id = palloc(num_sets * sizeof(int));
+				phasedata->group_id = palloc0(num_sets * sizeof(int));
 
 				i = 0;
 				foreach(l, aggnode->groupingSets)
@@ -2458,6 +2467,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 					phasedata->grouped_cols[i] = cols;
 					phasedata->gset_id[i] = numgsets++;
 					phasedata->gset_lengths[i] = current_length;
+					if (i > 0)
+					{
+						if (bms_equal(phasedata->grouped_cols[i], phasedata->grouped_cols[i - 1]))
+							phasedata->group_id[i] = phasedata->group_id[i - 1] + 1;
+					}
 
 					++i;
 				}
@@ -2471,6 +2485,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 				phasedata->gset_lengths = NULL;
 				phasedata->grouped_cols = NULL;
+				phasedata->group_id = NULL;
 				phasedata->gset_id = NULL;
 			}
 

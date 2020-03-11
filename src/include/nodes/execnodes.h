@@ -2671,9 +2671,10 @@ typedef struct AggState
 										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */
 
-	int			gset_id;		/* GROUP_ID in current projection. This is passed
+	int			group_id;		/* GROUP_ID in current projection. This is passed
 								 * to GroupingSetId expressions, similar to the
 								 * 'grouped_cols' value. */
+	int			gset_id;
 
 	/* if input tuple has an AggExprId, save the Attribute Number */
 	Index       AggExprId_AttrNum;

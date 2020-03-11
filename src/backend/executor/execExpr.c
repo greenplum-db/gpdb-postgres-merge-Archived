@@ -822,6 +822,34 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
+		case T_GroupId:
+			{
+				if (state->parent && IsA(state->parent, HashJoinState))
+				{
+					/*
+					 * GPDB_95_MERGE_FIXME: GPDB may choose a HashJoin to combine multiple
+					 * aggregations in targetlist, however, for queries with multiple
+					 * groups, the HashJoin combination will not be taken. For a single
+					 * group, the GROUP_ID() function should always return 0
+					 */
+					scratch.opcode = EEOP_CONST;
+					scratch.d.constval.value = Int32GetDatum(0);
+					scratch.d.constval.isnull = false;
+
+					ExprEvalPushStep(state, &scratch);
+				}
+				else if (!state->parent || !IsA(state->parent, AggState) || !IsA(state->parent->plan, Agg))
+					elog(ERROR, "parent of GROUP_ID is not Agg node");
+				else
+				{
+					scratch.opcode = EEOP_GROUP_ID;
+					scratch.d.group_id.parent = (AggState *) state->parent;
+
+					ExprEvalPushStep(state, &scratch);
+				}
+			}
+			break;
+
 		case T_GroupingSetId:
 			{
 				if (!state->parent || !IsA(state->parent, AggState) ||
