@@ -3495,11 +3495,11 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 bool
 isJoinExprNull(List *joinExpr, ExprContext *econtext)
 {
-
-	Assert(NULL != joinExpr);
-	bool joinkeys_null = true;
-
 	ListCell   *lc;
+	bool		joinkeys_null = true;
+
+	Assert(joinExpr != NIL);
+
 	foreach(lc, joinExpr)
 	{
 		ExprState  *keyexpr = (ExprState *) lfirst(lc);
