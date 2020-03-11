@@ -19285,12 +19285,6 @@ dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo)
 					tbinfo->dobj.namespace->dobj.name,
 					tbinfo->rolname,
 					coninfo->dobj.catId, 0,
-<<<<<<< HEAD
-					coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
-
-	destroyPQExpBuffer(conprefix);
-	free(qtabname);
-=======
 					coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(conprefix);
@@ -19318,7 +19312,6 @@ findLastBuiltinOid_V71(Archive *fout)
 	PQclear(res);
 
 	return last_oid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -19371,10 +19364,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  "SELECT 'bigint' AS sequence_type, "
 						  "start_value, increment_by, max_value, min_value, "
 						  "cache_value, is_cycled FROM %s",
-<<<<<<< HEAD
-						  bufx, bufm,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  fmtQualifiedDumpable(tbinfo));
 	}
 	else
@@ -19383,10 +19372,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  "SELECT 'bigint' AS sequence_type, "
 						  "0 AS start_value, increment_by, max_value, min_value, "
 						  "cache_value, is_cycled FROM %s",
-<<<<<<< HEAD
-						  bufx, bufm,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  fmtQualifiedDumpable(tbinfo));
 	}
 
@@ -19409,10 +19394,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	cache = PQgetvalue(res, 0, 5);
 	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
 
-<<<<<<< HEAD
-	appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n",
-					  fmtQualifiedDumpable(tbinfo));
-=======
 	/* Calculate default limits for a sequence of this type */
 	is_ascending = (incby[0] != '-');
 	if (strcmp(seqtype, "smallint") == 0)
@@ -19457,7 +19438,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n",
 						  fmtQualifiedDumpable(tbinfo));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	resetPQExpBuffer(query);
 
@@ -19970,24 +19950,16 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	if (!rinfo->separate)
 		return;
 
-<<<<<<< HEAD
-=======
 	/*
 	 * If it's an ON SELECT rule, we want to print it as a view definition,
 	 * instead of a rule.
 	 */
 	is_view = (rinfo->ev_type == '1' && rinfo->is_instead);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	query = createPQExpBuffer();
 	cmd = createPQExpBuffer();
 	delcmd = createPQExpBuffer();
 	ruleprefix = createPQExpBuffer();
-<<<<<<< HEAD
-
-	qtabname = pg_strdup(fmtId(tbinfo->dobj.name));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	qtabname = pg_strdup(fmtId(tbinfo->dobj.name));
 
@@ -20062,18 +20034,6 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 
 	if (is_view)
 	{
-<<<<<<< HEAD
-		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (",
-						  fmtQualifiedDumpable(tbinfo));
-		appendReloptionsArrayAH(cmd, rinfo->reloptions, "", fout);
-		appendPQExpBufferStr(cmd, ");\n");
-	}
-
-	appendPQExpBuffer(delcmd, "DROP RULE %s ",
-					  fmtId(rinfo->dobj.name));
-	appendPQExpBuffer(delcmd, "ON %s;\n",
-					  fmtQualifiedDumpable(tbinfo));
-=======
 		/*
 		 * We can't DROP a view's ON SELECT rule.  Instead, use CREATE OR
 		 * REPLACE VIEW to replace the rule with something with minimal
@@ -20094,7 +20054,6 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 		appendPQExpBuffer(delcmd, "ON %s;\n",
 						  fmtQualifiedDumpable(tbinfo));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	appendPQExpBuffer(ruleprefix, "RULE %s ON",
 					  fmtId(rinfo->dobj.name));
