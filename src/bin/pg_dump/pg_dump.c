@@ -7833,15 +7833,11 @@ getTables(Archive *fout, int *numTables)
 		 * We only need to lock the table for certain components; see
 		 * pg_dump.h
 		 */
-<<<<<<< HEAD
 		/* GPDB_96_MERGE_FIXME: Is the parrelid check still needed? */
-		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION &&
-			tblinfo[i].parrelid == 0 &&
-=======
 		if (tblinfo[i].dobj.dump &&
 			(tblinfo[i].relkind == RELKIND_RELATION ||
 			 tblinfo->relkind == RELKIND_PARTITIONED_TABLE) &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			tblinfo[i].parrelid == 0 &&
 			(tblinfo[i].dobj.dump & DUMP_COMPONENTS_REQUIRING_LOCK))
 		{
 			resetPQExpBuffer(query);
@@ -14982,14 +14978,6 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 
 	appendPQExpBuffer(delq, "DROP COLLATION %s;\n",
 					  fmtQualifiedDumpable(collinfo));
-<<<<<<< HEAD
-
-	appendPQExpBuffer(q, "CREATE COLLATION %s (lc_collate = ",
-					  fmtQualifiedDumpable(collinfo));
-	appendStringLiteralAH(q, collcollate, fout);
-	appendPQExpBufferStr(q, ", lc_ctype = ");
-	appendStringLiteralAH(q, collctype, fout);
-=======
 
 	appendPQExpBuffer(q, "CREATE COLLATION %s (",
 					  fmtQualifiedDumpable(collinfo));
@@ -15040,7 +15028,6 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 		}
 	}
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	appendPQExpBufferStr(q, ");\n");
 
 	if (dopt->binary_upgrade)
@@ -18265,7 +18252,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 									  tbinfo->attlen[j],
 									  tbinfo->attalign[j]);
 					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
-<<<<<<< HEAD
+
 					if (gp_partitioning_available)
 					{
 						/*
