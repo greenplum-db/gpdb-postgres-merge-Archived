@@ -16,6 +16,7 @@
 #include "access/table.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_utilcmd.h"
@@ -395,7 +396,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->tablespacename = NULL;   // FIXME: copy from parent stmt?
 	childstmt->accessMethod = get_am_name(parentrel->rd_rel->relam);
 	childstmt->if_not_exists = false;
-	childstmt->distributedBy = NULL; // FIXME: copy from parent stmt?
+	childstmt->distributedBy = make_distributedby_for_rel(parentrel);
 	childstmt->partitionBy = NULL;
 	childstmt->relKind = 0;
 	childstmt->ownerid = parentrel->rd_rel->relowner;
