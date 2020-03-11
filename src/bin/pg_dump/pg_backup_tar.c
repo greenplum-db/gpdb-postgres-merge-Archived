@@ -469,7 +469,7 @@ newTempFile(void)
 			if (!tmpdirChecked)
 			{
 				tmpdirChecked = 1;
-				write_msg(modulename, "TMPDIR value \"%s\" is not an existing directory; using system default\n", tmpdir);
+				pg_log_info("TMPDIR value \"%s\" is not an existing directory; using system default", tmpdir);
 			}
 			tmpdir = NULL;
 		}

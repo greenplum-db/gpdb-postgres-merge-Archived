@@ -51,6 +51,7 @@
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
 #include "catalog/pg_default_acl_d.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_server_d.h"
 #include "catalog/pg_largeobject_d.h"
 #include "catalog/pg_largeobject_metadata_d.h"
@@ -331,7 +332,8 @@ static void binary_upgrade_set_pg_class_oids_impl(Archive *fout,
 static void dumpSearchPath(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 													 PQExpBuffer upgrade_buffer,
-													 Oid pg_type_oid,
+													 Oid pg_type_oid, Oid pg_type_ns_oid,
+													 char *pg_type_name,
 													 bool force_array_type);
 static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 													PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
@@ -395,7 +397,7 @@ static void error_unsupported_server_version(Archive *fout) pg_attribute_noretur
 static void
 error_unsupported_server_version(Archive *fout)
 {
-	write_msg(NULL, "unexpected server version %d\n", fout->remoteVersion);
+    pg_log_warning("unexpected server version %d", fout->remoteVersion);
 	exit_nicely(1);
 }
 
@@ -820,7 +822,7 @@ main(int argc, char **argv)
 			case 1000:				/* gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
-					write_msg(NULL, "options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n");
+					pg_log_warning("options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together");
 					exit(1);
 				}
 				gp_syntax_option = GPS_ENABLED;
@@ -829,7 +831,7 @@ main(int argc, char **argv)
 			case 1001:				/* no-gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
-					write_msg(NULL, "options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n");
+					pg_log_warning("options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together");
 					exit(1);
 				}
 				gp_syntax_option = GPS_DISABLED;
@@ -1003,9 +1005,7 @@ main(int argc, char **argv)
 		case GPS_ENABLED:
 			dumpGpPolicy = isGPbackend;
 			if (!isGPbackend)
-			{
-				write_msg(NULL, "Server is not a Greenplum Database instance; --gp-syntax option ignored.\n");
-			}
+				pg_log_warning("server is not a Greenplum Database instance; --gp-syntax option ignored");
 			break;
 	}
 
@@ -1728,7 +1728,7 @@ expand_oid_patterns(SimpleStringList *patterns, SimpleOidList *oids)
 		char *oidstr = pg_strdup(cell->val);
 		if (oidstr == NULL)
 		{
-			write_msg(NULL, "memory allocation failed for function \"expand_oid_patterns\"\n");
+			pg_log_warning("memory allocation failed for function \"expand_oid_patterns\"");
 			exit_nicely(1);
 		}
 
@@ -1813,6 +1813,8 @@ checkExtensionMembership(DumpableObject *dobj, Archive *fout)
 static void
 selectDumpableNamespace(NamespaceInfo *nsinfo, Archive *fout)
 {
+	DumpOptions *dopt = fout->dopt;
+
 	/*
 	 * If specific tables are being dumped, do not dump any complete
 	 * namespaces. If specific namespaces are being dumped, dump just those
@@ -3015,23 +3017,11 @@ dumpPreassignedOidArchiveEntry(Archive *fout, BinaryUpgradeInfo *binfo)
 
 	char *tag = pg_strdup("binary_upgrade");
 
-	ArchiveEntry(fout,
-				 maxoidid,		/* catalog ID */
-				 binfo->dobj.dumpId,		/* dump ID */
-				 tag,		/* Name */
-				 NULL,			/* Namespace */
-				 NULL,			/* Tablespace */
-				 "",			/* Owner */
-				 false,			/* with oids */
-				 tag,	/* Desc */
-				 SECTION_PRE_DATA,		/* Section */
-				 setoidquery->data, /* Create */
-				 "",	/* Del */
-				 NULL,			/* Copy */
-				 NULL,			/* Deps */
-				 0,				/* # Deps */
-				 NULL,			/* Dumper */
-				 NULL);			/* Dumper Arg */
+	ArchiveEntry(fout, maxoidid, binfo->dobj.dumpId,
+				 ARCHIVE_OPTS(.tag = tag,
+							  .description = tag,
+							  .section = SECTION_PRE_DATA,
+							  .createStmt = setoidquery->data));
 
 	destroyPQExpBuffer(setoidquery);
 	free(tag);
@@ -3567,10 +3557,10 @@ dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 	/*
 	 * If we're upgrading from GPDB 5 or below, use the legacy hash ops.
 	 */
-	if (binary_upgrade && server_version < 90400)
+	if (AH->dopt->binary_upgrade && AH->remoteVersion < 90400)
 	{
 		makeAlterConfigCommand(conn, "gp_use_legacy_hashops=on",
-							   "DATABASE", dbname, NULL, NULL);
+							   "DATABASE", dbname, NULL, NULL, outbuf);
 	}
 
 	destroyPQExpBuffer(buf);
@@ -4787,7 +4777,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 	pg_type_array_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typarray")));
 	pg_type_array_nsoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typnamespace")));
-	pg_type_array_name = PQgetvalue(upgrade_res, 0, PQfnumber(res, "typname"));
+	pg_type_array_name = PQgetvalue(res, 0, PQfnumber(res, "typname"));
 
 	PQclear(res);
 
@@ -4819,7 +4809,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 		pg_type_array_oid = next_possible_free_oid;
 		pg_type_array_nsoid = pg_type_ns_oid;
-		pg_type_array_name = psprintf("_%s", pg_type_name);"_%s", pg_type_name);
+		pg_type_array_name = psprintf("_%s", pg_type_name);
 		free_name = true;
 	}
 
@@ -4835,7 +4825,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 						  pg_type_array_name);
 	}
 
-	if (free_type_name)
+	if (free_name)
 		pfree(pg_type_array_name);
 	destroyPQExpBuffer(upgrade_query);
 }
@@ -4953,7 +4943,7 @@ binary_upgrade_set_type_oids_for_ao(Archive *fout,
 									char *ao_aux_typname)
 {
 	if (!ao_aux_typname)
-		exit_horribly(NULL, "binary_upgrade_set_type_oids_for_ao() requires an AO auxiliary type name");
+		fatal("binary_upgrade_set_type_oids_for_ao() requires an AO auxiliary type name");
 
 	return binary_upgrade_set_type_oids_by_rel_oid_impl(fout, upgrade_buffer,
 														pg_rel_oid, ao_aux_typname);
@@ -4965,7 +4955,7 @@ create_ao_relname(char *dst, size_t len, const char *prefix, Oid auxoid)
 	size_t actual = snprintf(dst, len, "%s_%u", prefix, auxoid);
 
 	if (actual >= len)
-		exit_horribly(NULL, "create_ao_relname: destination buffer is too short");
+		fatal("create_ao_relname: destination buffer is too short");
 }
 
 static void
@@ -4974,7 +4964,7 @@ create_ao_idxname(char *dst, size_t len, const char *prefix, Oid auxoid)
 	size_t actual = snprintf(dst, len, "%s_%u_index", prefix, auxoid);
 
 	if (actual >= len)
-		exit_horribly(NULL, "create_ao_idxname: destination buffer is too short");
+		fatal("create_ao_idxname: destination buffer is too short");
 }
 
 /*
@@ -5185,7 +5175,7 @@ binary_upgrade_set_pg_class_oids_for_ao(Archive *fout,
 										char *ao_aux_relname)
 {
 	if (!ao_aux_relname)
-		exit_horribly(NULL, "binary_upgrade_set_pg_class_oids_for_ao() requires an AO auxiliary relname");
+		fatal("binary_upgrade_set_pg_class_oids_for_ao() requires an AO auxiliary relname");
 
 	binary_upgrade_set_pg_class_oids_impl(fout, upgrade_buffer, pg_class_oid,
 										  is_index, ao_aux_relname);
@@ -5808,7 +5798,7 @@ getTypeStorageOptions(Archive *fout, int *numTypes)
 		AssignDumpId(&tstorageoptions[i].dobj);
 		tstorageoptions[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_typname));
 		tstorageoptions[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
-		tstorageoptions[i].dobj.namespace = findNamespace(fout, atooid(PQgetvalue(res, i, i_typnamespace)),tstorageoptions[i].dobj.catId.oid);
+		tstorageoptions[i].dobj.namespace = findNamespace(fout, atooid(PQgetvalue(res, i, i_typnamespace)));
 		tstorageoptions[i].typoptions = pg_strdup(PQgetvalue(res, i, i_typoptions));
 		tstorageoptions[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 	}
@@ -6607,8 +6597,8 @@ getExtProtocols(Archive *fout, int *numExtProtocols)
 		ptcinfo[i].dobj.namespace = NULL;
 		ptcinfo[i].ptcowner = pg_strdup(PQgetvalue(res, i, i_rolname));
 		if (strlen(ptcinfo[i].ptcowner) == 0)
-			write_msg(NULL, "WARNING: owner of external protocol \"%s\" appears to be invalid\n",
-						ptcinfo[i].dobj.name);
+			pg_log_warning("owner of external protocol \"%s\" appears to be invalid",
+						   ptcinfo[i].dobj.name);
 
 		if (PQgetisnull(res, i, i_ptcreadid))
 			ptcinfo[i].ptcreadid = InvalidOid;
@@ -6928,19 +6918,14 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastreloptions;
 	int			i_reloftype;
 	int			i_relpages;
-<<<<<<< HEAD
 	int			i_parrelid;
 	int			i_parlevel;
-	int			i_changed_acl;
-
-=======
 	int			i_is_identity_sequence;
 	int			i_changed_acl;
 	int			i_partkeydef;
 	int			i_ispartition;
 	int			i_partbound;
 	int			i_amname;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Find all the tables and table-like objects.
@@ -7040,12 +7025,9 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-=======
 						  "c.relkind = '%c' AND EXISTS (SELECT 1 FROM pg_depend WHERE classid = 'pg_class'::regclass AND objid = c.oid AND objsubid = 0 AND refclassid = 'pg_class'::regclass AND deptype = 'i') AS is_identity_sequence, "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
@@ -7072,17 +7054,13 @@ getTables(Archive *fout, int *numTables)
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
 						  "AND pip.objsubid = 0) "
-<<<<<<< HEAD
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
 						  "JOIN pg_exttable e ON p.parchildrelid=e.reloid WHERE e.reloid IS NULL)"
-=======
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  acl_subquery->data,
 						  racl_subquery->data,
@@ -7145,35 +7123,26 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
 					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
 						  "JOIN pg_exttable e ON p.parchildrelid=e.reloid WHERE e.reloid IS NULL)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -7213,35 +7182,26 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
 						  "JOIN pg_exttable e ON p.parchildrelid=e.reloid WHERE e.reloid IS NULL)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -7280,35 +7240,26 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
 						  "JOIN pg_exttable e ON p.parchildrelid=e.reloid WHERE e.reloid IS NULL)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -7346,35 +7297,26 @@ getTables(Archive *fout, int *numTables)
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
 						  "JOIN pg_exttable e ON p.parchildrelid=e.reloid WHERE e.reloid IS NULL)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -7412,30 +7354,22 @@ getTables(Archive *fout, int *numTables)
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
@@ -7475,30 +7409,22 @@ getTables(Archive *fout, int *numTables)
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
 						  "tc.reloptions AS toast_reloptions, "
-<<<<<<< HEAD
 						  "p.parrelid as parrelid, "
 						  "pl.parlevel as parlevel, "
-						  "NULL AS changed_acl "
-=======
 						  "NULL AS changed_acl, "
 						  "NULL AS partkeydef, "
 						  "false AS ispartition, "
 						  "NULL AS partbound "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
 						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
@@ -7551,22 +7477,16 @@ getTables(Archive *fout, int *numTables)
 						  "d.classid = c.tableoid AND d.objid = c.oid AND "
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-<<<<<<< HEAD
-					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
 						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
 						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0) "
 						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') %s "
 						  "AND c.relnamespace <> 3012 " /* BM_BITMAPINDEX_NAMESPACE in GPDB 5 and below */
-=======
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
-<<<<<<< HEAD
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
 						  fout->remoteVersion >= 80209 ?
 						  "AND c.oid NOT IN (select p.parchildrelid from pg_partition_rule p left "
@@ -7575,11 +7495,6 @@ getTables(Archive *fout, int *numTables)
 	else
 	{
 		error_unsupported_server_version(fout);
-=======
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else
-	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
 		 * owning column, if any
@@ -7622,7 +7537,6 @@ getTables(Archive *fout, int *numTables)
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -7676,12 +7590,9 @@ getTables(Archive *fout, int *numTables)
 	i_checkoption = PQfnumber(res, "checkoption");
 	i_toastreloptions = PQfnumber(res, "toast_reloptions");
 	i_reloftype = PQfnumber(res, "reloftype");
-<<<<<<< HEAD
 	i_parrelid = PQfnumber(res, "parrelid");
 	i_parlevel = PQfnumber(res, "parlevel");
-=======
 	i_is_identity_sequence = PQfnumber(res, "is_identity_sequence");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	i_changed_acl = PQfnumber(res, "changed_acl");
 	i_partkeydef = PQfnumber(res, "partkeydef");
 	i_ispartition = PQfnumber(res, "ispartition");
@@ -7757,7 +7668,6 @@ getTables(Archive *fout, int *numTables)
 		else
 			tblinfo[i].checkoption = pg_strdup(PQgetvalue(res, i, i_checkoption));
 		tblinfo[i].toast_reloptions = pg_strdup(PQgetvalue(res, i, i_toastreloptions));
-<<<<<<< HEAD
 		tblinfo[i].parrelid = atooid(PQgetvalue(res, i, i_parrelid));
 		if (tblinfo[i].parrelid != 0)
 		{
@@ -7774,12 +7684,10 @@ getTables(Archive *fout, int *numTables)
 			tblinfo[i].parparent = false;
 		else
 			tblinfo[i].parparent = true;
-=======
 		if (PQgetisnull(res, i, i_amname))
 			tblinfo[i].amname = NULL;
 		else
 			tblinfo[i].amname = pg_strdup(PQgetvalue(res, i, i_amname));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* other fields were zeroed above */
 
@@ -9582,7 +9490,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		 */
 		if (gp_attribute_encoding_available && i_attencoding < 0)
 		{
-			write_msg(NULL, "attencoding column required in table attributes query");
+			pg_log_warning("attencoding column required in table attributes query");
 			exit_nicely(1);
 		}
 
@@ -12070,30 +11978,19 @@ dumpTypeStorageOptions(Archive *fout, TypeStorageOptions *tstorageoptions)
 					  tstorageoptions->dobj.name,
 					  tstorageoptions->typoptions);
 
-	ArchiveEntry(	fout
-	            , tstorageoptions->dobj.catId                 /* catalog ID  */
-	            , tstorageoptions->dobj.dumpId                /* dump ID     */
-	            , tstorageoptions->dobj.name                  /* type name   */
-	            , tstorageoptions->dobj.namespace->dobj.name  /* name space  */
-	            , NULL                                        /* table space */
-	            , tstorageoptions->rolname                    /* owner name  */
-	            , false                                       /* with oids   */
-	            , "TYPE STORAGE OPTIONS"                      /* Desc        */
-				, SECTION_PRE_DATA
-	            , q->data                                     /* ALTER...    */
-	            , ""                                          /* Del         */
-	            , NULL                                        /* Copy        */
-	            , NULL                                        /* Deps        */
-	            , 0                                           /* num Deps    */
-	            , NULL                                        /* Dumper      */
-	            , NULL                                        /* Dumper Arg  */
-	            );
+	ArchiveEntry(fout,
+				 tstorageoptions->dobj.catId,
+				 tstorageoptions->dobj.dumpId,
+				 ARCHIVE_OPTS(.tag = tstorageoptions->dobj.name,
+				 			  .namespace = tstorageoptions->dobj.namespace->dobj.name,
+							  .owner = tstorageoptions->rolname,
+							  .description = "TYPE STORAGE OPTIONS",
+							  .section = SECTION_PRE_DATA,
+							  .createStmt = q->data));
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
-
-
-}  /* end dumpTypeStorageOptions */
+}
 
 /*
  * dumpDomain
@@ -13026,7 +12923,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	  **argnames = NULL;
 	bool		isGE43 = isGPDB4300OrLater(fout);
 	bool		isGE50 = isGPDB5000OrLater(fout);
-	bool		isGE60 = isGPDB6000OrLater(fout);
 	char	  **configitems = NULL;
 	int			nconfigitems = 0;
 	const char *keyword;
@@ -13152,93 +13048,39 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-<<<<<<< HEAD
-					"pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
-		  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
-					 "pg_catalog.pg_get_function_result(oid) AS funcresult, "
-						  "proiswin as proiswindow, provolatile, proisstrict, prosecdef, "
-						  "false AS proleakproof, "
-						  "proconfig, procost, prorows, prodataaccess, "
-						  "'a' as proexeclocation, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname, "
-						  "(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
-=======
 						  "pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
-						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind, "
-						  "provolatile, proisstrict, prosecdef, "
-						  "false AS proleakproof, "
-						  " proconfig, procost, prorows, "
-						  "'-' AS prosupport, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-						  "FROM pg_catalog.pg_proc "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  finfo->dobj.catId.oid);
-	}
-<<<<<<< HEAD
-=======
-	else if (fout->remoteVersion >= 80300)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT proretset, prosrc, probin, "
-						  "proallargtypes, proargmodes, proargnames, "
-						  "'f' AS prokind, "
+						  "CASE WHEN proiswin THEN 'w' ELSE 'f' END AS prokind, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  "proconfig, procost, prorows, "
+						  "prodataaccess, "
+						  "'a' as proexeclocation, "
 						  "'-' AS prosupport, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname, "
+						  "(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
-	else if (fout->remoteVersion >= 80100)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT proretset, prosrc, probin, "
-						  "proallargtypes, proargmodes, proargnames, "
-						  "'f' AS prokind, "
-						  "provolatile, proisstrict, prosecdef, "
-						  "false AS proleakproof, "
-						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
-						  "'-' AS prosupport, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
-						  "FROM pg_catalog.pg_proc "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  finfo->dobj.catId.oid);
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	else
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-<<<<<<< HEAD
 						  "proallargtypes, proargmodes, proargnames, "
+						  "'f' AS prokind, "
 						  "proiswin as proiswindow, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  "null as proconfig, 0 as procost, 0 as prorows, %s"
+						  "'-' AS prosupport, "
 						  "'a' as proexeclocation, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname, "
 						  "(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  (isGE43 ? "prodataaccess, " : ""),
-=======
-						  "null AS proallargtypes, "
-						  "null AS proargmodes, "
-						  "proargnames, "
-						  "'f' AS prokind, "
-						  "provolatile, proisstrict, prosecdef, "
-						  "false AS proleakproof, "
-						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
-						  "'-' AS prosupport, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
-						  "FROM pg_catalog.pg_proc "
-						  "WHERE oid = '%u'::pg_catalog.oid",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  finfo->dobj.catId.oid);
 	}
 
@@ -13540,7 +13382,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(q, " EXECUTE ON INITPLAN");
 	else
 	{
-		write_msg(NULL, "unrecognized proexeclocation value: %c\n", proexeclocation[0]);
+		pg_log_warning("unrecognized proexeclocation value: %c",
+					   proexeclocation[0]);
 		exit_nicely(1);
 	}
 
@@ -14187,7 +14030,7 @@ getFormattedOperatorName(Archive *fout, const char *oproid)
  * caller should ensure we are in the proper schema, because the results
  * are search path dependent!
  */
-static const char *
+static char *
 convertTSFunction(Archive *fout, Oid funcOid)
 {
 	char	   *result;
@@ -15698,8 +15541,8 @@ getFunctionName(Archive *fout, Oid oid)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query yielded %d rows instead of one: %s\n",
-				  ntups, query->data);
+		pg_log_warning("query yielded %d rows instead of one: %s",
+					   ntups, query->data);
 		exit_nicely(1);
 	}
 
@@ -15866,14 +15709,14 @@ dumpExtProtocol(Archive *fout, ExtProtInfo *ptcinfo)
 					  fmtId(ptcinfo->dobj.name));
 
 	ArchiveEntry(fout, ptcinfo->dobj.catId, ptcinfo->dobj.dumpId,
-				 ptcinfo->dobj.name,
-				 NULL,
-				 NULL,
-				 ptcinfo->ptcowner,
-				 false, "PROTOCOL", SECTION_PRE_DATA,
-				 q->data, delq->data, NULL,
-				 ptcinfo->dobj.dependencies, ptcinfo->dobj.nDeps,
-				 NULL, NULL);
+				 ARCHIVE_OPTS(.tag = ptcinfo->dobj.name,
+							  .owner = ptcinfo->ptcowner,
+							  .description = "PROTOCOL",
+							  .section = SECTION_PRE_DATA,
+							  .createStmt = q->data,
+							  .dropStmt = delq->data,
+							  .deps = ptcinfo->dobj.dependencies,
+							  .nDeps = ptcinfo->dobj.nDeps));
 
 	/* Handle the ACL */
 	namecopy = pg_strdup(fmtId(ptcinfo->dobj.name));
@@ -17248,13 +17091,11 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 		if (PQntuples(res) != 1)
 		{
 			if (PQntuples(res) < 1)
-				write_msg(NULL, "query to obtain definition of external table "
-						  "\"%s\" returned no data\n",
-						  tbinfo->dobj.name);
+				pg_log_warning("query to obtain definition of external table \"%s\" returned no data",
+							   tbinfo->dobj.name);
 			else
-				write_msg(NULL, "query to obtain definition of external table "
-						  "\"%s\" returned more than one definition\n",
-						  tbinfo->dobj.name);
+				pg_log_warning("query to obtain definition of external table \"%s\" returned more than one definition",
+							   tbinfo->dobj.name);
 			exit_nicely(1);
 
 		}
@@ -17374,9 +17215,8 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 				appendPQExpBufferStr(q, "ON ALL ");
 			else
 			{
-				write_msg(NULL, "illegal ON clause catalog information \"%s\" "
-						  "for command '%s' on table \"%s\"\n",
-						  on_clause, command, fmtId(tbinfo->dobj.name));
+				pg_log_warning("illegal ON clause catalog information \"%s\" for command '%s' on table \"%s\"",
+							   on_clause, command, fmtId(tbinfo->dobj.name));
 				exit_nicely(1);
 			}
 		}
@@ -17577,6 +17417,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			j,
 				k;
 	bool		hasExternalPartitions = false;
+	char	   *ftoptions = NULL;
+	char	   *srvname = NULL;
+
 
 	qrelname = pg_strdup(fmtId(tbinfo->dobj.name));
 	qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
@@ -17630,9 +17473,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	}
 	else
 	{
-		char	   *ftoptions = NULL;
-		char	   *srvname = NULL;
-
 		switch (tbinfo->relkind)
 		{
 			case RELKIND_FOREIGN_TABLE:
@@ -18008,11 +17848,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (PQntuples(res) != 1)
 			{
 				if (PQntuples(res) < 1)
-					write_msg(NULL, "query to obtain definition of table \"%s\" returned no data\n",
-							  tbinfo->dobj.name);
+					pg_log_warning("query to obtain definition of table \"%s\" returned no data",
+								   tbinfo->dobj.name);
 				else
-					write_msg(NULL, "query to obtain definition of table \"%s\" returned more than one definition\n",
-							  tbinfo->dobj.name);
+					pg_log_warning("query to obtain definition of table \"%s\" returned more than one definition",
+								   tbinfo->dobj.name);
 				exit_nicely(1);
 			}
 			isPartitioned = !PQgetisnull(res, 0, 0);
@@ -18039,15 +17879,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				if (PQntuples(res) != 1)
 				{
 					if (PQntuples(res) < 1)
-						write_msg(
-								  NULL,
-								  "query to obtain definition of table \"%s\" returned no data\n",
-								  tbinfo->dobj.name);
+						pg_log_warning("query to obtain definition of table \"%s\" returned no data",
+									   tbinfo->dobj.name);
 					else
-						write_msg(
-								  NULL,
-								  "query to obtain definition of table \"%s\" returned more than one definition\n",
-								  tbinfo->dobj.name);
+						pg_log_warning("query to obtain definition of table \"%s\" returned more than one definition",
+									   tbinfo->dobj.name);
 					exit_nicely(1);
 				}
 
@@ -18293,7 +18129,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					if (tbinfo->relkind == RELKIND_RELATION)
 						appendPQExpBuffer(q, "ALTER TABLE %s ",
 										  qualrelname);
-					else if (tbinfo->relkind == RERELKIND_PARTITIONED_TABLE)
+					else if (tbinfo->relkind == RELKIND_PARTITIONED_TABLE)
 						appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 										  qualrelname);
 					else
@@ -20360,8 +20196,8 @@ setExtPartDependency(TableInfo *tblinfo, int numTables)
 		parent = findTableByOid(parrelid);
 		if (!parent)
 		{
-			write_msg(NULL, "parent table (OID %u) of partition \"%s\" (OID %u) not found\n",
-					  parrelid, tbinfo->dobj.name, tbinfo->dobj.catId.oid);
+			pg_log_warning("parent table (OID %u) of partition \"%s\" (OID %u) not found",
+						   parrelid, tbinfo->dobj.name, tbinfo->dobj.catId.oid);
 			exit_nicely(1);
 		}
 
@@ -20878,8 +20714,8 @@ addDistributedByOld(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_
 			/* if this is a catalog table we allow dumping it, skip the error */
 			if (strncmp(tbinfo->dobj.namespace->dobj.name, "pg_", 3) != 0)
 			{
-				write_msg(NULL, "query to obtain distribution policy of table \"%s\" returned no data\n",
-						  tbinfo->dobj.name);
+				pg_log_warning("query to obtain distribution policy of table \"%s\" returned no data",
+							   tbinfo->dobj.name);
 				exit_nicely(1);
 			}
 		}
@@ -20890,8 +20726,8 @@ addDistributedByOld(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_
 		 */
 		if (PQntuples(res) > 1)
 		{
-			write_msg(NULL, "query to obtain distribution policy of table \"%s\" returned more than one policy\n",
-					  tbinfo->dobj.name);
+			pg_log_warning("query to obtain distribution policy of table \"%s\" returned more than one policy",
+						   tbinfo->dobj.name);
 			exit_nicely(1);
 		}
 	}

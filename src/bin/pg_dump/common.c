@@ -124,8 +124,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	{
 		BinaryUpgradeInfo *binfo;
 
-		if (g_verbose)
-			write_msg(NULL, "identifying required binary upgrade calls\n");
+		pg_log_info(NULL, "identifying required binary upgrade calls");
 
 		binfo = getBinaryUpgradeObjects();
 		binaryupgradeinfoindex = buildIndexArray(binfo, 1, sizeof(BinaryUpgradeInfo));
@@ -170,8 +169,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 	/* this must be after getFuncs */
-	if (g_verbose)
-		write_msg(NULL, "reading type storage options\n");
+	pg_log_info("reading type storage options");
 	getTypeStorageOptions(fout, &numTypeStorageOptions);
 
 	/* this must be after getFuncs, too */
