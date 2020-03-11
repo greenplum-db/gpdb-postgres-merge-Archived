@@ -1008,18 +1008,20 @@ ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable)
 	 * Make sure all the temp files are closed.  We skip batch 0, since it
 	 * can't have any temp files (and the arrays might not even exist if
 	 * nbatch is only 1).  Parallel hash joins don't use these files.
+	 *
+	 * GPDB_12_MERGE_FIXME: In GPDB, we don't skip batch 0. Why?
 	 */
-        if (hashtable->innerBatchFile != NULL)
-        {
-            for (i = 1; i < hashtable->nbatch; i++)
-            {
-                if (hashtable->innerBatchFile[i])
-                    BufFileClose(hashtable->innerBatchFile[i]);
-                if (hashtable->outerBatchFile[i])
-                    BufFileClose(hashtable->outerBatchFile[i]);
-                hashtable->innerBatchFile[i] = NULL;
-                hashtable->outerBatchFile[i] = NULL;
-            }
+	if (hashtable->innerBatchFile != NULL)
+	{
+		for (i = 0; i < hashtable->nbatch; i++)
+		{
+			if (hashtable->innerBatchFile[i])
+				BufFileClose(hashtable->innerBatchFile[i]);
+			if (hashtable->outerBatchFile[i])
+				BufFileClose(hashtable->outerBatchFile[i]);
+			hashtable->innerBatchFile[i] = NULL;
+			hashtable->outerBatchFile[i] = NULL;
+		}
 	}
 
 	if (hashtable->work_set != NULL)
