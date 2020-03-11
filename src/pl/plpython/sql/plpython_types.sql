@@ -239,7 +239,6 @@ SELECT * FROM test_type_conversion_array_int4(NULL);
 SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
 SELECT * FROM test_type_conversion_array_int4(ARRAY[[[1,2,NULL],[NULL,5,6]],[[NULL,8,9],[10,11,12]]]);
 SELECT * FROM test_type_conversion_array_int4('[2:4]={1,2,3}');
-<<<<<<< HEAD
 
 CREATE FUNCTION test_type_conversion_array_int8(x int8[]) RETURNS int8[] AS $$
 plpy.info(x, type(x))
@@ -306,15 +305,7 @@ $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
 SELECT * FROM test_type_conversion_array_text(ARRAY[['foo', 'bar'],['foo2', 'bar2']]);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-CREATE FUNCTION test_type_conversion_array_int8(x int8[]) RETURNS int8[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-
-SELECT * FROM test_type_conversion_array_int8(ARRAY[[[1,2,NULL],[NULL,5,6]],[[NULL,8,9],[10,11,12]]]::int8[]);
 
 CREATE FUNCTION test_type_conversion_array_date(x date[]) RETURNS date[] AS $$
 plpy.info(x, type(x))
