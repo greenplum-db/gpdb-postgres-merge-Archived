@@ -16024,14 +16024,11 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 
 	appendPQExpBuffer(delq, "DROP TEXT SEARCH DICTIONARY %s;\n",
 					  fmtQualifiedDumpable(dictinfo));
-<<<<<<< HEAD
-=======
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &dictinfo->dobj,
 										"TEXT SEARCH DICTIONARY", qdictname,
 										dictinfo->dobj.namespace->dobj.name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (dictinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, dictinfo->dobj.catId, dictinfo->dobj.dumpId,
@@ -16597,16 +16594,6 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
  *		(Currently we assume that subname is only provided for table columns.)
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'owner' is the owner, NULL if there is no owner (for languages).
-<<<<<<< HEAD
- * 'acls' is the string read out of the fooacl system catalog field;
- *		it will be parsed here.
- * 'racls' contains any initial ACLs that the object had which have now been
- *		revoked by the user, it will also be parsed here.
- * 'initacls' In binary-upgrade mode, ACL string of the object's initial
- *		privileges, to be recorded into pg_init_privs
- * 'initracls' In binary-upgrade mode, ACL string of the object's
- *		revoked-from-default privileges, to be recorded into pg_init_privs
-=======
  * 'acls' contains the ACL string of the object from the appropriate system
  * 		catalog field; it will be passed to buildACLCommands for building the
  * 		appropriate GRANT commands.
@@ -16617,7 +16604,6 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
  * 		privileges, to be recorded into pg_init_privs
  * 'initracls' In binary-upgrade mode, ACL string of the object's
  * 		revoked-from-default privileges, to be recorded into pg_init_privs
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * NB: initacls/initracls are needed because extensions can set privileges on
  * an object during the extension's script file and we record those into
@@ -16679,15 +16665,6 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 			appendPQExpBuffer(tag, "%s %s", type, name);
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
-<<<<<<< HEAD
-					 tag->data, nspname,
-					 NULL,
-					 owner ? owner : "",
-					 false, "ACL", SECTION_NONE,
-					 sql->data, "", NULL,
-					 &(objDumpId), 1,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = tag->data,
 								  .namespace = nspname,
 								  .owner = owner,
@@ -16696,7 +16673,6 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 								  .createStmt = sql->data,
 								  .deps = &objDumpId,
 								  .nDeps = 1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		destroyPQExpBuffer(tag);
 	}
 
@@ -16778,13 +16754,6 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 
 		appendPQExpBuffer(tag, "%s %s", type, name);
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
-<<<<<<< HEAD
-					 tag->data, namespace, NULL, owner,
-					 false, "SECURITY LABEL", SECTION_NONE,
-					 query->data, "", NULL,
-					 &(dumpId), 1,
-					 NULL, NULL);
-=======
 					 ARCHIVE_OPTS(.tag = tag->data,
 								  .namespace = namespace,
 								  .owner = owner,
@@ -16793,7 +16762,6 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 								  .createStmt = query->data,
 								  .deps = &dumpId,
 								  .nDeps = 1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		destroyPQExpBuffer(tag);
 	}
 
@@ -17619,25 +17587,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			actual_atts;	/* number of attrs in this CREATE statement */
 	const char *reltypename;
 	char	   *storage;
-<<<<<<< HEAD
-	char	   *srvname;
-	char	   *ftoptions = NULL;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			j,
 				k;
 	bool		hasExternalPartitions = false;
 
 	qrelname = pg_strdup(fmtId(tbinfo->dobj.name));
 	qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
-<<<<<<< HEAD
-=======
 
 
 	if (tbinfo->hasoids)
 		pg_log_warning("WITH OIDS is not supported anymore (table \"%s\")",
 					   qrelname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_set_type_oids_by_rel_oid(fout, q,
@@ -17661,14 +17621,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 											 tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE VIEW %s", qualrelname);
-<<<<<<< HEAD
-		if (nonemptyReloptions(tbinfo->reloptions))
-=======
 
 		if (tbinfo->dummy_view)
 			result = createDummyViewAsClause(fout, tbinfo);
 		else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			if (nonemptyReloptions(tbinfo->reloptions))
 			{
@@ -17738,15 +17694,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				break;
 			default:
 				reltypename = "TABLE";
-<<<<<<< HEAD
-				srvname = NULL;
-				ftoptions = NULL;
 
 				/* Is it an external table (server GPDB 6.x and below.) */
 				if (tbinfo->relstorage == RELSTORAGE_EXTERNAL)
 					reltypename = "EXTERNAL TABLE";
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -17898,16 +17849,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 					if (print_default)
 					{
-<<<<<<< HEAD
-						error_unsupported_server_version(fout);
-=======
 						if (tbinfo->attgenerated[j] == ATTRIBUTE_GENERATED_STORED)
 							appendPQExpBuffer(q, " GENERATED ALWAYS AS (%s) STORED",
 											  tbinfo->attrdefs[j]->adef_expr);
 						else
 							appendPQExpBuffer(q, " DEFAULT %s",
 											  tbinfo->attrdefs[j]->adef_expr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 
 
@@ -17924,21 +17871,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							appendPQExpBuffer(q, " COLLATE %s",
 											  fmtQualifiedDumpable(coll));
 					}
-<<<<<<< HEAD
-
-					if (has_default)
-						appendPQExpBuffer(q, " DEFAULT %s",
-										  tbinfo->attrdefs[j]->adef_expr);
-
-					if (has_notnull)
-						appendPQExpBufferStr(q, " NOT NULL");
 
 					/* Column Storage attributes */
 					if (tbinfo->attencoding[j] != NULL)
 						appendPQExpBuffer(q, " ENCODING (%s)",
 										  tbinfo->attencoding[j]);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 			}
 
@@ -18297,14 +18234,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
 		 *
-<<<<<<< HEAD
-		 * We process foreign tables here, even though they lack heap storage,
-		 * because they can participate in inheritance relationships and we
-		 * want this stuff to be consistent across the inheritance tree.  We
-		 * exclude indexes, toast tables, sequences and matviews, even though
-		 * they have storage, because we don't support altering or dropping
-		 * columns in them, nor can they be part of inheritance trees.
-=======
 		 * We process foreign and partitioned tables here, even though they
 		 * lack heap storage, because they can participate in inheritance
 		 * relationships and we want this stuff to be consistent across the
@@ -18312,7 +18241,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * and matviews, even though they have storage, because we don't
 		 * support altering or dropping columns in them, nor can they be part
 		 * of inheritance trees.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (dopt->binary_upgrade &&
 			(tbinfo->relkind == RELKIND_RELATION ||
@@ -18377,23 +18305,13 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					 */
 					if (tbinfo->relkind == RELKIND_RELATION)
 						appendPQExpBuffer(q, "ALTER TABLE %s ",
-=======
-					appendPQExpBufferStr(q, "\n  AND attrelid = ");
-					appendStringLiteralAH(q, qualrelname, fout);
-					appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
-
-					if (tbinfo->relkind == RELKIND_RELATION ||
-						tbinfo->relkind == RELKIND_PARTITIONED_TABLE)
+										  qualrelname);
+					else if (tbinfo->relkind == RERELKIND_PARTITIONED_TABLE)
 						appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										  qualrelname);
 					else
 						appendPQExpBuffer(q, "ALTER FOREIGN TABLE ONLY %s ",
 										  qualrelname);
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					appendPQExpBuffer(q, "DROP COLUMN %s;\n",
 									  fmtId(tbinfo->attnames[j]));
 				}
@@ -18445,14 +18363,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				{
 					TableInfo  *parentRel = parents[k];
 
-<<<<<<< HEAD
-					appendPQExpBuffer(q, "ALTER TABLE ONLY %s INHERIT ",
-									  qualrelname);
-					appendPQExpBuffer(q, "%s;\n",
-=======
 					appendPQExpBuffer(q, "ALTER TABLE ONLY %s INHERIT %s;\n",
 									  qualrelname,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									  fmtQualifiedDumpable(parentRel));
 				}
 			}
@@ -18464,7 +18376,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  qualrelname,
 								  tbinfo->reloftype);
 			}
-<<<<<<< HEAD
 			appendPQExpBuffer(q, "RESET allow_system_table_mods;\n");
 		}
 
@@ -18480,9 +18391,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			 tbinfo->relkind == RELKIND_MATVIEW))
 		{
 			appendPQExpBuffer(q, "SET allow_system_table_mods = true;\n");
-=======
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * For partitioned tables, emit the ATTACH PARTITION clause.  Note
@@ -18706,13 +18615,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 	}
 
-<<<<<<< HEAD
-	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE && tbinfo->hasoids)
-		appendPQExpBuffer(q, "\nALTER TABLE ONLY %s SET WITH OIDS;\n",
-						  qualrelname);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (tbinfo->forcerowsec)
 		appendPQExpBuffer(q, "\nALTER TABLE ONLY %s FORCE ROW LEVEL SECURITY;\n",
 						  qualrelname);
@@ -18724,33 +18626,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 	if (tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 	{
-<<<<<<< HEAD
-		/*
-		 * GPDB_94_MERGE_FIXME: Why gpdb doesn't pass conditionally
-		 * SECTION_PRE_DATA or SECTION_POST_DATA based on tbinfo->postponed_def
-		 * similar to upstream.
-		 */
-		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
-					 tbinfo->dobj.name,
-					 tbinfo->dobj.namespace->dobj.name,
-				(tbinfo->relkind == RELKIND_VIEW) ? NULL : tbinfo->reltablespace,
-					 tbinfo->rolname,
-					 (strcmp(reltypename, "TABLE") == 0 ||
-					  strcmp(reltypename, "EXTERNAL TABLE") == 0
-						 ) ? tbinfo->hasoids : false,
-					 reltypename, SECTION_PRE_DATA,
-					 q->data, delq->data, NULL,
-					 NULL, 0,
-					 NULL, NULL);
-	}
-
-=======
 		char	   *tableam = NULL;
 
 		if (tbinfo->relkind == RELKIND_RELATION ||
 			tbinfo->relkind == RELKIND_MATVIEW)
 			tableam = tbinfo->amname;
 
+		/*
+		 * GPDB_94_MERGE_FIXME: Why gpdb doesn't pass conditionally
+		 * SECTION_PRE_DATA or SECTION_POST_DATA based on tbinfo->postponed_def
+		 * similar to upstream.
+		 */
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = tbinfo->dobj.name,
 								  .namespace = tbinfo->dobj.namespace->dobj.name,
@@ -18759,12 +18645,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  .tableam = tableam,
 								  .owner = tbinfo->rolname,
 								  .description = reltypename,
-								  .section = tbinfo->postponed_def ?
-								  SECTION_POST_DATA : SECTION_PRE_DATA,
+								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Dump Table Comments */
 	if (tbinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
@@ -18819,16 +18703,15 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 
 	qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
 
-<<<<<<< HEAD
 	/*
+	 * GPDB_12_MERGE_FIXME: upstream always uses ONLY here, why gpdb need
+	 * condition?
+	 *
 	 * If the table is the parent of a partitioning hierarchy, the default
 	 * constraint must be applied to all children as well.
 	 */
 	appendPQExpBuffer(q, "ALTER TABLE %s %s ",
 					  tbinfo->parparent ? "" : "ONLY",
-=======
-	appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					  qualrelname);
 	appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
 					  fmtId(tbinfo->attnames[adnum - 1]),
@@ -18947,8 +18830,6 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 			/* index name is not qualified in this syntax */
 			appendPQExpBuffer(q, " ON %s;\n",
 							  qindxname);
-<<<<<<< HEAD
-=======
 		}
 
 		/*
@@ -18975,7 +18856,6 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 				appendPQExpBuffer(q, "SET STATISTICS %s;\n",
 								  indstatvalsarray[j]);
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/* If the index defines identity, we need to record that. */
@@ -19020,8 +18900,6 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	free(qindxname);
-<<<<<<< HEAD
-=======
 }
 
 /*
@@ -19117,7 +18995,6 @@ dumpStatisticsExt(Archive *fout, StatsExtInfo *statsextinfo)
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
 	free(qstatsextname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -19281,24 +19158,14 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		 * XXX Potentially wrap in a 'SET CONSTRAINTS OFF' block so that the
 		 * current table data is not processed
 		 */
-<<<<<<< HEAD
-		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
-						  fmtQualifiedDumpable(tbinfo));
-=======
 		appendPQExpBuffer(q, "ALTER TABLE %s%s\n",
 						  only, fmtQualifiedDumpable(tbinfo));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s;\n",
 						  fmtId(coninfo->dobj.name),
 						  coninfo->condef);
 
-<<<<<<< HEAD
-		appendPQExpBuffer(delq, "ALTER TABLE ONLY %s ",
-						  fmtQualifiedDumpable(tbinfo));
-=======
 		appendPQExpBuffer(delq, "ALTER TABLE %s%s ",
 						  only, fmtQualifiedDumpable(tbinfo));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
 						  fmtId(coninfo->dobj.name));
 
