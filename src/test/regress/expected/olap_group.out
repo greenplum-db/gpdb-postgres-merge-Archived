@@ -2870,12 +2870,12 @@ LINE 1: select grouping(cn,vn,pn) from sale group by rollup(cn);
 -- Using in View --
 create view cube_view as select cn,vn,grouping(vn,cn) from sale group by cube(cn,vn);
 \d+ cube_view;
-                View "public.cube_view"
-  Column  |  Type   | Modifiers | Storage | Description 
-----------+---------+-----------+---------+-------------
- cn       | integer |           | plain   | 
- vn       | integer |           | plain   | 
- grouping | integer |           | plain   | 
+                           View "public.cube_view"
+  Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+----------+---------+-----------+----------+---------+---------+-------------
+ cn       | integer |           |          |         | plain   | 
+ vn       | integer |           |          |         | plain   | 
+ grouping | integer |           |          |         | plain   | 
 View definition:
  SELECT sale.cn,
     sale.vn,
@@ -2885,13 +2885,13 @@ View definition:
 
 create view rollup_view as select cn,vn,pn,grouping(cn,vn,pn) from sale group by rollup(cn),vn,pn;
 \d+ rollup_view;
-               View "public.rollup_view"
-  Column  |  Type   | Modifiers | Storage | Description 
-----------+---------+-----------+---------+-------------
- cn       | integer |           | plain   | 
- vn       | integer |           | plain   | 
- pn       | integer |           | plain   | 
- grouping | integer |           | plain   | 
+                          View "public.rollup_view"
+  Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+----------+---------+-----------+----------+---------+---------+-------------
+ cn       | integer |           |          |         | plain   | 
+ vn       | integer |           |          |         | plain   | 
+ pn       | integer |           |          |         | plain   | 
+ grouping | integer |           |          |         | plain   | 
 View definition:
  SELECT sale.cn,
     sale.vn,
@@ -2902,12 +2902,12 @@ View definition:
 
 create view gs_view as select cn,vn,grouping(vn,cn) from sale group by grouping sets ((vn), (cn), (), (cn,vn));
 \d+ gs_view;
-                 View "public.gs_view"
-  Column  |  Type   | Modifiers | Storage | Description 
-----------+---------+-----------+---------+-------------
- cn       | integer |           | plain   | 
- vn       | integer |           | plain   | 
- grouping | integer |           | plain   | 
+                            View "public.gs_view"
+  Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+----------+---------+-----------+----------+---------+---------+-------------
+ cn       | integer |           |          |         | plain   | 
+ vn       | integer |           |          |         | plain   | 
+ grouping | integer |           |          |         | plain   | 
 View definition:
  SELECT sale.cn,
     sale.vn,
@@ -5694,30 +5694,30 @@ create view grp_v1 as select count(*) from sale group by ();
 create view grp_v2 as select count(*) from sale group by grouping sets(());
 create view grp_v3 as select count(*) from sale group by grouping sets((), ());
 \d+ grp_v1;
-                View "public.grp_v1"
- Column |  Type  | Modifiers | Storage | Description 
---------+--------+-----------+---------+-------------
- count  | bigint |           | plain   | 
+                           View "public.grp_v1"
+ Column |  Type  | Collation | Nullable | Default | Storage | Description 
+--------+--------+-----------+----------+---------+---------+-------------
+ count  | bigint |           |          |         | plain   | 
 View definition:
  SELECT count(*) AS count
    FROM sale
   GROUP BY ();
 
 \d+ grp_v2;
-                View "public.grp_v2"
- Column |  Type  | Modifiers | Storage | Description 
---------+--------+-----------+---------+-------------
- count  | bigint |           | plain   | 
+                           View "public.grp_v2"
+ Column |  Type  | Collation | Nullable | Default | Storage | Description 
+--------+--------+-----------+----------+---------+---------+-------------
+ count  | bigint |           |          |         | plain   | 
 View definition:
  SELECT count(*) AS count
    FROM sale
   GROUP BY GROUPING SETS (());
 
 \d+ grp_v3;
-                View "public.grp_v3"
- Column |  Type  | Modifiers | Storage | Description 
---------+--------+-----------+---------+-------------
- count  | bigint |           | plain   | 
+                           View "public.grp_v3"
+ Column |  Type  | Collation | Nullable | Default | Storage | Description 
+--------+--------+-----------+----------+---------+---------+-------------
+ count  | bigint |           |          |         | plain   | 
 View definition:
  SELECT count(*) AS count
    FROM sale
