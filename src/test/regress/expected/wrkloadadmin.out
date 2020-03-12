@@ -2,7 +2,7 @@
 -- create resource queue
 CREATE RESOURCE QUEUE adhoc11 ACTIVE THRESHOLD 1;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='adhoc11';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='adhoc11';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  adhoc11 |             1 |           -1 | f             |                  0
@@ -25,7 +25,7 @@ DROP RESOURCE QUEUE adhoc11;
 -- create resource queue
 CREATE RESOURCE QUEUE adhoc12 ACTIVE THRESHOLD 2;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='adhoc12';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='adhoc12';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  adhoc12 |             2 |           -1 | f             |                  0
@@ -40,9 +40,9 @@ DROP RESOURCE QUEUE adhoc12;
 CREATE RESOURCE QUEUE adhoc13 ACTIVE THRESHOLD 2;
 CREATE RESOURCE QUEUE adhoc14 ACTIVE THRESHOLD 3;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='adhoc13' and rsqname='adhoc14';
- rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
----------+---------------+--------------+---------------+--------------------
+select rsqname from pg_resqueue where rsqname='adhoc13' and rsqname='adhoc14';
+ rsqname 
+---------
 (0 rows)
 
 --create role and assign role to resource queue
@@ -83,7 +83,7 @@ CREATE RESOURCE QUEUE adhoc1 ACTIVE THRESHOLD 1;
 CREATE RESOURCE QUEUE webuser1 ACTIVE THRESHOLD 3;
 CREATE RESOURCE QUEUE mgmtuser1 ACTIVE THRESHOLD 5;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname in ('adhoc1','webuser1','mgmtuser1');
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname in ('adhoc1','webuser1','mgmtuser1');
   rsqname  | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 -----------+---------------+--------------+---------------+--------------------
  adhoc1    |             1 |           -1 | f             |                  0
@@ -95,7 +95,6 @@ select * from pg_resqueue where rsqname in ('adhoc1','webuser1','mgmtuser1');
 DROP RESOURCE QUEUE adhoc1;
 DROP RESOURCE QUEUE webuser1;
 DROP RESOURCE QUEUE mgmtuser1;
-
 -- select from pg_resqueue table
 --select * from pg_resqueue;
 -- Test Workload Administration and Resource queuing
@@ -110,7 +109,7 @@ CREATE RESOURCE QUEUE mgmtuser4 ACTIVE THRESHOLD 8;
 CREATE RESOURCE QUEUE mgmtuser5 ACTIVE THRESHOLD 6;
 CREATE RESOURCE QUEUE mgmtuser6 ACTIVE THRESHOLD 2;
 -- select from pg_resqueue table
-select * from pg_resqueue;
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue;
   rsqname   | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ------------+---------------+--------------+---------------+--------------------
  pg_default |            20 |           -1 | f             |                  0
@@ -134,7 +133,7 @@ DROP RESOURCE QUEUE mgmtuser4;
 DROP RESOURCE QUEUE mgmtuser5;
 DROP RESOURCE QUEUE mgmtuser6;
 -- select from pg_resqueue table
-select * from pg_resqueue;
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue;
   rsqname   | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ------------+---------------+--------------+---------------+--------------------
  pg_default |            20 |           -1 | f             |                  0
@@ -144,7 +143,7 @@ select * from pg_resqueue;
 -- create resource queue
 CREATE RESOURCE QUEUE bob ACTIVE THRESHOLD 1;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='bob';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='bob';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  bob     |             1 |           -1 | f             |                  0
@@ -153,7 +152,7 @@ select * from pg_resqueue where rsqname='bob';
 -- ALTER Resource Queue
 ALTER RESOURCE QUEUE bob ACTIVE THRESHOLD 7;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='bob';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='bob';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  bob     |             7 |           -1 | f             |                  0
@@ -167,7 +166,7 @@ DROP RESOURCE QUEUE bob;
 -- create resource queue
 CREATE RESOURCE QUEUE sameera ACTIVE THRESHOLD 2;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='sameera';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='sameera';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  sameera |             2 |           -1 | f             |                  0
@@ -195,7 +194,7 @@ DROP RESOURCE QUEUE sameera;
 -- create resource queue
 CREATE RESOURCE QUEUE ram ACTIVE THRESHOLD 1;
 -- select from pg_resqueue table
-select * from pg_resqueue where rsqname='ram';
+select rsqname, rsqcountlimit, rsqcostlimit, rsqovercommit, rsqignorecostlimit from pg_resqueue where rsqname='ram';
  rsqname | rsqcountlimit | rsqcostlimit | rsqovercommit | rsqignorecostlimit 
 ---------+---------------+--------------+---------------+--------------------
  ram     |             1 |           -1 | f             |                  0
