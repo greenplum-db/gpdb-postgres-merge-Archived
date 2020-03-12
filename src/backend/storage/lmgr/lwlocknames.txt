@@ -53,7 +53,7 @@ CLogTruncationLock					44
 # Additional individual locks in GPDB
 SharedSnapshotLock					45
 DistributedLogControlLock			46
-AOSegFileLock						47
+# 47 is available; was formerly AOSegFileLock
 ResQueueLock						48
 ResGroupLock						49
 ErrorLogLock						50

@@ -4359,7 +4359,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 					n->filename = $7;
 					n->whereClause = $11;
 					n->sreh = $12;
-					n->ao_segnos = NIL;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -4393,7 +4392,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 					n->is_program = $6;
 					n->filename = $7;
 					n->options = $9;
-					n->ao_segnos = NIL;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,

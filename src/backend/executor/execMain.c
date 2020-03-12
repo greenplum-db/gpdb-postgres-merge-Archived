@@ -602,7 +602,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			}
 
 			/*
-			 * First, see whether we need to pre-execute any initPlan subplans.
+			 * First, pre-execute any initPlan subplans.
 			 */
 			if (list_length(queryDesc->plannedstmt->paramExecTypes) > 0)
 			{
@@ -632,14 +632,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				}
 
 				preprocess_initplans(queryDesc);
-
-				/*
-				 * Copy the values of the preprocessed subplans to the
-				 * external parameters.
-				 */
-				queryDesc->params = addRemoteExecParamsToParamList(queryDesc->plannedstmt,
-																   queryDesc->params,
-																   queryDesc->estate->es_param_exec_vals);
 			}
 
 			/*
@@ -652,7 +644,11 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			 */
 			if (estate->es_sliceTable->slices[0].gangType != GANGTYPE_UNALLOCATED ||
 				estate->es_sliceTable->slices[0].children)
-				CdbDispatchPlan(queryDesc, needDtx, true);
+			{
+				CdbDispatchPlan(queryDesc,
+								estate->es_param_exec_vals,
+								needDtx, true);
+			}
 		}
 
 		/*
@@ -1711,7 +1707,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_result_relations = NULL;
 		estate->es_num_result_relations = 0;
 		estate->es_result_relation_info = NULL;
-		estate->es_result_aosegnos = NIL;
 		estate->es_root_result_relations = NULL;
 		estate->es_num_root_result_relations = 0;
 	}
@@ -1890,11 +1885,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * If this is a query that was dispatched from the QE, extract precomputed
-	 * parameters from all init plans
+	 * If this is a query that was dispatched from the QE, install precomputed
+	 * parameter values from all init plans into our EState.
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE && queryDesc->ddesc)
-		ExtractParamsFromInitPlans(plannedstmt, plannedstmt->planTree, estate);
+		InstallDispatchedExecParams(queryDesc->ddesc, estate);
 
 	/*
 	 * Initialize the private state information for all the nodes in the query
@@ -2291,6 +2286,12 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
 
+	resultRelInfo->ri_aoInsertDesc = NULL;
+	resultRelInfo->ri_aocsInsertDesc = NULL;
+	resultRelInfo->ri_extInsertDesc = NULL;
+	resultRelInfo->ri_deleteDesc = NULL;
+	resultRelInfo->ri_updateDesc = NULL;
+
 	/*
 	 * Partition constraint, which also includes the partition constraint of
 	 * all the ancestors that are partitions.  Note that it will be checked
@@ -2313,7 +2314,42 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 }
 
 /*
- * ExecGetTriggerResultRel
+ * ResultRelInfoChooseSegno
+ *
+ * based on a list of relid->segno mapping, look for our own resultRelInfo
+ * relid in the mapping and find the segfile number that this resultrel should
+ * use if it is inserting into an AO relation. for any non AO relation this is
+ * irrelevant and will return early.
+ *
+ * Note that we rely on the fact that the caller has a well constructed mapping
+ * and that it includes all the relids of *any* AO relation that may insert
+ * data during this transaction. For non partitioned tables the mapping list
+ * will have only one element - our table. for partitioning it may have
+ * multiple (depending on how many partitions are AO).
+ */
+void
+ResultRelInfoChooseSegno(ResultRelInfo *resultRelInfo)
+{
+#ifdef GPDB_12_MERGE_FIXME
+	/* FIXME: All of this has to placed behind the tableam api */
+
+	if (resultRelInfo->ri_aosegno != InvalidFileSegNumber)
+		return;		/* a target was chosen already */
+
+	/* only relevant for AO relations */
+	if(!relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
+		return;
+
+	Assert(resultRelInfo->ri_RelationDesc);
+
+	resultRelInfo->ri_aosegno = ChooseSegnoForWrite(resultRelInfo->ri_RelationDesc);
+
+	Assert(resultRelInfo->ri_aosegno != InvalidFileSegNumber);
+#endif
+}
+
+/*
+ *		ExecGetTriggerResultRel
  *		Get a ResultRelInfo for a trigger target relation.
  *
  * Most of the time, triggers are fired on one of the result relations of the
@@ -2441,76 +2477,6 @@ ExecCleanUpTriggerState(EState *estate)
 	}
 }
 
-void
-SendAOTupCounts(EState *estate)
-{
-	/* GPDB_12_MERGE_FIXME: This will go away with
-	 * https://github.com/greenplum-db/gpdb/pull/9258
-	 */
-#if 0
-	StringInfoData buf;
-	ResultRelInfo *resultRelInfo;
-	int			i;
-	List	   *all_ao_rels = NIL;
-	ListCell   *lc;
-
-	/*
-	 * If we're inserting into partitions, send tuple counts for
-	 * AO tables back to the QD.
-	 */
-	if (Gp_role != GP_ROLE_EXECUTE || !estate->es_result_partitions)
-		return;
-
-	resultRelInfo = estate->es_result_relations;
-	for (i = 0; i < estate->es_num_result_relations; i++)
-	{
-		resultRelInfo = &estate->es_result_relations[i];
-
-		if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-			all_ao_rels = lappend(all_ao_rels, resultRelInfo);
-
-		if (resultRelInfo->ri_partition_hash)
-		{
-			HASH_SEQ_STATUS hash_seq_status;
-			ResultPartHashEntry *entry;
-
-			hash_seq_init(&hash_seq_status, resultRelInfo->ri_partition_hash);
-			while ((entry = hash_seq_search(&hash_seq_status)) != NULL)
-			{
-				if (relstorage_is_ao(RelinfoGetStorage(&entry->resultRelInfo)))
-					all_ao_rels = lappend(all_ao_rels, &entry->resultRelInfo);
-			}
-		}
-	}
-
-	if (!all_ao_rels)
-		return;
-
-	if (Debug_appendonly_print_insert)
-		ereport(LOG,(errmsg("QE sending tuple counts of %d partitioned "
-							"AO relations... ", list_length(all_ao_rels))));
-
-	pq_beginmessage(&buf, 'o');
-	pq_sendint(&buf, list_length(all_ao_rels), 4);
-
-	foreach(lc, all_ao_rels)
-	{
-		resultRelInfo = (ResultRelInfo *) lfirst(lc);
-		Oid			relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-		uint64		tupcount = resultRelInfo->ri_aoprocessed;
-
-		pq_sendint(&buf, relid, 4);
-		pq_sendint64(&buf, tupcount);
-
-		if (Debug_appendonly_print_insert)
-			ereport(LOG,(errmsg("sent tupcount " INT64_FORMAT " for "
-								"relation %d", tupcount, relid)));
-
-	}
-	pq_endmessage(&buf);
-#endif
-}
-
 /* ----------------------------------------------------------------
  *		ExecPostprocessPlan
  *
@@ -2596,9 +2562,6 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 * away anyway.
 	 */
 	ExecResetTupleTable(estate->es_tupleTable, false);
-
-	/* Report how many tuples we may have inserted into AO tables */
-	SendAOTupCounts(estate);
 
 	/* Adjust INSERT/UPDATE/DELETE count for replicated table ON QD */
 	AdjustReplicatedTableCounts(estate);
@@ -4045,7 +4008,6 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->planstate = NULL;
 	epqstate->origslot = NULL;
 }
-
 
 /* Use the given attribute map to convert an attribute number in the
  * base relation to an attribute number in the other relation.  Forgive

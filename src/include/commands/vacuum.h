@@ -261,10 +261,28 @@ extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 									 int options, bool verbose, LOCKMODE lmode);
 
+/* GPDB_12_MERGE_FIXME: what happened to this function? */
+extern bool vacuumStatement_IsTemporary(Relation onerel);
+
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation,
 						VacuumParams *params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
+
+/* in commands/vacuumlazy.c */
+extern void lazy_vacuum_rel_heap(Relation onerel, int options,
+							VacuumParams *params, BufferAccessStrategy bstrategy);
+extern void scan_index(Relation indrel, double num_tuples, int elevel);
+
+/* in commands/vacuum_ao.c */
+
+extern void ao_vacuum_rel_pre_cleanup(Relation onerel, int options, VacuumParams *params,
+									  BufferAccessStrategy bstrategy);
+extern void ao_vacuum_rel_compact(Relation onerel, int options, VacuumParams *params,
+								  BufferAccessStrategy bstrategy);
+extern void ao_vacuum_rel_post_cleanup(Relation onerel, int options, VacuumParams *params,
+									   BufferAccessStrategy bstrategy);
+
 extern bool std_typanalyze(VacAttrStats *stats);
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */

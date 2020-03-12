@@ -123,6 +123,7 @@
 #include "access/aocs_compaction.h"
 #include "access/aomd.h"
 #include "access/appendonlywriter.h"
+#include "access/appendonly_compaction.h"
 #include "access/bitmap_private.h"
 #include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
@@ -2178,21 +2179,6 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	foreach(cell, rels)
 	{
 		Relation	rel = (Relation) lfirst(cell);
-
-		if (RelationIsAppendOptimized(rel) && IS_QUERY_DISPATCHER())
-		{
-			/*
-			 * Drop the shared memory hash table entry for this table if it
-			 * exists. We must do so since before the rewrite we probably have few
-			 * non-zero segfile entries for this table while after the rewrite
-			 * only segno zero will be full and the others will be empty. By
-			 * dropping the hash entry we force refreshing the entry from the
-			 * catalog the next time a write into this AO table comes along.
-			 */
-			LWLockAcquire(AOSegFileLock, LW_EXCLUSIVE);
-			AORelRemoveHashEntry(RelationGetRelid(rel));
-			LWLockRelease(AOSegFileLock);
-		}
 
 		table_close(rel, NoLock);
 	}
@@ -5527,24 +5513,17 @@ column_to_scan(AOCSFileSegInfo **segInfos, int nseg, int natts, Relation aocsrel
 	int i;
 	AOCSVPInfoEntry *vpe;
 	int64 min_eof = 0;
-	List *drop_segno_list = NIL;
 
 	for (segi = 0; segi < nseg; ++segi)
 	{
 		/*
-		 * Append to drop_segno_list and skip if state is in
-		 * AOSEG_STATE_AWAITING_DROP. At the end of the loop, we will
-		 * try to drop the segfiles since we currently have the
-		 * AccessExclusiveLock. If we don't do this, aocssegfiles in
-		 * this state will have vpinfo size containing info for less
-		 * number of columns compared to the relation's relnatts in
-		 * its pg_class entry (e.g. in calls to getAOCSVPEntry).
+		 * Don't use a AOSEG_STATE_AWAITING_DROP segfile. That seems
+		 * like a bad idea in general, but there's one particular problem:
+		 * the 'vpinfo' of a dropped segfile might be missing information
+		 * for columns that were added later.
 		 */
 		if (segInfos[segi]->state == AOSEG_STATE_AWAITING_DROP)
-		{
-			drop_segno_list = lappend_int(drop_segno_list, segInfos[segi]->segno);
 			continue;
-		}
 
 		/*
 		 * Skip over appendonly segments with no tuples (caused by VACUUM)
@@ -5562,9 +5541,6 @@ column_to_scan(AOCSFileSegInfo **segInfos, int nseg, int natts, Relation aocsrel
 			}
 		}
 	}
-
-	if (list_length(drop_segno_list) > 0 && Gp_role != GP_ROLE_DISPATCH)
-		AOCSDrop(aocsrel, drop_segno_list);
 
 	return scancol;
 }
@@ -5628,10 +5604,10 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 
     Oid         segrelid;
 	rel = heap_open(tab->relid, NoLock);
-    GetAppendOnlyEntryAuxOids(rel->rd_id,
-                              snapshot,
-                              &segrelid, NULL, NULL,
-                              NULL, NULL);
+
+	/* Try to recycle any old segfiles first. */
+	AppendOnlyRecycleDeadSegments(rel);
+
 	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg, segrelid);
 	basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	if (nseg > 0)
@@ -5717,27 +5693,6 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 		ExecDropSingleTupleTableSlot(slot);
 	}
 
-	// GDPB_12_MERGE_FIXME: removed by PR 790, I hope that gets pushed.
-#if 0
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		/*
-		 * We remove the hash entry for this relation even though
-		 * there is no rewrite because we may have dropped some
-		 * segfiles that were in AOSEG_STATE_AWAITING_DROP state in
-		 * column_to_scan(). The cost of recreating the entry later on
-		 * is cheap so this should be fine. If we don't remove the
-		 * hash entry and we had done any segfile drops, master will
-		 * continue to see those segfiles as unavailable for use.
-		 *
-		 * Note that ALTER already took an exclusive lock on the
-		 * relation so we are guaranteed to not drop the hash
-		 * entry from under any concurrent operation.
-		 */
-		AORelRemoveHashEntry(RelationGetRelid(rel));
-	}
-#endif
-	
 	FreeExecutorState(estate);
 	heap_close(rel, NoLock);
 	UnregisterSnapshot(snapshot);
@@ -16091,28 +16046,6 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 
 		performDeletion(&object, DROP_RESTRICT, 0);
 	}
-
-	// GDPB_12_MERGE_FIXME: removed by PR 790, I hope that gets pushed.
-#if 0
-	if (relstorage_is_ao(relstorage) && IS_QUERY_DISPATCHER())
-	{
-		/*
-		 * Drop the shared memory hash table entry for this table if it
-		 * exists. We must do so since before the rewrite we probably have few
-		 * non-zero segfile entries for this table while after the rewrite
-		 * only segno zero will be full and the others will be empty. By
-		 * dropping the hash entry we force refreshing the entry from the
-		 * catalog the next time a write into this AO table comes along.
-		 *
-		 * Note that ALTER already took an exclusive lock on the old relation
-		 * so we are guaranteed to not drop the hash entry from under any
-		 * concurrent operation.
-		 */
-		LWLockAcquire(AOSegFileLock, LW_EXCLUSIVE);
-		AORelRemoveHashEntry(relid);
-		LWLockRelease(AOSegFileLock);
-	}
-#endif
 }
 
 /*
@@ -17062,6 +16995,7 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 			if (!(*targetAODescPtr))
 			{
 				MemoryContextSwitchTo(oldCxt);
+				LockSegnoForWrite(targetRelation, RESERVED_SEGNO);
 				*targetAODescPtr = appendonly_insert_init(targetRelation,
 														  RESERVED_SEGNO, false);
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
@@ -17078,6 +17012,7 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 			if (!*targetAOCSDescPtr)
 			{
 				MemoryContextSwitchTo(oldCxt);
+				LockSegnoForWrite(targetRelation, RESERVED_SEGNO);
 				*targetAOCSDescPtr = aocs_insert_init(targetRelation,
 													  RESERVED_SEGNO, false);
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));

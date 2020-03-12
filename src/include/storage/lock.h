@@ -159,7 +159,6 @@ typedef enum LockTagType
 	LOCKTAG_TUPLE,				/* one physical tuple */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
-	LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE,	/* Segment file within an Append-Only relation */
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	LOCKTAG_RESOURCE_QUEUE,		/* ID info for resource queue is QUEUE ID */
@@ -258,14 +257,6 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-/* ID info for a virtual transaction is its VirtualTransactionId */
-#define SET_LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE(locktag,dboid,reloid,segno) \
-	((locktag).locktag_field1 = (dboid), \
-	 (locktag).locktag_field2 = (reloid), \
-	 (locktag).locktag_field3 = (segno), \
-	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE, \
-	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 /*
  * ID info for a speculative insert is TRANSACTION info +

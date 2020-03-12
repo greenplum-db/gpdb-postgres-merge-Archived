@@ -133,7 +133,6 @@ typedef struct CopyIntoClause
 	bool		is_program;		/* is 'filename' a program to popen? */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	List	   *options;		/* List of DefElem nodes */
-	List	   *ao_segnos;		/* AO segno map */
 } CopyIntoClause;
 
 typedef struct RefreshClause
@@ -264,7 +263,6 @@ typedef enum ParamKind
 {
 	PARAM_EXTERN,
 	PARAM_EXEC,
-	PARAM_EXEC_REMOTE, /* MPP ???? */
 	PARAM_SUBLINK,
 	PARAM_MULTIEXPR
 } ParamKind;

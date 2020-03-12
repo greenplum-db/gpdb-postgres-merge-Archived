@@ -2299,7 +2299,6 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 		}
 #endif
 		
-		dispatchStmt->ao_segnos = assignPerRelSegno(all_relids);
 	}
 
 	CdbDispatchUtilityStatement((Node *) dispatchStmt,
@@ -2400,7 +2399,6 @@ MakeCopyIntoClause(CopyStmt *stmt)
 	copyIntoClause = makeNode(CopyIntoClause);
 
 	copyIntoClause->is_program = stmt->is_program;
-	copyIntoClause->ao_segnos = stmt->ao_segnos;
 	copyIntoClause->filename = stmt->filename;
 	copyIntoClause->options = stmt->options;
 	copyIntoClause->attlist = stmt->attlist;
@@ -4126,7 +4124,7 @@ CopyFrom(CopyState cstate)
 					  1,		/* must match rel's position in range_table */
 					  NULL,
 					  0);
-	ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+	ResultRelInfoChooseSegno(resultRelInfo);
 
 	target_resultRelInfo = resultRelInfo;
 
@@ -4399,7 +4397,7 @@ CopyFrom(CopyState cstate)
 		elog(DEBUG5, "COPY command sent to segdbs");
 
 		cdbCopyStart(cdbCopy, glob_copystmt,
-					 cstate->ao_segnos, cstate->file_encoding);
+					 NIL, cstate->file_encoding);
 
 		/*
 		 * Skip header processing if dummy file get from master for COPY FROM ON
@@ -4698,7 +4696,7 @@ CopyFrom(CopyState cstate)
 			if (relstorage == RELSTORAGE_AOROWS &&
 				resultRelInfo->ri_aoInsertDesc == NULL)
 			{
-				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+				ResultRelInfoChooseSegno(resultRelInfo);
 				resultRelInfo->ri_aoInsertDesc =
 					appendonly_insert_init(resultRelInfo->ri_RelationDesc,
 										   resultRelInfo->ri_aosegno, false);
@@ -4706,7 +4704,7 @@ CopyFrom(CopyState cstate)
 			else if (relstorage == RELSTORAGE_AOCOLS &&
 					 resultRelInfo->ri_aocsInsertDesc == NULL)
 			{
-				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+				ResultRelInfoChooseSegno(resultRelInfo);
 				resultRelInfo->ri_aocsInsertDesc =
 					aocs_insert_init(resultRelInfo->ri_RelationDesc,
 									 resultRelInfo->ri_aosegno, false);
@@ -4950,12 +4948,12 @@ CopyFrom(CopyState cstate)
 				cstate->on_segment ? processed : 0);
 	}
 
-	/* update AO tuple counts */
-	// GPDB_12_MERGE_FIXME
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 * Probably safe to remove now that 5778f31124d is in. Maintaining the
+	 * commented out section for now until all conflicts are resolved.
+	 */
 #if 0
-	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
-		SendAOTupCounts(estate);
-
 	if (cstate->dispatch_mode == COPY_DISPATCH)
 	{
 		for (i = estate->es_num_result_relations - 1; i >= 0; i--)
@@ -4966,29 +4964,10 @@ CopyFrom(CopyState cstate)
 			{
 				int64 tupcount;
 
-				if (cdbCopy->aotupcounts)
-				{
-					HTAB *ht = cdbCopy->aotupcounts;
-					struct {
-						Oid relid;
-						int64 tupcount;
-					} *ao;
-					bool found;
-					Oid relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-
-					ao = hash_search(ht, &relid, HASH_FIND, &found);
-					if (found)
-						tupcount = ao->tupcount;
-					else
-						tupcount = 0;
-				}
-				else
-				{
-					tupcount = processed;
-				}
+				tupcount = processed;
 
 				/* find out which segnos the result rels in the QE's used */
-				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+				ResultRelInfoChooseSegno(resultRelInfo);
 
 				if (resultRelInfo->ri_aoInsertDesc)
 					resultRelInfo->ri_aoInsertDesc->insertCount += tupcount;

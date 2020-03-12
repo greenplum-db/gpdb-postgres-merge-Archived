@@ -190,7 +190,6 @@ static int	vac_cmp_itemptr(const void *left, const void *right);
 static bool heap_page_is_all_visible(Relation rel, Buffer buf,
 									 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 
-
 /*
  *	heap_vacuum_rel() -- perform VACUUM for one heap relation
  *
@@ -201,7 +200,7 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
  *		and locked the relation.
  */
 void
-heap_vacuum_rel(Relation onerel, VacuumParams *params,
+lazy_vacuum_rel_heap(Relation onerel, int options, VacuumParams *params,
 				BufferAccessStrategy bstrategy)
 {
 	LVRelStats *vacrelstats;

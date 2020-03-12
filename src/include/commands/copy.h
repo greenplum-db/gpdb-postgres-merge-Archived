@@ -247,7 +247,6 @@ typedef struct CopyStateData
 	List	   *qe_attnumlist;
 	bool		stopped_processing_at_delim;
 
-	List		  *ao_segnos;  /* AO table meta data from dispatcher */
 	bool          skip_ext_partition;  /* skip external partition */
 
 	bool		on_segment; /* QE save data files locally */

@@ -901,53 +901,6 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 	return rel;
 }
 
-#if 0
-/*
- * ExecUpdateAOtupCount
- *		Update the tuple count on the master for an append only relation segfile.
- */
-static void
-ExecUpdateAOtupCount(ResultRelInfo *result_rels,
-					 Snapshot shapshot,
-					 int num_result_rels,
-					 EState* estate,
-					 uint64 tupadded)
-{
-	int		i;
-
-	Assert(Gp_role == GP_ROLE_DISPATCH);
-
-	bool was_delete = estate && estate->es_plannedstmt &&
-		(estate->es_plannedstmt->commandType == CMD_DELETE);
-
-	for (i = num_result_rels; i > 0; i--)
-	{
-		if(RelationIsAppendOptimized(result_rels->ri_RelationDesc))
-		{
-			Assert(result_rels->ri_aosegno != InvalidFileSegNumber);
-
-			if (was_delete && tupadded > 0)
-			{
-				/* Touch the ao seg info */
-				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
-									result_rels->ri_aosegno,
-									0,
-									1);
-			} 
-			else if (!was_delete)
-			{
-				UpdateMasterAosegTotals(result_rels->ri_RelationDesc,
-									result_rels->ri_aosegno,
-									tupadded,
-									1);
-			}
-		}
-
-		result_rels++;
-	}
-}
-#endif
-
 /*
  * UpdateChangedParamSet
  *		Add changed parameters to a plan node's chgParam set
@@ -1681,72 +1634,10 @@ void mppExecutorFinishup(QueryDesc *queryDesc)
 		{
 			estate->es_processed +=
 				cdbdisp_sumCmdTuples(pr, primaryWriterSliceIndex);
-
-			/* GPDB_12_MERGE_FIXME */
-#if 0
-			if (estate->es_result_partitions)
-				aopartcounts = cdbdisp_sumAoPartTupCount(pr);
-#endif
 		}
 
 		/* sum up rejected rows if any (single row error handling only) */
 		cdbdisp_sumRejectedRows(pr);
-
-		/* GPDB_12_MERGE_FIXME: This should  happen behind the table AM interace now. */
-#if 0
-		/* sum up inserted rows into any AO relation */
-		if (aopartcounts)
-		{
-			/* counts from a partitioned AO table */
-
-			ListCell *lc;
-
-			foreach(lc, estate->es_result_aosegnos)
-			{
-				SegfileMapNode *map = lfirst(lc);
-				struct {
-					Oid relid;
-			   		int64 tupcount;
-				} *entry;
-				bool found;
-
-				entry = hash_search(aopartcounts,
-									&(map->relid),
-									HASH_FIND,
-									&found);
-
-				/*
-				 * Must update the mod count only for segfiles where actual tuples were touched 
-				 * (added/deleted) based on entry->tupcount.
-				 */
-				if (found && entry->tupcount)
-				{
-					bool was_delete = estate->es_plannedstmt && (estate->es_plannedstmt->commandType == CMD_DELETE);
-
-					Relation r = heap_open(map->relid, AccessShareLock);
-					if (was_delete)
-					{
-						UpdateMasterAosegTotals(r, map->segno, 0, 1);
-					}
-					else
-					{
-						UpdateMasterAosegTotals(r, map->segno, entry->tupcount, 1);	
-					}
-					heap_close(r, NoLock);
-				}
-			}
-		}
-		else
-		{
-			/* counts from a (non partitioned) AO table */
-
-			ExecUpdateAOtupCount(estate->es_result_relations,
-								 estate->es_snapshot,
-								 estate->es_num_result_relations,
-								 estate,
-								 estate->es_processed);
-		}
-#endif
 
 		/*
 		 * Check and free the results of all gangs. If any QE had an
@@ -2016,117 +1907,30 @@ getLocallyExecutableSubplans(PlannedStmt *plannedstmt, Plan *root_plan)
 	return ctx.bms_subplans;
 }
 
-typedef struct ParamExtractorContext
-{
-	plan_tree_base_prefix base; /* Required prefix for plan_tree_walker/mutator */
-	EState *estate;
-} ParamExtractorContext;
-
 /*
- * Given a subplan determine if it is an initPlan (subplan->is_initplan) then copy its params
- * from estate-> es_param_list_info to estate->es_param_exec_vals.
- */
-static void ExtractSubPlanParam(SubPlan *subplan, EState *estate)
-{
-	/*
-	 * If this plan is un-correlated or undirect correlated one and want to
-	 * set params for parent plan then mark parameters as needing evaluation.
-	 *
-	 * Note that in the case of un-correlated subqueries we don't care about
-	 * setting parent->chgParam here: indices take care about it, for others -
-	 * it doesn't matter...
-	 */
-	if (subplan->setParam != NIL)
-	{
-		ListCell   *lst;
-
-		foreach(lst, subplan->setParam)
-		{
-			int			paramid = lfirst_int(lst);
-			ParamExecData *prmExec = &(estate->es_param_exec_vals[paramid]);
-
-			/**
-			 * Has this parameter been already
-			 * evaluated as part of preprocess_initplan()? If so,
-			 * we shouldn't re-evaluate it. If it has been evaluated,
-			 * we will simply substitute the actual value from
-			 * the external parameters.
-			 */
-			if (subplan->is_initplan)
-			{
-				ParamListInfo paramInfo = estate->es_param_list_info;
-				ParamExternData *prmExt = NULL;
-				int extParamIndex = -1;
-
-				Assert(paramInfo);
-				Assert(paramInfo->numParams > 0);
-
-				/*
-				 * To locate the value of this pre-evaluated parameter, we need to find
-				 * its location in the external parameter list.
-				 */
-				extParamIndex = paramInfo->numParams - list_length(estate->es_plannedstmt->paramExecTypes) + paramid;
-				prmExt = &paramInfo->params[extParamIndex];
-
-				/* Make sure the types are valid */
-				if (!OidIsValid(prmExt->ptype))
-				{
-					prmExec->execPlan = NULL;
-					prmExec->isnull = true;
-					prmExec->value = (Datum) 0;
-				}
-				else
-				{
-					/** Hurray! Copy value from external parameter and don't bother setting up execPlan. */
-					prmExec->execPlan = NULL;
-					prmExec->isnull = prmExt->isnull;
-					prmExec->value = prmExt->value;
-				}
-			}
-		}
-	}
-}
-
-/*
- * Walker to extract all the precomputer InitPlan params in a plan tree.
- */
-static bool
-ParamExtractorWalker(Plan *node,
-				  void *context)
-{
-	Assert(context);
-	ParamExtractorContext *ctx = (ParamExtractorContext *) context;
-
-	/* Assuming InitPlan always runs on the master */
-	if (node == NULL)
-	{
-		return false;	/* don't visit subtree */
-	}
-
-	if (IsA(node, SubPlan))
-	{
-		SubPlan *sub_plan = (SubPlan *) node;
-		ExtractSubPlanParam(sub_plan, ctx->estate);
-	}
-
-	/* Continue walking */
-	return plan_tree_walker((Node*)node, ParamExtractorWalker, ctx, true);
-}
-
-/*
- * Find and extract all the InitPlan setParams in a root node's subtree.
+ * Copy PARAM_EXEC parameter values that were received from the QD into
+ * our EState.
  */
 void
-ExtractParamsFromInitPlans(PlannedStmt *plannedstmt, Plan *root, EState *estate)
+InstallDispatchedExecParams(QueryDispatchDesc *ddesc, EState *estate)
 {
-	ParamExtractorContext ctx;
-
-	ctx.base.node = (Node *) plannedstmt;
-	ctx.estate = estate;
-
 	Assert(Gp_role == GP_ROLE_EXECUTE);
 
-	ParamExtractorWalker(root, &ctx);
+	if (ddesc->paramInfo == NULL)
+		return;
+
+	for (int i = 0; i < ddesc->paramInfo->nExecParams; i++)
+	{
+		SerializedParamExecData *sprm = &ddesc->paramInfo->execParams[i];
+		ParamExecData *prmExec = &estate->es_param_exec_vals[i];
+
+		if (!sprm->isvalid)
+			continue;	/* not dispatched */
+
+		prmExec->execPlan = NULL;
+		prmExec->value = sprm->value;
+		prmExec->isnull = sprm->isnull;
+	}
 }
 
 /**

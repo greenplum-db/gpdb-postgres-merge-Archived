@@ -8,6 +8,8 @@
  * ANALYZE in analyze.c, and VACUUM FULL is a variant of CLUSTER, handled
  * in cluster.c.
  *
+ * Also have a look at vacuum_ao.c, which contains VACUUM related code for
+ * Append-Optimized tables.
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
@@ -50,7 +52,6 @@
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -82,7 +83,8 @@ static void vac_truncate_clog(TransactionId frozenXID,
 							  MultiXactId minMulti,
 							  TransactionId lastSaneFrozenXid,
 							  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params);
+static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
+					   bool recursing);
 static VacOptTernaryValue get_vacopt_ternary_value(DefElem *def);
 
 /*
@@ -206,6 +208,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	vacuum(vacstmt->rels, &params, NULL, isTopLevel);
 }
 
+
 /*
  * Internal entry point for VACUUM and ANALYZE commands.
  *
@@ -256,12 +259,14 @@ vacuum(List *relations, VacuumParams *params,
 	 * would not have the intended effect!	There are numerous other subtle
 	 * dependencies on this, too.
 	 *
-	 * ANALYZE (without VACUUM) can run either way.
+	 * GPDB: AO vacuum's compaction phase has to run in a distributed
+	 * transaction though.
+	 *
 	 */
-	if (params->options & VACOPT_VACUUM)
+	if ((params->options & VACOPT_VACUUM) &&
+		(params->options & VACUUM_AO_PHASE_MASK) == 0)
 	{
-		if (Gp_role == GP_ROLE_DISPATCH)
-			PreventInTransactionBlock(isTopLevel, stmttype);
+		PreventTransactionChain(isTopLevel, stmttype);
 		in_outer_xact = false;
 	}
 	else
@@ -356,7 +361,9 @@ vacuum(List *relations, VacuumParams *params,
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-	if (params->options & VACOPT_VACUUM)
+	if (params->options & VACOPT_AO_COMPACT_PHASE)
+		use_own_xacts = false;
+	else if (params->options & VACOPT_VACUUM)
 		use_own_xacts = true;
 	else
 	{
@@ -386,6 +393,8 @@ vacuum(List *relations, VacuumParams *params,
 		/* ActiveSnapshot is not set by autovacuum */
 		if (ActiveSnapshotSet())
 			PopActiveSnapshot();
+
+		PreserveOidAssignmentsOnCommit();
 
 		/* matches the StartTransaction in PostgresMain() */
 		CommitTransactionCommand();
@@ -472,6 +481,7 @@ vacuum(List *relations, VacuumParams *params,
 		 * PostgresMain().
 		 */
 		StartTransactionCommand();
+		ClearOidAssignmentsOnCommit();
 	}
 
 	if ((params->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
@@ -833,7 +843,6 @@ get_all_vacuum_rels(int options)
 	HeapTuple	tuple;
 
 	pgclass = table_open(RelationRelationId, AccessShareLock);
-
 	scan = table_beginscan_catalog(pgclass, 0, NULL);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -1738,7 +1747,8 @@ vac_truncate_clog(TransactionId frozenXID,
  *		At entry and exit, we are not inside a transaction.
  */
 static bool
-vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
+vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
+		   bool recursing)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -1748,10 +1758,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	Oid         aoblkdir_relid;
 	Oid         aovisimap_relid;
 	Oid			save_userid;
+	RangeVar	*this_rangevar = NULL;
+	int			ao_vacuum_phase;
 	int			save_sec_context;
 	int			save_nestlevel;
+	bool		is_appendoptimized;
 
 	Assert(params != NULL);
+
+ 	ao_vacuum_phase = (params->options & VACUUM_AO_PHASE_MASK);
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -1765,6 +1780,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	if (!(params->options & VACOPT_FULL))
 	{
 		/*
+		 * PostgreSQL does this:
 		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
 		 * other concurrent VACUUMs know that they can ignore this one while
 		 * determining their OldestXmin.  (The reason we don't set it during a
@@ -1774,6 +1790,10 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 * removed from other tables.  An index function that depends on the
 		 * contents of other tables is arguably broken, but we won't break it
 		 * here by violating transaction semantics.)
+		 *
+		 * GPDB doesn't use PROC_IN_VACUUM, as lazy vacuum for bitmap
+		 * indexed tables performs reindex causing updates to pg_class
+		 * tuples for index entries.
 		 *
 		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
 		 * autovacuum; it's used to avoid canceling a vacuum that was invoked
@@ -1785,7 +1805,10 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 * which is probably Not Good.
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		/* GPDB_12_MERGE_FIXME: is the comment bellow still valid? */
+#if 0 /* Upstream code not applicable to GPDB */
 		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
+#endif
 		if (params->is_wraparound)
 			MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 		LWLockRelease(ProcArrayLock);
@@ -1802,6 +1825,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 */
+	// FIXME: This fault point was roughly here before. It's kept here to keep
+	// the regression tests from hanging, but need to check that the tests
+	// still make sense. And "drop phase" isn't a term we use anymore.
+	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		SIMPLE_FAULT_INJECTOR("vacuum_relation_open_relation_during_drop_phase");
+	}
+
+	// FIXME: what's the right level for AO tables?
 	lmode = (params->options & VACOPT_FULL) ?
 		AccessExclusiveLock : ShareUpdateExclusiveLock;
 
@@ -1948,8 +1980,205 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	save_nestlevel = NewGUCNestLevel();
 
 	/*
-	 * If we are in the dispatch mode, dispatch this modified
-	 * vacuum statement to QEs, and wait for them to finish.
+	 * Open the relation and get the appropriate lock on it.
+	 *
+	 * There's a race condition here: the rel may have gone away since the
+	 * last time we saw it.  If so, we don't need to vacuum it.
+	 *
+	 * If we've been asked not to wait for the relation lock, acquire it first
+	 * in non-blocking mode, before calling try_relation_open().
+	 */
+	if (!(options & VACOPT_NOWAIT))
+		onerel = try_relation_open(relid, lmode, false /* nowait */);
+	else if (ConditionalLockRelationOid(relid, lmode))
+		onerel = try_relation_open(relid, NoLock, false /* nowait */);
+	else
+	{
+		onerel = NULL;
+		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+			ereport(LOG,
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+				   errmsg("skipping vacuum of \"%s\" --- lock not available",
+						  relation->relname)));
+	}
+
+	if (!onerel)
+	{
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return false;
+	}
+
+	/*
+	 * Check permissions.
+	 *
+	 * We allow the user to vacuum a table if he is superuser, the table
+	 * owner, or the database owner (but in the latter case, only if it's not
+	 * a shared relation).	pg_class_ownercheck includes the superuser case.
+	 *
+	 * Note we choose to treat permissions failure as a WARNING and keep
+	 * trying to vacuum the rest of the DB --- is this appropriate?
+	 */
+	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
+		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
+	{
+		if (Gp_role != GP_ROLE_EXECUTE)
+		{
+			if (onerel->rd_rel->relisshared)
+				ereport(WARNING,
+						(errmsg("skipping \"%s\" --- only superuser can vacuum it",
+								RelationGetRelationName(onerel))));
+			else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
+				ereport(WARNING,
+						(errmsg("skipping \"%s\" --- only superuser or database owner can vacuum it",
+								RelationGetRelationName(onerel))));
+			else
+				ereport(WARNING,
+						(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
+								RelationGetRelationName(onerel))));
+		}
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return false;
+	}
+
+	/*
+	 * Check that it's a vacuumable relation; we used to do this in
+	 * get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
+	 */
+	if ((onerel->rd_rel->relkind != RELKIND_RELATION &&
+		 onerel->rd_rel->relkind != RELKIND_MATVIEW &&
+		 onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
+		 onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
+		 onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
+		 onerel->rd_rel->relkind != RELKIND_AOVISIMAP)
+		|| RelationIsForeign(onerel))
+	{
+		ereport(WARNING,
+				(errmsg("skipping \"%s\" --- cannot vacuum non-tables, external tables, foreign tables or special system tables",
+						RelationGetRelationName(onerel))));
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return false;
+	}
+
+	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		FaultInjector_InjectFaultIfSet(
+			"compaction_before_cleanup_phase",
+			DDLNotSpecified,
+			"",	// databaseName
+			RelationGetRelationName(onerel)); // tableName
+
+		FaultInjector_InjectFaultIfSet(
+			"compaction_before_segmentfile_drop",
+			DDLNotSpecified,
+			"",	// databaseName
+			RelationGetRelationName(onerel)); // tableName
+	}
+
+	/*
+	 * Silently ignore tables that are temp tables of other backends ---
+	 * trying to vacuum these will lead to great unhappiness, since their
+	 * contents are probably not up-to-date on disk.  (We don't throw a
+	 * warning here; it would just lead to chatter during a database-wide
+	 * VACUUM.)
+	 */
+	if (RELATION_IS_OTHER_TEMP(onerel))
+	{
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return false;
+	}
+
+	is_appendoptimized = RelationIsAppendOptimized(onerel);
+
+	if (ao_vacuum_phase && !is_appendoptimized)
+	{
+		/* We were asked to some phase of AO vacuum, but it's not an AO table. Huh? */
+		elog(ERROR, "AO vacuum phase was invoked on a non-AO table");
+	}
+
+	/*
+	 * Get a session-level lock too. This will protect our access to the
+	 * relation across multiple transactions, so that we can vacuum the
+	 * relation's TOAST table (if any) secure in the knowledge that no one is
+	 * deleting the parent relation.
+	 *
+	 * NOTE: this cannot block, even if someone else is waiting for access,
+	 * because the lock manager knows that both lock requests are from the
+	 * same process.
+	 */
+	onerelid = onerel->rd_lockInfo.lockRelId;
+	LockRelationIdForSession(&onerelid, lmode);
+
+	/*
+	 * Remember the relation's TOAST relation for later, if the caller asked
+	 * us to process it.  In VACUUM FULL, though, the toast table is
+	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
+	 *
+	 * GPDB: Also remember the AO segment relations for later.
+	 */
+	if (!(options & VACOPT_SKIPTOAST) && !(options & VACOPT_FULL))
+		toast_relid = onerel->rd_rel->reltoastrelid;
+	else
+		toast_relid = InvalidOid;
+	oldcontext = MemoryContextSwitchTo(vac_context);
+	toast_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(toast_relid)),
+								  get_rel_name(toast_relid),
+								  -1);
+	MemoryContextSwitchTo(oldcontext);
+
+	is_appendoptimized = RelationIsAppendOptimized(onerel);
+	if (is_appendoptimized)
+	{
+		GetAppendOnlyEntryAuxOids(RelationGetRelid(onerel), NULL,
+								  &aoseg_relid,
+								  &aoblkdir_relid, NULL,
+								  &aovisimap_relid, NULL);
+		oldcontext = MemoryContextSwitchTo(vac_context);
+		aoseg_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoseg_relid)),
+									  get_rel_name(aoseg_relid),
+									  -1);
+		aoblkdir_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoblkdir_relid)),
+										 get_rel_name(aoblkdir_relid),
+										 -1);
+		aovisimap_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aovisimap_relid)),
+										  get_rel_name(aovisimap_relid),
+										  -1);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * If it's a partitioned relation, on entry 'relation' refers to the table
+	 * that the original command was issued on, and 'relid' is the actual partition
+	 * we're processing. Build a rangevar representing this partition, so that we
+	 * can dispatch it.
+	 */
+	oldcontext = MemoryContextSwitchTo(vac_context);
+	this_rangevar = makeRangeVar(get_namespace_name(onerel->rd_rel->relnamespace),
+								 pstrdup(RelationGetRelationName(onerel)),
+								 -1);
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(onerel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
+	/*
+	 * If there are any bitmap indexes, we have to acquire a ShareLock for the
+	 * table, since reindex is used later. Otherwise, concurrent vacuum and
+	 * inserts may cause deadlock. MPP-5960
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1971,11 +2200,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		}
 		vac_close_indexes(nindexes, i_rel, AccessShareLock);
 
-		/*
-		 * We have to acquire a ShareLock for the relation which has bitmap
-		 * indexes, since reindex is used later. Otherwise, concurrent
-		 * vacuum and inserts may cause deadlock. MPP-5960
-		 */
 		if (has_bitmap)
 			LockRelation(onerel, ShareLock);
 	}
@@ -1983,7 +2207,24 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
-	if (params->options & VACOPT_FULL)
+	if (ao_vacuum_phase == VACOPT_AO_PRE_CLEANUP_PHASE)
+	{
+		ao_vacuum_rel_pre_cleanup(onerel, options, params, vac_strategy);
+	}
+	else if (ao_vacuum_phase == VACOPT_AO_COMPACT_PHASE)
+	{
+		ao_vacuum_rel_compact(onerel, options, params, vac_strategy);
+	}
+	else if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		ao_vacuum_rel_post_cleanup(onerel, options, params, vac_strategy);
+	}
+	else if (is_appendoptimized)
+	{
+		/* Do nothing here, we will launch the stages later */
+		Assert(ao_vacuum_phase == 0);
+	}
+	else if ((params->options & VACOPT_FULL))
 	{
 		int			cluster_options = 0;
 
@@ -2016,14 +2257,22 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 #if 0
 	if (dispatch)
 	{
+		/* GPDB_12_MERGE_FIXME: reimplent VacuumStats, got lost in the merge */
 		VacuumStatsContext stats_context;
 
-		stats_context.updated_stats = NIL;
-		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	/*
+	 * If an AO/CO table is empty on a segment,
+	 *
+	 * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
+	 * constructed and dispatched separately by the QD, when vacuuming the
+	 * base AO relation.  A backend executing dispatched VacuumStmt
+	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
+	 */
 
-		SetUserIdAndSecContext(
-				save_userid,
-				save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	/* do the same for an AO segments table, if any */
+	if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
+		vacuum_rel(aoseg_relid, aoseg_rangevar, options & ~VACUUM_AO_PHASE_MASK,
+				   params, true);
 
 		dispatchVacuum(options, relation, skip_twophase, &stats_context);
 		vac_update_relstats_from_list(stats_context.updated_stats);
@@ -2032,6 +2281,104 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 #endif
+
+	if (is_appendoptimized && ao_vacuum_phase == 0)
+	{
+		/* orchestrate the AO vacuum phases */
+		/*
+		 * Do cleanup first, to reclaim as much space as possible that
+		 * was left behind from previous VACUUMs. This runs under local
+		 * transactions.
+		 */
+		vacuum_rel(relid, this_rangevar,options | VACOPT_AO_PRE_CLEANUP_PHASE,
+				   params, false);
+
+		/* Compact. This runs in a distributed transaction.  */
+		vacuum_rel(relid, this_rangevar, options | VACOPT_AO_COMPACT_PHASE,
+				   params, false);
+
+		/* Do a final round of cleanup. Hopefully, this can drop the segments
+		 * that were compacted in the previous phase.
+		 */
+		vacuum_rel(relid, this_rangevar, options | VACOPT_AO_POST_CLEANUP_PHASE,
+				   params, false);
+	}
+
+	/*
+	 * In an append-only table, the auxiliary tables are cleaned up in
+	 * the POST_CLEANUP phase. Ignore them in other phases.
+	 */
+	if (is_appendoptimized && ao_vacuum_phase != VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		toast_relid = InvalidOid;
+		aoseg_relid = InvalidOid;
+		aoblkdir_relid = InvalidOid;
+		aovisimap_relid = InvalidOid;
+	}
+
+	/*
+	 * If the relation has a secondary toast rel, vacuum that too while we
+	 * still hold the session lock on the master table.  We do this in
+	 * post-cleanup phase when it's AO table.
+	 */
+	if (toast_relid != InvalidOid && toast_rangevar != NULL)
+		vacuum_rel(toast_relid, toast_rangevar, options & ~VACUUM_AO_PHASE_MASK,
+				   params, true);
+
+	/* do the same for an AO block directory table, if any */
+	if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
+		vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options & ~VACUUM_AO_PHASE_MASK,
+				   params, true);
+
+	/* do the same for an AO visimap, if any */
+	if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
+		vacuum_rel(aovisimap_relid, aovisimap_rangevar, options & ~VACUUM_AO_PHASE_MASK,
+				   params, true);
+
+	if (Gp_role == GP_ROLE_DISPATCH && !recursing &&
+		(!is_appendoptimized || ao_vacuum_phase))
+	{
+		VacuumStatsContext stats_context;
+		char	   *vsubtype;
+
+		/*
+		 * Dispatching needs a transaction. At least in some error scenarios,
+		 * it uses TopTransactionContext to store stuff.
+		 */
+		StartTransactionCommand();
+		PushActiveSnapshot(GetTransactionSnapshot());
+
+		stats_context.updated_stats = NIL;
+		dispatchVacuum(options, this_rangevar, &stats_context);
+		vac_update_relstats_from_list(stats_context.updated_stats);
+
+		/* Also update pg_stat_last_operation */
+		if (IsAutoVacuumWorkerProcess())
+			vsubtype = "AUTO";
+		else
+		{
+			if ((options & VACOPT_FULL) &&
+				(0 == params->freeze_min_age))
+				vsubtype = "FULL FREEZE";
+			else if ((options & VACOPT_FULL))
+				vsubtype = "FULL";
+			else if (0 == params->freeze_min_age)
+				vsubtype = "FREEZE";
+			else
+				vsubtype = "";
+		}
+		MetaTrackUpdObject(RelationRelationId,
+						   relid,
+						   GetUserId(),
+						   "VACUUM",
+						   vsubtype);
+
+		/* Restore userid and security context */
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+	}
 	
 	/* all done with this class, but hold lock until commit */
 	if (onerel)

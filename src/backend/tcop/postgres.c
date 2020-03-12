@@ -1109,7 +1109,6 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  *
  * query_string -- optional query text (C string).
  * serializedPlantree[len] -- PlannedStmt node, or (NULL,0) if query provided.
- * serializedParams[len] -- optional parameters
  * serializedQueryDispatchDesc[len] -- QueryDispatchDesc node, or (NULL,0) if query provided.
  *
  * Caller may supply either a Query (representing utility command) or
@@ -1118,7 +1117,6 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 static void
 exec_mpp_query(const char *query_string,
 			   const char * serializedPlantree, int serializedPlantreelen,
-			   const char * serializedParams, int serializedParamslen,
 			   const char * serializedQueryDispatchDesc, int serializedQueryDispatchDesclen)
 {
 	CommandDest dest = whereToSendOutput;
@@ -1278,10 +1276,11 @@ exec_mpp_query(const char *query_string,
 	}
 
 	/*
-	 * Get (possibly 0) parameters.
+	 * Get (possibly 0) PARAM_EXTERN parameters. (PARAM_EXEC parameter
+	 * will be handled later, in InitPlan()).
 	 */
-	if (serializedParams != NULL && serializedParamslen > 0)
-		paramLI = deserializeParamListInfo(serializedParams, serializedParamslen);
+	if (ddesc && ddesc->paramInfo)
+		paramLI = deserializeExternParams(ddesc->paramInfo);
 	else
 		paramLI = NULL;
 
@@ -5276,14 +5275,12 @@ PostgresMain(int argc, char *argv[],
 
 					const char *serializedDtxContextInfo = NULL;
 					const char *serializedPlantree = NULL;
-					const char *serializedParams = NULL;
 					const char *serializedQueryDispatchDesc = NULL;
 					const char *resgroupInfoBuf = NULL;
 
 					int query_string_len = 0;
 					int serializedDtxContextInfolen = 0;
 					int serializedPlantreelen = 0;
-					int serializedParamslen = 0;
 					int serializedQueryDispatchDesclen = 0;
 					int resgroupInfoLen = 0;
 					TimestampTz statementStart;
@@ -5319,7 +5316,6 @@ PostgresMain(int argc, char *argv[],
 					statementStart = pq_getmsgint64(&input_message);
 					query_string_len = pq_getmsgint(&input_message, 4);
 					serializedPlantreelen = pq_getmsgint(&input_message, 4);
-					serializedParamslen = pq_getmsgint(&input_message, 4);
 					serializedQueryDispatchDesclen = pq_getmsgint(&input_message, 4);
 					serializedDtxContextInfolen = pq_getmsgint(&input_message, 4);
 
@@ -5337,9 +5333,6 @@ PostgresMain(int argc, char *argv[],
 
 					if (serializedPlantreelen > 0)
 						serializedPlantree = pq_getmsgbytes(&input_message,serializedPlantreelen);
-
-					if (serializedParamslen > 0)
-						serializedParams = pq_getmsgbytes(&input_message,serializedParamslen);
 
 					if (serializedQueryDispatchDesclen > 0)
 						serializedQueryDispatchDesc = pq_getmsgbytes(&input_message,serializedQueryDispatchDesclen);
@@ -5407,7 +5400,6 @@ PostgresMain(int argc, char *argv[],
 					else
 						exec_mpp_query(query_string,
 									   serializedPlantree, serializedPlantreelen,
-									   serializedParams, serializedParamslen,
 									   serializedQueryDispatchDesc, serializedQueryDispatchDesclen);
 
 					SetUserIdAndContext(GetOuterUserId(), false);

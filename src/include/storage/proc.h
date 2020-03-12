@@ -205,8 +205,6 @@ struct PGPROC
 	 */
 	int			queryCommandId;
 
-	bool serializableIsoLevel; /* true if proc has serializable isolation level set */
-
 	/*
 	 * Information for resource group
 	 */

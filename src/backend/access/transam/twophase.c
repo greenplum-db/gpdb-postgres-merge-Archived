@@ -495,7 +495,6 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	proc->lwWaitMode = 0;
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
-	proc->serializableIsoLevel = false;
 
 	proc->localDistribXactData = *localDistribXactRef;
 

@@ -304,7 +304,4 @@ cdbdisp_makeDispatchResults(struct CdbDispatcherState *ds,
 void
 cdbdisp_clearCdbPgResults(CdbPgResults* cdb_pgresults);
 
-extern struct HTAB *
-PQprocessAoTupCounts(struct HTAB *ht, void *aotupcounts, int naotupcounts);
-
 #endif   /* CDBDISPATCHRESULT_H */

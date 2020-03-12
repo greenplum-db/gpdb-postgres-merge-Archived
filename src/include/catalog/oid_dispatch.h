@@ -101,6 +101,10 @@ extern Oid GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber
 
 
 
+/* Functions used in master and QE nodes */
+extern void PreserveOidAssignmentsOnCommit(void);
+extern void ClearOidAssignmentsOnCommit(void);
+
 /* Functions used in binary upgrade */
 extern bool IsOidAcceptable(Oid oid);
 extern void MarkOidPreassignedFromBinaryUpgrade(Oid oid);

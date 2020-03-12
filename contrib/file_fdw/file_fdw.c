@@ -700,8 +700,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 						   is_program,
 						   NULL,
 						   NIL,
-						   options,
-						   NIL);  /* ao_segnos */
+						   options);
 
 	/*
 	 * Save state in node->fdw_state.  We must save enough information to call
@@ -776,8 +775,7 @@ fileReScanForeignScan(ForeignScanState *node)
 									festate->is_program,
 									NULL,
 									NIL,
-									festate->options,
-                                    NIL);  /* ao_segnos */
+									festate->options);
 }
 
 /*
@@ -1148,7 +1146,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	 * Create CopyState from FDW options.
 	 */
 	cstate = BeginCopyFrom(NULL, onerel, filename, is_program, NULL, NIL,
-						   options, NIL);
+						   options);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
