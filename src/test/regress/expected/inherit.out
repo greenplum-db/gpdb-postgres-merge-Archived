@@ -2470,26 +2470,41 @@ explain (costs off) select * from bool_rp where b = false order by b,a;
  Optimizer: Postgres query optimizer
 (8 rows)
 
+-- GPDB: force the planner to choose same plan as in upstream
+set enable_seqscan=off;
+set enable_bitmapscan=off;
 explain (costs off) select * from bool_rp where b = true order by a;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Append
-   ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k
-         Index Cond: (b = true)
-   ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k
-         Index Cond: (b = true)
-(5 rows)
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   Merge Key: bool_rp_true_1k.a
+   ->  Sort
+         Sort Key: bool_rp_true_1k.a
+         ->  Append
+               ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k
+                     Index Cond: (b = true)
+               ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k
+                     Index Cond: (b = true)
+ Optimizer: Postgres query optimizer
+(10 rows)
 
 explain (costs off) select * from bool_rp where b = false order by a;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
- Append
-   ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k
-         Index Cond: (b = false)
-   ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k
-         Index Cond: (b = false)
-(5 rows)
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   Merge Key: bool_rp_false_1k.a
+   ->  Sort
+         Sort Key: bool_rp_false_1k.a
+         ->  Append
+               ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k
+                     Index Cond: (b = false)
+               ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k
+                     Index Cond: (b = false)
+ Optimizer: Postgres query optimizer
+(10 rows)
 
+reset enable_seqscan;
+reset enable_bitmapscan;
 drop table bool_rp;
 -- Ensure an Append scan is chosen when the partition order is a subset of
 -- the required order.
