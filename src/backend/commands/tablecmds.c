@@ -16137,6 +16137,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	bool        rep_pol = false;
 	bool        force_reorg = false;
 	Datum		newOptions = PointerGetDatum(NULL);
+	bool		need_reorg;
 	bool		change_policy = false;
 	int			numsegments;
 	bool 				save_optimizer_replicated_table_insert;
@@ -16479,129 +16480,141 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (!ldistro)
 			ldistro = make_distributedby_for_rel(rel);
 
-		/*
-		 * Force the use of Postgres query optimizer, since Pivotal Optimizer (GPORCA) will not
-		 * redistribute the tuples if the current and required distributions
-		 * are both RANDOM even when reorganize is set to "true"
-		 */
-		bool saveOptimizerGucValue = optimizer;
-		optimizer = false;
+		if (rel->rd_rel->relkind == RELKIND_RELATION ||
+			rel->rd_rel->relkind == RELKIND_MATVIEW)
+		{
+			need_reorg = true;
+		}
+		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			need_reorg = false;
+		else
+			elog(ERROR, "unexpected relkind '%c'", rel->rd_rel->relkind);
 
-		if (saveOptimizerGucValue)
-			ereport(LOG,
-					(errmsg("ALTER SET DISTRIBUTED BY: falling back to Postgres query optimizer to ensure re-distribution of tuples.")));
-
-		GpPolicy *original_policy = NULL;
-
-		/*
-		 * Disable optimizer_replicated_table_insert so planner 
-		 * can force a broadcast motion even both source and target
-		 * are replicated table. This is important when altering
-		 * distribution policy is called by gpexpand.
-		 */
-		save_optimizer_replicated_table_insert = optimizer_replicated_table_insert;
-		optimizer_replicated_table_insert = false;
-
-		if (force_reorg && !rand_pol && !GpPolicyIsReplicated(rel->rd_cdbpolicy))
+		if (need_reorg)
 		{
 			/*
-			 * since we force the reorg, we don't care about the original
-			 * distribution policy of the source table hence, we can set the
-			 * policy to random, which will force it to redistribute if the new
-			 * distribution policy is partitioned, even the new partition policy
-			 * is same as the original one, the query optimizer will generate
-			 * redistribute plan.
+			 * Force the use of Postgres query optimizer, since Pivotal Optimizer (GPORCA) will not
+			 * redistribute the tuples if the current and required distributions
+			 * are both RANDOM even when reorganize is set to "true"
 			 */
-			MemoryContext oldcontext;
-			GpPolicy *random_policy = createRandomPartitionedPolicy(ldistro->numsegments);
+			bool saveOptimizerGucValue = optimizer;
+			optimizer = false;
 
-			original_policy = rel->rd_cdbpolicy;
+			if (saveOptimizerGucValue)
+				ereport(LOG,
+						(errmsg("ALTER SET DISTRIBUTED BY: falling back to Postgres query optimizer to ensure re-distribution of tuples.")));
+
+			GpPolicy *original_policy = NULL;
+
 			/*
-			 * break the link to avoid original_policy from getting deleted if
-			 * relcache invalidation happens.
+			 * Disable optimizer_replicated_table_insert so planner 
+			 * can force a broadcast motion even both source and target
+			 * are replicated table. This is important when altering
+			 * distribution policy is called by gpexpand.
 			 */
-			rel->rd_cdbpolicy = NULL;
-			/* update the catalog first and then assign the policy to rd_cdbpolicy */
-			GpPolicyReplace(RelationGetRelid(rel), random_policy);
+			save_optimizer_replicated_table_insert = optimizer_replicated_table_insert;
+			optimizer_replicated_table_insert = false;
 
-			oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
-			rel->rd_cdbpolicy = GpPolicyCopy(random_policy);
-			MemoryContextSwitchTo(oldcontext);
-		}
+			if (force_reorg && !rand_pol && !GpPolicyIsReplicated(rel->rd_cdbpolicy))
+			{
+				/*
+				 * since we force the reorg, we don't care about the original
+				 * distribution policy of the source table hence, we can set the
+				 * policy to random, which will force it to redistribute if the new
+				 * distribution policy is partitioned, even the new partition policy
+				 * is same as the original one, the query optimizer will generate
+				 * redistribute plan.
+				 */
+				MemoryContext oldcontext;
+				GpPolicy *random_policy = createRandomPartitionedPolicy(ldistro->numsegments);
 
-		/* Step (b) - build CTAS */
-		queryDesc = build_ctas_with_dist(rel, ldistro,
-						untransformRelOptions(newOptions),
-						&tmprv,
-						true);
+				original_policy = rel->rd_cdbpolicy;
+				/*
+				 * break the link to avoid original_policy from getting deleted if
+				 * relcache invalidation happens.
+				 */
+				rel->rd_cdbpolicy = NULL;
+				/* update the catalog first and then assign the policy to rd_cdbpolicy */
+				GpPolicyReplace(RelationGetRelid(rel), random_policy);
 
-		/* 
-		 * We need to update our snapshot here to make sure we see all
-		 * committed work. We have an exclusive lock on the table so no one
-		 * will be able to access the table now.
-		 */
-		PushActiveSnapshot(GetLatestSnapshot());
+				oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+				rel->rd_cdbpolicy = GpPolicyCopy(random_policy);
+				MemoryContextSwitchTo(oldcontext);
+			}
 
-		/* Step (c) - run on all nodes */
-		queryDesc->ddesc = makeNode(QueryDispatchDesc);
-		queryDesc->ddesc->useChangedAOOpts = false;
+			/* Step (b) - build CTAS */
+			queryDesc = build_ctas_with_dist(rel, ldistro,
+											 untransformRelOptions(newOptions),
+											 &tmprv,
+											 true);
+
+			/* 
+			 * We need to update our snapshot here to make sure we see all
+			 * committed work. We have an exclusive lock on the table so no one
+			 * will be able to access the table now.
+			 */
+			PushActiveSnapshot(GetLatestSnapshot());
+
+			/* Step (c) - run on all nodes */
+			queryDesc->ddesc = makeNode(QueryDispatchDesc);
+			queryDesc->ddesc->useChangedAOOpts = false;
 		
-		/* GPDB hook for collecting query info */
-		if (query_info_collect_hook)
-			(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
+			/* GPDB hook for collecting query info */
+			if (query_info_collect_hook)
+				(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
 
-		queryDesc->plannedstmt->query_mem =
+			queryDesc->plannedstmt->query_mem =
 				ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
-		ExecutorStart(queryDesc, 0);
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
+			ExecutorStart(queryDesc, 0);
+			ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
-		if (Gp_role == GP_ROLE_DISPATCH)
-			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
+			if (Gp_role == GP_ROLE_DISPATCH)
+				autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
-		queryDesc->dest->rDestroy(queryDesc->dest);
-		ExecutorFinish(queryDesc);
-		ExecutorEnd(queryDesc);
+			queryDesc->dest->rDestroy(queryDesc->dest);
+			ExecutorFinish(queryDesc);
+			ExecutorEnd(queryDesc);
 
-		if (Gp_role == GP_ROLE_DISPATCH)
-			auto_stats(cmdType,
-					   relationOid,
-					   queryDesc->es_processed,
-					   false);
+			if (Gp_role == GP_ROLE_DISPATCH)
+				auto_stats(cmdType,
+						   relationOid,
+						   queryDesc->es_processed,
+						   false);
 
-		FreeQueryDesc(queryDesc);
+			FreeQueryDesc(queryDesc);
 
-		/* Restore the old snapshot */
-		PopActiveSnapshot();
-		optimizer = saveOptimizerGucValue;
-		optimizer_replicated_table_insert = save_optimizer_replicated_table_insert;
+			/* Restore the old snapshot */
+			PopActiveSnapshot();
+			optimizer = saveOptimizerGucValue;
+			optimizer_replicated_table_insert = save_optimizer_replicated_table_insert;
 
-		CommandCounterIncrement(); /* see the effects of the command */
+			CommandCounterIncrement(); /* see the effects of the command */
 
-		if (original_policy)
-		{
+			if (original_policy)
+			{
+				/*
+				 * update catalog first and then update the rd_cdbpolicy. This order
+				 * avoids original_policy from getting freed before we use it for
+				 * GpPolicyReplace() if relcache invalidation happens. Also, helps
+				 * to have the rd_cdbpolicy current instead of reverse order which
+				 * can invalidate our assignment to rd_cdbpolicy.
+				 */
+				GpPolicyReplace(RelationGetRelid(rel), original_policy);
+				rel->rd_cdbpolicy = original_policy;
+			}
+
 			/*
-			 * update catalog first and then update the rd_cdbpolicy. This order
-			 * avoids original_policy from getting freed before we use it for
-			 * GpPolicyReplace() if relcache invalidation happens. Also, helps
-			 * to have the rd_cdbpolicy current instead of reverse order which
-			 * can invalidate our assignment to rd_cdbpolicy.
+			 * Step (d) - tell the seg nodes about the temporary relation. We use
+			 * the global 'qe_data' variable to pass this information up to the
+			 * caller, so that it can be included when the command is dispatched.
 			 */
-			GpPolicyReplace(RelationGetRelid(rel), original_policy);
-			rel->rd_cdbpolicy = original_policy;
+			cmd->backendId = MyBackendId + 1;
 		}
-
-		/*
-		 * Step (d) - tell the seg nodes about the temporary relation. We use
-		 * the global 'qe_data' variable to pass this information up to the
-		 * caller, so that it can be included when the command is dispatched.
-		 */
-		cmd->backendId = MyBackendId + 1;
 	}
 	else
 	{
 		int			backend_id;
-		bool		reorg = false;
 
 		/*
 		 * Extract the already-transformed representation of the DistributedBy
@@ -16612,8 +16625,11 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (policy)
 			GpPolicyReplace(RelationGetRelid(rel), policy);
 
-		/* Set to random distribution on master with no reorganisation */
-		if (!reorg && cmd->backendId == 0)
+		/*
+		 * Set to random distribution on master with no reorganisation.
+		 * Or this is a partitioned table, with no data.
+		 */
+		if (cmd->backendId == 0)
 		{
 			/* caller expects rel to be closed for this AT type */
 			heap_close(rel, NoLock);
@@ -16624,102 +16640,106 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		tmprv = make_temp_table_name(rel, backend_id);
 
 		newOptions = new_rel_opts(rel);
+		need_reorg = true;
 	}
 
-	/*
-	 * Step (e) - Correct ownership on temporary table:
-	 *   necessary so that the toast tables/indices have the correct
-	 *   owner after we swap them.
-	 *
-	 * Note: ATExecChangeOwner does NOT dispatch, so this does not
-	 * belong in the dispatch block above (MPP-9663).
-	 */
-	ATExecChangeOwner(RangeVarGetRelid(tmprv, NoLock, false),
-					  rel->rd_rel->relowner, true, AccessExclusiveLock);
-	CommandCounterIncrement(); /* see the effects of the command */
-
-	/*
-	 * Update pg_attribute for dropped columns. The temp table we built
-	 * uses int4 to stand in for any dropped columns, so we need to update
-	 * the original table's definition to match the new contents.
-	 */
-	change_dropped_col_datatypes(rel);
-
-	/*
-	 * Step (f) - swap relfilenodes and MORE !!!
-	 *
-	 * Just lookup the Oid and pass it to swap_relation_files(). To do
-	 * this we must close the rel, since it needs to be forgotten by
-	 * the cache, we keep the lock though. ATRewriteCatalogs() knows
-	 * that we've closed the relation here.
-	 */
-	heap_close(rel, NoLock);
-	rel = NULL;
-	tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
-	swap_relation_files(tarrelid, tmprelid,
-						false, /* target_is_pg_class */
-						false, /* swap_toast_by_content */
-						false, /* swap_stats */
-						true,
-						RecentXmin,
-						ReadNextMultiXactId(),
-						NULL);
-
-	/*
-	 * Make changes from swapping relation files visible before updating
-	 * options below or else we get an already updated tuple error.
-	 */
-	CommandCounterIncrement();
-
-	if (DatumGetPointer(newOptions))
+	if (need_reorg)
 	{
-		Datum		repl_val[Natts_pg_class];
-		bool		repl_null[Natts_pg_class];
-		bool		repl_repl[Natts_pg_class];
-		HeapTuple	newOptsTuple;
-		HeapTuple	tuple;
-		Relation	relationRelation;
-
 		/*
-		 * All we need do here is update the pg_class row; the new
-		 * options will be propagated into relcaches during
-		 * post-commit cache inval.
+		 * Step (e) - Correct ownership on temporary table:
+		 *   necessary so that the toast tables/indices have the correct
+		 *   owner after we swap them.
+		 *
+		 * Note: ATExecChangeOwner does NOT dispatch, so this does not
+		 * belong in the dispatch block above (MPP-9663).
 		 */
-		MemSet(repl_val, 0, sizeof(repl_val));
-		MemSet(repl_null, false, sizeof(repl_null));
-		MemSet(repl_repl, false, sizeof(repl_repl));
-
-		if (newOptions != (Datum) 0)
-			repl_val[Anum_pg_class_reloptions - 1] = newOptions;
-		else
-			repl_null[Anum_pg_class_reloptions - 1] = true;
-
-		repl_repl[Anum_pg_class_reloptions - 1] = true;
-
-		relationRelation = table_open(RelationRelationId, RowExclusiveLock);
-		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(tarrelid));
-
-		Insist(HeapTupleIsValid(tuple));
-		newOptsTuple = heap_modify_tuple(tuple, RelationGetDescr(relationRelation),
-										 repl_val, repl_null, repl_repl);
-
-		CatalogTupleUpdate(relationRelation, &tuple->t_self, newOptsTuple);
-
-		heap_freetuple(newOptsTuple);
-
-		ReleaseSysCache(tuple);
-
-		table_close(relationRelation, RowExclusiveLock);
+		ATExecChangeOwner(RangeVarGetRelid(tmprv, NoLock, false),
+						  rel->rd_rel->relowner, true, AccessExclusiveLock);
+		CommandCounterIncrement(); /* see the effects of the command */
 
 		/*
-		 * Increment cmd counter to make updates visible; this is
-		 * needed because the same tuple has to be updated again
+		 * Update pg_attribute for dropped columns. The temp table we built
+		 * uses int4 to stand in for any dropped columns, so we need to update
+		 * the original table's definition to match the new contents.
+		 */
+		change_dropped_col_datatypes(rel);
+
+		/*
+		 * Step (f) - swap relfilenodes and MORE !!!
+		 *
+		 * Just lookup the Oid and pass it to swap_relation_files(). To do
+		 * this we must close the rel, since it needs to be forgotten by
+		 * the cache, we keep the lock though. ATRewriteCatalogs() knows
+		 * that we've closed the relation here.
+		 */
+		heap_close(rel, NoLock);
+		rel = NULL;
+		tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
+		swap_relation_files(tarrelid, tmprelid,
+							false, /* target_is_pg_class */
+							false, /* swap_toast_by_content */
+							false, /* swap_stats */
+							true,
+							RecentXmin,
+							ReadNextMultiXactId(),
+							NULL);
+
+		/*
+		 * Make changes from swapping relation files visible before updating
+		 * options below or else we get an already updated tuple error.
 		 */
 		CommandCounterIncrement();
-	}
 
-	/* now, reindex */
-	reindex_relation(tarrelid, 0, 0);
+		if (DatumGetPointer(newOptions))
+		{
+			Datum		repl_val[Natts_pg_class];
+			bool		repl_null[Natts_pg_class];
+			bool		repl_repl[Natts_pg_class];
+			HeapTuple	newOptsTuple;
+			HeapTuple	tuple;
+			Relation	relationRelation;
+
+			/*
+			 * All we need do here is update the pg_class row; the new
+			 * options will be propagated into relcaches during
+			 * post-commit cache inval.
+			 */
+			MemSet(repl_val, 0, sizeof(repl_val));
+			MemSet(repl_null, false, sizeof(repl_null));
+			MemSet(repl_repl, false, sizeof(repl_repl));
+
+			if (newOptions != (Datum) 0)
+				repl_val[Anum_pg_class_reloptions - 1] = newOptions;
+			else
+				repl_null[Anum_pg_class_reloptions - 1] = true;
+
+			repl_repl[Anum_pg_class_reloptions - 1] = true;
+
+			relationRelation = table_open(RelationRelationId, RowExclusiveLock);
+			tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(tarrelid));
+
+			Insist(HeapTupleIsValid(tuple));
+			newOptsTuple = heap_modify_tuple(tuple, RelationGetDescr(relationRelation),
+											 repl_val, repl_null, repl_repl);
+
+			CatalogTupleUpdate(relationRelation, &tuple->t_self, newOptsTuple);
+
+			heap_freetuple(newOptsTuple);
+
+			ReleaseSysCache(tuple);
+
+			table_close(relationRelation, RowExclusiveLock);
+
+			/*
+			 * Increment cmd counter to make updates visible; this is
+			 * needed because the same tuple has to be updated again
+			 */
+			CommandCounterIncrement();
+		}
+
+		/* now, reindex */
+		reindex_relation(tarrelid, 0, 0);
+	}
 
 	/* Step (g) */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -16731,6 +16751,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	}
 
 	/* Step (h) Drop the table */
+	if (need_reorg)
 	{
 		ObjectAddress object;
 		object.classId = RelationRelationId;
@@ -16739,29 +16760,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 
 		performDeletion(&object, DROP_RESTRICT, 0);
 	}
-
-	/* GPDB_12_MERGE_FIXME: This needs to go away or be moved behind
-	 * Table AM API */
-#if 0
-	if (relstorage_is_ao(tarrelstorage) && IS_QUERY_DISPATCHER())
-	{
-		/*
-		 * Drop the shared memory hash table entry for this table if it
-		 * exists. We must do so since before the rewrite we probably have few
-		 * non-zero segfile entries for this table while after the rewrite
-		 * only segno zero will be full and the others will be empty. By
-		 * dropping the hash entry we force refreshing the entry from the
-		 * catalog the next time a write into this AO table comes along.
-		 *
-		 * Note that ALTER already took an exclusive lock on the old relation
-		 * so we are guaranteed to not drop the hash entry from under any
-		 * concurrent operation.
-		 */
-		LWLockAcquire(AOSegFileLock, LW_EXCLUSIVE);
-		AORelRemoveHashEntry(tarrelid);
-		LWLockRelease(AOSegFileLock);
-	}
-#endif
 	
 l_distro_fini:
 
