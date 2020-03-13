@@ -248,6 +248,7 @@ BLD_GPDB_BUILDSET=$($(BLD_ARCH)_GPDB_BUILDSET)
 # set default build steps
 define BUILD_STEPS
 	@rm -rf $(INSTLOC)
+	@$(MAKE) -C $(BUILDDIR)/src/backend generated-headers
 	cd $(BUILDDIR) && $(MAKE) $(PARALLEL_MAKE_OPTS) install
 	#@$(MAKE) mgmtcopy INSTLOC=$(INSTLOC)
 	@$(MAKE) mkpgbouncer INSTLOC=$(INSTLOC) BUILDDIR=$(BUILDDIR)
