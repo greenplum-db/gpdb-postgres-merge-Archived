@@ -428,7 +428,7 @@ DETAIL:  Failing row contains (0, null).
 ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
 INSERT INTO gtest21b (a) VALUES (0);  -- ok now
 -- index constraints
-CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE);
+CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE) distributed replicated;
 INSERT INTO gtest22a VALUES (2);
 INSERT INTO gtest22a VALUES (3);
 ERROR:  duplicate key value violates unique constraint "gtest22a_b_key"
@@ -459,11 +459,13 @@ INSERT INTO gtest22c VALUES (1), (2), (3);
 SET enable_seqscan TO off;
 SET enable_bitmapscan TO off;
 EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 4;
-                 QUERY PLAN                  
----------------------------------------------
- Index Scan using gtest22c_b_idx on gtest22c
-   Index Cond: (b = 4)
-(2 rows)
+                    QUERY PLAN                     
+---------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Scan using gtest22c_b_idx on gtest22c
+         Index Cond: (b = 4)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM gtest22c WHERE b = 4;
  a | b 
@@ -523,18 +525,16 @@ Foreign-key constraints:
     "gtest23b_b_fkey" FOREIGN KEY (b) REFERENCES gtest23a(x)
 
 INSERT INTO gtest23b VALUES (1);  -- ok
+-- GPDB doesn't enforce foreign key constraints, so this doesn't error out.
 INSERT INTO gtest23b VALUES (5);  -- error
-ERROR:  insert or update on table "gtest23b" violates foreign key constraint "gtest23b_b_fkey"
-DETAIL:  Key (b)=(10) is not present in table "gtest23a".
 DROP TABLE gtest23b;
 DROP TABLE gtest23a;
 CREATE TABLE gtest23p (x int, y int GENERATED ALWAYS AS (x * 2) STORED, PRIMARY KEY (y));
 INSERT INTO gtest23p VALUES (1), (2), (3);
 CREATE TABLE gtest23q (a int PRIMARY KEY, b int REFERENCES gtest23p (y));
 INSERT INTO gtest23q VALUES (1, 2);  -- ok
+-- GPDB doesn't enforce foreign key constraints, so this doesn't error out.
 INSERT INTO gtest23q VALUES (2, 5);  -- error
-ERROR:  insert or update on table "gtest23q" violates foreign key constraint "gtest23q_b_fkey"
-DETAIL:  Key (b)=(5) is not present in table "gtest23p".
 -- domains
 CREATE DOMAIN gtestdomain1 AS int CHECK (VALUE < 10);
 CREATE TABLE gtest24 (a int PRIMARY KEY, b gtestdomain1 GENERATED ALWAYS AS (a * 2) STORED);
