@@ -25,6 +25,7 @@
 #include "cdb/cdbplan.h"
 #include "cdb/cdbvars.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/orca.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
@@ -109,7 +110,6 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	glob->subplans = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
-	glob->nParamExec = 0;
 
 	root = makeNode(PlannerInfo);
 	root->parse = parse;
