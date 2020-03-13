@@ -108,7 +108,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	ExprContext *econtext;
 	TableScanDesc scan;
 	Node  		*tbm;
-	GenericBMIterator *tbmiterator;
+	GenericBMIterator *tbmiterator = NULL;
 	TBMIterateResult *tbmres;
 #ifdef USE_PREFETCH
 	GenericBMIterator *prefetch_iterator;
