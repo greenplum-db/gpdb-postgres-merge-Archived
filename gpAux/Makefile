@@ -119,7 +119,10 @@ DEBUGFLAGS="$(strip $(BLD_CFLAGS) $(CFLAGS_OPT) $(DEBUG_CFLAGS_OPT))"
 
 DEFPORT=5432
 
-ORCA_CONFIG=--enable-orca
+# GPDB_12_MERGE_FIXME: Re-enable orca. Issues around partitions as well as
+# changes to ArrayCoerceExpr (see commit c12d570fa147) that will likely require
+# changes in orca's translation layer.
+ORCA_CONFIG=--disable-orca
 
 ifneq "$(findstring $(BLD_ARCH),aix7_ppc_64)" ""
 APR_CONFIG=--with-apr-config=$(BLD_THIRDPARTY_BIN_DIR)/apr-1-config
