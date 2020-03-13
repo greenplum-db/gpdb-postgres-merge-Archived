@@ -120,6 +120,7 @@
 #include "access/genam.h"
 #include "access/multixact.h"
 #include "access/xact.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
@@ -437,6 +438,8 @@ vacuum_appendonly_indexes(Relation aoRelation, int options,
 	FileSegInfo **segmentFileInfo = NULL; /* Might be a casted AOCSFileSegInfo */
 	int			totalSegfiles;
 	Snapshot	appendOnlyMetaDataSnapshot;
+	Oid			visimaprelid;
+	Oid			visimapidxid;
 
 	Assert(RelationIsAppendOptimized(aoRelation));
 
@@ -468,10 +471,15 @@ vacuum_appendonly_indexes(Relation aoRelation, int options,
 																&totalSegfiles);
 	}
 
+	GetAppendOnlyEntryAuxOids(aoRelation->rd_id,
+							  appendOnlyMetaDataSnapshot, 
+							  NULL, NULL, NULL,
+							  &visimaprelid, &visimapidxid);
+
 	AppendOnlyVisimap_Init(
 			&vacuumIndexState.visiMap,
-			aoRelation->rd_appendonly->visimaprelid,
-			aoRelation->rd_appendonly->visimapidxid,
+			visimaprelid,
+			visimapidxid,
 			AccessShareLock,
 			appendOnlyMetaDataSnapshot);
 
@@ -691,6 +699,8 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot, int elevel,
 	double		eof;
 	int64       hidden_tupcount;
 	AppendOnlyVisimap visimap;
+	Oid			visimaprelid;
+	Oid			visimapidxid;
 
 	Assert(RelationIsAoRows(aorel) || RelationIsAoCols(aorel));
 
@@ -713,9 +723,14 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot, int elevel,
 	totalbytes = eof;
 	nblocks = (uint32)RelationGuessNumberOfBlocks(totalbytes);
 
+	GetAppendOnlyEntryAuxOids(aorel->rd_id,
+							  snapshot, 
+							  NULL, NULL, NULL,
+							  &visimaprelid, &visimapidxid);
+
 	AppendOnlyVisimap_Init(&visimap,
-						   aorel->rd_appendonly->visimaprelid,
-						   aorel->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   AccessShareLock,
 						   snapshot);
 	hidden_tupcount = AppendOnlyVisimap_GetRelationHiddenTupleCount(&visimap);

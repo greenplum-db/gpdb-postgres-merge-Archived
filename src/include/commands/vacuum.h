@@ -150,7 +150,18 @@ typedef enum VacuumOption
 	VACOPT_SKIP_LOCKED = 1 << 5,	/* skip if cannot get lock */
 	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
 	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
+
+	,
+	/* GPDB_12_MERGE_FIXME: Should probably move the bits down a bit */
+	/* AO vacuum phases. Mutually exclusive */
+	VACOPT_AO_PRE_CLEANUP_PHASE = 1 << 10,
+	VACOPT_AO_COMPACT_PHASE = 1 << 11,
+	VACOPT_AO_POST_CLEANUP_PHASE = 1 << 12
 } VacuumOption;
+
+#define VACUUM_AO_PHASE_MASK (VACOPT_AO_PRE_CLEANUP_PHASE | \
+							  VACOPT_AO_COMPACT_PHASE | \
+							  VACOPT_AO_POST_CLEANUP_PHASE)
 
 /*
  * A ternary value used by vacuum parameters.

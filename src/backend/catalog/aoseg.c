@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "access/heapam.h"
 #include "catalog/aoseg.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/aocatalog.h"
@@ -172,10 +173,7 @@ AlterTableCreateAoSegTable(Oid relOid)
 	if (!IsBootstrapProcessingMode())
 	{
 		/* normal case, use a transactional update */
-		simple_heap_update(class_rel, &reltup->t_self, reltup);
-
-		/* Keep catalog indexes current */
-		CatalogUpdateIndexes(class_rel, reltup);
+		CatalogTupleUpdate(class_rel, &reltup->t_self, reltup);
 	}
 	else
 	{

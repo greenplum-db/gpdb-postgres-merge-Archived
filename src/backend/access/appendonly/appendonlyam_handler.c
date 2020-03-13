@@ -1432,11 +1432,3 @@ aoco_tableam_handler(PG_FUNCTION_ARGS)
 	elog(ERROR, "aoco_tableam_handler not implemented");
 	//PG_RETURN_POINTER(&appendonly_methods);
 }
-
-/* GPDB_12_MERGE_FIXME: this doesn't belong here, but let's just make the
- * linker happy for now.
- */
-void
-ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
-{
-}

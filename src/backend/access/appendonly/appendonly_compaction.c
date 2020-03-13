@@ -504,6 +504,7 @@ AppendOnlyRecycleDeadSegments(Relation aorel)
 	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 	bool		got_accessexclusive_lock = false;
 	TransactionId cutoff_xid = InvalidTransactionId;
+	Oid			segrelid;
 
 	Assert(RelationIsAppendOptimized(aorel));
 
@@ -515,11 +516,13 @@ AppendOnlyRecycleDeadSegments(Relation aorel)
 	 */
 	LockRelationForExtension(aorel, ExclusiveLock);
 
+	GetAppendOnlyEntryAuxOids(aorel->rd_id, appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL, NULL, NULL);
 	/*
 	 * Now pick a segment that is not in use, and is not over the allowed
 	 * size threshold (90% full).
 	 */
-	pg_aoseg_rel = heap_open(aorel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
@@ -632,6 +635,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 	SysScanDesc aoscan;
 	HeapTuple	tuple;
 	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
+	Oid			segrelid;
 
 	Assert(RelationIsAppendOptimized(aorel));
 
@@ -643,11 +647,14 @@ AppendOnlyTruncateToEOF(Relation aorel)
 	 */
 	LockRelationForExtension(aorel, ExclusiveLock);
 
+	GetAppendOnlyEntryAuxOids(aorel->rd_id, appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL, NULL, NULL);
+
 	/*
 	 * Now pick a segment that is not in use, and is not over the allowed
 	 * size threshold (90% full).
 	 */
-	pg_aoseg_rel = heap_open(aorel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);

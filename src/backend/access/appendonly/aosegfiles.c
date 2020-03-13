@@ -110,8 +110,8 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 	TupleDesc	pg_aoseg_dsc;
 	HeapTuple	pg_aoseg_tuple;
 	Buffer		buf = InvalidBuffer;
-	HTSU_Result result;
-	HeapUpdateFailureData hufd;
+	TM_Result	result;
+	TM_FailureData hufd;
 	int			natts;
 	bool	   *nulls;
 	Datum	   *values;
@@ -168,7 +168,7 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 							 false, /* follow_updates */
 							 &buf,
 							 &hufd);
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_WouldBlock)
 		elog(ERROR, "could not lock newly-inserted gp_fastsequence tuple");
 	if (BufferIsValid(buf))
 		ReleaseBuffer(buf);
@@ -1758,7 +1758,7 @@ pg_aoseg_tuple_could_be_updated(Relation relation, HeapTuple tuple)
 {
 	CommandId	cid = GetCurrentCommandId(false);
 	Buffer		buffer;
-	HTSU_Result result;
+	TM_Result	result;
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&tuple->t_self));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -1767,7 +1767,7 @@ pg_aoseg_tuple_could_be_updated(Relation relation, HeapTuple tuple)
 
 	UnlockReleaseBuffer(buffer);
 
-	return (result == HeapTupleMayBeUpdated);
+	return (result == TM_Ok);
 }
 
 bool

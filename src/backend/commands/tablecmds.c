@@ -5608,7 +5608,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	/* Try to recycle any old segfiles first. */
 	AppendOnlyRecycleDeadSegments(rel);
 
-	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg, segrelid);
+	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg);
 	basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	if (nseg > 0)
 	{

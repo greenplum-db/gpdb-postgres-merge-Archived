@@ -95,8 +95,8 @@ InsertInitialAOCSFileSegInfo(Relation prel, int32 segno, int32 nvp, Oid segrelid
 	HeapTuple	segtup;
 	Relation	segrel;
 	Buffer		buf = InvalidBuffer;
-	HTSU_Result result;
-	HeapUpdateFailureData hufd;
+	TM_Result	result;
+	TM_FailureData hufd;
 	int16		formatVersion;
 
 	ValidateAppendonlySegmentDataBeforeStorage(segno);
@@ -135,7 +135,7 @@ InsertInitialAOCSFileSegInfo(Relation prel, int32 segno, int32 nvp, Oid segrelid
 							 false, /* follow_updates */
 							 &buf,
 							 &hufd);
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 		elog(ERROR, "could not lock newly-inserted gp_fastsequence tuple");
 	if (BufferIsValid(buf))
 		ReleaseBuffer(buf);
@@ -286,13 +286,18 @@ GetAOCSFileSegInfo(Relation prel,
 AOCSFileSegInfo **
 GetAllAOCSFileSegInfo(Relation prel,
 					  Snapshot appendOnlyMetaDataSnapshot,
-					  int32 *totalseg,
-					  Oid   segrelid)
+					  int32 *totalseg)
 {
 	Relation	pg_aocsseg_rel;
 	AOCSFileSegInfo **results;
+	Oid         segrelid;
 
 	Assert(RelationIsAoCols(prel));
+
+	GetAppendOnlyEntryAuxOids(prel->rd_id,
+							  appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL,
+							  NULL, NULL);
 
 	pg_aocsseg_rel = relation_open(segrelid, AccessShareLock);
 
@@ -463,12 +468,7 @@ GetAOCSSSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	totals = (FileSegTotals *) palloc0(sizeof(FileSegTotals));
 	memset(totals, 0, sizeof(FileSegTotals));
 
-    Oid         segrelid;
-    GetAppendOnlyEntryAuxOids(parentrel->rd_id,
-                              appendOnlyMetaDataSnapshot,
-                              &segrelid, NULL, NULL,
-                              NULL, NULL);
-	allseg = GetAllAOCSFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, &totalseg, segrelid);
+	allseg = GetAllAOCSFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, &totalseg);
 	for (s = 0; s < totalseg; s++)
 	{
 		int32		nEntry;
@@ -516,12 +516,7 @@ GetAOCSTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot,
 	int					e;
 
 	result = 0;
-    Oid         segrelid;
-    GetAppendOnlyEntryAuxOids(parentrel->rd_id,
-                              appendOnlyMetaDataSnapshot,
-                              &segrelid, NULL, NULL,
-                              NULL, NULL);
-	allseg = GetAllAOCSFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, &totalseg, segrelid);
+	allseg = GetAllAOCSFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, &totalseg);
 	for (s = 0; s < totalseg; s++)
 	{
 		for (e = 0; e < RelationGetNumberOfAttributes(parentrel); e++)
@@ -569,6 +564,8 @@ MarkAOCSFileSegInfoAwaitingDrop(Relation prel, int segno)
 	bool		null[Natts_pg_aocsseg] = {0,};
 	bool		repl[Natts_pg_aocsseg] = {0,};
 	TupleDesc	tupdesc;
+	Snapshot	appendOnlyMetaDataSnapshot;
+	Oid			segrelid;
 
 	if (Debug_appendonly_print_compaction)
 		elog(LOG,
@@ -576,6 +573,13 @@ MarkAOCSFileSegInfoAwaitingDrop(Relation prel, int segno)
 			 segno, RelationGetRelationName(prel));
 
 	Assert(RelationIsAoCols(prel));
+
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
+	GetAppendOnlyEntryAuxOids(prel->rd_id,
+							  appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL,
+							  NULL, NULL);
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
 	segrel = heap_open(segrelid, RowExclusiveLock);
 	tupdesc = RelationGetDescr(segrel);
@@ -655,6 +659,8 @@ ClearAOCSFileSegInfo(Relation prel, int segno)
 	int			nvp = RelationGetNumberOfAttributes(prel);
 	int			i;
 	AOCSVPInfo *vpinfo = create_aocs_vpinfo(nvp);
+	Oid			segrelid;
+	Snapshot	appendOnlyMetaDataSnapshot;
 
 	Assert(RelationIsAoCols(prel));
 
@@ -663,28 +669,23 @@ ClearAOCSFileSegInfo(Relation prel, int segno)
 		   segno,
 		   RelationGetRelationName(prel));
 
-	/*
-	 * Verify we already have the write-lock!
-	 */
-	acquireResult = LockRelationAppendOnlySegmentFile(
-													  &prel->rd_node,
-													  segno,
-													  AccessExclusiveLock,
-													   /* dontWait */ false);
-	if (acquireResult != LOCKACQUIRE_ALREADY_HELD)
-	{
-		elog(ERROR, "Should already have the (transaction-scope) write-lock on Append-Only segment file #%d, "
-			 "relation %s", segno, RelationGetRelationName(prel));
-	}
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));	
+	GetAppendOnlyEntryAuxOids(prel->rd_id,
+							  appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL,
+							  NULL, NULL);
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
-	segrel = heap_open(prel->rd_appendonly->segrelid, RowExclusiveLock);
+	segrel = heap_open(segrelid, RowExclusiveLock);
 	tupdesc = RelationGetDescr(segrel);
 
+	 /* GPDB_12_MERGE_FIXME: using NULL for snapshot in systable_beginscan
+	  * should change to appropriate one */
 	/*
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, snapshot, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, true, NULL, 0, NULL);
 	while (segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -768,21 +769,7 @@ UpdateAOCSFileSegInfo(AOCSInsertDesc idesc)
 	int			i;
 	AOCSVPInfo *vpinfo = create_aocs_vpinfo(nvp);
 
-	/*
-	 * Verify we already have the write-lock!
-	 */
-	acquireResult = LockRelationAppendOnlySegmentFile(
-													  &prel->rd_node,
-													  idesc->cur_segno,
-													  AccessExclusiveLock,
-													   /* dontWait */ false);
-	if (acquireResult != LOCKACQUIRE_ALREADY_HELD)
-	{
-		elog(ERROR, "Should already have the (transaction-scope) write-lock on Append-Only segment file #%d, "
-			 "relation %s", idesc->cur_segno, RelationGetRelationName(prel));
-	}
-
-	segrel = heap_open(prel->rd_appendonly->segrelid, RowExclusiveLock);
+	segrel = heap_open(idesc->segrelid, RowExclusiveLock);
 	tupdesc = RelationGetDescr(segrel);
 
 	/*
@@ -1096,21 +1083,8 @@ AOCSFileSegInfoAddCount(Relation prel, int32 segno,
                               NULL,
                               &segrelid, NULL, NULL,
                               NULL, NULL);
-	/*
-	 * Verify we already have the write-lock!
-	 */
-	acquireResult = LockRelationAppendOnlySegmentFile(
-													  &prel->rd_node,
-													  segno,
-													  AccessExclusiveLock,
-													   /* dontWait */ false);
-	if (acquireResult != LOCKACQUIRE_ALREADY_HELD)
-	{
-		elog(ERROR, "Should already have the (transaction-scope) write-lock on Append-Only segment file #%d, "
-			 "relation %s", segno, RelationGetRelationName(prel));
-	}
 
-	segrel = heap_open(prel->rd_appendonly->segrelid, RowExclusiveLock);
+	segrel = heap_open(segrelid, RowExclusiveLock);
 	tupdesc = RelationGetDescr(segrel);
 
 	/*

@@ -58,6 +58,7 @@
 
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "utils/faultinjector.h"
 
@@ -266,7 +267,7 @@ vacuum(List *relations, VacuumParams *params,
 	if ((params->options & VACOPT_VACUUM) &&
 		(params->options & VACUUM_AO_PHASE_MASK) == 0)
 	{
-		PreventTransactionChain(isTopLevel, stmttype);
+		PreventInTransactionBlock(isTopLevel, stmttype);
 		in_outer_xact = false;
 	}
 	else
@@ -421,7 +422,7 @@ vacuum(List *relations, VacuumParams *params,
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params))
+				if (!vacuum_rel(vrel->oid, vrel->relation, params, false))
 					continue;
 			}
 
@@ -1980,36 +1981,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	save_nestlevel = NewGUCNestLevel();
 
 	/*
-	 * Open the relation and get the appropriate lock on it.
-	 *
-	 * There's a race condition here: the rel may have gone away since the
-	 * last time we saw it.  If so, we don't need to vacuum it.
-	 *
-	 * If we've been asked not to wait for the relation lock, acquire it first
-	 * in non-blocking mode, before calling try_relation_open().
-	 */
-	if (!(options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, lmode, false /* nowait */);
-	else if (ConditionalLockRelationOid(relid, lmode))
-		onerel = try_relation_open(relid, NoLock, false /* nowait */);
-	else
-	{
-		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
-			ereport(LOG,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				   errmsg("skipping vacuum of \"%s\" --- lock not available",
-						  relation->relname)));
-	}
-
-	if (!onerel)
-	{
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-		return false;
-	}
-
-	/*
 	 * Check permissions.
 	 *
 	 * We allow the user to vacuum a table if he is superuser, the table
@@ -2054,7 +2025,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		 onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
 		 onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
 		 onerel->rd_rel->relkind != RELKIND_AOVISIMAP)
-		|| RelationIsForeign(onerel))
+		|| onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables, external tables, foreign tables or special system tables",
@@ -2123,47 +2094,10 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 *
 	 * GPDB: Also remember the AO segment relations for later.
 	 */
-	if (!(options & VACOPT_SKIPTOAST) && !(options & VACOPT_FULL))
+	if (!(params->options & VACOPT_SKIPTOAST) && !(params->options & VACOPT_FULL))
 		toast_relid = onerel->rd_rel->reltoastrelid;
 	else
 		toast_relid = InvalidOid;
-	oldcontext = MemoryContextSwitchTo(vac_context);
-	toast_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(toast_relid)),
-								  get_rel_name(toast_relid),
-								  -1);
-	MemoryContextSwitchTo(oldcontext);
-
-	is_appendoptimized = RelationIsAppendOptimized(onerel);
-	if (is_appendoptimized)
-	{
-		GetAppendOnlyEntryAuxOids(RelationGetRelid(onerel), NULL,
-								  &aoseg_relid,
-								  &aoblkdir_relid, NULL,
-								  &aovisimap_relid, NULL);
-		oldcontext = MemoryContextSwitchTo(vac_context);
-		aoseg_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoseg_relid)),
-									  get_rel_name(aoseg_relid),
-									  -1);
-		aoblkdir_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoblkdir_relid)),
-										 get_rel_name(aoblkdir_relid),
-										 -1);
-		aovisimap_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aovisimap_relid)),
-										  get_rel_name(aovisimap_relid),
-										  -1);
-		MemoryContextSwitchTo(oldcontext);
-	}
-
-	/*
-	 * If it's a partitioned relation, on entry 'relation' refers to the table
-	 * that the original command was issued on, and 'relid' is the actual partition
-	 * we're processing. Build a rangevar representing this partition, so that we
-	 * can dispatch it.
-	 */
-	oldcontext = MemoryContextSwitchTo(vac_context);
-	this_rangevar = makeRangeVar(get_namespace_name(onerel->rd_rel->relnamespace),
-								 pstrdup(RelationGetRelationName(onerel)),
-								 -1);
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -2209,15 +2143,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (ao_vacuum_phase == VACOPT_AO_PRE_CLEANUP_PHASE)
 	{
-		ao_vacuum_rel_pre_cleanup(onerel, options, params, vac_strategy);
+		ao_vacuum_rel_pre_cleanup(onerel, params->options, params, vac_strategy);
 	}
 	else if (ao_vacuum_phase == VACOPT_AO_COMPACT_PHASE)
 	{
-		ao_vacuum_rel_compact(onerel, options, params, vac_strategy);
+		ao_vacuum_rel_compact(onerel, params->options, params, vac_strategy);
 	}
 	else if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
 	{
-		ao_vacuum_rel_post_cleanup(onerel, options, params, vac_strategy);
+		ao_vacuum_rel_post_cleanup(onerel, params->options, params, vac_strategy);
 	}
 	else if (is_appendoptimized)
 	{
@@ -2284,26 +2218,32 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 
 	if (is_appendoptimized && ao_vacuum_phase == 0)
 	{
+		int orig_options = params->options;	
 		/* orchestrate the AO vacuum phases */
 		/*
 		 * Do cleanup first, to reclaim as much space as possible that
 		 * was left behind from previous VACUUMs. This runs under local
 		 * transactions.
 		 */
-		vacuum_rel(relid, this_rangevar,options | VACOPT_AO_PRE_CLEANUP_PHASE,
-				   params, false);
+		params->options |= VACOPT_AO_PRE_CLEANUP_PHASE;
+		vacuum_rel(relid, this_rangevar, params, false);
 
 		/* Compact. This runs in a distributed transaction.  */
-		vacuum_rel(relid, this_rangevar, options | VACOPT_AO_COMPACT_PHASE,
-				   params, false);
+		params->options |= VACOPT_AO_COMPACT_PHASE,
+		vacuum_rel(relid, this_rangevar, params, false);
 
 		/* Do a final round of cleanup. Hopefully, this can drop the segments
 		 * that were compacted in the previous phase.
 		 */
-		vacuum_rel(relid, this_rangevar, options | VACOPT_AO_POST_CLEANUP_PHASE,
-				   params, false);
+		params->options |= VACOPT_AO_POST_CLEANUP_PHASE,
+		vacuum_rel(relid, this_rangevar, params, false);
+
+		params->options = orig_options;
 	}
 
+	/* GPDB_12_MERGE_FIXME: What is this block doing here? It seems that it came
+ 	 * from a code shift and merge, probably ended up in an offset, investigate */
+#if 0
 	/*
 	 * In an append-only table, the auxiliary tables are cleaned up in
 	 * the POST_CLEANUP phase. Ignore them in other phases.
@@ -2315,25 +2255,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		aoblkdir_relid = InvalidOid;
 		aovisimap_relid = InvalidOid;
 	}
-
-	/*
-	 * If the relation has a secondary toast rel, vacuum that too while we
-	 * still hold the session lock on the master table.  We do this in
-	 * post-cleanup phase when it's AO table.
-	 */
-	if (toast_relid != InvalidOid && toast_rangevar != NULL)
-		vacuum_rel(toast_relid, toast_rangevar, options & ~VACUUM_AO_PHASE_MASK,
-				   params, true);
-
-	/* do the same for an AO block directory table, if any */
-	if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
-		vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options & ~VACUUM_AO_PHASE_MASK,
-				   params, true);
-
-	/* do the same for an AO visimap, if any */
-	if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
-		vacuum_rel(aovisimap_relid, aovisimap_rangevar, options & ~VACUUM_AO_PHASE_MASK,
-				   params, true);
 
 	if (Gp_role == GP_ROLE_DISPATCH && !recursing &&
 		(!is_appendoptimized || ao_vacuum_phase))
@@ -2379,6 +2300,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		PopActiveSnapshot();
 		CommitTransactionCommand();
 	}
+#endif
 	
 	/* all done with this class, but hold lock until commit */
 	if (onerel)
@@ -2398,7 +2320,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, NULL, params);
+		vacuum_rel(toast_relid, NULL, params, false);
 
 	/*
 	 * Now release the session-level lock on the master table.

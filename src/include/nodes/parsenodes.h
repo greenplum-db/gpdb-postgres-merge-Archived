@@ -3610,29 +3610,6 @@ typedef struct ClusterStmt
  * just one node type for both.
  * ----------------------
  */
-typedef enum VacuumOption
-{
-	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
-	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
-	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
-	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7,		/* don't skip any pages */
-
-	VACOPT_ROOTONLY = 1 << 8,	/* only ANALYZE root partition tables */
-	VACOPT_FULLSCAN = 1 << 9,	/* ANALYZE using full table scan */
-
-	/* AO vacuum phases. Mutually exclusive */
-	VACOPT_AO_PRE_CLEANUP_PHASE = 1 << 10,
-	VACOPT_AO_COMPACT_PHASE = 1 << 11,
-	VACOPT_AO_POST_CLEANUP_PHASE = 1 << 12
-} VacuumOption;
-
-#define VACUUM_AO_PHASE_MASK (VACOPT_AO_PRE_CLEANUP_PHASE | \
-							  VACOPT_AO_COMPACT_PHASE | \
-							  VACOPT_AO_POST_CLEANUP_PHASE)
 
 typedef struct VacuumStmt
 {

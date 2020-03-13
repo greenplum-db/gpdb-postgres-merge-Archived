@@ -2925,9 +2925,7 @@ CopyToDispatch(CopyState cstate)
 	{
 		bool		done;
 
-		cdbCopyStart(cdbCopy, stmt,
-					 NIL,
-					 cstate->file_encoding);
+		cdbCopyStart(cdbCopy, stmt, cstate->file_encoding);
 
 		if (cstate->binary)
 		{
@@ -4396,8 +4394,7 @@ CopyFrom(CopyState cstate)
 		 */
 		elog(DEBUG5, "COPY command sent to segdbs");
 
-		cdbCopyStart(cdbCopy, glob_copystmt,
-					 NIL, cstate->file_encoding);
+		cdbCopyStart(cdbCopy, glob_copystmt, cstate->file_encoding);
 
 		/*
 		 * Skip header processing if dummy file get from master for COPY FROM ON

@@ -229,7 +229,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		{
 			Assert(context->parentRelation->rd_rel->relam == AOCO_TABLE_AM_OID);
 			context->aocsSegfileInfo = GetAllAOCSFileSegInfo(context->parentRelation,
-															 snapshot, &context->segfile_info_total, segrelid);
+															 snapshot, &context->segfile_info_total);
 		}
 		context->i = 0;
 

@@ -431,13 +431,7 @@ aocs_beginscan(Relation relation,
 
 	RelationIncrementReferenceCount(relation);
 
-    Oid         segrelid;
-    GetAppendOnlyEntryAuxOids(relation->rd_id,
-                              appendOnlyMetaDataSnapshot,
-                              &segrelid, NULL, NULL,
-                              NULL, NULL);
-
-	seginfo = GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &total_seg, segrelid);
+	seginfo = GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &total_seg);
 
 	return aocs_beginscan_internal(relation,
 								   seginfo,
@@ -775,7 +769,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 	desc->ds = (DatumStreamWrite **) palloc0(sizeof(DatumStreamWrite *) * nvp);
 
 	open_ds_write(desc->aoi_rel, desc->ds, tupdesc,
-				  desc->aoi_rel->rd_appendonly->checksum);
+				  desc->checksum);
 
 	/* Now open seg info file and get eof mark. */
 	seginfo = GetAOCSFileSegInfo(desc->aoi_rel,
@@ -1264,7 +1258,7 @@ aocs_fetch_init(Relation relation,
                                  NULL);
 
 	aocsFetchDesc->segmentFileInfo =
-		GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &aocsFetchDesc->totalSegfiles, aocsFetchDesc->segrelid);
+		GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &aocsFetchDesc->totalSegfiles);
 
 	AppendOnlyBlockDirectory_Init_forSearch(
 											&aocsFetchDesc->blockDirectory,

@@ -145,6 +145,8 @@ LockSegnoForWrite(Relation rel, int segno)
 	SysScanDesc aoscan;
 	HeapTuple	tuple;
 	Snapshot	snapshot;
+	Snapshot	appendOnlyMetaDataSnapshot;
+	Oid			segrelid;
 	bool		found = false;
 
 	if (Debug_appendonly_print_segfile_choice)
@@ -158,11 +160,14 @@ LockSegnoForWrite(Relation rel, int segno)
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
+	GetAppendOnlyEntryAuxOids(rel->rd_id, appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL, NULL, NULL);
 	/*
 	 * Now pick a segment that is not in use, and is not over the allowed
 	 * size threshold (90% full).
 	 */
-	pg_aoseg_rel = table_open(rel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/*
@@ -219,7 +224,7 @@ LockSegnoForWrite(Relation rel, int segno)
 			InsertInitialSegnoEntry(rel, segno);
 		else
 			InsertInitialAOCSFileSegInfo(rel, segno,
-										 RelationGetNumberOfAttributes(rel));
+										 RelationGetNumberOfAttributes(rel), segrelid);
 
 		/* the tuple was locked by InsertInitial already */
 	}
@@ -236,8 +241,8 @@ LockSegnoForWrite(Relation rel, int segno)
 		/* this segno is available and not full. Try to lock it. */
 		HeapTupleData locktup;
 		Buffer		buf = InvalidBuffer;
-		HeapUpdateFailureData hufd;
-		HTSU_Result result;
+		TM_FailureData hufd;
+		TM_Result result;
 
 		locktup.t_self = tuple->t_self;
 		result = heap_lock_tuple(pg_aoseg_rel, &locktup,
@@ -249,7 +254,7 @@ LockSegnoForWrite(Relation rel, int segno)
 								 &hufd);
 		if (BufferIsValid(buf))
 			ReleaseBuffer(buf);
-		if (result != HeapTupleMayBeUpdated)
+		if (result != TM_Ok)
 			elog(ERROR, "could not lock segfile %d", segno);
 	}
 
@@ -259,6 +264,8 @@ LockSegnoForWrite(Relation rel, int segno)
 	UnlockRelationForExtension(rel, ExclusiveLock);
 
 	heap_close(pg_aoseg_rel, AccessShareLock);
+
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
 	/* success! */
 }
@@ -350,6 +357,8 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	SysScanDesc aoscan;
 	HeapTuple	tuple;
 	Snapshot	snapshot;
+	Snapshot	appendOnlyMetaDataSnapshot;
+	Oid			segrelid;
 	bool		tried_creating_new_segfile = false;
 
 	memset(used, 0, sizeof(used));
@@ -360,11 +369,16 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
+	GetAppendOnlyEntryAuxOids(rel->rd_id, appendOnlyMetaDataSnapshot,
+							  &segrelid, NULL, NULL, NULL, NULL);
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
+
 	/*
 	 * Now pick a segment that is not in use, and is not over the allowed
 	 * size threshold (90% full).
 	 */
-	pg_aoseg_rel = heap_open(rel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/*
@@ -478,8 +492,8 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 		{
 			HeapTupleData locktup;
 			Buffer		buf = InvalidBuffer;
-			HeapUpdateFailureData hufd;
-			HTSU_Result result;
+			TM_FailureData hufd;
+			TM_Result result;
 
 			/*
 			 * When performing VACUUM compaction, we prefer to create a new segment
@@ -509,7 +523,7 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 									 &hufd);
 			if (BufferIsValid(buf))
 				ReleaseBuffer(buf);
-			if (result == HeapTupleMayBeUpdated)
+			if (result == TM_Ok)
 			{
 				chosen_segno = candidates[i].segno;
 				if (Debug_appendonly_print_segfile_choice)
@@ -576,8 +590,18 @@ choose_new_segfile(Relation rel, bool *used, List *avoid_segnos)
 		if (RelationIsAoRows(rel))
 			InsertInitialSegnoEntry(rel, chosen_segno);
 		else
+		{
+			Oid segrelid;
+			Snapshot appendOnlyMetaDataSnapshot;
+
+			appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
+			GetAppendOnlyEntryAuxOids(rel->rd_id, appendOnlyMetaDataSnapshot,
+									  &segrelid, NULL, NULL, NULL, NULL);
+			UnregisterSnapshot(appendOnlyMetaDataSnapshot);
+
 			InsertInitialAOCSFileSegInfo(rel, chosen_segno,
-										 RelationGetNumberOfAttributes(rel));
+										 RelationGetNumberOfAttributes(rel), segrelid);
+		}
 	}
 	else
 	{
@@ -665,11 +689,6 @@ AORelIncrementModCount(Relation parentrel)
 	 * (same rules as for inserting).
 	 */
 	segno = ChooseSegnoForWrite(parentrel);
-
-    GetAppendOnlyEntryAuxOids(parentrel->rd_id,
-                              appendOnlyMetaDataSnapshot,
-                              &segrelid, NULL, NULL,
-                              NULL, NULL);
 
 	if (RelationIsAoRows(parentrel))
 	{
