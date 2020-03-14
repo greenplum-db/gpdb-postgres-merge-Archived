@@ -70,7 +70,6 @@
 #include "utils/syscache.h"
 
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_inherits_fn.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbcat.h"
 #include "cdb/cdbdisp_query.h"

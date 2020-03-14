@@ -81,7 +81,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-#include "catalog/pg_inherits_fn.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 

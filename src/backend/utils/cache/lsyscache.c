@@ -60,7 +60,6 @@
 #include "catalog/heap.h"                   /* SystemAttributeDefinition() */
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_trigger.h"
 
 /* Hook for plugins to get control in get_attavgwidth() */
