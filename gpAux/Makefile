@@ -420,8 +420,6 @@ define tmpCLIENTS_FILESET_BIN
 	psql
 	createdb
 	dropdb
-	createlang
-	droplang
 	createuser
 	dropuser
 endef
