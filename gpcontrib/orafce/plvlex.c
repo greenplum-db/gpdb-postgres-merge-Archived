@@ -20,7 +20,6 @@
 #include "nodes/pg_list.h"
 #include "utils/date.h"
 #include "utils/builtins.h"
-#include "utils/nabstime.h"
 #include "plvlex.h"
 #include "sqlparse.h"
 #include "funcapi.h"
@@ -229,7 +228,7 @@ plvlex_tokens(PG_FUNCTION_ARGS)
 		fctx->values  [4] = (char*) palloc (255 * sizeof (char));
 		fctx->values  [5] = (char*) palloc (255 * sizeof (char));
 
-		tupdesc = CreateTemplateTupleDesc (6 , false);
+		tupdesc = CreateTemplateTupleDesc (6);
 
 		TupleDescInitEntry (tupdesc,  1, "start_pos", INT4OID, -1, 0);
 		TupleDescInitEntry (tupdesc,  2, "token",     TEXTOID, -1, 0);
@@ -237,9 +236,6 @@ plvlex_tokens(PG_FUNCTION_ARGS)
 		TupleDescInitEntry (tupdesc,  4, "class",     TEXTOID, -1, 0);
 		TupleDescInitEntry (tupdesc,  5, "separator", TEXTOID, -1, 0);
 		TupleDescInitEntry (tupdesc,  6, "mod",       TEXTOID, -1, 0);
-
-		slot = TupleDescGetSlot (tupdesc);
-		funcctx -> slot = slot;
 
 		attinmeta = TupleDescGetAttInMetadata (tupdesc);
 		funcctx -> attinmeta = attinmeta;
