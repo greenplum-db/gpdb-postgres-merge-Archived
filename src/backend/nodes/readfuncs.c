@@ -2431,6 +2431,8 @@ _readPlannedStmt(void)
 
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
 
+	READ_NODE_FIELD(intoPolicy);
+
 	READ_UINT64_FIELD(query_mem);
 	READ_NODE_FIELD(intoClause);
 	READ_NODE_FIELD(copyIntoClause);
