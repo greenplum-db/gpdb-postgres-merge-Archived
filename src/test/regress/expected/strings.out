@@ -1343,11 +1343,10 @@ select 'foo'::varchar(10) || bar from (select 'bar' as bar) moo;
 (1 row)
 
 select '123'::numeric(4,1) + bar from (select '123' as bar) baz;
- ?column? 
-----------
-    246.0
-(1 row)
-
+ERROR:  operator does not exist: numeric + text
+LINE 1: select '123'::numeric(4,1) + bar from (select '123' as bar) ...
+                                   ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 drop table unknown_test;
 -- Test nested "unknown"s from MPP-2689
 select 'foo'::text || foo from ( select foo from (select 4.5, foo from ( select
