@@ -1417,15 +1417,14 @@ serializeParamsForDispatch(QueryDesc *queryDesc,
 		{
 			ParamExternData *prm = &externParams->params[i];
 			SerializedParamExternData *sprm = &result->externParams[i];
+			ParamExternData prmdata;
 
 			/*
-			 * GPDB_12_MERGE_FIXME: Can we pass NULL on the cb func?
-			 *
 			 * First, use paramFetch to fetch any "lazy" parameters. (The callback
 			 * function is of no use in the QE.)
 			 */
 			if (externParams->paramFetch && !OidIsValid(prm->ptype))
-				externParams->paramFetch(externParams, i + 1, false, NULL);
+				externParams->paramFetch(externParams, i + 1, false, &prmdata);
 
 			sprm->value = prm->value;
 			sprm->isnull = prm->isnull;
