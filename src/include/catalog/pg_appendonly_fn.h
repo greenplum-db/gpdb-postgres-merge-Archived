@@ -10,6 +10,9 @@
  * IDENTIFICATION
  *	    src/include/catalog/pg_appendonly_fn.h
  *
+ *
+ * GPDB_12_MERGE_FIXME: In upstream commit cefa387153, all *_fn.h header
+ * files were merged back to the plan *.h files. Should do the same here.
  *-------------------------------------------------------------------------
  */
 #ifndef PG_APPENDONLY_FN_H

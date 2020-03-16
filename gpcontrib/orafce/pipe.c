@@ -703,7 +703,7 @@ dbms_pipe_pack_message_record(PG_FUNCTION_ARGS)
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
 	Oid tupType;
 	bytea *data;
-	FunctionCallInfoData info;
+	FunctionCallInfoBaseData info;
 
 	tupType = HeapTupleHeaderGetTypeId(rec);
 
@@ -715,12 +715,12 @@ dbms_pipe_pack_message_record(PG_FUNCTION_ARGS)
 	 */
 	InitFunctionCallInfoData(info, fcinfo->flinfo, 3, InvalidOid, NULL, NULL);
 
-	info.arg[0] = PointerGetDatum(rec);
-	info.arg[1] = ObjectIdGetDatum(tupType);
-	info.arg[2] = Int32GetDatum(-1);
-	info.argnull[0] = false;
-	info.argnull[1] = false;
-	info.argnull[2] = false;
+	info.args[0].value = PointerGetDatum(rec);
+	info.args[0].isnull = false;
+	info.args[1].value = ObjectIdGetDatum(tupType);
+	info.args[1].isnull = false;
+	info.args[2].value = Int32GetDatum(-1);
+	info.args[2].isnull = false;
 
 	data = (bytea*) DatumGetPointer(record_send(&info));
 
@@ -773,7 +773,7 @@ dbms_pipe_unpack_message(PG_FUNCTION_ARGS, message_data_type dtype)
 			break;
 		case IT_RECORD:
 		{
-			FunctionCallInfoData	info;
+			FunctionCallInfoBaseData	info;
 			StringInfoData	buf;
 			text		   *data = cstring_to_text_with_len(ptr, size);
 
@@ -790,12 +790,12 @@ dbms_pipe_unpack_message(PG_FUNCTION_ARGS, message_data_type dtype)
 			 */
 			InitFunctionCallInfoData(info, fcinfo->flinfo, 3, InvalidOid, NULL, NULL);
 
-			info.arg[0] = PointerGetDatum(&buf);
-			info.arg[1] = ObjectIdGetDatum(tupType);
-			info.arg[2] = Int32GetDatum(-1);
-			info.argnull[0] = false;
-			info.argnull[1] = false;
-			info.argnull[2] = false;
+			info.args[0].value = PointerGetDatum(&buf);
+			info.args[0].isnull = false;
+			info.args[1].value = ObjectIdGetDatum(tupType);
+			info.args[1].isnull = false;
+			info.args[2].value = Int32GetDatum(-1);
+			info.args[2].isnull = false;
 
 			result = record_recv(&info);
 			break;
@@ -1027,7 +1027,7 @@ dbms_pipe_list_pipes(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = fctx;
 		fctx->pipe_nth = 0;
 
-		tupdesc = CreateTemplateTupleDesc(DB_PIPES_COLS , false);
+		tupdesc = CreateTemplateTupleDesc(DB_PIPES_COLS);
 		i = 0;
 		TupleDescInitEntry(tupdesc, ++i, "name",    VARCHAROID, -1, 0);
 		TupleDescInitEntry(tupdesc, ++i, "items",   INT4OID,    -1, 0);
@@ -1036,9 +1036,6 @@ dbms_pipe_list_pipes(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, ++i, "private", BOOLOID,    -1, 0);
 		TupleDescInitEntry(tupdesc, ++i, "owner",   VARCHAROID, -1, 0);
 		Assert(i == DB_PIPES_COLS);
-
-		slot = TupleDescGetSlot(tupdesc);
-		funcctx->slot = slot;
 
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;

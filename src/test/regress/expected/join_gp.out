@@ -126,18 +126,18 @@ select count(*) from t1,t2 where t1.x = 100 and t1.x = t2.x;
 -- infer over >=
 --
 explain select * from t1,t2 where t1.x = 100 and t2.x >= t1.x;
-                                            QUERY PLAN                                            
---------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=3.28..6.58 rows=2 width=24)
-   ->  Nested Loop  (cost=3.28..6.58 rows=2 width=24)
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000008.65 rows=4 width=24)
+   ->  Nested Loop  (cost=10000000000.00..10000000008.59 rows=2 width=24)
          Join Filter: (t2.x >= t1.x)
-         ->  Seq Scan on t1  (cost=0.00..3.25 rows=1 width=12)
-               Filter: (x = 100)
-         ->  Materialize  (cost=3.28..3.30 rows=1 width=12)
-               ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..3.28 rows=1 width=12)
-                     ->  Seq Scan on t2  (cost=0.00..3.25 rows=1 width=12)
-                           Filter: (x >= 100)
- Settings:  enable_hashjoin=on; enable_mergejoin=off; enable_nestloop=off
+         ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..4.29 rows=1 width=12)
+               ->  Seq Scan on t1  (cost=0.00..4.25 rows=1 width=12)
+                     Filter: (x = 100)
+         ->  Materialize  (cost=0.00..4.25 rows=1 width=12)
+               ->  Seq Scan on t2  (cost=0.00..4.25 rows=1 width=12)
+                     Filter: (x >= 100)
+ Optimizer: Postgres query optimizer
 (10 rows)
 
 select * from t1,t2 where t1.x = 100 and t2.x >= t1.x;
@@ -958,20 +958,20 @@ select * from generate_series(1, 5) g left join thash_join_gp on g = thash_join_
 (5 rows)
 
 explain select * from generate_series(1, 5) g left join trand_join_gp on g = trand_join_gp.c1;
-                                             QUERY PLAN                                             
-----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=1.03..44.78 rows=1000 width=12)
-   ->  Hash Left Join  (cost=1.03..44.78 rows=334 width=12)
-         Hash Cond: (g.g = trand_join_gp.c1)
-         ->  Redistribute Motion 1:3  (slice2; segments: 1)  (cost=0.00..30.00 rows=1000 width=4)
-               Hash Key: g.g
-               ->  Function Scan on generate_series g  (cost=0.00..10.00 rows=334 width=4)
-         ->  Hash  (cost=1.02..1.02 rows=1 width=8)
-               ->  Redistribute Motion 3:3  (slice3; segments: 3)  (cost=0.00..1.02 rows=1 width=8)
-                     Hash Key: trand_join_gp.c1
-                     ->  Seq Scan on trand_join_gp  (cost=0.00..961.00 rows=28700 width=8)
- Optimizer: legacy query optimizer
-(14 rows)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.22..2911.92 rows=431 width=12)
+   ->  Hash Right Join  (cost=0.22..2903.31 rows=144 width=12)
+         Hash Cond: (trand_join_gp.c1 = g.g)
+         ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..2683.00 rows=28700 width=8)
+               Hash Key: trand_join_gp.c1
+               ->  Seq Scan on trand_join_gp  (cost=0.00..961.00 rows=28700 width=8)
+         ->  Hash  (cost=0.15..0.15 rows=2 width=4)
+               ->  Redistribute Motion 1:3  (slice3; segments: 1)  (cost=0.00..0.15 rows=5 width=4)
+                     Hash Key: g.g
+                     ->  Function Scan on generate_series g  (cost=0.00..0.05 rows=5 width=4)
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 select * from generate_series(1, 5) g left join trand_join_gp on g = trand_join_gp.c1;
  g | c1 | c2 
@@ -984,20 +984,20 @@ select * from generate_series(1, 5) g left join trand_join_gp on g = trand_join_
 (5 rows)
 
 explain select * from generate_series(1, 5) g full join trand_join_gp on g = trand_join_gp.c1;
-                                             QUERY PLAN                                             
-----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=1.03..44.78 rows=1000 width=12)
-   ->  Hash Full Join  (cost=1.03..44.78 rows=334 width=12)
-         Hash Cond: (g.g = trand_join_gp.c1)
-         ->  Redistribute Motion 1:3  (slice2; segments: 1)  (cost=0.00..30.00 rows=1000 width=4)
-               Hash Key: g.g
-               ->  Function Scan on generate_series g  (cost=0.00..10.00 rows=334 width=4)
-         ->  Hash  (cost=1.02..1.02 rows=1 width=8)
-               ->  Redistribute Motion 3:3  (slice3; segments: 3)  (cost=0.00..1.02 rows=1 width=8)
-                     Hash Key: trand_join_gp.c1
-                     ->  Seq Scan on trand_join_gp  (cost=0.00..961.00 rows=28700 width=8)
- Optimizer: legacy query optimizer
-(14 rows)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.22..5482.00 rows=86100 width=12)
+   ->  Hash Full Join  (cost=0.22..3760.00 rows=28700 width=12)
+         Hash Cond: (trand_join_gp.c1 = g.g)
+         ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..2683.00 rows=28700 width=8)
+               Hash Key: trand_join_gp.c1
+               ->  Seq Scan on trand_join_gp  (cost=0.00..961.00 rows=28700 width=8)
+         ->  Hash  (cost=0.15..0.15 rows=2 width=4)
+               ->  Redistribute Motion 1:3  (slice3; segments: 1)  (cost=0.00..0.15 rows=5 width=4)
+                     Hash Key: g.g
+                     ->  Function Scan on generate_series g  (cost=0.00..0.05 rows=5 width=4)
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 select * from generate_series(1, 5) g full join trand_join_gp on g = trand_join_gp.c1;
  g | c1 | c2 
@@ -1035,18 +1035,18 @@ select * from trep_join_gp left join thash_join_gp using (c1);
 (2 rows)
 
 explain select * from trep_join_gp left join trand_join_gp using (c1);
-                                             QUERY PLAN                                             
-----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=1.03..2.13 rows=4 width=12)
-   ->  Hash Left Join  (cost=1.03..2.13 rows=2 width=12)
-         Hash Cond: (trep_join_gp.c1 = trand_join_gp.c1)
-         ->  Redistribute Motion 1:3  (slice2; segments: 1)  (cost=0.00..1.06 rows=2 width=8)
-               Hash Key: trep_join_gp.c1
-               ->  Seq Scan on trep_join_gp  (cost=0.00..1.02 rows=2 width=8)
-         ->  Hash  (cost=1.02..1.02 rows=1 width=8)
-               ->  Redistribute Motion 3:3  (slice3; segments: 3)  (cost=0.00..1.02 rows=1 width=8)
-                     Hash Key: trand_join_gp.c1
-                     ->  Seq Scan on trand_join_gp  (cost=0.00..1.00 rows=1 width=8)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=1.08..2904.72 rows=173 width=12)
+   ->  Hash Right Join  (cost=1.08..2901.27 rows=58 width=12)
+         Hash Cond: (trand_join_gp.c1 = trep_join_gp.c1)
+         ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..2683.00 rows=28700 width=8)
+               Hash Key: trand_join_gp.c1
+               ->  Seq Scan on trand_join_gp  (cost=0.00..961.00 rows=28700 width=8)
+         ->  Hash  (cost=1.06..1.06 rows=1 width=8)
+               ->  Redistribute Motion 1:3  (slice3; segments: 1)  (cost=0.00..1.06 rows=2 width=8)
+                     Hash Key: trep_join_gp.c1
+                     ->  Seq Scan on trep_join_gp  (cost=0.00..1.02 rows=2 width=8)
  Optimizer: Postgres query optimizer
 (11 rows)
 
@@ -1155,16 +1155,16 @@ select * from (
   select a from generate_series(1, 10)a
 ) t_subquery_general
 join t_randomly_dist_table on t_subquery_general.a = t_randomly_dist_table.c;
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=65.00..31221.76 rows=192600 width=8)
-   ->  Hash Join  (cost=65.00..27369.76 rows=64200 width=8)
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.76..1410.53 rows=1926 width=8)
+   ->  Hash Join  (cost=0.76..1372.01 rows=642 width=8)
          Hash Cond: (t_randomly_dist_table.c = a.a)
          ->  Seq Scan on t_randomly_dist_table  (cost=0.00..1063.00 rows=32100 width=4)
-         ->  Hash  (cost=40.00..40.00 rows=667 width=4)
-               ->  Append  (cost=0.00..20.00 rows=667 width=4)
-                     ->  Function Scan on generate_series a  (cost=0.00..10.00 rows=334 width=4)
-                     ->  Function Scan on generate_series a_1  (cost=0.00..10.00 rows=334 width=4)
+         ->  Hash  (cost=0.51..0.51 rows=7 width=4)
+               ->  Append  (cost=0.00..0.31 rows=7 width=4)
+                     ->  Function Scan on generate_series a  (cost=0.00..0.10 rows=4 width=4)
+                     ->  Function Scan on generate_series a_1  (cost=0.00..0.10 rows=4 width=4)
  Optimizer: Postgres query optimizer
 (9 rows)
 

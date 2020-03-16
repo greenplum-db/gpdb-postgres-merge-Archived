@@ -847,8 +847,13 @@ create table bool_rp_true_2k partition of bool_rp for values from (true,1000) to
 create index on bool_rp (b,a);
 explain (costs off) select * from bool_rp where b = true order by b,a;
 explain (costs off) select * from bool_rp where b = false order by b,a;
+-- GPDB: force the planner to choose same plan as in upstream
+set enable_seqscan=off;
+set enable_bitmapscan=off;
 explain (costs off) select * from bool_rp where b = true order by a;
 explain (costs off) select * from bool_rp where b = false order by a;
+reset enable_seqscan;
+reset enable_bitmapscan;
 
 drop table bool_rp;
 

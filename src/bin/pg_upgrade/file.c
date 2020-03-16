@@ -87,46 +87,6 @@ copyFile(const char *src, const char *dst,
 	report_progress(NULL, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
 
 #ifndef WIN32
-<<<<<<< HEAD
-	if (copy_file(src, dst) == -1)
-#else
-	if (CopyFile(src, dst, true) == 0)
-#endif
-		return getErrorText();
-	else
-		return NULL;
-}
-
-
-/*
- * linkFile()
- *
- * Creates a hard link between the given relation files. We use
- * this function to perform a true in-place update. If the on-disk
- * format of the new cluster is bit-for-bit compatible with the on-disk
- * format of the old cluster, we can simply link each relation
- * instead of copying the data from the old cluster to the new cluster.
- */
-const char *
-linkFile(const char *src, const char *dst)
-{
-	report_progress(NULL, FILE_COPY, "Link \"%s\" to \"%s\"", src, dst);
-
-	if (pg_link_file(src, dst) == -1)
-		return getErrorText();
-	else
-		return NULL;
-}
-
-
-#ifndef WIN32
-static int
-copy_file(const char *srcfile, const char *dstfile)
-{
-#define COPY_BUF_SIZE (50 * BLCKSZ)
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			src_fd;
 	int			dest_fd;
 	char	   *buffer;
@@ -195,6 +155,8 @@ void
 linkFile(const char *src, const char *dst,
 		 const char *schemaName, const char *relName)
 {
+	report_progress(NULL, FILE_COPY, "Link \"%s\" to \"%s\"", src, dst);
+
 	if (pg_link_file(src, dst) < 0)
 		pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 				 schemaName, relName, src, dst, strerror(errno));

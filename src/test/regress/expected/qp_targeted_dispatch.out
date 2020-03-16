@@ -771,8 +771,8 @@ explain select * from table_a where a0=3;
 explain select a0 from table_a where a0 in (select max(a1) from table_a);
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=1.08..2.13 rows=4 width=4)
-   ->  Hash Semi Join  (cost=1.08..2.13 rows=2 width=4)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=1.08..2.20 rows=4 width=4)
+   ->  Hash Join  (cost=1.08..2.13 rows=2 width=4)
          Hash Cond: (table_a.a0 = (max(table_a_1.a1)))
          ->  Seq Scan on table_a  (cost=0.00..1.01 rows=1 width=4)
          ->  Hash  (cost=1.07..1.07 rows=1 width=4)
@@ -810,7 +810,7 @@ explain select a0 from table_a where a0 in (select max(a1) from table_a where a0
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=1.09..2.20 rows=4 width=4)
-   ->  Hash Semi Join  (cost=1.09..2.13 rows=2 width=4)
+   ->  Hash Join  (cost=1.09..2.13 rows=2 width=4)
          Hash Cond: (table_a.a0 = (max(table_a_1.a1)))
          ->  Seq Scan on table_a  (cost=0.00..1.01 rows=1 width=4)
          ->  Hash  (cost=1.07..1.07 rows=1 width=4)

@@ -29,7 +29,7 @@ typedef struct NumericData *Numeric;
 typedef struct HeapTupleData *HeapTuple;
 typedef struct RelationData *Relation;
 struct Value;
-typedef struct tupleDesc *TupleDesc;
+typedef struct TupleDescData *TupleDesc;
 struct Query;
 typedef struct ScanKeyData *ScanKey;
 struct Bitmapset;
@@ -308,8 +308,9 @@ namespace gpdb {
 	// get partition keys and kinds ordered by partition level
 	void GetOrderedPartKeysAndKinds(Oid oid, List **pkeys, List **pkinds);
 
+	/* GPDB_12_MERGE_FIXME: mergings stats not yet implemented with new partitioning implementation */
 	// parts of a partitioned table
-	PartitionNode *GetParts(Oid relid, int16 level, Oid parent, bool inctemplate, bool includesubparts);
+	//PartitionNode *GetParts(Oid relid, int16 level, Oid parent, bool inctemplate, bool includesubparts);
 
 	// keys of the relation with the given oid
 	List *GetRelationKeys(Oid relid);

@@ -139,6 +139,8 @@ extern char *quote_literal_cstr(const char *rawstr);
 /* gp_partition_functions.c */
 struct EState;
 extern void dumpDynamicTableScanPidIndex(struct EState *estate, int index);
+extern void InsertPidIntoDynamicTableScanInfo(struct EState *estate, int32 index,
+											  Oid partOid, int32 selectorId);
 
 /* query_metrics.c */
 extern Datum gp_instrument_shmem_summary(PG_FUNCTION_ARGS);

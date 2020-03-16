@@ -461,8 +461,8 @@ begin
 end;
 $func$ language plpgsql;
 select workset_cleanup_test();
-NOTICE:  caught exception: invalid input syntax for integer: "bogus"
-NOTICE:  caught exception: invalid input syntax for integer: "bogus"
+NOTICE:  caught exception: invalid input syntax for type integer: "bogus"
+NOTICE:  caught exception: invalid input syntax for type integer: "bogus"
  workset_cleanup_test 
 ----------------------
  t

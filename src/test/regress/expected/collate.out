@@ -507,7 +507,7 @@ SELECT a, b, a < b as lt FROM
 
 -- collation mismatch in subselects
 SELECT * FROM collate_test10 WHERE (x, y) NOT IN (SELECT y, x FROM collate_test10);
-ERROR:  could not determine which collation to use for string hashing
+ERROR:  could not determine which collation to use for string comparison  (seg1 slice1 127.0.0.1:40001 pid=24086)
 HINT:  Use the COLLATE clause to set the collation explicitly.
 -- now it works with overrides
 SELECT * FROM collate_test10 WHERE (x COLLATE "POSIX", y COLLATE "C") NOT IN (SELECT y, x FROM collate_test10);

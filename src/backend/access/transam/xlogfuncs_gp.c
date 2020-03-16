@@ -16,7 +16,6 @@
  */
 #include "postgres.h"
 
-#include "access/xlog_fn.h"
 #include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"

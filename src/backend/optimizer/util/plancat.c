@@ -60,7 +60,7 @@
 #include "cdb/cdbrelsize.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_foreign_server.h"
-#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_inherits.h"
 #include "utils/guc.h"
 
 

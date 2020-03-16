@@ -1209,17 +1209,10 @@ dumpRoles(PGconn *conn)
 						  "rolvaliduntil, rolreplication, rolbypassrls, "
 						  "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-<<<<<<< HEAD
 						  " %s %s %s %s"
-						  "FROM pg_authid "
-						  "WHERE rolname !~ '^pg_' "
-						  "ORDER BY 2",
-						  resq_col, resgroup_col, extauth_col, hdfs_col);
-=======
 						  "FROM %s "
 						  "WHERE rolname !~ '^pg_' "
-						  "ORDER BY 2", role_catalog, role_catalog);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  "ORDER BY 2", role_catalog, resq_col, resgroup_col, extauth_col, hdfs_col, role_catalog);
 	else if (server_version >= 90500)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -1228,15 +1221,9 @@ dumpRoles(PGconn *conn)
 						  "rolvaliduntil, rolreplication, rolbypassrls, "
 						  "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-<<<<<<< HEAD
 						  " %s %s %s %s"
-						  "FROM pg_authid "
-						  "ORDER BY 2",
-						  resq_col, resgroup_col, extauth_col, hdfs_col);
-=======
 						  "FROM %s "
-						  "ORDER BY 2", role_catalog, role_catalog);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  "ORDER BY 2", role_catalog, resq_col, resgroup_col, extauth_col, hdfs_col, role_catalog);
 	else if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -1246,15 +1233,9 @@ dumpRoles(PGconn *conn)
 						  "false as rolbypassrls, "
 						  "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-<<<<<<< HEAD
 						  " %s %s %s %s"
-						  "FROM pg_authid "
-						  "ORDER BY 2",
-						  resq_col, resgroup_col, extauth_col, hdfs_col);
-=======
 						  "FROM %s "
-						  "ORDER BY 2", role_catalog, role_catalog);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  "ORDER BY 2", role_catalog, resq_col, resgroup_col, extauth_col, hdfs_col, role_catalog);
 	else if (server_version >= 80200)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -1264,16 +1245,9 @@ dumpRoles(PGconn *conn)
 						  "false as rolbypassrls, "
 						  "pg_catalog.shobj_description(oid, '%s') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
-<<<<<<< HEAD
 						  " %s %s %s %s"
-						  "FROM pg_authid "
-						  "ORDER BY 2",
-						  resq_col, resgroup_col, extauth_col, hdfs_col);
-	else
-		error_unsupported_server_version(conn);
-=======
 						  "FROM %s "
-						  "ORDER BY 2", role_catalog, role_catalog);
+						  "ORDER BY 2", role_catalog, resq_col, resgroup_col, extauth_col, hdfs_col, role_catalog);
 	else if (server_version >= 80100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
@@ -1319,7 +1293,6 @@ dumpRoles(PGconn *conn)
 						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
 						  " WHERE usename = groname) "
 						  "ORDER BY 2");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = executeQuery(conn, buf->data);
 
@@ -1732,13 +1705,8 @@ dumpTablespaces(PGconn *conn)
 						   "ORDER BY 1");
 	else if (server_version >= 90000)
 		res = executeQuery(conn, "SELECT oid, spcname, "
-<<<<<<< HEAD
-						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						   "pg_catalog.pg_tablespace_location(oid), spcacl, '' as rspcacl,"
-=======
 						   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, '' as rspcacl, "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						   "array_to_string(spcoptions, ', '),"
 						   "pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "

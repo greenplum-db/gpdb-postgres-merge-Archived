@@ -229,7 +229,7 @@ ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
 INSERT INTO gtest21b (a) VALUES (0);  -- ok now
 
 -- index constraints
-CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE);
+CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE) distributed replicated;
 INSERT INTO gtest22a VALUES (2);
 INSERT INTO gtest22a VALUES (3);
 INSERT INTO gtest22a VALUES (4);
@@ -267,6 +267,7 @@ CREATE TABLE gtest23b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STOR
 \d gtest23b
 
 INSERT INTO gtest23b VALUES (1);  -- ok
+-- GPDB doesn't enforce foreign key constraints, so this doesn't error out.
 INSERT INTO gtest23b VALUES (5);  -- error
 
 DROP TABLE gtest23b;
@@ -277,6 +278,7 @@ INSERT INTO gtest23p VALUES (1), (2), (3);
 
 CREATE TABLE gtest23q (a int PRIMARY KEY, b int REFERENCES gtest23p (y));
 INSERT INTO gtest23q VALUES (1, 2);  -- ok
+-- GPDB doesn't enforce foreign key constraints, so this doesn't error out.
 INSERT INTO gtest23q VALUES (2, 5);  -- error
 
 -- domains

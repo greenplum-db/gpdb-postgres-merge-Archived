@@ -175,17 +175,18 @@ get_stream(int d, int *max_linesize, int *encoding)
 static void
 IO_EXCEPTION(void)
 {
-	switch (errno)
+	int save_errno = errno;
+	switch (save_errno)
 	{
 		case EACCES:
 		case ENAMETOOLONG:
 		case ENOENT:
 		case ENOTDIR:
-			CUSTOM_EXCEPTION(INVALID_PATH, strerror(errno));
+			CUSTOM_EXCEPTION(INVALID_PATH, strerror(save_errno));
 			break;
 
 		default:
-			CUSTOM_EXCEPTION(INVALID_OPERATION, strerror(errno));
+			CUSTOM_EXCEPTION(INVALID_OPERATION, strerror(save_errno));
 	}
 }
 
@@ -324,6 +325,7 @@ get_line(FILE *f, int max_linesize, int encoding, bool *iseof)
 	int csize = 0;
 	text *result = NULL;
 	bool eof = true;
+	int save_errno;
 
 	buffer = palloc(max_linesize + 2);
 	bpt = buffer;
@@ -380,7 +382,8 @@ get_line(FILE *f, int max_linesize, int encoding, bool *iseof)
 				break;
 
 			default:
-				CUSTOM_EXCEPTION(READ_ERROR, strerror(errno));
+				save_errno = errno;
+				CUSTOM_EXCEPTION(READ_ERROR, strerror(save_errno));
 				break;
 		}
 
@@ -471,7 +474,10 @@ do_flush(FILE *f)
 		if (errno == EBADF)
 			CUSTOM_EXCEPTION(INVALID_OPERATION, "File is not an opened, or is not open for writing");
 		else
-			CUSTOM_EXCEPTION(WRITE_ERROR, strerror(errno));
+		{
+			int save_errno = errno;
+			CUSTOM_EXCEPTION(WRITE_ERROR, strerror(save_errno));
+		}
 	}
 }
 
@@ -489,14 +495,17 @@ do_flush(FILE *f)
  */
 
 #define CHECK_ERRNO_PUT()  \
-	switch (errno) \
+{ \
+	int save_errno = errno; \
+	switch (save_errno) \
 	{ \
 		case EBADF: \
 			CUSTOM_EXCEPTION(INVALID_OPERATION, "file descriptor isn't valid for writing"); \
 			break; \
 		default: \
-			CUSTOM_EXCEPTION(WRITE_ERROR, strerror(errno)); \
-	}
+			CUSTOM_EXCEPTION(WRITE_ERROR, strerror(save_errno)); \
+	} \
+}
 
 /* encode(t, encoding) */
 static char *
@@ -730,7 +739,10 @@ utl_file_fclose(PG_FUNCTION_ARGS)
 				if (errno == EBADF)
 					CUSTOM_EXCEPTION(INVALID_FILEHANDLE, "File is not an opened");
 				else
-					CUSTOM_EXCEPTION(WRITE_ERROR, strerror(errno));
+				{
+					int save_errno = errno;
+					CUSTOM_EXCEPTION(WRITE_ERROR, strerror(save_errno));
+				}
 			}
 			slots[i].file = NULL;
 			slots[i].id = INVALID_SLOTID;
@@ -765,7 +777,10 @@ utl_file_fclose_all(PG_FUNCTION_ARGS)
 				if (errno == EBADF)
 					CUSTOM_EXCEPTION(INVALID_FILEHANDLE, "File is not an opened");
 				else
-					CUSTOM_EXCEPTION(WRITE_ERROR, strerror(errno));
+				{
+					int save_errno = errno;
+					CUSTOM_EXCEPTION(WRITE_ERROR, strerror(save_errno));
+				}
 			}
 			slots[i].file = NULL;
 			slots[i].id = INVALID_SLOTID;
@@ -1097,7 +1112,10 @@ utl_file_tmpdir(PG_FUNCTION_ARGS)
 
 	ret = GetTempPathA(MAXPGPATH, tmpdir);
 	if (ret == 0 || ret > MAXPGPATH)
-		CUSTOM_EXCEPTION(INVALID_PATH, strerror(errno));
+	{
+		int save_errno = errno;
+		CUSTOM_EXCEPTION(INVALID_PATH, strerror(save_errno));
+	}
 
 	canonicalize_path(tmpdir);
 #endif

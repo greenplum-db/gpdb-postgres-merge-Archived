@@ -33,8 +33,8 @@
 
 extern bool Test_print_prefetch_joinqual;
 
-static void splitJoinQualExpr(NestLoopState *nlstate);
-//static void extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses);
+static void splitJoinQualExpr(List *joinqual, List **inner_join_keys_p, List **outer_join_keys_p);
+static void extractFuncExprArgs(Expr *clause, List **lclauses, List **rclauses);
 
 /* ----------------------------------------------------------------
  *		ExecNestLoop(node)
@@ -489,8 +489,59 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	nlstate->js.ps.qual =
 		ExecInitQual(node->join.plan.qual, (PlanState *) nlstate);
 	nlstate->js.jointype = node->join.jointype;
-	nlstate->js.joinqual =
-		ExecInitQual(node->join.joinqual, (PlanState *) nlstate);
+
+	if (node->join.jointype == JOIN_LASJ_NOTIN)
+	{
+		List	   *inner_join_keys;
+		List	   *outer_join_keys;
+		ListCell   *lc;
+
+		/* not initialized yet */
+		Assert(nlstate->nl_InnerJoinKeys == NIL);
+		Assert(nlstate->nl_OuterJoinKeys == NIL);
+
+		splitJoinQualExpr(node->join.joinqual,
+						  &inner_join_keys,
+						  &outer_join_keys);
+		foreach(lc, inner_join_keys)
+		{
+			Expr	   *expr = (Expr *) lfirst(lc);
+			ExprState  *exprstate;
+
+			exprstate = ExecInitExpr(expr, (PlanState *) nlstate);
+
+			nlstate->nl_InnerJoinKeys = lappend(nlstate->nl_InnerJoinKeys,
+												exprstate);
+		}
+		foreach(lc, outer_join_keys)
+		{
+			Expr	   *expr = (Expr *) lfirst(lc);
+			ExprState  *exprstate;
+
+			exprstate = ExecInitExpr(expr, (PlanState *) nlstate);
+
+			nlstate->nl_OuterJoinKeys = lappend(nlstate->nl_OuterJoinKeys,
+												exprstate);
+		}
+
+		/*
+		 * For LASJ_NOTIN, when we evaluate the join condition, we want to
+		 * return true when one of the conditions is NULL, so we exclude
+		 * that tuple from the output.
+		 */
+		nlstate->nl_qualResultForNull = true;
+	}
+	else
+	{
+		nlstate->nl_qualResultForNull = false;
+	}
+
+	if (nlstate->nl_qualResultForNull)
+		nlstate->js.joinqual =
+			ExecInitCheck(node->join.joinqual, (PlanState *) nlstate);
+	else
+		nlstate->js.joinqual =
+			ExecInitQual(node->join.joinqual, (PlanState *) nlstate);
 
 	/*
 	 * detect whether we need only consider the first matching inner tuple
@@ -522,22 +573,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 */
 	nlstate->nl_NeedNewOuter = true;
 	nlstate->nl_MatchedOuter = false;
-
-    if (node->join.jointype == JOIN_LASJ_NOTIN)
-    {
-		elog(ERROR, "GPDB_12_MERGE_FIXME: JOIN_LASJ_NOTIN broken");
-		//splitJoinQualExpr(nlstate);
-    	/*
-    	 * For LASJ_NOTIN, when we evaluate the join condition, we want to
-    	 * return true when one of the conditions is NULL, so we exclude
-    	 * that tuple from the output.
-    	 */
-		nlstate->nl_qualResultForNull = true;
-    }
-    else
-    {
-        nlstate->nl_qualResultForNull = false;
-    }
 
 	NL1_printf("ExecInitNestLoop: %s\n",
 			   "node initialized");
@@ -615,67 +650,62 @@ ExecReScanNestLoop(NestLoopState *node)
  *
  * This is used for NOTIN joins, as we need to look for NULLs on both
  * inner and outer side.
+ *
+ * XXX: This would be more appropriate in the planner.
  * ----------------------------------------------------------------
  */
-/* GPDB_12_MERGE_FIXME: broken */
-#if 0
 static void
-splitJoinQualExpr(NestLoopState *nlstate)
+splitJoinQualExpr(List *joinqual, List **inner_join_keys_p, List **outer_join_keys_p)
 {
 	List *lclauses = NIL;
 	List *rclauses = NIL;
-	ListCell *lc = NULL;
+	ListCell   *lc;
 
-	foreach(lc, nlstate->js.joinqual)
+	foreach(lc, joinqual)
 	{
-		GenericExprState *exprstate = (GenericExprState *) lfirst(lc);
-		switch (exprstate->xprstate.type)
+		Expr	   *expr = (Expr *) lfirst(lc);
+
+		switch (expr->type)
 		{
-		case T_FuncExprState:
-			extractFuncExprArgs((FuncExprState *) exprstate, &lclauses, &rclauses);
-			break;
-		case T_BoolExprState:
-		{
-			BoolExprState *bstate = (BoolExprState *) exprstate;
-			ListCell *argslc = NULL;
-			foreach(argslc,bstate->args)
-			{
-				FuncExprState *fstate = (FuncExprState *) lfirst(argslc);
-				Assert(IsA(fstate, FuncExprState));
-				extractFuncExprArgs(fstate, &lclauses, &rclauses);
-			}
-			break;
-		}
-		case T_ExprState:
-			/* For constant expression we don't need to split */
-			if (exprstate->xprstate.expr->type == T_Const)
-			{
+			case T_FuncExpr:
+			case T_OpExpr:
+				extractFuncExprArgs(expr, &lclauses, &rclauses);
+				break;
+
+			case T_BoolExpr:
+				{
+					BoolExpr   *bexpr = (BoolExpr *) expr;
+					ListCell   *argslc;
+
+					foreach(argslc, bexpr->args)
+					{
+						extractFuncExprArgs(lfirst(argslc), &lclauses, &rclauses);
+					}
+				}
+				break;
+
+			case T_Const:
 				/*
 				 * Constant expressions do not need to be splitted into left and
 				 * right as they don't need to be considered for NULL value special
 				 * cases
 				 */
-				continue;
-			}
+				break;
 
-			elog(ERROR, "unexpected expression type in NestLoopJoin qual");
-
-			break; /* Unreachable */
-		default:
-			elog(ERROR, "unexpected expression type in NestLoopJoin qual");
+			default:
+				elog(ERROR, "unexpected expression type in NestLoopJoin qual");
 		}
 	}
-	Assert(NIL == nlstate->nl_InnerJoinKeys && NIL == nlstate->nl_OuterJoinKeys);
-	nlstate->nl_InnerJoinKeys = rclauses;
-	nlstate->nl_OuterJoinKeys = lclauses;
+
+	*inner_join_keys_p = rclauses;
+	*outer_join_keys_p = lclauses;
 }
-#endif
 
 
 /* ----------------------------------------------------------------
  * extractFuncExprArgs
  *
- * Extract the arguments of a FuncExpr and append them into two
+ * Extract the arguments of a FuncExpr or an OpExpr and append them into two
  * given lists:
  *   - lclauses for the left side of the expression,
  *   - rclauses for the right side
@@ -690,22 +720,35 @@ splitJoinQualExpr(NestLoopState *nlstate)
  * performed.
  * ----------------------------------------------------------------
  */
-#if 0
 static void
-extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses)
+extractFuncExprArgs(Expr *clause, List **lclauses, List **rclauses)
 {
-	Node *clause;
-
-	if (list_length(fstate->args) != 2)
-		return;
-
-	/* Check for strictness of the equality operator */
-	clause = (Node *)fstate->xprstate.expr;
-	if ((is_opclause(clause) && op_strict(((OpExpr *) clause)->opno)) ||
-			(is_funcclause(clause) && func_strict(((FuncExpr *) clause)->funcid)))
+	if (IsA(clause, OpExpr))
 	{
-		*lclauses = lappend(*lclauses, linitial(fstate->args));
-		*rclauses = lappend(*rclauses, lsecond(fstate->args));
+		OpExpr	   *opexpr = (OpExpr *) clause;
+
+		if (list_length(opexpr->args) != 2)
+			return;
+
+		if (!op_strict(opexpr->opno))
+			return;
+
+		*lclauses = lappend(*lclauses, linitial(opexpr->args));
+		*rclauses = lappend(*rclauses, lsecond(opexpr->args));
 	}
+	else if (IsA(clause, FuncExpr))
+	{
+		FuncExpr   *fexpr = (FuncExpr *) clause;
+
+		if (list_length(fexpr->args) != 2)
+			return;
+
+		if (!func_strict(fexpr->funcid))
+			return;
+
+		*lclauses = lappend(*lclauses, linitial(fexpr->args));
+		*rclauses = lappend(*rclauses, lsecond(fexpr->args));
+	}
+	else
+		elog(ERROR, "unexpected join qual in JOIN_LASJ_NOTIN join");
 }
-#endif

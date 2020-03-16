@@ -77,7 +77,6 @@
 #include "utils/faultinjector.h"
 #include "utils/resource_manager.h"
 
-#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_class.h"
 

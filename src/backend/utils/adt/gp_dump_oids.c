@@ -12,13 +12,14 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "tcop/tcopprot.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/planmain.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/syscache.h"
 
 static List *proc_oids_for_dump = NIL;

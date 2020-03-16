@@ -122,7 +122,6 @@ typedef struct _restoreOptions
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
 
-	int			binary_upgrade;	/* GPDB: restoring for a binary upgrade */
 	int			enable_row_security;
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
 	int			binary_upgrade;
@@ -250,7 +249,8 @@ extern void ConnectDatabase(Archive *AH,
 							const char *pghost,
 							const char *pgport,
 							const char *username,
-							trivalue prompt_password);
+							trivalue prompt_password,
+							bool binary_upgrade);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 

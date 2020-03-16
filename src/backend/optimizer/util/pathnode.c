@@ -4144,6 +4144,7 @@ create_projection_path_with_quals(PlannerInfo *root,
 	/* Projection does not change the sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
 	pathnode->path.locus = subpath->locus;
+	pathnode->path.sameslice_relids = subpath->sameslice_relids;
 
 	pathnode->subpath = subpath;
 

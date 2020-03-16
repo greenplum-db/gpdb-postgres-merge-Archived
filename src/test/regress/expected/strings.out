@@ -1343,11 +1343,10 @@ select 'foo'::varchar(10) || bar from (select 'bar' as bar) moo;
 (1 row)
 
 select '123'::numeric(4,1) + bar from (select '123' as bar) baz;
- ?column? 
-----------
-    246.0
-(1 row)
-
+ERROR:  operator does not exist: numeric + text
+LINE 1: select '123'::numeric(4,1) + bar from (select '123' as bar) ...
+                                   ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 drop table unknown_test;
 -- Test nested "unknown"s from MPP-2689
 select 'foo'::text || foo from ( select foo from (select 4.5, foo from ( select
@@ -1472,11 +1471,14 @@ SELECT substr(f1, 99995, 10) from toasttest;
  567890
 (4 rows)
 
+-- GPDB: These tests are sensitive to block size. In GPDB, the block
+-- size is 32 kB, whereas in PostgreSQL it's 8kB. Therefore make
+-- the data 4x larger here.
 TRUNCATE TABLE toasttest;
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300*4));
+INSERT INTO toasttest values (repeat('1234567890',300*4));
+INSERT INTO toasttest values (repeat('1234567890',300*4));
+INSERT INTO toasttest values (repeat('1234567890',300*4));
 -- expect >0 blocks
 SELECT pg_relation_size(reltoastrelid) = 0 AS is_empty
   FROM pg_class where relname = 'toasttest';

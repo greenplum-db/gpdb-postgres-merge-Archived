@@ -21,9 +21,8 @@
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
 
-extern PGDLLIMPORT const ScanKeyword ScanKeywords[];
-extern PGDLLIMPORT const int	NumScanKeywords;
-#define ScanKeywordLookupArgs	, ScanKeywords, NumScanKeywords
+extern PGDLLIMPORT const ScanKeywordList ScanKeywords;
+extern PGDLLIMPORT const uint8 ScanKeywordCategories[];
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
@@ -476,15 +475,14 @@ other			.
 					 * We will pass this along as a normal character string,
 					 * but preceded with an internally-generated "NCHAR".
 					 */
-					const ScanKeyword *keyword;
+					int kwnum;
 
 					SET_YYLLOC();
 					yyless(1);				/* eat only 'n' this time */
 					/* nchar had better be a keyword! */
-					keyword = ScanKeywordLookup("nchar" ScanKeywordLookupArgs);
-					Assert(keyword != NULL);
-					yylval.val.str = (char*) keyword->name;
-					yylval.val.keycode = keyword->value;
+					kwnum = ScanKeywordLookup("nchar" , &ScanKeywords);
+					yylval.val.str = (char *)GetScanKeyword(kwnum, &ScanKeywords);
+					yylval.val.keycode = ScanKeywordTokens[kwnum];
 					yylval.val.modificator = NULL;
 					yylval.val.sep = NULL;
 					return X_KEYWORD;
@@ -824,17 +822,17 @@ other			.
 
 
 {identifier}	{
-					const ScanKeyword *keyword;
+					int kwnum;
 					char		   *ident;
 
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
-					keyword = ScanKeywordLookup(yytext ScanKeywordLookupArgs);
-					if (keyword != NULL)
+					kwnum = ScanKeywordLookup(yytext, &ScanKeywords);
+					if (kwnum != -1)
 					{
-						yylval.val.str = (char*) keyword->name;
-						yylval.val.keycode = keyword->value;
+						yylval.val.str = (char *)GetScanKeyword(kwnum, &ScanKeywords);
+						yylval.val.keycode = ScanKeywordTokens[kwnum];
 						yylval.val.modificator = NULL;
 						yylval.val.sep = NULL;
 						return X_KEYWORD;

@@ -925,10 +925,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	else
 		dest = None_Receiver;
 
-	/* GPDB hook for collecting query info */
-	if (query_info_collect_hook)
-		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, es->qd);
-
 	es->qd = CreateQueryDesc(es->stmt,
 							 fcache->src,
 							 GetActiveSnapshot(),
@@ -937,6 +933,10 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 							 fcache->paramLI,
 							 es->qd ? es->qd->queryEnv : NULL,
 							 0);
+
+	/* GPDB hook for collecting query info */
+	if (query_info_collect_hook)
+		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, es->qd);
 
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)

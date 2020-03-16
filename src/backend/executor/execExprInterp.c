@@ -384,6 +384,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_XMLEXPR,
 		&&CASE_EEOP_AGGREF,
 		&&CASE_EEOP_GROUPING_FUNC,
+		&&CASE_EEOP_GROUP_ID,
 		&&CASE_EEOP_GROUPING_SET_ID,
 		&&CASE_EEOP_AGGEXPR_ID,
 		&&CASE_EEOP_WINDOW_FUNC,
@@ -1463,6 +1464,16 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* too complex/uncommon for an inline implementation */
 			ExecEvalGroupingFunc(state, op);
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_GROUP_ID)
+		{
+			int			group_id = op->d.group_id.parent->group_id;
+
+			*op->resvalue = Int32GetDatum(group_id);
+			*op->resnull = false;
 
 			EEO_NEXT();
 		}

@@ -55,7 +55,7 @@
 #include "utils/rel.h"
 
 #include "catalog/gp_distribution_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
-#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_inherits.h"
 #include "optimizer/plancat.h"
 #include "parser/parse_relation.h"
 #include "utils/lsyscache.h"

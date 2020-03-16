@@ -62,14 +62,6 @@ typedef struct _z_stream
 typedef z_stream *z_streamp;
 #endif
 
-<<<<<<< HEAD
-/* Current archive version number (the format we can output) */
-#define K_VERS_MAJOR 1
-#define K_VERS_MINOR 13
-#define K_VERS_REV 0
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Data block types */
 #define BLK_DATA 1
 #define BLK_BLOBS 3

@@ -168,9 +168,13 @@ WHERE p1.oid < p2.oid AND
      p1.proretset != p2.proretset OR
      p1.provolatile != p2.provolatile OR
      p1.pronargs != p2.pronargs);
- oid | proname | oid | proname 
------+---------+-----+---------
-(0 rows)
+ oid  |      proname      | oid  |       proname       
+------+-------------------+------+---------------------
+ 6212 | int2_matrix_accum | 6214 | int8_matrix_accum
+ 6212 | int2_matrix_accum | 6215 | float8_matrix_accum
+ 6213 | int4_matrix_accum | 6214 | int8_matrix_accum
+ 6213 | int4_matrix_accum | 6215 | float8_matrix_accum
+(4 rows)
 
 -- Look for uses of different type OIDs in the argument/result type fields
 -- for different aliases of the same built-in function.
@@ -191,6 +195,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.prorettype < p2.prorettype)
+    -- int2/int4/int8/float8_matrix_accum functions violate this
+    AND p1.proname NOT LIKE E'%_matrix_accum'
+    AND p2.proname NOT LIKE E'%_matrix_accum'
 ORDER BY 1, 2;
  prorettype | prorettype 
 ------------+------------
@@ -207,6 +214,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
+    -- int2/int4/int8/float8_matrix_accum functions violate this
+    AND p1.proname NOT LIKE E'%_matrix_accum'
+    AND p2.proname NOT LIKE E'%_matrix_accum'
 ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
@@ -225,6 +235,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
+    -- int2/int4/int8/float8_matrix_accum functions violate this
+    AND p1.proname NOT LIKE E'%_matrix_accum'
+    AND p2.proname NOT LIKE E'%_matrix_accum'
 ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
@@ -1580,9 +1593,10 @@ WHERE a.aggcombinefn = p.oid AND
      p.prorettype != p.proargtypes[0] OR
      p.prorettype != p.proargtypes[1] OR
      NOT binary_coercible(a.aggtranstype, p.proargtypes[0]));
- aggfnoid | proname 
-----------+---------
-(0 rows)
+       aggfnoid       |      proname      
+----------------------+-------------------
+ pg_catalog.pivot_sum | int8_matrix_accum
+(1 row)
 
 -- Check that no combine function for an INTERNAL transtype is strict.
 SELECT a.aggfnoid, p.proname

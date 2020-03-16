@@ -488,14 +488,14 @@ SELECT (EXISTS (SELECT UNNEST(X))) AS B FROM A;
 (2 rows)
 
 EXPLAIN SELECT (EXISTS (SELECT UNNEST(X))) AS B FROM A;
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.02 rows=1 width=33)
-   ->  Seq Scan on a  (cost=0.00..1.02 rows=1 width=33)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.04 rows=1 width=1)
+   ->  Seq Scan on a  (cost=0.00..1.02 rows=1 width=1)
          SubPlan 1
-           ->  Result  (cost=0.00..0.01 rows=1 width=0)
- Settings:  optimizer=off
- Optimizer status: Postgres query optimizer
+           ->  ProjectSet  (cost=0.00..0.07 rows=4 width=4)
+                 ->  Result  (cost=0.00..0.01 rows=1 width=0)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 DROP TABLE A;

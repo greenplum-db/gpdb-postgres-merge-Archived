@@ -44,6 +44,7 @@
 #include "pgstat.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -821,6 +822,34 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}
+
+		case T_GroupId:
+			{
+				if (state->parent && IsA(state->parent, HashJoinState))
+				{
+					/*
+					 * GPDB_95_MERGE_FIXME: GPDB may choose a HashJoin to combine multiple
+					 * aggregations in targetlist, however, for queries with multiple
+					 * groups, the HashJoin combination will not be taken. For a single
+					 * group, the GROUP_ID() function should always return 0
+					 */
+					scratch.opcode = EEOP_CONST;
+					scratch.d.constval.value = Int32GetDatum(0);
+					scratch.d.constval.isnull = false;
+
+					ExprEvalPushStep(state, &scratch);
+				}
+				else if (!state->parent || !IsA(state->parent, AggState) || !IsA(state->parent->plan, Agg))
+					elog(ERROR, "parent of GROUP_ID is not Agg node");
+				else
+				{
+					scratch.opcode = EEOP_GROUP_ID;
+					scratch.d.group_id.parent = (AggState *) state->parent;
+
+					ExprEvalPushStep(state, &scratch);
+				}
+			}
+			break;
 
 		case T_GroupingSetId:
 			{
@@ -2971,6 +3000,10 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 								&deform);
 		get_last_attnums_walker((Node *) pertrans->aggref->aggfilter,
 								&deform);
+
+		if (aggstate->AggExprId_AttrNum > 0)
+			deform.last_outer = Max(deform.last_outer,
+									aggstate->AggExprId_AttrNum);
 	}
 	ExecPushExprSlots(state, &deform);
 
@@ -2999,6 +3032,42 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		{
 			/* evaluate filter expression */
 			ExecInitExprRec(pertrans->aggref->aggfilter, state,
+							&state->resvalue, &state->resnull);
+			/* and jump out if false */
+			scratch.opcode = EEOP_JUMP_IF_NOT_TRUE;
+			scratch.d.jump.jumpdone = -1;	/* adjust later */
+			ExprEvalPushStep(state, &scratch);
+			adjust_bailout = lappend_int(adjust_bailout,
+										 state->steps_len - 1);
+		}
+
+		/* if AggExprId is in input, trans function bitmap should match */
+		if (aggstate->AggExprId_AttrNum > 0)
+		{
+			Expr	   *aggexpr_matches_expr;
+
+			/* evaluate expression: <AggExprId column> == pertrans->agg_expr_id */
+			aggexpr_matches_expr = (Expr *)
+				makeFuncExpr(F_INT4EQ,
+							 BOOLOID,
+							 list_make2(
+								 makeVar(OUTER_VAR,
+										 aggstate->AggExprId_AttrNum,
+										 INT4OID,
+										 -1,
+										 InvalidOid,
+										 0),
+								 makeConst(INT4OID,
+										   -1,
+										   InvalidOid,
+										   sizeof(int32),
+										   Int32GetDatum(pertrans->agg_expr_id),
+										   false,
+										   true)),
+							 InvalidOid,
+							 InvalidOid,
+							 COERCE_EXPLICIT_CALL);
+			ExecInitExprRec(aggexpr_matches_expr, state,
 							&state->resvalue, &state->resnull);
 			/* and jump out if false */
 			scratch.opcode = EEOP_JUMP_IF_NOT_TRUE;
@@ -3495,11 +3564,11 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 bool
 isJoinExprNull(List *joinExpr, ExprContext *econtext)
 {
-
-	Assert(NULL != joinExpr);
-	bool joinkeys_null = true;
-
 	ListCell   *lc;
+	bool		joinkeys_null = true;
+
+	Assert(joinExpr != NIL);
+
 	foreach(lc, joinExpr)
 	{
 		ExprState  *keyexpr = (ExprState *) lfirst(lc);

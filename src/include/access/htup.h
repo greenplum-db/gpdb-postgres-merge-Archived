@@ -64,9 +64,6 @@ typedef MinimalTupleData *MinimalTuple;
  * t_self and t_tableOid should be valid if the HeapTupleData points to
  * a disk buffer, or if it represents a copy of a tuple on disk.  They
  * should be explicitly set invalid in manufactured tuples.
- *
- * CDB: t_tableOid deleted.  Instead, use tts_tableOid in TupleTableSlot.
- * GPDB_12_MERGE_FIXME: Are we going to keep carrying that diff?
  */
 typedef struct HeapTupleData
 {

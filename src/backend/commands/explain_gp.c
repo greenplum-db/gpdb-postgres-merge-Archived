@@ -1802,6 +1802,9 @@ cdbexplain_showExecStatsEnd(struct PlannedStmt *stmt,
 							struct EState *estate,
 							ExplainState *es)
 {
+	if (!es->summary)
+		return;
+
     gpexplain_formatSlicesOutput(showstatctx, estate, es);
 
 	if (!IsResManagerMemoryPolicyNone())

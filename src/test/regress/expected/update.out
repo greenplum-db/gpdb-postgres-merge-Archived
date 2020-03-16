@@ -172,19 +172,31 @@ EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE update_test t
   SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)
   WHERE CURRENT_USER = SESSION_USER;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
  Update on public.update_test t
-   ->  Result
-         Output: $1, $2, t.c, (SubPlan 1 (returns $1,$2)), t.ctid
-         One-Time Filter: (CURRENT_USER = SESSION_USER)
-         ->  Seq Scan on public.update_test t
-               Output: t.c, t.a, t.ctid
-         SubPlan 1 (returns $1,$2)
-           ->  Seq Scan on public.update_test s
-                 Output: s.b, s.a
-                 Filter: (s.a = t.a)
-(10 rows)
+   ->  Explicit Redistribute Motion 3:3  (slice1; segments: 3)
+         Output: ($1), ($2), t.c, ((SubPlan 1 (returns $1,$2))), t.ctid, t.gp_segment_id, (DMLAction)
+         ->  Split
+               Output: ($1), ($2), t.c, ((SubPlan 1 (returns $1,$2))), t.ctid, t.gp_segment_id, DMLAction
+               ->  Result
+                     Output: $1, $2, t.c, (SubPlan 1 (returns $1,$2)), t.ctid, t.gp_segment_id
+                     One-Time Filter: (CURRENT_USER = SESSION_USER)
+                     ->  Seq Scan on public.update_test t
+                           Output: t.c, t.a, t.ctid, t.gp_segment_id
+                     SubPlan 1 (returns $1,$2)
+                       ->  Result
+                             Output: s.b, s.a
+                             Filter: (s.a = t.a)
+                             ->  Materialize
+                                   Output: s.b, s.a
+                                   ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                         Output: s.b, s.a
+                                         ->  Seq Scan on public.update_test s
+                                               Output: s.b, s.a
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(22 rows)
 
 UPDATE update_test t
   SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)

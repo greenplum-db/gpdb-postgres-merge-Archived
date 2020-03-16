@@ -299,7 +299,7 @@ CTranslatorScalarToDXL::TranslateScalarToDXL
 		{T_ArrayCoerceExpr, &CTranslatorScalarToDXL::TranslateArrayCoerceExprToDXL},
 		{T_SubLink, &CTranslatorScalarToDXL::TranslateSubLinkToDXL},
 		{T_ArrayExpr, &CTranslatorScalarToDXL::TranslateArrayExprToDXL},
-		{T_ArrayRef, &CTranslatorScalarToDXL::TranslateArrayRefToDXL},
+		{T_SubscriptingRef, &CTranslatorScalarToDXL::TranslateArrayRefToDXL},
 	};
 
 	const ULONG num_translators = GPOS_ARRAY_SIZE(translators);

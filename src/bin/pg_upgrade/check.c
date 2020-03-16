@@ -253,14 +253,13 @@ report_clusters_compatible(void)
 
 
 void
-<<<<<<< HEAD
 issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 {
 	/*
-	 * We unconditionally start/stop the new server because pg_resetwal -o
-	 * set wal_level to 'minimum'.  If the user is upgrading standby
-	 * servers using the rsync instructions, they will need pg_upgrade
-	 * to write its final WAL record with the proper wal_level.
+	 * We unconditionally start/stop the new server because pg_resetwal -o set
+	 * wal_level to 'minimum'.  If the user is upgrading standby servers using
+	 * the rsync instructions, they will need pg_upgrade to write its final
+	 * WAL record showing wal_level as 'replica'.
 	 */
 	start_postmaster(&new_cluster, true);
 
@@ -291,18 +290,6 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 	}
 
 	/* GPDB_90_MERGE_FIXME: See earlier comment on large objects */
-=======
-issue_warnings_and_set_wal_level(void)
-{
-	/*
-	 * We unconditionally start/stop the new server because pg_resetwal -o set
-	 * wal_level to 'minimum'.  If the user is upgrading standby servers using
-	 * the rsync instructions, they will need pg_upgrade to write its final
-	 * WAL record showing wal_level as 'replica'.
-	 */
-	start_postmaster(&new_cluster, true);
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
@@ -1162,14 +1149,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								"           'regprocedure' "
 		/* regrole.oid is preserved, so 'regrole' is OK */
 		/* regtype.oid is preserved, so 'regtype' is OK */
-<<<<<<< HEAD
-								" %s "
-								" ) AND "
-=======
+								"           %s "
 								"			) AND "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								"		c.relnamespace = n.oid AND "
 							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')",
+						/* GPDB 4.3 support */
 						GET_MAJOR_VERSION(old_cluster.major_version) == 802 ?
 							"0" :
 							"'pg_catalog.regconfig'::pg_catalog.regtype, "

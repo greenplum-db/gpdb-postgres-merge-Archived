@@ -8,4 +8,6 @@ include $(top_builddir)/src/backend/mock.mk
 
 nodeShareInputScan.t: \
 	$(MOCK_DIR)/backend/executor/execUtils_mock.o \
-	$(MOCK_DIR)/backend/utils/sort/tuplestorenew_mock.o
+	$(MOCK_DIR)/backend/utils/sort/tuplestorenew_mock.o \
+	$(MOCK_DIR)/backend/access/hash/hash_mock.o \
+	$(MOCK_DIR)/backend/utils/fmgr/fmgr_mock.o

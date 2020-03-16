@@ -4495,7 +4495,7 @@ CopyFrom(CopyState cstate)
 		}
 
 		/* Determine the partition to insert the tuple into */
-		if (proute)
+		if (proute && cstate->dispatch_mode != COPY_DISPATCH)
 		{
 			TupleConversionMap *map;
 
