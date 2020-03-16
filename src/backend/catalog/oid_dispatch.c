@@ -366,7 +366,7 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 		/* Assign a new oid, and memorize it in the list of OIDs to dispatch */
 		oid = GetNewOidWithIndex(relation, indexId, oidcolumn);
 
-		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+		oldcontext = MemoryContextSwitchTo(get_oids_context());
 		searchkey->oid = oid;
 		dispatch_oids = lappend(dispatch_oids, copyObject(searchkey));
 		MemoryContextSwitchTo(oldcontext);
@@ -556,7 +556,7 @@ RememberAssignedOidForDatabase(const char *datname, Oid oid)
 	MemoryContext oldcontext;
 	OidAssignment *key;
 
-	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+	oldcontext = MemoryContextSwitchTo(get_oids_context());
 
 	key = makeNode(OidAssignment);
 	key->catalog = DatabaseRelationId;
@@ -593,7 +593,7 @@ RememberAssignedOidForEnum(Oid enumtypid, const char *enumlabel, Oid oid)
 	MemoryContext oldcontext;
 	OidAssignment *key;
 
-	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+	oldcontext = MemoryContextSwitchTo(get_oids_context());
 
 	key = makeNode(OidAssignment);
 	key->catalog = EnumRelationId;
