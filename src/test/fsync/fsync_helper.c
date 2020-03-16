@@ -17,8 +17,8 @@ dirty_buffers(PG_FUNCTION_ARGS)
 	MemoryContext		oldcontext;
 	List               *dirty_tags;
 	BufferTag          *tag;
-	AttrNumber          natts = 4; /* (RelFileNode, segno) */
 	AttrNumber          attno;
+#define natts 4 /* (RelFileNode, segno) */
 
 	if (SRF_IS_FIRSTCALL())
 	{
