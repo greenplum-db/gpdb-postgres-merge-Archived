@@ -1969,21 +1969,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 								  &aovisimap_relid, NULL);
 	}
 
-#ifdef GPDB_12_MERGE_FIXME
-	/* This block seems to be a missmerge in the wrong place, verify or
- 	 * reactivate */
-	/*
-	 * Switch to the table owner's userid, so that any index functions are run
-	 * as that user.  Also lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command. (This is
-	 * unnecessary, but harmless, for lazy VACUUM.)
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(onerel->rd_rel->relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
-#endif
-
 	/*
 	 * Check permissions.
 	 *
@@ -2077,31 +2062,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		/* We were asked to some phase of AO vacuum, but it's not an AO table. Huh? */
 		elog(ERROR, "AO vacuum phase was invoked on a non-AO table");
 	}
-
-	/*
-	 * Get a session-level lock too. This will protect our access to the
-	 * relation across multiple transactions, so that we can vacuum the
-	 * relation's TOAST table (if any) secure in the knowledge that no one is
-	 * deleting the parent relation.
-	 *
-	 * NOTE: this cannot block, even if someone else is waiting for access,
-	 * because the lock manager knows that both lock requests are from the
-	 * same process.
-	 */
-	onerelid = onerel->rd_lockInfo.lockRelId;
-	LockRelationIdForSession(&onerelid, lmode);
-
-	/*
-	 * Remember the relation's TOAST relation for later, if the caller asked
-	 * us to process it.  In VACUUM FULL, though, the toast table is
-	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
-	 *
-	 * GPDB: Also remember the AO segment relations for later.
-	 */
-	if (!(params->options & VACOPT_SKIPTOAST) && !(params->options & VACOPT_FULL))
-		toast_relid = onerel->rd_rel->reltoastrelid;
-	else
-		toast_relid = InvalidOid;
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
