@@ -10954,9 +10954,6 @@
 { oid => 7171, descr => 'show append only table compression ratio',
    proname => 'get_ao_compression_ratio', provolatile => 'v', proparallel => 'u', prorettype => 'float8', proargtypes => 'regclass', prosrc => 'get_ao_compression_ratio', prodataaccess => 'r' },
 
-{ oid => 7173, descr => 'append only tables utility function',
-   proname => 'gp_update_ao_master_stats', proisstrict => 'f', provolatile => 'v', proparallel => 'u', prorettype => 'int8', proargtypes => 'regclass', prosrc => 'gp_update_ao_master_stats', prodataaccess => 'm' },
-
 { oid => 7050, descr => 'bitmap(internal)',
    proname => 'bmhandler', provolatile => 'v', prorettype => 'index_am_handler', proargtypes => 'internal', prosrc => 'bmhandler' },
 
@@ -10989,14 +10986,6 @@
 
 { oid => 7069, descr => 'truncate the error log for the specified external table',
    proname => 'gp_truncate_error_log', provolatile => 'v', prorettype => 'bool', proargtypes => 'text', prosrc => 'gp_truncate_error_log' },
-
-# elog related
-{ oid => 5044, descr => 'Insert text into the error log',
-   proname => 'gp_elog', prorettype => 'void', proargtypes => 'text', prosrc => 'gp_elog' },
-
-{ oid => 5045, descr => 'Insert text into the error log',
-   proname => 'gp_elog', prorettype => 'void', proargtypes => 'text bool', prosrc => 'gp_elog' },
-
 
 # Segment and master administration functions, see utils/gp/segadmin.c
 { oid => 5046, descr => 'Perform the catalog operations necessary for adding a new standby',

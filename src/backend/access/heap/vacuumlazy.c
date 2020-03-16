@@ -191,7 +191,7 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
 									 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 
 /*
- *	heap_vacuum_rel() -- perform VACUUM for one heap relation
+ *	lazy_vacuum_rel_heap() -- perform VACUUM for one heap relation
  *
  *		This routine vacuums a single heap, cleans out its indexes, and
  *		updates its relpages and reltuples statistics.
@@ -200,7 +200,7 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
  *		and locked the relation.
  */
 void
-lazy_vacuum_rel_heap(Relation onerel, int options, VacuumParams *params,
+lazy_vacuum_rel_heap(Relation onerel, VacuumParams *params,
 				BufferAccessStrategy bstrategy)
 {
 	LVRelStats *vacrelstats;

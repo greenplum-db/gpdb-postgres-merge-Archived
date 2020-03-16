@@ -1419,11 +1419,13 @@ serializeParamsForDispatch(QueryDesc *queryDesc,
 			SerializedParamExternData *sprm = &result->externParams[i];
 
 			/*
+			 * GPDB_12_MERGE_FIXME: Can we pass NULL on the cb func?
+			 *
 			 * First, use paramFetch to fetch any "lazy" parameters. (The callback
 			 * function is of no use in the QE.)
 			 */
 			if (externParams->paramFetch && !OidIsValid(prm->ptype))
-				(*externParams->paramFetch) (externParams, i + 1);
+				externParams->paramFetch(externParams, i + 1, false, NULL);
 
 			sprm->value = prm->value;
 			sprm->isnull = prm->isnull;
@@ -1499,7 +1501,7 @@ getExecParamsToDispatch(PlannedStmt *stmt, ParamExecData *intPrm,
 	ParamWalkerContext context;
 	int			i;
 	Plan	   *plan = stmt->planTree;
-	int			nIntPrm = stmt->nParamExec;
+	int			nIntPrm = list_length(stmt->paramExecTypes);
 	Bitmapset  *sendParams = NULL;
 
 	if (nIntPrm == 0)

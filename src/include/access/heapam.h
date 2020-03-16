@@ -190,11 +190,6 @@ extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);
 extern Size SyncScanShmemSize(void);
 
-/* in heap/vacuumlazy.c */
-struct VacuumParams;
-extern void heap_vacuum_rel(Relation onerel,
-							struct VacuumParams *params, BufferAccessStrategy bstrategy);
-
 /* in heap/heapam_visibility.c */
 extern bool HeapTupleSatisfiesVisibility(Relation relation, HeapTuple stup, Snapshot snapshot,
 										 Buffer buffer);

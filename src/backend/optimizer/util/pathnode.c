@@ -2065,14 +2065,8 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 				else
 					numsegments = subpath->locus.numsegments;
 				RestrictInfo *restrict_info =
-					             make_restrictinfo((Expr *) makeSegmentFilterExpr(
-						             gp_session_id % numsegments),
-					                               false,
-					                               false,
-					                               true,
-					                               NULL,
-					                               NULL,
-					                               NULL);
+							make_simple_restrictinfo((Expr *) makeSegmentFilterExpr(
+													 gp_session_id % numsegments));
 				subpath = (Path *) create_projection_path_with_quals(
 					root,
 					subpath->parent,

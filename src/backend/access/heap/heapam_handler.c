@@ -36,6 +36,7 @@
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "commands/progress.h"
+#include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "optimizer/plancat.h"
 #include "pgstat.h"
@@ -2643,7 +2644,7 @@ static const TableAmRoutine heapam_methods = {
 	.relation_nontransactional_truncate = heapam_relation_nontransactional_truncate,
 	.relation_copy_data = heapam_relation_copy_data,
 	.relation_copy_for_cluster = heapam_relation_copy_for_cluster,
-	.relation_vacuum = heap_vacuum_rel,
+	.relation_vacuum = lazy_vacuum_rel_heap,
 	.scan_analyze_next_block = heapam_scan_analyze_next_block,
 	.scan_analyze_next_tuple = heapam_scan_analyze_next_tuple,
 	.index_build_range_scan = heapam_index_build_range_scan,

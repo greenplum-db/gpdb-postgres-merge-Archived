@@ -699,6 +699,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 						   filename,
 						   is_program,
 						   NULL,
+						   NULL,
 						   NIL,
 						   options);
 
@@ -773,6 +774,7 @@ fileReScanForeignScan(ForeignScanState *node)
 									node->ss.ss_currentRelation,
 									festate->filename,
 									festate->is_program,
+									NULL,
 									NULL,
 									NIL,
 									festate->options);
@@ -1145,7 +1147,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Create CopyState from FDW options.
 	 */
-	cstate = BeginCopyFrom(NULL, onerel, filename, is_program, NULL, NIL,
+	cstate = BeginCopyFrom(NULL, onerel, filename, is_program, NULL, NULL, NIL,
 						   options);
 
 	/*

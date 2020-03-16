@@ -1969,6 +1969,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 								  &aovisimap_relid, NULL);
 	}
 
+#ifdef GPDB_12_MERGE_FIXME
+	/* This block seems to be a missmerge in the wrong place, verify or
+ 	 * reactivate */
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and
@@ -1979,6 +1982,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
+#endif
 
 	/*
 	 * Check permissions.

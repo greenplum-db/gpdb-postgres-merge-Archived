@@ -281,9 +281,9 @@ extern void analyze_rel(Oid relid, RangeVar *relation,
 						BufferAccessStrategy bstrategy);
 
 /* in commands/vacuumlazy.c */
-extern void lazy_vacuum_rel_heap(Relation onerel, int options,
+extern void lazy_vacuum_rel_heap(Relation onerel,
 							VacuumParams *params, BufferAccessStrategy bstrategy);
-extern void scan_index(Relation indrel, double num_tuples, int elevel);
+extern void scan_index(Relation indrel, double num_tuples, int elevel, BufferAccessStrategy bstrategy);
 
 /* in commands/vacuum_ao.c */
 
