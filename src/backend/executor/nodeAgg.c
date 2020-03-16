@@ -691,8 +691,6 @@ advance_transition_function(AggState *aggstate,
  * incorporated into aggstate->phase->evaltrans (most likely in
  * ExecBuildAggTrans)
  *
- * - commit 0138eed43680ea8c (Multiple Distinct-qualified
- *   Aggregation(Multi-DQA) MPP execution method)
  * - commit 652e34adaf2e00e8 (Make use of serial/deserial functions to enable
  *   2-phase aggregates.)
  */
@@ -2946,61 +2944,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregate function calls cannot be nested")));
 
-	/*
-	 * Build expressions doing all the transition work at once. We build a
-	 * different one for each phase, as the number of transition function
-	 * invocation can differ between phases. Note this'll work both for
-	 * transition and combination functions (although there'll only be one
-	 * phase in the latter case).
-	 */
-	for (phaseidx = 0; phaseidx < aggstate->numphases; phaseidx++)
-	{
-		AggStatePerPhase phase = &aggstate->phases[phaseidx];
-		bool		dohash = false;
-		bool		dosort = false;
-
-		/* phase 0 doesn't necessarily exist */
-		if (!phase->aggnode)
-			continue;
-
-		if (aggstate->aggstrategy == AGG_MIXED && phaseidx == 1)
-		{
-			/*
-			 * Phase one, and only phase one, in a mixed agg performs both
-			 * sorting and aggregation.
-			 */
-			dohash = true;
-			dosort = true;
-		}
-		else if (aggstate->aggstrategy == AGG_MIXED && phaseidx == 0)
-		{
-			/*
-			 * No need to compute a transition function for an AGG_MIXED phase
-			 * 0 - the contents of the hashtables will have been computed
-			 * during phase 1.
-			 */
-			continue;
-		}
-		else if (phase->aggstrategy == AGG_PLAIN ||
-				 phase->aggstrategy == AGG_SORTED)
-		{
-			dohash = false;
-			dosort = true;
-		}
-		else if (phase->aggstrategy == AGG_HASHED)
-		{
-			dohash = true;
-			dosort = false;
-		}
-		else
-			Assert(false);
-
-		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash);
-	}
-
 	/* MPP */
 	aggstate->AggExprId_AttrNum = node->agg_expr_id;
-	
+
 	/* > 0: there is a TupleSplit node under agg */
 	if (aggstate->AggExprId_AttrNum > 0)
 	{
@@ -3058,6 +3004,58 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			
 			bms_free(args_attr_num);
 		}
+	}
+
+	/*
+	 * Build expressions doing all the transition work at once. We build a
+	 * different one for each phase, as the number of transition function
+	 * invocation can differ between phases. Note this'll work both for
+	 * transition and combination functions (although there'll only be one
+	 * phase in the latter case).
+	 */
+	for (phaseidx = 0; phaseidx < aggstate->numphases; phaseidx++)
+	{
+		AggStatePerPhase phase = &aggstate->phases[phaseidx];
+		bool		dohash = false;
+		bool		dosort = false;
+
+		/* phase 0 doesn't necessarily exist */
+		if (!phase->aggnode)
+			continue;
+
+		if (aggstate->aggstrategy == AGG_MIXED && phaseidx == 1)
+		{
+			/*
+			 * Phase one, and only phase one, in a mixed agg performs both
+			 * sorting and aggregation.
+			 */
+			dohash = true;
+			dosort = true;
+		}
+		else if (aggstate->aggstrategy == AGG_MIXED && phaseidx == 0)
+		{
+			/*
+			 * No need to compute a transition function for an AGG_MIXED phase
+			 * 0 - the contents of the hashtables will have been computed
+			 * during phase 1.
+			 */
+			continue;
+		}
+		else if (phase->aggstrategy == AGG_PLAIN ||
+				 phase->aggstrategy == AGG_SORTED)
+		{
+			dohash = false;
+			dosort = true;
+		}
+		else if (phase->aggstrategy == AGG_HASHED)
+		{
+			dohash = true;
+			dosort = false;
+		}
+		else
+			Assert(false);
+
+		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash);
 	}
 
 	return aggstate;
