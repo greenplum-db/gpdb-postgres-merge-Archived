@@ -48,6 +48,8 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
+#include "cdb/cdbvars.h"
+
 
 typedef struct LastAttnumInfo
 {
@@ -872,6 +874,22 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				scratch.opcode = EEOP_AGGEXPR_ID;
 				scratch.d.agg_expr_id.parent = (TupleSplitState *) state->parent;
+
+				ExprEvalPushStep(state, &scratch);
+				break;
+			}
+
+		case T_RowIdExpr:
+			{
+				/*
+				 * RowIdExpr generates a number that's unique for this row,
+				 * within this query execution. Different segments can
+				 * generate rows in parallel, so we include the segment ID in
+				 * the value so that two segments never generate the same
+				 * value.
+				 */
+				scratch.opcode = EEOP_ROWIDEXPR;
+				scratch.d.rowidexpr.rowcounter = ((int64) GpIdentity.dbid) << 48;
 
 				ExprEvalPushStep(state, &scratch);
 				break;
