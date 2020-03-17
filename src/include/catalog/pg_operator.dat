@@ -3296,6 +3296,14 @@
   oprresult => 'bool', oprcode => 'jsonb_path_match_opr(jsonb,jsonpath)',
   oprrest => 'contsel', oprjoin => 'contjoinsel' },
 
+# GPDB: Additional division operators for 'interval' type
+{ oid => '7095', descr => 'divide',
+  oprname => '/', oprleft => 'interval', oprright => 'interval',
+  oprresult => 'float8', oprcode => 'interval_interval_div' },
+{ oid => '7096', descr => 'modulus',
+  oprname => '%', oprleft => 'interval', oprright => 'interval',
+  oprresult => 'interval', oprcode => 'interval_interval_mod' },
+
 # operators for complex data type
 { oid => '6469', descr => 'equal',
   oprname => '=', oprkind => 'b', oprcanmerge => 't', oprcanhash => 't', oprleft => 'complex',
