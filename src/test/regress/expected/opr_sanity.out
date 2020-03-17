@@ -1082,12 +1082,14 @@ ORDER BY 1, 2;
  *<=  | *>
  *<>  | *=
  <    | >=
+ <<   | >>=
+ <<=  | >>
  <=   | >
  <>   | =
  <>   | ~=
  ~<=~ | ~>~
  ~<~  | ~>=~
-(13 rows)
+(15 rows)
 
 -- A mergejoinable or hashjoinable operator must be binary, must return
 -- boolean, and must have a commutator (itself, unless it's a cross-type
