@@ -1905,7 +1905,7 @@ RETURNS TABLE (tid tid,
     segno int,
     row_num bigint)
 AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_wrapper'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C STRICT;
 GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap(regclass) TO public;
 
 CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass)
