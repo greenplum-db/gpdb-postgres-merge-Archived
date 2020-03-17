@@ -5,7 +5,7 @@
 -- prepare the table...
 
 DROP TABLE INET_TBL;
-CREATE TABLE INET_TBL (c cidr, i inet);
+CREATE TABLE INET_TBL (c cidr, i inet) distributed by (i);
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.0/26', '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.0/24');
