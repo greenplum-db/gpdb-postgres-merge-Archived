@@ -292,6 +292,9 @@ exprType(const Node *expr)
 		case T_AggExprId:
 			type = INT4OID;
 			break;
+		case T_RowIdExpr:
+			type = INT8OID;
+			break;
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
@@ -966,6 +969,7 @@ exprCollation(const Node *expr)
 			coll = InvalidOid;
 			break;
 		case T_AggExprId:
+		case T_RowIdExpr:
 			coll = InvalidOid;
 			break;
 		default:
@@ -1961,6 +1965,7 @@ expression_tree_walker(Node *node,
 		case T_PartListRuleExpr:
 		case T_PartListNullTestExpr:
 		case T_AggExprId:
+		case T_RowIdExpr:
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_WithCheckOption:
@@ -3349,6 +3354,15 @@ expression_tree_mutator(Node *node,
 				AggExprId *new_exprId;
 				FLATCOPY(new_exprId, exprId, AggExprId);
 				return (Node *)new_exprId;
+			}
+			break;
+		case T_RowIdExpr:
+			{
+				RowIdExpr *rowidexpr = (RowIdExpr *) node;
+				RowIdExpr *newnode;
+
+				FLATCOPY(newnode, rowidexpr, RowIdExpr);
+				return (Node *) newnode;
 			}
 			break;
 

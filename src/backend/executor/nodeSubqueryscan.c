@@ -31,7 +31,6 @@
 
 #include "executor/execdebug.h"
 #include "executor/nodeSubqueryscan.h"
-#include "parser/parsetree.h"
 
 #include "cdb/cdbvars.h"
 #include "optimizer/optimizer.h"		/* CDB: contain_ctid_var_reference() */
@@ -63,16 +62,6 @@ SubqueryNext(SubqueryScanState *node)
 	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
 	 * EvalPlanQual rechecks.)
 	 */
-
-    /*
-     * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
-     */
-    if (node->cdb_want_ctid &&
-        !TupIsNull(slot))
-    {
-    	slot_set_ctid_from_fake(slot, &node->cdb_fake_ctid);
-    }
-
 	return slot;
 }
 
@@ -135,10 +124,6 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &subquerystate->ss.ps);
-
-	/* Check if targetlist or qual contains a var node referencing the ctid column */
-	subquerystate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
-	ItemPointerSetInvalid(&subquerystate->cdb_fake_ctid);
 
 	/*
 	 * initialize subquery
@@ -216,8 +201,6 @@ void
 ExecReScanSubqueryScan(SubqueryScanState *node)
 {
 	ExecScanReScan(&node->ss);
-
-	ItemPointerSet(&node->cdb_fake_ctid, 0, 0);
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do

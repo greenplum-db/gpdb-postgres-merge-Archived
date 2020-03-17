@@ -891,6 +891,13 @@ _outAggExprId(StringInfo str, const AggExprId *node)
 {
 	WRITE_NODE_TYPE("AGGEXPRID");
 }
+static void
+_outRowIdExpr(StringInfo str, const RowIdExpr *node)
+{
+	WRITE_NODE_TYPE("ROWIDEXPR");
+
+	WRITE_INT_FIELD(rowidexpr_id);
+}
 
 /*
  * _outNode -
@@ -1781,6 +1788,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AggExprId:
 				_outAggExprId(str, obj);
+				break;
+			case T_RowIdExpr:
+				_outRowIdExpr(str, obj);
 				break;
 
 			default:

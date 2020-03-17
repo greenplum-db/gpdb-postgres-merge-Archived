@@ -109,6 +109,7 @@ bool        gp_guc_need_restore = false;
 
 char	   *Debug_dtm_action_sql_command_tag;
 
+bool		dev_opt_unsafe_truncate_in_subtransaction = false;
 bool		Debug_print_full_dtm = false;
 bool		Debug_print_snapshot_dtm = false;
 bool		Debug_disable_distributed_snapshot = false;
@@ -388,6 +389,7 @@ bool		optimizer_cte_inlining;
 bool		optimizer_enable_space_pruning;
 bool		optimizer_enable_associativity;
 bool		optimizer_enable_eageragg;
+bool		optimizer_enable_range_predicate_dpe;
 
 /* Analyze related GUCs for Optimizer */
 bool		optimizer_analyze_root_partition;
@@ -1064,6 +1066,21 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL
 		},
 		&gp_debug_resqueue_priority,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"dev_opt_unsafe_truncate_in_subtransaction", PGC_USERSET, DEVELOPER_OPTIONS,
+		 gettext_noop("Pick unsafe truncate instead of safe truncate inside sub-transaction."),
+		 gettext_noop("Usage of this GUC is strongly discouraged and only "
+					  "should be used after understanding the impact of using "
+					  "the same. Setting the GUC comes with cost of losing "
+					  "table data on truncate command despite sub-transaction "
+					  "rollback for table created within transaction."),
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE
+		},
+		&dev_opt_unsafe_truncate_in_subtransaction,
 		false,
 		NULL, NULL, NULL
 	},
@@ -2826,6 +2843,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"optimizer_enable_range_predicate_dpe", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enable range predicates for dynamic partition elimination."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_range_predicate_dpe,
+		false,
+		NULL, NULL, NULL
+	},
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -3948,6 +3975,17 @@ struct config_int ConfigureNamesInt_gp[] =
 
 struct config_real ConfigureNamesReal_gp[] =
 {
+	{
+		{"disable_cost", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Sets the planner's cost of a disabled path."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&disable_cost,
+		1.0e10, 1.0e10, 1.0e30,
+		NULL, NULL, NULL
+	},
+
 	{
 		{"gp_motion_cost_per_row", PGC_USERSET, QUERY_TUNING_COST,
 			gettext_noop("Sets the planner's estimate of the cost of "

@@ -35,8 +35,6 @@ extern int	compare_fractional_path_costs(Path *path1, Path *path2,
 										  double fraction);
 extern void set_cheapest(RelOptInfo *parent_rel);
 extern void add_path(RelOptInfo *parent_rel, Path *new_path);
-extern void cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_jointype,
-				  Relids required_outer, JoinPath *new_path);
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer, int parallel_workers);
 extern AppendOnlyPath *create_appendonly_path(PlannerInfo *root, RelOptInfo *rel,
@@ -98,8 +96,8 @@ extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
 											RelOptInfo *rel,
 											Path *subpath,
-											Relids distinct_relids,
-											Relids required_outer);
+											Relids required_outer,
+											int rowidexpr_id);
 extern GatherPath *create_gather_path(PlannerInfo *root,
 									  RelOptInfo *rel, Path *subpath, PathTarget *target,
 									  Relids required_outer, double *rows);
@@ -164,9 +162,11 @@ extern Relids calc_nestloop_required_outer(Relids outerrelids,
 extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path);
 
 extern bool path_contains_inner_index(Path *path);
-extern NestPath *create_nestloop_path(PlannerInfo *root,
+
+extern Path *create_nestloop_path(PlannerInfo *root,
 									  RelOptInfo *joinrel,
 									  JoinType jointype,
+									  JoinType orig_jointype,		/* CDB */
 									  JoinCostWorkspace *workspace,
 									  JoinPathExtraData *extra,
 									  Path *outer_path,
@@ -176,9 +176,10 @@ extern NestPath *create_nestloop_path(PlannerInfo *root,
 									  List *pathkeys,
 									  Relids required_outer);
 
-extern MergePath *create_mergejoin_path(PlannerInfo *root,
+extern Path *create_mergejoin_path(PlannerInfo *root,
 										RelOptInfo *joinrel,
 										JoinType jointype,
+										JoinType orig_jointype,		/* CDB */
 										JoinCostWorkspace *workspace,
 										JoinPathExtraData *extra,
 										Path *outer_path,
@@ -191,9 +192,10 @@ extern MergePath *create_mergejoin_path(PlannerInfo *root,
 										List *outersortkeys,
 										List *innersortkeys);
 
-extern HashPath *create_hashjoin_path(PlannerInfo *root,
+extern Path *create_hashjoin_path(PlannerInfo *root,
 									  RelOptInfo *joinrel,
 									  JoinType jointype,
+									  JoinType orig_jointype,		/* CDB */
 									  JoinCostWorkspace *workspace,
 									  JoinPathExtraData *extra,
 									  Path *outer_path,
@@ -345,16 +347,6 @@ extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 								RelOptInfo *input_rel);
 extern void build_joinrel_tlist_for_exprs(PlannerInfo *root, RelOptInfo *joinrel,
 										  List *exprs);
-
-extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
-                         RelOptInfo    *rel,
-                         const char    *colname,
-                         Expr          *defexpr,
-                         int32          width);
-
-extern CdbRelColumnInfo *cdb_find_pseudo_column(PlannerInfo *root, Var *var);
-
-extern CdbRelColumnInfo *cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno);
 
 extern RelOptInfo *fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind,
 								   Relids relids);

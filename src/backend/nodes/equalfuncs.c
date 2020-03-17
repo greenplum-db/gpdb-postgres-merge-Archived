@@ -3068,6 +3068,14 @@ _equalDistributedBy(const DistributedBy *a, const DistributedBy *b)
 }
 
 static bool
+_equalRowIdExpr(const RowIdExpr *a, const RowIdExpr *b)
+{
+	COMPARE_SCALAR_FIELD(rowidexpr_id);
+
+	return true;
+}
+
+static bool
 _equalXmlSerialize(const XmlSerialize *a, const XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
@@ -4011,6 +4019,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_AggExprId:
 			retval = true;
+			break;
+		case T_RowIdExpr:
+			retval = _equalRowIdExpr(a, b);
 			break;
 		case T_TriggerTransition:
 			retval = _equalTriggerTransition(a, b);

@@ -270,6 +270,7 @@ extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;
 extern bool Debug_pretty_print;
 
+extern bool dev_opt_unsafe_truncate_in_subtransaction;
 extern bool	Debug_print_full_dtm;
 extern bool	Debug_print_snapshot_dtm;
 extern bool Debug_disable_distributed_snapshot;
@@ -567,6 +568,7 @@ extern bool optimizer_array_constraints;
 extern bool optimizer_cte_inlining;
 extern bool optimizer_enable_space_pruning;
 extern bool optimizer_enable_associativity;
+extern bool optimizer_enable_range_predicate_dpe;
 
 /* Analyze related GUCs for Optimizer */
 extern bool optimizer_analyze_root_partition;

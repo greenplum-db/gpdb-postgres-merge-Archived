@@ -187,7 +187,9 @@ deallocate pstmt_def_insert;
 -- Test plan_cache_mode
 
 create table test_mode (a int);
-insert into test_mode select 1 from generate_series(1,1000) union all select 2;
+-- GPDB:setting the number of rows slightly higher to get a plan with
+-- Index Only Scan (similar to upstream)
+insert into test_mode select 1 from generate_series(1,15000) union all select 2;
 create index on test_mode (a);
 analyze test_mode;
 

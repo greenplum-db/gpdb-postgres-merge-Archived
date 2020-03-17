@@ -2081,9 +2081,6 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->joinaliasvars = aliasvars;
 	rte->alias = alias;
 
-	/* transform any Vars of type UNKNOWNOID if we can */
-	fixup_unknown_vars_in_exprlist(pstate, rte->joinaliasvars);
-
 	eref = alias ? copyObject(alias) : makeAlias("unnamed_join", NIL);
 	numaliases = list_length(eref->colnames);
 
@@ -3078,19 +3075,6 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		return strVal(list_nth(rte->alias->colnames, attnum - 1));
 
 	/*
-	 * CDB: Pseudo columns have negative attribute numbers below the
-	 * lowest system attribute number.
-	 */
-	if (attnum <= FirstLowInvalidHeapAttributeNumber)
-	{
-		CdbRelColumnInfo   *rci = cdb_rte_find_pseudo_column(rte, attnum);
-
-		if (!rci)
-			goto bogus;
-		return rci->colname;
-	}
-
-	/*
 	 * If the RTE is a relation, go to the system catalogs not the
 	 * eref->colnames list.  This is a little slower but it will give the
 	 * right answer if the column has been renamed since the eref list was
@@ -3116,7 +3100,6 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		return pstrdup(NameStr(att_tup->attname));
     }
 
-bogus:
 	/* else caller gave us a bogus attnum */
     name = (rte->eref && rte->eref->aliasname) ? rte->eref->aliasname
                                                : "*BOGUS*";

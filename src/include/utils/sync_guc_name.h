@@ -5,6 +5,7 @@
 		"DateStyle",
 		"default_tablespace",
 		"default_table_access_method",
+		"dev_opt_unsafe_truncate_in_subtransaction",
 		"dml_ignore_target_partition_check",
 		"execute_pruned_plan",
 		"explain_memory_verbosity",

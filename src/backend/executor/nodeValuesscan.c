@@ -31,7 +31,6 @@
 #include "utils/expandeddatum.h"
 
 #include "cdb/cdbvars.h"
-#include "optimizer/optimizer.h"
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -187,13 +186,6 @@ ValuesNext(ValuesScanState *node)
 		 * And return the virtual tuple.
 		 */
 		ExecStoreVirtualTuple(slot);
-
-		/* CDB: Label each row with a synthetic ctid for subquery dedup. */
-		if (node->cdb_want_ctid)
-        {
-			ItemPointerSet(&slot->tts_tid, node->curr_idx >> 16,
-						   (OffsetNumber)node->curr_idx);
-		}
 	}
 
 	return slot;
@@ -268,9 +260,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, planstate);
 	scanstate->rowcontext = planstate->ps_ExprContext;
 	ExecAssignExprContext(estate, planstate);
-
-	/* Check if targetlist or qual contains a var node referencing the ctid column */
-	scanstate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
 
 	/*
 	 * Get info about values list, initialize scan slot with it.
