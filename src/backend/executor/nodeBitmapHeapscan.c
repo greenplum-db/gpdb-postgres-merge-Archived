@@ -712,12 +712,10 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
-	 * close down subplans
-	 */
-	ExecEndNode(outerPlanState(node));
-
-	/*
 	 * release bitmaps and buffers if any
+	 */
+	/* GPDB: release the iterators before closing down subplans, because
+	 * the bitmap is owned by the BitmapIndex scan.
 	 */
 	if (node->tbmiterator)
 		tbm_generic_end_iterate(node->tbmiterator);
@@ -733,6 +731,11 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 		ReleaseBuffer(node->vmbuffer);
 	if (node->pvmbuffer != InvalidBuffer)
 		ReleaseBuffer(node->pvmbuffer);
+
+	/*
+	 * close down subplans
+	 */
+	ExecEndNode(outerPlanState(node));
 
 	/*
 	 * close heap scan
