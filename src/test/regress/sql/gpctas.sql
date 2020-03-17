@@ -32,10 +32,6 @@ create table ctas_bar as select a.generate_series as a, b.generate_series as b f
 create table ctas_baz as select 'delete me' as action, * from ctas_bar distributed by (a);
 -- "action" becomes text
 \d ctas_baz
--- start_matchsubs
--- m/^(ERROR:  .*)\(parse_coerce\.c:\d+\)$/
--- s/\(parse_coerce\.c:\d+\)$/(parse_coerce.c:XXX)/
--- end_matchsubs
 select action, b from ctas_baz order by 1,2 limit 5;
 select action, b from ctas_baz order by 2 limit 5;
 select action::text, b from ctas_baz order by 1,2 limit 5;
