@@ -493,6 +493,10 @@ add_twostage_group_agg_path(PlannerInfo *root,
 		/*
 		 * We have grouping sets, possibly with aggregation.  Make
 		 * a GroupingSetsPath.
+		 *
+		 * NOTE: We don't pass the HAVING quals here. HAVING quals can
+		 * only be evaluated in the Finalize stage, after computing the
+		 * final aggregate values.
 		 */
 		/* GPDB_12_MERGE_FIXME: upstream would support hashed grouping sets now. Add
 		 * support? */
@@ -501,7 +505,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 											  output_rel,
 											  path,
 											  AGGSPLIT_INITIAL_SERIAL,
-											  (List *) parse->havingQual,
+											  NIL,
 											  AGG_SORTED,
 											  ctx->rollups,
 											  ctx->agg_partial_costs,
