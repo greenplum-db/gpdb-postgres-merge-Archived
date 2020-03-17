@@ -12817,7 +12817,7 @@ bool
 IsRoleMirror()
 {
 	struct stat stat_buf;
-	return (stat(RECOVERY_COMMAND_FILE, &stat_buf) == 0);
+	return (stat(STANDBY_SIGNAL_FILE, &stat_buf) == 0);
 }
 
 /*
