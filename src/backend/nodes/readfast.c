@@ -750,10 +750,10 @@ _readExtensibleNode(void)
 	const char *extnodename;
 
 	char *str;
-	char *save_strtok = NULL;
-	char *save_begin = NULL;
-	char **save_strtok_ptr = &save_strtok;
-	char **save_begin_ptr = &save_begin;
+	const char *save_strtok = NULL;
+	const char *save_begin = NULL;
+	const char ** save_strtok_ptr = &save_strtok;
+	const char ** save_begin_ptr = &save_begin;
 
 	READ_STRING_VAR(extnodename);
 	if (!extnodename)

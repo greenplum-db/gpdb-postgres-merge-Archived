@@ -48,7 +48,7 @@ static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
  * (readfast.c), set_strtok_states() to pg_strtok() the string.
  */
 void
-save_strtok_states(char **save_ptr, char **save_begin)
+save_strtok_states(const char ** save_ptr, const char ** save_begin)
 {
 	*save_ptr = pg_strtok_ptr;		/* point pg_strtok at the string to read */
 	*save_begin = pg_strtok_begin;	/* CDB: save starting position for debug */
@@ -548,7 +548,7 @@ void
 nodeReadSkip(void)
 {
     int     tok_len;
-    char   *token = pg_strtok(&tok_len);
+    const char *token = pg_strtok(&tok_len);
 
     if (!token)
     {
@@ -588,7 +588,7 @@ nodeReadSkipThru(char closingDelimiter)
     for (;;)
     {
         int     tok_len;
-        char   *token = pg_strtok(&tok_len);
+        const char   *token = pg_strtok(&tok_len);
 
         if (!token)
         {
@@ -629,8 +629,8 @@ nodeReadSkipThru(char closingDelimiter)
 bool
 pg_strtok_peek_fldname(const char *fldname)
 {
-    char   *bp = pg_strtok_ptr;
-    char   *cp;
+    const char   *bp = pg_strtok_ptr;
+    const char   *cp;
 
     if (!bp)
         return false;
