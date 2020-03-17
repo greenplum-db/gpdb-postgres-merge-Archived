@@ -723,8 +723,8 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 		tbm_generic_end_iterate(node->tbmiterator);
 	if (node->prefetch_iterator)
 		tbm_generic_end_iterate(node->prefetch_iterator);
-	if (node->tbm)
-		tbm_generic_free(node->tbm);
+	/* GPDB: BitmapIndexScan is the owner of the bitmap memory. Don't free it here */
+	node->tbm = NULL;
 	if (node->shared_tbmiterator)
 		tbm_end_shared_iterate(node->shared_tbmiterator);
 	if (node->shared_prefetch_iterator)
