@@ -1415,7 +1415,7 @@ match_unsorted_outer(PlannerInfo *root,
 	ListCell   *lc1;
 
 	if (jointype == JOIN_DEDUP_SEMI || jointype == JOIN_DEDUP_SEMI_REVERSE)
-		jointype = JOIN_INNER;
+		save_jointype = jointype = JOIN_INNER;
 
 	/*
 	 * Nestloop only supports inner, left, semi, and anti joins.  Also, if we
