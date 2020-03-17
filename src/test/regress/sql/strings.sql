@@ -435,15 +435,6 @@ from (select $1::u_d || bar as foo from (select 'bar' as bar) a ) b;
 select 'a' as a, 'b' as b, 'c' as c, 1 as d union select * from (select 'a' as a, 'b' as b, 'c' as c, 1 as d)d;
 select * from (select 'a' as a, 'b' as b, 'c' as c, 1 as d)d union select 'a' as a, 'b' as b, 'c' as c, 1 as d;
 
--- Make sure we can convert unknown to other useful types (MPP-4298)
-create table t as select j as a, 'abc' as i from
-generate_series(1, 10) j;
-select * from t order by a;
-alter table t alter i type int; -- should fail
-alter table t alter i type text; -- should work
-select * from t order by a;
-drop table t;
-
 --
 -- test substr with toasted text values
 --
