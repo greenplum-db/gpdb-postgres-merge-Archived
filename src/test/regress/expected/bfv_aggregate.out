@@ -205,6 +205,13 @@ reset optimizer_force_multistage_agg;
 --
 -- Testing not picking HashAgg for aggregates without combine functions
 --
+-- GPDB_12_MERGE_FIXME: The reason that we tested that a HashAggregate is
+-- not chosen when an aggregate is missing combine functions is that in
+-- GPDB Hybrid Hash Agg, a HashAggregate can spill to disk, and it requires
+-- the combine function for that. But that got reverted with the v12 merge.
+-- Currently, this does choose a Hash Agg, and as long as we don't do the
+-- spilling like we used to, that's OK. But if we resurrect the Hybrid Hash
+-- Agg spilling, then this test becomes relevant again.
 -- SETUP
 set optimizer_print_missing_stats = off;
 CREATE TABLE attribute_table (product_id integer, attribute_id integer,attribute text, attribute2 text,attribute_ref_lists text,short_name text,attribute6 text,attribute5 text,measure double precision,unit character varying(60)) DISTRIBUTED BY (product_id ,attribute_id);
@@ -232,7 +239,7 @@ UPDATE pg_class set reltuples=524592::real, relpages=2708::integer where oid = '
 select count_operator('select product_id,concat(E''#attribute_''||attribute_id::varchar||E'':''||attribute) as attr FROM attribute_table GROUP BY product_id;','HashAggregate');
  count_operator 
 ----------------
-              0
+              1
 (1 row)
 
 -- CLEANUP
