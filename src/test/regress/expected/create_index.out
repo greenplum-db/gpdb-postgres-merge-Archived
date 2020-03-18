@@ -1320,29 +1320,17 @@ DROP TABLE unlogged_hash_table;
 -- Test hash index build tuplesorting.  Force hash tuplesort using low
 -- maintenance_work_mem setting and fillfactor:
 SET maintenance_work_mem = '1MB';
--- GPDB_12_MERGE_FIXME
--- upstream this guc default is 4.0 but we change it to 100. We can not find any
--- clue in commit message. This change affect plan. GPDB perfer seqscan instead of bitmap 
--- index scan in upstream. We have met this issue many times still no conclusion yet. 
--- https://groups.google.com/a/greenplum.org/forum/#!msg/gpdb-dev/Plf2leSAUxA/-aG6ltl8CwAJ
--- 
--- I temporary set this guc follow by upstream default value. We can rid of it after conclusion
--- got.
-SET random_page_cost=4.0;
 CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Finalize Aggregate
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Partial Aggregate
-               ->  Bitmap Heap Scan on tenk1
-                     Recheck Cond: (stringu1 = 'TVAAAA'::name)
-                     ->  Bitmap Index Scan on hash_tuplesort_idx
-                           Index Cond: (stringu1 = 'TVAAAA'::name)
- Optimizer: Postgres query optimizer
-(8 rows)
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: (stringu1 = 'TVAAAA'::name)
+         ->  Bitmap Index Scan on hash_tuplesort_idx
+               Index Cond: (stringu1 = 'TVAAAA'::name)
+(5 rows)
 
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
  count 
@@ -1351,7 +1339,6 @@ SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 (1 row)
 
 DROP INDEX hash_tuplesort_idx;
-RESET random_page_cost;
 RESET maintenance_work_mem;
 --
 -- Test functional index
@@ -1954,18 +1941,14 @@ explain (costs off)
 SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
 ORDER BY unique1;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 2:1  (slice1; segments: 2)
    Merge Key: unique1
-   ->  Sort
-         Sort Key: unique1
-         ->  Bitmap Heap Scan on tenk1
-               Recheck Cond: (unique1 = ANY ('{1,42,7}'::integer[]))
-               ->  Bitmap Index Scan on tenk1_unique1
-                     Index Cond: (unique1 = ANY ('{1,42,7}'::integer[]))
+   ->  Index Only Scan using tenk1_unique1 on tenk1
+         Index Cond: (unique1 = ANY ('{1,42,7}'::integer[]))
  Optimizer: Postgres query optimizer
-(9 rows)
+(5 rows)
 
 SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
@@ -1981,16 +1964,15 @@ explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: thousand
-   ->  Sort
-         Sort Key: thousand
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-               Index Cond: ((thousand < 2) AND (tenthous = ANY ('{1001,3000}'::integer[])))
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+         Index Cond: (thousand < 2)
+         Filter: (tenthous = ANY ('{1001,3000}'::integer[]))
  Optimizer: Postgres query optimizer
-(7 rows)
+(6 rows)
 
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -2065,78 +2047,48 @@ explain (costs off)
 
 explain (costs off)
   select * from boolindex where b order by i limit 10;
-                   QUERY PLAN                   
-------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Limit
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i
-                     ->  Seq Scan on boolindex
-                           Filter: b
- Optimizer: Postgres query optimizer
-(9 rows)
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
-                   QUERY PLAN                   
-------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Limit
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i DESC
-                     ->  Seq Scan on boolindex
-                           Filter: b
- Optimizer: Postgres query optimizer
-(9 rows)
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where not b order by i limit 10;
-                   QUERY PLAN                   
-------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Limit
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i
-                     ->  Seq Scan on boolindex
-                           Filter: (NOT b)
- Optimizer: Postgres query optimizer
-(9 rows)
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = false)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where b is true order by i desc limit 10;
-                   QUERY PLAN                   
-------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Limit
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i DESC
-                     ->  Seq Scan on boolindex
-                           Filter: (b IS TRUE)
- Optimizer: Postgres query optimizer
-(9 rows)
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where b is false order by i desc limit 10;
-                   QUERY PLAN                   
-------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Limit
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i DESC
-                     ->  Seq Scan on boolindex
-                           Filter: (b IS FALSE)
- Optimizer: Postgres query optimizer
-(9 rows)
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = false)
+(3 rows)
 
 --
 -- REINDEX (VERBOSE)

@@ -31,6 +31,8 @@ typedef struct EventTriggerData
 #define AT_REWRITE_ALTER_PERSISTENCE	0x01
 #define AT_REWRITE_DEFAULT_VAL			0x02
 #define AT_REWRITE_COLUMN_REWRITE		0x04
+/* set if AOCS and only the AT_PASS_ADD_COL subcmd is populated */
+#define AT_REWRITE_NEW_COLUMNS_ONLY_AOCS	0x08
 
 /*
  * EventTriggerData is the node type that is passed as fmgr "context" info
