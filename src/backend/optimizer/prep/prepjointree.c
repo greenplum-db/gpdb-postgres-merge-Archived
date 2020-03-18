@@ -3253,6 +3253,11 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 			case JOIN_ANTI:
 				/* We have no special smarts for these cases */
 				break;
+
+			case JOIN_LASJ_NOTIN:
+				/* no smarts for this case either */
+				break;
+
 			default:
 				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
