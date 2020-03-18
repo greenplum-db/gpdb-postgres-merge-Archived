@@ -3,11 +3,10 @@
 -- specific server features
 --
 
-<<<<<<< HEAD
 -- GPDB: Use Postgres's tuplesort instead of our tuplesort_mk to avoid
 -- array sorting diffs.
 set gp_enable_mk_sort=false;
-=======
+
 -- \set
 
 -- fail: invalid name
@@ -42,7 +41,6 @@ SELECT 3 as three, 4 as four \gx
 \g
 
 \unset FETCH_COUNT
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- \gset
 
