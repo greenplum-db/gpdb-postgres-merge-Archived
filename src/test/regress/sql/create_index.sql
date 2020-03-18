@@ -383,13 +383,23 @@ DROP TABLE unlogged_hash_table;
 -- Test hash index build tuplesorting.  Force hash tuplesort using low
 -- maintenance_work_mem setting and fillfactor:
 SET maintenance_work_mem = '1MB';
+
+-- GPDB_12_MERGE_FIXME
+-- upstream this guc default is 4.0 but we change it to 100. We can not find any
+-- clue in commit message. This change affect plan. GPDB perfer seqscan instead of bitmap 
+-- index scan in upstream. We have met this issue many times still no conclusion yet. 
+-- https://groups.google.com/a/greenplum.org/forum/#!msg/gpdb-dev/Plf2leSAUxA/-aG6ltl8CwAJ
+-- 
+-- I temporary set this guc follow by upstream default value. We can rid of it after conclusion
+-- got.
+SET random_page_cost=4.0;
 CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 DROP INDEX hash_tuplesort_idx;
+RESET random_page_cost;
 RESET maintenance_work_mem;
-
 
 --
 -- Test functional index
