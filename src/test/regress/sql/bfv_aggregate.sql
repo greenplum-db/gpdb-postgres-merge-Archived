@@ -1388,6 +1388,9 @@ select array_agg(a order by b desc nulls first) from aggordertest;
 select array_agg(a order by b desc nulls last) from aggordertest;
 
 -- begin MPP-14125: if combine function is missing, do not choose hash agg.
+-- GPDB_12_MERGE_FIXME: Like in the 'attribute_table' and 'concat' test earlier in this
+-- file, a Hash Agg is currently OK, since we lost the Hybrid Hash Agg spilling
+-- code in the merge.
 create temp table mpp14125 as select repeat('a', a) a, a % 10 b from generate_series(1, 100)a;
 explain select string_agg(a, '') from mpp14125 group by b;
 -- end MPP-14125
