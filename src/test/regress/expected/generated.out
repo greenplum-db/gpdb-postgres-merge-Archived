@@ -697,13 +697,23 @@ SELECT * FROM gtest26 ORDER BY a;
   3 |  6
 (3 rows)
 
+-- GPDB: There are a few issues with the UPDATE and DELETE test. Firstly,
+-- the UPDATE of 'a' fails, because you can't update distribution key column
+-- when there's an update trigger on it. Secondly, the INFO messages from the
+-- triggers that run on different segments arrive in random order. To fix
+-- these issues, drop the primary key, and force all the rows to reside on
+-- the same segment.
+alter table gtest26 drop constraint gtest26_pkey;
+alter table gtest26 add column distkey integer;
+alter table gtest26 set distributed by (distkey);
+alter table gtest26 drop column distkey;
 UPDATE gtest26 SET a = a * -2;
 INFO:  gtest1: BEFORE: old = (-2,-4)
 INFO:  gtest1: BEFORE: new = (4,)
-INFO:  gtest3: AFTER: old = (-2,-4)
-INFO:  gtest3: AFTER: new = (4,8)
 INFO:  gtest4: AFTER: old = (3,6)
 INFO:  gtest4: AFTER: new = (-6,-12)
+INFO:  gtest3: AFTER: old = (-2,-4)
+INFO:  gtest3: AFTER: new = (4,8)
 SELECT * FROM gtest26 ORDER BY a;
  a  |  b  
 ----+-----

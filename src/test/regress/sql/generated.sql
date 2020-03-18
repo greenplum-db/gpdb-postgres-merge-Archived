@@ -390,7 +390,20 @@ CREATE TRIGGER gtest4 AFTER INSERT OR UPDATE ON gtest26
 
 INSERT INTO gtest26 (a) VALUES (-2), (0), (3);
 SELECT * FROM gtest26 ORDER BY a;
+
+-- GPDB: There are a few issues with the UPDATE and DELETE test. Firstly,
+-- the UPDATE of 'a' fails, because you can't update distribution key column
+-- when there's an update trigger on it. Secondly, the INFO messages from the
+-- triggers that run on different segments arrive in random order. To fix
+-- these issues, drop the primary key, and force all the rows to reside on
+-- the same segment.
+alter table gtest26 drop constraint gtest26_pkey;
+alter table gtest26 add column distkey integer;
+alter table gtest26 set distributed by (distkey);
+alter table gtest26 drop column distkey;
+
 UPDATE gtest26 SET a = a * -2;
+
 SELECT * FROM gtest26 ORDER BY a;
 DELETE FROM gtest26 WHERE a = -6;
 SELECT * FROM gtest26 ORDER BY a;
