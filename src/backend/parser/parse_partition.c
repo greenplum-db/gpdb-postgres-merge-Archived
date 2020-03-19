@@ -162,25 +162,53 @@ generateRangePartitions(ParseState *pstate,
 		ListCell   *lc;
 		int			keyidx;
 
-		if (list_length(endvalues) != partkey->partnatts)
-			elog(ERROR, "invalid number of end values"); // GPDB_12_MERGE_FIXME: improve message
-
-		keyidx = 0;
-		foreach(lc, endvalues)
+		if (list_length(endvalues) == 0)
 		{
-			Const	   *endconst;
+			/* the partition spans till infinity */
+			foreach(lc, startconsts)
+			{
+				Const	   *startconst = lfirst_node(Const, lc);
+				Const	   *endconst;
 
-			endconst = transformPartitionBoundValue(pstate,
-													lfirst(lc),
-													"", /* GPDB_12_MERGE_FIXME: colname */
-													get_partition_col_typid(partkey, keyidx),
-													get_partition_col_typmod(partkey, keyidx),
-													get_partition_col_collation(partkey, keyidx));
-			if (endconst->consttype != INT4OID)
-				elog(ERROR, "fixme: only int4 columns implemented");
-			if (endconst->constisnull)
-				elog(ERROR, "NULL not allowed in END"); // GPDB_12_MERGE_FIXME: improve message
-			endconsts = lappend(endconsts, endconst);
+				if (startconst->consttype != INT4OID)
+				{
+					// GPDB_12_MERGE_FIXME: improve message
+					elog(ERROR, "leaving out end value is only supported for integer column");
+				}
+
+				endconst = makeConst(INT4OID,
+									 -1,
+									 InvalidOid,
+									 sizeof(int32),
+									 DatumGetInt32(INT_MAX),
+									 false,
+									 true);
+
+				endconsts = lappend(endconsts, endconst);
+			}
+		}
+		else
+		{
+			if (list_length(endvalues) != partkey->partnatts)
+				elog(ERROR, "invalid number of end values"); // GPDB_12_MERGE_FIXME: improve message
+
+			keyidx = 0;
+			foreach(lc, endvalues)
+			{
+				Const	   *endconst;
+
+				endconst = transformPartitionBoundValue(pstate,
+														lfirst(lc),
+														"", /* GPDB_12_MERGE_FIXME: colname */
+														get_partition_col_typid(partkey, keyidx),
+														get_partition_col_typmod(partkey, keyidx),
+														get_partition_col_collation(partkey, keyidx));
+				if (endconst->consttype != INT4OID)
+					elog(ERROR, "fixme: only int4 columns implemented");
+				if (endconst->constisnull)
+					elog(ERROR, "NULL not allowed in END"); // GPDB_12_MERGE_FIXME: improve message
+				endconsts = lappend(endconsts, endconst);
+			}
 		}
 	}
 
