@@ -1415,7 +1415,7 @@ serializeParamsForDispatch(QueryDesc *queryDesc,
 
 		for (int i = 0; i < externParams->numParams; i++)
 		{
-			ParamExternData *prm = &externParams->params[i];
+			ParamExternData *prm;
 			SerializedParamExternData *sprm = &result->externParams[i];
 			ParamExternData prmdata;
 
@@ -1423,8 +1423,10 @@ serializeParamsForDispatch(QueryDesc *queryDesc,
 			 * First, use paramFetch to fetch any "lazy" parameters. (The callback
 			 * function is of no use in the QE.)
 			 */
-			if (externParams->paramFetch && !OidIsValid(prm->ptype))
-				externParams->paramFetch(externParams, i + 1, false, &prmdata);
+			if (externParams->paramFetch != NULL)
+				prm = externParams->paramFetch(externParams, i + 1, false, &prmdata);
+			else
+				prm = &externParams->params[i];
 
 			sprm->value = prm->value;
 			sprm->isnull = prm->isnull;
