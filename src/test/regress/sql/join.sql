@@ -1991,6 +1991,17 @@ insert into j1 values(1),(2),(3);
 insert into j2 values(1),(2),(3);
 insert into j3 values(1),(1);
 
+-- In GPDB, we need more data to make the plans match the upstream.
+--
+-- In particular, with just a handful of rows, a Seq Scan on j1 or j3 appear to
+-- be 2x or 3x as expensive as a scan on j3, because on j3, all the rows reside
+-- on the same segment, and hence the total size of the table is just one page,
+-- whereas on j1 and j2 the rows are spread on different segments, and the
+-- total table size is therefore 2 or 3 pages.
+insert into j1 select g from generate_series(1000,1100) g;
+insert into j2 select g from generate_series(1000,1100) g;
+insert into j3 select 1000 from generate_series(1000,1100) g;
+
 analyze j1;
 analyze j2;
 analyze j3;
@@ -2068,6 +2079,7 @@ inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2;
 
 -- ensure we don't detect the join to be unique when quals are not part of the
 -- join condition
+set enable_nestloop=on;
 explain (verbose, costs off)
 select * from j1
 inner join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
@@ -2110,6 +2122,10 @@ drop table j2;
 drop table j3;
 
 -- check that semijoin inner is not seen as unique for a portion of the outerrel
+set enable_nestloop = on;
+set enable_seqscan = off;
+set enable_bitmapscan = off;
+
 explain (verbose, costs off)
 select t1.unique1, t2.hundred
 from onek t1, tenk1 t2
@@ -2130,3 +2146,7 @@ where exists (select 1 from j3
       and t1.unique1 < 1;
 
 drop table j3;
+
+reset enable_nestloop;
+reset enable_seqscan;
+reset enable_bitmapscan;
