@@ -34,7 +34,7 @@ create table distpol as select random(), 1 as a, 2 as b distributed by (random);
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol'::regclass;
  distkey | distclass 
 ---------+-----------
- 1       | 10014
+ 1       | 10048
 (1 row)
 
 drop table distpol;
@@ -42,7 +42,7 @@ create table distpol as select random(), 2 as foo distributed by (foo);
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10020
+ 2       | 10054
 (1 row)
 
 drop table distpol;
@@ -53,7 +53,7 @@ NOTICE:  updating distribution policy to match new PRIMARY KEY
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10020
+ 2       | 10054
 (1 row)
 
 -- make sure we can't overwrite it
@@ -67,7 +67,7 @@ NOTICE:  updating distribution policy to match new UNIQUE index
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol'::regclass;
  distkey | distclass 
 ---------+-----------
- 3       | 10027
+ 3       | 10054
 (1 row)
 
 drop index distpol_uidx;
@@ -108,8 +108,8 @@ select localoid::regclass, distkey, distclass from gp_distribution_policy where
       localoid       | distkey |  distclass  
 ---------------------+---------+-------------
  distpol_no_pk       |         | 
- distpol_with_pk     | 1       | 10027
- distpol_with_unique | 1 2     | 10027 10027
+ distpol_with_pk     | 1       | 10054
+ distpol_with_unique | 1 2     | 10054 10054
 (3 rows)
 
 -- If a table is previously DISTRIBUTED RANDOMLY, you cannot add a primary key
@@ -131,7 +131,7 @@ create table distpol3 as select i, j from distpol1 union
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol3'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10027
+ 2       | 10054
 (1 row)
 
 drop table distpol3;
@@ -140,7 +140,7 @@ create table distpol3 as (select i, j from distpol1 union
 select distkey, distclass from gp_distribution_policy where localoid = 'distpol3'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10020
+ 2       | 10054
 (1 row)
 
 -- MPP-7268: CTAS produces incorrect distribution.
@@ -153,7 +153,7 @@ create table bar as select * from foo distributed by (b);
 select distkey, distclass from gp_distribution_policy where localoid='bar'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10020
+ 2       | 10054
 (1 row)
 
 drop table if exists foo;
@@ -163,7 +163,7 @@ create table bar as select * from foo distributed by (b);
 select distkey, distclass from gp_distribution_policy where localoid='bar'::regclass;
  distkey | distclass 
 ---------+-----------
- 2       | 10038
+ 2       | 10072
 (1 row)
 
 drop table if exists foo;
@@ -177,7 +177,7 @@ CREATE TABLE bar AS SELECT * FROM foo distributed by (col_with_constraint);
 select distkey, distclass from gp_distribution_policy where localoid='bar'::regclass;
  distkey | distclass 
 ---------+-----------
- 3       | 10030
+ 3       | 10064
 (1 row)
 
 drop table if exists foo;
@@ -211,7 +211,7 @@ create table foo ("I" int, i int) distributed by ("I",I);
 select distkey, distclass from gp_distribution_policy where localoid='foo'::regclass;
  distkey |  distclass  
 ---------+-------------
- 1 2     | 10020 10020
+ 1 2     | 10054 10054
 (1 row)
 
 create table fooctas as select * from foo distributed by (i,i);
