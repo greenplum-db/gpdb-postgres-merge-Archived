@@ -398,23 +398,23 @@ THEN I should NOT see the partition key in the output
 CREATE TABLE T26002_T2 (empid int, departmentid int, year int, region varchar(20))
 DISTRIBUTED BY (empid);
 \d T26002_T2;
-         Table "bfv_partition.t26002_t2"
-    Column    |         Type          | Modifiers 
---------------+-----------------------+-----------
- empid        | integer               | 
- departmentid | integer               | 
- year         | integer               | 
- region       | character varying(20) | 
+                    Table "bfv_partition.t26002_t2"
+    Column    |         Type          | Collation | Nullable | Default 
+--------------+-----------------------+-----------+----------+---------
+ empid        | integer               |           |          | 
+ departmentid | integer               |           |          | 
+ year         | integer               |           |          | 
+ region       | character varying(20) |           |          | 
 Distributed by: (empid)
 
 \d+ T26002_T2;
-                             Table "bfv_partition.t26002_t2"
-    Column    |         Type          | Modifiers | Storage  | Stats target | Description 
---------------+-----------------------+-----------+----------+--------------+-------------
- empid        | integer               |           | plain    |              | 
- departmentid | integer               |           | plain    |              | 
- year         | integer               |           | plain    |              | 
- region       | character varying(20) |           | extended |              | 
+                                        Table "bfv_partition.t26002_t2"
+    Column    |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ empid        | integer               |           |          |         | plain    |              | 
+ departmentid | integer               |           |          |         | plain    |              | 
+ year         | integer               |           |          |         | plain    |              | 
+ region       | character varying(20) |           |          |         | extended |              | 
 Distributed by: (empid)
 
 --

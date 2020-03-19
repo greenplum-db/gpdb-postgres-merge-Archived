@@ -9499,18 +9499,18 @@ where longlivingregions.region = denseregions.region and allcountrystats.code = 
 and country.indepyear > 1900
 );
 \d+ view_with_shared_scans;
-                View "qp_with_clause.view_with_shared_scans"
-       Column        |       Type       | Modifiers | Storage  | Description 
----------------------+------------------+-----------+----------+-------------
- city_cnt            | bigint           |           | plain    | 
- lang_cnt            | bigint           |           | plain    | 
- name                | text             |           | extended | 
- REGION_SURFACE_AREA | numeric          |           | main     | 
- REGION_LIFETIME     | double precision |           | plain    | 
- REGION_POP          | bigint           |           | plain    | 
- lang_count          | bigint           |           | plain    | 
- REGION_GNP          | numeric          |           | main     | 
- region              | text             |           | extended | 
+                           View "qp_with_clause.view_with_shared_scans"
+       Column        |       Type       | Collation | Nullable | Default | Storage  | Description 
+---------------------+------------------+-----------+----------+---------+----------+-------------
+ city_cnt            | bigint           |           |          |         | plain    | 
+ lang_cnt            | bigint           |           |          |         | plain    | 
+ name                | text             |           |          |         | extended | 
+ REGION_SURFACE_AREA | numeric          |           |          |         | main     | 
+ REGION_LIFETIME     | double precision |           |          |         | plain    | 
+ REGION_POP          | bigint           |           |          |         | plain    | 
+ lang_count          | bigint           |           |          |         | plain    | 
+ REGION_GNP          | numeric          |           |          |         | main     | 
+ region              | text             |           |          |         | extended | 
 View definition:
  WITH longlivingregions AS (
          SELECT foo."REGION_POP",
