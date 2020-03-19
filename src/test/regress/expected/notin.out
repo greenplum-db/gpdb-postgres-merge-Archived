@@ -392,30 +392,28 @@ select a,b from g1 where (a,b) not in
 --
 explain select x,y from l1 where (x,y) not in
 	(select distinct y, sum(x) from l1 group by y having y < 4 order by y) order by 1,2;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000007.74..10000000007.81 rows=4 width=8)
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000007.71..10000000007.79 rows=4 width=8)
    Merge Key: l1.x, l1.y
-   ->  Sort  (cost=10000000007.74..10000000007.75 rows=2 width=8)
+   ->  Sort  (cost=10000000007.71..10000000007.72 rows=2 width=8)
          Sort Key: l1.x, l1.y
-         ->  Nested Loop Left Anti Semi (Not-In) Join  (cost=10000000003.14..10000000007.71 rows=2 width=8)
+         ->  Nested Loop Left Anti Semi (Not-In) Join  (cost=10000000003.19..10000000007.69 rows=2 width=8)
                Join Filter: ((l1.x = "NotIn_SUBQUERY".y) AND (l1.y = "NotIn_SUBQUERY".sum))
                ->  Seq Scan on l1  (cost=0.00..3.10 rows=4 width=8)
-               ->  Materialize  (cost=3.14..3.40 rows=3 width=12)
-                     ->  Broadcast Motion 1:3  (slice2; segments: 1)  (cost=3.14..3.37 rows=7 width=12)
-                           ->  Subquery Scan on "NotIn_SUBQUERY"  (cost=3.14..3.27 rows=3 width=12)
-                                 ->  Finalize GroupAggregate  (cost=3.14..3.25 rows=3 width=16)
+               ->  Materialize  (cost=3.19..3.38 rows=3 width=12)
+                     ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=3.19..3.34 rows=3 width=12)
+                           ->  Subquery Scan on "NotIn_SUBQUERY"  (cost=3.19..3.25 rows=1 width=12)
+                                 ->  GroupAggregate  (cost=3.19..3.23 rows=1 width=16)
                                        Group Key: l1_1.y
-                                       ->  Gather Motion 3:1  (slice3; segments: 3)  (cost=3.14..3.22 rows=3 width=12)
-                                             Merge Key: l1_1.y
-                                             ->  Partial GroupAggregate  (cost=3.14..3.17 rows=1 width=12)
-                                                   Group Key: l1_1.y
-                                                   ->  Sort  (cost=3.14..3.15 rows=1 width=8)
-                                                         Sort Key: l1_1.y
-                                                         ->  Seq Scan on l1 l1_1  (cost=0.00..3.12 rows=1 width=8)
-                                                               Filter: (y < 4)
+                                       ->  Sort  (cost=3.19..3.19 rows=1 width=8)
+                                             Sort Key: l1_1.y
+                                             ->  Redistribute Motion 3:3  (slice3; segments: 3)  (cost=0.00..3.17 rows=1 width=8)
+                                                   Hash Key: l1_1.y
+                                                   ->  Seq Scan on l1 l1_1  (cost=0.00..3.12 rows=1 width=8)
+                                                         Filter: (y < 4)
  Optimizer: Postgres query optimizer
-(21 rows)
+(19 rows)
 
 select x,y from l1 where (x,y) not in
 	(select distinct y, sum(x) from l1 group by y having y < 4 order by y) order by 1,2;
