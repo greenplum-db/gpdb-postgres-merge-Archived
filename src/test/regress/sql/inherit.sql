@@ -752,8 +752,18 @@ create table parted_minmax (a int, b varchar(16)) partition by range (a);
 create table parted_minmax1 partition of parted_minmax for values from (1) to (10);
 create index parted_minmax1i on parted_minmax1 (a, b);
 insert into parted_minmax values (1,'12345');
+-- GPDB_12_MERGE_FIXME
+-- upstream this guc default is 4.0 but we change it to 100. We can not find any
+-- clue in commit message. This change affect plan. GPDB perfer seqscan instead of bitmap 
+-- index scan in upstream. We have met this issue many times still no conclusion yet. 
+-- https://groups.google.com/a/greenplum.org/forum/#!msg/gpdb-dev/Plf2leSAUxA/-aG6ltl8CwAJ
+-- 
+-- I temporary set this guc follow by upstream default value. We can rid of it after conclusion
+-- got.
+set random_page_cost to 4.0;
 explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
 select min(a), max(a) from parted_minmax where b = '12345';
+reset random_page_cost;
 drop table parted_minmax;
 
 -- Test code that uses Append nodes in place of MergeAppend when the
