@@ -3221,6 +3221,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	pstate->p_pre_columnref_hook = replace_domain_constraint_value;
 	pstate->p_ref_hook_state = (void *) domVal;
 
+	/*
+	 * GPDB: transformExpr scribbles on the input, but we need to keep it intact
+	 * because we dispatch it afterwards.
+	 */
+	constr = (Constraint *) copyObject(constr);
 	expr = transformExpr(pstate, constr->raw_expr, EXPR_KIND_DOMAIN_CHECK);
 
 	/*
