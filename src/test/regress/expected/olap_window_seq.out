@@ -221,19 +221,18 @@ LINE 2: window w as (w order by cname);
 select cn, 
   count(*) over (order by cn range '1'::interval preceding) 
   from customer; -- error, type mismatch
-ERROR:  window specification RANGE parameter type must be coercible to ORDER BY column type
+ERROR:  RANGE with offset PRECEDING/FOLLOWING is not supported for column type integer and offset type interval
+LINE 2:   count(*) over (order by cn range '1'::interval preceding) 
+                                           ^
+HINT:  Cast the offset value to an appropriate type.
 select cn,
   count(*) over (order by cn range between '-11' preceding and '-2' following)
   from customer; -- error, negative values not permitted
-ERROR:  RANGE parameter cannot be negative
-LINE 2:   count(*) over (order by cn range between '-11' preceding a...
-                                                   ^
+ERROR:  invalid preceding or following size in window function
 select cn,
   sum(cn) over (order by cn range NULL preceding)
   from customer; -- we don't permit NULL
-ERROR:  RANGE parameter cannot be NULL
-LINE 2:   sum(cn) over (order by cn range NULL preceding)
-                                          ^
+ERROR:  frame starting offset must not be null
 select cn,
   sum(cn) over (order by cn range '1'::float8 preceding)
   from customer; -- this, however, should work
@@ -1517,13 +1516,18 @@ select cn, dt, qty,
 	sum(qty) over (order by dt
        range '2007-08-05'::date preceding) as sum
 from sale; --mvd 2->4
-ERROR:  invalid RANGE parameter
-HINT:  Operations between window specification the ORDER BY column and RANGE parameter must result in a data type which can be cast back to the ORDER BY column type
+ERROR:  RANGE with offset PRECEDING/FOLLOWING is not supported for column type date and offset type date
+LINE 3:        range '2007-08-05'::date preceding) as sum
+                     ^
+HINT:  Cast the offset value to an appropriate type.
 select cn, dt, qty,
 	sum(qty) over (order by dt
        range '192.168.1.1'::inet preceding) as sum
 from sale; --mvd 2->4
-ERROR:  window specification RANGE parameter type must be coercible to ORDER BY column type
+ERROR:  RANGE with offset PRECEDING/FOLLOWING is not supported for column type date and offset type inet
+LINE 3:        range '192.168.1.1'::inet preceding) as sum
+                     ^
+HINT:  Cast the offset value to an appropriate type.
 -- Test for FOLLOWING frames
 select cn, prc, dt, sum(prc) over (order by ord,dt,cn rows between 2 following and 3 following) as f from sale_ord;
  cn | prc  |     dt     | f  
@@ -1643,7 +1647,7 @@ select cn,
 sum(count(*)) over (range between 1 preceding and 1 following)
 from sale
 group by cn;
-ERROR:  window specifications with a framing clause must have an ORDER BY clause
+ERROR:  RANGE with offset PRECEDING/FOLLOWING requires exactly one ORDER BY column
 LINE 2: sum(count(*)) over (range between 1 preceding and 1 followin...
                            ^
 -- test for issue which reopened MPP-1762
