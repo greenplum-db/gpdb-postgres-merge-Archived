@@ -78,11 +78,6 @@ VACUUM FULL vactst;
 
 VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
 
-<<<<<<< HEAD
--- check behavior with duplicate column mentions
-VACUUM ANALYZE vaccluster(i,i);
-ANALYZE vaccluster(i,i);
-=======
 -- INDEX_CLEANUP option
 CREATE TABLE no_index_cleanup (i INT PRIMARY KEY, t TEXT);
 -- Use uncompressed data stored in toast.
@@ -179,7 +174,6 @@ RESET default_transaction_isolation;
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ANALYZE vactst;
 COMMIT;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 DROP TABLE vaccluster;
 DROP TABLE vactst;

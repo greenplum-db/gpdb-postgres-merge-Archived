@@ -1028,55 +1028,6 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 	}
 }
 
-
-/*
- * Dispatch a Vacuum command.
- */
-static void
-dispatchVacuum(int options, RangeVar *relation, bool skip_twophase,
-			   AOVacuumPhaseConfig *ao_vacuum_phase_config, VacuumStatsContext *ctx)
-{
-	CdbPgResults cdb_pgresults;
-	VacuumStmt *vacstmt = makeNode(VacuumStmt);
-	int flags = DF_CANCEL_ON_ERROR | DF_WITH_SNAPSHOT;
-
-	/* should these be marked volatile ? */
-
-	Assert(Gp_role == GP_ROLE_DISPATCH);
-	Assert(options & VACOPT_VACUUM);
-	Assert(!(options & VACOPT_ANALYZE));
-
-	vacstmt->options = options;
-	vacstmt->relation = relation;
-	vacstmt->va_cols = NIL;
-	vacstmt->skip_twophase = skip_twophase;
-
-	vacstmt->ao_vacuum_phase_config = makeNode(AOVacuumPhaseConfig);
-	if (ao_vacuum_phase_config != NULL)
-	{
-		vacstmt->ao_vacuum_phase_config->appendonly_compaction_segno =
-			ao_vacuum_phase_config->appendonly_compaction_segno;
-		vacstmt->ao_vacuum_phase_config->appendonly_compaction_insert_segno =
-			ao_vacuum_phase_config->appendonly_compaction_insert_segno;
-		vacstmt->ao_vacuum_phase_config->appendonly_relation_empty =
-			ao_vacuum_phase_config->appendonly_relation_empty;
-		vacstmt->ao_vacuum_phase_config->appendonly_phase =
-			ao_vacuum_phase_config->appendonly_phase;
-	}
-
-	if (!skip_twophase)
-		flags |= DF_NEED_TWO_PHASE;
-
-	/* XXX: Some kinds of VACUUM assign a new relfilenode. bitmap indexes maybe? */
-	CdbDispatchUtilityStatement((Node *) vacstmt, flags,
-								GetAssignedOidsForDispatch(),
-								&cdb_pgresults);
-
-	vacuum_combine_stats(ctx, &cdb_pgresults);
-
-	cdbdisp_clearCdbPgResults(&cdb_pgresults);
-}
-
 /*
  * vacuum_combine_stats
  * This function combine the stats information sent by QEs to generate

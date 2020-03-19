@@ -56,12 +56,22 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include "catalog/heap.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/oid_dispatch.h"
+#include "cdb/cdbdispatchresult.h"
+#include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
+#include "libpq-int.h"
 #include "utils/faultinjector.h"
+#include "utils/lsyscache.h"
 
+
+typedef struct VacuumStatsContext
+{
+	List	   *updated_stats;
+} VacuumStatsContext;
 
 /*
  * GUC parameters
@@ -87,6 +97,13 @@ static void vac_truncate_clog(TransactionId frozenXID,
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 					   bool recursing);
 static VacOptTernaryValue get_vacopt_ternary_value(DefElem *def);
+
+static void dispatchVacuum(VacuumParams *params, RangeVar *relation,
+						   VacuumStatsContext *ctx);
+static List *vacuum_params_to_options_list(VacuumParams *params);
+static void vacuum_combine_stats(VacuumStatsContext *stats_context,
+								 CdbPgResults *cdb_pgresults);
+static void vac_update_relstats_from_list(List *updated_stats);
 
 /*
  * Primary entry point for manual VACUUM and ANALYZE commands
@@ -2064,6 +2081,18 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	/*
+	 * If it's a partitioned relation, on entry 'relation' refers to the table
+	 * that the original command was issued on, and 'relid' is the actual partition
+	 * we're processing. Build a rangevar representing this partition, so that we
+	 * can dispatch it.
+	 */
+	MemoryContext oldcontext = MemoryContextSwitchTo(vac_context);
+	this_rangevar = makeRangeVar(get_namespace_name(onerel->rd_rel->relnamespace),
+								 pstrdup(RelationGetRelationName(onerel)),
+								 -1);
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and
 	 * arrange to make GUC variable changes local to this command.
@@ -2145,41 +2174,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
-	// GPDB_12_MERGE_FIXME: Heikki TODO:
-	// My plan is that we dispatch the VACUUM command here, unless
-	// the AM-specific table_relation_vacuum() method already dispatched
-	// it. AO vacuum is complicated, and needs to dispatch multiple
-	// commands, whereas a heap vacuum can be dispatched just once.
-	// Hopefully dispatching just once will work for most future AM
-	// extensions, too, so that they don't need to be modified for GPDB.
-#if 0
-	if (dispatch)
-	{
-		/* GPDB_12_MERGE_FIXME: reimplent VacuumStats, got lost in the merge */
-		VacuumStatsContext stats_context;
-
-	/*
-	 * If an AO/CO table is empty on a segment,
-	 *
-	 * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
-	 * constructed and dispatched separately by the QD, when vacuuming the
-	 * base AO relation.  A backend executing dispatched VacuumStmt
-	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
-	 */
-
-	/* do the same for an AO segments table, if any */
-	if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
-		vacuum_rel(aoseg_relid, aoseg_rangevar, options & ~VACUUM_AO_PHASE_MASK,
-				   params, true);
-
-		dispatchVacuum(options, relation, skip_twophase, &stats_context);
-		vac_update_relstats_from_list(stats_context.updated_stats);
-
-		/* Restore userid and security context */
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-	}
-#endif
-
 	if (is_appendoptimized && ao_vacuum_phase == 0)
 	{
 		int orig_options = params->options;	
@@ -2205,67 +2199,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		params->options = orig_options;
 	}
 
-	/* GPDB_12_MERGE_FIXME: What is this block doing here? It seems that it came
- 	 * from a code shift and merge, probably ended up in an offset, investigate */
-#if 0
-	/*
-	 * In an append-only table, the auxiliary tables are cleaned up in
-	 * the POST_CLEANUP phase. Ignore them in other phases.
-	 */
-	if (is_appendoptimized && ao_vacuum_phase != VACOPT_AO_POST_CLEANUP_PHASE)
-	{
-		toast_relid = InvalidOid;
-		aoseg_relid = InvalidOid;
-		aoblkdir_relid = InvalidOid;
-		aovisimap_relid = InvalidOid;
-	}
-
-	if (Gp_role == GP_ROLE_DISPATCH && !recursing &&
-		(!is_appendoptimized || ao_vacuum_phase))
-	{
-		VacuumStatsContext stats_context;
-		char	   *vsubtype;
-
-		/*
-		 * Dispatching needs a transaction. At least in some error scenarios,
-		 * it uses TopTransactionContext to store stuff.
-		 */
-		StartTransactionCommand();
-		PushActiveSnapshot(GetTransactionSnapshot());
-
-		stats_context.updated_stats = NIL;
-		dispatchVacuum(options, this_rangevar, &stats_context);
-		vac_update_relstats_from_list(stats_context.updated_stats);
-
-		/* Also update pg_stat_last_operation */
-		if (IsAutoVacuumWorkerProcess())
-			vsubtype = "AUTO";
-		else
-		{
-			if ((options & VACOPT_FULL) &&
-				(0 == params->freeze_min_age))
-				vsubtype = "FULL FREEZE";
-			else if ((options & VACOPT_FULL))
-				vsubtype = "FULL";
-			else if (0 == params->freeze_min_age)
-				vsubtype = "FREEZE";
-			else
-				vsubtype = "";
-		}
-		MetaTrackUpdObject(RelationRelationId,
-						   relid,
-						   GetUserId(),
-						   "VACUUM",
-						   vsubtype);
-
-		/* Restore userid and security context */
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-#endif
-	
 	/* all done with this class, but hold lock until commit */
 	if (onerel)
 		relation_close(onerel, NoLock);
@@ -2285,6 +2218,51 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (toast_relid != InvalidOid)
 		vacuum_rel(toast_relid, NULL, params, false);
+
+	if (Gp_role == GP_ROLE_DISPATCH && !recursing &&
+		(!is_appendoptimized || ao_vacuum_phase))
+	{
+		VacuumStatsContext stats_context;
+		char	   *vsubtype;
+
+		/*
+		 * Dispatching needs a transaction. At least in some error scenarios,
+		 * it uses TopTransactionContext to store stuff.
+		 */
+		StartTransactionCommand();
+		PushActiveSnapshot(GetTransactionSnapshot());
+
+		stats_context.updated_stats = NIL;
+		dispatchVacuum(params, this_rangevar, &stats_context);
+		vac_update_relstats_from_list(stats_context.updated_stats);
+
+		/* Also update pg_stat_last_operation */
+		if (IsAutoVacuumWorkerProcess())
+			vsubtype = "AUTO";
+		else
+		{
+			if ((params->options & VACOPT_FULL) &&
+				(0 == params->freeze_min_age))
+				vsubtype = "FULL FREEZE";
+			else if ((params->options & VACOPT_FULL))
+				vsubtype = "FULL";
+			else if (0 == params->freeze_min_age)
+				vsubtype = "FREEZE";
+			else
+				vsubtype = "";
+		}
+		MetaTrackUpdObject(RelationRelationId,
+						   relid,
+						   GetUserId(),
+						   "VACUUM",
+						   vsubtype);
+
+		/* Restore userid and security context */
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+	}
 
 	/*
 	 * Now release the session-level lock on the master table.
@@ -2410,4 +2388,229 @@ static VacOptTernaryValue
 get_vacopt_ternary_value(DefElem *def)
 {
 	return defGetBoolean(def) ? VACOPT_TERNARY_ENABLED : VACOPT_TERNARY_DISABLED;
+}
+
+
+
+/*
+ * Dispatch a Vacuum command.
+ */
+static void
+dispatchVacuum(VacuumParams *params, RangeVar *relation,
+			   VacuumStatsContext *ctx)
+{
+	CdbPgResults cdb_pgresults;
+	VacuumStmt *vacstmt = makeNode(VacuumStmt);
+	int flags = DF_CANCEL_ON_ERROR | DF_WITH_SNAPSHOT;
+	VacuumRelation *rel;
+
+	// GPDB_12_MERGE_FIXME
+	//if ((options & VACUUM_AO_PHASE_MASK) == VACOPT_AO_COMPACT_PHASE)
+	//	flags |= DF_NEED_TWO_PHASE;
+
+	Assert(Gp_role == GP_ROLE_DISPATCH);
+
+	/* convert the VacuumParams back into an options list */
+
+	vacstmt->options = vacuum_params_to_options_list(params);
+	if ((params->options & VACOPT_VACUUM) != 0)
+		vacstmt->is_vacuumcmd = true;
+	else
+	{
+		Assert((params->options & VACOPT_ANALYZE) != 0);
+		vacstmt->is_vacuumcmd = false;
+	}
+
+	rel = makeNode(VacuumRelation);
+	rel->relation = relation;
+	rel->oid = InvalidOid; /* GPDB_12_MERGE_FIXME: should the caller pass oid instead of RangeVar? */
+	rel->va_cols = NIL;
+
+	vacstmt->rels = list_make1(rel);
+
+	/* XXX: Some kinds of VACUUM assign a new relfilenode. bitmap indexes maybe? */
+	CdbDispatchUtilityStatement((Node *) vacstmt, flags,
+								GetAssignedOidsForDispatch(),
+								&cdb_pgresults);
+
+	vacuum_combine_stats(ctx, &cdb_pgresults);
+
+	cdbdisp_clearCdbPgResults(&cdb_pgresults);
+}
+
+/* convert VacuumParams back into an options list, for dispatch */
+static List *
+vacuum_params_to_options_list(VacuumParams *params)
+{
+	int			optmask = params->options;
+	List	   *options = NIL;
+
+	/* VACOPT_VACUUM and ANALYZE are derived from the VacuumStmt */
+	optmask &= ~(VACOPT_VACUUM | VACOPT_ANALYZE);
+	if (optmask & VACOPT_VERBOSE)
+	{
+		options = lappend(options, makeDefElem("verbose", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_VERBOSE;
+	}
+	if (optmask & VACOPT_FREEZE)
+	{
+		options = lappend(options, makeDefElem("freeze", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_FREEZE;
+	}
+	if (optmask & VACOPT_FULL)
+	{
+		options = lappend(options, makeDefElem("full", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_FULL;
+	}
+	if (optmask & VACOPT_SKIP_LOCKED)
+	{
+		options = lappend(options, makeDefElem("skip_locked", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_SKIP_LOCKED;
+	}
+	if (optmask & VACOPT_SKIPTOAST)
+	{
+		options = lappend(options, makeDefElem("skip_toast", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_SKIPTOAST;
+	}
+	if (optmask & VACOPT_DISABLE_PAGE_SKIPPING)
+	{
+		options = lappend(options, makeDefElem("disable_page_skipping", (Node *) makeInteger(1), -1));
+		optmask &= ~VACOPT_DISABLE_PAGE_SKIPPING;
+	}
+	if (optmask != 0)
+		elog(ERROR, "unrecognized vacuum option %x", optmask);
+
+	if (params->truncate == VACOPT_TERNARY_DISABLED)
+		options = lappend(options, makeDefElem("truncate", (Node *) makeInteger(0), -1));
+	if (params->truncate == VACOPT_TERNARY_ENABLED)
+		options = lappend(options, makeDefElem("truncate", (Node *) makeInteger(1), -1));
+	/* GPDB_12_MERGE_FIXME: is DEFAULT possible here? */
+
+	if (params->index_cleanup == VACOPT_TERNARY_DISABLED)
+		options = lappend(options, makeDefElem("index_cleanup", (Node *) makeInteger(0), -1));
+	if (params->index_cleanup == VACOPT_TERNARY_ENABLED)
+		options = lappend(options, makeDefElem("index_cleanup", (Node *) makeInteger(1), -1));
+	/* GPDB_12_MERGE_FIXME: is DEFAULT possible here? */
+
+	/* GPDB_12_MERGE_FIXME: Should we do something about 'is_wraparound',
+	 * multixact_freeze ages and other options? */
+
+	return options;
+}
+
+/*
+ * vacuum_combine_stats
+ * This function combine the stats information sent by QEs to generate
+ * the final stats for QD relations.
+ *
+ * Note that the mirrorResults is ignored by this function.
+ */
+static void
+vacuum_combine_stats(VacuumStatsContext *stats_context, CdbPgResults *cdb_pgresults)
+{
+	int			result_no;
+	MemoryContext old_context;
+
+	Assert(Gp_role == GP_ROLE_DISPATCH);
+
+	if (cdb_pgresults == NULL || cdb_pgresults->numResults <= 0)
+		return;
+
+	/*
+	 * Process the dispatch results from the primary. Note that the QE
+	 * processes also send back the new stats info, such as stats on
+	 * pg_class, for the relevant table and its
+	 * indexes. We parse this information, and compute the final stats
+	 * for the QD.
+	 *
+	 * For pg_class stats, we compute the maximum number of tuples and
+	 * maximum number of pages after processing the stats from each QE.
+	 *
+	 */
+	for(result_no = 0; result_no < cdb_pgresults->numResults; result_no++)
+	{
+		VPgClassStats *pgclass_stats = NULL;
+		ListCell *lc = NULL;
+		struct pg_result *pgresult = cdb_pgresults->pg_results[result_no];
+
+		if (pgresult->extras == NULL)
+			continue;
+
+		Assert(pgresult->extraslen > sizeof(int));
+
+		/*
+		 * Process the stats for pg_class. We simply compute the maximum
+		 * number of rel_tuples and rel_pages.
+		 */
+		pgclass_stats = (VPgClassStats *) pgresult->extras;
+		foreach (lc, stats_context->updated_stats)
+		{
+			VPgClassStats *tmp_stats = (VPgClassStats *) lfirst(lc);
+
+			if (tmp_stats->relid == pgclass_stats->relid)
+			{
+				tmp_stats->rel_pages += pgclass_stats->rel_pages;
+				tmp_stats->rel_tuples += pgclass_stats->rel_tuples;
+				tmp_stats->relallvisible += pgclass_stats->relallvisible;
+				break;
+			}
+		}
+
+		if (lc == NULL)
+		{
+			Assert(pgresult->extraslen == sizeof(VPgClassStats));
+
+			old_context = MemoryContextSwitchTo(vac_context);
+			pgclass_stats = palloc(sizeof(VPgClassStats));
+			memcpy(pgclass_stats, pgresult->extras, pgresult->extraslen);
+
+			stats_context->updated_stats =
+				lappend(stats_context->updated_stats, pgclass_stats);
+			MemoryContextSwitchTo(old_context);
+		}
+	}
+}
+
+/*
+ * Update relpages/reltuples of all the relations in the list.
+ */
+static void
+vac_update_relstats_from_list(List *updated_stats)
+{
+	ListCell *lc;
+
+	/*
+	 * This function is only called in the context of the QD, so let's be
+	 * explicit about that given the assumptions taken.
+	 */
+	Assert(Gp_role == GP_ROLE_DISPATCH);
+
+	foreach (lc, updated_stats)
+	{
+		VPgClassStats *stats = (VPgClassStats *) lfirst(lc);
+		Relation	rel;
+
+		rel = relation_open(stats->relid, AccessShareLock);
+
+		if (GpPolicyIsReplicated(rel->rd_cdbpolicy))
+		{
+			stats->rel_pages = stats->rel_pages / rel->rd_cdbpolicy->numsegments;
+			stats->rel_tuples = stats->rel_tuples / rel->rd_cdbpolicy->numsegments;
+			stats->relallvisible = stats->relallvisible / rel->rd_cdbpolicy->numsegments;
+		}
+
+		/*
+		 * Pass 'false' for isvacuum, so that the stats are
+		 * actually updated.
+		 */
+		vac_update_relstats(rel,
+							stats->rel_pages, stats->rel_tuples,
+							stats->relallvisible,
+							rel->rd_rel->relhasindex,
+							InvalidTransactionId,
+							InvalidMultiXactId,
+							false,
+							false /* isvacuum */);
+		relation_close(rel, AccessShareLock);
+	}
 }
