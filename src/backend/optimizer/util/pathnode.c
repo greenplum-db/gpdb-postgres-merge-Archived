@@ -2005,13 +2005,23 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 				 * add a projection path with cdb_restrict_clauses, so that only
 				 * a single QE will actually produce rows.
 				 */
+				RestrictInfo *restrict_info;
+
 				if (CdbPathLocus_IsGeneral(subpath->locus))
 					numsegments = targetlocus.numsegments;
 				else
 					numsegments = subpath->locus.numsegments;
-				RestrictInfo *restrict_info =
-							make_simple_restrictinfo((Expr *) makeSegmentFilterExpr(
-													 gp_session_id % numsegments));
+
+				restrict_info = make_restrictinfo((Expr *) makeSegmentFilterExpr(
+													  gp_session_id % numsegments),
+												  true,		/* is_pushed_down */
+												  false,	/* outerjoin_delayed */
+												  true,		/* pseudoconstant */
+												  0,		/* security_level */
+												  NULL,		/* required_relids */
+												  NULL,		/* outer_relids */
+												  NULL);	/* nullable_relids */
+
 				subpath = (Path *) create_projection_path_with_quals(
 					root,
 					subpath->parent,

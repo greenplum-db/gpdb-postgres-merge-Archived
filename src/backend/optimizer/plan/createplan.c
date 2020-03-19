@@ -1941,7 +1941,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 	 * therefore can't predict whether it will require an exact tlist. For
 	 * both of these reasons, we have to recheck here.
 	 */
-	if (use_physical_tlist(root, &best_path->path, flags))
+	if (!best_path->cdb_restrict_clauses && use_physical_tlist(root, &best_path->path, flags))
 	{
 		/*
 		 * Our caller doesn't really care what tlist we return, so we don't
@@ -1954,7 +1954,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 			apply_pathtarget_labeling_to_tlist(tlist,
 											   best_path->path.pathtarget);
 	}
-	else if (is_projection_capable_path(best_path->subpath))
+	else if (!best_path->cdb_restrict_clauses && is_projection_capable_path(best_path->subpath))
 	{
 		/*
 		 * Our caller requires that we return the exact tlist, but no separate
