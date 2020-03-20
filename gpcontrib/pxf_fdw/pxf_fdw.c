@@ -711,7 +711,7 @@ InitCopyState(PxfFdwScanState *pxfsstate)
 									  pxfsstate->options->is_reject_limit_rows,
 									  pxfsstate->options->resource,
 									  (char *) cstate->cur_relname,
-									  pxfsstate->options->log_errors);
+									  pxfsstate->options->log_errors ? LOG_ERRORS_ENABLE : LOG_ERRORS_DISABLE);
 
 		cstate->cdbsreh->relid = RelationGetRelid(pxfsstate->relation);
 	}

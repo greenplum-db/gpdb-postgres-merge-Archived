@@ -27,8 +27,7 @@
 
 #include "cdb/cdblocaldistribxact.h"  /* LocalDistribXactData */
 #include "cdb/cdbtm.h"  /* TMGXACT */
-#include "utils/timestamp.h"
-#include "access/xlog.h"
+#include "dsm.h"
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -190,9 +189,10 @@ struct PGPROC
 	uint32		waitPortalId;	/* portal id we are waiting on */
 
 	/*
-	 * Information for our combocid-map (populated in writer/dispatcher backends only)
+	 * Handle for our shared comboCids array (populated in writer/dispatcher
+	 * backends only)
 	 */
-	uint32		combocid_map_count; /* how many entries in the map ? */
+	dsm_handle  comboCidsHandle;
 
 	/*
 	 * Current command_id for the running query

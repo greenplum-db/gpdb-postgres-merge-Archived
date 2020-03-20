@@ -115,7 +115,7 @@ make_externalscan_info(ExtTableEntry *extEntry)
 	bool		ismasteronly = false;
 	bool		islimitinrows = false;
 	int			rejectlimit = -1;
-	bool		logerrors = false;
+	char		logerrors = LOG_ERRORS_DISABLE;
 	static uint32 scancounter = 0;
 
 	if (extEntry->rejectlimit != -1)
@@ -153,6 +153,7 @@ make_externalscan_info(ExtTableEntry *extEntry)
 	node->logErrors = logerrors;
 	node->encoding = extEntry->encoding;
 	node->scancounter = scancounter++;
+	node->extOptions = extEntry->options;
 
 	return node;
 }
@@ -311,7 +312,8 @@ exttable_BeginForeignScan(ForeignScanState *node,
 										 externalscan_info->rejLimit,
 										 externalscan_info->rejLimitInRows,
 										 externalscan_info->logErrors,
-										 externalscan_info->encoding);
+										 externalscan_info->encoding,
+										 externalscan_info->extOptions);
 	externalSelectDesc = external_getnext_init(&node->ss.ps);
 	if (gp_external_enable_filter_pushdown)
 		externalSelectDesc->filter_quals = node->ss.ps.plan->qual;

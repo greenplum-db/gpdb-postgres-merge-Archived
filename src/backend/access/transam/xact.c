@@ -2922,6 +2922,9 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
+	/* detach combocid dsm */
+	AtEOXact_ComboCid_Dsm_Detach();
+
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
@@ -3271,6 +3274,8 @@ PrepareTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
+	/* detach combocid dsm */
+	AtEOXact_ComboCid_Dsm_Detach();
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
@@ -3528,6 +3533,7 @@ AbortTransaction(void)
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_BEFORE_LOCKS,
 							 false, true);
+		AtEOXact_ComboCid_Dsm_Detach();
 		AtEOXact_Buffers(false);
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
