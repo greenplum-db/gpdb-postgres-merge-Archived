@@ -466,7 +466,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
-%type <boolean>  OptWeb OptWritable OptSrehLimitType OptLogErrorTable ExtLogErrorTable
+%type <boolean>  OptWeb OptWritable OptSrehLimitType
+
+%type <chr>		OptLogErrorTable ExtLogErrorTable
 
 %type <boolean>  opt_trusted opt_restart_seqs
 %type <ival>	 OptTemp

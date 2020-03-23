@@ -10987,6 +10987,20 @@
 { oid => 7069, descr => 'truncate the error log for the specified external table',
    proname => 'gp_truncate_error_log', provolatile => 'v', prorettype => 'bool', proargtypes => 'text', prosrc => 'gp_truncate_error_log' },
 
+{ oid => 7080, descr => 'read the persistent error log for the specified external table',
+   proname => 'gp_read_persistent_error_log', prorows => '1000',
+   proretset => 't', provolatile => 'v', prorettype => 'record',
+   proargtypes => 'text',
+   proallargtypes => '{text,timestamptz,text,text,int4,int4,text,text,bytea}',
+   proargmodes => '{i,o,o,o,o,o,o,o,o}',
+   proargnames => '{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes }',
+   prosrc => 'gp_read_persistent_error_log', proexeclocation => 's' },
+
+{ oid => 7081, descr => 'truncate the persistent error log for the specified external table',
+   proname => 'gp_truncate_persistent_error_log', provolatile => 'v',
+   prorettype => 'bool', proargtypes => 'text',
+   prosrc => 'gp_truncate_persistent_error_log' },
+
 # Segment and master administration functions, see utils/gp/segadmin.c
 { oid => 5046, descr => 'Perform the catalog operations necessary for adding a new standby',
    proname => 'gp_add_master_standby', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => 'text text text', prosrc => 'gp_add_master_standby' },
