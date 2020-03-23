@@ -2527,14 +2527,7 @@ appendonly_delete(AppendOnlyDeleteDesc aoDeleteDesc,
 		   NameStr(aoDeleteDesc->aod_rel->rd_rel->relname),
 		   AOTupleIdToString(aoTupleId));
 
-#ifdef FAULT_INJECTOR
-	FaultInjector_InjectFaultIfSet(
-								   "appendonly_delete",
-								   DDLNotSpecified,
-								   "", //databaseName
-								   RelationGetRelationName(aoDeleteDesc->aod_rel));
-	/* tableName */
-#endif
+	FAULT_INJECTOR_TABLE("appendonly_delete", RelationGetRelationName(aoDeleteDesc->aod_rel));
 
 	return AppendOnlyVisimapDelete_Hide(&aoDeleteDesc->visiMapDelete, aoTupleId);
 }
@@ -2602,14 +2595,7 @@ appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
 	Assert(aoUpdateDesc);
 	Assert(aoTupleId);
 
-#ifdef FAULT_INJECTOR
-	FaultInjector_InjectFaultIfSet(
-								   "appendonly_update",
-								   DDLNotSpecified,
-								   "", //databaseName
-								   RelationGetRelationName(aoUpdateDesc->aoInsertDesc->aoi_rel));
-	/* tableName */
-#endif
+	FAULT_INJECTOR_TABLE("appendonly_update", RelationGetRelationName(aoUpdateDesc->aoInsertDesc->aoi_rel));
 
 	result = AppendOnlyVisimapDelete_Hide(&aoUpdateDesc->visiMapDelete, aoTupleId);
 	if (result != TM_Ok)
@@ -2883,14 +2869,7 @@ appendonly_insert(AppendOnlyInsertDesc aoInsertDesc,
 	Assert(aoInsertDesc->usableBlockSize > 0 && aoInsertDesc->tempSpaceLen > 0);
 	Assert(aoInsertDesc->toast_tuple_threshold > 0 && aoInsertDesc->toast_tuple_target > 0);
 
-#ifdef FAULT_INJECTOR
-	FaultInjector_InjectFaultIfSet(
-								   "appendonly_insert",
-								   DDLNotSpecified,
-								   "", //databaseName
-								   RelationGetRelationName(aoInsertDesc->aoi_rel));
-	/* tableName */
-#endif
+	FAULT_INJECTOR_TABLE("appendonly_insert", RelationGetRelationName(aoInsertDesc->aoi_rel));
 
 	if (aoInsertDesc->useNoToast)
 		need_toast = false;

@@ -196,4 +196,3 @@ test: partition_info
 test: event_trigger
 test: fast_default
 test: stats
-test: createdb
