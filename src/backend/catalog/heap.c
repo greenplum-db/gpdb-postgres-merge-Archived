@@ -425,7 +425,13 @@ heap_create(const char *relname,
 	else
 	{
 		create_storage = true;
+		/*
+		 * GPDB: relfilenode has its own counter, hence let
+		 * RelationBuildLocalRelation() assign the value to it.
+		 */
+#if 0
 		relfilenode = relid;
+#endif
 	}
 
 	/*
