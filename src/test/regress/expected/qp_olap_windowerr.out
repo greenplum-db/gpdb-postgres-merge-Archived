@@ -208,14 +208,14 @@ TO_CHAR(COALESCE(CUME_DIST() OVER(order by cf_olap_windowerr_sale.vn asc),0),'99
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.vn)::integer preceding and floor(cf_olap_windowerr_sale.cn)::integer following ),
 win2 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.vn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- COUNT() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(DENSE_RANK() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.prc)::integer preceding and unbounded following ),
 win2 as (partition by cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty order by cf_olap_windowerr_sale.vn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- COUNT() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.cn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(ROW_NUMBER() OVER(win2),0),'99999999.9999999')
@@ -334,7 +334,7 @@ FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_ola
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn asc range between 3 following and floor(cf_olap_windowerr_sale.pn-cf_olap_windowerr_sale.qty)::integer following ),
 win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn asc),
 win3 as (partition by cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.cn desc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- MAX() function with ONLY order by having rows based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(MAX(floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,
 TO_CHAR(COALESCE(MAX(floor(cf_olap_windowerr_sale.pn)) OVER(order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn asc,cf_olap_windowerr_sale.vn desc,cf_olap_windowerr_sale.pn asc rows between unbounded preceding and 1 preceding ),0),'99999999.9999999'),
@@ -554,12 +554,12 @@ TO_CHAR(COALESCE(PERCENT_RANK() OVER(partition by cf_olap_windowerr_sale.pn,cf_o
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between unbounded preceding and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.vn)::integer preceding ),
 win2 as (partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn desc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- MIN() function with ONLY order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.vn*cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn asc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.cn)::integer preceding and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.pn)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- MIN() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(MAX(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.qty)) OVER(order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.pn)::integer preceding and floor(cf_olap_windowerr_sale.qty)::integer following ),0),'99999999.9999999'),
@@ -574,7 +574,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn desc range between current row and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.qty)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- MIN() function with ONLY order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
@@ -661,7 +661,7 @@ SELECT cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_
 TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.vn*cf_olap_windowerr_sale.qty)) OVER(partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.cn)::integer preceding and floor(cf_olap_windowerr_sale.pn*cf_olap_windowerr_sale.prc)::integer preceding ),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.cn)::integer preceding and floor(cf_olap_windowerr_sale.pn*cf_olap_windowerr_sale.prc)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice5 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg2 slice1 127.0.0.1:40002 pid=3935)
 -- MIN() function with partition by and order by having rows based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.vn+cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999'),
@@ -742,7 +742,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(STDDEV(floor(cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn asc range floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.cn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- STDDEV() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(STDDEV(floor(cf_olap_windowerr_sale.cn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(PERCENT_RANK() OVER(win2),0),'99999999.9999999'),
@@ -760,7 +760,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn, TO_CHAR(COALESCE(STDDEV(floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.pn)::integer preceding and 3 following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- STDDEV() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(STDDEV(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(RANK() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.pn
@@ -890,7 +890,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.qty+cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn ) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.vn)::integer preceding and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.cn)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- STDDEV_POP() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.pn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.qty) as int),cast (floor(cf_olap_windowerr_sale.qty) as int),NULL) OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty,
@@ -930,7 +930,7 @@ win4 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_ola
 SELECT cf_olap_windowerr_sale.cn, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.vn desc range between unbounded preceding and floor(cf_olap_windowerr_sale.pn-cf_olap_windowerr_sale.qty)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg2 slice2 127.0.0.1:25434 pid=55691)
+ERROR:  invalid preceding or following size in window function  (seg2 slice1 127.0.0.1:40002 pid=3935)
 -- STDDEV_POP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.cn, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.vn/cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,
 TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.qty*cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
@@ -943,12 +943,12 @@ WINDOW win1 as (partition by cf_olap_windowerr_sale.qty order by cf_olap_windowe
 win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.prc order by cf_olap_windowerr_sale.cn desc),
 win3 as (order by cf_olap_windowerr_sale.vn desc),
 win4 as (partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn desc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice3 127.0.0.1:25432 pid=55700)
+ERROR:  invalid preceding or following size in window function  (seg1 slice1 127.0.0.1:40001 pid=3934)
 -- STDDEV_POP() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.qty order by cf_olap_windowerr_sale.cn asc range between floor(cf_olap_windowerr_sale.vn+cf_olap_windowerr_sale.cn)::integer preceding and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.vn)::integer following );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice3 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg1 slice1 127.0.0.1:40001 pid=3934)
 -- STDDEV_POP() function with partition by and order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(STDDEV_POP(floor(cf_olap_windowerr_sale.pn/cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
@@ -1205,7 +1205,7 @@ FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_ol
 WINDOW win1 as (partition by cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.qty)::integer following and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer following ),
 win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.cn desc),
 win3 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn asc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55692)
+ERROR:  invalid preceding or following size in window function  (seg0 slice2 127.0.0.1:40000 pid=3939)
 -- STDDEV_SAMP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(STDDEV_SAMP(floor(cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,
 TO_CHAR(COALESCE(LEAD(cast(floor(cf_olap_windowerr_sale.prc+cf_olap_windowerr_sale.qty) as int),cast (floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.pn) as int),NULL) OVER(win2),0),'99999999.9999999')
@@ -1532,7 +1532,7 @@ FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_ol
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer preceding and 4 following ),
 win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn asc),
 win3 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VAR_POP() function with ONLY order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(VAR_POP(floor(cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
@@ -1688,7 +1688,7 @@ TO_CHAR(COALESCE(LEAD(cast(floor(cf_olap_windowerr_sale.prc) as int),cast (floor
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.pn desc range floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)::integer preceding ),
 win2 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.vn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VAR_SAMP() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(VAR_SAMP(floor(cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.qty*cf_olap_windowerr_sale.vn) as int),cast (floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.cn) as int),NULL) OVER(win2),0),'99999999.9999999')
@@ -1740,7 +1740,7 @@ win2 as (order by cf_olap_windowerr_sale.cn asc);
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(VAR_SAMP(floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.prc)::integer preceding and unbounded following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VAR_SAMP() function with ONLY order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(VAR_SAMP(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
@@ -1797,7 +1797,7 @@ TO_CHAR(COALESCE(DENSE_RANK() OVER(order by cf_olap_windowerr_sale.cn desc),0),'
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.cn asc range floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.pn)::integer preceding ),
 win2 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn desc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice3 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function
 -- VAR_SAMP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(VAR_SAMP(floor(cf_olap_windowerr_sale.vn*cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(DENSE_RANK() OVER(win2),0),'99999999.9999999'),
@@ -1919,7 +1919,7 @@ TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sal
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.qty)::integer preceding and floor(cf_olap_windowerr_sale.vn)::integer preceding ),
 win2 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VARIANCE() function with ONLY order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(VARIANCE(floor(cf_olap_windowerr_sale.vn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
@@ -1931,7 +1931,7 @@ TO_CHAR(COALESCE(MAX(floor(cf_olap_windowerr_sale.vn*cf_olap_windowerr_sale.cn))
 TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)) OVER(order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.prc)::integer preceding and current row ),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.prc)::integer preceding and current row );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VARIANCE() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(VARIANCE(floor(cf_olap_windowerr_sale.pn-cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.pn,
@@ -1941,7 +1941,7 @@ FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_ola
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn asc range between floor(cf_olap_windowerr_sale.pn)::integer following and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.pn)::integer following ),
 win2 as (order by cf_olap_windowerr_sale.pn desc),
 win3 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn asc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- VARIANCE() function with ONLY order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(VARIANCE(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
@@ -2080,7 +2080,7 @@ win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_ola
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(VARIANCE(floor(cf_olap_windowerr_sale.pn-cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.vn desc range floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.pn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice1 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- VARIANCE() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(VARIANCE(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(LEAD(cast(floor(cf_olap_windowerr_sale.pn) as int),cast (floor(cf_olap_windowerr_sale.cn) as int),NULL) OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,
@@ -2483,7 +2483,7 @@ win3 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,cf_ola
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(COVAR_POP(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.pn*cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.pn)::integer preceding and floor(cf_olap_windowerr_sale.vn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice3 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- COVAR_POP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(COVAR_POP(floor(cf_olap_windowerr_sale.vn),floor(cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.pn) as int),cast (floor(cf_olap_windowerr_sale.qty+cf_olap_windowerr_sale.prc) as int),NULL) OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
@@ -2513,7 +2513,7 @@ win4 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn asc);
 
 -- COVAR_POP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(COVAR_POP(floor(cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.cn/cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,
-TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)) OVER(partition by cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.cn) preceding and unbounded following ),0),'99999999.9999999'),
+TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)) OVER(partition by cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.cn)::integer preceding and unbounded following ),0),'99999999.9999999'),
 TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.vn)) OVER(partition by cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.cn)::integer preceding and unbounded following ),0),'99999999.9999999'),
 TO_CHAR(COALESCE(PERCENT_RANK() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.vn) as int),cast (floor(cf_olap_windowerr_sale.qty) as int),NULL) OVER(win3),0),'99999999.9999999')
@@ -2530,7 +2530,7 @@ TO_CHAR(COALESCE(PERCENT_RANK() OVER(partition by cf_olap_windowerr_sale.dt,cf_o
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn ) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.prc)::integer following and floor(cf_olap_windowerr_sale.cn+cf_olap_windowerr_sale.prc)::integer following ),
 win2 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.pn desc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice3 127.0.0.1:25432 pid=55715)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- COVAR_POP() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(COVAR_POP(floor(cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn ) cf_olap_windowerr_sale
@@ -2690,7 +2690,7 @@ TO_CHAR(COALESCE(RANK() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.cn desc range between unbounded preceding and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.pn)::integer preceding ),
 win2 as (order by cf_olap_windowerr_sale.cn asc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice4 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- COVAR_SAMP() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(COVAR_SAMP(floor(cf_olap_windowerr_sale.qty+cf_olap_windowerr_sale.vn),floor(cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
@@ -2700,7 +2700,7 @@ ERROR:  RANGE parameter cannot be negative  (seg0 slice4 127.0.0.1:25432 pid=556
 SELECT cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(COVAR_SAMP(floor(cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.pn)::integer preceding and current row );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- COVAR_SAMP() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(COVAR_SAMP(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,
@@ -2723,7 +2723,7 @@ ERROR:  RANGE parameter cannot be negative  (seg2 slice3 127.0.0.1:25434 pid=556
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(COVAR_SAMP(floor(cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.pn desc range between current row and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.qty)::integer following );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- COVAR_SAMP() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(COVAR_SAMP(floor(cf_olap_windowerr_sale.qty*cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
@@ -2898,7 +2898,7 @@ TO_CHAR(COALESCE(ROW_NUMBER() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.vn asc range between floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.pn)::integer following and unbounded following ),
 win2 as (partition by cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn asc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55700)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- REGR_AVGX() function with partition by and order by having rows based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_AVGX(floor(cf_olap_windowerr_sale.prc+cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,
 TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.prc*cf_olap_windowerr_sale.cn)) OVER(partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.vn desc,cf_olap_windowerr_sale.pn asc,cf_olap_windowerr_sale.pn desc rows between unbounded preceding and 1 preceding ),0),'99999999.9999999'),
@@ -3035,7 +3035,7 @@ TO_CHAR(COALESCE(PERCENT_RANK() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn asc range between unbounded preceding and floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.pn)::integer following ),
 win2 as (order by cf_olap_windowerr_sale.pn desc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_AVGY() function with ONLY order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(REGR_AVGY(floor(cf_olap_windowerr_sale.vn+cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.cn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
@@ -3148,7 +3148,7 @@ win2 as (partition by cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(REGR_AVGY(floor(cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.vn+cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.pn)::integer preceding and floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.vn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice4 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- REGR_AVGY() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(REGR_AVGY(floor(cf_olap_windowerr_sale.cn/cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn ) cf_olap_windowerr_sale
@@ -3274,7 +3274,7 @@ win4 as (order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.vn asc);
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(REGR_COUNT(floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn asc range floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.cn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_COUNT() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(REGR_COUNT(floor(cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(LAG(cast(floor(cf_olap_windowerr_sale.qty) as int),cast (floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.cn) as int),NULL) OVER(win2),0),'99999999.9999999'),
@@ -3296,7 +3296,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_COUNT(floor(cf_olap_windowerr_sale.qty*cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.prc*cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn asc range between unbounded preceding and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_COUNT() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(REGR_COUNT(floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(DENSE_RANK() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
@@ -3504,7 +3504,7 @@ ERROR:  division by zero
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_INTERCEPT(floor(cf_olap_windowerr_sale.vn),floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn desc range between floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.vn)::integer following and floor(cf_olap_windowerr_sale.pn)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_INTERCEPT() function with ONLY order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_INTERCEPT(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
@@ -3649,7 +3649,7 @@ ERROR:  division by zero  (seg0 slice2 127.0.0.1:25432 pid=55689)
 -- REGR_INTERCEPT() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_INTERCEPT(floor(cf_olap_windowerr_sale.pn/cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.cn*cf_olap_windowerr_sale.qty)) OVER(partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.pn asc range between unbounded preceding and floor(cf_olap_windowerr_sale.vn)::integer preceding ),0),'99999999.9999999'),
-TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.vn)) OVER(partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.pn asc range between unbounded preceding and floor(cf_olap_windowerr_sale.vn) preceding ),0),'99999999.9999999'),
+TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.vn)) OVER(partition by cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.pn asc range between unbounded preceding and floor(cf_olap_windowerr_sale.vn)::integer preceding ),0),'99999999.9999999'),
 TO_CHAR(COALESCE(LEAD(cast(floor(cf_olap_windowerr_sale.pn*cf_olap_windowerr_sale.prc) as int),cast (floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.pn) as int),NULL) OVER(win2),0),'99999999.9999999'),
 TO_CHAR(COALESCE(PERCENT_RANK() OVER(partition by cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.cn desc),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
@@ -3780,7 +3780,7 @@ ERROR:  frame ending offset must not be negative  (seg0 slice3 127.0.0.1:25432 p
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(REGR_R2(floor(cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn asc range floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)::integer preceding );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_R2() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(REGR_R2(floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.prc+cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
 TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999'),
@@ -3810,7 +3810,7 @@ win3 as (partition by cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn, TO_CHAR(COALESCE(REGR_R2(floor(cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn asc range between floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.qty)::integer preceding and 2 preceding );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_R2() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(REGR_R2(floor(cf_olap_windowerr_sale.qty/cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.vn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(DENSE_RANK() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,
@@ -4063,7 +4063,7 @@ SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(RE
 TO_CHAR(COALESCE(MAX(floor(cf_olap_windowerr_sale.qty+cf_olap_windowerr_sale.qty)) OVER(order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.vn)::integer following and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer following ),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.pn asc range between floor(cf_olap_windowerr_sale.vn)::integer following and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer following );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_SLOPE() function with ONLY order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.qty, TO_CHAR(COALESCE(REGR_SLOPE(floor(cf_olap_windowerr_sale.vn),floor(cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn ) cf_olap_windowerr_sale
@@ -4120,7 +4120,7 @@ ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=556
 SELECT cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_SLOPE(floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.cn),floor(cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.vn desc range between current row and floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.pn)::integer following );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg1 slice1 127.0.0.1:40001 pid=3934)
 -- REGR_SLOPE() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(REGR_SLOPE(floor(cf_olap_windowerr_sale.vn-cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.prc+cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(MIN(floor(cf_olap_windowerr_sale.vn/cf_olap_windowerr_sale.qty)) OVER(partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.cn desc range between current row and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.prc)::integer following ),0),'99999999.9999999'),
@@ -4128,7 +4128,7 @@ TO_CHAR(COALESCE(PERCENT_RANK() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.cn desc range between current row and floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.prc)::integer following ),
 win2 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.vn desc);
-ERROR:  RANGE parameter cannot be negative  (seg2 slice3 127.0.0.1:25434 pid=55691)
+ERROR:  invalid preceding or following size in window function  (seg2 slice1 127.0.0.1:40002 pid=3935)
 -- REGR_SLOPE() function with partition by and order by having range based framing clause in combination with other functions--
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(REGR_SLOPE(floor(cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.pn/cf_olap_windowerr_sale.cn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,
 TO_CHAR(COALESCE(LEAD(cast(floor(cf_olap_windowerr_sale.qty) as int),cast (floor(cf_olap_windowerr_sale.qty) as int),NULL) OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.prc,
@@ -4368,7 +4368,7 @@ win4 as (partition by cf_olap_windowerr_sale.dt order by cf_olap_windowerr_sale.
 SELECT cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.cn, TO_CHAR(COALESCE(REGR_SXX(floor(cf_olap_windowerr_sale.prc-cf_olap_windowerr_sale.pn),floor(cf_olap_windowerr_sale.vn+cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.cn order by cf_olap_windowerr_sale.cn asc range floor(cf_olap_windowerr_sale.cn-cf_olap_windowerr_sale.pn)::integer preceding );
-ERROR:  RANGE parameter cannot be negative  (seg0 slice4 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg1 slice1 127.0.0.1:40001 pid=3934)
 -- REGR_SXX() function with partition by and order by having range based framing clause --
 SELECT cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.dt, TO_CHAR(COALESCE(REGR_SXX(floor(cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.pn/cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product,cf_olap_windowerr_vendor,cf_olap_windowerr_customer WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn AND cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn AND cf_olap_windowerr_sale_ord.cn=cf_olap_windowerr_customer.cn) cf_olap_windowerr_sale
@@ -4505,7 +4505,7 @@ TO_CHAR(COALESCE(PERCENT_RANK() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.cn asc range floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.pn)::integer preceding ),
 win2 as (order by cf_olap_windowerr_sale.pn desc);
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_SXY() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_SXY(floor(cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(COUNT(floor(cf_olap_windowerr_sale.prc+cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999'),
@@ -4537,7 +4537,7 @@ win3 as (partition by cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.cn order 
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.vn, TO_CHAR(COALESCE(REGR_SXY(floor(cf_olap_windowerr_sale.qty),floor(cf_olap_windowerr_sale.prc)) OVER(win1),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_vendor WHERE cf_olap_windowerr_sale_ord.vn=cf_olap_windowerr_vendor.vn) cf_olap_windowerr_sale
 WINDOW win1 as (order by cf_olap_windowerr_sale.vn desc range between floor(cf_olap_windowerr_sale.pn-cf_olap_windowerr_sale.qty)::integer preceding and floor(cf_olap_windowerr_sale.prc)::integer preceding );
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- REGR_SXY() function with ONLY order by having range based framing clause in combination with other functions --
 SELECT cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn, TO_CHAR(COALESCE(REGR_SXY(floor(cf_olap_windowerr_sale.pn+cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.prc/cf_olap_windowerr_sale.qty)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.cn,
 TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999'),cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.vn,
@@ -4897,7 +4897,7 @@ TO_CHAR(COALESCE(CUME_DIST() OVER(win2),0),'99999999.9999999')
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord,cf_olap_windowerr_product WHERE cf_olap_windowerr_sale_ord.pn=cf_olap_windowerr_product.pn) cf_olap_windowerr_sale
 WINDOW win1 as (partition by cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.vn order by cf_olap_windowerr_sale.vn asc range between floor(cf_olap_windowerr_sale.qty-cf_olap_windowerr_sale.vn)::integer preceding and 1 following ),
 win2 as (partition by cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.pn,cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.pn order by cf_olap_windowerr_sale.ord, cf_olap_windowerr_sale.vn asc);
-ERROR:  RANGE parameter cannot be negative  (seg0 slice2 127.0.0.1:25432 pid=55689)
+ERROR:  invalid preceding or following size in window function  (seg0 slice1 127.0.0.1:40000 pid=3933)
 -- REGR_SYY() function with partition by and order by having rows based framing clause --
 SELECT cf_olap_windowerr_sale.qty,cf_olap_windowerr_sale.prc,cf_olap_windowerr_sale.cn,cf_olap_windowerr_sale.dt,cf_olap_windowerr_sale.prc, TO_CHAR(COALESCE(REGR_SYY(floor(cf_olap_windowerr_sale.vn/cf_olap_windowerr_sale.prc),floor(cf_olap_windowerr_sale.pn)) OVER(win1),0),'99999999.9999999'),cf_olap_windowerr_sale.vn,cf_olap_windowerr_sale.pn
 FROM (SELECT cf_olap_windowerr_sale_ord.* FROM cf_olap_windowerr_sale_ord) cf_olap_windowerr_sale
