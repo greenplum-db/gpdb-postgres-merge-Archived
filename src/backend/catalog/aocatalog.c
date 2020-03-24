@@ -161,7 +161,7 @@ CreateAOAuxiliaryTable(
 		Relation	aoauxiliary_rel;
 
 		/* ShareLock is not really needed here, but take it anyway */
-		aoauxiliary_rel = heap_open(aoauxiliary_relid, ShareLock);
+		aoauxiliary_rel = table_open(aoauxiliary_relid, ShareLock);
 
 		collationObjectId = palloc0(list_length(indexColNames) * sizeof(Oid));
 
@@ -179,7 +179,7 @@ CreateAOAuxiliaryTable(
 										 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
 
 		/* Unlock target table -- no one can see it */
-		heap_close(aoauxiliary_rel, ShareLock);
+		table_close(aoauxiliary_rel, ShareLock);
 
 		/* Unlock the index -- no one can see it anyway */
 		UnlockRelationOid(aoauxiliary_idxid, AccessExclusiveLock);

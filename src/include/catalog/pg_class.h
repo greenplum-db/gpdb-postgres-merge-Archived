@@ -201,6 +201,9 @@ typedef FormData_pg_class *Form_pg_class;
 	 (relkind) == RELKIND_INDEX || \
 	 (relkind) == RELKIND_SEQUENCE || \
 	 (relkind) == RELKIND_TOASTVALUE || \
+	 (relkind) == RELKIND_AOSEGMENTS || \
+	 (relkind) == RELKIND_AOVISIMAP || \
+	 (relkind) == RELKIND_AOBLOCKDIR || \
 	 (relkind) == RELKIND_MATVIEW)
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */

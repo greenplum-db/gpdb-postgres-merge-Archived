@@ -35,6 +35,7 @@
 #include "catalog/storage_xlog.h"
 #include "cdb/cdbappendonlyam.h"
 #include "commands/progress.h"
+#include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "optimizer/plancat.h"
 #include "pgstat.h"
@@ -438,8 +439,13 @@ appendonly_relation_set_new_filenode(Relation rel,
 	 */
 	*minmulti = GetOldestMultiXactId();
 
-	// GPDB_12_MERGE_FIXME: RelationCreateStorage() used to take a 'relstorage' arg.
-	// Do we need to do something special to tell it that this is an AO table?
+	/*
+	 * No special treatment is needed for new AO/AOCO relation. Create the
+	 * underlying disk file storage for the relation.
+	 * No clean up is needed, RelationCreateStorage() is transactional.
+	 *
+	 * Segment files will be created when / if needed.
+	 */
 	srel = RelationCreateStorage(*newrnode, persistence);
 
 	/*
@@ -524,6 +530,19 @@ appendonly_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	/* drop old relation, and close new one */
 	RelationDropStorage(rel);
 	smgrclose(dstrel);
+}
+
+static void
+appendonly_vacuum_rel(Relation onerel, VacuumParams *params,
+					  BufferAccessStrategy bstrategy)
+{
+	/*
+	 * GPDB_12_MERGE_FIXME: This is a dummy function in order to proceed with the
+	 * implementation of the appendonlyam_handler.
+	 * A snipped implementation exists in appendonly_vacuum.c which would need to
+	 * get revived here.
+	 */
+	return;
 }
 
 static void
@@ -1127,6 +1146,15 @@ appendonly_relation_needs_toast_table(Relation rel)
 	int32		tuple_length;
 	int			i;
 
+	/*
+	 * GPDB_12_MERGE_FIXME: the toast table will inherit the access method of
+	 * the relation. This is fine but it leads to estimate_rel_size() ->
+	 * table_relation_estimate_size -> appendonly_estimate_rel_size ->
+	 * RelationGetNumberOfBlocksInFork() which does not allow to be called for
+	 * appendonly access methods. Disable here for now.
+	 */
+	return false;
+
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -1403,7 +1431,7 @@ static const TableAmRoutine appendonly_methods = {
 	.relation_nontransactional_truncate = appendonly_relation_nontransactional_truncate,
 	.relation_copy_data = appendonly_relation_copy_data,
 	.relation_copy_for_cluster = appendonly_relation_copy_for_cluster,
-	//.relation_vacuum = appendonly_vacuum_rel,
+	.relation_vacuum = appendonly_vacuum_rel,
 	.scan_analyze_next_block = appendonly_scan_analyze_next_block,
 	.scan_analyze_next_tuple = appendonly_scan_analyze_next_tuple,
 	.index_build_range_scan = appendonly_index_build_range_scan,

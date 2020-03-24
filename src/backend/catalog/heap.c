@@ -99,6 +99,9 @@
 #include "utils/syscache.h"
 
 #include "catalog/aocatalog.h"
+#include "catalog/aoseg.h"
+#include "catalog/aoblkdir.h"
+#include "catalog/aovisimap.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_stat_last_operation.h"
@@ -490,6 +493,15 @@ heap_create(const char *relname,
 			case RELKIND_RELATION:
 			case RELKIND_TOASTVALUE:
 			case RELKIND_MATVIEW:
+				table_relation_set_new_filenode(rel, &rel->rd_node,
+												relpersistence,
+												relfrozenxid, relminmxid);
+				break;
+
+			case RELKIND_AOSEGMENTS:
+			case RELKIND_AOVISIMAP:
+			case RELKIND_AOBLOCKDIR:
+				Assert(rel->rd_tableam);
 				table_relation_set_new_filenode(rel, &rel->rd_node,
 												relpersistence,
 												relfrozenxid, relminmxid);
@@ -1439,8 +1451,6 @@ heap_create_with_catalog(const char *relname,
 	Oid			new_array_oid = InvalidOid;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
-	bool		appendOnlyRel;
-	StdRdOptions *stdRdOptions;
 	int			safefswritesize = gp_safefswritesize;
 	char	   *relarrayname = NULL;
 
@@ -1451,38 +1461,6 @@ heap_create_with_catalog(const char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 
-	/* GPDB_12_MERGE_FIXME */
-#if 0
-	/*
-	 * Was "appendonly" specified in the relopts? If yes, check for
-	 * override (debug) GUCs.
-	 */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_PARTITIONED_TABLE ||
-		relkind == RELKIND_MATVIEW)
-	{
-		stdRdOptions = (StdRdOptions*) heap_reloptions(
-			relkind, reloptions, !valid_opts);
-		appendOnlyRel = stdRdOptions->appendonly;
-		validateAppendOnlyRelOptions(appendOnlyRel,
-									 stdRdOptions->blocksize,
-									 safefswritesize,
-									 stdRdOptions->compresslevel,
-									 stdRdOptions->compresstype,
-									 stdRdOptions->checksum,
-									 relkind,
-									 stdRdOptions->columnstore);
-		if(appendOnlyRel)
-		{
-			reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
-		}
-	}
-	else
-#endif
-	{
-		appendOnlyRel = false;
-		stdRdOptions = NULL;
-	}
 
 	/*
 	 * Validate proposed tupdesc for the desired relkind.  If
@@ -1607,7 +1585,7 @@ heap_create_with_catalog(const char *relname,
 	 * create a typname and error us out.
 	 * GPDB_12_MERGE_FIXME: Do we still want to do that differently from upstream?
 	 */
-	if (IsUnderPostmaster && ((relkind == RELKIND_RELATION && !appendOnlyRel) ||
+	if (IsUnderPostmaster && ((relkind == RELKIND_RELATION  && !RelationIsAppendOptimized(new_rel_desc)) ||
 							  relkind == RELKIND_VIEW ||
 							  relkind == RELKIND_MATVIEW ||
 							  relkind == RELKIND_FOREIGN_TABLE ||
@@ -1713,8 +1691,34 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * if this is an append-only relation, add an entry in pg_appendonly.
 	 */
-	if(appendOnlyRel)
+	if (RelationIsAppendOptimized(new_rel_desc))
 	{
+#if 0
+	/* GPDB_12_MERGE_FIXME */
+	/*
+	 * Was "appendonly" specified in the relopts? If yes, check for
+	 * override (debug) GUCs.
+	 */
+	if (relkind == RELKIND_RELATION ||
+		relkind == RELKIND_PARTITIONED_TABLE ||
+		relkind == RELKIND_MATVIEW)
+	{
+		stdRdOptions = (StdRdOptions*) heap_reloptions(
+			relkind, reloptions, !valid_opts);
+		appendOnlyRel = stdRdOptions->appendonly;
+		validateAppendOnlyRelOptions(appendOnlyRel,
+									 stdRdOptions->blocksize,
+									 safefswritesize,
+									 stdRdOptions->compresslevel,
+									 stdRdOptions->compresstype,
+									 stdRdOptions->checksum,
+									 relkind,
+									 stdRdOptions->columnstore);
+		if(appendOnlyRel)
+		{
+			reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
+		}
+	}
 		InsertAppendOnlyEntry(relid,
 							  stdRdOptions->blocksize,
 							  safefswritesize,
@@ -1727,6 +1731,22 @@ heap_create_with_catalog(const char *relname,
 							  InvalidOid,
 							  InvalidOid,
 							  InvalidOid);
+#else
+		/* Use defaults for now */
+		InsertAppendOnlyEntry(relid,
+							  AO_DEFAULT_BLOCKSIZE,
+							  safefswritesize,
+							  AO_DEFAULT_COMPRESSLEVEL,
+							  AO_DEFAULT_CHECKSUM,
+							  RelationIsAoCols(new_rel_desc),
+							  AO_DEFAULT_COMPRESSTYPE,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid);
+
+#endif
 	}
 
 

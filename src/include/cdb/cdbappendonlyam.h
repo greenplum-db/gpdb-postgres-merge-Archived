@@ -390,10 +390,6 @@ extern TM_Result appendonly_update(
 
 extern void appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc);
 
-struct VacuumParams;
-extern void appendonly_vacuum_rel(Relation onerel, struct VacuumParams *params,
-								  BufferAccessStrategy bstrategy);
-
 extern int acquire_sample_rows_ao(Relation onerel, int elevel,
 								  HeapTuple *rows, int targrows,
 								  double *totalrows, double *totaldeadrows);

@@ -2946,7 +2946,8 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	 * the callers do that. But let's check.
 	 */
 	if (RelationIsAppendOptimized(relation))
-		elog(ERROR, "cannot get number of blocks for AO table");
+		elog(ERROR, "cannot get number of blocks for AO table, %s",
+				RelationGetRelationName(relation));
 
 	switch (relation->rd_rel->relkind)
 	{
@@ -2961,6 +2962,9 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
+		case RELKIND_AOSEGMENTS:
+		case RELKIND_AOVISIMAP:
+		case RELKIND_AOBLOCKDIR:
 			{
 				/*
 				 * Not every table AM uses BLCKSZ wide fixed size blocks.

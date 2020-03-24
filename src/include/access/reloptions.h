@@ -26,6 +26,8 @@
 #include "storage/lock.h"
 #include "utils/rel.h"
 
+#include "cdb/cdbappendonlyam.h"
+
 #define AO_DEFAULT_APPENDONLY     false
 #define AO_DEFAULT_BLOCKSIZE      DEFAULT_APPENDONLY_BLOCK_SIZE
 /* Compression is turned off by default. */

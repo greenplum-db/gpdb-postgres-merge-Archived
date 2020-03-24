@@ -1229,6 +1229,12 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		case RELKIND_PARTITIONED_TABLE:
 			Assert(relation->rd_rel->relam == InvalidOid);
 			break;
+		case RELKIND_AOSEGMENTS:
+		case RELKIND_AOVISIMAP:
+		case RELKIND_AOBLOCKDIR:
+			Assert(relation->rd_rel->relam != InvalidOid);
+			RelationInitTableAccessMethod(relation);
+			break;
 	}
 
 	/*
@@ -1236,6 +1242,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	 */
 	/* GPDB_12_MERGE_FIXME */
 #if 0	
+	if (RelationIsAppendOptimized(relation))
 	if (relation->rd_rel->relstorage == RELSTORAGE_AOROWS ||
 		relation->rd_rel->relstorage == RELSTORAGE_AOCOLS)
 	{
@@ -3538,6 +3545,11 @@ RelationBuildLocalRelation(const char *relname,
 		relkind == RELKIND_MATVIEW)
 		RelationInitTableAccessMethod(rel);
 
+	if (relkind == RELKIND_AOSEGMENTS ||
+		relkind == RELKIND_AOVISIMAP ||
+		relkind == RELKIND_AOBLOCKDIR)
+		RelationInitTableAccessMethod(rel);
+
 	/*
 	 * Okay to insert into the relcache hash table.
 	 *
@@ -3645,6 +3657,14 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
+			table_relation_set_new_filenode(relation, &newrnode,
+											persistence,
+											&freezeXid, &minmulti);
+			break;
+
+		case RELKIND_AOSEGMENTS:
+		case RELKIND_AOVISIMAP:
+		case RELKIND_AOBLOCKDIR:
 			table_relation_set_new_filenode(relation, &newrnode,
 											persistence,
 											&freezeXid, &minmulti);
@@ -4119,6 +4139,17 @@ RelationCacheInitializePhase3(void)
 			 relation->rd_rel->relkind == RELKIND_SEQUENCE ||
 			 relation->rd_rel->relkind == RELKIND_TOASTVALUE ||
 			 relation->rd_rel->relkind == RELKIND_MATVIEW))
+		{
+			RelationInitTableAccessMethod(relation);
+			Assert(relation->rd_tableam != NULL);
+
+			restart = true;
+		}
+
+		if (relation->rd_tableam == NULL &&
+			(relation->rd_rel->relkind == RELKIND_AOSEGMENTS ||
+			 relation->rd_rel->relkind == RELKIND_AOBLOCKDIR ||
+			 relation->rd_rel->relkind == RELKIND_AOVISIMAP))
 		{
 			RelationInitTableAccessMethod(relation);
 			Assert(relation->rd_tableam != NULL);
@@ -5757,6 +5788,11 @@ load_relcache_init_file(bool shared)
 				rel->rd_rel->relkind == RELKIND_SEQUENCE ||
 				rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
 				rel->rd_rel->relkind == RELKIND_MATVIEW)
+				RelationInitTableAccessMethod(rel);
+
+			if (rel->rd_rel->relkind == RELKIND_AOSEGMENTS ||
+				rel->rd_rel->relkind == RELKIND_AOVISIMAP ||
+				rel->rd_rel->relkind == RELKIND_AOBLOCKDIR)
 				RelationInitTableAccessMethod(rel);
 
 			Assert(rel->rd_index == NULL);
