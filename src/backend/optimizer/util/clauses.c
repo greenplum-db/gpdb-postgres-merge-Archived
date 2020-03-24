@@ -70,7 +70,6 @@ typedef struct
 	List	   *active_fns;
 	Node	   *case_val;
 	bool		estimate;
-	bool		eval_stable_functions;
 	bool		recurse_queries; /* recurse into query structures */
 	bool		recurse_sublink_testexpr; /* recurse into sublink test expressions */
 	Size        max_size; /* max constant binary size in bytes, 0: no restrictions */
@@ -163,11 +162,6 @@ static Query *substitute_actual_srf_parameters(Query *expr,
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
 													  substitute_actual_srf_parameters_context *context);
 static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
-
-/*
- * Greenplum specific functions
- */
-static bool should_eval_stable_functions(PlannerInfo *root);
 
 /*****************************************************************************
  *		Aggregate-function clause manipulation
@@ -2345,8 +2339,6 @@ fold_constants(PlannerInfo *root, Query *q, ParamListInfo boundParams, Size max_
 
 	context.max_size = max_size;
 	
-	context.eval_stable_functions = should_eval_stable_functions(root);
-
 	return (Query *) query_or_expression_tree_mutator
 						(
 						(Node *) q,
@@ -2478,7 +2470,6 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	context.recurse_queries = false; /* do not recurse into query structures */
 	context.recurse_sublink_testexpr = true;
 	context.max_size = 0;
-	context.eval_stable_functions = should_eval_stable_functions(root);
 
 	return eval_const_expressions_mutator(node, &context);
 }
@@ -4630,11 +4621,6 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 		 /* okay */ ;
 	else if (context->estimate && funcform->provolatile == PROVOLATILE_STABLE)
 		 /* okay */ ;
-	else if (context->eval_stable_functions && funcform->provolatile == PROVOLATILE_STABLE)
-	{
-		/* okay, but we cannot reuse this plan */
-		context->root->glob->oneoffPlan = true;
-	}
 	else
 		return NULL;
 
@@ -5805,35 +5791,6 @@ tlist_matches_coltypelist(List *tlist, List *coltypelist)
 
 	return true;
 }
-
-/*
- * If this expression is part of a query, and the query isn't a simple
- * "SELECT foo()" style query with no actual tables involved, then we
- * also aggressively evaluate stable functions, in addition to immutable
- * ones. Such plans cannot be reused, and therefore need to be re-planned
- * on every execution, but it can be a big win if it allows partition
- * elimination to happen. That's considered a good tradeoff in GPDB, as
- * typical queries are long-running.
- */
-static bool
-should_eval_stable_functions(PlannerInfo *root)
-{
-	/*
-	 * Without PlannerGlobal, we cannot mark the plan as a `oneoffPlan`
-	 */
-	if (root == NULL) return false;
-	if (root->glob == NULL) return false;
-	if (root->parse == NULL) return false;
-
-	/*
-	 * If the query has no range table, then there is no reason to need to
-	 * pre-evaluate stable functions, as the output cannot be used as part
-	 * of static partition elimination, unless the query is part of a
-	 * subquery.
-	 */
-	return root->parse->rtable || root->query_level > 1;
-}
-
 
 /*
  * get_leftscalararrayop
