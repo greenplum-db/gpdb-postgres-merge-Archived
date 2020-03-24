@@ -435,7 +435,6 @@ IsSharedRelation(Oid relationId)
 		relationId == ResQueueCapabilityRestypidIndexId ||
 		relationId == ResGroupOidIndexId ||
 		relationId == ResGroupRsgnameIndexId ||
-		relationId == ResGroupCapabilityOidIndexId ||
 		relationId == ResGroupCapabilityResgroupidIndexId ||
 		relationId == ResGroupCapabilityResgroupidResLimittypeIndexId ||
 		relationId == AuthIdRolResQueueIndexId ||

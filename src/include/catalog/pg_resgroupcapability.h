@@ -19,8 +19,6 @@
 
 CATALOG(pg_resgroupcapability,6439,ResGroupCapabilityRelationId) BKI_SHARED_RELATION
 {
-	Oid			oid;				/* oid */
-
 	Oid			resgroupid;	/* OID of the group with this capability  */
 
 	int16		reslimittype;	/* resource limit type id (RESGROUP_LIMIT_TYPE_XXX) */
