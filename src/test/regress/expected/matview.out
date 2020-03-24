@@ -60,10 +60,10 @@ EXPLAIN (costs off)
   CREATE MATERIALIZED VIEW mvtest_tvm AS SELECT * FROM mvtest_tv ORDER BY type;
                          QUERY PLAN                         
 ------------------------------------------------------------
- Sort
-   Sort Key: mvtest_t.type
-   ->  HashAggregate
-         Group Key: mvtest_t.type
+ GroupAggregate
+   Group Key: mvtest_t.type
+   ->  Sort
+         Sort Key: mvtest_t.type
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
                Hash Key: mvtest_t.type
                ->  Seq Scan on mvtest_t
