@@ -1097,7 +1097,7 @@ userdata_project(PG_FUNCTION_ARGS)
 	 * Sanity checking, shouldn't occur if our CREATE FUNCTION in SQL is done
 	 * correctly.
 	 */
-	if (PG_NARGS() != 1 || PG_ARGISNULL(0) || PG_ARGISNULL(1))
+	if (PG_NARGS() != 1 || PG_ARGISNULL(0))
 		elog(ERROR, "invalid invocation of userdata_project");
 	scan = PG_GETARG_ANYTABLE(0);  /* Should be the first parameter */
 	if (SRF_IS_FIRSTCALL())

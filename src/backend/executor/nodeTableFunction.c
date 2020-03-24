@@ -411,7 +411,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 							 &scanstate->flinfo,		/* Flinfo  */
 							 list_length(func->args), /* Nargs   */
 							 InvalidOid,					  /* input_collation */
-							 (Node *) node,                   /* Context */
+							 (Node *) scanstate,                   /* Context */
 							 (Node *) &(scanstate->rsinfo));       /* ResultInfo */
 
 	/*

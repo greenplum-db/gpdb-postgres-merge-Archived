@@ -525,6 +525,7 @@ compute_common_attribute(ParseState *pstate,
 						 DefElem **rows_item,
 						 DefElem **support_item,
 						 DefElem **parallel_item,
+						 DefElem **describe_item,
 						 DefElem **data_access_item,
 						 DefElem **exec_location_item)
 {
@@ -601,6 +602,13 @@ compute_common_attribute(ParseState *pstate,
 			goto duplicate_error;
 
 		*parallel_item = defel;
+	}
+	else if (strcmp(defel->defname, "describe") == 0)
+	{
+		if (*describe_item)
+			goto duplicate_error;
+
+		*describe_item = defel;
 	}
 	else if (strcmp(defel->defname, "data_access") == 0)
 	{
@@ -882,6 +890,7 @@ compute_function_attributes(ParseState *pstate,
 							float4 *prorows,
 							Oid *prosupport,
 							char *parallel_p,
+							List **describeQualName_p,
 							char *data_access_p,
 							char *exec_location_p)
 {
@@ -899,6 +908,7 @@ compute_function_attributes(ParseState *pstate,
 	DefElem    *rows_item = NULL;
 	DefElem    *support_item = NULL;
 	DefElem    *parallel_item = NULL;
+	DefElem    *describe_item = NULL;
 	DefElem    *data_access_item = NULL;
 	DefElem    *exec_location_item = NULL;
 
@@ -959,6 +969,7 @@ compute_function_attributes(ParseState *pstate,
 										  &rows_item,
 										  &support_item,
 										  &parallel_item,
+										  &describe_item,
 										  &data_access_item,
 										  &exec_location_item))
 		{
@@ -1026,6 +1037,8 @@ compute_function_attributes(ParseState *pstate,
 		*prosupport = interpret_func_support(support_item);
 	if (parallel_item)
 		*parallel_p = interpret_func_parallel(parallel_item);
+	if (describe_item)
+		*describeQualName_p = defGetQualifiedName(describe_item);
 	if (data_access_item)
 		*data_access_p = interpret_data_access(data_access_item);
 	if (exec_location_item)
@@ -1314,6 +1327,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 								&isStrict, &security, &isLeakProof,
 								&proconfig, &procost, &prorows,
 								&prosupport, &parallel,
+								&describeQualName,
 								&dataAccess, &execLocation);
 
 	/* Look up the language and validate permissions */
@@ -1621,6 +1635,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	DefElem    *support_item = NULL;
 	DefElem    *parallel_item = NULL;
 	ObjectAddress address;
+	DefElem    *describe_item = NULL;
 	DefElem    *data_access_item = NULL;
 	DefElem    *exec_location_item = NULL;
 	bool		isnull;
@@ -1672,6 +1687,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 									 &rows_item,
 									 &support_item,
 									 &parallel_item,
+									 &describe_item,
 									 &data_access_item,
 									 &exec_location_item) == false)
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
@@ -1769,6 +1785,12 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	}
 	if (parallel_item)
 		procForm->proparallel = interpret_func_parallel(parallel_item);
+	if (describe_item)
+	{
+		// GPDB_12_MERGE_FIXME: This cannot happen, because grammar doesn't allow it.
+		// But we probably should support it.
+		elog(ERROR, "cannot change DESCRIBE function");
+	}
 	if (data_access_item)
 	{
 		Datum		repl_val[Natts_pg_proc];
