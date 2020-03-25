@@ -589,12 +589,6 @@ SELECT count(*) FROM tenk_aocs2;
      0
 (1 row)
 
--- OID with aocs NYI
--- OIDS
---
--- MPP-8058: should fail
-CREATE TABLE aocswithoids(a int, b int) WITH (appendonly=true, orientation=column, oids=true);
-ERROR:  OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE
 -- INDEX
 CREATE INDEX tenk_aocs1_unique1 ON tenk_aocs1 USING btree(unique1 int4_ops);
 -- Verify that the visimap and block-directory indexes have unique and
