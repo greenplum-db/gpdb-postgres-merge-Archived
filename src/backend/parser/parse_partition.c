@@ -27,11 +27,13 @@
 static List *generateRangePartitions(ParseState *pstate, CreateStmt *cstmt,
 									 Relation parentrel,
 									 GpPartitionElem *elem,
-									 const char *queryString);
+									 const char *queryString,
+									 int *num_unnamed_parts_p);
 static List *generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 								   Relation parentrel,
 								   GpPartitionElem *elem,
-								   const char *queryString);
+								   const char *queryString,
+								   int *num_unnamed_parts_p);
 static List *generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
 									  Relation parentrel,
 									  GpPartitionElem *elem,
@@ -53,6 +55,7 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 	char	   *schemaname;
 	ListCell   *lc;
 	ParseState *pstate;
+	int			num_unnamed_parts = 0;
 
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -73,11 +76,13 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 			if (elem->boundSpec)
 			{
 				if (IsA(elem->boundSpec, GpPartitionBoundSpec))
-					new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString);
+					new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString,
+														&num_unnamed_parts);
 				else
 				{
 					Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
-					new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString);
+					new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString,
+													  &num_unnamed_parts);
 				}
 			}
 			else if (elem->isDefault)
@@ -107,11 +112,12 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 }
 
 /* Generate partitions for START (..) END (..) EVERY (..) */
-List *
+static List *
 generateRangePartitions(ParseState *pstate,
 						CreateStmt *cstmt, Relation parentrel,
 						GpPartitionElem *elem,
-						const char *queryString)
+						const char *queryString,
+						int *num_unnamed_parts_p)
 {
 	GpPartitionBoundSpec *boundspec;
 	List	   *startconsts = NIL;
@@ -273,7 +279,7 @@ generateRangePartitions(ParseState *pstate,
 			 * isn't exactly the same as it used to be.
 			 * And we probably should be using ChooseRelationName() here.
 			 */
-			partname = psprintf("%s_prt_%d", RelationGetRelationName(parentrel), bound);
+			partname = psprintf("%s_1_prt_%d", RelationGetRelationName(parentrel), ++(*num_unnamed_parts_p));
 
 			childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
 
@@ -328,7 +334,8 @@ static List *
 generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 					  Relation parentrel,
 					  GpPartitionElem *elem,
-					  const char *queryString)
+					  const char *queryString,
+					  int *num_unnamed_parts_p)
 {
 	GpPartitionValuesSpec *gpvaluesspec;
 	PartitionBoundSpec *boundspec;
@@ -371,9 +378,10 @@ generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 	 * isn't exactly the same as it used to be.
 	 * And we probably should be using ChooseRelationName() here.
 	 */
-	if (!elem->partName)
-		elog(ERROR, "list partition must have a name");
-	partname = psprintf("%s_prt_%s", RelationGetRelationName(parentrel), elem->partName);
+	if (elem->partName)
+		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel), elem->partName);
+	else
+		partname = psprintf("%s_1_prt_%d", RelationGetRelationName(parentrel), ++(*num_unnamed_parts_p));
 
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 
@@ -402,11 +410,11 @@ generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
 	 * And we probably should be using ChooseRelationName() here.
 	 */
 	if (elem->partName)
-		partname = psprintf("%s_prt_%s", RelationGetRelationName(parentrel),
+		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel),
 							elem->partName);
 	else
 	{
-		partname = psprintf("%s_prt_default", RelationGetRelationName(parentrel));
+		partname = psprintf("%s_1_prt_default", RelationGetRelationName(parentrel));
 	}
 
 	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
