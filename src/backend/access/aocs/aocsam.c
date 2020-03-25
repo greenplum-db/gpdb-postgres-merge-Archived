@@ -905,7 +905,13 @@ aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupl
 	Relation	rel = idesc->aoi_rel;
 	int			i;
 
-	FAULT_INJECTOR_TABLE("appendonly_insert", RelationGetRelationName(idesc->aoi_rel));
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet(
+								   "appendonly_insert",
+								   DDLNotSpecified,
+								   "",	/* databaseName */
+								   RelationGetRelationName(idesc->aoi_rel));	/* tableName */
+#endif
 
 	/* As usual, at this moment, we assume one col per vp */
 	for (i = 0; i < RelationGetNumberOfAttributes(rel); ++i)
@@ -1623,7 +1629,14 @@ aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
 	Assert(oldTupleId);
 	Assert(newTupleId);
 
-	FAULT_INJECTOR_TABLE("appendonly_update", RelationGetRelationName(desc->insertDesc->aoi_rel));
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet(
+								   "appendonly_update",
+								   DDLNotSpecified,
+								   "", //databaseName
+								   RelationGetRelationName(desc->insertDesc->aoi_rel));
+	/* tableName */
+#endif
 
 	result = AppendOnlyVisimapDelete_Hide(&desc->visiMapDelete, oldTupleId);
 	if (result != TM_Ok)
@@ -1725,7 +1738,13 @@ aocs_delete(AOCSDeleteDesc aoDeleteDesc,
 		   NameStr(aoDeleteDesc->aod_rel->rd_rel->relname),
 		   AOTupleIdToString(aoTupleId));
 
-	FAULT_INJECTOR_TABLE("appendonly_delete", RelationGetRelationName(aoDeleteDesc->aod_rel));
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet(
+								   "appendonly_delete",
+								   DDLNotSpecified,
+								   "",	/* databaseName */
+								   RelationGetRelationName(aoDeleteDesc->aod_rel)); /* tableName */
+#endif
 
 	return AppendOnlyVisimapDelete_Hide(&aoDeleteDesc->visiMapDelete, aoTupleId);
 }

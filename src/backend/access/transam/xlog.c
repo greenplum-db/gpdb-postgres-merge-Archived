@@ -8876,7 +8876,11 @@ CreateCheckPoint(int flags)
 	}
 
 #ifdef FAULT_INJECTOR
-	if (SIMPLE_FAULT_INJECTOR("checkpoint") == FaultInjectorTypeSkip)
+	if (FaultInjector_InjectFaultIfSet(
+			"checkpoint",
+			DDLNotSpecified,
+			"" /* databaseName */,
+			"" /* tableName */) == FaultInjectorTypeSkip)
 		return;  // skip checkpoint
 #endif
 
