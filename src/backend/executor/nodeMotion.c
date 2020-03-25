@@ -502,6 +502,11 @@ execMotionSortedReceiver(MotionState *node)
 	 */
 	else
 	{
+		// GPDB_12_MERGE_FIXME: temporarily suppress crash. The heap
+		// should not be empty here.
+		if (binaryheap_empty(hp))
+			elog(ERROR, "FIXME: execMotionSortedReceiver() called but there were no tuples anymore");
+
 		/* Old element is still at the head of the pq. */
 		Assert(DatumGetInt32(binaryheap_first(hp)) == node->routeIdNext);
 
