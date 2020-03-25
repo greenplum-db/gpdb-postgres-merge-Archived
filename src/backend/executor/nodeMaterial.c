@@ -248,6 +248,22 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.state = estate;
 	matstate->ss.ps.ExecProcNode = ExecMaterial;
 
+	if (node->cdb_strict)
+		eflags |= EXEC_FLAG_REWIND;
+
+	/*
+	 * If the Material node was inserted to protect the child node from rescanning, don't
+	 * eager free.
+	 *
+	 * XXX: The planner doesn't always set the flag for Material nodes that are put
+	 * directly on top of Motion nodes, so check for that, too. (Or is this for ORCA?)
+	 */
+	if (node->cdb_shield_child_from_rescans ||
+		IsA(outerPlan((Plan *) node), Motion))
+	{
+		eflags |= EXEC_FLAG_REWIND;
+	}
+
 	/*
 	 * We must have a tuplestore buffering the subplan output to do backward
 	 * scan or mark/restore.  We also prefer to materialize the subplan output
@@ -268,22 +284,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	if (eflags & EXEC_FLAG_BACKWARD)
 		matstate->eflags |= EXEC_FLAG_REWIND;
 
-	if (node->cdb_strict)
-		matstate->eflags |= EXEC_FLAG_REWIND;
-
-	/*
-	 * If the Material node was inserted to protect the child node from rescanning, don't
-	 * eager free.
-	 *
-	 * XXX: The planner doesn't always set the flag for Material nodes that are put
-	 * directly on top of Motion nodes, so check for that, too. (Or is this for ORCA?)
-	 */
-	if (node->cdb_shield_child_from_rescans ||
-		IsA(outerPlan((Plan *) node), Motion))
-	{
-		matstate->eflags |= EXEC_FLAG_REWIND;
-	}
-
 	matstate->eof_underlying = false;
 	matstate->tuplestorestate = NULL;
 	matstate->ts_destroyed = false;
@@ -300,7 +300,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 * then this node is not eager free safe.
 	 */
 	matstate->delayEagerFree =
-		((matstate->eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
+		((eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
 
 	/*
 	 * initialize child nodes

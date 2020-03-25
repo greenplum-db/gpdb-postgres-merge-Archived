@@ -156,7 +156,6 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "lib/stringinfo.h"
-#include "storage/buffile.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
