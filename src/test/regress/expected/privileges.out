@@ -2052,9 +2052,11 @@ SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)',
 (1 row)
 
 DROP SCHEMA testns CASCADE;
-NOTICE:  drop cascades to 5 other objects
+NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to table testns.t1
 drop cascades to table testns.t2
+drop cascades to table testns.t3
+drop cascades to table testns.t4
 drop cascades to function testns.priv_testfunc(integer)
 drop cascades to function testns.priv_testagg(integer)
 drop cascades to function testns.priv_testproc(integer)
