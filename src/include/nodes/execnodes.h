@@ -737,7 +737,7 @@ typedef struct EState
 	/* MPP used resources */
 	bool		es_interconnect_is_setup;   /* is interconnect set-up?    */
 
-	bool		es_got_eos;			/* was end-of-stream recieved? */
+	bool		es_got_eos;			/* was end-of-stream received? */
 
 	bool		cancelUnfinished;	/* when we're cleaning up, we need to make sure that we know it */
 

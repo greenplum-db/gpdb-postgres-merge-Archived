@@ -2668,7 +2668,18 @@ ExecutePlan(EState *estate,
 		 * process so we just end the loop...
 		 */
 		if (TupIsNull(slot))
+		{
+			/*
+			 * We got end-of-stream. We need to mark it since with a cursor
+			 * end-of-stream will only be received with the fetch that
+			 * returns the last tuple. ExecutorEnd needs to know if EOS was
+			 * received in order to do the right cleanup.
+			 */
+			estate->es_got_eos = true;
+			/* Allow nodes to release or shut down resources. */
+			(void) ExecShutdownNode(planstate);
 			break;
+		}
 
 		/*
 		 * If we have a junk filter, then project a new tuple with the junk
