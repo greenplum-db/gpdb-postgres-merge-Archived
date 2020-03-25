@@ -722,8 +722,6 @@ ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
 GRANT ALL ON t1 TO public;
 COPY t1 FROM stdin WITH ;
 CREATE TABLE t2 (c float) INHERITS (t1);
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 GRANT ALL ON t2 TO public;
 COPY t2 FROM stdin;
 CREATE TABLE t3 (id int not null primary key, c text, b text, a int);
@@ -775,33 +773,18 @@ NOTICE:  f_leak => yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
-<<<<<<< HEAD
-                QUERY PLAN                 
--------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  Append
-               ->  Seq Scan on t1 t1_1
-                     Filter: ((a % 2) = 0)
-               ->  Seq Scan on t2
-                     Filter: ((a % 2) = 0)
-               ->  Seq Scan on t3
-                     Filter: ((a % 2) = 0)
+   ->  Append
+         ->  Seq Scan on t1
+               Filter: (((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t2
+               Filter: (((a % 2) = 0) AND f_leak(b))
+         ->  Seq Scan on t3
+               Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(11 rows)
-=======
-                  QUERY PLAN                   
------------------------------------------------
- Append
-   ->  Seq Scan on t1
-         Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t2
-         Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t3
-         Filter: (((a % 2) = 0) AND f_leak(b))
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(9 rows)
 
 -- reference to system column
 SELECT tableoid::regclass, * FROM t1;
@@ -864,25 +847,9 @@ SELECT * FROM t1 FOR SHARE;
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
-<<<<<<< HEAD
-                   QUERY PLAN                    
--------------------------------------------------
+                QUERY PLAN                
+------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on t1
-         ->  Result
-               ->  Append
-                     ->  Seq Scan on t1 t1_1
-                           Filter: ((a % 2) = 0)
-                     ->  Seq Scan on t2
-                           Filter: ((a % 2) = 0)
-                     ->  Seq Scan on t3
-                           Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
-(11 rows)
-=======
-             QUERY PLAN              
--------------------------------------
- LockRows
    ->  Append
          ->  Seq Scan on t1
                Filter: ((a % 2) = 0)
@@ -890,8 +857,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
                Filter: ((a % 2) = 0)
          ->  Seq Scan on t3
                Filter: ((a % 2) = 0)
-(8 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 NOTICE:  f_leak => bbb
@@ -909,26 +876,9 @@ NOTICE:  f_leak => yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
-<<<<<<< HEAD
-                   QUERY PLAN                    
--------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  Result
-               ->  Append
-                     ->  Seq Scan on t1 t1_1
-                           Filter: ((a % 2) = 0)
-                     ->  Seq Scan on t2
-                           Filter: ((a % 2) = 0)
-                     ->  Seq Scan on t3
-                           Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
-(12 rows)
-=======
                      QUERY PLAN                      
 -----------------------------------------------------
- LockRows
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Seq Scan on t1
                Filter: (((a % 2) = 0) AND f_leak(b))
@@ -936,8 +886,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
                Filter: (((a % 2) = 0) AND f_leak(b))
          ->  Seq Scan on t3
                Filter: (((a % 2) = 0) AND f_leak(b))
-(8 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 -- union all query
 SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
@@ -950,8 +900,7 @@ SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclas
  3 | zzz | t3
 (5 rows)
 
-<<<<<<< HEAD
-EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+EXPLAIN (COSTS OFF) SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -961,16 +910,6 @@ EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
          ->  Seq Scan on t3
  Optimizer: Postgres query optimizer
 (6 rows)
-=======
-EXPLAIN (COSTS OFF) SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
-          QUERY PLAN           
--------------------------------
- Append
-   ->  Seq Scan on t2
-         Filter: ((a % 2) = 1)
-   ->  Seq Scan on t3
-(4 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- superuser is allowed to bypass RLS checks
 RESET SESSION AUTHORIZATION;
@@ -1146,19 +1085,22 @@ NOTICE:  f_leak => my first satire
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                     QUERY PLAN                      
------------------------------------------------------
- Append
-   InitPlan 1 (returns $0)
-     ->  Index Scan using uaccount_pkey on uaccount
-           Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-(10 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   InitPlan 1 (returns $0)  (slice2)
+     ->  Gather Motion 3:1  (slice3; segments: 3)
+           ->  Seq Scan on uaccount
+                 Filter: (pguser = CURRENT_USER)
+   ->  Append
+         ->  Seq Scan on part_document_fiction
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         ->  Seq Scan on part_document_satire
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         ->  Seq Scan on part_document_nonfiction
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -1188,19 +1130,22 @@ NOTICE:  f_leak => awesome technology book
 (10 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                     QUERY PLAN                      
------------------------------------------------------
- Append
-   InitPlan 1 (returns $0)
-     ->  Index Scan using uaccount_pkey on uaccount
-           Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
-(10 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   InitPlan 1 (returns $0)  (slice2)
+     ->  Gather Motion 3:1  (slice3; segments: 3)
+           ->  Seq Scan on uaccount
+                 Filter: (pguser = CURRENT_USER)
+   ->  Append
+         ->  Seq Scan on part_document_fiction
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         ->  Seq Scan on part_document_satire
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         ->  Seq Scan on part_document_nonfiction
+               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 -- viewpoint from regress_rls_dave
 SET SESSION AUTHORIZATION regress_rls_dave;
@@ -1218,14 +1163,17 @@ NOTICE:  f_leak => awesome science fiction
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                          QUERY PLAN                          
---------------------------------------------------------------
- Seq Scan on part_document_fiction
-   Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
-   InitPlan 1 (returns $0)
-     ->  Index Scan using uaccount_pkey on uaccount
-           Index Cond: (pguser = CURRENT_USER)
-(5 rows)
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   InitPlan 1 (returns $0)  (slice2)
+     ->  Gather Motion 3:1  (slice3; segments: 3)
+           ->  Seq Scan on uaccount
+                 Filter: (pguser = CURRENT_USER)
+   ->  Seq Scan on part_document_fiction
+         Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 -- pp1 ERROR
 INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_dave', 'testing pp1'); -- fail
@@ -1555,15 +1503,9 @@ ERROR:  infinite recursion detected in policy for relation "rec1"
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
 DROP VIEW rec1v, rec2v CASCADE;
-<<<<<<< HEAD
--- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
--- GUCs in QEs.
-SET client_min_messages TO 'notice';
-=======
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to policy r1 on table rec1
 drop cascades to policy r2 on table rec2
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
 SET SESSION AUTHORIZATION regress_rls_alice;
@@ -1606,32 +1548,17 @@ NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
-<<<<<<< HEAD
-                        QUERY PLAN                        
-----------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on s1
-         Filter: f_leak(s1.b)
-         ->  Hash Semi Join
-               Hash Cond: (s1_1.a = s2.x)
-               ->  Seq Scan on s1 s1_1
-               ->  Hash
-                     ->  Subquery Scan on s2
-                           Filter: (s2.y ~~ '%2f%'::text)
-                           ->  Seq Scan on s2 s2_1
-                                 Filter: ((x % 2) = 0)
+   ->  Seq Scan on s1
+         Filter: ((hashed SubPlan 1) AND f_leak(b))
+         SubPlan 1
+           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                 ->  Seq Scan on s2
+                       Filter: (((x % 2) = 0) AND (y ~~ '%2f%'::text))
  Optimizer: Postgres query optimizer
-(12 rows)
-=======
-                        QUERY PLAN                         
------------------------------------------------------------
- Seq Scan on s1
-   Filter: ((hashed SubPlan 1) AND f_leak(b))
-   SubPlan 1
-     ->  Seq Scan on s2
-           Filter: (((x % 2) = 0) AND (y ~~ '%2f%'::text))
-(5 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(8 rows)
 
 SET SESSION AUTHORIZATION regress_rls_alice;
 ALTER POLICY p1 ON s1 USING (a in (select x from v2)); -- using VIEW in RLS policy
@@ -1646,32 +1573,17 @@ NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
-<<<<<<< HEAD
-                        QUERY PLAN                        
-----------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on s1
-         Filter: f_leak(s1.b)
-         ->  Hash Semi Join
-               Hash Cond: (s1_1.a = s2.x)
-               ->  Seq Scan on s1 s1_1
-               ->  Hash
-                     ->  Subquery Scan on s2
-                           Filter: (s2.y ~~ '%af%'::text)
-                           ->  Seq Scan on s2 s2_1
-                                 Filter: ((x % 2) = 0)
+   ->  Seq Scan on s1
+         Filter: ((hashed SubPlan 1) AND f_leak(b))
+         SubPlan 1
+           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                 ->  Seq Scan on s2
+                       Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
  Optimizer: Postgres query optimizer
-(12 rows)
-=======
-                        QUERY PLAN                         
------------------------------------------------------------
- Seq Scan on s1
-   Filter: ((hashed SubPlan 1) AND f_leak(b))
-   SubPlan 1
-     ->  Seq Scan on s2
-           Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
-(5 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(8 rows)
 
 SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
  xx | x  |                y                 
@@ -1874,28 +1786,6 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
 EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
-<<<<<<< HEAD
-             QUERY PLAN              
--------------------------------------
- Update on t1 t1_3
-   Update on t1 t1_3
-   Update on t2 t1
-   Update on t3 t1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_4
-               Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_1
-         Filter: f_leak(t1_1.b)
-         ->  Seq Scan on t2
-               Filter: ((a % 2) = 0)
-   ->  Subquery Scan on t1_2
-         Filter: f_leak(t1_2.b)
-         ->  Seq Scan on t3
-               Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
-(17 rows)
-=======
                   QUERY PLAN                   
 -----------------------------------------------
  Update on t1
@@ -1909,7 +1799,6 @@ EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
    ->  Seq Scan on t3
          Filter: (((a % 2) = 0) AND f_leak(b))
 (10 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1918,24 +1807,12 @@ NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
 EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
-<<<<<<< HEAD
-             QUERY PLAN              
--------------------------------------
- Update on t1 t1_1
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_2
-               Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
-(6 rows)
-=======
                   QUERY PLAN                   
 -----------------------------------------------
  Update on t1
    ->  Seq Scan on t1
          Filter: (((a % 2) = 0) AND f_leak(b))
 (3 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
@@ -1983,34 +1860,18 @@ NOTICE:  f_leak => yyyyyy
 -- updates with from clause
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
-<<<<<<< HEAD
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Update on t2 t2_1
-   ->  Explicit Redistribute Motion 3:3  (slice1; segments: 3)
-         ->  Nested Loop
-               ->  Subquery Scan on t2
-                     Filter: f_leak(t2.b)
-                     ->  Seq Scan on t2 t2_2
-                           Filter: ((a = 3) AND ((a % 2) = 1))
-               ->  Materialize
-                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                           Hash Key: 3
-                           ->  Seq Scan on t3
-                                 Filter: (f_leak(b) AND (a = 2))
- Optimizer: Postgres query optimizer
-(13 rows)
-=======
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Update on t2
    ->  Nested Loop
          ->  Seq Scan on t2
                Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
-         ->  Seq Scan on t3
-               Filter: ((a = 2) AND f_leak(b))
-(6 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+         ->  Materialize
+               ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                     ->  Seq Scan on t3
+                           Filter: ((a = 2) AND f_leak(b))
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
@@ -2018,51 +1879,8 @@ NOTICE:  f_leak => cde
 NOTICE:  f_leak => yyyyyy
 EXPLAIN (COSTS OFF) UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
-<<<<<<< HEAD
-                             QUERY PLAN                              
----------------------------------------------------------------------
- Update on t1 t1_3
-   Update on t1 t1_3
-   Update on t2 t1
-   Update on t3 t1
-   ->  Nested Loop
-         ->  Subquery Scan on t1
-               Filter: f_leak(t1.b)
-               ->  Seq Scan on t1 t1_4
-                     Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Materialize
-               ->  Subquery Scan on t2
-                     Filter: f_leak(t2.b)
-                     ->  Seq Scan on t2 t2_3
-                           Filter: ((a = 3) AND ((a % 2) = 1))
-   ->  Nested Loop
-         ->  Subquery Scan on t1_1
-               Filter: f_leak(t1_1.b)
-               ->  Seq Scan on t2 t2_4
-                     Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Materialize
-               ->  Subquery Scan on t2_1
-                     Filter: f_leak(t2_1.b)
-                     ->  Seq Scan on t2 t2_5
-                           Filter: ((a = 3) AND ((a % 2) = 1))
-   ->  Explicit Redistribute Motion 3:3  (slice1; segments: 3)
-         ->  Nested Loop
-               ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                     Hash Key: t1_2.a
-                     ->  Subquery Scan on t1_2
-                           Filter: f_leak(t1_2.b)
-                           ->  Seq Scan on t3
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-               ->  Materialize
-                     ->  Subquery Scan on t2_2
-                           Filter: f_leak(t2_2.b)
-                           ->  Seq Scan on t2 t2_6
-                                 Filter: ((a = 3) AND ((a % 2) = 1))
- Optimizer: Postgres query optimizer
-(38 rows)
-=======
-                           QUERY PLAN                            
------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Update on t1
    Update on t1
    Update on t2 t2_1
@@ -2070,20 +1888,26 @@ WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
    ->  Nested Loop
          ->  Seq Scan on t1
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
-         ->  Seq Scan on t2
-               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+         ->  Materialize
+               ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                     ->  Seq Scan on t2
+                           Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
          ->  Seq Scan on t2 t2_1
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
-         ->  Seq Scan on t2
-               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+         ->  Materialize
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     ->  Seq Scan on t2
+                           Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
          ->  Seq Scan on t3
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
-         ->  Seq Scan on t2
-               Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
-(19 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+         ->  Materialize
+               ->  Broadcast Motion 3:3  (slice3; segments: 3)
+                     ->  Seq Scan on t2
+                           Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
+ Optimizer: Postgres query optimizer
+(26 rows)
 
 UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
@@ -2680,43 +2504,22 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-
+(4 rows)
 PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
-
-PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
-EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 PREPARE plancache_test2 AS WITH q AS MATERIALIZED (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
@@ -2787,95 +2590,48 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 0)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
+(8 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 0)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z1
-           Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z2
-(7 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                     QUERY PLAN                      
------------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z2
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z1
-               Filter: (((a % 2) = 0) AND f_leak(b))
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(8 rows)
 
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2888,95 +2644,48 @@ NOTICE:  f_leak => ccc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 1)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 1)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 1)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
+(8 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 1)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 1) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 1) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z1
-           Filter: (((a % 2) = 1) AND f_leak(b))
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z2
-(7 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                     QUERY PLAN                      
------------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z2
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z1
-               Filter: (((a % 2) = 1) AND f_leak(b))
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(8 rows)
 
 SET ROLE regress_rls_group2;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -2989,95 +2698,48 @@ NOTICE:  f_leak => ccc
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 1)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 1)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 1)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
+(8 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          ->  Seq Scan on z2
          ->  Materialize
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Subquery Scan on z1
-                           Filter: f_leak(z1.b)
-                           ->  Seq Scan on z1 z1_1
-                                 Filter: ((a % 2) = 1)
+                     ->  Seq Scan on z1
+                           Filter: (((a % 2) = 1) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(10 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 1) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 1) AND f_leak(b))
-(2 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z1
-           Filter: (((a % 2) = 1) AND f_leak(b))
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z2
-(7 rows)
-
-EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
-                     QUERY PLAN                      
------------------------------------------------------
- Nested Loop
-   CTE q
-     ->  Seq Scan on z2
-   ->  CTE Scan on q
-   ->  Materialize
-         ->  Seq Scan on z1
-               Filter: (((a % 2) = 1) AND f_leak(b))
-(7 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(8 rows)
 
 --
 -- Views should follow policy for view owner.
@@ -3152,23 +2814,13 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 -- Query as role that is not owner of table but is owner of view.
 -- Should return records based on view owner policies.
@@ -3183,23 +2835,13 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 -- Query as role that is not the owner of the table or view without permissions.
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -3220,23 +2862,13 @@ NOTICE:  f_leak => dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-<<<<<<< HEAD
-                QUERY PLAN                
-------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on z1
-         Filter: f_leak(z1.b)
-         ->  Seq Scan on z1 z1_1
-               Filter: ((a % 2) = 0)
+   ->  Seq Scan on z1
+         Filter: (((a % 2) = 0) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-               QUERY PLAN                
------------------------------------------
- Seq Scan on z1
-   Filter: (((a % 2) = 0) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 DROP VIEW rls_view;
@@ -3384,23 +3016,13 @@ SET SESSION AUTHORIZATION regress_rls_bob;
 CREATE VIEW rls_sbv WITH (security_barrier) AS
     SELECT * FROM y1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM rls_sbv WHERE (a = 1);
-<<<<<<< HEAD
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Subquery Scan on y1
-         Filter: f_leak(y1.b)
-         ->  Seq Scan on y1 y1_1
-               Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)))
+   ->  Seq Scan on y1
+         Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Seq Scan on y1
-   Filter: ((a = 1) AND ((a > 2) OR ((a % 2) = 0)) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 DROP VIEW rls_sbv;
 --
@@ -3445,23 +3067,13 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (14 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 WHERE f_leak(b);
-<<<<<<< HEAD
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on y2
-         Filter: f_leak(y2.b)
-         ->  Seq Scan on y2 y2_1
-               Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
+   ->  Seq Scan on y2
+         Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
  Optimizer: Postgres query optimizer
-(6 rows)
-=======
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Seq Scan on y2
-   Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
-(2 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(4 rows)
 
 --
 -- Qual push-down of leaky functions, when not referring to table
@@ -3561,32 +3173,18 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM y2 JOIN test_qual_pushdown ON (b = abc) WHERE f_leak(b);
-<<<<<<< HEAD
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Join
          Hash Cond: (y2.b = test_qual_pushdown.abc)
-         ->  Subquery Scan on y2
-               Filter: f_leak(y2.b)
-               ->  Seq Scan on y2 y2_1
-                     Filter: (((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0))
+         ->  Seq Scan on y2
+               Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
          ->  Hash
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
                      ->  Seq Scan on test_qual_pushdown
  Optimizer: Postgres query optimizer
-(11 rows)
-=======
-                                       QUERY PLAN                                        
------------------------------------------------------------------------------------------
- Hash Join
-   Hash Cond: (test_qual_pushdown.abc = y2.b)
-   ->  Seq Scan on test_qual_pushdown
-   ->  Hash
-         ->  Seq Scan on y2
-               Filter: ((((a % 4) = 0) OR ((a % 3) = 0) OR ((a % 2) = 0)) AND f_leak(b))
-(6 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+(9 rows)
 
 DROP TABLE test_qual_pushdown;
 --
@@ -3594,15 +3192,9 @@ DROP TABLE test_qual_pushdown;
 --
 RESET SESSION AUTHORIZATION;
 DROP TABLE t1 CASCADE;
-<<<<<<< HEAD
--- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
--- GUCs in QEs.
-SET client_min_messages TO 'notice';
-=======
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table t2
 drop cascades to table t3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE t1 (a integer);
 GRANT SELECT ON t1 TO regress_rls_bob, regress_rls_carol;
 CREATE POLICY p1 ON t1 TO regress_rls_bob USING ((a % 2) = 0);
@@ -3683,28 +3275,15 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
  20 | 98f13708210194c475687be6106a3b84
 (11 rows)
 
-<<<<<<< HEAD
-EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-                QUERY PLAN                
-------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
-   ->  Subquery Scan on t1
-         Filter: f_leak(t1.b)
-         ->  Seq Scan on t1 t1_1
-               Filter: ((a % 2) = 0)
- Optimizer: Postgres query optimizer
-(6 rows)
-=======
 EXPLAIN (COSTS OFF)
 WITH cte1 AS MATERIALIZED (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-                   QUERY PLAN                    
--------------------------------------------------
- CTE Scan on cte1
-   CTE cte1
-     ->  Seq Scan on t1
-           Filter: (((a % 2) = 0) AND f_leak(b))
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on t1
+         Filter: (((a % 2) = 0) AND f_leak(b))
+ Optimizer: Postgres query optimizer
 (4 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
 ERROR:  new row violates row-level security policy for table "t1"
