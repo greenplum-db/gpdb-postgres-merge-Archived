@@ -20,12 +20,10 @@ create language plpythonu;
  $$
  language plpythonu;
  
- set gp_enable_mk_sort = on;
  select sort_schema.has_sortmethod('explain analyze select * from generate_series(1, 100) g order by g limit 100;');
  
  select sort_schema.has_sortmethod('explain analyze select * from generate_series(1, 100) g order by g;');
  
- set gp_enable_mk_sort = off;
  select sort_schema.has_sortmethod('explain analyze select * from generate_series(1, 100) g order by g limit 100;');
  
  select sort_schema.has_sortmethod('explain analyze select * from generate_series(1, 100) g order by g;');
@@ -33,13 +31,10 @@ create language plpythonu;
  create table sort_a(i int, j int);
  insert into sort_a values(1, 2);
  
- set gp_enable_mk_sort = on;
  select sort_schema.has_sortmethod('explain analyze select i from sort_a order by i;');
  
- set gp_enable_mk_sort = off;
  select sort_schema.has_sortmethod('explain analyze select i from sort_a order by i;');
 
-set gp_enable_mk_sort = on;
 create table gpsort_alltypes(dist_col int, col1 bigint, col2 bigserial, col3 bit, col4 bit varying(10), col5 bool, col6 char, col7 varchar(10), col8 cidr, col9 circle, col10 date, col11 numeric(5,2), col12 float8, col13 inet, col14 int4, col15 interval, col16 lseg, col17 macaddr, col18 money, col19 path, col20 point, col21 polygon, col22 float4, col23 serial4, col24 smallint, col25 text, col26 time, col27 timetz, col28 timestamp, col29 timestamptz) distributed by (dist_col);
 
 insert into gpsort_alltypes values(1, 1234567891011,13942492347494,'1','0001','yes', 'a', 'abcdefgh', '192.168.100.1', circle '((0,0),1)', '2007-01-01', 123.45, 12323423424.324, inet '192.168.1.1', 123123, interval '24 hours',lseg '((0,0),(1,1))', macaddr '12:34:56:78:90:ab', '$1000.00',  path '((0,0),(1,1),(2,2))', point '(0,0)',polygon '((0,0),(1,1))',213234.23,1,7123,'abcdsafasfasfasfasfdasfasfdasf2asdfhsadfsfs','04:00:00','04:00:00 EST','2007-01-01 04:00:00','2007-01-01 04:00:00 EST');

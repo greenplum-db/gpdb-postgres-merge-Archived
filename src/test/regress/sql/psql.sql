@@ -3,10 +3,6 @@
 -- specific server features
 --
 
--- GPDB: Use Postgres's tuplesort instead of our tuplesort_mk to avoid
--- array sorting diffs.
-set gp_enable_mk_sort=false;
-
 -- \set
 
 -- fail: invalid name
