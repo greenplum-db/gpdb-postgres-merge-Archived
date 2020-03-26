@@ -747,7 +747,8 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     }
     else if (att_isnull(attnum-1, tup->t_data->t_bits))
     {
-        result = getmissingattr(tupleDesc, attnum, isnull);
+		result = Int32GetDatum(0);
+		*isnull = true;
     }
     else
         result = nocachegetattr(tup, attnum, tupleDesc);
