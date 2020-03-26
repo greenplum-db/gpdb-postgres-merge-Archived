@@ -393,9 +393,9 @@ select count(i) from filter_test;
 
 -- TEST with multi-parameter aggs
 select covar_pop(i,j) from filter_test;
-    covar_pop     
-------------------
- 2.08163265306122
+     covar_pop      
+--------------------
+ 2.0816326530612246
 (1 row)
 
 select covar_pop(i,j) from filter_test where i < 5;
