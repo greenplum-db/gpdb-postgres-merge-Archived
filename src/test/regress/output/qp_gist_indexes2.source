@@ -785,15 +785,13 @@ SELECT owner, property FROM GistTable1
 EXPLAIN (COSTS OFF)
 SELECT owner, property FROM GistTable1
  WHERE property ~= '( (6050, 20), (7052, 250) )';
-                              QUERY PLAN                             
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable1
-         Recheck Cond: (property ~= '(7052,250),(6050,20)'::box)
-         ->  Bitmap Index Scan on propertyboxindex
-               Index Cond: (property ~= '(7052,250),(6050,20)'::box)
+   ->  Index Scan using propertyboxindex on gisttable1
+         Index Cond: (property ~= '(7052,250),(6050,20)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 SELECT id, property FROM GistTable1 
  WHERE property IS NULL 
@@ -1074,17 +1072,15 @@ SELECT owner, property FROM GistTable1
  WHERE property IS NULL
  ORDER BY id
  ;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property IS NULL)
-               ->  Bitmap Index Scan on propertyisnullindex
+         ->  Index Scan using propertyisnullindex on gisttable1
  Optimizer: Postgres query optimizer
-(8 rows)
+(6 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test13Vacuum.sql
@@ -1225,15 +1221,13 @@ SELECT id, property AS "ProperTee" FROM GistTable13
 
 EXPLAIN (COSTS OFF) SELECT id, property AS "ProperTee" FROM GistTable13 
  WHERE property ~= '( (999,999), (998,998) )';
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable13
-         Recheck Cond: (property ~= '(999,999),(998,998)'::box)
-         ->  Bitmap Index Scan on gistindex13
-               Index Cond: (property ~= '(999,999),(998,998)'::box)
+   ->  Index Scan using gistindex13 on gisttable13
+         Index Cond: (property ~= '(999,999),(998,998)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test15ReindexDropIndex.sql
@@ -1262,18 +1256,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 REINDEX INDEX propertyBoxIndex;
 SELECT id FROM GistTable1 
@@ -1289,18 +1281,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 DROP INDEX propertyBoxIndex;
 -- Obviously, this shouldn't use the index now that the index is gone.
@@ -1407,15 +1397,13 @@ SELECT owner, property FROM GistTable1
 EXPLAIN (COSTS OFF)
 SELECT owner, property FROM GistTable1
  WHERE property ~= '( (6050, 20), (7052, 250) )';
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable1
-         Recheck Cond: (property ~= '(7052,250),(6050,20)'::box)
-         ->  Bitmap Index Scan on propertyboxindex
-               Index Cond: (property ~= '(7052,250),(6050,20)'::box)
+   ->  Index Scan using propertyboxindex on gisttable1
+         Index Cond: (property ~= '(7052,250),(6050,20)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 SELECT id, property FROM GistTable1 
  WHERE property IS NULL 
@@ -1696,17 +1684,15 @@ SELECT owner, property FROM GistTable1
  WHERE property IS NULL
  ORDER BY id
  ;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property IS NULL)
-               ->  Bitmap Index Scan on propertyisnullindex
+         ->  Index Scan using propertyisnullindex on gisttable1
  Optimizer: Postgres query optimizer
-(8 rows)
+(6 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test13Vacuum.sql
@@ -1847,15 +1833,13 @@ SELECT id, property AS "ProperTee" FROM GistTable13
 
 EXPLAIN (COSTS OFF) SELECT id, property AS "ProperTee" FROM GistTable13 
  WHERE property ~= '( (999,999), (998,998) )';
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable13
-         Recheck Cond: (property ~= '(999,999),(998,998)'::box)
-         ->  Bitmap Index Scan on gistindex13
-               Index Cond: (property ~= '(999,999),(998,998)'::box)
+   ->  Index Scan using gistindex13 on gisttable13
+         Index Cond: (property ~= '(999,999),(998,998)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test15ReindexDropIndex.sql
@@ -1884,18 +1868,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 REINDEX INDEX propertyBoxIndex;
 SELECT id FROM GistTable1 
@@ -1911,18 +1893,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 DROP INDEX propertyBoxIndex;
 -- Obviously, this shouldn't use the index now that the index is gone.
@@ -2029,15 +2009,13 @@ SELECT owner, property FROM GistTable1
 EXPLAIN (COSTS OFF)
 SELECT owner, property FROM GistTable1
  WHERE property ~= '( (6050, 20), (7052, 250) )';
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable1
-         Recheck Cond: (property ~= '(7052,250),(6050,20)'::box)
-         ->  Bitmap Index Scan on propertyboxindex
-               Index Cond: (property ~= '(7052,250),(6050,20)'::box)
+   ->  Index Scan using propertyboxindex on gisttable1
+         Index Cond: (property ~= '(7052,250),(6050,20)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 SELECT id, property FROM GistTable1 
  WHERE property IS NULL 
@@ -2318,17 +2296,15 @@ SELECT owner, property FROM GistTable1
  WHERE property IS NULL
  ORDER BY id
  ;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property IS NULL)
-               ->  Bitmap Index Scan on propertyisnullindex
+         ->  Index Scan using propertyisnullindex on gisttable1
  Optimizer: Postgres query optimizer
-(8 rows)
+(6 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test13Vacuum.sql
@@ -2469,15 +2445,13 @@ SELECT id, property AS "ProperTee" FROM GistTable13
 
 EXPLAIN (COSTS OFF) SELECT id, property AS "ProperTee" FROM GistTable13 
  WHERE property ~= '( (999,999), (998,998) )';
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable13
-         Recheck Cond: (property ~= '(999,999),(998,998)'::box)
-         ->  Bitmap Index Scan on gistindex13
-               Index Cond: (property ~= '(999,999),(998,998)'::box)
+   ->  Index Scan using gistindex13 on gisttable13
+         Index Cond: (property ~= '(999,999),(998,998)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test15ReindexDropIndex.sql
@@ -2506,18 +2480,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 REINDEX INDEX propertyBoxIndex;
 SELECT id FROM GistTable1 
@@ -2533,18 +2505,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 DROP INDEX propertyBoxIndex;
 -- Obviously, this shouldn't use the index now that the index is gone.
@@ -2651,15 +2621,13 @@ SELECT owner, property FROM GistTable1
 EXPLAIN (COSTS OFF)
 SELECT owner, property FROM GistTable1
  WHERE property ~= '( (6050, 20), (7052, 250) )';
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable1
-         Recheck Cond: (property ~= '(7052,250),(6050,20)'::box)
-         ->  Bitmap Index Scan on propertyboxindex
-               Index Cond: (property ~= '(7052,250),(6050,20)'::box)
+   ->  Index Scan using propertyboxindex on gisttable1
+         Index Cond: (property ~= '(7052,250),(6050,20)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 SELECT id, property FROM GistTable1 
  WHERE property IS NULL 
@@ -2940,17 +2908,15 @@ SELECT owner, property FROM GistTable1
  WHERE property IS NULL
  ORDER BY id
  ;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property IS NULL)
-               ->  Bitmap Index Scan on propertyisnullindex
+         ->  Index Scan using propertyisnullindex on gisttable1
  Optimizer: Postgres query optimizer
-(8 rows)
+(6 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test13Vacuum.sql
@@ -3091,15 +3057,13 @@ SELECT id, property AS "ProperTee" FROM GistTable13
 
 EXPLAIN (COSTS OFF) SELECT id, property AS "ProperTee" FROM GistTable13 
  WHERE property ~= '( (999,999), (998,998) )';
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Bitmap Heap Scan on gisttable13
-         Recheck Cond: (property ~= '(999,999),(998,998)'::box)
-         ->  Bitmap Index Scan on gistindex13
-               Index Cond: (property ~= '(999,999),(998,998)'::box)
+   ->  Index Scan using gistindex13 on gisttable13
+         Index Cond: (property ~= '(999,999),(998,998)'::box)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: test15ReindexDropIndex.sql
@@ -3128,18 +3092,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 REINDEX INDEX propertyBoxIndex;
 SELECT id FROM GistTable1 
@@ -3155,18 +3117,16 @@ SELECT id FROM GistTable1
 EXPLAIN (COSTS OFF) SELECT id FROM GistTable1 
  WHERE property ~= '( (1,2), (3,4) )'
  ORDER BY id;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: id
    ->  Sort
          Sort Key: id
-         ->  Bitmap Heap Scan on gisttable1
-               Recheck Cond: (property ~= '(3,4),(1,2)'::box)
-               ->  Bitmap Index Scan on propertyboxindex
-                     Index Cond: (property ~= '(3,4),(1,2)'::box)
+         ->  Index Scan using propertyboxindex on gisttable1
+               Index Cond: (property ~= '(3,4),(1,2)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(7 rows)
 
 DROP INDEX propertyBoxIndex;
 -- Obviously, this shouldn't use the index now that the index is gone.
