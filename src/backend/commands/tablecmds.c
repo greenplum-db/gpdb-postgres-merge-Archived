@@ -16109,6 +16109,12 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
  * ALTER TABLE SET DISTRIBUTED BY
  *
  * set distribution policy for rel
+ *
+ * GPDB_12_MERGE_FIXME: this function used to close the relation. Previously, the
+ * callers expected that, but not anymore. There are supposedly comments
+ * below explaining why we have to close it, but I don't understand it.
+ * I changed it so that we don't close the relation here, but I wonder why it
+ * was done differently before? Was there a good reason to close it?
  */
 static void
 ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
@@ -16139,15 +16145,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		ereport(ERROR,
 			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			errmsg("permission denied: \"%s\" is a system catalog", RelationGetRelationName(rel))));
-
-	/* GPDB_12_MERGE_FIXME: this function closes the relation. Previously, the
-	 * callers expected that, but not anymore. There are supposedly comments
-	 * below explaining why we have to close it, but I don't understand it.
-	 * I think it would be good to test, as a separate PR, whether we can
-	 * avoid closing it here. For now, increment the relcount, so that the
-	 * heap_close() won't actually close it for the caller.
-	 */
-	RelationIncrementReferenceCount(rel);
 
 	Assert(PointerIsValid(node));
 	Assert(IsA(node, List));
@@ -16275,7 +16272,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 					 * caller expects ATExecSetDistributedBy() to close rel
 					 * (see the non-random distribution case below for why.
 					 */
-					heap_close(rel, NoLock);
 					goto l_distro_fini;
 				}
 			}
@@ -16303,7 +16299,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				 * caller expects ATExecSetDistributedBy() to close rel
 				 * (see the non-random distribution case below for why.
 				 */
-				heap_close(rel, NoLock);
 				goto l_distro_fini;
 			}
 
@@ -16456,7 +16451,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 								"to force redistribution",
 								RelationGetRelationName(rel),
 								buf.data)));
-						heap_close(rel, NoLock);
 						/* Tell QEs to do nothing */
 						return;
 						/* don't goto l_distro_fini -- didn't do anything! */
@@ -16622,7 +16616,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		if (cmd->backendId == 0)
 		{
 			/* caller expects rel to be closed for this AT type */
-			heap_close(rel, NoLock);
 			goto l_distro_fini;			
 		}
 
@@ -16661,8 +16654,10 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 * this we must close the rel, since it needs to be forgotten by
 		 * the cache, we keep the lock though. ATRewriteCatalogs() knows
 		 * that we've closed the relation here.
+		 * GPDB_12_MERGE_FIXME: We no longer close the relation. Is that OK?
+		 * See FIXME comment at top of function, too.
 		 */
-		heap_close(rel, NoLock);
+		//table_close(rel, NoLock);
 		rel = NULL;
 		tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 		swap_relation_files(tarrelid, tmprelid,
