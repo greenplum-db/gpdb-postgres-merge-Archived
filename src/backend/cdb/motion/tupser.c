@@ -368,16 +368,16 @@ CandidateForSerializeDirect(int16 targetRoute, struct directTransportBuffer *b)
 int
 SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTransportBuffer *b, TupleChunkList tcList, int16 targetRoute)
 {
-	int			natts;
-	int			dataSize = TUPLE_CHUNK_HEADER_SIZE;
-	TupleDesc	tupdesc;
+	int                natts;
+	int                dataSize = TUPLE_CHUNK_HEADER_SIZE;
+	TupleDesc          tupdesc;
 	TupleChunkListItem tcItem = NULL;
-	MinimalTuple mintuple;
-	bool		shouldFree;
-	char	   *tupbody;
-	unsigned int tupbodylen;
-	unsigned int tuplen;
-	bool hasExternalAttr = false;
+	MinimalTuple       mintuple;
+	bool               shouldFreeTuple;
+	char               *tupbody;
+	unsigned int       tupbodylen;
+	unsigned int       tuplen;
+	bool               hasExternalAttr = false;
 
 	AssertArg(pSerInfo != NULL);
 	AssertArg(b != NULL);
@@ -425,7 +425,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 		Datum	   *values;
 
 		slot_getallattrs(slot);
-		values = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
+		values = slot->tts_values;
 
 		for (int i = 0; i < natts; i++)
 		{
@@ -435,18 +435,27 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 			if (!attr->attisdropped && attr->attlen == -1 && !slot->tts_isnull[i])
 			{
 				if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
-					val = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
+				{
+					if (values == slot->tts_values)
+					{
+						values = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
+						memcpy(values, slot->tts_values, tupdesc->natts * sizeof(Datum));
+					}
+					Assert(&values[i] != &slot->tts_values[i]);
+					values[i] = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
 																DatumGetPointer(val)));
+				}
 			}
-			values[i] = val;
 		}
 		mintuple = heap_form_minimal_tuple(slot->tts_tupleDescriptor, values,
-																			 slot->tts_isnull);
-		shouldFree = true;
-		pfree(values);
+										   slot->tts_isnull);
+		if (values != slot->tts_values)
+			pfree(values);
+
+		shouldFreeTuple = true;
 	}
 	else
-		mintuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
+		mintuple = ExecFetchSlotMinimalTuple(slot, &shouldFreeTuple);
 
 	tupbody = (char *) mintuple + MINIMAL_TUPLE_DATA_OFFSET;
 	tupbodylen = mintuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
@@ -468,7 +477,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 		SetChunkType(b->pri, TC_WHOLE);
 		SetChunkDataSize(b->pri, dataSize - TUPLE_CHUNK_HEADER_SIZE);
 
-		if (shouldFree)
+		if (shouldFreeTuple)
 			pfree(mintuple);
 		return dataSize;
 	}
@@ -519,7 +528,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 		 */
 	}
 
-	if (shouldFree)
+	if (shouldFreeTuple)
 		pfree(mintuple);
 
 	/*
