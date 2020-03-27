@@ -6918,17 +6918,25 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		{
 			NewColumnValue *newval;
 
-			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
-			newval->attnum = attribute.attnum;
-			newval->expr = expression_planner(defval);
-			newval->is_generated = (colDef->generated != '\0');
+			/* If QE, AlteredTableInfo streamed from QD already contains newvals */
+			if (Gp_role != GP_ROLE_EXECUTE)
+			{
+				newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+				newval->attnum = attribute.attnum;
+				newval->expr = expression_planner(defval);
+				newval->is_generated = (colDef->generated != '\0');
 
-			/*
-			 * tab is null if this is called by "create or replace view" which
-			 * can't have any default value.
-			 */
-			Assert(tab);
-			tab->newvals = lappend(tab->newvals, newval);
+				/*
+				 * tab is null if this is called by "create or replace view" which
+				 * can't have any default value.
+				 */
+				Assert(tab);
+				tab->newvals = lappend(tab->newvals, newval);
+			}
+			else
+			{
+				Assert(tab->newvals != NULL);
+			}
 		}
 
 		if (DomainHasConstraints(typeOid))
@@ -7016,6 +7024,12 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * optimization for columnar tables.
 	 * We have to do it while processing the root partition because that's the
 	 * only level where the `ADD COLUMN` subcommands are populated.
+	 *
+	 * GPDB_12_MERGE_FIXME: Given now wqueue gets dispatched from QD to QE, no
+	 * need to perform this step on QE. Only need to execute this block of
+	 * code on QD and QE will get the information to perform optimized rewrite
+	 * for CO or not. Leaving fixme here as CO code is not working currently,
+	 * hence hard to validate if works correctly or not.
 	 */
 	if (!recursing && tab->relkind == RELKIND_RELATION)
 	{
