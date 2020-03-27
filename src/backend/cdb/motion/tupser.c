@@ -377,6 +377,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 	char	   *tupbody;
 	unsigned int tupbodylen;
 	unsigned int tuplen;
+	bool hasExternalAttr = false;
 
 	AssertArg(pSerInfo != NULL);
 	AssertArg(b != NULL);
@@ -399,11 +400,53 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 	tcList->serialized_data_length = 0;
 	tcList->max_chunk_length = Gp_max_tuple_chunk_size;
 
-	/* GPDB_12_MERGE_FIXME: This used to support serializing memtuples directly.
+	/*
+	 * GPDB_12_MERGE_FIXME: This used to support serializing memtuples directly.
 	 * That got removed with MinimalTuples in the merge. Resurrect the MemtUple
 	 * support if there's a performance benefit.
 	 */
-	mintuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
+	/* Check if the slot has external attribute */
+	for (int i = 0; i < natts; i++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(slot->tts_tupleDescriptor, i);
+
+		if (!attr->attisdropped && attr->attlen == -1 && !slot->tts_isnull[i])
+		{
+			hasExternalAttr = true;
+			break;
+		}
+	}
+
+	/*
+	 * If the slot contains any toasted attributes, detoast them now before serializing
+	 */
+	if (hasExternalAttr)
+	{
+		Datum	   *values;
+
+		slot_getallattrs(slot);
+		values = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
+
+		for (int i = 0; i < natts; i++)
+		{
+			Datum		val = slot->tts_values[i];
+			Form_pg_attribute attr = TupleDescAttr(slot->tts_tupleDescriptor, i);
+
+			if (!attr->attisdropped && attr->attlen == -1 && !slot->tts_isnull[i])
+			{
+				if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
+					val = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
+																DatumGetPointer(val)));
+			}
+			values[i] = val;
+		}
+		mintuple = heap_form_minimal_tuple(slot->tts_tupleDescriptor, values,
+																			 slot->tts_isnull);
+		shouldFree = true;
+		pfree(values);
+	}
+	else
+		mintuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
 
 	tupbody = (char *) mintuple + MINIMAL_TUPLE_DATA_OFFSET;
 	tupbodylen = mintuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
@@ -444,6 +487,11 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 	addByteStringToChunkList(tcList, (char *) &tuplen, sizeof(tuplen), &pSerInfo->chunkCache);
 	addByteStringToChunkList(tcList, tupbody, tupbodylen, &pSerInfo->chunkCache);
 
+	/*
+	 * GPDB_12_MERGE_FIXME: This function does not use this context. This context
+	 * is only used in SerializeRecordCacheIntoChunks(). We need to find a better
+	 * place for resetting it, or eliminating the needs for this context.
+	 */
 	MemoryContextReset(s_tupSerMemCtxt);
 
 	/*
