@@ -203,17 +203,9 @@ FETCH ALL FROM c;
 (2 rows)
 
 FETCH BACKWARD 1 FROM c;
- ctid  | id 
--------+----
- (0,2) |  2
-(1 row)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
 FETCH FIRST FROM c;
- ctid  | id 
--------+----
- (0,1) |  1
-(1 row)
-
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
 -- tidscan via CURRENT OF
 BEGIN;
