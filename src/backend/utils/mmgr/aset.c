@@ -677,6 +677,7 @@ AllocSetReset(MemoryContext context)
 #endif
 
 	set->accountingParent->currentAllocated -= set->localAllocated;
+	set->localAllocated = 0;
 
 	/* Clear chunk freelists */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
@@ -751,6 +752,7 @@ AllocSetDelete(MemoryContext context, MemoryContext parent)
 	}
 	else
 		set->accountingParent->currentAllocated -= set->localAllocated;
+	set->localAllocated = 0;
 
 	/*
 	 * If the context is a candidate for a freelist, put it into that freelist
