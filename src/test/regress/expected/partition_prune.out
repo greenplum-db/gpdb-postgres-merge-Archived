@@ -1250,16 +1250,18 @@ create table coercepart_ab partition of coercepart for values in ('ab');
 create table coercepart_bc partition of coercepart for values in ('bc');
 create table coercepart_cd partition of coercepart for values in ('cd');
 explain (costs off) select * from coercepart where a in ('ab', to_char(125, '999'));
-                                                          QUERY PLAN                                                          
-------------------------------------------------------------------------------------------------------------------------------
- Append
-   ->  Seq Scan on coercepart_ab
-         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-   ->  Seq Scan on coercepart_bc
-         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-   ->  Seq Scan on coercepart_cd
-         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-(7 rows)
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Append
+         ->  Seq Scan on coercepart_ab
+               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+         ->  Seq Scan on coercepart_bc
+               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+         ->  Seq Scan on coercepart_cd
+               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 explain (costs off) select * from coercepart where a ~ any ('{ab}');
                         QUERY PLAN                        
