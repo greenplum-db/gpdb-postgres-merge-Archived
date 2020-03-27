@@ -4948,6 +4948,7 @@ transformStorageEncodingClause(List *options)
 	Datum d;
 	ListCell *lc;
 	DefElem *dl;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	foreach(lc, options)
 	{
 		dl = (DefElem *) lfirst(lc);
@@ -4975,7 +4976,7 @@ transformStorageEncodingClause(List *options)
 	 */
 	d = transformRelOptions(PointerGetDatum(NULL),
 									  list_concat(extra, options),
-									  NULL, NULL,
+									  NULL, validnsps,
 									  true, false);
 	(void)heap_reloptions(RELKIND_RELATION, d, true);
 
