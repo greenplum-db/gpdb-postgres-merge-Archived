@@ -1172,6 +1172,9 @@ generate_mergejoin_paths(PlannerInfo *root,
 	if (jointype == JOIN_UNIQUE_OUTER || jointype == JOIN_UNIQUE_INNER)
 		jointype = JOIN_INNER;
 
+	if (jointype == JOIN_DEDUP_SEMI || jointype == JOIN_DEDUP_SEMI_REVERSE)
+		jointype = JOIN_INNER;
+
 	/* Look for useful mergeclauses (if any) */
 	mergeclauses =
 		find_mergeclauses_for_outer_pathkeys(root,
@@ -1415,7 +1418,7 @@ match_unsorted_outer(PlannerInfo *root,
 	ListCell   *lc1;
 
 	if (jointype == JOIN_DEDUP_SEMI || jointype == JOIN_DEDUP_SEMI_REVERSE)
-		save_jointype = jointype = JOIN_INNER;
+		jointype = JOIN_INNER;
 
 	/*
 	 * Nestloop only supports inner, left, semi, and anti joins.  Also, if we
