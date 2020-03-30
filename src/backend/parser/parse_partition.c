@@ -388,7 +388,7 @@ nextPartBound(PartEveryIterator *iter)
 	else
 	{
 		/* Without EVERY, create just one partition that covers the whole range */
-		if (iter->called)
+		if (!firstcall)
 			return false;
 
 		iter->called = true;
