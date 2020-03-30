@@ -1680,9 +1680,9 @@ setupQEDtxContext(DtxContextInfo *dtxContextInfo)
 			{
 				LWLockAcquire(SharedSnapshot.lockSlot->lock, LW_SHARED);
 				elog(DTM_DEBUG5,
-					 "setupQEDtxContext inputs (part 2b):  shared local snapshot xid = %u "
+					 "setupQEDtxContext inputs (part 2b):  shared local snapshot xid = " UINT64_FORMAT" "
 					 "(xmin: %u xmax: %u xcnt: %u) curcid: %d, segmate = %u",
-					 SharedSnapshot.desc->fullXid,
+					 U64FromFullTransactionId(SharedSnapshot.desc->fullXid),
 					 SharedSnapshot.desc->snapshot.xmin,
 					 SharedSnapshot.desc->snapshot.xmax,
 					 SharedSnapshot.desc->snapshot.xcnt,
