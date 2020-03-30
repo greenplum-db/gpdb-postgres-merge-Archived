@@ -26,6 +26,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_utilcmd.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/partcache.h"
 #include "utils/rel.h"
@@ -468,14 +469,18 @@ generateRangePartitions(ParseState *pstate,
 													  boundIter->partkey->parttypmod[0],
 													  boundIter->partkey->parttypcoll[0],
 													  boundIter->partkey->parttyplen[0],
-													  boundIter->currStart,
+													  datumCopy(boundIter->currStart,
+																boundIter->partkey->parttypbyval[0],
+																boundIter->partkey->parttyplen[0]),
 													  false,
 													  boundIter->partkey->parttypbyval[0]));
 		boundspec->upperdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
 													  boundIter->partkey->parttypmod[0],
 													  boundIter->partkey->parttypcoll[0],
 													  boundIter->partkey->parttyplen[0],
-													  boundIter->currEnd,
+													  datumCopy(boundIter->currEnd,
+																boundIter->partkey->parttypbyval[0],
+																boundIter->partkey->parttyplen[0]),
 													  false,
 													  boundIter->partkey->parttypbyval[0]));
 		boundspec->location = -1;
