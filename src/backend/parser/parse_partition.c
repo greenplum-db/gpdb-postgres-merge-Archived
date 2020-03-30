@@ -322,11 +322,7 @@ nextPartBound(PartEveryIterator *iter)
 		int32		cmpval;
 		bool		isnull;
 
-		/*
-		 * Corner case: if the previous end was equal to the END value, we're done.
-		 * Normally, we would catch it after calling the + operator, but it's possible
-		 * that we would overflow first.
-		 */
+		/* If the previous partition reached END, we're done */
 		if (iter->endReached)
 			return false;
 
@@ -339,50 +335,55 @@ nextPartBound(PartEveryIterator *iter)
 		if (isnull)
 			elog(ERROR, "plus-operator returned NULL"); // GPDB_12_MERGE_FIXME: better message
 
+		iter->currStart = iter->currEnd;
+
 		/* Is the next bound greater than END? */
 		cmpval = DatumGetInt32(FunctionCall2Coll(&iter->partkey->partsupfunc[0],
 												 iter->partkey->partcollation[0],
 												 next,
 												 iter->endVal));
-		if (cmpval > 0)
-			return false;
-		if (cmpval == 0)
-			iter->endReached = true;
-
-		/*
-		 * Sanity check that the next bound is > previous bound. This prevents us
-		 * from getting into an infinite loop if the + operator is not behaving.
-		 */
-		cmpval = DatumGetInt32(FunctionCall2Coll(&iter->partkey->partsupfunc[0],
-												 iter->partkey->partcollation[0],
-												 iter->currEnd,
-												 next));
 		if (cmpval >= 0)
 		{
-			if (firstcall)
+			iter->endReached = true;
+			iter->currEnd = iter->endVal;
+		}
+		else
+		{
+			/*
+			 * Sanity check that the next bound is > previous bound. This prevents us
+			 * from getting into an infinite loop if the + operator is not behaving.
+			 */
+			cmpval = DatumGetInt32(FunctionCall2Coll(&iter->partkey->partsupfunc[0],
+													 iter->partkey->partcollation[0],
+													 iter->currEnd,
+													 next));
+			if (cmpval >= 0)
 			{
-				/*
-				 * Second iteration: parameter hasn't increased the
-				 * current end from the old end.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("EVERY parameter too small")));
+				if (firstcall)
+				{
+					/*
+					 * Second iteration: parameter hasn't increased the
+					 * current end from the old end.
+					 */
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("EVERY parameter too small")));
+				}
+				else
+				{
+					/*
+					 * We got a smaller value but later than we
+					 * thought so it must be an overflow.
+					 */
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("END parameter not reached before type overflows")));
+				}
 			}
-			else
-			{
-				/*
-				 * We got a smaller value but later than we
-				 * thought so it must be an overflow.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("END parameter not reached before type overflows")));
-			}
+
+			iter->currEnd = next;
 		}
 
-		iter->currStart = iter->currEnd;
-		iter->currEnd = next;
 		return true;
 	}
 	else
