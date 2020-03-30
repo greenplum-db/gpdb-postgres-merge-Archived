@@ -331,7 +331,7 @@ do_copy(const char *args)
 
 	if (options->after_tofrom && is_on_segment(options->after_tofrom))
 	{
-		pg_log_error("\\COPY command doesn't support ON SEGMENT.");
+		pg_log_error("\\COPY command doesn't support ON SEGMENT");
 		free_copy_options(options);
 		return false;
 	}
