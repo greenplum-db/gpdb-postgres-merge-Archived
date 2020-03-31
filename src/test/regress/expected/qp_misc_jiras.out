@@ -3719,7 +3719,7 @@ select i as a, i as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a
  a | b 
 ---+---
  1 | 1
- 1 | 1
+ 1 |  
 (2 rows)
 
 explain select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a, b), (a)); 
@@ -3743,7 +3743,7 @@ select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a
  a | b 
 ---+---
  2 | 2
- 2 | 2
+ 2 |  
 (2 rows)
 
 drop table qp_misc_jiras.tbl7553_test;
