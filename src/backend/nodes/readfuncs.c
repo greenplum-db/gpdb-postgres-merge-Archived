@@ -863,7 +863,6 @@ _readDropStmt(void)
 	READ_ENUM_FIELD(removeType,ObjectType);
 	READ_ENUM_FIELD(behavior,DropBehavior);
 	READ_BOOL_FIELD(missing_ok);
-	READ_BOOL_FIELD(bAllowPartn);
 	READ_BOOL_FIELD(concurrent);
 
 	/* Force 'missing_ok' in QEs */
@@ -922,8 +921,6 @@ _readAlterTableCmd(void)
 	READ_NODE_FIELD(def);
 	READ_NODE_FIELD(transform);
 	READ_ENUM_FIELD(behavior, DropBehavior);
-	READ_BOOL_FIELD(part_expanded);
-	READ_NODE_FIELD(partoids);
 	READ_BOOL_FIELD(missing_ok);
 
 	READ_INT_FIELD(backendId);
@@ -1118,7 +1115,6 @@ _readRenameStmt(void)
 	READ_STRING_FIELD(newname);
 	READ_ENUM_FIELD(behavior,DropBehavior);
 
-	READ_BOOL_FIELD(bAllowPartn);
 	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
@@ -4213,6 +4209,28 @@ _readPartitionCmd(void)
 	READ_DONE();
 }
 
+static GpAlterPartitionId *
+_readGpAlterPartitionId(void)
+{
+	READ_LOCALS(GpAlterPartitionId);
+
+	READ_ENUM_FIELD(idtype, GpAlterPartitionIdType);
+	READ_NODE_FIELD(partiddef);
+
+	READ_DONE();
+}
+
+static GpDropPartitionCmd *
+_readGpDropPartitionCmd(void)
+{
+	READ_LOCALS(GpDropPartitionCmd);
+
+	READ_NODE_FIELD(partid);
+	READ_ENUM_FIELD(behavior,DropBehavior);
+
+	READ_DONE();
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 /*
  * parseNodeString
@@ -4503,6 +4521,10 @@ parseNodeString(void)
         return_value = _readPartitionRangeDatum();
 	else if (MATCHX("PARTITIONCMD"))
 		return_value = _readPartitionCmd();
+	else if (MATCHX("GPALTERPARTITIONID"))
+		return_value = _readGpAlterPartitionId();
+	else if (MATCHX("GPDROPPARTITIONCMD"))
+		return_value = _readGpDropPartitionCmd();
 
 	/* GPDB additions */
 	else if (MATCHX("A_ARRAYEXPR"))

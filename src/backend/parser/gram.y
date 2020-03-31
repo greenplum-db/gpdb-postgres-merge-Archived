@@ -3735,14 +3735,11 @@ alter_table_partition_id_spec_with_opt_default:
 			| DEFAULT PARTITION 
 				{
 					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId *n = makeNode(AlterPartitionId);
+					GpAlterPartitionId *n = makeNode(GpAlterPartitionId);
 					n->idtype = AT_AP_IDDefault;
                     n->partiddef = NULL;
                     n->location  = @1;
 					$$ = (Node *)n;
-#endif
 				}
 		;
 
@@ -3954,31 +3951,15 @@ alter_table_partition_cmd:
             alter_table_partition_id_spec_with_opt_default
             opt_drop_behavior
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpDropPartitionCmd *dpc = makeNode(GpDropPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					DropStmt *ds = makeNode(DropStmt);
 
-					ds->missing_ok = false;
-					ds->behavior = $3;
-
-                    /* 
-                       build an (incomplete) drop statement for arg1: 
-                       fill in the rest after the partition id spec is
-                       validated
-                    */
-
-                    pc->partid = (Node *)$2;
-                    pc->arg1 = (Node *)ds;
-                    pc->arg2 = NULL;
-                    pc->location = @2;
+					dpc->partid = $2;
+					dpc->behavior = $3;
 
 					n->subtype = AT_PartDrop;
-					n->def = (Node *)pc;
-					$$ = (Node *)n;
-#endif
+					n->def = (Node *) dpc;
+					$$ = (Node *) n;
 				}
 			| DROP PARTITION 
 				{

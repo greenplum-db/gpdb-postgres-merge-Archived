@@ -4340,9 +4340,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				break;
 
 				/* CDB: Partitioned Tables */
+            case AT_PartDrop:			/* Drop */
+				newcmds = lappend(newcmds, cmd);
+				break;
+
             case AT_PartAlter:			/* Alter */
             case AT_PartAdd:			/* Add */
-            case AT_PartDrop:			/* Drop */
             case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */

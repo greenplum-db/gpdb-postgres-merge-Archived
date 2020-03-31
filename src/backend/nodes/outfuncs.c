@@ -3335,7 +3335,6 @@ _outDropStmt(StringInfo str, const DropStmt *node)
 	WRITE_ENUM_FIELD(removeType, ObjectType);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
 	WRITE_BOOL_FIELD(missing_ok);
-	WRITE_BOOL_FIELD(bAllowPartn);
 	WRITE_BOOL_FIELD(concurrent);
 }
 
@@ -3410,8 +3409,6 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 	WRITE_NODE_FIELD(def);
 	WRITE_NODE_FIELD(transform);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
-	WRITE_BOOL_FIELD(part_expanded);
-	WRITE_NODE_FIELD(partoids);
 	WRITE_BOOL_FIELD(missing_ok);
 
 	WRITE_INT_FIELD(backendId);
@@ -3609,7 +3606,6 @@ _outRenameStmt(StringInfo str, const RenameStmt *node)
 	WRITE_STRING_FIELD(newname);
 	WRITE_ENUM_FIELD(behavior,DropBehavior);
 
-	WRITE_BOOL_FIELD(bAllowPartn);
 	WRITE_BOOL_FIELD(missing_ok);
 }
 
@@ -5024,6 +5020,24 @@ _outPartitionCmd(StringInfo str, const PartitionCmd *node)
 }
 
 static void
+_outGpAlterPartitionId(StringInfo str, const GpAlterPartitionId *node)
+{
+	WRITE_NODE_TYPE("GPALTERPARTITIONID");
+
+	WRITE_ENUM_FIELD(idtype, GpAlterPartitionIdType);
+	WRITE_NODE_FIELD(partiddef);
+}
+
+static void
+_outGpDropPartitionCmd(StringInfo str, const GpDropPartitionCmd *node)
+{
+	WRITE_NODE_TYPE("GPDROPPARTITIONCMD");
+
+	WRITE_NODE_FIELD(partid);
+	WRITE_ENUM_FIELD(behavior, DropBehavior);
+}
+
+static void
 _outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
 {
 	WRITE_NODE_TYPE("CREATESCHEMASTMT");
@@ -6244,6 +6258,12 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionCmd:
 				_outPartitionCmd(str, obj);
+				break;
+			case T_GpAlterPartitionId:
+				_outGpAlterPartitionId(str, obj);
+				break;
+			case T_GpDropPartitionCmd:
+				_outGpDropPartitionCmd(str, obj);
 				break;
 
 			case T_CreateSchemaStmt:

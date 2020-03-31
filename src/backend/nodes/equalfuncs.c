@@ -1174,9 +1174,6 @@ _equalAlterTableCmd(const AlterTableCmd *a, const AlterTableCmd *b)
 	COMPARE_NODE_FIELD(newowner);
 	COMPARE_NODE_FIELD(def);
 	COMPARE_SCALAR_FIELD(behavior);
-	COMPARE_SCALAR_FIELD(part_expanded);
-
-	/* No need to compare AT workspace field, partoids.  */
 	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;

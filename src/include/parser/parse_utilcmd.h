@@ -37,6 +37,8 @@ extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel,
 
 extern GpPolicy *getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc);
 
+
+/* prototypes for functions in parse_partition.h */
 extern Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 										   const char *colName, Oid colType, int32 colTypmod,
 										   Oid partCollation);

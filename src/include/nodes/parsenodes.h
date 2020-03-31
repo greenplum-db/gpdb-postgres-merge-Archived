@@ -1999,8 +1999,6 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 								 * constraint, or parent table */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
-	bool		part_expanded;	/* expands from another command, for partitioning */
-	List	   *partoids;		/* If applicable, OIDs of partition part tables */
 	bool		missing_ok;		/* skip error if missing? */
 
 	/*
@@ -2012,6 +2010,39 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	GpPolicy   *policy;
 
 } AlterTableCmd;
+
+/* GPDB_12_MERGE_FIXME: which of these are still needed? */
+typedef enum GpAlterPartitionIdType
+{
+#if 0
+	AT_AP_IDNone,				/* no ID */
+	AT_AP_IDName,				/* IDentify by Name */
+	AT_AP_IDValue,				/* IDentifier FOR Value */
+	AT_AP_IDRank,				/* IDentifier FOR Rank */
+	AT_AP_ID_oid,				/* IDentifier by oid (for internal use only) */
+	AT_AP_IDList,				/* List of IDentifier(for internal use only) */
+	AT_AP_IDRule,				/* partition rule (for internal use only) */
+#endif
+	AT_AP_IDDefault,			/* IDentify DEFAULT partition */
+#if 0
+	AT_AP_IDRangeVar			/* IDentify Partition by RangeVar */
+#endif
+} GpAlterPartitionIdType;
+
+typedef struct GpAlterPartitionId /* Identify a partition by name, val, pos */
+{
+	NodeTag		type;
+	GpAlterPartitionIdType idtype;/* Type of table alteration to apply */
+	Node	   *partiddef;		/* partition id definition */
+	int			location;		/* token location, or -1 if unknown */
+} GpAlterPartitionId;
+
+typedef struct GpDropPartitionCmd
+{
+	NodeTag		type;
+	Node	   *partid;			/* partition id of the partition to drop */
+	DropBehavior behavior;		/* RESTRICT or CASCADE */
+} GpDropPartitionCmd;
 
 /* ----------------------
  * Alter Collation
@@ -3036,7 +3067,6 @@ typedef struct DropStmt
 	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if object is missing? */
-	bool		bAllowPartn;	/* allow action on a partition */
 	bool		concurrent;		/* drop index concurrently? */
 } DropStmt;
 
@@ -3307,7 +3337,6 @@ typedef struct RenameStmt
 	char	   *newname;		/* the new name */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 
-	bool		bAllowPartn;	/* allow action on a partition */
 	bool		missing_ok;		/* skip error if missing? */
 } RenameStmt;
 

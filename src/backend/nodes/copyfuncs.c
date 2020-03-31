@@ -3841,10 +3841,6 @@ _copyAlterTableCmd(const AlterTableCmd *from)
 	COPY_NODE_FIELD(newowner);
 	COPY_NODE_FIELD(def);
 	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(part_expanded);
-
-	/* Need to copy AT workspace since process uses copy internally. */
-	COPY_NODE_FIELD(partoids);
 	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
@@ -4130,7 +4126,6 @@ _copyDropStmt(const DropStmt *from)
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
 	COPY_SCALAR_FIELD(concurrent);
-	COPY_SCALAR_FIELD(bAllowPartn);
 
 	return newnode;
 }
@@ -4296,7 +4291,6 @@ _copyRenameStmt(const RenameStmt *from)
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
 	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(bAllowPartn);
 	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
@@ -5544,6 +5538,28 @@ _copyPartitionCmd(const PartitionCmd *from)
 
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(bound);
+
+	return newnode;
+}
+
+static GpAlterPartitionId *
+_copyGpAlterPartitionId(const GpAlterPartitionId *from)
+{
+	GpAlterPartitionId *newnode = makeNode(GpAlterPartitionId);
+
+	COPY_SCALAR_FIELD(idtype);
+	COPY_NODE_FIELD(partiddef);
+
+	return newnode;
+}
+
+static GpDropPartitionCmd *
+_copyGpDropPartitionCmd(const GpDropPartitionCmd *from)
+{
+	GpDropPartitionCmd *newnode = makeNode(GpDropPartitionCmd);
+
+	COPY_NODE_FIELD(partid);
+	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
 }
@@ -6810,6 +6826,12 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PartitionCmd:
 			retval = _copyPartitionCmd(from);
+			break;
+		case T_GpAlterPartitionId:
+			retval = _copyGpAlterPartitionId(from);
+			break;
+		case T_GpDropPartitionCmd:
+			retval = _copyGpDropPartitionCmd(from);
 			break;
 		case T_GpPartitionSpec:
 			retval = _copyGpPartitionSpec(from);

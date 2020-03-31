@@ -1315,7 +1315,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 									NULL);
 	}
 
-	
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
@@ -4239,6 +4238,10 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
+			case AT_PartDrop:
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
 			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
@@ -4713,6 +4716,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
+
+		/* GPDB ALTER/DROP/ADD/EXCHANGE/SPLIT PARTITION commands */
+		case AT_PartDrop:			/* DROP PARTITION */
+			ATSimplePermissions(rel, ATT_TABLE);
+			pass = AT_PASS_MISC;
+			break;
+
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
@@ -5069,6 +5079,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
+			break;
+
+		case AT_PartDrop:
+			/* ATPrepCmd ensures it must be a table */
+			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+			ATExecPartDrop(rel, castNode(GpDropPartitionCmd, cmd->def));
 			break;
 	}
 
