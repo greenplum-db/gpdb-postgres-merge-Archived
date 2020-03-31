@@ -801,12 +801,13 @@ explain (verbose, costs off)
    Output: $0, $1
    InitPlan 1 (returns $0)
      ->  Result
-           Output: 'regression'::name
+           Output: current_database()
    InitPlan 2 (returns $1)
      ->  Result
-           Output: 'regression'::name
+           Output: current_database()
  Optimizer: Postgres query optimizer
-(9 rows)
+ Settings: optimizer=off
+(10 rows)
 
 explain (verbose, costs off)
   select x, x from
@@ -832,14 +833,15 @@ explain (verbose, costs off)
    Output: (SubPlan 1), (SubPlan 2)
    SubPlan 1
      ->  Result
-           Output: 'regression'::name
+           Output: current_database()
            One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
    SubPlan 2
      ->  Result
-           Output: 'regression'::name
+           Output: current_database()
            One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
  Optimizer: Postgres query optimizer
-(11 rows)
+ Settings: optimizer=off
+(12 rows)
 
 explain (verbose, costs off)
   select x, x from
