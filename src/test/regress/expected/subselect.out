@@ -806,8 +806,7 @@ explain (verbose, costs off)
      ->  Result
            Output: current_database()
  Optimizer: Postgres query optimizer
- Settings: optimizer=off
-(10 rows)
+(9 rows)
 
 explain (verbose, costs off)
   select x, x from
@@ -840,8 +839,7 @@ explain (verbose, costs off)
            Output: current_database()
            One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
  Optimizer: Postgres query optimizer
- Settings: optimizer=off
-(12 rows)
+(11 rows)
 
 explain (verbose, costs off)
   select x, x from
@@ -948,8 +946,7 @@ select * from int4_tbl where
                                                ->  Seq Scan on public.tenk1 a
                                                      Output: a.unique1
  Optimizer: Postgres query optimizer
- Settings: optimizer=off
-(26 rows)
+(25 rows)
 
 select * from int4_tbl where
   (case when f1 in (select unique1 from tenk1 a) then f1 else null end) in
@@ -964,10 +961,9 @@ select * from int4_tbl where
 --
 explain (verbose, costs off)
 select * from int4_tbl o where (f1, f1) in
-<<<<<<< HEAD
-  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+  (select f1, generate_series(1,50) / 10 g from int4_tbl i group by f1);
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Output: o.f1
    ->  Hash Semi Join
@@ -981,36 +977,13 @@ select * from int4_tbl o where (f1, f1) in
                      Output: "ANY_subquery".f1, "ANY_subquery".g
                      Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
                      ->  Result
-                           Output: i.f1, (generate_series(1, 2) / 10)
-                           ->  Seq Scan on public.int4_tbl i
-                                 Output: i.f1
- Optimizer: Postgres query optimizer
-(17 rows)
-=======
-  (select f1, generate_series(1,50) / 10 g from int4_tbl i group by f1);
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Nested Loop Semi Join
-   Output: o.f1
-   Join Filter: (o.f1 = "ANY_subquery".f1)
-   ->  Seq Scan on public.int4_tbl o
-         Output: o.f1
-   ->  Materialize
-         Output: "ANY_subquery".f1, "ANY_subquery".g
-         ->  Subquery Scan on "ANY_subquery"
-               Output: "ANY_subquery".f1, "ANY_subquery".g
-               Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
-               ->  Result
-                     Output: i.f1, ((generate_series(1, 50)) / 10)
-                     ->  ProjectSet
-                           Output: generate_series(1, 50), i.f1
-                           ->  HashAggregate
-                                 Output: i.f1
-                                 Group Key: i.f1
+                           Output: i.f1, ((generate_series(1, 50)) / 10)
+                           ->  ProjectSet
+                                 Output: generate_series(1, 50), i.f1
                                  ->  Seq Scan on public.int4_tbl i
                                        Output: i.f1
+ Optimizer: Postgres query optimizer
 (19 rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,50) / 10 g from int4_tbl i group by f1);
@@ -1457,11 +1430,14 @@ select * from x;
 explain (verbose, costs off)
 with x as (select * from int4_tbl)
 select * from (with y as (select * from x) select * from y) ss;
-         QUERY PLAN          
------------------------------
- Seq Scan on public.int4_tbl
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: int4_tbl.f1
-(2 rows)
+   ->  Seq Scan on public.int4_tbl
+         Output: int4_tbl.f1
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 explain (verbose, costs off)
 with x as materialized (select * from int4_tbl)
@@ -1490,9 +1466,12 @@ select * from (with x as (select 2 as y) select * from x) ss;
 explain (verbose, costs off)
 with x as (select * from subselect_tbl)
 select * from x for update;
-                           QUERY PLAN                           
-----------------------------------------------------------------
- Seq Scan on public.subselect_tbl
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: subselect_tbl.f1, subselect_tbl.f2, subselect_tbl.f3
-(2 rows)
+   ->  Seq Scan on public.subselect_tbl
+         Output: subselect_tbl.f1, subselect_tbl.f2, subselect_tbl.f3
+ Optimizer: Postgres query optimizer
+(5 rows)
 
