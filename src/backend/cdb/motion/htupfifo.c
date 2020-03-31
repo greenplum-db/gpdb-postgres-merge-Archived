@@ -102,6 +102,9 @@ htfifo_addtuple(htup_fifo htf, MinimalTuple tup)
 	AssertArg(htf != NULL);
 	AssertArg(tup != NULL);
 
+	/* Serialized tuple should never have external attribute */
+	Assert(!(tup->t_infomask & HEAP_HASEXTERNAL));
+
 	/* Populate the new entry. */
 	if (htf->freelist != NULL)
 	{
