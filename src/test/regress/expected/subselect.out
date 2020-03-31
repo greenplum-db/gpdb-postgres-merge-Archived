@@ -1065,12 +1065,6 @@ select nextval('ts1');
 (1 row)
 
 --
-<<<<<<< HEAD
--- Ensure that backward scan direction isn't propagated into
--- expression subqueries (bug #15336)
---
---start_ignore
-=======
 -- Check that volatile quals aren't pushed down past a set-returning function;
 -- while a nonvolatile qual can be, if it doesn't reference the SRF.
 --
@@ -1229,7 +1223,7 @@ drop table sq_limit;
 -- Ensure that backward scan direction isn't propagated into
 -- expression subqueries (bug #15336)
 --
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+--start_ignore
 begin;
 declare c1 scroll cursor for
  select * from generate_series(1,4) i
@@ -1243,9 +1237,7 @@ fetch backward all in c1;
 (2 rows)
 
 commit;
-<<<<<<< HEAD
 --end_ignore
-=======
 --
 -- Tests for CTE inlining behavior
 --
@@ -1502,4 +1494,3 @@ select * from x for update;
    Output: subselect_tbl.f1, subselect_tbl.f2, subselect_tbl.f3
 (2 rows)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
