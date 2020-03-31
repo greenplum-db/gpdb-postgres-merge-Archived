@@ -5640,7 +5640,8 @@ OptTabPartitionStorageAttr: WITH definition TABLESPACE name
 			| WITH definition
 				{
 					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
+					elog(WARNING, "FIXME: WITH storage options not implemented");
+					$$ = NULL;
 #if 0
                     /* re-use alterpartitioncmd struct here... */
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
