@@ -1892,16 +1892,6 @@ reset enable_seqscan;
 reset enable_bitmapscan;
 reset enable_indexscan;
 
-create table qp_misc_jiras.tbl8258 (a int, b double precision)
-PARTITION BY RANGE(b)
-(START (1::double precision) END (100::double precision)
-EVERY ((20)::double precision),
-PARTITION p1 START (100::double precision) END (150::double precision));
-
-select pg_get_partition_def('qp_misc_jiras.tbl8258'::regclass, true);
-
-drop table qp_misc_jiras.tbl8258;
-
 reset statement_timeout;
 set statement_mem = '512MB';
 
