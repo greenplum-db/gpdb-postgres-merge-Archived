@@ -662,7 +662,7 @@ nextval_qd(Oid relid, int64 *plast, int64 *pcached, int64  *pincrement, bool *po
 {
 	Assert(IS_QUERY_DISPATCHER());
 
-	*plast = nextval_internal(relid, true, true);
+	*plast = nextval_internal(relid, false, true);
 	*pcached = last_used_seq->cached;
 	*pincrement = last_used_seq->increment;
 	*poverflow = !last_used_seq->last_valid;
