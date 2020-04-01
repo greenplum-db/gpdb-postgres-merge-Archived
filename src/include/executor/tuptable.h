@@ -338,6 +338,7 @@ extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
 extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree);
 extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
+										 MemTupleBinding *mt_bind,
 										 TupleTableSlot *slot,
 										 bool shouldFree);
 extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,

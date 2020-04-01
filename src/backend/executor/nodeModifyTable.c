@@ -2255,6 +2255,18 @@ ExecModifyTable(PlanState *pstate)
 	estate->es_result_relation_info = resultRelInfo;
 
 	/*
+	 * GPDB_12_MERGE_FIXME: workaround to capture state needed by appendonly
+	 * DML operations.  The state is currently captured as a global variable
+	 * in appendonly handler.  We should make room for this state either in
+	 * the executor state or relation state or similar and provide a way to
+	 * pass it to the access method.
+	 */
+	if (RelationIsAppendOptimized(resultRelInfo->ri_RelationDesc))
+	{
+		appendonly_dml_init(resultRelInfo->ri_RelationDesc, operation);
+	}
+
+	/*
 	 * Fetch rows from subplan(s), and execute the required table modification
 	 * for each row.
 	 */
@@ -2506,6 +2518,11 @@ ExecModifyTable(PlanState *pstate)
 			estate->es_result_relation_info = saved_resultRelInfo;
 			return slot;
 		}
+	}
+
+	if (RelationIsAppendOptimized(resultRelInfo->ri_RelationDesc))
+	{
+		appendonly_dml_finish(resultRelInfo->ri_RelationDesc, operation);
 	}
 
 	/* Restore es_result_relation_info before exiting */

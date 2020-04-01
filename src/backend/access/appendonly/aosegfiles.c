@@ -168,7 +168,7 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 							 false, /* follow_updates */
 							 &buf,
 							 &hufd);
-	if (result != TM_WouldBlock)
+	if (result != TM_Ok)
 		elog(ERROR, "could not lock newly-inserted gp_fastsequence tuple");
 	if (BufferIsValid(buf))
 		ReleaseBuffer(buf);

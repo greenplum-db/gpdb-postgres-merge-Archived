@@ -1221,6 +1221,10 @@ static bool ntuplestore_acc_current_data_internal(NTupleStoreAccessor *tsa, void
 
 bool ntuplestore_acc_current_tupleslot(NTupleStoreAccessor *tsa, TupleTableSlot *slot)
 {
+#ifdef GPDB_12_MERGE_FIXME
+	/* GPDB_12_MERGE_FIXME: this should use VirtualTupleTableSlot instead of
+	 * MemTuple.  Otherwise, if we want to continue using MemTuples,
+	 * ExecStoreMemTuple needs to be taught how to deal with null binding. */
 	MemTuple tuple = NULL;
 	int len = 0;
 	bool fOK = ntuplestore_acc_current_data_internal(tsa, (void **) &tuple, &len);
@@ -1247,6 +1251,8 @@ bool ntuplestore_acc_current_tupleslot(NTupleStoreAccessor *tsa, TupleTableSlot 
 
 	ExecStoreMemTuple(tuple, slot, false);
 	return true;
+#endif
+	return false;
 }
 
 bool ntuplestore_acc_current_data(NTupleStoreAccessor *tsa, void **data, int *len)

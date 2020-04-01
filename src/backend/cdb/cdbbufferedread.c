@@ -175,8 +175,8 @@ BufferedReadIo(
 	{
 		int			actualLen = FileRead(bufferedRead->file,
 										 (char *) largeReadMemory,
-										 bufferedRead->fileOff,
 										 largeReadLen,
+										 bufferedRead->fileOff,
 										 WAIT_EVENT_DATA_FILE_READ);
 
 		if (actualLen == 0)

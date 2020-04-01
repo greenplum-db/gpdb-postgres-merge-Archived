@@ -120,6 +120,7 @@ typedef struct AppendOnlyExecutorReadBlock
 
 	AppendOnlyStorageRead	*storageRead;
 
+	MemTupleBinding *mt_bind;
 	/*
 	 * When reading a segfile that's using version < AORelationVersion_PG83,
 	 * that is, was created before GPDB 5.0 and upgraded with pg_upgrade, we need
@@ -367,12 +368,14 @@ extern bool appendonly_fetch(
 	AOTupleId *aoTid,
 	TupleTableSlot *slot);
 extern void appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc);
+extern void appendonly_dml_init(Relation relation, CmdType operation);
 extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel, int segno, bool update_mode);
 extern void appendonly_insert(
 		AppendOnlyInsertDesc aoInsertDesc, 
 		MemTuple instup, 
 		AOTupleId *aoTupleId);
 extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
+extern void appendonly_dml_finish(Relation relation, CmdType operation);
 extern BlockNumber RelationGuessNumberOfBlocks(double totalbytes);
 
 extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot);

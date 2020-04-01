@@ -20,6 +20,7 @@
 
 #include "miscadmin.h"
 
+#include "access/appendonlywriter.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/multixact.h"
@@ -56,6 +57,9 @@ static void reform_and_rewrite_tuple(HeapTuple tuple,
 
 static const TableAmRoutine appendonly_methods;
 
+/* GPDB_12_MERGE_FIXME: do we need more than one of these? */
+static AppendOnlyInsertDesc insertDesc = NULL;
+
 
 /* ------------------------------------------------------------------------
  * Slot related callbacks for appendonly AM
@@ -86,17 +90,35 @@ const TupleTableSlotOps TTSOpsMemTuple = {
 MemTuple
 ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
 {
-	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
-	elog(ERROR, "ExecFetchSlotMemTuple not implemented");
+	MemTuple result;
+	MemoryContext oldContext;
+
+	/*
+	 * VirtualTupleTableSlot interface has no way to free the MemTuple, the
+	 * caller needs to free it.
+	 */
+	*shouldFree = true;
+
+	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	result = memtuple_form(
+		insertDesc->mt_bind, slot->tts_values, slot->tts_isnull);
+	MemoryContextSwitchTo(oldContext);
+	return result;
 }
 
 TupleTableSlot *
 ExecStoreMemTuple(MemTuple tuple,
+				  MemTupleBinding *mt_bind,
 				  TupleTableSlot *slot,
 				  bool shouldFree)
 {
-	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
-	elog(ERROR, "ExecStoreMemTuple not implemented");
+	ExecClearTuple(slot);
+	memtuple_deform(tuple, mt_bind, slot->tts_values, slot->tts_isnull);
+	if (shouldFree)
+		(slot)->tts_flags |= TTS_FLAG_SHOULDFREE;
+	
+	(slot)->tts_flags &= ~TTS_FLAG_EMPTY;
+	return slot;
 }
 
 MemTuple
@@ -118,7 +140,7 @@ ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
 static const TupleTableSlotOps *
 appendonly_slot_callbacks(Relation relation)
 {
-	return &TTSOpsMemTuple;
+	return &TTSOpsVirtual;
 }
 
 /* ------------------------------------------------------------------------
@@ -252,7 +274,37 @@ appendonly_compute_xid_horizon_for_tuples(Relation rel,
 	elog(ERROR, "not implemented yet");
 }
 
+void
+appendonly_dml_init(Relation relation, CmdType operation)
+{
+	switch(operation)
+	{
+	case CMD_INSERT:
+		Assert(insertDesc == NULL);
+		insertDesc = appendonly_insert_init(
+			relation, ChooseSegnoForWrite(relation), false);
+		break;
+	default:
+		elog(ERROR, "not implemented");
+		break;
+	}
+}
 
+void
+appendonly_dml_finish(Relation relation, CmdType operation)
+{
+	switch(operation)
+	{
+	case CMD_INSERT:
+		Assert(insertDesc->aoi_rel == relation);
+		appendonly_insert_finish(insertDesc);
+		insertDesc = NULL;
+		break;
+	default:
+		elog(ERROR, "not implemented");
+		break;
+	}
+}
 
 /* ----------------------------------------------------------------------------
  *  Functions for manipulations of physical tuples for heap AM.
@@ -265,22 +317,7 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 {
 	bool		shouldFree = true;
 	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree);
-	AppendOnlyInsertDesc insertDesc = NULL;
 
-	// GPDB_12_MERGE_FIXME: Where to store this?
-#if 0
-	if (resultRelInfo->ri_aoInsertDesc == NULL)
-	{
-		/* Set the pre-assigned fileseg number to insert into */
-		ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-
-		resultRelInfo->ri_aoInsertDesc =
-			appendonly_insert_init(resultRelationDesc,
-								   resultRelInfo->ri_aosegno,
-								   false);
-	}
-#endif
-	
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
 

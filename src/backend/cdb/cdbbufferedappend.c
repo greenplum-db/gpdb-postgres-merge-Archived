@@ -158,8 +158,8 @@ BufferedAppendWrite(BufferedAppend *bufferedAppend, bool needsWAL)
 
 		byteswritten = FileWrite(bufferedAppend->file,
 								 (char *) largeWriteMemory + bytestotal,
-								 bufferedAppend->largeWritePosition + bytestotal,
 								 bytesleft,
+								 bufferedAppend->largeWritePosition + bytestotal,
 								 WAIT_EVENT_DATA_FILE_WRITE);
 		if (byteswritten < 0)
 			ereport(ERROR,

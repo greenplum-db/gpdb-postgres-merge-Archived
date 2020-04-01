@@ -72,6 +72,7 @@ AlterTableCreateAoVisimapTable(Oid relOid)
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 2;
+	indexInfo->ii_NumIndexKeyAttrs = 2;
 	indexInfo->ii_IndexAttrNumbers[0] = 1;
 	indexInfo->ii_IndexAttrNumbers[1] = 2;
 	indexInfo->ii_Expressions = NIL;

@@ -163,6 +163,9 @@ initscan(AppendOnlyScanDesc scan, ScanKey key)
 		AppendOnlyExecutorReadBlock_ResetCounts(
 												&scan->executorReadBlock);
 
+	scan->executorReadBlock.mt_bind =
+		create_memtuple_binding(RelationGetDescr(scan->aos_rd));
+
 	pgstat_count_heap_scan(scan->aos_rd);
 }
 
@@ -813,7 +816,7 @@ AppendOnlyExecutorReadBlock_Init(AppendOnlyExecutorReadBlock *executorReadBlock,
 	AssertArg(MemoryContextIsValid(memoryContext));
 
 	oldcontext = MemoryContextSwitchTo(memoryContext);
-	executorReadBlock->uncompressedBuffer = (uint8 *) palloc(usableBlockSize * sizeof(uint8));
+	executorReadBlock->uncompressedBuffer = (uint8 *) palloc0(usableBlockSize * sizeof(uint8));
 
 	executorReadBlock->storageRead = storageRead;
 	executorReadBlock->memoryContext = memoryContext;
@@ -1011,8 +1014,14 @@ AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorRe
 			tuple = upgrade_tuple(executorReadBlock, tuple, slot->tts_mt_bind, formatVersion, &shouldFree);
 #endif
 
-		ExecStoreMemTuple(tuple, slot, shouldFree);
+		Assert(executorReadBlock->mt_bind);
+		
+		ExecClearTuple(slot);
+		memtuple_deform(tuple, executorReadBlock->mt_bind, slot->tts_values, slot->tts_isnull);
 		slot->tts_tid = fake_ctid;
+		if (shouldFree)
+			(slot)->tts_flags |= TTS_FLAG_SHOULDFREE;
+		ExecStoreVirtualTuple(slot);
 	}
 
 	/* skip visibility test, all tuples are visible */
@@ -2698,7 +2707,12 @@ appendonly_insert_init(Relation rel, int segno, bool update_mode)
 	 * This GUC must have the same value on write and read.
 	 */
 /* 	aoInsertDesc->useNoToast = aoentry->notoast; */
-	aoInsertDesc->useNoToast = Debug_appendonly_use_no_toast;
+	/*
+	 * GPDB_12_MERGE_FIXME: we should simply never use toast for AO, variable
+	 * length blocks of AO should be able to accommodate variable length
+	 * datums.
+	 */
+	aoInsertDesc->useNoToast = !(rel->rd_tableam->relation_needs_toast_table(rel));
 
 	aoInsertDesc->usableBlockSize = blocksize;
 
@@ -3118,6 +3132,8 @@ appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc)
 	AppendOnlyStorageWrite_FinishSession(&aoInsertDesc->storageWrite);
 
 	UnregisterSnapshot(aoInsertDesc->appendOnlyMetaDataSnapshot);
+
+	destroy_memtuple_binding(aoInsertDesc->mt_bind);
 
 	pfree(aoInsertDesc->title);
 	pfree(aoInsertDesc);
