@@ -427,6 +427,8 @@ create table inh_fk_2 (x int primary key, y int references inh_fk_1 on delete ca
 insert into inh_fk_2 values (11, 1), (22, 2), (33, 3);
 create table inh_fk_2_child () inherits (inh_fk_2);
 insert into inh_fk_2_child values (111, 1), (222, 2);
+-- The cascading deletion doesn't work on GPDB, because foreign keys are not
+-- enforced in general. So this produces different result than on upstream.
 delete from inh_fk_1 where a = 1;
 select * from inh_fk_1 order by 1;
 select * from inh_fk_2 order by 1, 2;
