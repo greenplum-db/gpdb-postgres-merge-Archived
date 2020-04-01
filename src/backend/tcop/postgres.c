@@ -4970,6 +4970,11 @@ PostgresMain(int argc, char *argv[],
 		{
 			write_stderr("An exception was encountered during the execution of statement: %s", debug_query_string);
 			debug_query_string = NULL;
+			/* Cancel MPP operation if QE errors out at the quite beginning */
+			if (Gp_role == GP_ROLE_EXECUTE)
+				ereport(ERROR,
+						(errcode(ERRCODE_GP_OPERATION_CANCELED),
+						 errmsg("canceling MPP operation")));
 		}
 
 		/*
@@ -5193,8 +5198,6 @@ PostgresMain(int argc, char *argv[],
 		 * it's called when DoingCommandRead is set, so check for interrupts
 		 * before resetting DoingCommandRead.
 		 */
-		if (debug_query_string)
-			DoingCommandRead = false;
 		CHECK_FOR_INTERRUPTS();
 		DoingCommandRead = false;
 
