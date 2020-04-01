@@ -5193,8 +5193,6 @@ PostgresMain(int argc, char *argv[],
 		 * it's called when DoingCommandRead is set, so check for interrupts
 		 * before resetting DoingCommandRead.
 		 */
-		if (debug_query_string)
-			DoingCommandRead = false;
 		CHECK_FOR_INTERRUPTS();
 		DoingCommandRead = false;
 
