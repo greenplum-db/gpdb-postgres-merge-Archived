@@ -27,12 +27,9 @@ extern Relation try_table_open(Oid relationId, LOCKMODE lockmode, bool noWait);
 extern void table_close(Relation relation, LOCKMODE lockmode);
 
 /* CDB */
-extern Relation CdbOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, 
-							 bool *lockUpgraded);
+extern Relation CdbOpenTable(Oid relid, LOCKMODE reqmode, bool *lockUpgraded);
 extern Relation CdbTryOpenTable(Oid relid, LOCKMODE reqmode,
-								bool noWait, bool *lockUpgraded);
-extern Relation CdbOpenTableRv(const RangeVar *relation, LOCKMODE reqmode, 
-							   bool noWait, bool *lockUpgraded);
+								bool *lockUpgraded);
 
 /*
  * heap_ used to be the prefix for these routines, and a lot of code will just

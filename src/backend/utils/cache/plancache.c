@@ -1719,7 +1719,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 				if ((plannedstmt->commandType == CMD_UPDATE ||
 					 plannedstmt->commandType == CMD_DELETE ||
 					 IsOnConflictUpdate(plannedstmt)) &&
-					CondUpgradeRelLock(rte->relid, false))
+					CondUpgradeRelLock(rte->relid))
 					lockmode = ExclusiveLock;
 				else
 					lockmode = RowExclusiveLock;
@@ -1822,7 +1822,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 						 parsetree->commandType == CMD_DELETE ||
 						 (parsetree->onConflict &&
 						  parsetree->onConflict->action == ONCONFLICT_UPDATE)) &&
-						CondUpgradeRelLock(rte->relid, false))
+						CondUpgradeRelLock(rte->relid))
 						lockmode = ExclusiveLock;
 					else
 						lockmode = RowExclusiveLock;

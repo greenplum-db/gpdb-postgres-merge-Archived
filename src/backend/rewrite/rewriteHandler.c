@@ -225,7 +225,7 @@ AcquireRewriteLocks(Query *parsetree,
 				/* Take a lock either using CDB lock promotion or not */
 				if (needLockUpgrade)
 				{
-					rel = CdbOpenTable(rte->relid, lockmode, false, NULL);
+					rel = CdbOpenTable(rte->relid, lockmode, NULL);
 				}
 				else
 				{

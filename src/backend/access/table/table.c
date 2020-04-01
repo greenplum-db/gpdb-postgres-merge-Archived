@@ -178,7 +178,7 @@ table_close(Relation relation, LOCKMODE lockmode)
  * for distributed tables.
  */
 Relation
-CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
+CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool *lockUpgraded)
 {
     LOCKMODE    lockmode = reqmode;
 	Relation    rel;
@@ -200,7 +200,7 @@ CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
 	if (lockmode == RowExclusiveLock)
 	{
 		if (Gp_role == GP_ROLE_DISPATCH &&
-			CondUpgradeRelLock(relid, noWait))
+			CondUpgradeRelLock(relid))
 		{
 			lockmode = ExclusiveLock;
 			if (lockUpgraded != NULL)
@@ -208,7 +208,7 @@ CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
 		}
     }
 
-	rel = try_table_open(relid, lockmode, noWait);
+	rel = try_table_open(relid, lockmode, false);
 	if (!RelationIsValid(rel))
 		return NULL;
 
@@ -239,11 +239,11 @@ CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
  * an error or a valid opened table returned.
  */
 Relation
-CdbOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
+CdbOpenTable(Oid relid, LOCKMODE reqmode, bool *lockUpgraded)
 {
 	Relation rel;
 
-	rel = CdbTryOpenTable(relid, reqmode, noWait, lockUpgraded);
+	rel = CdbTryOpenTable(relid, reqmode, lockUpgraded);
 
 	if (!RelationIsValid(rel))
 	{
@@ -251,45 +251,6 @@ CdbOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("table not found (OID %u)", relid),
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
-	}
-
-	return rel;
-
-}                                       /* CdbOpenTable */
-
-/*
- * CdbOpenTableRv -- Opens a table with a specified lock mode.
- *
- * CDB: Like CdbTryOpenTable, except that it guarantees either
- * an error or a valid opened table returned.
- */
-Relation
-CdbOpenTableRv(const RangeVar *table, LOCKMODE reqmode, bool noWait, 
-			   bool *lockUpgraded)
-{
-	Oid			relid;
-	Relation	rel;
-
-	/* Look up the appropriate table using namespace search */
-	relid = RangeVarGetRelid(table, NoLock, false);
-	rel = CdbTryOpenTable(relid, reqmode, noWait, lockUpgraded);
-
-	if (!RelationIsValid(rel))
-	{
-		if (table->schemaname)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("table \"%s.%s\" does not exist",
-							table->schemaname, table->relname)));
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("table \"%s\" does not exist",
-							table->relname)));
-		}
 	}
 
 	return rel;

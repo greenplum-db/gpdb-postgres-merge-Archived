@@ -1187,7 +1187,7 @@ chooseScalarFunctionAlias(Node *funcexpr, char *funcname,
  */
 Relation
 parserOpenTable(ParseState *pstate, const RangeVar *relation,
-				int lockmode, bool nowait, bool *lockUpgraded)
+				int lockmode, bool *lockUpgraded)
 {
 	Relation	rel;
 	ParseCallbackState pcbstate;
@@ -1202,7 +1202,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	 * is dropped by another transaction). Every time we invoke function
 	 * CdbTryOpenTable, we should check if the return value is NULL.
 	 */
-	rel = CdbTryOpenTable(relid, lockmode, nowait, lockUpgraded);
+	rel = CdbTryOpenTable(relid, lockmode, lockUpgraded);
 
 	if (!RelationIsValid(rel))
 	{
@@ -1255,7 +1255,6 @@ addRangeTableEntry(ParseState *pstate,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	char	   *refname = alias ? alias->aliasname : relation->relname;
 	LOCKMODE	lockmode = AccessShareLock;
-	bool		nowait = false;
 	LockingClause *locking;
 	Relation	rel;
 
@@ -1307,10 +1306,13 @@ addRangeTableEntry(ParseState *pstate,
 							RelationGetRelationName(rel))));
 
 		lockmode = pstate->p_canOptSelectLockingClause ? RowShareLock : ExclusiveLock;
+		if (lockmode == ExclusiveLock && locking->waitPolicy != LockWaitBlock)
+			ereport(WARNING,
+					(errmsg("Upgrade the lockmode to ExclusiveLock on table(%s) and ingore the wait policy.",
+					 RelationGetRelationName(rel))));
 
 		heap_close(rel, NoLock);
-	 	/* if user says NOWAIT, report an error if we cannot lock the table */
-		nowait = locking->waitPolicy == LockWaitError ? true : false;
+
 	}
 	else
 		lockmode = AccessShareLock;
@@ -1322,7 +1324,7 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	// GPDB_12_MERGE_FIXME: we used do setup_parser_errposition_callback here.
 	// I presume that is no longer needed.
-	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
+	rel = parserOpenTable(pstate, relation, lockmode, NULL);
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = lockmode;
