@@ -71,3 +71,31 @@ select a, length(b) from ao_basic_t1;
   1 | 300000
 (16 rows)
 
+create index i_ao_basic_t1 on ao_basic_t1 using btree(a);
+select * from ao_basic_t1 where a = 2;
+ a |  b  
+---+-----
+ 2 | pqr
+ 2 | 2
+(2 rows)
+
+create table heap_t2(a int, b varchar) distributed by (a);
+insert into heap_t2 select i, i from generate_series(1, 20)i;
+select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
+ a  |  b  | a  | b  
+----+-----+----+----
+  2 | 2   |  2 | 2
+  2 | pqr |  2 | 2
+  3 | 3   |  3 | 3
+  3 | lmn |  3 | 3
+  4 | 4   |  4 | 4
+  7 | 7   |  7 | 7
+  8 | 8   |  8 | 8
+  5 | 5   |  5 | 5
+  6 | 6   |  6 | 6
+  9 | 9   |  9 | 9
+ 10 | 10  | 10 | 10
+ 11 | 11  | 11 | 11
+ 12 | 12  | 12 | 12
+(13 rows)
+

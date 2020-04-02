@@ -13,3 +13,13 @@ select gp_segment_id, count(*) from ao_basic_t1 group by gp_segment_id;
 insert into ao_basic_t1 values (1, repeat('abc', 100000));
 
 select a, length(b) from ao_basic_t1;
+
+create index i_ao_basic_t1 on ao_basic_t1 using btree(a);
+select * from ao_basic_t1 where a = 2;
+
+create table heap_t2(a int, b varchar) distributed by (a);
+insert into heap_t2 select i, i from generate_series(1, 20)i;
+
+select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
+
+
