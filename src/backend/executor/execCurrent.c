@@ -437,12 +437,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		 */
 		slot = queryDesc->planstate->ps_ResultTupleSlot;
 		Insist(!TupIsNull(slot));
-
-		/* GDPB_12_MERGE_FIXME: this shouldn't happen, and used to be an Assert, but it
-		 * does happen in the regression tests
-		 */
-		if (!queryDesc->estate->es_junkFilter)
-			elog(ERROR, "could not find cursor position columns in CURRENT OF query");
+		Assert(queryDesc->estate->es_junkFilter);
 
 		/* extract gp_segment_id metadata */
 		gp_segment_id_attno = ExecFindJunkAttribute(queryDesc->estate->es_junkFilter, "gp_segment_id");

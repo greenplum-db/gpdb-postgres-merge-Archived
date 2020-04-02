@@ -95,6 +95,9 @@ PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "non-SELECT statement in DECLARE CURSOR");
 
+	/* Also try to make any cursor declared with DECLARE CURSOR updatable. */
+	cstmt->options |= CURSOR_OPT_UPDATABLE;
+
 	/* Plan the query, applying the specified options */
 	plan = pg_plan_query(query, cstmt->options, params);
 

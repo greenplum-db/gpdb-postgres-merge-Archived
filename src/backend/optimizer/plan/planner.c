@@ -378,23 +378,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		INSTR_TIME_SET_CURRENT(starttime);
 
 	/*
-	 * GPDB_12_MERGE_FIXME: This was removed in upstream commit ab1f0c8225.
-	 * But we had added the CURSOR_OPT_UPDATABLE part in GPDB. Where does it
-	 * belong now?
-	 */
-#if 0
-	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
-	if (parse->utilityStmt &&
-		IsA(parse->utilityStmt, DeclareCursorStmt))
-	{
-		cursorOptions |= ((DeclareCursorStmt *) parse->utilityStmt)->options;
-
-		/* Also try to make any cursor declared with DECLARE CURSOR updatable. */
-		cursorOptions |= CURSOR_OPT_UPDATABLE;
-	}
-#endif
-
-	/*
 	 * Set up global state for this planner invocation.  This data is needed
 	 * across all levels of sub-Query that might exist in the given command,
 	 * so we keep it in a separate struct that's linked to by each per-Query
