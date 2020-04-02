@@ -259,7 +259,7 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 
 	tupDesc = RelationGetDescr(aorel);
 	// GPDB_12_MERGE_FIXME: Or TTSOpsVirtual?
-	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsMemTuple);
+	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsVirtual);
 	mt_bind = create_memtuple_binding(tupDesc);
 
 	/*

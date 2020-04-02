@@ -409,7 +409,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 										 &compact_segno, 1, 0, NULL);
 
 	tupDesc = RelationGetDescr(aorel);
-	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsMemTuple);
+	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsVirtual);
 	mt_bind = create_memtuple_binding(tupDesc);
 
 	/*

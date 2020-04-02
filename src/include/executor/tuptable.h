@@ -233,7 +233,7 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMemTuple;
 #define TTS_IS_MINIMALTUPLE(slot) ((slot)->tts_ops == &TTSOpsMinimalTuple)
 #define TTS_IS_BUFFERTUPLE(slot) ((slot)->tts_ops == &TTSOpsBufferHeapTuple)
 
-#define TTS_IS_MEMTUPLE(slot) ((slot)->tts_ops == &TTSOpsMemTuple)
+#define TTS_IS_MEMTUPLE(slot) ((slot)->tts_ops == &TTSOpsVirtual)
 
 
 /*

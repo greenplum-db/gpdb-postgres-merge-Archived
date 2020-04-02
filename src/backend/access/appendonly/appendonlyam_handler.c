@@ -35,6 +35,7 @@
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "cdb/cdbappendonlyam.h"
+#include "cdb/cdbvars.h"
 #include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -66,26 +67,34 @@ static AppendOnlyInsertDesc insertDesc = NULL;
  * ------------------------------------------------------------------------
  */
 
-/* GPDB_12_MERGE_FIXME: not implemented yet */
-const TupleTableSlotOps TTSOpsMemTuple = {
-/* GPDB_12_MERGE_FIXME: not implemented yet */
-#if 0
-	.base_slot_size = sizeof(HeapTupleTableSlot),
-	.init = tts_heap_init,
-	.release = tts_heap_release,
-	.clear = tts_heap_clear,
-	.getsomeattrs = tts_heap_getsomeattrs,
-	.getsysattr = tts_heap_getsysattr,
-	.materialize = tts_heap_materialize,
-	.copyslot = tts_heap_copyslot,
-	.get_heap_tuple = tts_heap_get_heap_tuple,
+static Datum
+tts_aovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
+{
+	Datum result;
 
-	/* A heap tuple table slot can not "own" a minimal tuple. */
-	.get_minimal_tuple = NULL,
-	.copy_heap_tuple = tts_heap_copy_heap_tuple,
-	.copy_minimal_tuple = tts_heap_copy_minimal_tuple
-#endif
-};
+	if (attnum == GpSegmentIdAttributeNumber)
+	{
+		*isnull = false;
+		result = Int32GetDatum(GpIdentity.segindex);
+	}
+	else
+		result = TTSOpsVirtual.getsysattr(slot, attnum, isnull);
+
+	return result;
+}
+
+/*
+ * Appendonly access method uses virtual tuples with some minor modifications.
+ */
+static const TupleTableSlotOps *
+appendonly_slot_callbacks(Relation relation)
+{
+	TupleTableSlotOps *aoSlotOps = palloc(sizeof(TupleTableSlotOps));
+
+	*aoSlotOps = TTSOpsVirtual;
+	aoSlotOps->getsysattr = tts_aovirtual_getsysattr;
+	return (const TupleTableSlotOps*) aoSlotOps;
+}
 
 MemTuple
 ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
@@ -135,12 +144,6 @@ ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
 {
 	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
 	elog(ERROR, "ExecForceStoreMemTuple not implemented");
-}
-
-static const TupleTableSlotOps *
-appendonly_slot_callbacks(Relation relation)
-{
-	return &TTSOpsVirtual;
 }
 
 /* ------------------------------------------------------------------------
