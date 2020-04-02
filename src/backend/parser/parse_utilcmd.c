@@ -156,7 +156,6 @@ static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
 static void validateInfiniteBounds(ParseState *pstate, List *blist);
 
 static DistributedBy *getLikeDistributionPolicy(TableLikeClause *e);
-static bool co_explicitly_disabled(List *opts);
 static DistributedBy *transformDistributedBy(CreateStmtContext *cxt,
 					   DistributedBy *distributedBy,
 					   DistributedBy *likeDistributedBy,
@@ -164,6 +163,7 @@ static DistributedBy *transformDistributedBy(CreateStmtContext *cxt,
 static List *transformAttributeEncoding(List *stenc, CreateStmt *stmt,
 										CreateStmtContext *cxt);
 static bool encodings_overlap(List *a, List *b, bool test_conflicts);
+static bool is_aocs(const char *access_method);
 
 /*
  * transformCreateStmt -
@@ -294,12 +294,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	if (stmt->ofTypename)
 		transformOfType(&cxt, stmt->ofTypename);
-
-	/* Disallow inheritance for CO table */
-	if (stmt->inhRelations && is_aocs(stmt->options))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("INHERITS clause cannot be used with column oriented tables")));
 
 	if (stmt->partspec)
 	{
@@ -4963,12 +4957,6 @@ transformStorageEncodingClause(List *options)
 							SOPT_CHECKSUM)));
 		}
 	}
-	List *extra = list_make2(makeDefElem("appendonly",
-										 (Node *)makeString("true"),
-										 -1),
-							 makeDefElem("orientation",
-										 (Node *)makeString("column"),
-										 -1));
 
 	/* add defaults for missing values */
 	options = fillin_encoding(options);
@@ -4978,7 +4966,7 @@ transformStorageEncodingClause(List *options)
 	 * formed.
 	 */
 	d = transformRelOptions(PointerGetDatum(NULL),
-									  list_concat(extra, options),
+									  options,
 									  NULL, validnsps,
 									  true, false);
 	(void)heap_reloptions(RELKIND_RELATION, d, true);
@@ -5214,20 +5202,17 @@ transformAttributeEncoding(List *stenc, CreateStmt *stmt, CreateStmtContext *cxt
 {
 	ListCell *lc;
 	bool found_enc = stenc != NIL;
-	bool can_enc = is_aocs(stmt->options);
+	bool can_enc = is_aocs(stmt->accessMethod);
 	ColumnReferenceStorageDirective *deflt = NULL;
 	List *newenc = NIL;
 	List *tmpenc;
 	MemoryContext oldCtx;
 
-#define UNSUPPORTED_ORIENTATION_ERROR() \
-	ereport(ERROR, \
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
-			 errmsg("ENCODING clause only supported with column oriented tables")))
-
 	/* We only support the attribute encoding clause on AOCS tables */
 	if (stenc && !can_enc)
-		UNSUPPORTED_ORIENTATION_ERROR();
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ENCODING clause only supported with column oriented tables")));
 
 	/* Use the temporary context to avoid leaving behind so much garbage. */
 	oldCtx = MemoryContextSwitchTo(cxt->tempCtx);
@@ -5335,7 +5320,9 @@ transformAttributeEncoding(List *stenc, CreateStmt *stmt, CreateStmtContext *cxt
 	if (!can_enc)
 	{
 		if (found_enc)
-			UNSUPPORTED_ORIENTATION_ERROR();
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ENCODING clause only supported with column oriented tables")));
 		else
 			newenc = NULL;
 	}
@@ -5348,6 +5335,13 @@ transformAttributeEncoding(List *stenc, CreateStmt *stmt, CreateStmtContext *cxt
 
 	return newenc;
 }
+
+#ifdef GPDB_12_MERGE_FIXME
+/*
+ * GPDB_12_MERGE_FIXME: appendonly and orientation are no loger passed as
+ * arguments. This code was used in child partition cases and the caller is
+ * currently disabled. Address this issue when the caller gets reenabled
+ */
 
 /*
  * Tells the caller if CO is explicitly disabled, to handle cases where we
@@ -5393,53 +5387,24 @@ co_explicitly_disabled(List *opts)
 	}
 	return false;
 }
+#endif
 
 /*
- * Tell the caller whether appendonly=true and orientation=column
- * have been specified.
+ * Greenplum: We used to specify appendonly and columnar options prior to the
+ * introduction of the table access methods. There still exists code that needs
+ * to fail early before we have parsed and processed the access method.
+ * In all other cases use the provided RelationIsAOColumn() macros.
  */
-bool
-is_aocs(List *opts)
+static bool
+is_aocs(const char *accessMethod)
 {
-	bool found_ao = false;
-	bool found_cs = false;
-	bool aovalue = false;
-	bool csvalue = false;
+	Oid accessMethodId;
 
-	ListCell *lc;
-
-	foreach(lc, opts)
-	{
-		DefElem *el = lfirst(lc);
-		char *arg = NULL;
-
-		/* Argument will be a Value */
-		if (!el->arg)
-		{
-			continue;
-		}
-
-		arg = defGetString(el);
-
-		if (pg_strcasecmp("appendonly", el->defname) == 0)
-		{
-			found_ao = true;
-			if (!parse_bool(arg, &aovalue))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for option \"appendonly\"")));
-		}
-		else if (pg_strcasecmp("orientation", el->defname) == 0)
-		{
-			found_cs = true;
-			csvalue = pg_strcasecmp("column", arg) == 0;
-		}
-	}
-	if (!found_ao)
-		aovalue = isDefaultAO();
-	if (!found_cs)
-		csvalue = isDefaultAOCS();
-	return (aovalue && csvalue);
+	if (accessMethod == NULL)
+		accessMethodId = get_table_am_oid(default_table_access_method, true);
+	else
+		accessMethodId = get_table_am_oid(accessMethod, true);
+	return (accessMethodId == AOCO_TABLE_AM_OID);
 }
 
 /*

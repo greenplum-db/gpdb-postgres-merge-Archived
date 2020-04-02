@@ -1693,60 +1693,35 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (RelationIsAppendOptimized(new_rel_desc))
 	{
-#if 0
-	/* GPDB_12_MERGE_FIXME */
-	/*
-	 * Was "appendonly" specified in the relopts? If yes, check for
-	 * override (debug) GUCs.
-	 */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_PARTITIONED_TABLE ||
-		relkind == RELKIND_MATVIEW)
-	{
-		stdRdOptions = (StdRdOptions*) heap_reloptions(
-			relkind, reloptions, !valid_opts);
-		appendOnlyRel = stdRdOptions->appendonly;
-		validateAppendOnlyRelOptions(appendOnlyRel,
-									 stdRdOptions->blocksize,
+		/*
+		 * Extract and process any WITH options supplied, otherwise use defaults
+		 */
+		StdRdOptions *stdRdOptions = (StdRdOptions *)heap_reloptions(relkind,
+																	 reloptions,
+																	!valid_opts);
+
+		validateAppendOnlyRelOptions(stdRdOptions->blocksize,
 									 safefswritesize,
 									 stdRdOptions->compresslevel,
 									 stdRdOptions->compresstype,
 									 stdRdOptions->checksum,
 									 relkind,
-									 stdRdOptions->columnstore);
-		if(appendOnlyRel)
-		{
-			reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
-		}
-	}
+									 RelationIsAoCols(new_rel_desc));
+
+		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
+
 		InsertAppendOnlyEntry(relid,
 							  stdRdOptions->blocksize,
 							  safefswritesize,
 							  stdRdOptions->compresslevel,
 							  stdRdOptions->checksum,
-                              stdRdOptions->columnstore,
+							  RelationIsAoCols(new_rel_desc),
 							  stdRdOptions->compresstype,
 							  InvalidOid,
 							  InvalidOid,
 							  InvalidOid,
 							  InvalidOid,
 							  InvalidOid);
-#else
-		/* Use defaults for now */
-		InsertAppendOnlyEntry(relid,
-							  AO_DEFAULT_BLOCKSIZE,
-							  safefswritesize,
-							  AO_DEFAULT_COMPRESSLEVEL,
-							  AO_DEFAULT_CHECKSUM,
-							  RelationIsAoCols(new_rel_desc),
-							  AO_DEFAULT_COMPRESSTYPE,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid);
-
-#endif
 	}
 
 

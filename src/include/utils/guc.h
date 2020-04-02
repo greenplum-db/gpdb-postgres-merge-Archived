@@ -621,16 +621,10 @@ extern IndexCheckType gp_indexcheck_insert;
 
 /* Storage option names */
 #define SOPT_FILLFACTOR    "fillfactor"
-#define SOPT_APPENDONLY    "appendonly"
 #define SOPT_BLOCKSIZE     "blocksize"
 #define SOPT_COMPTYPE      "compresstype"
 #define SOPT_COMPLEVEL     "compresslevel"
 #define SOPT_CHECKSUM      "checksum"
-#define SOPT_ORIENTATION   "orientation"
-/* Aliases for storage option names */
-#define SOPT_ALIAS_APPENDOPTIMIZED "appendoptimized"
-/* Max number of chars needed to hold value of a storage option. */
-#define MAX_SOPT_VALUE_LEN 15
 
 /*
  * Functions exported by guc.c

@@ -1404,12 +1404,10 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
 
 		/* AO table options */
-		{SOPT_APPENDONLY, RELOPT_TYPE_BOOL, offsetof(StdRdOptions, appendonly)},
 		{SOPT_BLOCKSIZE, RELOPT_TYPE_INT, offsetof(StdRdOptions, blocksize)},
 		{SOPT_COMPLEVEL, RELOPT_TYPE_INT, offsetof(StdRdOptions, compresslevel)},
 		{SOPT_COMPTYPE, RELOPT_TYPE_STRING, offsetof(StdRdOptions, compresstype)},
 		{SOPT_CHECKSUM, RELOPT_TYPE_BOOL, offsetof(StdRdOptions, checksum)},
-		{SOPT_ORIENTATION, RELOPT_TYPE_STRING, offsetof(StdRdOptions, orientation)},
 
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},

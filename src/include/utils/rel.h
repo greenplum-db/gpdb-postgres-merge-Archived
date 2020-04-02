@@ -285,13 +285,10 @@ typedef struct StdRdOptions
 	bool		vacuum_index_cleanup;	/* enables index vacuuming and cleanup */
 	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
 
-	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
 	int			compresslevel;  /* compression level (AO rels only) */
 	char		compresstype[NAMEDATALEN]; /* compression type (AO rels only) */
 	bool		checksum;		/* checksum (AO rels only) */
-	bool 		columnstore;	/* columnstore (AO only) */
-	char		orientation[NAMEDATALEN]; /* orientation (AO only) */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

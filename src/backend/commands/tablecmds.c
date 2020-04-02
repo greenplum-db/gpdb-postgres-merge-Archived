@@ -932,6 +932,12 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	if (accessMethod != NULL)
 		accessMethodId = get_table_am_oid(accessMethod, false);
 
+	/* Greenplum: error out early for this case */
+	if (stmt->inhRelations && accessMethodId == AOCO_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INHERITS clause cannot be used with column oriented tables")));
+
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
 	 * for immediate handling --- since they don't need parsing, they can be
@@ -13801,12 +13807,10 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 			DefElem    *def = lfirst(cell);
 			int			kw_len = strlen(def->defname);
 
-			if (pg_strncasecmp(SOPT_APPENDONLY, def->defname, kw_len) == 0 ||
-				pg_strncasecmp(SOPT_BLOCKSIZE, def->defname, kw_len) == 0 ||
+			if (pg_strncasecmp(SOPT_BLOCKSIZE, def->defname, kw_len) == 0 ||
 				pg_strncasecmp(SOPT_COMPTYPE, def->defname, kw_len) == 0 ||
 				pg_strncasecmp(SOPT_COMPLEVEL, def->defname, kw_len) == 0 ||
-				pg_strncasecmp(SOPT_CHECKSUM, def->defname, kw_len) == 0 ||
-				pg_strncasecmp(SOPT_ORIENTATION, def->defname, kw_len) == 0)
+				pg_strncasecmp(SOPT_CHECKSUM, def->defname, kw_len) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("cannot SET reloption \"%s\"",

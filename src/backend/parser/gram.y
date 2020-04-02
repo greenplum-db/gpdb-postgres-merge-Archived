@@ -197,6 +197,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
+static char *greenplumLegacyAOoptions(const char *accessMethod, List **options);
+
 %}
 
 %pure-parser
@@ -3422,17 +3424,7 @@ reloption_list:
 reloption_elem:
 			ColLabel '=' def_arg
 				{
-					/*
-					 * appendoptimized is an alias for appendonly in order to
-					 * provide a reloption syntax which better reflects the
-					 * featureset of AO tables. It is implemented as a very
-					 * thin alias, the reloptions and messaging will still
-					 * say appendonly.
-					 */
-					if (strcmp($1, "appendoptimized") == 0)
-						$$ = makeDefElem("appendonly", (Node *) $3, @1);
-					else
-						$$ = makeDefElem($1, (Node *) $3, @1);
+					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
@@ -4593,13 +4585,16 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->partspec = $9 ? $9 : $15;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
-					//n->accessMethod = $10;
+					n->accessMethod = $10;
 					n->options = $11;
 					n->oncommit = $12;
 					n->tablespacename = $13;
 					n->if_not_exists = false;
 					n->distributedBy = (DistributedBy *) $14;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
@@ -4627,6 +4622,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = true;
 					n->distributedBy = (DistributedBy *) $17;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF any_name
@@ -4655,6 +4653,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = false;
 					n->distributedBy = (DistributedBy *) $13;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
@@ -4683,6 +4684,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = true;
 					n->distributedBy = (DistributedBy *) $16;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
@@ -4711,6 +4715,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = false;
 					n->distributedBy = (DistributedBy *) $15;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
@@ -4739,6 +4746,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->if_not_exists = true;
 					n->distributedBy = (DistributedBy *) $18;
 					n->relKind = RELKIND_RELATION;
+
+					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
+
 					$$ = (Node *)n;
 				}
 		;
@@ -6185,6 +6195,8 @@ create_as_target:
 					$$->tableSpaceName = $6;
 					$$->viewQuery = NULL;
 					$$->skipData = false;		/* might get changed later */
+
+					$$->accessMethod = greenplumLegacyAOoptions($$->accessMethod, &$$->options);
 				}
 		;
 
@@ -6625,6 +6637,8 @@ create_mv_target:
 					$$->tableSpaceName = $5;
 					$$->viewQuery = NULL;		/* filled at analysis time */
 					$$->skipData = false;		/* might get changed later */
+
+					$$->accessMethod = greenplumLegacyAOoptions($$->accessMethod, &$$->options);
 				}
 		;
 
@@ -8362,17 +8376,7 @@ def_list:	def_elem								{ $$ = list_make1($1); }
 
 def_elem:	ColLabel '=' def_arg
 				{
-					/*
-					 * appendoptimized is an alias for appendonly in order to
-					 * provide a reloption syntax which better reflects the
-					 * featureset of AO tables. It is implemented as a very
-					 * thin alias, the reloptions and messaging will still
-					 * say appendonly.
-					 */
-					if (strcmp($1, "appendoptimized") == 0)
-						$$ = makeDefElem("appendonly", (Node *) $3, @1);
-					else
-						$$ = makeDefElem($1, (Node *) $3, @1);
+					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
@@ -19638,6 +19642,77 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 	s->fromClause = list_make1(makeRangeVar(NULL, relname, -1));
 
 	return (Node *) s;
+}
+
+/*
+ * Greenplum: a thin wax off layer to keep compatibility with the legacy syntax
+ * for appendoptimized options. Before the introduction of the tableam in
+ * postgres, appendoptimized and column orientated tables were expressed in the
+ * options list which corresponded to StdRelOptions.
+ *
+ * These specific options now are removed from the options list in favour for
+ * the corresponding accessMethod. The accessMethod takes precedence.
+ */
+static char *
+greenplumLegacyAOoptions(const char *accessMethod, List **options)
+{
+	List	 *amendedOptions = NIL;
+	ListCell *lc;
+	bool	  appendoptimized = false;
+	bool	  is_column_oriented = false;
+
+	foreach (lc, *options)
+	{
+		DefElem *elem = lfirst(lc);
+
+		if (strcmp(elem->defname, "appendoptimized") == 0 ||
+				strcmp(elem->defname, "appendonly") == 0)
+			appendoptimized = strcmp(strVal(elem->arg), "true") == 0;
+		else if (strcmp(elem->defname, "orientation") == 0)
+			is_column_oriented = strcmp(strVal(elem->arg), "column") == 0;
+		else
+			amendedOptions = lappend(amendedOptions, elem);
+	}
+	*options = amendedOptions;
+
+#ifdef GPDB_12_MERGE_FIXME
+	/* GPDB_12_MERGE_FIXME: during the development of the ao/aoco tableam we
+	 * need to have this layer turned off. When removing this fixme, make
+	 * certain that any sanity checks on the options are also introduced if
+	 * needed. Such examples can be:
+	 *
+	 *	if (!appendoptimized && is_column_oriented)
+	 *		ereport(....
+	 *
+	 * OR
+	 *
+	 *  if (strcmp(elem->defname, "appendoptimized") == 0 ||
+	 *      strcmp(elem->defname, "appendonly") == 0)
+	 *  {
+	 *      if ((strVal(elem->arg), "true") == 0)
+	 *   	{ options for true }
+	 *   	else if ((strVal(elem->arg), "false") == 0)
+	 *   	{ options for false }
+	 *   	else
+	 *   	{ ereport(....
+	 *  }
+	 *
+	 */
+
+	/* access_method takes precedence */
+	if (accessMethod)
+		return (char *)accessMethod;
+
+	if (appendoptimized && is_column_oriented)
+		return pstrdup("aoco");
+
+	if (appendoptimized)
+		return pstrdup("appendoptimized");
+
+	return NULL;
+#else
+	return (char *)accessMethod;	
+#endif
 }
 
 /* parser_init()

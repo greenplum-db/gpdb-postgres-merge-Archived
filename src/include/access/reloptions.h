@@ -28,7 +28,6 @@
 
 #include "cdb/cdbappendonlyam.h"
 
-#define AO_DEFAULT_APPENDONLY     false
 #define AO_DEFAULT_BLOCKSIZE      DEFAULT_APPENDONLY_BLOCK_SIZE
 /* Compression is turned off by default. */
 #define AO_DEFAULT_COMPRESSLEVEL  0
@@ -44,7 +43,6 @@
 #define AO_DEFAULT_COMPRESSTYPE   "none"
 #endif
 #define AO_DEFAULT_CHECKSUM       true
-#define AO_DEFAULT_COLUMNSTORE    false
 
 /* types supported by reloptions */
 typedef enum relopt_type
@@ -306,23 +304,22 @@ extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
-extern void validateAppendOnlyRelOptions(bool ao, int blocksize, int writesize,
-										 int complevel, char* comptype, 
-										 bool checksum, char relkind, bool co);
 
+/* in reloptions_gp.c */
 extern Datum transformAOStdRdOptions(StdRdOptions *opts, Datum withOpts);
 
-extern void resetDefaultAOStorageOpts(void);
-extern void resetAOStorageOpts(StdRdOptions *ao_opts);
-extern bool isDefaultAOCS(void);
-extern bool isDefaultAO(void);
-extern void setDefaultAOStorageOpts(StdRdOptions *copy);
-extern const StdRdOptions *currentAOStorageOptions(void);
-extern Datum parseAOStorageOpts(const char *opts_str, bool *aovalue);
+extern void validateAppendOnlyRelOptions(int blocksize, int writesize,
+										 int complevel, char* comptype,
+										 bool checksum, char relkind, bool co);
 extern void parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 									  bool validate, relopt_kind relkind);
 
-/* in reloptions_gp.c */
+extern void setDefaultAOStorageOpts(StdRdOptions *copy);
+extern const StdRdOptions *currentAOStorageOptions(void);
+extern Datum parseAOStorageOpts(const char *opts_str);
+extern void resetDefaultAOStorageOpts(void);
+extern void resetAOStorageOpts(StdRdOptions *ao_opts);
+
 extern void initialize_reloptions_gp(void);
 extern void validate_and_refill_options(StdRdOptions *result, relopt_value *options,
 							int numoptions, relopt_kind kind, bool validate);

@@ -31,6 +31,7 @@
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 #include "cdb/memquota.h"
+#include "commands/defrem.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
@@ -4721,9 +4722,7 @@ storageOptToString(const StdRdOptions *ao_opts)
 	char	   *ret;
 
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "%s=%s", SOPT_APPENDONLY,
-					 ao_opts->appendonly ? "true" : "false");
-	appendStringInfo(&buf, ",%s=%d,", SOPT_BLOCKSIZE,
+	appendStringInfo(&buf, "%s=%d,", SOPT_BLOCKSIZE,
 					 ao_opts->blocksize);
 	if (ao_opts->compresstype[0])
 	{
@@ -4744,10 +4743,8 @@ storageOptToString(const StdRdOptions *ao_opts)
 		appendStringInfo(&buf, "%s=%d,", SOPT_COMPLEVEL,
 						 ao_opts->compresslevel);
 	}
-	appendStringInfo(&buf, "%s=%s,", SOPT_CHECKSUM,
+	appendStringInfo(&buf, "%s=%s", SOPT_CHECKSUM,
 					 ao_opts->checksum ? "true" : "false");
-	appendStringInfo(&buf, "%s=%s", SOPT_ORIENTATION,
-					 ao_opts->columnstore ? "column" : "row");
 	ret = strdup(buf.data);
 	if (ret == NULL)
 		elog(ERROR, "out of memory");
@@ -4778,22 +4775,19 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 		 */
 		if ((*newval)[0])
 		{
-			bool		aovalue = false;
 			Datum		newopts_datum;
 
-			newopts_datum = parseAOStorageOpts(*newval, &aovalue);
+			newopts_datum = parseAOStorageOpts(*newval);
 			parse_validate_reloptions(&newopts, newopts_datum,
 									  /* validate */ true, RELOPT_KIND_HEAP);
 			validateAppendOnlyRelOptions(
-				newopts.appendonly,
 				newopts.blocksize,
 				gp_safefswritesize,
 				newopts.compresslevel,
 				newopts.compresstype,
 				newopts.checksum,
 				RELKIND_RELATION,
-				newopts.columnstore);
-			newopts.appendonly = aovalue;
+				get_table_am_oid(default_table_access_method, true) == AOCO_TABLE_AM_OID);
 		}
 
 		/*

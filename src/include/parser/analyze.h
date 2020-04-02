@@ -52,8 +52,6 @@ extern int validate_partition_spec(CreateStmtContext *cxt,
 							int					 partNumber);
 #endif
 
-extern bool is_aocs(List *opts);
-
 List *transformStorageEncodingClause(List *options);
 List *TypeNameGetStorageDirective(TypeName *typname);
 extern List * form_default_storage_directive(List *enc);
