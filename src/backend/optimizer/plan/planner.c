@@ -8255,8 +8255,11 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	 * see the old partial paths in the next stanza.  Hence, zap the main
 	 * pathlist here, then allow generate_gather_paths to add path(s) to the
 	 * main list, and finally zap the partial pathlist.
+	 *
+	 * GPDB: We cannot do that if this is a correlated subquery, and we need
+	 * to evaluate the correlation qual on top of the Append.
 	 */
-	if (rel_is_partitioned)
+	if (rel_is_partitioned && !rel->upperrestrictinfo)
 		rel->pathlist = NIL;
 
 	/*
@@ -8369,7 +8372,7 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	 * Since Append is not projection-capable, that might save a separate
 	 * Result node, and it also is important for partitionwise aggregate.
 	 */
-	if (rel_is_partitioned)
+	if (rel_is_partitioned && !rel->upperrestrictinfo)
 	{
 		List	   *live_children = NIL;
 		int			partition_idx;
