@@ -6382,7 +6382,7 @@ select a+1, rank() over(partition by b+1 order by a+1) from orca.foo order by 1,
        41 |   20
 (40 rows)
 
-select a , sum(a) over (order by a range '1'::float8 preceding) from orca.r order by 1,2;
+select a , sum(a) over (order by a range 1 preceding) from orca.r order by 1,2;
  a  | sum 
 ----+-----
   1 |   1

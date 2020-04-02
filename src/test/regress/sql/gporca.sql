@@ -275,7 +275,7 @@ select 1+row_number() over(order by foo.a+bar.a) from orca.foo inner join orca.b
 select row_number() over(order by foo.a+ bar.a)/count(*) from orca.foo inner join orca.bar using(b) group by foo.a, bar.a, bar.b;
 select count(*) over(partition by b order by a range between 1 preceding and (select count(*) from orca.bar) following) from orca.foo;
 select a+1, rank() over(partition by b+1 order by a+1) from orca.foo order by 1, 2;
-select a , sum(a) over (order by a range '1'::float8 preceding) from orca.r order by 1,2;
+select a , sum(a) over (order by a range 1 preceding) from orca.r order by 1,2;
 select a, b, floor(avg(b) over(order by a desc, b desc rows between unbounded preceding and unbounded following)) as avg, dense_rank() over (order by a) from orca.r order by 1,2,3,4;
 select lead(a) over(order by a) from orca.r order by 1;
 select lag(c,d) over(order by c,d) from orca.s order by 1;
