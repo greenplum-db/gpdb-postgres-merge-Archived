@@ -1810,7 +1810,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&EnableHotStandby,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 
