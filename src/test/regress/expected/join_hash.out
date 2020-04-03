@@ -89,15 +89,18 @@ set local max_parallel_workers_per_gather = 0;
 set local work_mem = '4MB';
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on simple s
-(6 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) from simple r join simple s using (id);
  count 
@@ -199,15 +202,18 @@ set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on simple s
-(6 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) from simple r join simple s using (id);
  count 
@@ -310,15 +316,18 @@ set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
 explain (costs off)
   select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
-                      QUERY PLAN                      
-------------------------------------------------------
- Aggregate
-   ->  Hash Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on bigger_than_it_looks s
-(6 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on bigger_than_it_looks s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
  count 
@@ -422,15 +431,18 @@ set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
-                    QUERY PLAN                    
---------------------------------------------------
- Aggregate
-   ->  Hash Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on extremely_skewed s
-(6 rows)
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on extremely_skewed s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) from simple r join extremely_skewed s using (id);
  count 
