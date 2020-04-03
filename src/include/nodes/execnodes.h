@@ -933,7 +933,7 @@ typedef struct MemoryManagerContainer
  */
 typedef union GenericTupStore
 {
-	struct NTupleStore        *matstore;     /* Used by Materialize */
+	struct Tuplestorestate *matstore;     /* Used by Materialize */
 	void	   *sortstore;	/* Used by Sort */
 } GenericTupStore;
 
@@ -2531,9 +2531,9 @@ typedef struct ShareInputScanState
 	 * Depends on share_type, we should have a tuplestore_state, tuplestore_pos
 	 * or tuplesort_state, tuplesort_pos
 	 */
-	GenericTupStore *ts_state;
-	void	   *ts_pos;
-	void	   *ts_markpos;
+	GenericTupStore ts_state;
+	int			ts_pos;
+	int			ts_markpos;
 
 	void	   *share_lk_ctxt;
 	bool		freed; /* is this node already freed? */

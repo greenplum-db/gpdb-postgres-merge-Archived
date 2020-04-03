@@ -19,7 +19,6 @@
 #include "nodes/execnodes.h"
 
 extern ShareInputScanState *ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecShareInputScan(ShareInputScanState *node);
 extern void ExecEndShareInputScan(ShareInputScanState *node);
 extern void ExecReScanShareInputScan(ShareInputScanState *node);
 extern void ExecSquelchShareInputScan(ShareInputScanState *node);

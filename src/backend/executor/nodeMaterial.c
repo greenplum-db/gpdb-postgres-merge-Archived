@@ -74,16 +74,8 @@ ExecMaterial(PlanState *pstate)
 	 */
 	if (tuplestorestate == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
 	{
-		/*
-		 * GPDB_12_MERGE_FIXME: SharedInputScans are broken.
-		 * We used to use tuplestorenew.c here, but all that was reverted
-		 * to upstream tuplestore.c as part of the merge. Need to reimplement
-		 * the sharing on top of tuplestore.c and the new SharedFileSet APIs
-		 * or similar.
-		 */
 		if (ma->share_type != SHARE_NOTSHARED)
-			elog(ERROR, "sharing Material nodes across processes is broken");
-
+			node->eflags |= EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
 		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
 		tuplestore_set_eflags(tuplestorestate, node->eflags);
 		if (node->eflags & EXEC_FLAG_MARK)

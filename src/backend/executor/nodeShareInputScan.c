@@ -19,8 +19,6 @@
  *	ExecInitShareInputScan
  * 	ExecShareInputScan
  * 	ExecEndShareInputScan
- * 	ExecShareInputMarkPosScan
- * 	ExecShareInputRestrPosScan
  * 	ExecShareInputReScanScanv
  */
 
@@ -59,8 +57,6 @@ static void ExecEagerFreeShareInputScan(ShareInputScanState *node);
 static void
 init_tuplestore_state(ShareInputScanState *node)
 {
-	Assert(node->ts_state == NULL);
-	
 	EState *estate = node->ss.ps.state;
 	ShareInputScan *sisc = (ShareInputScan *)node->ss.ps.plan;
 	ShareNodeEntry *snEntry = ExecGetShareNodeEntry(estate, sisc->share_id, false);
@@ -82,10 +78,10 @@ init_tuplestore_state(ShareInputScanState *node)
 		}
 	}
 
-	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
-#if 0
 	if(share_type == SHARE_MATERIAL_XSLICE)
 	{
+		elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 		char rwfile_prefix[100];
 		shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), sisc->share_id);
 	
@@ -94,17 +90,23 @@ init_tuplestore_state(ShareInputScanState *node)
 		node->ts_state->matstore = ntuplestore_create_readerwriter(rwfile_prefix, 0, false, false);
 		node->ts_pos = (void *) ntuplestore_create_accessor(node->ts_state->matstore, false);
 		ntuplestore_acc_seek_bof((NTupleStoreAccessor *)node->ts_pos);
+#endif
 	}
 	else if(share_type == SHARE_MATERIAL)
 	{
 		/* The materialstate->ts_state structure should have been initialized already, during init of material node */
-		node->ts_state = ((MaterialState *)snState)->ts_state;
-		Assert(NULL != node->ts_state->matstore);
-		node->ts_pos = (void *) ntuplestore_create_accessor(node->ts_state->matstore, false);
-		ntuplestore_acc_seek_bof((NTupleStoreAccessor *)node->ts_pos);
+		Assert(node->ts_state.matstore == NULL);
+
+		node->ts_state.matstore = ((MaterialState *) snState)->tuplestorestate;
+		Assert(NULL != node->ts_state.matstore);
+		node->ts_pos = tuplestore_alloc_read_pointer(node->ts_state.matstore, EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD);
+		tuplestore_select_read_pointer(node->ts_state.matstore, node->ts_pos);
+		tuplestore_rescan(node->ts_state.matstore);
 	}
 	else if(share_type == SHARE_SORT_XSLICE)
 	{
+		elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 		char rwfile_prefix[100];
 		shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), sisc->share_id);
 		node->ts_state = palloc0(sizeof(GenericTupStore));
@@ -124,9 +126,12 @@ init_tuplestore_state(ShareInputScanState *node)
 
 		tuplesort_begin_pos(node->ts_state->sortstore, (TuplesortPos **)(&node->ts_pos));
 		tuplesort_rescan_pos(node->ts_state->sortstore, (TuplesortPos *)node->ts_pos);
+#endif
 	}
 	else 
 	{
+		elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 		Assert(sisc->share_type == SHARE_SORT);
 		Assert(snState != NULL);
 
@@ -134,11 +139,10 @@ init_tuplestore_state(ShareInputScanState *node)
 		Assert(NULL != node->ts_state->sortstore);
 		tuplesort_begin_pos(node->ts_state->sortstore, (TuplesortPos **)(&node->ts_pos));
 		tuplesort_rescan_pos(node->ts_state->sortstore, (TuplesortPos *)node->ts_pos);
-	}
 #endif
+	}
 
-	Assert(NULL != node->ts_state);
-	Assert(NULL != node->ts_state->matstore || NULL != node->ts_state->sortstore);
+	Assert(NULL != node->ts_state.matstore || NULL != node->ts_state.sortstore);
 }
 
 
@@ -148,8 +152,9 @@ init_tuplestore_state(ShareInputScanState *node)
  * ------------------------------------------------------------------
  */
 TupleTableSlot *
-ExecShareInputScan(ShareInputScanState *node)
+ExecShareInputScan(PlanState *pstate)
 {
+	ShareInputScanState *node = castNode(ShareInputScanState, pstate);
 	EState *estate;
 	ScanDirection dir;
 	bool forward;
@@ -168,7 +173,7 @@ ExecShareInputScan(ShareInputScanState *node)
 
 
 	/* if first time call, need to initialize the tuplestore state.  */
-	if(node->ts_state == NULL)
+	if (node->ts_state.matstore == NULL)
 	{
 		elog(DEBUG1, "SISC (shareid=%d, slice=%d): No tuplestore yet, initializing tuplestore",
 				sisc->share_id, currentSliceId);
@@ -177,22 +182,25 @@ ExecShareInputScan(ShareInputScanState *node)
 
 	slot = node->ss.ps.ps_ResultTupleSlot;
 
-	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
-#if 0
 	while(1)
 	{
 		bool gotOK = false;
 
 		if(share_type == SHARE_MATERIAL || share_type == SHARE_MATERIAL_XSLICE) 
 		{
-			ntuplestore_acc_advance((NTupleStoreAccessor *) node->ts_pos, forward ? 1 : -1);
-			gotOK = ntuplestore_acc_current_tupleslot((NTupleStoreAccessor *) node->ts_pos, slot);
+			if (sisc->share_type == SHARE_MATERIAL_XSLICE)
+				elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+			tuplestore_select_read_pointer(node->ts_state.matstore, node->ts_pos);
+			gotOK = tuplestore_gettupleslot(node->ts_state.matstore, forward, true, slot);
 		}
 		else
 		{
+			elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 			gotOK = tuplesort_gettupleslot_pos(node->ts_state->sortstore,
 											   (TuplesortPos *) node->ts_pos, forward, slot, NULL,
 											   CurrentMemoryContext);
+#endif
 		}
 
 		if(!gotOK)
@@ -202,7 +210,6 @@ ExecShareInputScan(ShareInputScanState *node)
 
 		return slot;
 	}
-#endif
 
 	Assert(!"should not be here");
 	return NULL;
@@ -225,10 +232,10 @@ ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags)
 	sisstate = makeNode(ShareInputScanState);
 	sisstate->ss.ps.plan = (Plan *) node;
 	sisstate->ss.ps.state = estate;
+	sisstate->ss.ps.ExecProcNode = ExecShareInputScan;
 	
-	sisstate->ts_state = NULL;
-	sisstate->ts_pos = NULL;
-	sisstate->ts_markpos = NULL;
+	sisstate->ts_state.matstore = NULL;
+	sisstate->ts_pos = -1;
 
 	sisstate->share_lk_ctxt = NULL;
 	sisstate->freed = false;
@@ -249,15 +256,9 @@ ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags)
 
 	/* 
 	 * Initialize result slot and type.
-	 *
-	 * GPDB_12_MERGE_FIXME: What's the right TTSOps for this? The tuples
-	 * come from tuplesort or ntuplestore.
 	 */
-	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
-#if 0
-	ExecInitResultTupleSlotTL(&sortstate->ss.ps, &TTSOpsMinimalTuple);
+	ExecInitResultTupleSlotTL(&sisstate->ss.ps, &TTSOpsMinimalTuple);
 	sisstate->ss.ps.ps_ProjInfo = NULL;
-#endif
 
 	/*
 	 * If this is an intra-slice share node, increment reference count to
@@ -299,7 +300,7 @@ ExecSliceDependencyShareInputScan(ShareInputScanState *node)
 void ExecEndShareInputScan(ShareInputScanState *node)
 {
 	/* clean up tuple table */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	//ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	ShareInputScan * sisc = (ShareInputScan *) node->ss.ps.plan;
@@ -323,8 +324,8 @@ void ExecEndShareInputScan(ShareInputScanState *node)
 void
 ExecReScanShareInputScan(ShareInputScanState *node)
 {
-	/* if first time call, need to initialize the tuplestore state */
-	if(node->ts_state == NULL)
+	/* if first tirme call, need to initialize the tuplestore state */
+	if (node->ts_state.matstore == NULL)
 	{
 		init_tuplestore_state(node);
 	}
@@ -332,25 +333,28 @@ ExecReScanShareInputScan(ShareInputScanState *node)
 	ShareInputScan *sisc = (ShareInputScan *) node->ss.ps.plan;
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	Assert(NULL != node->ts_pos);
+	Assert(node->ts_pos != -1);
 
-	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
-#if 0
 	if(sisc->share_type == SHARE_MATERIAL || sisc->share_type == SHARE_MATERIAL_XSLICE)
 	{
-		Assert(NULL != node->ts_state->matstore);
-		ntuplestore_acc_seek_bof((NTupleStoreAccessor *) node->ts_pos);
+		if (sisc->share_type == SHARE_MATERIAL_XSLICE)
+			elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+		Assert(node->ts_state.matstore != NULL);
+		tuplestore_select_read_pointer(node->ts_state.matstore, node->ts_pos);
+		tuplestore_rescan(node->ts_state.matstore);
 	}
 	else if (sisc->share_type == SHARE_SORT || sisc->share_type == SHARE_SORT_XSLICE)
 	{
+		elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 		Assert(NULL != node->ts_state->sortstore);
 		tuplesort_rescan_pos(node->ts_state->sortstore, (TuplesortPos *) node->ts_pos);
+#endif
 	}
 	else
 	{
 		Assert(!"ExecShareInputScanReScan: invalid share type ");
 	}
-#endif
 }
 
 /*************************************************************************
@@ -863,7 +867,7 @@ static void
 ExecEagerFreeShareInputScan(ShareInputScanState *node)
 {
 	/* clean up tuple table */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	//ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
@@ -878,11 +882,15 @@ ExecEagerFreeShareInputScan(ShareInputScanState *node)
 	ShareInputScan * sisc = (ShareInputScan *) node->ss.ps.plan;
 	if(sisc->share_type == SHARE_MATERIAL || sisc->share_type == SHARE_MATERIAL_XSLICE)
 	{
-		if(node->ts_pos != NULL)
-			ntuplestore_destroy_accessor((NTupleStoreAccessor *) node->ts_pos);
-		if(node->ts_markpos != NULL)
-			pfree(node->ts_markpos);
+		if (node->ts_pos != -1)
+		{
+			/* GPDB_12_MERGE_FIXME: nothing to do? */
+			//ntuplestore_destroy_accessor((NTupleStoreAccessor *) node->ts_pos);
+			node->ts_pos = -1;
+		}
 
+		/* GPDB_12_MERGE_FIXME */
+#if 0
 		if(NULL != node->ts_state && NULL != node->ts_state->matstore)
 		{
 			/* Check if shared X-SLICE. In that case, we can safely destroy our tuplestore */
@@ -891,13 +899,14 @@ ExecEagerFreeShareInputScan(ShareInputScanState *node)
 				ntuplestore_destroy(node->ts_state->matstore);
 			}
 		}
+#endif
 	}
 	if (sisc->share_type == SHARE_SORT_XSLICE)
 	{
-		if (NULL != node->ts_state && NULL != node->ts_state->sortstore)
+		if (node->ts_state.sortstore != NULL)
 		{
-			tuplesort_end(node->ts_state->sortstore);
-			node->ts_state->sortstore = NULL;
+			tuplesort_end(node->ts_state.sortstore);
+			node->ts_state.sortstore = NULL;
 		}
 	}
 
@@ -905,9 +914,8 @@ ExecEagerFreeShareInputScan(ShareInputScanState *node)
 	 * Reset our copy of the pointer to the ts_state. The tuplestore can still be accessed by
 	 * the other consumers, but we don't have a pointer to it anymore
 	 */ 
-	node->ts_state = NULL; 
-	node->ts_pos = NULL;
-	node->ts_markpos = NULL;
+	node->ts_state.matstore = NULL;
+	node->ts_pos = -1;
 
 	/* This can be called more than once */
 	if (!node->freed &&
@@ -932,7 +940,7 @@ ExecSquelchShareInputScan(ShareInputScanState *node)
 {
 	ShareType share_type = ((ShareInputScan *) node->ss.ps.plan)->share_type;
 	bool isWriter = outerPlanState(node) != NULL;
-	bool tuplestoreInitialized = node->ts_state != NULL;
+	bool tuplestoreInitialized = node->ts_state.matstore != NULL;
 
 	/*
 	 * If this SharedInputScan is shared within the same slice then its
