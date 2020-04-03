@@ -19667,9 +19667,9 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 
 		if (strcmp(elem->defname, "appendoptimized") == 0 ||
 				strcmp(elem->defname, "appendonly") == 0)
-			appendoptimized = strcmp(strVal(elem->arg), "true") == 0;
+			appendoptimized = defGetBoolean(elem);
 		else if (strcmp(elem->defname, "orientation") == 0)
-			is_column_oriented = strcmp(strVal(elem->arg), "column") == 0;
+			is_column_oriented = strcmp(defGetString(elem), "column") == 0;
 		else
 			amendedOptions = lappend(amendedOptions, elem);
 	}
