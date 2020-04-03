@@ -3212,7 +3212,7 @@ select l_suppkey, avg(l_discount) from heap_lineitem group by l_suppkey;
 set statement_mem= 7000;
 set enable_groupagg=off;
 set enable_hashagg=on;
-select l_orderkey, covar_pop(l_partkey, l_suppkey) as covar_pop from heap_lineitem group by l_orderkey order by l_orderkey, covar_pop limit 2000;
+select l_orderkey, to_char(covar_pop(l_partkey, l_suppkey), '99999.9999') as covar_pop from heap_lineitem group by l_orderkey order by l_orderkey, covar_pop limit 2000;
 set enable_hashagg=on;
 create table agg_zoo(x bigint, y int) distributed by (x);
 insert into agg_zoo select random() * 12345678, 1 from generate_series(1,100000);
