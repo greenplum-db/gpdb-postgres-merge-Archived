@@ -10794,21 +10794,17 @@ set log_statement='none';
 set log_min_duration_statement=-1;
 set client_min_messages='log';
 explain select count(*) from foo group by cube(a,b);
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
- GroupAggregate  (cost=8018.50..16794.97 rows=10611 width=16)
-   Group Key: a, b
-   Group Key: a
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ MixedAggregate  (cost=0.00..4511.11 rows=10611 width=16)
+   Hash Key: a, b
+   Hash Key: a
+   Hash Key: b
    Group Key: ()
-   Sort Key: b
-     Group Key: b
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=8018.50..8233.75 rows=86100 width=8)
-         Merge Key: a, b
-         ->  Sort  (cost=8018.50..8233.75 rows=28700 width=8)
-               Sort Key: a, b
-               ->  Seq Scan on foo  (cost=0.00..961.00 rows=28700 width=8)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..2683.00 rows=86100 width=8)
+         ->  Seq Scan on foo  (cost=0.00..961.00 rows=28700 width=8)
  Optimizer: Postgres query optimizer
-(12 rows)
+(8 rows)
 
 reset client_min_messages;
 reset log_statement;
