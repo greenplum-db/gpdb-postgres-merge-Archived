@@ -108,11 +108,7 @@ CommentObject(CommentStmt *stmt)
 			break;
 	}
 
-	/*
-	 * Dispatch to the segments. Except for event triggers, they're only stored
-	 * in the QD node.
-	 */
-	if (Gp_role == GP_ROLE_DISPATCH && stmt->objtype != OBJECT_EVENT_TRIGGER)
+	if (Gp_role == GP_ROLE_DISPATCH && shouldDispatchForObject(stmt->objtype))
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|

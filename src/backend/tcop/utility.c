@@ -2114,7 +2114,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 	 *
 	 * Event triggers are not stored in QE nodes, so skip those.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH && stmt->removeType != OBJECT_EVENT_TRIGGER)
+	if (Gp_role == GP_ROLE_DISPATCH && shouldDispatchForObject(stmt->removeType))
 	{
 		int			flags;
 
