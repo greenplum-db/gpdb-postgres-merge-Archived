@@ -97,7 +97,7 @@ select cn,
 
 select cn,
   sum(cn) over (order by cn range '1'::float8 preceding)
-  from customer; -- this, however, should work
+  from customer; -- this used to work on GPDB 6 and before, but GPDB 7 got more strict
 
 -- 4 -- Partitioned, non-ordered window specifications -- OVER (PARTITION BY ...) --
 

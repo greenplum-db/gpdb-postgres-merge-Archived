@@ -235,15 +235,11 @@ select cn,
 ERROR:  frame starting offset must not be null
 select cn,
   sum(cn) over (order by cn range '1'::float8 preceding)
-  from customer; -- this, however, should work
- cn | sum 
-----+-----
-  1 |   1
-  2 |   3
-  3 |   5
-  4 |   7
-(4 rows)
-
+  from customer; -- this used to work on GPDB 6 and before, but GPDB 7 got more strict
+ERROR:  RANGE with offset PRECEDING/FOLLOWING is not supported for column type integer and offset type double precision
+LINE 2:   sum(cn) over (order by cn range '1'::float8 preceding)
+                                          ^
+HINT:  Cast the offset value to an appropriate type.
 -- 4 -- Partitioned, non-ordered window specifications -- OVER (PARTITION BY ...) --
 -- !
 select row_number() over (partition by cn), cn, pn 
