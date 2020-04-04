@@ -1557,6 +1557,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * new xlog files into pg_xlog directory.
 						 */
 						if (pg_str_endswith(filename, "/pg_log") ||
+							pg_str_endswith(filename, "/pg_wal") ||
 							pg_str_endswith(filename, "/pg_xlog"))
 							continue;
 
@@ -2019,7 +2020,8 @@ BaseBackup(void)
 	if (forceoverwrite)
 	{
 		char xlog_path[MAXPGPATH];
-		snprintf(xlog_path, MAXPGPATH, "%s/pg_xlog", basedir);
+		snprintf(xlog_path, MAXPGPATH, "%s/%s", basedir,
+			PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ? "pg_xlog" : "pg_wal");
 
 		if (pg_check_dir(xlog_path) != 0)
 			rmtree(xlog_path, true);

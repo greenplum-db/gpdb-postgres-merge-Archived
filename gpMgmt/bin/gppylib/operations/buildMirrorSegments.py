@@ -27,7 +27,7 @@ gDatabaseDirectories = [
     # this list occur inside initdb.c
     "global",
     "pg_log",
-    "pg_xlog",
+    "pg_wal",
     "pg_clog",
     "pg_changetracking",
     "pg_subtrans",
