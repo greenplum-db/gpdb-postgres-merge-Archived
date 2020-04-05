@@ -2987,6 +2987,8 @@ pgstat_bestart(void)
 	else
 		lbeentry.st_userid = InvalidOid;
 
+	lbeentry.st_session_id = gp_session_id;  /* GPDB only */
+
 	/*
 	 * We may not have a MyProcPort (eg, if this is the autovacuum process).
 	 * If so, use all-zeroes client address, which is dealt with specially in
