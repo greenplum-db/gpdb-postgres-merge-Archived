@@ -225,12 +225,14 @@ FETCH NEXT FROM c;
 -- perform update
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
-                    QUERY PLAN                     
----------------------------------------------------
- Update on tidscan (actual rows=1 loops=1)
-   ->  Tid Scan on tidscan (actual rows=1 loops=1)
-         TID Cond: CURRENT OF c
-(3 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
+   ->  Update on tidscan (actual rows=1 loops=1)
+         ->  Tid Scan on tidscan (actual rows=1 loops=1)
+               TID Cond: CURRENT OF c
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 FETCH NEXT FROM c;
  ctid  | id 
@@ -241,12 +243,14 @@ FETCH NEXT FROM c;
 -- perform update
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
 UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
-                    QUERY PLAN                     
----------------------------------------------------
- Update on tidscan (actual rows=1 loops=1)
-   ->  Tid Scan on tidscan (actual rows=1 loops=1)
-         TID Cond: CURRENT OF c
-(3 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
+   ->  Update on tidscan (actual rows=1 loops=1)
+         ->  Tid Scan on tidscan (actual rows=1 loops=1)
+               TID Cond: CURRENT OF c
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 SELECT * FROM tidscan;
  id 
