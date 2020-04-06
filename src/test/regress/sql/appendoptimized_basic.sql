@@ -1,5 +1,10 @@
 create table ao_basic_t1 (a int, b varchar) using appendoptimized distributed by (a);
 
+-- Validate that the appendoptimized table access method will be used
+-- for this table.
+select amhandler from pg_class c, pg_am a where c.relname = 'ao_basic_t1' and c.relam = a.oid;
+select count(*) = 1 from pg_appendonly where relid = 'ao_basic_t1'::regclass;
+
 insert into ao_basic_t1 values (1, 'abc'), (2, 'pqr'), (3, 'lmn');
 
 insert into ao_basic_t1 select i, i from generate_series(1,12)i;
