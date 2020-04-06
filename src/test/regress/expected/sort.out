@@ -410,21 +410,21 @@ LINE 1: select col21 from gpsort_alltypes order by col21 desc;
                                                    ^
 HINT:  Use an explicit ordering operator or modify the query.
 select col22 from gpsort_alltypes order by col22 asc;
-    col22    
--------------
-     213.232
-      213234
- 2.13346e+06
- 2.13121e+07
+     col22     
+---------------
+     213.23235
+     213234.23
+ 2.1334592e+06
+ 2.1312122e+07
 (4 rows)
 
 select col22 from gpsort_alltypes order by col22 desc;
-    col22    
--------------
- 2.13121e+07
- 2.13346e+06
-      213234
-     213.232
+     col22     
+---------------
+ 2.1312122e+07
+ 2.1334592e+06
+     213234.23
+     213.23235
 (4 rows)
 
 select col23 from gpsort_alltypes order by col23 asc;
