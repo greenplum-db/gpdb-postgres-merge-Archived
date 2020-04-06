@@ -25,7 +25,7 @@ begin
   i := 0; /* in func */
   while c < 1 and i < timeout_secs*2 loop
     select count(*) into c from pg_stat_activity
-    where wait_event_type = 'Replication'; /* in func */
+    where wait_event = 'SyncRep'; /* in func */
     perform pg_sleep(0.5); /* in func */
     perform pg_stat_clear_snapshot(); /* in func */
     i := i + 1; /* in func */
@@ -49,8 +49,8 @@ from gp_segment_configuration where content=-1 and role='m';
 -- The create table command should be seen as blocked.  Wait until
 -- that happens.
 select wait_for_pg_stat_activity(60);
-select datname, wait_event_type, query from pg_stat_activity
-where wait_event_type = 'Replication';
+select datname, wait_event, query from pg_stat_activity
+where wait_event = 'SyncRep';
 
 select gp_inject_fault('walrecv_skip_flush', 'reset', dbid)
 from gp_segment_configuration where content=-1 and role='m';
@@ -100,15 +100,21 @@ show repl_catchup_within_range;
 begin;
 
 create or replace function wait_until_standby_in_state(targetstate text)
-returns void as $$
+returns text as $$
 declare
    replstate text; /* in func */
+   i int; /* in func */
 begin
-   loop
+   i := 0; /* in func */
+   while i < 1200 loop
       select state into replstate from pg_stat_replication; /* in func */
-      exit when replstate = targetstate; /* in func */
+      if replstate = targetstate then
+          return replstate; /* in func */
+      end if; /* in func */
       perform pg_sleep(0.1); /* in func */
+      i := i + 1; /* in func */
    end loop; /* in func */
+   return replstate; /* in func */
 end; /* in func */
 $$ language plpgsql;
 
@@ -144,8 +150,8 @@ select gp_wait_until_triggered_fault(
 
 -- The create table command should be seen as blocked.
 select wait_for_pg_stat_activity(60);
-select datname, wait_event_type, query from pg_stat_activity
-where wait_event_type = 'Replication';
+select datname, wait_event, query from pg_stat_activity
+where wait_event = 'SyncRep';
 
 -- Reset faults on primary as well as mirror.
 select gp_inject_fault('all', 'reset', dbid)
