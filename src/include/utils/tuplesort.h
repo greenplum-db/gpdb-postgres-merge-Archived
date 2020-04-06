@@ -70,12 +70,16 @@ typedef enum
 	SORT_TYPE_QUICKSORT,
 	SORT_TYPE_EXTERNAL_SORT,
 	SORT_TYPE_EXTERNAL_MERGE
+#define NUM_SORT_METHOD (SORT_TYPE_EXTERNAL_MERGE + 1)
+
 } TuplesortMethod;
 
 typedef enum
 {
 	SORT_SPACE_TYPE_DISK,
 	SORT_SPACE_TYPE_MEMORY
+#define NUM_SORT_SPACE_TYPE (SORT_SPACE_TYPE_MEMORY + 1)
+
 } TuplesortSpaceType;
 
 typedef struct TuplesortInstrumentation

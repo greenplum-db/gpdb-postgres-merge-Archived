@@ -530,15 +530,11 @@ ExecReScanSort(SortState *node)
 void
 ExecSortExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 {
-	SortState *sortstate = (SortState *)planstate;
-	
-		/* GPDB_12_MERGE_FIXME: broken */
-#if 0
-	if (NULL != sortstate->tuplesortstate->sortstore)
-	{
-		tuplesort_finalize_stats(sortstate->tuplesortstate->sortstore);
-	}
-#endif
+	SortState *sortstate = (SortState *) planstate;
+
+	if (sortstate->tuplesortstate->sortstore)
+		tuplesort_get_stats(sortstate->tuplesortstate->sortstore,
+							&sortstate->sortstats);
 }                               /* ExecSortExplainEnd */
 
 static void
@@ -583,6 +579,10 @@ ExecEagerFreeSort(SortState *node)
 		{
 			shareinput_writer_waitdone(node->share_lk_ctxt, sort->share_id, sort->nsharer_xslice);
 		}
+
+		/* Save stats, so that we can display them later in EXPLAIN ANALYZE */
+		tuplesort_get_stats(node->tuplesortstate->sortstore,
+							&node->sortstats);
 
 		tuplesort_end(node->tuplesortstate->sortstore);
 		node->tuplesortstate->sortstore = NULL;

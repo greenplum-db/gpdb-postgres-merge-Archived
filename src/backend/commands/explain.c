@@ -3300,29 +3300,28 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		CdbExplain_Agg	*agg;
 		const char *sortMethod;
 		const char *spaceType;
-
-		sortMethod = sort_method_enum_str[i];
+		int			j;
 
 		/*
 		 * Memory and disk usage statistics are saved separately in GPDB so
 		 * need to pull out the one in question first
 		 */
-		spaceType = "Memory";
-		agg = &ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][i];
-		if (agg->vcnt > 0)
-			spaceType = "Memory";
-		else
+		for (j = 0; j < NUM_SORT_SPACE_TYPE; j++)
 		{
-			spaceType = "Disk";
-			agg = &ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][i];
-		}
+			agg = &ns->sortSpaceUsed[j][i];
 
+			if (agg->vcnt > 0)
+				break;
+		}
 		/*
 		 * If the current sort method in question hasn't been used, skip to
 		 * next one
 		 */
-		if (agg->vcnt  == 0)
+		if (j >= NUM_SORT_SPACE_TYPE)
 			continue;
+
+		sortMethod = tuplesort_method_name(i);
+		spaceType = tuplesort_space_type_name(j);
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{

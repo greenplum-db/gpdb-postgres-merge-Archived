@@ -30,65 +30,14 @@
 #include "libpq/pqformat.h"		/* pq_beginmessage() etc. */
 #include "miscadmin.h"
 #include "utils/resscheduler.h"
+#include "utils/tuplesort.h"
 #include "utils/memutils.h"		/* MemoryContextGetPeakSpace() */
 #include "utils/vmem_tracker.h"
 
 #include "cdb/cdbexplain.h"             /* cdbexplain_recvExecStats */
 
-#define NUM_SORT_METHOD 5
-
-#define TOP_N_HEAP_SORT_STR "top-N heapsort"
-#define QUICK_SORT_STR "quicksort"
-#define EXTERNAL_SORT_STR "external sort"
-#define EXTERNAL_MERGE_STR "external merge"
-#define IN_PROGRESS_SORT_STR "sort still in progress"
-
-#define NUM_SORT_SPACE_TYPE 2
-#define MEMORY_STR_SORT_SPACE_TYPE "Memory"
-#define DISK_STR_SORT_SPACE_TYPE "Disk"
-
 /* Convert bytes into kilobytes */
 #define kb(x) (floor((x + 1023.0) / 1024.0))
-
-/*
- * Different sort method in GPDB.
- *
- * Make sure to update NUM_SORT_METHOD when this enum changes.
- * This enum value is used an index in the array sortSpaceUsed
- * in struct CdbExplain_NodeSummary.
- */
-typedef enum
-{
-	UNINITIALIZED_SORT = 0,
-	TOP_N_HEAP_SORT = 1,
-	QUICK_SORT = 2,
-	EXTERNAL_SORT = 3,
-	EXTERNAL_MERGE = 4,
-	IN_PROGRESS_SORT = 5
-} ExplainSortMethod;
-
-typedef enum
-{
-	UNINITIALIZED_SORT_SPACE_TYPE = 0,
-	MEMORY_SORT_SPACE_TYPE = 1,
-	DISK_SORT_SPACE_TYPE = 2
-} ExplainSortSpaceType;
-
-/*
- * Convert the above enum `ExplainSortMethod` to printable string for
- * Explain Analyze.
- * Note : No conversion available for `UNINITALIZED_SORT`. Caller has to index
- * this array by subtracting 1 from origin enum value.
- *
- * E.g. sort_method_enum_str[TOP_N_HEAP_SORT-1]
- */
-const char *sort_method_enum_str[] = {
-	TOP_N_HEAP_SORT_STR,
-	QUICK_SORT_STR,
-	EXTERNAL_SORT_STR,
-	EXTERNAL_MERGE_STR,
-	IN_PROGRESS_SORT_STR
-};
 
 /* EXPLAIN ANALYZE statistics for one plan node of a slice */
 typedef struct CdbExplain_StatInst
@@ -107,9 +56,7 @@ typedef struct CdbExplain_StatInst
 	bool		workfileCreated;	/* workfile created in this node */
 	instr_time	firststart;		/* Start time of first iteration of node */
 	int			numPartScanned; /* Number of part tables scanned */
-	ExplainSortMethod sortMethod;	/* Type of sort */
-	ExplainSortSpaceType sortSpaceType; /* Sort space type */
-	long		sortSpaceUsed;	/* Memory / Disk used by sort(KBytes) */
+	TuplesortInstrumentation sortstats; /* Sort stats, if this is a Sort node */
 	int			bnotes;			/* Offset to beginning of node's extra text */
 	int			enotes;			/* Offset to end of node's extra text */
 } CdbExplain_StatInst;
@@ -339,61 +286,6 @@ static void
 gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
                              struct EState *estate,
                              ExplainState *es);
-
-/*
- * Convert the sort method in string to corresponding
- * enum ExplainSortMethod.
- *
- * If you change please update tuplesort_get_stats in tuplesort.c.
- */
-static ExplainSortMethod
-String2ExplainSortMethod(const char *sortMethod)
-{
-	if (sortMethod == NULL)
-	{
-		return UNINITIALIZED_SORT;
-	}
-	else if (strcmp(TOP_N_HEAP_SORT_STR, sortMethod) == 0)
-	{
-		return TOP_N_HEAP_SORT;
-	}
-	else if (strcmp(QUICK_SORT_STR, sortMethod) == 0)
-	{
-		return QUICK_SORT;
-	}
-	else if (strcmp(EXTERNAL_SORT_STR, sortMethod) == 0)
-	{
-		return EXTERNAL_SORT;
-	}
-	else if (strcmp(EXTERNAL_MERGE_STR, sortMethod) == 0)
-	{
-		return EXTERNAL_MERGE;
-	}
-	else if (strcmp(IN_PROGRESS_SORT_STR, sortMethod) == 0)
-	{
-		return IN_PROGRESS_SORT;
-	}
-	return UNINITIALIZED_SORT;
-}
-
-static ExplainSortSpaceType
-String2ExplainSortSpaceType(const char *sortSpaceType, ExplainSortMethod sortMethod)
-{
-	if (sortSpaceType == NULL ||
-		sortMethod == UNINITIALIZED_SORT)
-	{
-		return UNINITIALIZED_SORT_SPACE_TYPE;
-	}
-	else if (strcmp(MEMORY_STR_SORT_SPACE_TYPE, sortSpaceType) == 0)
-	{
-		return MEMORY_SORT_SPACE_TYPE;
-	}
-	else
-	{
-		Assert(strcmp(DISK_STR_SORT_SPACE_TYPE, sortSpaceType) == 0);
-		return DISK_SORT_SPACE_TYPE;
-	}
-}
 
 /*
  * cdbexplain_localExecStats
@@ -934,9 +826,13 @@ cdbexplain_collectStatsFromNode(PlanState *planstate, CdbExplain_SendStatCtx *ct
 	si->workfileCreated = instr->workfileCreated;
 	si->firststart = instr->firststart;
 	si->numPartScanned = instr->numPartScanned;
-	si->sortMethod = String2ExplainSortMethod(instr->sortMethod);
-	si->sortSpaceType = String2ExplainSortSpaceType(instr->sortSpaceType, si->sortMethod);
-	si->sortSpaceUsed = instr->sortSpaceUsed;
+
+	if (IsA(planstate, SortState))
+	{
+		SortState *sortstate = (SortState *) planstate;
+
+		si->sortstats = sortstate->sortstats;
+	}
 }								/* cdbexplain_collectStatsFromNode */
 
 
@@ -1085,10 +981,13 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 	cdbexplain_depStatAcc_init0(&workmemwanted);
 	cdbexplain_depStatAcc_init0(&totalWorkfileCreated);
 	cdbexplain_depStatAcc_init0(&totalPartTableScanned);
-	for (int idx = 0; idx < NUM_SORT_METHOD; ++idx)
+	for (int i = 0; i < NUM_SORT_METHOD; i++)
 	{
-		cdbexplain_depStatAcc_init0(&sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][idx]);
-		cdbexplain_depStatAcc_init0(&sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][idx]);
+		for (int j = 0; j < NUM_SORT_SPACE_TYPE; j++)
+		{
+			cdbexplain_depStatAcc_init0(&sortSpaceUsed[j][i]);
+			cdbexplain_depStatAcc_init0(&sortSpaceUsed[j][i]);
+		}
 	}
 
 	/* Initialize per-slice accumulators. */
@@ -1127,10 +1026,12 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 		cdbexplain_depStatAcc_upd(&workmemwanted, rsi->workmemwanted, rsh, rsi, nsi);
 		cdbexplain_depStatAcc_upd(&totalWorkfileCreated, (rsi->workfileCreated ? 1 : 0), rsh, rsi, nsi);
 		cdbexplain_depStatAcc_upd(&totalPartTableScanned, rsi->numPartScanned, rsh, rsi, nsi);
-		if (rsi->sortMethod < NUM_SORT_METHOD && rsi->sortMethod != UNINITIALIZED_SORT && rsi->sortSpaceType != UNINITIALIZED_SORT_SPACE_TYPE)
+		Assert(rsi->sortstats.sortMethod < NUM_SORT_METHOD);
+		Assert(rsi->sortstats.spaceType < NUM_SORT_SPACE_TYPE);
+		if (rsi->sortstats.sortMethod != SORT_TYPE_STILL_IN_PROGRESS)
 		{
-			Assert(rsi->sortSpaceType <= NUM_SORT_SPACE_TYPE);
-			cdbexplain_depStatAcc_upd(&sortSpaceUsed[rsi->sortSpaceType - 1][rsi->sortMethod - 1], (double) rsi->sortSpaceUsed, rsh, rsi, nsi);
+			cdbexplain_depStatAcc_upd(&sortSpaceUsed[rsi->sortstats.spaceType][rsi->sortstats.sortMethod],
+									  (double) rsi->sortstats.spaceUsed, rsh, rsi, nsi);
 		}
 
 		/* Update per-slice accumulators. */
@@ -1145,10 +1046,13 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 	ns->workmemwanted = workmemwanted.agg;
 	ns->totalWorkfileCreated = totalWorkfileCreated.agg;
 	ns->totalPartTableScanned = totalPartTableScanned.agg;
-	for (int idx = 0; idx < NUM_SORT_METHOD; ++idx)
+	for (int i = 0; i < NUM_SORT_METHOD; i++)
 	{
-		ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][idx] = sortSpaceUsed[MEMORY_SORT_SPACE_TYPE - 1][idx].agg;
-		ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][idx] = sortSpaceUsed[DISK_SORT_SPACE_TYPE - 1][idx].agg;
+		for (int j = 0; j < NUM_SORT_SPACE_TYPE; j++)
+		{
+			ns->sortSpaceUsed[j][i] = sortSpaceUsed[j][i].agg;
+			ns->sortSpaceUsed[j][i] = sortSpaceUsed[j][i].agg;
+		}
 	}
 
 	/* Roll up summary over all nodes of slice into RecvStatCtx. */

@@ -2575,8 +2575,9 @@ typedef struct SortState
 
 	bool		noduplicates;	/* true if discard duplicate rows */
 
-	bool		delayEagerFree;		/* is is safe to free memory used by this node,
+	bool		delayEagerFree;		/* is it safe to free memory used by this node,
 									 * when this node has outputted its last row? */
+	TuplesortInstrumentation sortstats; /* holds stats, if the Sort is eagerly free'd */
 
 	void	   *share_lk_ctxt;
 
