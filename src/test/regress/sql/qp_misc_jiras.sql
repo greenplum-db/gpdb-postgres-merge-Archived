@@ -2065,7 +2065,6 @@ insert into qp_misc_jiras.tbl9613 values(1, 6);
 insert into qp_misc_jiras.tbl9613 values(1, 7);
 insert into qp_misc_jiras.tbl9613 values(1, 8);
 
-
 --
 -- First set of functions. These do not access external relations.
 --
