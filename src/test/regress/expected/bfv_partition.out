@@ -1406,25 +1406,25 @@ NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_5" for table "mp
 create table mpp3512a (like mpp3512_part);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 \d mpp3512
-   Table "bfv_partition.mpp3512"
- Column |     Type     | Modifiers 
---------+--------------+-----------
- id     | integer      | 
- rank   | integer      | 
- year   | integer      | 
- gender | character(1) | 
- count  | integer      | 
+             Table "bfv_partition.mpp3512"
+ Column |     Type     | Collation | Nullable | Default 
+--------+--------------+-----------+----------+---------
+ id     | integer      |           |          | 
+ rank   | integer      |           |          | 
+ year   | integer      |           |          | 
+ gender | character(1) |           |          | 
+ count  | integer      |           |          | 
 Distributed by: (id)
 
 \d mpp3512a
-  Table "bfv_partition.mpp3512a"
- Column |     Type     | Modifiers 
---------+--------------+-----------
- id     | integer      | 
- rank   | integer      | 
- year   | integer      | 
- gender | character(1) | 
- count  | integer      | 
+             Table "bfv_partition.mpp3512a"
+ Column |     Type     | Collation | Nullable | Default 
+--------+--------------+-----------+----------+---------
+ id     | integer      |           |          | 
+ rank   | integer      |           |          | 
+ year   | integer      |           |          | 
+ gender | character(1) |           |          | 
+ count  | integer      |           |          | 
 Distributed by: (id)
 
 select * from pg_partitions where tablename='mpp3512_part';
@@ -1485,7 +1485,7 @@ alter table mpp3816 add column AAA int;
 alter table mpp3816 add column BBB int;
 alter table mpp3816 drop column BBB;
 alter table mpp3816 drop column startDate;
-ERROR:  cannot drop partitioning column "startdate"
+ERROR:  cannot drop column named in partition key
 drop table mpp3816;
 CREATE TABLE mpp3762_cities (
         city     varchar(80) primary key,
@@ -2136,72 +2136,70 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 alter table mpp3817 drop column unique2;
 \d mpp3817
-   Table "bfv_partition.mpp3817"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
- startdate   | date    | 
-Number of child tables: 13 (Use \d+ to list them.)
+       Partitioned table "bfv_partition.mpp3817"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+ startdate   | date    |           |          | 
+Partition key: RANGE (startdate)
+Number of partitions: 13 (Use \d+ to list them.)
 Distributed randomly
-Partition by: (startdate)
 
 \d mpp3817_1_prt_10
-Table "bfv_partition.mpp3817_1_prt_10"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
- startdate   | date    | 
-Check constraints:
-    "mpp3817_1_prt_10_check" CHECK (startdate >= '09-01-2007'::date AND startdate < '10-01-2007'::date)
-Inherits: mpp3817
+         Table "bfv_partition.mpp3817_1_prt_10"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+ startdate   | date    |           |          | 
+Partition of: mpp3817 FOR VALUES FROM ('10-01-2007') TO ('11-01-2007')
 Distributed randomly
 
 \d mpp3817_1_prt_default_part
-Table "bfv_partition.mpp3817_1_prt_default_part"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
- startdate   | date    | 
-Inherits: mpp3817
+    Table "bfv_partition.mpp3817_1_prt_default_part"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+ startdate   | date    |           |          | 
+Partition of: mpp3817 DEFAULT
 Distributed randomly
 
 drop table mpp3817;
@@ -2708,9 +2706,9 @@ NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_9" for table "mpp3487
 insert into mpp3487 select i from generate_series(1, 9) i;
 vacuum analyze mpp3487;
 select  schemaname, tablename, attname, null_frac, avg_width, n_distinct, most_common_freqs, histogram_bounds from pg_stats where tablename like 'mpp3487%' order by 2;
-  schemaname   |    tablename    | attname | null_frac | avg_width | n_distinct | most_common_freqs | histogram_bounds 
----------------+-----------------+---------+-----------+-----------+------------+-------------------+------------------
- bfv_partition | mpp3487         | i       |         0 |         4 |         -1 |                   | 
+  schemaname   |    tablename    | attname | null_frac | avg_width | n_distinct | most_common_freqs |  histogram_bounds   
+---------------+-----------------+---------+-----------+-----------+------------+-------------------+---------------------
+ bfv_partition | mpp3487         | i       |         0 |         4 |         -1 |                   | {1,2,3,4,5,6,7,8,9}
  bfv_partition | mpp3487_1_prt_1 | i       |         0 |         4 |         -1 |                   | 
  bfv_partition | mpp3487_1_prt_2 | i       |         0 |         4 |         -1 |                   | 
  bfv_partition | mpp3487_1_prt_3 | i       |         0 |         4 |         -1 |                   | 
