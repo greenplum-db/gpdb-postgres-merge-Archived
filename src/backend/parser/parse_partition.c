@@ -490,6 +490,9 @@ generateRangePartitions(ParseState *pstate,
 		 * isn't exactly the same as it used to be.
 		 * And we probably should be using ChooseRelationName() here.
 		 */
+	if (elem->partName)
+		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel), elem->partName);
+	else
 		partname = psprintf("%s_1_prt_%d", RelationGetRelationName(parentrel), ++(*num_unnamed_parts_p));
 
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
