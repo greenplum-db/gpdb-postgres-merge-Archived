@@ -163,8 +163,7 @@ initscan(AppendOnlyScanDesc scan, ScanKey key)
 		AppendOnlyExecutorReadBlock_ResetCounts(
 												&scan->executorReadBlock);
 
-	scan->executorReadBlock.mt_bind =
-		create_memtuple_binding(RelationGetDescr(scan->aos_rd));
+	scan->executorReadBlock.mt_bind = NULL;
 
 	pgstat_count_heap_scan(scan->aos_rd);
 }
@@ -841,6 +840,12 @@ AppendOnlyExecutorReadBlock_Finish(AppendOnlyExecutorReadBlock *executorReadBloc
 		pfree(executorReadBlock->numericAtts);
 		executorReadBlock->numericAtts = NULL;
 	}
+
+	if (executorReadBlock->mt_bind)
+	{
+		pfree(executorReadBlock->mt_bind);
+		executorReadBlock->mt_bind = NULL;
+	}
 }
 
 static void
@@ -983,6 +988,26 @@ upgrade_tuple(AppendOnlyExecutorReadBlock *executorReadBlock,
 	return newtuple;
 }
 
+
+static void
+AOExecutorReadBlockBindingInit(AppendOnlyExecutorReadBlock *executorReadBlock,
+									   TupleTableSlot *slot)
+{
+	MemoryContext oldContext;
+	/*
+	 * MemTupleBinding should be created from the slot's tuple descriptor
+	 * and not from the tuple descriptor in the relation.  These could be
+	 * different.  One example is alter table rewrite.
+	 */
+	if (!executorReadBlock->mt_bind)
+	{
+		oldContext = MemoryContextSwitchTo(executorReadBlock->memoryContext);
+		executorReadBlock->mt_bind = create_memtuple_binding(slot->tts_tupleDescriptor);
+		MemoryContextSwitchTo(oldContext);
+	}
+}
+
+
 static bool
 AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorReadBlock,
 										 int64 rowNum,
@@ -1004,6 +1029,13 @@ AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorRe
 	AOTupleIdInit(aoTupleId, executorReadBlock->segmentFileNum, rowNum);
 
 	if (slot)
+		AOExecutorReadBlockBindingInit(executorReadBlock, slot);
+
+	/*
+	 * Is it legal to call this function with NULL slot?  The
+	 * HeapKeyTestUsingSlot call below assumes that the slot is not NULL.
+	 */
+	Assert (slot);
 	{
 		bool		shouldFree = false;
 
