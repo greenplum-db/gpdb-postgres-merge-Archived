@@ -1830,7 +1830,7 @@ typedef enum ObjectType
 
 /* Event triggers and extended statistics are only stored on the QD node.*/
 #define shouldDispatchForObject(object_type) \
-	(object_type != OBJECT_TRIGGER && object_type != OBJECT_STATISTIC_EXT)
+	(object_type != OBJECT_EVENT_TRIGGER && object_type != OBJECT_STATISTIC_EXT)
 
 /* ----------------------
  *		Create Schema Statement

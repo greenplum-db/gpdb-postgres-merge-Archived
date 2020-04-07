@@ -21,6 +21,7 @@ endif
 
 ifeq ($(have_yaml),yes)
   OBJS += transform.o
+  GPFDIST_LIBS += -lyaml
   ifneq ($(PORTNAME),win32)
     override CPPFLAGS := -DGPFXDIST $(CPPFLAGS)
   endif
