@@ -49,6 +49,9 @@ static List *generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec);
 
+static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
+								 const char *partname, int partnum);
+
 /*
  * Create a list of CreateStmts, to create partitions based on 'gpPartSpec'
  * specification.
@@ -485,16 +488,8 @@ generateRangePartitions(ParseState *pstate,
 													  boundIter->partkey->parttypbyval[0]));
 		boundspec->location = -1;
 
-		/*
-		 * GPDB_12_MERGE_FIXME: this way of choosing the partition rel name
-		 * isn't exactly the same as it used to be.
-		 * And we probably should be using ChooseRelationName() here.
-		 */
-	if (elem->partName)
-		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel), elem->partName);
-	else
-		partname = psprintf("%s_1_prt_%d", RelationGetRelationName(parentrel), ++(*num_unnamed_parts_p));
-
+		/* GPDB_12_MERGE_FIXME: pass correct level */
+		partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
 
 		result = lappend(result, childstmt);
@@ -548,16 +543,8 @@ generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 	boundspec->listdatums = listdatums;
 	boundspec->location = -1;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: this way of choosing the partition rel name
-	 * isn't exactly the same as it used to be.
-	 * And we probably should be using ChooseRelationName() here.
-	 */
-	if (elem->partName)
-		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel), elem->partName);
-	else
-		partname = psprintf("%s_1_prt_%d", RelationGetRelationName(parentrel), ++(*num_unnamed_parts_p));
-
+	/* GPDB_12_MERGE_FIXME: pass correct level */
+	partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 
 	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
@@ -626,4 +613,22 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->ownerid = parentrel->rd_rel->relowner;
 
 	return childstmt;
+}
+
+static char *
+ChoosePartitionName(Relation parentrel, const char *levelstr,
+					const char *partname, int partnum)
+{
+	char partsubstring[NAMEDATALEN];
+
+	if (partname)
+		snprintf(partsubstring, NAMEDATALEN, "prt_%s", partname);
+	else
+		snprintf(partsubstring, NAMEDATALEN, "prt_%d", partnum);
+
+	return ChooseRelationName(RelationGetRelationName(parentrel),
+							  levelstr,
+							  partsubstring,
+							  RelationGetNamespace(parentrel),
+							  false);
 }
