@@ -5917,7 +5917,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		 * Initialize state for inserting into new relation, needed for
 		 * appendoptimized row-oriented tables only.
 		 */
-		if (RelationIsAoRows(newrel))
+		if (newrel && RelationIsAoRows(newrel))
 		{
 			/*
 			 * Table access method is not allowed to be changed by alter table
@@ -5926,7 +5926,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			Assert(RelationIsAoRows(oldrel));
 			appendonly_dml_init(newrel, CMD_INSERT);
 		}
-
 
 		/*
 		 * Switch to per-tuple memory context and reset it for each tuple
@@ -6086,7 +6085,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		if (newslot)
 			ExecDropSingleTupleTableSlot(newslot);
 
-		if (RelationIsAoRows(newrel))
+		if (newrel && RelationIsAoRows(newrel))
 			appendonly_dml_finish(newrel, CMD_INSERT);
 	}
 
