@@ -1060,8 +1060,6 @@ create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
 explain (costs off) delete from t1 where a = 1;
 delete from t1 where a = 1;
 
-<<<<<<< HEAD
-=======
 -- Test a primary key with attributes located in later attnum positions
 -- compared to the fk attributes.
 create table pktable2 (a int, b int, c int, d int, e int, primary key (d, e));
@@ -1086,7 +1084,6 @@ create table fktable2 (
 select conname from pg_constraint where conrelid = 'fktable2'::regclass order by conname;
 drop table pktable1, pktable2, fktable2;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
@@ -1122,8 +1119,6 @@ alter table fktable2 drop constraint fktable2_f1_fkey;
 commit;
 
 drop table pktable2, fktable2;
-<<<<<<< HEAD
-=======
 
 --
 -- Test keys that "look" different but compare as equal
@@ -1672,4 +1667,3 @@ ALTER TABLE fkpart7.pkpart1 ADD PRIMARY KEY (a);
 ALTER TABLE fkpart7.pkpart ADD PRIMARY KEY (a);
 CREATE TABLE fkpart7.fk (a int REFERENCES fkpart7.pkpart);
 DROP SCHEMA fkpart7 CASCADE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

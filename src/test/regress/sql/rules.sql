@@ -775,13 +775,9 @@ drop table cchild;
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
 
-<<<<<<< HEAD
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' AND viewname <> 'pg_roles' AND viewname <> 'gp_pgdatabase' AND viewname <> 'pg_locks' AND viewname <> 'gp_max_external_files' AND viewname <> 'pg_resqueue_status' AND viewname <> 'pg_stat_resqueues' ORDER BY viewname;
-=======
 SELECT viewname, definition FROM pg_views
-WHERE schemaname IN ('pg_catalog', 'public')
+WHERE schemaname <> 'information_schema' AND viewname <> 'pg_roles' AND viewname <> 'gp_pgdatabase' AND viewname <> 'pg_locks' AND viewname <> 'gp_max_external_files' AND viewname <> 'pg_resqueue_status' AND viewname <> 'pg_stat_resqueues'
 ORDER BY viewname;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SELECT tablename, rulename, definition FROM pg_rules
 WHERE schemaname IN ('pg_catalog', 'public')
@@ -1199,13 +1195,6 @@ SELECT pg_get_function_identity_arguments(0);
 SELECT pg_get_function_result(0);
 SELECT pg_get_function_arg_default(0, 0);
 SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
-<<<<<<< HEAD
-
--- test rule for select-for-update
-create table t_test_rules_select_for_update (c int) distributed randomly;
-create rule myrule as on insert to t_test_rules_select_for_update
-do instead select * from t_test_rules_select_for_update for update;
-=======
 SELECT pg_get_partkeydef(0);
 
 -- test rename for a rule defined on a partitioned table
@@ -1241,4 +1230,8 @@ SELECT * FROM ruletest2;
 
 DROP TABLE ruletest1;
 DROP TABLE ruletest2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+-- test rule for select-for-update
+create table t_test_rules_select_for_update (c int) distributed randomly;
+create rule myrule as on insert to t_test_rules_select_for_update
+do instead select * from t_test_rules_select_for_update for update;
