@@ -71,10 +71,11 @@ AlterTableCreateAoBlkdirTable(Oid relOid)
 	tupdesc->attrs[3].attstorage = 'p';
 
 	/*
-	 * Create index on segno, first_row_no.
+	 * Create index on segno, columngroup_no and first_row_no.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 3;
+	indexInfo->ii_NumIndexKeyAttrs = 3;
 	indexInfo->ii_IndexAttrNumbers[0] = 1;
 	indexInfo->ii_IndexAttrNumbers[1] = 2;
 	indexInfo->ii_IndexAttrNumbers[2] = 3;
@@ -85,7 +86,7 @@ AlterTableCreateAoBlkdirTable(Oid relOid)
 	indexInfo->ii_Unique = true;
 	indexInfo->ii_Concurrent = false;
 	indexColNames = list_make3("segno", "columngroup_no", "first_row_no");
-	
+
 	classObjectId[0] = INT4_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 	classObjectId[2] = INT8_BTREE_OPS_OID;
