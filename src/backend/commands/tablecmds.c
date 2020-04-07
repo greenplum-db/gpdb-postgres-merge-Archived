@@ -5914,6 +5914,21 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		scan = table_beginscan(oldrel, snapshot, 0, NULL);
 
 		/*
+		 * Initialize state for inserting into new relation, needed for
+		 * appendoptimized row-oriented tables only.
+		 */
+		if (RelationIsAoRows(newrel))
+		{
+			/*
+			 * Table access method is not allowed to be changed by alter table
+			 * commands.
+			 */
+			Assert(RelationIsAoRows(oldrel));
+			appendonly_dml_init(newrel, CMD_INSERT);
+		}
+
+
+		/*
 		 * Switch to per-tuple memory context and reset it for each tuple
 		 * produced, so we don't leak memory.
 		 */
@@ -6070,6 +6085,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		ExecDropSingleTupleTableSlot(oldslot);
 		if (newslot)
 			ExecDropSingleTupleTableSlot(newslot);
+
+		if (RelationIsAoRows(newrel))
+			appendonly_dml_finish(newrel, CMD_INSERT);
 	}
 
 	FreeExecutorState(estate);
@@ -6840,7 +6858,25 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * Did the request for a missing value work? If not we'll have to do a
 		 * rewrite
 		 */
-		if (!rawEnt->missingMode)
+		/*
+		 * GPDB_12_MERGE_FIXME: This optimization to avoid rewriting a table
+		 * is based on the assumption that at the time of reading tuples from
+		 * this table, it is possible to determine if the tuple does not
+		 * contain the value for the new column being added.  In that case,
+		 * the missing value would be replaced with the default value from
+		 * pg_attrdef catalog table.
+		 *
+		 * The optimization cannot be applied to appendoptimized row-oriented
+		 * tables because the number of attributes is not recorded on disk.
+		 * MemTuples only record the tuple length followed by the tuple data.
+		 * This information is not sufficient to determine if the tuple
+		 * contains a missing column.
+		 *
+		 * A possible solution involves recoding the number of attributes for
+		 * each tuple or for each varblock, so that this optimization can be
+		 * applied on similar lines as heap_getattr.
+		 */
+		if (!rawEnt->missingMode || RelationIsAoRows(rel))
 			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
 	}
 

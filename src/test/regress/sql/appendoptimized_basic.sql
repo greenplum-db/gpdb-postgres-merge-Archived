@@ -27,4 +27,14 @@ insert into heap_t2 select i, i from generate_series(1, 20)i;
 
 select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
 
+create table ao_basic_t2 (a int) using appendoptimized distributed by (a);
 
+insert into ao_basic_t2 select i from generate_series(1,20)i;
+
+alter table ao_basic_t2 add column b varchar default 'abc';
+
+select * from ao_basic_t2;
+
+insert into ao_basic_t2 select  i, 'new column' from generate_series(1,12)i;
+
+select * from ao_basic_t2 where b != 'abc';

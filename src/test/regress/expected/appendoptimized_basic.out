@@ -113,3 +113,49 @@ select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
  12 | 12  | 12 | 12
 (13 rows)
 
+create table ao_basic_t2 (a int) using appendoptimized distributed by (a);
+insert into ao_basic_t2 select i from generate_series(1,20)i;
+alter table ao_basic_t2 add column b varchar default 'abc';
+select * from ao_basic_t2;
+ a  |  b  
+----+-----
+  2 | abc
+  3 | abc
+  4 | abc
+  7 | abc
+  8 | abc
+ 16 | abc
+ 18 | abc
+ 19 | abc
+  5 | abc
+  6 | abc
+  9 | abc
+ 10 | abc
+ 11 | abc
+ 13 | abc
+ 14 | abc
+ 17 | abc
+  1 | abc
+ 12 | abc
+ 15 | abc
+ 20 | abc
+(20 rows)
+
+insert into ao_basic_t2 select  i, 'new column' from generate_series(1,12)i;
+select * from ao_basic_t2 where b != 'abc';
+ a  |     b      
+----+------------
+  2 | new column
+  3 | new column
+  4 | new column
+  7 | new column
+  8 | new column
+  1 | new column
+ 12 | new column
+  5 | new column
+  6 | new column
+  9 | new column
+ 10 | new column
+ 11 | new column
+(12 rows)
+
