@@ -412,7 +412,9 @@ SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
  brin_summarize_new_values 
 ---------------------------
                          0
-(1 row)
+                         0
+                         0
+(3 rows)
 
 -- Tests for brin_desummarize_range
 SELECT brin_desummarize_range('brinidx', -1); -- error, invalid range
@@ -452,31 +454,30 @@ END;
 $$;
 -- summarize one range
 SELECT brin_summarize_range('brin_summarize_idx', 0);
- brin_summarize_range 
-----------------------
-                    0
-(1 row)
-
+ERROR:  Greenplum could not summarize indicated page range
 -- nothing: already summarized
 SELECT brin_summarize_range('brin_summarize_idx', 1);
+ERROR:  Greenplum could not summarize indicated page range
+-- summarize one range
+SELECT brin_summarize_range('brin_summarize_idx', 2);
+ERROR:  Greenplum could not summarize indicated page range
+-- summarize all pages
+SELECT brin_summarize_range('brin_summarize_idx', 4294967295);
  brin_summarize_range 
 ----------------------
                     0
-(1 row)
-
--- summarize one range
-SELECT brin_summarize_range('brin_summarize_idx', 2);
- brin_summarize_range 
-----------------------
+                    0
                     1
-(1 row)
+(3 rows)
 
 -- nothing: page doesn't exist in table
 SELECT brin_summarize_range('brin_summarize_idx', 4294967295);
  brin_summarize_range 
 ----------------------
                     0
-(1 row)
+                    0
+                    0
+(3 rows)
 
 -- invalid block number values
 SELECT brin_summarize_range('brin_summarize_idx', -1);
