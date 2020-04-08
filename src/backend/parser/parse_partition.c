@@ -83,26 +83,24 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 			GpPartitionElem *elem = (GpPartitionElem *) n;
 			List	   *new_parts;
 
-			if (elem->boundSpec)
-			{
-				if (IsA(elem->boundSpec, GpPartitionBoundSpec))
-					new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString,
-														&num_unnamed_parts);
-				else
-				{
-					Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
-					new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString,
-													  &num_unnamed_parts);
-				}
-			}
-			else if (elem->isDefault)
-			{
+			if (elem->isDefault)
 				new_parts = generateDefaultPartition(pstate, cstmt, parentrel, elem, queryString);
-			}
 			else
 			{
-				/* GPDB_12_MERGE_FIXME: which cases are we not handling yet? */
-				elog(ERROR, "unexpected GpPartitionElem");
+				switch (*cstmt->partspec->strategy)
+				{
+					case PARTITION_STRATEGY_RANGE:
+						new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString,
+															&num_unnamed_parts);
+						break;
+
+					case PARTITION_STRATEGY_LIST:
+						new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString,
+														  &num_unnamed_parts);
+						break;
+					default:
+						elog(ERROR, "Not supported partition strategy");
+				}
 			}
 
 			result = list_concat(result, new_parts);
@@ -420,8 +418,12 @@ generateRangePartitions(ParseState *pstate,
 	Node	   *end = NULL;
 	Node	   *every = NULL;
 
+	if (elem->boundSpec == NULL)
+		elog(ERROR, "missing boundary specification in partition%s of type RANGE",
+			 elem->partName);
+
+	Assert(IsA(elem->boundSpec, GpPartitionBoundSpec));
 	boundspec = (GpPartitionBoundSpec *) elem->boundSpec;
-	Assert(boundspec);
 
 	partkey = RelationGetPartitionKey(parentrel);
 
@@ -515,8 +517,15 @@ generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 	ListCell   *lc;
 	List	  *listdatums;
 
+	if (elem->boundSpec == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					  errmsg("missing boundary specification in partition \"%s\" of type LIST",
+							 elem->partName),
+							 parser_errposition(pstate, elem->location)));
+
+	Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
 	gpvaluesspec = (GpPartitionValuesSpec *) elem->boundSpec;
-	Assert(gpvaluesspec);
 
 	partkey = RelationGetPartitionKey(parentrel);
 
