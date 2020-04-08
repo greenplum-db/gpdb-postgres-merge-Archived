@@ -440,7 +440,10 @@ generateRangePartitions(ParseState *pstate,
 	partcolname = NameStr(TupleDescAttr(RelationGetDescr(parentrel), partkey->partattrs[0] - 1)->attname);
 
 	if (list_length(boundspec->partStart) != partkey->partnatts)
-		elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("invalid use of mixed named and unnamed RANGE boundary specifications"),
+				 parser_errposition(pstate, boundspec->location)));
 	start = linitial(boundspec->partStart);
 
 	if (boundspec->partEnd)
@@ -524,7 +527,12 @@ generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 							 elem->partName),
 							 parser_errposition(pstate, elem->location)));
 
-	Assert(IsA(elem->boundSpec, GpPartitionValuesSpec));
+	if (!IsA(elem->boundSpec, GpPartitionValuesSpec))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					  errmsg("invalid boundary specification for LIST partition"),
+					  parser_errposition(pstate, elem->location)));
+
 	gpvaluesspec = (GpPartitionValuesSpec *) elem->boundSpec;
 
 	partkey = RelationGetPartitionKey(parentrel);
