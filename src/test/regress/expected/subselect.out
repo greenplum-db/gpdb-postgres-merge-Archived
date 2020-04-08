@@ -1220,12 +1220,16 @@ commit;
 explain (verbose, costs off)
 with x as (select * from (select f1 from subselect_tbl) ss)
 select * from x where f1 = 1;
-            QUERY PLAN            
-----------------------------------
- Seq Scan on public.subselect_tbl
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
    Output: subselect_tbl.f1
-   Filter: (subselect_tbl.f1 = 1)
-(3 rows)
+   ->  Seq Scan on public.subselect_tbl
+         Output: subselect_tbl.f1
+         Filter: (subselect_tbl.f1 = 1)
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(7 rows)
 
 -- Explicitly request materialization
 explain (verbose, costs off)
@@ -1245,12 +1249,16 @@ select * from x where f1 = 1;
 explain (verbose, costs off)
 with x as (select * from (select f1, now() from subselect_tbl) ss)
 select * from x where f1 = 1;
-            QUERY PLAN             
------------------------------------
- Seq Scan on public.subselect_tbl
-   Output: subselect_tbl.f1, now()
-   Filter: (subselect_tbl.f1 = 1)
-(3 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   Output: subselect_tbl.f1, (now())
+   ->  Seq Scan on public.subselect_tbl
+         Output: subselect_tbl.f1, now()
+         Filter: (subselect_tbl.f1 = 1)
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(7 rows)
 
 -- Volatile functions prevent inlining
 explain (verbose, costs off)
