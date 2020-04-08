@@ -427,10 +427,16 @@ generateRangePartitions(ParseState *pstate,
 
 	partkey = RelationGetPartitionKey(parentrel);
 
+	/*
+	 * GPDB_12_MERGE_FIXME: Greenplum historically does not support multi column
+	 * List partitions. Upstream Postgres allows it. Keep this restriction for
+	 * now and most likely we will get the functionality for free from the merge
+	 * and we should remove this restriction once we verifies that.
+	 */
 	if (partkey->partnatts != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("START/RANGE/EVERY is only supported for tables with a single partitioning key")));
+				 errmsg("too many columns for RANGE partition -- only one column is allowed")));
 
 	/* not sure if the syntax allows this, but better safe than sorry */
 	if (partkey->partattrs[0] == 0)
