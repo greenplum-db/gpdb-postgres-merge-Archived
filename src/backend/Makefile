@@ -25,7 +25,7 @@ SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
 
 SUBDIRS += fts cdb
 ifeq ($(enable_orca),yes)
-SUBDIRS += gpopt
+SUBDIRS += gporca gpopt
 endif
 
 include $(srcdir)/common.mk
@@ -222,6 +222,7 @@ endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
 ifeq ($(enable_orca), yes)
+	$(MAKE) -C gporca $@ INSTLOC=$(DESTDIR)$(libdir)
 	$(MAKE) -C gpopt $@ INSTLOC=$(DESTDIR)$(libdir)
 endif
 

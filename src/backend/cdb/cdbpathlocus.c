@@ -931,18 +931,18 @@ cdbpathlocus_is_hashed_on_tlist(CdbPathLocus locus, List *tlist,
 		{
 			DistributionKey *distkey = (DistributionKey *) lfirst(distkeycell);
 			ListCell   *distkeyeccell;
-			bool		found = false;
 
 			foreach(distkeyeccell, distkey->dk_eclasses)
 			{
 				/* Does some expr in distkey match some item in exprlist? */
 				EquivalenceClass *dk_eclass = (EquivalenceClass *) lfirst(distkeyeccell);
 				ListCell   *i;
+				bool		found = false;
 
 				if (ignore_constants && CdbEquivClassIsConstant(dk_eclass))
 				{
 					found = true;
-					break;
+					continue;
 				}
 
 				if (dk_eclass->ec_sortref != 0)
@@ -979,11 +979,9 @@ cdbpathlocus_is_hashed_on_tlist(CdbPathLocus locus, List *tlist,
 							break;
 					}
 				}
-				if (found)
-					break;
+				if (!found)
+					return false;
 			}
-			if (!found)
-				return false;
 		}
 		/* Every column of the distkey contains an expr in exprlist. */
 		return true;

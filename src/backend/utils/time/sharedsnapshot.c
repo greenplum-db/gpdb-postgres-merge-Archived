@@ -347,8 +347,8 @@ SharedSnapshotDump(void)
 
 		if (testSlot->slotid != -1)
 		{
-			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %u pid: %u)",
-							 testSlot->slotindex, testSlot->slotid, testSlot->QDxid,
+			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %d pid: %u)",
+							 testSlot->slotindex, testSlot->slotid, testSlot->distributedXid,
 							 testSlot->writer_proc ? testSlot->writer_proc->pid : 0);
 		}
 
@@ -458,9 +458,9 @@ retry:
 
 	/* initialize some things */
 	slot->slotid = slotId;
-	slot->fullXid= InvalidFullTransactionId;
+	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
-	slot->QDxid = 0;
+	slot->distributedXid = InvalidDistributedTransactionId;
 	slot->segmateSync = 0;
 	/* Remember the writer proc for IsCurrentTransactionIdForReader */
 	slot->writer_proc = MyProc;
@@ -571,7 +571,7 @@ SharedSnapshotRemove(volatile SharedSnapshotSlot *slot, char *creatorDescription
 	slot->slotid = -1;
 	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
-	slot->QDxid = 0;
+	slot->distributedXid = InvalidDistributedTransactionId;
 	slot->segmateSync = 0;
 
 	sharedSnapshotArray->numSlots -= 1;
@@ -670,7 +670,7 @@ dumpSharedLocalSnapshot_forCursor(void)
 	pDump->segment = segment;
 	pDump->handle = dsm_segment_handle(segment);
 	pDump->segmateSync = src->segmateSync;
-	pDump->xid = src->fullXid;
+	pDump->distributedXid = src->distributedXid;
 
 	elog(LOG, "Dump syncmate : %u snapshot to slot %d", src->segmateSync, id);
 
@@ -722,7 +722,8 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTrans
 			if (search_iter < 0)
 				search_iter = SNAPSHOTDUMPARRAYSZ - 1;
 
-			if(src->dump[search_iter].segmateSync == QEDtxContextInfo.segmateSync)
+			if (src->dump[search_iter].segmateSync == QEDtxContextInfo.segmateSync &&
+				src->dump[search_iter].distributedXid == QEDtxContextInfo.distributedXid)
 			{
 				pDump = &src->dump[search_iter];
 				found = true;
@@ -748,8 +749,12 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTrans
 		char *ptr = dsm_segment_address(segment);
 
 		entry->snapshot = RestoreSnapshot(ptr);
-		entry->localXid = pDump->xid;
-
+		/*
+		 * GPDB_12_MERGE_FIXME: why do we store a distributedXid into a localXid field?
+		 * Surely that's wrong. But that's what we're doing on master branch too, just
+		 * with different field names. Unless I messed up something.
+		 */
+		entry->localXid.value = pDump->distributedXid;
 
 		dsm_detach(segment);
 

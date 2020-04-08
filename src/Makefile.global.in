@@ -948,6 +948,10 @@ ifndef COMPILE.cc
 COMPILE.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
 endif
 
+ifndef COMPILE.cxx
+COMPILE.cxx = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
+endif
+
 DEPDIR = .deps
 
 ifeq ($(GCC), yes)
@@ -960,6 +964,7 @@ ifeq ($(GCC), yes)
 %.o : %.cpp
 	@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
 	$(COMPILE.cc) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
+	$(COMPILE.cxx) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
 
 endif # GCC
 

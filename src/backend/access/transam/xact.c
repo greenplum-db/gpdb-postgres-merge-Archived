@@ -2528,18 +2528,17 @@ StartTransaction(void)
 				SharedLocalSnapshotSlot->ready = false;
 				SharedLocalSnapshotSlot->fullXid = s->fullTransactionId;
 				SharedLocalSnapshotSlot->startTimestamp = stmtStartTimestamp;
-				SharedLocalSnapshotSlot->QDxid = QEDtxContextInfo.distributedXid;
+				SharedLocalSnapshotSlot->distributedXid = QEDtxContextInfo.distributedXid;
 				SharedLocalSnapshotSlot->writer_proc = MyProc;
 				SharedLocalSnapshotSlot->writer_xact = MyPgXact;
 
 				ereportif(Debug_print_full_dtm, LOG,
 						  (errmsg(
 							  "qExec writer setting distributedXid: %d "
-							  "sharedQDxid %d (shared xid " UINT64_FORMAT " -> " UINT64_FORMAT ") ready %s"
+							  "sharedQDxid (shared xid " UINT64_FORMAT " -> " UINT64_FORMAT ") ready %s"
 							  " (shared timeStamp = " INT64_FORMAT " -> "
 							  INT64_FORMAT ")",
 							  QEDtxContextInfo.distributedXid,
-							  SharedLocalSnapshotSlot->QDxid,
 							  U64FromFullTransactionId(SharedLocalSnapshotSlot->fullXid),
 							  U64FromFullTransactionId(s->fullTransactionId),
 							  SharedLocalSnapshotSlot->ready ? "true" : "false",
@@ -3734,7 +3733,7 @@ StartTransactionCommand(void)
 				}
 
 				SharedLocalSnapshotSlot->startTimestamp = xactStartTimestamp;
-				SharedLocalSnapshotSlot->QDxid = QEDtxContextInfo.distributedXid;
+				SharedLocalSnapshotSlot->distributedXid = QEDtxContextInfo.distributedXid;
 
 				LWLockRelease(SharedLocalSnapshotSlot->slotLock);
 
