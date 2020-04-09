@@ -620,7 +620,10 @@ heapam_relation_set_new_filenode(Relation rel,
 	{
 		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
-			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+			   rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
+			   rel->rd_rel->relkind == RELKIND_AOSEGMENTS ||
+			   rel->rd_rel->relkind == RELKIND_AOVISIMAP ||
+			   rel->rd_rel->relkind == RELKIND_AOBLOCKDIR);
 		smgrcreate(srel, INIT_FORKNUM, false);
 		log_smgrcreate(newrnode, INIT_FORKNUM);
 		smgrimmedsync(srel, INIT_FORKNUM);
