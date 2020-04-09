@@ -589,19 +589,8 @@ generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
 	boundspec->is_default = true;
 	boundspec->location = -1;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: this way of choosing the partition rel name
-	 * isn't exactly the same as it used to be.
-	 * And we probably should be using ChooseRelationName() here.
-	 */
-	if (elem->partName)
-		partname = psprintf("%s_1_prt_%s", RelationGetRelationName(parentrel),
-							elem->partName);
-	else
-	{
-		partname = psprintf("%s_1_prt_default", RelationGetRelationName(parentrel));
-	}
-
+	/* GPDB_12_MERGE_FIXME: pass correct level */
+	partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
 	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
 
 	return list_make1(childstmt);
@@ -646,6 +635,8 @@ ChoosePartitionName(Relation parentrel, const char *levelstr,
 
 	if (partname)
 		snprintf(partsubstring, NAMEDATALEN, "prt_%s", partname);
+	else if (partnum == -1)
+		snprintf(partsubstring, NAMEDATALEN, "prt_default");
 	else
 		snprintf(partsubstring, NAMEDATALEN, "prt_%d", partnum);
 
