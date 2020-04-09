@@ -4759,72 +4759,40 @@ storageOptToString(const StdRdOptions *ao_opts)
 static bool
 check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 {
-	bool		result = false;
+	/* Value of "appendonly" option if one is specified. */
+	StdRdOptions *newopts;
 
-	PG_TRY();
+	newopts = calloc(sizeof(*newopts), 1);
+	if (!newopts)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	resetAOStorageOpts(newopts);
+
+	/*
+	 * Perform identical validations as in case of options specified
+	 * in a WITH() clause.
+	 */
+	if ((*newval)[0])
 	{
-		/* Value of "appendonly" option if one is specified. */
-		StdRdOptions newopts;
+		Datum		newopts_datum;
 
-		memset(&newopts, 0, sizeof(StdRdOptions));
-		resetAOStorageOpts(&newopts);
-
-		/*
-		 * Perform identical validations as in case of options specified
-		 * in a WITH() clause.
-		 */
-		if ((*newval)[0])
-		{
-			Datum		newopts_datum;
-
-			newopts_datum = parseAOStorageOpts(*newval);
-			parse_validate_reloptions(&newopts, newopts_datum,
-									  /* validate */ true, RELOPT_KIND_HEAP);
-			validateAppendOnlyRelOptions(
-				newopts.blocksize,
-				gp_safefswritesize,
-				newopts.compresslevel,
-				newopts.compresstype,
-				newopts.checksum,
-				RELKIND_RELATION,
-				get_table_am_oid(default_table_access_method, true) == AOCO_TABLE_AM_OID);
-		}
-
-		/*
-		 * All validations succeeded, it is safe to update global
-		 * appendonly storage options.
-		 */
-		*extra = malloc(sizeof(StdRdOptions));
-		if (*extra == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		memcpy(*extra, &newopts, sizeof(StdRdOptions));
-
-		free(*newval);
-		*newval = NULL;
-		*newval = storageOptToString(&newopts);
-
-		result = true;
+		newopts_datum = parseAOStorageOpts(*newval);
+		parse_validate_reloptions(newopts, newopts_datum,
+								  /* validate */ true, RELOPT_KIND_APPENDOPTIMIZED);
 	}
-	PG_CATCH();
-	{
-		if (source >= PGC_S_INTERACTIVE)
-			PG_RE_THROW();
-		else
-		{
-			/*
-			 * We are in the middle of backend / postmaster startup.  The
-			 * configured value is bad, proceed with factory defaults.
-			 */
-			elog(WARNING, "could not set gp_default_storage_options to '%s'",
-				 *newval);
-		}
-		result = false;
-	}
-	PG_END_TRY();
 
-	return result;
+	/*
+	 * All validations succeeded, it is safe to update global
+	 * appendonly storage options.
+	 */
+
+	free(*newval);
+	*newval = storageOptToString(newopts);
+	*extra = newopts;
+
+	return true;
 }
 
 

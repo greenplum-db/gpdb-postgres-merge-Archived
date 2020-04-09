@@ -32,11 +32,9 @@
 #include "miscadmin.h"
 
 /*
- * Confusingly, RELOPT_KIND_HEAP is also used for AO/CO tables. To reduce
- * the confusion in this file, use this macro to check for "heap or AO/CO
- * table".
+ * Helper macro used for validation
  */
-#define KIND_IS_RELATION(kind) (((kind) & RELOPT_KIND_HEAP) != 0)
+#define KIND_IS_APPENDOPTIMIZED(kind) (((kind) & RELOPT_KIND_APPENDOPTIMIZED) != 0)
 
 /*
  * GPDB reloptions specification.
@@ -48,7 +46,7 @@ static relopt_bool boolRelOpts_gp[] =
 		{
 			SOPT_CHECKSUM,
 			"Append table checksum",
-			RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_CHECKSUM
@@ -73,7 +71,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_BLOCKSIZE,
 			"AO tables block size in bytes",
-			RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_BLOCKSIZE, MIN_APPENDONLY_BLOCK_SIZE, MAX_APPENDONLY_BLOCK_SIZE
@@ -82,7 +80,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_COMPLEVEL,
 			"AO table compression level",
-			RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			ShareUpdateExclusiveLock	/* since it applies only to later
 										 * inserts */
 		},
@@ -104,7 +102,7 @@ static relopt_string stringRelOpts_gp[] =
 		{
 			SOPT_COMPTYPE,
 			"AO tables compression type",
-			RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		0, true, NULL, ""
@@ -294,6 +292,8 @@ currentAOStorageOptions(void)
 void
 setDefaultAOStorageOpts(StdRdOptions *copy)
 {
+	Assert(copy);
+
 	memcpy(&ao_storage_opts, copy, sizeof(ao_storage_opts));
 	if (pg_strcasecmp(copy->compresstype, "none") == 0)
 	{
@@ -707,7 +707,7 @@ validate_and_adjust_options(StdRdOptions *result,
 	blocksize_opt = get_option_set(options, num_options, SOPT_BLOCKSIZE);
 	if (blocksize_opt != NULL)
 	{
-		if (!KIND_IS_RELATION(kind) && validate)
+		if (!KIND_IS_APPENDOPTIMIZED(kind) && validate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("usage of parameter \"blocksize\" in a non relation object is not supported")));
@@ -733,7 +733,7 @@ validate_and_adjust_options(StdRdOptions *result,
 	comptype_opt = get_option_set(options, num_options, SOPT_COMPTYPE);
 	if (comptype_opt != NULL)
 	{
-		if (!KIND_IS_RELATION(kind) && validate)
+		if (!KIND_IS_APPENDOPTIMIZED(kind) && validate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("usage of parameter \"compresstype\" in a non relation object is not supported")));
@@ -752,7 +752,7 @@ validate_and_adjust_options(StdRdOptions *result,
 	complevel_opt = get_option_set(options, num_options, SOPT_COMPLEVEL);
 	if (complevel_opt != NULL)
 	{
-		if (!KIND_IS_RELATION(kind) && validate)
+		if (!KIND_IS_APPENDOPTIMIZED(kind) && validate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("usage of parameter \"compresslevel\" in a non relation object is not supported")));
@@ -868,7 +868,7 @@ validate_and_adjust_options(StdRdOptions *result,
 	checksum_opt = get_option_set(options, num_options, SOPT_CHECKSUM);
 	if (checksum_opt != NULL)
 	{
-		if (!KIND_IS_RELATION(kind) && validate)
+		if (!KIND_IS_APPENDOPTIMIZED(kind) && validate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("usage of parameter \"checksum\" in a non relation object is not supported")));
@@ -889,7 +889,7 @@ validate_and_refill_options(StdRdOptions *result, relopt_value *options,
 {
 	if (validate &&
 		ao_storage_opts_changed &&
-		KIND_IS_RELATION(kind))
+		KIND_IS_APPENDOPTIMIZED(kind))
 	{
 		if (!(get_option_set(options, numrelopts, SOPT_FILLFACTOR)))
 			result->fillfactor = ao_storage_opts.fillfactor;
@@ -917,8 +917,7 @@ parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 	relopt_value *options;
 	int			num_options;
 
-	options = parseRelOptions(reloptions, validate, RELOPT_KIND_HEAP,
-							  &num_options);
+	options = parseRelOptions(reloptions, validate, kind, &num_options);
 
 	validate_and_adjust_options(result, options, num_options, kind, validate);
 	free_options_deep(options, num_options);
@@ -935,22 +934,8 @@ validateAppendOnlyRelOptions(int blocksize,
 							 int complevel,
 							 char *comptype,
 							 bool checksum,
-							 char relkind,
 							 bool co)
 {
-	if (relkind != RELKIND_RELATION  && relkind != RELKIND_MATVIEW)
-	{
-		if (checksum)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"checksum\" may only be specified for base relations")));
-
-		if (comptype)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"compresstype\" may only be specified for base relations")));
-	}
-
 	if (comptype &&
 		(pg_strcasecmp(comptype, "quicklz") == 0 ||
 		 pg_strcasecmp(comptype, "zlib") == 0 ||

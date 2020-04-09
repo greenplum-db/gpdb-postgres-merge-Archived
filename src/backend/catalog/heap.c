@@ -1451,7 +1451,6 @@ heap_create_with_catalog(const char *relname,
 	Oid			new_array_oid = InvalidOid;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
-	int			safefswritesize = gp_safefswritesize;
 	char	   *relarrayname = NULL;
 
 	pg_class_desc = table_open(RelationRelationId, RowExclusiveLock);
@@ -1670,6 +1669,28 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/*
+	 * If this is an append-only relation, add an entry in pg_appendonly.
+	 */
+	if (RelationIsAppendOptimized(new_rel_desc))
+	{
+		StdRdOptions *stdRdOptions = (StdRdOptions *)default_reloptions(reloptions,
+																	 !valid_opts,
+																	 RELOPT_KIND_APPENDOPTIMIZED);
+		InsertAppendOnlyEntry(relid,
+							  stdRdOptions->blocksize,
+							  gp_safefswritesize,
+							  stdRdOptions->compresslevel,
+							  stdRdOptions->checksum,
+							  RelationIsAoCols(new_rel_desc),
+							  stdRdOptions->compresstype,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid,
+							  InvalidOid);
+	}
+
+	/*
 	 * now create an entry in pg_class for the relation.
 	 *
 	 * NOTE: we could get a unique-index failure here, in case someone else is
@@ -1687,44 +1708,6 @@ heap_create_with_catalog(const char *relname,
 						relminmxid,
 						PointerGetDatum(relacl),
 						reloptions);
-
-	/*
-	 * if this is an append-only relation, add an entry in pg_appendonly.
-	 */
-	if (RelationIsAppendOptimized(new_rel_desc))
-	{
-		/*
-		 * Extract and process any WITH options supplied, otherwise use defaults
-		 */
-		StdRdOptions *stdRdOptions = (StdRdOptions *)heap_reloptions(relkind,
-																	 reloptions,
-																	!valid_opts);
-
-		validateAppendOnlyRelOptions(stdRdOptions->blocksize,
-									 safefswritesize,
-									 stdRdOptions->compresslevel,
-									 stdRdOptions->compresstype,
-									 stdRdOptions->checksum,
-									 relkind,
-									 RelationIsAoCols(new_rel_desc));
-
-		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
-
-		InsertAppendOnlyEntry(relid,
-							  stdRdOptions->blocksize,
-							  safefswritesize,
-							  stdRdOptions->compresslevel,
-							  stdRdOptions->checksum,
-							  RelationIsAoCols(new_rel_desc),
-							  stdRdOptions->compresstype,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid,
-							  InvalidOid);
-	}
-
-
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new relation.
 	 */

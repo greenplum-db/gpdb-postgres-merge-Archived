@@ -4961,16 +4961,6 @@ transformStorageEncodingClause(List *options)
 	/* add defaults for missing values */
 	options = fillin_encoding(options);
 
-	/*
-	 * The following two statements validate that the encoding clause is well
-	 * formed.
-	 */
-	d = transformRelOptions(PointerGetDatum(NULL),
-									  options,
-									  NULL, validnsps,
-									  true, false);
-	(void)heap_reloptions(RELKIND_RELATION, d, true);
-
 	return options;
 }
 

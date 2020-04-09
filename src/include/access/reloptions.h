@@ -70,9 +70,10 @@ typedef enum relopt_kind
 	RELOPT_KIND_PARTITIONED = (1 << 11),
 
 	RELOPT_KIND_BITMAP = (1 << 12),
+	RELOPT_KIND_APPENDOPTIMIZED = (1 << 13),
 
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_BITMAP,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_APPENDOPTIMIZED,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;
@@ -310,7 +311,7 @@ extern Datum transformAOStdRdOptions(StdRdOptions *opts, Datum withOpts);
 
 extern void validateAppendOnlyRelOptions(int blocksize, int writesize,
 										 int complevel, char* comptype,
-										 bool checksum, char relkind, bool co);
+										 bool checksum, bool co);
 extern void parse_validate_reloptions(StdRdOptions *result, Datum reloptions,
 									  bool validate, relopt_kind relkind);
 

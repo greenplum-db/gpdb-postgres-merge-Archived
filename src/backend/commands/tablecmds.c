@@ -731,12 +731,72 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		ownerId = GetUserId();
 
 	/*
+	 * Greenplum: the accessMethod is necessary to extract, transform and
+	 * validate the reloptions.
+	 */
+
+	/*
+	 * If the statement hasn't specified an access method, but we're defining
+	 * a type of relation that needs one, use the default.
+	 */
+	if (stmt->accessMethod != NULL)
+	{
+		accessMethod = stmt->accessMethod;
+
+		if (partitioned)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("specifying a table access method is not supported on a partitioned table")));
+
+	}
+	else if (relkind == RELKIND_RELATION ||
+			 relkind == RELKIND_TOASTVALUE ||
+			 relkind == RELKIND_MATVIEW)
+		accessMethod = default_table_access_method;
+
+	/* look up the access method, verify it is for a table */
+	if (accessMethod != NULL)
+		accessMethodId = get_table_am_oid(accessMethod, false);
+
+	/* Greenplum: error out early for this case */
+	if (stmt->inhRelations && accessMethodId == AOCO_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INHERITS clause cannot be used with column oriented tables")));
+
+	/*
 	 * Parse and validate reloptions, if any.
 	 */
 	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
 									 true, false);
 
-	if (relkind == RELKIND_VIEW)
+	/*
+	 * Greenplum: special case checks for reloptions that correspond to
+	 * appendonly relations. This check can not be performed earlier because it
+	 * is needed to know the access method.
+	 */
+	if ((accessMethodId == APPENDOPTIMIZED_TABLE_AM_OID ||
+			accessMethodId == AOCO_TABLE_AM_OID))
+	{
+		Assert(relkind == RELKIND_MATVIEW || relkind == RELKIND_RELATION );
+
+		/*
+		 * Extract and process any WITH options supplied, otherwise use defaults
+		 */
+		StdRdOptions *stdRdOptions = (StdRdOptions *)default_reloptions(reloptions,
+																		true,
+																		RELOPT_KIND_APPENDOPTIMIZED);
+
+		/* Validate the StdRdOptions paresed or error out */
+		validateAppendOnlyRelOptions(stdRdOptions->blocksize,
+									 gp_safefswritesize,
+									 stdRdOptions->compresslevel,
+									 stdRdOptions->compresstype,
+									 stdRdOptions->checksum,
+									 (accessMethodId == APPENDOPTIMIZED_TABLE_AM_OID));
+
+		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
+	} else if (relkind == RELKIND_VIEW)
 		(void) view_reloptions(reloptions, true);
 	else
 		(void) heap_reloptions(relkind, reloptions, true);
@@ -908,35 +968,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	bool valid_opts = !useChangedOpts;
-
-	/*
-	 * If the statement hasn't specified an access method, but we're defining
-	 * a type of relation that needs one, use the default.
-	 */
-	if (stmt->accessMethod != NULL)
-	{
-		accessMethod = stmt->accessMethod;
-
-		if (partitioned)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("specifying a table access method is not supported on a partitioned table")));
-
-	}
-	else if (relkind == RELKIND_RELATION ||
-			 relkind == RELKIND_TOASTVALUE ||
-			 relkind == RELKIND_MATVIEW)
-		accessMethod = default_table_access_method;
-
-	/* look up the access method, verify it is for a table */
-	if (accessMethod != NULL)
-		accessMethodId = get_table_am_oid(accessMethod, false);
-
-	/* Greenplum: error out early for this case */
-	if (stmt->inhRelations && accessMethodId == AOCO_TABLE_AM_OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("INHERITS clause cannot be used with column oriented tables")));
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in

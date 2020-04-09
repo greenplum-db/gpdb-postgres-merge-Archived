@@ -108,9 +108,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	ObjectAddress intoRelationAddr;
 
-	Datum       reloptions;
-	StdRdOptions *stdRdOptions;
-
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
 	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
@@ -148,18 +145,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	else
 		create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
-
-	/* Parse and validate any reloptions */
-	reloptions = transformRelOptions((Datum) 0,
-									 into->options,
-									 NULL,
-									 validnsps,
-									 true,
-									 false);
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
-												   reloptions,
-												   queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
 
 	create->distributedBy = NULL; /* We will pass a pre-made intoPolicy instead */
 	create->partitionBy = NULL; /* CTAS does not not support partition. */
