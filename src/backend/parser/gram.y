@@ -3707,12 +3707,8 @@ alter_table_partition_id_spec:
 alter_table_partition_id_spec_with_opt_default:
 			PARTITION alter_table_partition_id_spec
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId *n = (AlterPartitionId*)$2;
+					GpAlterPartitionId *n = (GpAlterPartitionId*)$2;
                     $$ = (Node *)n;
-#endif
 				}
 			| DEFAULT PARTITION alter_table_partition_id_spec
 				{

@@ -16,9 +16,13 @@
  */
 #include "postgres.h"
 
+#include "access/table.h"
 #include "commands/tablecmds.h"
 #include "nodes/parsenodes.h"
+#include "nodes/primnodes.h"
+#include "nodes/makefuncs.h"
 #include "partitioning/partdesc.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 
 
@@ -39,6 +43,22 @@ find_target_partition(Relation parent, GpAlterPartitionId *partid)
 						 errmsg("DEFAULT partition of relation \"%s\" does not exist",
 								RelationGetRelationName(parent))));
 			break;
+		case AT_AP_IDName:
+		{
+			/* Find partition by name */
+			RangeVar	*partrv;
+			char		*schemaname;
+			char		*partname;
+			Relation	partRel;
+
+			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
+			partname     = pstrdup(strVal((partid)->partiddef));
+			partrv       = makeRangeVar(schemaname, partname, -1);
+			partRel      = table_openrv(partrv, AccessShareLock);
+			target_relid = RelationGetRelid(partRel);
+			table_close(partRel, AccessShareLock);
+			break;
+		}
 	}
 
 	return target_relid;
