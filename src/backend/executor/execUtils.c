@@ -1281,7 +1281,7 @@ FillSliceGangInfo(ExecSlice *slice, int numsegments, DirectDispatchInfo *dd)
 				int i;
 				slice->segments = NIL;
 				for (i = 0; i < numsegments; i++)
-					slice->segments = lappend_int(slice->segments, i);
+					slice->segments = lappend_int(slice->segments, i % getgpsegmentCount());
 			}
 			break;
 		case GANGTYPE_ENTRYDB_READER:
