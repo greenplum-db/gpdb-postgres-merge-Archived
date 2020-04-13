@@ -50,8 +50,8 @@ static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
 
 List *
-generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
-					  const char *queryString)
+generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
+						const char *queryString, int *num_unnamed_parts)
 {
 	List *new_parts;
 	ParseState *pstate;
@@ -62,7 +62,23 @@ generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
 	if (elem->isDefault)
 		new_parts = generateDefaultPartition(pstate, parentrel, elem);
 	else
-		elog(ERROR, "not implemented yet");
+	{
+		PartitionKey key = RelationGetPartitionKey(parentrel);
+		switch (key->strategy)
+		{
+			case PARTITION_STRATEGY_RANGE:
+				new_parts = generateRangePartitions(pstate, parentrel, elem,
+													num_unnamed_parts);
+				break;
+
+			case PARTITION_STRATEGY_LIST:
+				new_parts = generateListPartition(pstate, parentrel, elem,
+												  num_unnamed_parts);
+				break;
+			default:
+				elog(ERROR, "Not supported partition strategy");
+		}
+	}
 
 	return new_parts;
 }
@@ -72,7 +88,7 @@ generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
  * specification.
  */
 List *
-generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSpec,
+generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 				   const char *queryString)
 {
 	Relation	parentrel;
@@ -95,26 +111,7 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 			GpPartitionElem *elem = (GpPartitionElem *) n;
 			List	   *new_parts;
 
-			if (elem->isDefault)
-				new_parts = generateDefaultPartition(pstate, parentrel, elem);
-			else
-			{
-				switch (*cstmt->partspec->strategy)
-				{
-					case PARTITION_STRATEGY_RANGE:
-						new_parts = generateRangePartitions(pstate, parentrel, elem,
-															&num_unnamed_parts);
-						break;
-
-					case PARTITION_STRATEGY_LIST:
-						new_parts = generateListPartition(pstate, parentrel, elem,
-														  &num_unnamed_parts);
-						break;
-					default:
-						elog(ERROR, "Not supported partition strategy");
-				}
-			}
-
+			new_parts = generateSinglePartition(parentrel, elem, queryString, &num_unnamed_parts);
 			result = list_concat(result, new_parts);
 		}
 		else if (IsA(n, ColumnReferenceStorageDirective))

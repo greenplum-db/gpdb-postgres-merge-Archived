@@ -3734,37 +3734,29 @@ alter_table_partition_cmd:
 			OptTabSubPartitionSpec
            
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId  *pid   = makeNode(AlterPartitionId);
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionId  *pid   = makeNode(GpAlterPartitionId);
+					GpAddPartitionCmd *pc = makeNode(GpAddPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-                    PartitionElem     *pelem = makeNode(PartitionElem); 
+					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
-                    pid->idtype = AT_AP_IDNone;
-                    pid->location = @3;
-                    pid->partiddef = NULL;
+					pid->idtype = AT_AP_IDNone;
+					pid->location = @3;
+					pid->partiddef = NULL;
 
-                    pc->partid = (Node *) pid;
+					pc->partid = (Node *) pid;
 
-					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
-#if 0
-                    pelem->partName  = NULL;
-                    pelem->boundSpec = $3;
-                    pelem->subSpec   = $5;
-                    pelem->location  = @3;
-                    pelem->isDefault = false; /* not default */
-                    pelem->storeAttr = $4;
-#endif
-					pc->arg1 = (Node *) pelem;
-					
-                    pc->location = @3;
+					pelem->partName  = NULL;
+					pelem->boundSpec = $3;
+					pelem->subSpec   = $5;
+					pelem->location  = @3;
+					pelem->isDefault = false; /* not default */
+					pelem->storeAttr = $4;
+
+					pc->arg = (Node *) pelem;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| ADD_P DEFAULT PARTITION 
             alter_table_partition_id_spec 
@@ -3803,38 +3795,30 @@ alter_table_partition_cmd:
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId  *pid   = (AlterPartitionId *)$3;
-					AlterPartitionCmd *pc    = makeNode(AlterPartitionCmd);
+					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$3;
+					GpAddPartitionCmd *pc    = makeNode(GpAddPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-                    PartitionElem     *pelem = makeNode(PartitionElem); 
+					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
                     if (pid->idtype != AT_AP_IDName)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("can only ADD a partition by name")));
 
-                    pc->partid = (Node *) pid;
+					pc->partid = (Node *) pid;
 
-					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
-#if 0
-                    pelem->partName  = NULL;
-                    pelem->boundSpec = $4;
-                    pelem->subSpec   = $6;
-                    pelem->location  = @4;
-                    pelem->isDefault = false;
-                    pelem->storeAttr = $5;
-#endif
-                    pc->arg1 = (Node *) pelem;
+					pelem->partName  = strVal(pid->partiddef);
+					pelem->boundSpec = $4;
+					pelem->subSpec   = $6;
+					pelem->location  = @4;
+					pelem->isDefault = false;
+					pelem->storeAttr = $5;
 
-                    pc->location = @4;
+					pc->arg = (Node *) pelem;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| ALTER 
             alter_table_partition_id_spec_with_opt_default

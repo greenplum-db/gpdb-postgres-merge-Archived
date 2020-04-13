@@ -1216,7 +1216,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							{
 								List *parts;
 
-								parts = generatePartitions(cstmt, address.objectId, cstmt->partspec->gpPartSpec, queryString);
+								parts = generatePartitions(address.objectId, cstmt->partspec->gpPartSpec, queryString);
 								more_stmts = list_concat(more_stmts, parts);
 							}
 

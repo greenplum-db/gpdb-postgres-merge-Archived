@@ -2018,9 +2018,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 /* GPDB_12_MERGE_FIXME: which of these are still needed? */
 typedef enum GpAlterPartitionIdType
 {
-#if 0
 	AT_AP_IDNone,				/* no ID */
-#endif
 	AT_AP_IDName,				/* IDentify by Name */
 #if 0
 	AT_AP_IDValue,				/* IDentifier FOR Value */

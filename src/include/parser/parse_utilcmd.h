@@ -42,9 +42,9 @@ extern GpPolicy *getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDe
 extern Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 										   const char *colName, Oid colType, int32 colTypmod,
 										   Oid partCollation);
-extern List *generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSpec,
+extern List *generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 								const char *queryString);
-extern List *generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
-								   const char *queryString);
+extern List *generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
+								   const char *queryString, int *num_unnamed_parts);
 
 #endif							/* PARSE_UTILCMD_H */
