@@ -4231,6 +4231,17 @@ _readGpDropPartitionCmd(void)
 	READ_DONE();
 }
 
+static GpAddPartitionCmd *
+_readGpAddPartitionCmd(void)
+{
+	READ_LOCALS(GpAddPartitionCmd);
+
+	READ_NODE_FIELD(partid);
+	READ_NODE_FIELD(arg);
+
+	READ_DONE();
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 /*
  * parseNodeString

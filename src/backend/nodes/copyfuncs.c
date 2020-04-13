@@ -5564,6 +5564,17 @@ _copyGpDropPartitionCmd(const GpDropPartitionCmd *from)
 	return newnode;
 }
 
+static GpAddPartitionCmd *
+_copyGpAddPartitionCmd(const GpAddPartitionCmd *from)
+{
+	GpAddPartitionCmd *newnode = makeNode(GpAddPartitionCmd);
+
+	COPY_NODE_FIELD(partid);
+	COPY_NODE_FIELD(arg);
+
+	return newnode;
+}
+
 static GpPartitionSpec *
 _copyGpPartitionSpec(const GpPartitionSpec *from)
 {
@@ -6832,6 +6843,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_GpDropPartitionCmd:
 			retval = _copyGpDropPartitionCmd(from);
+			break;
+		case T_GpAddPartitionCmd:
+			retval = _copyGpAddPartitionCmd(from);
 			break;
 		case T_GpPartitionSpec:
 			retval = _copyGpPartitionSpec(from);

@@ -44,5 +44,7 @@ extern Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 										   Oid partCollation);
 extern List *generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSpec,
 								const char *queryString);
+extern List *generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
+								   const char *queryString);
 
 #endif							/* PARSE_UTILCMD_H */

@@ -4338,8 +4338,20 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				newcmds = lappend(newcmds, cmd);
 				break;
 
-            case AT_PartAlter:			/* Alter */
             case AT_PartAdd:			/* Add */
+				{
+					GpAddPartitionCmd *add_cmd = castNode(GpAddPartitionCmd, cmd->def);
+					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
+					List *cstmts = generateAddPartitions(rel, pelem, queryString);
+					foreach(l, cstmts)
+					{
+						Node *stmt = (Node *) lfirst(l);
+						cxt.blist = lappend(cxt.blist, stmt);
+					}
+				}
+				break;
+
+			case AT_PartAlter:			/* Alter */
             case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */

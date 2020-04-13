@@ -5038,6 +5038,15 @@ _outGpDropPartitionCmd(StringInfo str, const GpDropPartitionCmd *node)
 }
 
 static void
+_outGpAddPartitionCmd(StringInfo str, const GpAddPartitionCmd *node)
+{
+	WRITE_NODE_TYPE("GPADDPARTITIONCMD");
+
+	WRITE_NODE_FIELD(partid);
+	WRITE_NODE_FIELD(arg);
+}
+
+static void
 _outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
 {
 	WRITE_NODE_TYPE("CREATESCHEMASTMT");

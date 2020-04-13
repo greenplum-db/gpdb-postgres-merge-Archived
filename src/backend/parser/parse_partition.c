@@ -31,26 +31,41 @@
 #include "utils/partcache.h"
 #include "utils/rel.h"
 
-static List *generateRangePartitions(ParseState *pstate, CreateStmt *cstmt,
+static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
 									 GpPartitionElem *elem,
-									 const char *queryString,
 									 int *num_unnamed_parts_p);
-static List *generateListPartition(ParseState *pstate, CreateStmt *cstmt,
+static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
 								   GpPartitionElem *elem,
-								   const char *queryString,
 								   int *num_unnamed_parts_p);
-static List *generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
+static List *generateDefaultPartition(ParseState *pstate,
 									  Relation parentrel,
-									  GpPartitionElem *elem,
-									  const char *queryString);
+									  GpPartitionElem *elem);
 
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec);
 
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
+
+List *
+generateAddPartitions(Relation parentrel, GpPartitionElem *elem,
+					  const char *queryString)
+{
+	List *new_parts;
+	ParseState *pstate;
+
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = queryString;
+
+	if (elem->isDefault)
+		new_parts = generateDefaultPartition(pstate, parentrel, elem);
+	else
+		elog(ERROR, "not implemented yet");
+
+	return new_parts;
+}
 
 /*
  * Create a list of CreateStmts, to create partitions based on 'gpPartSpec'
@@ -62,7 +77,6 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 {
 	Relation	parentrel;
 	List	   *result = NIL;
-	char	   *schemaname;
 	ListCell   *lc;
 	ParseState *pstate;
 	int			num_unnamed_parts = 0;
@@ -71,8 +85,6 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 	pstate->p_sourcetext = queryString;
 
 	parentrel = table_open(parentrelid, NoLock);
-
-	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);
 
 	foreach(lc, gpPartSpec->partElem)
 	{
@@ -84,18 +96,18 @@ generatePartitions(CreateStmt *cstmt, Oid parentrelid, GpPartitionSpec *gpPartSp
 			List	   *new_parts;
 
 			if (elem->isDefault)
-				new_parts = generateDefaultPartition(pstate, cstmt, parentrel, elem, queryString);
+				new_parts = generateDefaultPartition(pstate, parentrel, elem);
 			else
 			{
 				switch (*cstmt->partspec->strategy)
 				{
 					case PARTITION_STRATEGY_RANGE:
-						new_parts = generateRangePartitions(pstate, cstmt, parentrel, elem, queryString,
+						new_parts = generateRangePartitions(pstate, parentrel, elem,
 															&num_unnamed_parts);
 						break;
 
 					case PARTITION_STRATEGY_LIST:
-						new_parts = generateListPartition(pstate, cstmt, parentrel, elem, queryString,
+						new_parts = generateListPartition(pstate, parentrel, elem,
 														  &num_unnamed_parts);
 						break;
 					default:
@@ -404,9 +416,8 @@ nextPartBound(PartEveryIterator *iter)
 /* Generate partitions for START (..) END (..) EVERY (..) */
 static List *
 generateRangePartitions(ParseState *pstate,
-						CreateStmt *cstmt, Relation parentrel,
+						Relation parentrel,
 						GpPartitionElem *elem,
-						const char *queryString,
 						int *num_unnamed_parts_p)
 {
 	GpPartitionBoundSpec *boundspec;
@@ -512,10 +523,9 @@ generateRangePartitions(ParseState *pstate,
 }
 
 static List *
-generateListPartition(ParseState *pstate, CreateStmt *cstmt,
+generateListPartition(ParseState *pstate,
 					  Relation parentrel,
 					  GpPartitionElem *elem,
-					  const char *queryString,
 					  int *num_unnamed_parts_p)
 {
 	GpPartitionValuesSpec *gpvaluesspec;
@@ -576,10 +586,9 @@ generateListPartition(ParseState *pstate, CreateStmt *cstmt,
 }
 
 static List *
-generateDefaultPartition(ParseState *pstate, CreateStmt *cstmt,
+generateDefaultPartition(ParseState *pstate,
 						 Relation parentrel,
-						 GpPartitionElem *elem,
-						 const char *queryString)
+						 GpPartitionElem *elem)
 {
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
@@ -604,7 +613,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	char	   *schemaname;
 
 	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);
-	parentrv = makeRangeVar(schemaname, RelationGetRelationName(parentrel), -1);
+	parentrv = makeRangeVar(schemaname, pstrdup(RelationGetRelationName(parentrel)), -1);
 
 	childstmt = makeNode(CreateStmt);
 	childstmt->relation = makeRangeVar(schemaname, partname, -1);

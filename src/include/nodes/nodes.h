@@ -544,6 +544,7 @@ typedef enum NodeTag
 	T_GpPartitionValuesSpec,
 	T_GpAlterPartitionId,
 	T_GpDropPartitionCmd,
+	T_GpAddPartitionCmd,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

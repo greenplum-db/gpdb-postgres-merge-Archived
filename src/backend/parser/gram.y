@@ -3621,15 +3621,11 @@ opt_table_partition_exchange_validate:
 alter_table_partition_id_spec: 
 			PartitionColId
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId *n = makeNode(AlterPartitionId);
+					GpAlterPartitionId *n = makeNode(GpAlterPartitionId);
 					n->idtype = AT_AP_IDName;
                     n->partiddef = (Node *)makeString($1);
                     n->location  = @1;
 					$$ = (Node *)n;
-#endif
 				}
             | FOR 
             '(' TabPartitionBoundarySpecValList ')'	
@@ -3780,13 +3776,10 @@ alter_table_partition_cmd:
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId  *pid   = (AlterPartitionId *)$4;
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$4;
+					GpAddPartitionCmd *pc = makeNode(GpAddPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-                    PartitionElem     *pelem = makeNode(PartitionElem); 
+					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
                     if (pid->idtype != AT_AP_IDName)
 						ereport(ERROR,
@@ -3795,22 +3788,18 @@ alter_table_partition_cmd:
 
                     pc->partid = (Node *) pid;
 
-					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
-#if 0
-                    pelem->partName  = NULL;
+					pelem->partName  = strVal(pid->partiddef);
                     pelem->boundSpec = $5;
                     pelem->subSpec   = $7;
                     pelem->location  = @5;
                     pelem->isDefault = true;
                     pelem->storeAttr = $6;
-#endif
-					pc->arg1 = (Node *) pelem;
-                    pc->location = @5;
+
+					pc->arg = (Node *) pelem;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| ADD_P PARTITION 
             alter_table_partition_id_spec 

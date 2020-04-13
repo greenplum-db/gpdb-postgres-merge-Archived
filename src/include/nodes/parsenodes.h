@@ -2020,7 +2020,9 @@ typedef enum GpAlterPartitionIdType
 {
 #if 0
 	AT_AP_IDNone,				/* no ID */
+#endif
 	AT_AP_IDName,				/* IDentify by Name */
+#if 0
 	AT_AP_IDValue,				/* IDentifier FOR Value */
 	AT_AP_IDRank,				/* IDentifier FOR Rank */
 	AT_AP_ID_oid,				/* IDentifier by oid (for internal use only) */
@@ -2047,6 +2049,13 @@ typedef struct GpDropPartitionCmd
 	Node	   *partid;			/* partition id of the partition to drop */
 	DropBehavior behavior;		/* RESTRICT or CASCADE */
 } GpDropPartitionCmd;
+
+typedef struct GpAddPartitionCmd
+{
+	NodeTag		type;
+	Node	   *partid;			/* partition id of the partition to add */
+	Node       *arg;            /* argument 1 */
+} GpAddPartitionCmd;
 
 /* ----------------------
  * Alter Collation
