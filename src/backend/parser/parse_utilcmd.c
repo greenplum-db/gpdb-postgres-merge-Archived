@@ -4335,12 +4335,28 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 				/* CDB: Partitioned Tables */
             case AT_PartDrop:			/* Drop */
+				if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("table \"%s\" is not partitioned",
+									RelationGetRelationName(rel))));
+				}
+
 				newcmds = lappend(newcmds, cmd);
 				break;
 
             case AT_PartAdd:			/* Add */
 				{
 					int num_unnamed_parts = 0;
+					if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("table \"%s\" is not partitioned",
+										RelationGetRelationName(rel))));
+					}
+
 					GpAddPartitionCmd *add_cmd = castNode(GpAddPartitionCmd, cmd->def);
 					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
 					List *cstmts = generateSinglePartition(rel, pelem, queryString, &num_unnamed_parts);

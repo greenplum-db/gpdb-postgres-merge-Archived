@@ -64,6 +64,7 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
 	else
 	{
 		PartitionKey key = RelationGetPartitionKey(parentrel);
+		Assert(key != NULL);
 		switch (key->strategy)
 		{
 			case PARTITION_STRATEGY_RANGE:
