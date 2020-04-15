@@ -17,14 +17,89 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "catalog/pg_attribute.h"
 #include "commands/tablecmds.h"
+#include "executor/execPartition.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
+#include "utils/partcache.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/ruleutils.h"
 
+/*
+ * Build a datum according to tables partition key based on parse expr. Would
+ * have been nice if FormPartitionKeyDatum() was generic and could have been
+ * used instead.
+ */
+static void
+FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isnull)
+{
+	PartitionKey partkey;
+	int 		num_expr;
+	ListCell   *lc;
+	int			i;
+
+	Assert(rel);
+	partkey = RelationGetPartitionKey(rel);
+	Assert(partkey != NULL);
+
+	Assert(IsA(expr, List));
+	num_expr = list_length((List *) expr);
+
+	if (num_expr > RelationGetDescr(rel)->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("too many columns in boundary specification (%d > %d)",
+						num_expr, RelationGetDescr(rel)->natts)));
+
+	if (num_expr > partkey->partnatts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("too many columns in boundary specification (%d > %d)",
+						num_expr, partkey->partnatts)));
+
+	i = 0;
+	foreach(lc, (List *) expr)
+	{
+		Const      *result;
+		char       *colname;
+		Oid			coltype;
+		int32		coltypmod;
+		Oid			partcollation;
+		Node	   *n1 = (Node *) lfirst(lc);
+
+		/* Get column's name in case we need to output an error */
+		if (partkey->partattrs[0] != 0)
+			colname = get_attname(RelationGetRelid(rel),
+								  partkey->partattrs[0], false);
+		else
+			colname = deparse_expression((Node *) linitial(partkey->partexprs),
+										 deparse_context_for(RelationGetRelationName(rel),
+															 RelationGetRelid(rel)),
+										 false, false);
+
+		coltype = get_partition_col_typid(partkey, 0);
+		coltypmod = get_partition_col_typmod(partkey, 0);
+		partcollation = get_partition_col_collation(partkey, 0);
+		result = transformPartitionBoundValue(make_parsestate(NULL), n1,
+											  colname, coltype, coltypmod,
+											  partcollation);
+
+		values[i] = result->constvalue;
+		isnull[i] = false;
+		i++;
+	}
+
+	for (; i < partkey->partnatts; i++)
+	{
+		values[i] = 0;
+		isnull[i] = true;
+	}
+}
 
 static Oid
 find_target_partition(Relation parent, GpAlterPartitionId *partid)
@@ -52,13 +127,51 @@ find_target_partition(Relation parent, GpAlterPartitionId *partid)
 			Relation	partRel;
 
 			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
-			partname     = pstrdup(strVal((partid)->partiddef));
+			partname     = pstrdup(strVal(partid->partiddef));
 			partrv       = makeRangeVar(schemaname, partname, -1);
 			partRel      = table_openrv(partrv, AccessShareLock);
 			target_relid = RelationGetRelid(partRel);
 			table_close(partRel, AccessShareLock);
 			break;
 		}
+
+		case AT_AP_IDValue:
+			{
+				Datum		values[PARTITION_MAX_KEYS];
+				bool		isnull[PARTITION_MAX_KEYS];
+				PartitionDesc partdesc = RelationGetPartitionDesc(parent);
+				int partidx;
+
+				FormPartitionKeyDatumFromExpr(parent, partid->partiddef, values, isnull);
+				partidx = get_partition_for_tuple(RelationGetPartitionKey(parent),
+												  partdesc, values, isnull);
+
+				if (partidx < 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("partition for specified value of %s does not exist",
+									RelationGetRelationName(parent))));
+
+				if (!partdesc->is_leaf[partidx])
+					elog(ERROR, "not implemented yet");
+
+				if (partdesc->oids[partidx] ==
+					get_default_oid_from_partdesc(RelationGetPartitionDesc(parent)))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("FOR expression matches DEFAULT partition for specified value of %s",
+									RelationGetRelationName(parent)),
+							 errhint("FOR expression may only specify a non-default partition in this context.")));
+				}
+
+				target_relid = partdesc->oids[partidx];
+				break;
+			}
+
+		case AT_AP_IDNone:
+			elog(ERROR, "not expected value");
+			break;
 	}
 
 	return target_relid;

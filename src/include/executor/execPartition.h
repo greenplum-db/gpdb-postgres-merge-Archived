@@ -152,5 +152,7 @@ extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate);
 extern Bitmapset *ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate,
 												  int nsubplans);
+extern int get_partition_for_tuple(PartitionKey key, PartitionDesc partdesc,
+								   Datum *values, bool *isnull);
 
 #endif							/* EXECPARTITION_H */

@@ -3630,15 +3630,11 @@ alter_table_partition_id_spec:
             | FOR 
             '(' TabPartitionBoundarySpecValList ')'	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId *n = makeNode(AlterPartitionId);
+					GpAlterPartitionId *n = makeNode(GpAlterPartitionId);
 					n->idtype = AT_AP_IDValue;
                     n->partiddef = (Node *)$3;
                     n->location  = @3;
 					$$ = (Node *)n;
-#endif
 				}
 			/*
 			 * What we'd really want here is:
