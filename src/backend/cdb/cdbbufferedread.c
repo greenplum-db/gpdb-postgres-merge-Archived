@@ -141,6 +141,7 @@ BufferedReadSetFile(
 
 	bufferedRead->haveTemporaryLimitInEffect = false;
 	bufferedRead->temporaryLimitFileLen = 0;
+	bufferedRead->fileOff =0;
 
 	if (fileLen > 0)
 	{
