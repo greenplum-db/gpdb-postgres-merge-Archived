@@ -73,18 +73,18 @@ FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isn
 		Node	   *n1 = (Node *) lfirst(lc);
 
 		/* Get column's name in case we need to output an error */
-		if (partkey->partattrs[0] != 0)
+		if (partkey->partattrs[i] != 0)
 			colname = get_attname(RelationGetRelid(rel),
-								  partkey->partattrs[0], false);
+								  partkey->partattrs[i], false);
 		else
 			colname = deparse_expression((Node *) linitial(partkey->partexprs),
 										 deparse_context_for(RelationGetRelationName(rel),
 															 RelationGetRelid(rel)),
 										 false, false);
 
-		coltype = get_partition_col_typid(partkey, 0);
-		coltypmod = get_partition_col_typmod(partkey, 0);
-		partcollation = get_partition_col_collation(partkey, 0);
+		coltype = get_partition_col_typid(partkey, i);
+		coltypmod = get_partition_col_typmod(partkey, i);
+		partcollation = get_partition_col_collation(partkey, i);
 		result = transformPartitionBoundValue(make_parsestate(NULL), n1,
 											  colname, coltype, coltypmod,
 											  partcollation);
