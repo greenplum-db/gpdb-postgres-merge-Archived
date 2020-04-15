@@ -431,9 +431,13 @@ generateRangePartitions(ParseState *pstate,
 		elog(ERROR, "missing boundary specification in partition%s of type RANGE",
 			 elem->partName);
 
-	Assert(IsA(elem->boundSpec, GpPartitionBoundSpec));
-	boundspec = (GpPartitionBoundSpec *) elem->boundSpec;
+	if (!IsA(elem->boundSpec, GpPartitionBoundSpec))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("invalid boundary specification for RANGE partition"),
+				 parser_errposition(pstate, elem->location)));
 
+	boundspec = (GpPartitionBoundSpec *) elem->boundSpec;
 	partkey = RelationGetPartitionKey(parentrel);
 
 	/*
