@@ -49,7 +49,7 @@ WITH query_plan (et) AS
 )
 SELECT
   (SELECT COUNT(*) FROM query_plan WHERE et like '%Vmem reserved: %') as vmem_reserved_lines,
-  (SELECT COUNT(*) FROM query_plan WHERE et like '%Executor memory: %') as executor_memory_lines
+  (SELECT COUNT(*) FROM query_plan WHERE et like '%Executor Memory: %') as executor_memory_lines
 ;
 
 -- With 'detail' level, should have an Executor Memory on each executor node.
@@ -62,7 +62,7 @@ WITH query_plan (et) AS
 )
 SELECT
   (SELECT COUNT(*) FROM query_plan WHERE et like '%Vmem reserved: %') as vmem_reserved_lines,
-  (SELECT COUNT(*) FROM query_plan WHERE et like '%Executor memory: %') as executor_memory_lines
+  (SELECT COUNT(*) FROM query_plan WHERE et like '%Executor Memory: %') as executor_memory_lines
 ;
 
 reset explain_memory_verbosity;
