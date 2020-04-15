@@ -225,16 +225,10 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsHeapTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMinimalTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsBufferHeapTuple;
 
-/* GPDB: slot type to hold MemTuples */
-extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMemTuple;
-
 #define TTS_IS_VIRTUAL(slot) ((slot)->tts_ops == &TTSOpsVirtual)
 #define TTS_IS_HEAPTUPLE(slot) ((slot)->tts_ops == &TTSOpsHeapTuple)
 #define TTS_IS_MINIMALTUPLE(slot) ((slot)->tts_ops == &TTSOpsMinimalTuple)
 #define TTS_IS_BUFFERTUPLE(slot) ((slot)->tts_ops == &TTSOpsBufferHeapTuple)
-
-#define TTS_IS_MEMTUPLE(slot) ((slot)->tts_ops == &TTSOpsVirtual)
-
 
 /*
  * Tuple table slot implementations.

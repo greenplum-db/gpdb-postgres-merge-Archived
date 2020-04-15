@@ -223,8 +223,6 @@ appendonly_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 * between calls? Add a sanity check for that here. */
 	}
 
-	Assert(TTS_IS_MEMTUPLE(slot));
-
 	appendonly_fetch(aoscan->aofetch, (AOTupleId *) tid, slot);
 
 	return !TupIsNull(slot);
