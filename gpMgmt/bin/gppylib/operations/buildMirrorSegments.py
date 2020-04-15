@@ -26,9 +26,9 @@ logger = gplog.get_default_logger()
 gDatabaseDirectories = [
     # this list occur inside initdb.c
     "global",
-    "pg_log",
+    "log",
     "pg_wal",
-    "pg_clog",
+    "pg_xact",
     "pg_changetracking",
     "pg_subtrans",
     "pg_twophase",

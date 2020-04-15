@@ -76,7 +76,7 @@ static const char *excludeDirContents[] =
 	"pg_subtrans",
 
 	/* GPDB: Contents unique to each segment instance. */
-	"pg_log",
+	"log",
 
 	/* end of list */
 	NULL

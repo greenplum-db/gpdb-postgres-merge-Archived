@@ -1733,8 +1733,8 @@ checkPgDir(const char *dir)
 
 	if (stat(buf, &st) != 0)
 	{
-		/* check if pg_log is there */
-		snprintf(buf, sizeof(buf), "%s%s", DataDir, "/pg_log");
+		/* check if log is there */
+		snprintf(buf, sizeof(buf), "%s%s", DataDir, "/log");
 		if (stat(buf, &st) == 0)
 			elog(LOG, "System file or directory missing (%s), shutting down segment", dir);
 

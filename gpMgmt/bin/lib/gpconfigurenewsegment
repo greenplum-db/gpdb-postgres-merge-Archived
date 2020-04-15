@@ -86,7 +86,7 @@ class ConfExpSegCmd(Command):
 
             # validate that we don't contain database directories or files
             for toCheck in gDatabaseDirectories:
-                if toCheck != "pg_log": # it's okay to have pg_log -- to save old logs around to look at
+                if toCheck != "log": # it's okay to have log -- to save old logs around to look at
                     if os.path.exists(os.path.join(path, toCheck)):
                         raise ValidationException("Segment directory '%s' contains directory %s but should not!" %
                                     (path, toCheck))
@@ -210,9 +210,9 @@ class ConfExpSegCmd(Command):
                         shutil.rmtree(dumps_dir)
                         os.remove(tblspc_config_json)
 
-                # Create pg_log for new segment in case it dosen't exist.
+                # Create log for new segment in case it dosen't exist.
                 try:
-                    self.makeOrUpdatePathAsNeeded(os.path.join(self.datadir, "pg_log"))
+                    self.makeOrUpdatePathAsNeeded(os.path.join(self.datadir, "log"))
                 except Exception, e:
                     self.set_results(CommandResult(1,'',e,True,False))
                     raise

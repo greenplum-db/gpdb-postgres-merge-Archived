@@ -10,15 +10,15 @@ TESTNAME=pg_xlog_symlink
 
 . sql/config_test.sh
 
-# Change location of pg_xlog and symlink to new location
+# Change location of pg_wal and symlink to new location
 function before_master
 {
-	TEST_XLOG=$TESTROOT/$TESTNAME/pg_xlog
+	TEST_XLOG=$TESTROOT/$TESTNAME/pg_wal
 	rm -rf $TEST_XLOG
 	mkdir $TEST_XLOG
-	cp -r $TEST_MASTER/pg_xlog/* $TEST_XLOG/
-	rm -rf $TEST_MASTER/pg_xlog
-	ln -s $TEST_XLOG $TEST_MASTER/pg_xlog
+	cp -r $TEST_MASTER/pg_wal/* $TEST_XLOG/
+	rm -rf $TEST_MASTER/pg_wal
+	ln -s $TEST_XLOG $TEST_MASTER/pg_wal
 }
 
 # Do an insert in master.

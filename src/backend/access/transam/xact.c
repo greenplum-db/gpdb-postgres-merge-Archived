@@ -7241,7 +7241,7 @@ xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
 		 * log.
 		 */
 
-		/* Mark the transaction committed in pg_clog */
+		/* Mark the transaction committed in pg_xact */
 
 		/* Add the committed subtransactions to the DistributedLog, too. */
 		DistributedLog_SetCommittedTree(xid, parsed->nsubxacts, parsed->subxacts,

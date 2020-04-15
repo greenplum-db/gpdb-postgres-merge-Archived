@@ -222,7 +222,7 @@ class PgCtlStartArgs(CmdArgs):
     >>> a = PgCtlStartArgs("/data1/master/gpseg-1", str(PgCtlBackendOptions(5432, 1, 2)), 123, None, None, True, 600)
     >>> str(a).split(' ') #doctest: +NORMALIZE_WHITESPACE
     ['env', GPERA=123', '$GPHOME/bin/pg_ctl', '-D', '/data1/master/gpseg-1', '-l',
-     '/data1/master/gpseg-1/pg_log/startup.log', '-w', '-t', '600',
+     '/data1/master/gpseg-1/log/startup.log', '-w', '-t', '600',
      '-o', '"', '-p', '5432', '--silent-mode=true', '"', 'start']
     """
 
@@ -243,7 +243,7 @@ class PgCtlStartArgs(CmdArgs):
             "GPERA=%s" % str(era),	# <- master era used to help identify orphans
             "$GPHOME/bin/pg_ctl",
             "-D", str(datadir),
-            "-l", "%s/pg_log/startup.log" % datadir,
+            "-l", "%s/log/startup.log" % datadir,
         ])
         self.set_wrapper(wrapper, args)
         self.set_wait_timeout(wait, timeout)

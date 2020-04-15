@@ -1982,7 +1982,7 @@ def step_impl(context, abbreviated_timezone):
 
 @then('the startup timezone is saved')
 def step_impl(context):
-    logfile = "%s/pg_log/startup.log" % os.getenv("MASTER_DATA_DIRECTORY")
+    logfile = "%s/log/startup.log" % os.getenv("MASTER_DATA_DIRECTORY")
     timezone = ""
     with open(logfile) as l:
         first_line = l.readline()

@@ -174,7 +174,7 @@ static const char *excludeDirContents[] =
 	"pg_subtrans",
 
 	/* Contents unique to each segment instance. */
-	"pg_log",
+	"log",
 
 	/* end of list */
 	NULL
@@ -1156,7 +1156,7 @@ sendTablespace(char *path, bool sizeonly)
 /*
  * Check if client EXCLUDE option matches this path.  Current implementation
  * is only the exact match for the relative path from the datadir root (e.g.
- * "./pg_log" etc).
+ * "./log" etc).
  */
 static bool
 match_exclude_list(char *path, HTAB *exclude)
