@@ -2414,6 +2414,12 @@ appendonly_fetch(AppendOnlyFetchDesc aoFetchDesc,
 		segmentFileNum != aoFetchDesc->currentSegmentFile.num)
 	{
 #ifdef USE_ASSERT_CHECKING
+		/*
+		 * GPDB_12_MERGE_FIXME: we are getting this warning after building a
+		 * btree index.  May be, something changed in the way the index access
+		 * method returns the TIDs?  Does that warning make sense if scan
+		 * direction is backwards?
+		 */
 		if (segmentFileNum < aoFetchDesc->currentSegmentFile.num)
 			ereport(WARNING,
 					(errmsg("append-only fetch requires scan prior segment file: segmentFileNum %d, rowNum " INT64_FORMAT ", currentSegmentFileNum %d",

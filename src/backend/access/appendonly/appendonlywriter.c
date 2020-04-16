@@ -357,7 +357,6 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	SysScanDesc aoscan;
 	HeapTuple	tuple;
 	Snapshot	snapshot;
-	Snapshot	appendOnlyMetaDataSnapshot;
 	Oid			segrelid;
 	bool		tried_creating_new_segfile = false;
 
@@ -368,18 +367,6 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	 * Grab a lock to serialize.
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
-
-	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
-	GetAppendOnlyEntryAuxOids(rel->rd_id, appendOnlyMetaDataSnapshot,
-							  &segrelid, NULL, NULL, NULL, NULL);
-	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
-
-	/*
-	 * Now pick a segment that is not in use, and is not over the allowed
-	 * size threshold (90% full).
-	 */
-	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
-	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/*
 	 * Obtain the snapshot that is taken at the beginning of the transaction.
@@ -400,6 +387,16 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 			 TransactionXmin, snapshot->xmin, snapshot->xmax, GetCurrentTransactionIdIfAny());
 		LogDistributedSnapshotInfo(snapshot, "Used snapshot: ");
 	}
+
+	GetAppendOnlyEntryAuxOids(rel->rd_id, NULL,
+							  &segrelid, NULL, NULL, NULL, NULL);
+
+	/*
+	 * Now pick a segment that is not in use, and is not over the allowed
+	 * size threshold (90% full).
+	 */
+	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
+	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/*
 	 * Scan through all the pg_aoseg (or pg_aocs) entries, and make note of

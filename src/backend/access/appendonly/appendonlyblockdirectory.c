@@ -19,7 +19,6 @@
 #include "catalog/pg_appendonly_fn.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "catalog/indexing.h"
 #include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -277,6 +276,8 @@ AppendOnlyBlockDirectory_Init_forInsert(
 
 	blockDirectory->blkdirIdx =
 		index_open(blkdiridxid, RowExclusiveLock);
+
+	blockDirectory->indinfo = CatalogOpenIndexes(blockDirectory->blkdirRel);
 
 	init_internal(blockDirectory);
 
@@ -1082,7 +1083,7 @@ load_last_minipage(AppendOnlyBlockDirectory *blockDirectory,
 						 columnGroupNo);
 	}
 
-	systable_endscan(idxScanDesc);
+	systable_endscan_ordered(idxScanDesc);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -1156,6 +1157,7 @@ write_minipage(AppendOnlyBlockDirectory *blockDirectory,
 	Datum	   *values = blockDirectory->values;
 	bool	   *nulls = blockDirectory->nulls;
 	Relation	blkdirRel = blockDirectory->blkdirRel;
+	CatalogIndexState indinfo = blockDirectory->indinfo;
 	TupleDesc	heapTupleDesc = RelationGetDescr(blkdirRel);
 
 	Assert(minipageInfo->numMinipageEntries > 0);
@@ -1204,7 +1206,8 @@ write_minipage(AppendOnlyBlockDirectory *blockDirectory,
 						  columnGroupNo, minipageInfo->numMinipageEntries,
 						  minipageInfo->minipage->entry[0].firstRowNum)));
 
-		CatalogTupleUpdate(blkdirRel, &minipageInfo->tupleTid, tuple);
+		CatalogTupleUpdateWithInfo(blkdirRel, &minipageInfo->tupleTid, tuple,
+								   indinfo);
 	}
 	else
 	{
@@ -1216,7 +1219,7 @@ write_minipage(AppendOnlyBlockDirectory *blockDirectory,
 						  columnGroupNo, minipageInfo->numMinipageEntries,
 						  minipageInfo->minipage->entry[0].firstRowNum)));
 
-		CatalogTupleInsert(blkdirRel, tuple);
+		CatalogTupleInsertWithInfo(blkdirRel, tuple, indinfo);
 	}
 
 	heap_freetuple(tuple);
@@ -1268,6 +1271,7 @@ AppendOnlyBlockDirectory_End_forInsert(
 
 	index_close(blockDirectory->blkdirIdx, RowExclusiveLock);
 	heap_close(blockDirectory->blkdirRel, RowExclusiveLock);
+	CatalogCloseIndexes(blockDirectory->indinfo);
 
 	MemoryContextDelete(blockDirectory->memoryContext);
 }

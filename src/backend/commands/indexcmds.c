@@ -69,6 +69,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include "catalog/aoblkdir.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbcat.h"
@@ -674,14 +675,30 @@ DefineIndex(Oid relationId,
 	 * parallel workers under the control of certain particular ambuild
 	 * functions will need to be updated, too.
 	 */
-	// GPDB_12_MERGE_FIXME: fix locking
-#if 0
-	if (RangeVarIsAppendOptimizedTable(stmt->relation))
-		lockmode = ShareRowExclusiveLock;
-	else
-		lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
-#endif
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	/*
+	 * GPDB_12_MERGE_FIXME: Appendoptimized tables need block directory
+	 * relation for index access.  Creating and maintaining block directory is
+	 * expensive, because it needs to be kept up to date whenever new data is
+	 * inserted in the table.  We delay the block directory creation until it
+	 * is really needed - the first index creation.  Once created, all indexes
+	 * share the same block directory.  We need stronger lock
+	 * (ShareRowExclusiveLock) that blocks index creation from another
+	 * transaction (not to be confused with create index concurrently) as well
+	 * as concurrent insert for appendoptimized tables, if the block directory
+	 * needs to be created.  If the block directory already exists, we can use
+	 * the same lock as heap tables but this is not currently implemented
+	 * (hence the fixme).
+	 */
+	{
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
+		Form_pg_class pgc = GETSTRUCT(tuple);
+		if (pgc->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+			pgc->relam == AOCO_TABLE_AM_OID)
+			lockmode = ShareRowExclusiveLock;
+		else
+			lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+		ReleaseSysCache(tuple);
+	}
 	rel = table_open(relationId, lockmode);
 
 	namespaceId = RelationGetNamespace(rel);

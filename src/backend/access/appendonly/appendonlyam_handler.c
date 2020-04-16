@@ -654,6 +654,12 @@ appendonly_index_build_range_scan(Relation heapRelation,
 	/* Remember if it's a system catalog */
 	is_system_catalog = IsSystemRelation(heapRelation);
 
+	/* Appendoptimized catalog tables are not supported. */
+	Assert(!is_system_catalog);
+	/* Appendoptimized tables have no data on master. */
+	if (IS_QUERY_DISPATCHER())
+		return 0;
+
 	/* See whether we're verifying uniqueness/exclusion properties */
 	checking_uniqueness = (indexInfo->ii_Unique ||
 						   indexInfo->ii_ExclusionOps != NULL);
@@ -729,6 +735,37 @@ appendonly_index_build_range_scan(Relation heapRelation,
 	}
 
 	aoscan = (AppendOnlyScanDesc) scan;
+
+	/*
+	 * If block directory is empty, it must also be built along with the index.
+	 */
+	Oid blkdirrelid;
+	Oid blkidxrelid;
+
+	GetAppendOnlyEntryAuxOids(RelationGetRelid(aoscan->aos_rd), NULL, NULL,
+							  &blkdirrelid, &blkidxrelid, NULL, NULL);
+	/*
+	 * Note that block directory is created during creation of the first
+	 * index.  If it is found empty, it means the block directory was created
+	 * by this create index transaction.  The caller (DefineIndex) must have
+	 * acquired sufficiently strong lock on the appendoptimized table such
+	 * that index creation as well as insert from concurrent transactions are
+	 * blocked.  We can rest assured of exclusive access to the block
+	 * directory relation.
+	 */
+	Relation blkdir = relation_open(blkdirrelid, AccessShareLock);
+	if (RelationGetNumberOfBlocks(blkdir) == 0)
+	{
+		/*
+		 * Allocate blockDirectory in scan descriptor to let the access method
+		 * know that it needs to also build the block directory while
+		 * scanning.
+		 */
+		Assert(aoscan->blockDirectory == NULL);
+		aoscan->blockDirectory = palloc0(sizeof(AppendOnlyBlockDirectory));
+	}
+	relation_close(blkdir, NoLock);
+
 
 	/* GPDB_12_MERGE_FIXME */
 #if 0

@@ -18,9 +18,11 @@ insert into ao_basic_t1 select i, i from generate_series(1,12)i;
 select * from ao_basic_t1;
  a  |  b  
 ----+-----
-  1 | abc
-  1 | 1
- 12 | 12
+  5 | 5
+  6 | 6
+  9 | 9
+ 10 | 10
+ 11 | 11
   2 | pqr
   3 | lmn
   2 | 2
@@ -28,21 +30,14 @@ select * from ao_basic_t1;
   4 | 4
   7 | 7
   8 | 8
-  5 | 5
-  6 | 6
-  9 | 9
- 10 | 10
- 11 | 11
+  1 | abc
+  1 | 1
+ 12 | 12
 (15 rows)
 
 select gp_segment_id, * from ao_basic_t1;
  gp_segment_id | a  |  b  
 ---------------+----+-----
-             2 |  5 | 5
-             2 |  6 | 6
-             2 |  9 | 9
-             2 | 10 | 10
-             2 | 11 | 11
              0 |  2 | pqr
              0 |  3 | lmn
              0 |  2 | 2
@@ -53,17 +48,28 @@ select gp_segment_id, * from ao_basic_t1;
              1 |  1 | abc
              1 |  1 | 1
              1 | 12 | 12
+             2 |  5 | 5
+             2 |  6 | 6
+             2 |  9 | 9
+             2 | 10 | 10
+             2 | 11 | 11
 (15 rows)
 
 select gp_segment_id, count(*) from ao_basic_t1 group by gp_segment_id;
  gp_segment_id | count 
 ---------------+-------
+             2 |     5
              0 |     7
              1 |     3
-             2 |     5
 (3 rows)
 
 insert into ao_basic_t1 values (1, repeat('abc', 100000));
+-- create two segment files by inserting from concurrent sessions
+begin;
+insert into ao_basic_t1 select i, 'session1' from generate_series(1,20)i;
+\! psql -d regression -c "insert into ao_basic_t1 select i, 'session2' from generate_series(1,20)i"
+INSERT 0 20
+end;
 select a, length(b) from ao_basic_t1;
  a  | length 
 ----+--------
@@ -74,44 +80,163 @@ select a, length(b) from ao_basic_t1;
   4 |      1
   7 |      1
   8 |      1
+  2 |      8
+  3 |      8
+  4 |      8
+  7 |      8
+  8 |      8
+ 16 |      8
+ 18 |      8
+ 19 |      8
+  2 |      8
+  3 |      8
+  4 |      8
+  7 |      8
+  8 |      8
+ 16 |      8
+ 18 |      8
+ 19 |      8
   5 |      1
   6 |      1
   9 |      1
  10 |      2
  11 |      2
+  5 |      8
+  6 |      8
+  9 |      8
+ 10 |      8
+ 11 |      8
+ 13 |      8
+ 14 |      8
+ 17 |      8
+  5 |      8
+  6 |      8
+  9 |      8
+ 10 |      8
+ 11 |      8
+ 13 |      8
+ 14 |      8
+ 17 |      8
   1 |      3
   1 |      1
  12 |      2
   1 | 300000
-(16 rows)
+  1 |      8
+ 12 |      8
+ 15 |      8
+ 20 |      8
+  1 |      8
+ 12 |      8
+ 15 |      8
+ 20 |      8
+(56 rows)
 
 create index i_ao_basic_t1 on ao_basic_t1 using btree(a);
-select * from ao_basic_t1 where a = 2;
- a |  b  
----+-----
- 2 | pqr
- 2 | 2
-(2 rows)
+select blkdirrelid > 0 as blockdir_created from pg_appendonly where relid = 'ao_basic_t1'::regclass;
+ blockdir_created 
+------------------
+ t
+(1 row)
 
+set enable_seqscan = off;
+set enable_bitmapscan = on;
+set enable_indexscan = on;
+explain (costs off) select * from ao_basic_t1 where a < 4;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Scan using i_ao_basic_t1 on ao_basic_t1
+         Index Cond: (a < 4)
+ Optimizer: Postgres query optimizer
+(4 rows)
+
+select a, length(b) from ao_basic_t1 where a < 4;
+ a | length 
+---+--------
+ 2 |      3
+ 2 |      1
+ 2 |      8
+ 2 |      8
+ 3 |      3
+ 3 |      1
+ 3 |      8
+ 3 |      8
+ 1 |      3
+ 1 |      1
+ 1 | 300000
+ 1 |      8
+ 1 |      8
+(13 rows)
+
+insert into ao_basic_t1 select i, 'index insert' from generate_series(1,12)i;
 create table heap_t2(a int, b varchar) distributed by (a);
 insert into heap_t2 select i, i from generate_series(1, 20)i;
 select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
- a  |  b  | a  | b  
-----+-----+----+----
-  2 | 2   |  2 | 2
-  2 | pqr |  2 | 2
-  3 | 3   |  3 | 3
-  3 | lmn |  3 | 3
-  4 | 4   |  4 | 4
-  7 | 7   |  7 | 7
-  8 | 8   |  8 | 8
-  5 | 5   |  5 | 5
-  6 | 6   |  6 | 6
-  9 | 9   |  9 | 9
- 10 | 10  | 10 | 10
- 11 | 11  | 11 | 11
- 12 | 12  | 12 | 12
-(13 rows)
+ a  |      b       | a  | b  
+----+--------------+----+----
+  5 | 5            |  5 | 5
+  5 | session1     |  5 | 5
+  5 | session2     |  5 | 5
+  5 | index insert |  5 | 5
+  6 | 6            |  6 | 6
+  6 | session1     |  6 | 6
+  6 | session2     |  6 | 6
+  6 | index insert |  6 | 6
+  9 | 9            |  9 | 9
+  9 | session1     |  9 | 9
+  9 | session2     |  9 | 9
+  9 | index insert |  9 | 9
+ 10 | 10           | 10 | 10
+ 10 | session1     | 10 | 10
+ 10 | session2     | 10 | 10
+ 10 | index insert | 10 | 10
+ 11 | 11           | 11 | 11
+ 11 | session1     | 11 | 11
+ 11 | session2     | 11 | 11
+ 11 | index insert | 11 | 11
+ 13 | session1     | 13 | 13
+ 13 | session2     | 13 | 13
+ 14 | session1     | 14 | 14
+ 14 | session2     | 14 | 14
+ 17 | session1     | 17 | 17
+ 17 | session2     | 17 | 17
+  2 | pqr          |  2 | 2
+  2 | 2            |  2 | 2
+  2 | session1     |  2 | 2
+  2 | session2     |  2 | 2
+  2 | index insert |  2 | 2
+  3 | lmn          |  3 | 3
+  3 | 3            |  3 | 3
+  3 | session1     |  3 | 3
+  3 | session2     |  3 | 3
+  3 | index insert |  3 | 3
+  4 | 4            |  4 | 4
+  4 | session1     |  4 | 4
+  4 | session2     |  4 | 4
+  4 | index insert |  4 | 4
+  7 | 7            |  7 | 7
+  7 | session1     |  7 | 7
+  7 | session2     |  7 | 7
+  7 | index insert |  7 | 7
+  8 | 8            |  8 | 8
+  8 | session1     |  8 | 8
+  8 | session2     |  8 | 8
+  8 | index insert |  8 | 8
+ 16 | session1     | 16 | 16
+ 16 | session2     | 16 | 16
+ 18 | session1     | 18 | 18
+ 18 | session2     | 18 | 18
+ 19 | session1     | 19 | 19
+ 19 | session2     | 19 | 19
+ 12 | 12           | 12 | 12
+ 12 | session1     | 12 | 12
+ 12 | session2     | 12 | 12
+ 12 | index insert | 12 | 12
+ 15 | session1     | 15 | 15
+ 15 | session2     | 15 | 15
+ 20 | session1     | 20 | 20
+ 20 | session2     | 20 | 20
+(62 rows)
 
 create table ao_basic_t2 (a int) using appendoptimized distributed by (a);
 insert into ao_basic_t2 select i from generate_series(1,20)i;

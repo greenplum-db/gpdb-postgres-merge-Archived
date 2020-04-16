@@ -17,10 +17,25 @@ select gp_segment_id, count(*) from ao_basic_t1 group by gp_segment_id;
 
 insert into ao_basic_t1 values (1, repeat('abc', 100000));
 
-select a, length(b) from ao_basic_t1;
+-- create two segment files by inserting from concurrent sessions
+begin;
+insert into ao_basic_t1 select i, 'session1' from generate_series(1,20)i;
 
+\! psql -d regression -c "insert into ao_basic_t1 select i, 'session2' from generate_series(1,20)i"
+
+end;
+
+select a, length(b) from ao_basic_t1;
 create index i_ao_basic_t1 on ao_basic_t1 using btree(a);
-select * from ao_basic_t1 where a = 2;
+
+select blkdirrelid > 0 as blockdir_created from pg_appendonly where relid = 'ao_basic_t1'::regclass;
+
+set enable_seqscan = off;
+set enable_bitmapscan = on;
+set enable_indexscan = on;
+explain (costs off) select * from ao_basic_t1 where a < 4;
+select a, length(b) from ao_basic_t1 where a < 4;
+insert into ao_basic_t1 select i, 'index insert' from generate_series(1,12)i;
 
 create table heap_t2(a int, b varchar) distributed by (a);
 insert into heap_t2 select i, i from generate_series(1, 20)i;
