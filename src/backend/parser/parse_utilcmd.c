@@ -4359,7 +4359,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 					GpAddPartitionCmd *add_cmd = castNode(GpAddPartitionCmd, cmd->def);
 					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
-					List *cstmts = generateSinglePartition(rel, pelem, queryString, &num_unnamed_parts);
+					List *cstmts = generateSinglePartition(rel, pelem, NULL, queryString, &num_unnamed_parts);
 					foreach(l, cstmts)
 					{
 						Node *stmt = (Node *) lfirst(l);

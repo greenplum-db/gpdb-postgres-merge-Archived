@@ -34,23 +34,26 @@
 static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
 									 GpPartitionElem *elem,
+									 PartitionSpec *subPart,
 									 int *num_unnamed_parts_p);
 static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
 								   GpPartitionElem *elem,
+								   PartitionSpec *subPart,
 								   int *num_unnamed_parts_p);
 static List *generateDefaultPartition(ParseState *pstate,
 									  Relation parentrel,
-									  GpPartitionElem *elem);
+									  GpPartitionElem *elem,
+									  PartitionSpec *subPart);
 
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
-										   PartitionBoundSpec *boundspec);
+										   PartitionBoundSpec *boundspec, PartitionSpec *subPart);
 
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
 
 List *
-generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
+generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
 						const char *queryString, int *num_unnamed_parts)
 {
 	List *new_parts;
@@ -60,7 +63,7 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
 	pstate->p_sourcetext = queryString;
 
 	if (elem->isDefault)
-		new_parts = generateDefaultPartition(pstate, parentrel, elem);
+		new_parts = generateDefaultPartition(pstate, parentrel, elem, subPart);
 	else
 	{
 		PartitionKey key = RelationGetPartitionKey(parentrel);
@@ -68,12 +71,12 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem,
 		switch (key->strategy)
 		{
 			case PARTITION_STRATEGY_RANGE:
-				new_parts = generateRangePartitions(pstate, parentrel, elem,
+				new_parts = generateRangePartitions(pstate, parentrel, elem, subPart,
 													num_unnamed_parts);
 				break;
 
 			case PARTITION_STRATEGY_LIST:
-				new_parts = generateListPartition(pstate, parentrel, elem,
+				new_parts = generateListPartition(pstate, parentrel, elem, subPart,
 												  num_unnamed_parts);
 				break;
 			default:
@@ -111,8 +114,16 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 		{
 			GpPartitionElem *elem = (GpPartitionElem *) n;
 			List	   *new_parts;
+			PartitionSpec *subspec = NULL;
 
-			new_parts = generateSinglePartition(parentrel, elem, queryString, &num_unnamed_parts);
+			if (gpPartSpec->subSpec)
+			{
+				Assert(IsA(gpPartSpec->subSpec, PartitionSpec));
+				subspec = (PartitionSpec*) gpPartSpec->subSpec;
+				subspec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
+			}
+
+			new_parts = generateSinglePartition(parentrel, elem, subspec, queryString, &num_unnamed_parts);
 			result = list_concat(result, new_parts);
 		}
 		else if (IsA(n, ColumnReferenceStorageDirective))
@@ -416,6 +427,7 @@ static List *
 generateRangePartitions(ParseState *pstate,
 						Relation parentrel,
 						GpPartitionElem *elem,
+						PartitionSpec *subPart,
 						int *num_unnamed_parts_p)
 {
 	GpPartitionBoundSpec *boundspec;
@@ -514,7 +526,7 @@ generateRangePartitions(ParseState *pstate,
 
 		/* GPDB_12_MERGE_FIXME: pass correct level */
 		partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
-		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
+		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
 
 		result = lappend(result, childstmt);
 	}
@@ -528,6 +540,7 @@ static List *
 generateListPartition(ParseState *pstate,
 					  Relation parentrel,
 					  GpPartitionElem *elem,
+					  PartitionSpec *subPart,
 					  int *num_unnamed_parts_p)
 {
 	GpPartitionValuesSpec *gpvaluesspec;
@@ -582,7 +595,7 @@ generateListPartition(ParseState *pstate,
 	partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
+	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
 
 	return list_make1(childstmt);
 }
@@ -590,7 +603,8 @@ generateListPartition(ParseState *pstate,
 static List *
 generateDefaultPartition(ParseState *pstate,
 						 Relation parentrel,
-						 GpPartitionElem *elem)
+						 GpPartitionElem *elem,
+						 PartitionSpec *subPart)
 {
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
@@ -602,13 +616,14 @@ generateDefaultPartition(ParseState *pstate,
 
 	/* GPDB_12_MERGE_FIXME: pass correct level */
 	partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec);
+	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
 
 	return list_make1(childstmt);
 }
 
 static CreateStmt *
-makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec)
+makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
+						PartitionSpec *subPart)
 {
 	CreateStmt *childstmt;
 	RangeVar   *parentrv;
@@ -622,7 +637,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->tableElts = NIL;
 	childstmt->inhRelations = list_make1(parentrv);
 	childstmt->partbound = boundspec;
-	childstmt->partspec = NULL;
+	childstmt->partspec = subPart;
 	childstmt->ofTypename = NULL;
 	childstmt->constraints = NIL;
 	childstmt->options = NIL; // FIXME: copy from parent stmt?

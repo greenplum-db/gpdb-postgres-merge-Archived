@@ -5414,9 +5414,12 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
  */
 
 /* Optional partition key specification (at the position where PostgreSQL has it) */
-OptFirstPartitionSpec: PartitionSpec OptTabPartitionSpec
+OptFirstPartitionSpec: PartitionSpec opt_list_subparts OptTabPartitionSpec
 				{
-					$1->gpPartSpec = (GpPartitionSpec *) $2;
+					$1->gpPartSpec = (GpPartitionSpec *) $3;
+					if (PointerIsValid($1->gpPartSpec))
+						$1->gpPartSpec->subSpec = $2;
+
 					$$ = $1;
 
 					pg_yyget_extra(yyscanner)->tail_partition_magic = true;
@@ -5430,13 +5433,15 @@ OptFirstPartitionSpec: PartitionSpec OptTabPartitionSpec
 		;
 
 OptSecondPartitionSpec:
-			PARTITION_TAIL BY part_strategy '(' part_params ')' OptTabPartitionSpec
+			PARTITION_TAIL BY part_strategy '(' part_params ')' opt_list_subparts OptTabPartitionSpec
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 
 					n->strategy = $3;
 					n->partParams = $5;
-					n->gpPartSpec = (GpPartitionSpec *) $7;
+					n->gpPartSpec = (GpPartitionSpec *) $8;
+					if (PointerIsValid(n->gpPartSpec))
+						n->gpPartSpec->subSpec = $7;
 					n->location = @1;
 
 					$$ = n;
@@ -5639,15 +5644,11 @@ OptTabPartitionSpec: '(' TabPartitionElemList ')'
 OptTabSubPartitionSpec: 
             '(' TabSubPartitionElemList ')' 
 				{
-/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
- * the old GPDB one. */
-#if 0
-                        PartitionSpec *n = makeNode(PartitionSpec); 
-                        n->partElem  = $2;
-                        n->subSpec   = NULL;
-                        n->location  = @2;
-                        $$ = (Node *)n;
-#endif
+					GpPartitionSpec *n = makeNode(GpPartitionSpec);
+					n->partElem  = $2;
+					n->subSpec   = NULL;
+					n->location  = @2;
+					$$ = (Node *) n;
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -5963,6 +5964,7 @@ TabSubPartitionTemplate:
 				{
 /* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
  * the old GPDB one. */
+					elog(ERROR, "not implemented yet");
 #if 0
 					PartitionSpec *n = makeNode(PartitionSpec); 
 					n->partElem  = $4;
@@ -6004,20 +6006,13 @@ opt_list_subparts: TabSubPartition { $$ = $1; }
 TabSubPartitionBy: SUBPARTITION BY
 			part_strategy '(' part_params ')'
 				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-#if 0
-					PartitionBy *n = makeNode(PartitionBy);
-					n->partType = $3;
-					n->keys = $5;
-					n->subPart  = NULL;
-					n->partSpec = NULL;
-					n->partDepth = 0;
-					n->partQuiet = PART_VERBO_NODISTRO;
-					n->location  = @3;
-					n->partDefault = NULL;
+					PartitionSpec *n = makeNode(PartitionSpec);
+
+					n->strategy = $3;
+					n->partParams = $5;
+					n->location = @1;
+
 					$$ = (Node *)n;
-#endif
 				}
 			;
 
@@ -6026,6 +6021,7 @@ TabSubPartition:
 				{
 /* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
  * the old GPDB one. */
+					elog(ERROR, "not implemented yet");
 #if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 
@@ -6039,6 +6035,7 @@ TabSubPartition:
 				{
 /* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
  * the old GPDB one. */
+					elog(ERROR, "not implemented yet");
 #if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 					pby->subPart = $2;
@@ -6049,6 +6046,7 @@ TabSubPartition:
 				{
 /* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
  * the old GPDB one. */
+					elog(ERROR, "not implemented yet");
 #if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 					pby->partSpec = $2;
