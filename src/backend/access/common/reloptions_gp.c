@@ -235,12 +235,13 @@ accumAOStorageOpt(char *name, char *value,
 		 * appendonly and its variants
 		 */
 		if (!pg_strcasecmp(name, "appendonly") ||
+			!pg_strcasecmp(name, "appendoptimized") ||
 			!pg_strcasecmp(name, "orientation"))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid storage option \"%s\"", name),
-					 errhint("For thable access methods use \"default_table_access_method\" instead.")));
+					 errhint("For table access methods use \"default_table_access_method\" instead.")));
 		}
 		else
 			ereport(ERROR,
