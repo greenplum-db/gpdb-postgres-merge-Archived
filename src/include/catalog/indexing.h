@@ -46,6 +46,8 @@ extern void CatalogTupleUpdateWithInfo(Relation heapRel,
 extern void CatalogTupleDelete(Relation heapRel, ItemPointer tid);
 
 
+extern void GPFastSequenceInsertFrozen(Relation heapRel, HeapTuple tup);
+
 /*
  * These macros are just to keep the C compiler from spitting up on the
  * upcoming commands for Catalog.pm.

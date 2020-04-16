@@ -179,11 +179,7 @@ insert_or_update_fastsequence(Relation gp_fastsequence_rel,
 
 		newTuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
 
-		/*
-		 * GPDB_12_MERGE_FIXME: This used to insert a frozen
-		 * tuple. Do we need to update the API to do that?
-		 */
-		CatalogTupleInsert(gp_fastsequence_rel, newTuple);
+		GPFastSequenceInsertFrozen(gp_fastsequence_rel, newTuple);
 
 		heap_freetuple(newTuple);
 	}
