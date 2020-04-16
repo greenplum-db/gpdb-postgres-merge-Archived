@@ -19625,6 +19625,8 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	ListCell *lc;
 	bool	  appendoptimized = false;
 	bool	  is_column_oriented = false;
+	bool	  appendoptimized_found = false;
+	bool	  is_column_oriented_found = false;
 
 	foreach (lc, *options)
 	{
@@ -19632,9 +19634,23 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 
 		if (strcmp(elem->defname, "appendoptimized") == 0 ||
 				strcmp(elem->defname, "appendonly") == 0)
+		{
+			if (appendoptimized_found)
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("parameter \"appendonly\" specified more than once")));
 			appendoptimized = defGetBoolean(elem);
+			appendoptimized_found = true;
+		}
 		else if (strcmp(elem->defname, "orientation") == 0)
+		{
+			if (is_column_oriented_found)
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("parameter \"orientation\" specified more than once")));
 			is_column_oriented = strcmp(defGetString(elem), "column") == 0;
+			is_column_oriented_found = true;
+		}
 		else
 			amendedOptions = lappend(amendedOptions, elem);
 	}
