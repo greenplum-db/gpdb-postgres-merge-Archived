@@ -74,12 +74,9 @@ typedef struct
 	CommandId	output_cid;		/* cmin to insert in output tuples */
 	int			ti_options;		/* table_tuple_insert performance options */
 	BulkInsertState bistate;	/* bulk insert state */
-
-	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
-	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
 } DR_intorel;
 
-static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
+static void intorel_startup_gp(DestReceiver *self, int operation, TupleDesc typeinfo);
 /* utility functions for CTAS definition creation */
 static ObjectAddress create_ctas_internal(List *attrList, IntoClause *into,
 										  QueryDesc *queryDesc, bool dispatch);
@@ -520,27 +517,29 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
 
 	self->pub.receiveSlot = intorel_receive;
-	self->pub.rStartup = intorel_startup_dummy;
+	self->pub.rStartup = intorel_startup_gp;
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
 	self->into = intoClause;
 
-	self->ao_insertDesc = NULL;
-	self->aocs_insertDes = NULL;
-
 	return (DestReceiver *) self;
 }
 
 /*
- * intorel_startup_dummy --- executor startup
+ * intorel_startup_gp --- NOT PG intorel_startup().
+ * See intorel_initplan() for commends.
+ *
+ * Appendoptimized relations need a specific initialization before being able to
+ * perform insertions. Handle this special case here.
  */
 static void
-intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
+intorel_startup_gp(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-	/* no-op */
+	Relation rel = ((DR_intorel *)self)->rel;
 
-	/* See intorel_initplan() for explanation */
+	if (RelationIsAoRows(rel))
+		appendonly_dml_init(rel, CMD_INSERT);
 }
 
 /*
@@ -756,10 +755,8 @@ intorel_shutdown(DestReceiver *self)
 
 	table_finish_bulk_insert(myState->rel, myState->ti_options);
 
-	if (RelationIsAoRows(into_rel) && myState->ao_insertDesc)
-		appendonly_insert_finish(myState->ao_insertDesc);
-	else if (RelationIsAoCols(into_rel) && myState->aocs_insertDes)
-		aocs_insert_finish(myState->aocs_insertDes);
+	if (RelationIsAoRows(into_rel))
+		appendonly_dml_finish(into_rel, CMD_INSERT);
 
 	/* close rel, but keep lock until commit */
 	table_close(myState->rel, NoLock);

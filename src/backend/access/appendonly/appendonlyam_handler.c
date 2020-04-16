@@ -99,19 +99,24 @@ appendonly_slot_callbacks(Relation relation)
 MemTuple
 ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
 {
-	MemTuple result;
-	MemoryContext oldContext;
+	MemTuple		result;
+	MemoryContext	oldContext;
 
-	/*
-	 * VirtualTupleTableSlot interface has no way to free the MemTuple, the
-	 * caller needs to free it.
-	 */
 	*shouldFree = true;
 
+	/*
+	 * In case of a non virtal tuple, make certain that the slot's values are
+	 * populated, for example during a CTAS.
+	 */
+	if (!TTS_IS_VIRTUAL(slot))
+		slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
+
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	result = memtuple_form(
-		insertDesc->mt_bind, slot->tts_values, slot->tts_isnull);
+	result = memtuple_form(insertDesc->mt_bind,
+						   slot->tts_values,
+						   slot->tts_isnull);
 	MemoryContextSwitchTo(oldContext);
+
 	return result;
 }
 

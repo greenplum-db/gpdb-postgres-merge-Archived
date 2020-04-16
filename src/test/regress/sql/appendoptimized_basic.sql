@@ -53,3 +53,12 @@ select * from ao_basic_t2;
 insert into ao_basic_t2 select  i, 'new column' from generate_series(1,12)i;
 
 select * from ao_basic_t2 where b != 'abc';
+
+create table ao_ctas using appendoptimized as select * from heap_t2;
+select amhandler from pg_class c, pg_am a where c.relname = 'ao_ctas' and c.relam = a.oid;
+
+insert into ao_ctas values (0, 'inserted');
+table ao_ctas;
+
+insert into ao_ctas select * from heap_t2;
+table ao_ctas;
