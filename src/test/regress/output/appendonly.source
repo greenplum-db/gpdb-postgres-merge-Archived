@@ -43,8 +43,7 @@ CREATE TABLE tenk_ao4 (like tenk_heap) with (appendonly=true, compresslevel=1, c
 CREATE TABLE tenk_ao5 (like tenk_heap) with (appendonly=true, compresslevel=6, compresstype=zlib, blocksize=1048576, checksum=true) distributed by(unique1);
 -- invalid
 CREATE TABLE tenk_ao6 (like tenk_heap) with (appendonly=false, compresslevel=6, checksum=true) distributed by(unique1);
-ERROR:  invalid option "compresslevel" for base relation
-HINT:  Compression only valid for Append Only relations, create an AO relation to use compression.
+ERROR:  unrecognized parameter "compresslevel"
 CREATE TABLE tenk_ao7 (like tenk_heap) with (appendonly=true, compresslevel=16, compresstype=zlib) distributed by(unique1);
 ERROR:  compresslevel=16 is out of range for zlib (should be in the range 1 to 9)
 CREATE TABLE tenk_ao8 (like tenk_heap) with (appendonly=true, blocksize=100) distributed by(unique1);
@@ -54,20 +53,17 @@ CREATE TABLE tenk_ao9 (like tenk_heap) with (appendonly=true, compresslevel=0, c
 ERROR:  compresstype "zlib" can't be used with compresslevel 0
 -- these should not work without appendonly=true
 CREATE TABLE tenk_ao10 (like tenk_heap) with (compresslevel=5);
-ERROR:  invalid option "compresslevel" for base relation
-HINT:  Compression only valid for Append Only relations, create an AO relation to use compression.
+ERROR:  unrecognized parameter "compresslevel"
 CREATE TABLE tenk_ao11 (like tenk_heap) with (blocksize=8192);
-ERROR:  invalid option "blocksize" for base relation
-HINT:  "blocksize" is only valid for Append Only relations, create an AO relation to use "blocksize".
+ERROR:  unrecognized parameter "blocksize"
 CREATE TABLE tenk_ao12 (like tenk_heap) with (appendonly=false,blocksize=8192);
-ERROR:  invalid option "blocksize" for base relation
-HINT:  "blocksize" is only valid for Append Only relations, create an AO relation to use "blocksize".
+ERROR:  unrecognized parameter "blocksize"
 -- appendoptimized is an alias for appendonly
 CREATE TABLE tenk_ao13 (like tenk_heap) with (appendoptimized=true);
 CREATE TABLE tenk_ao14 (like tenk_heap) with (appendonly=true, appendoptimized=false);
 ERROR:  parameter "appendonly" specified more than once
 CREATE TABLE tenk_ao14 (like tenk_heap) with (appendoptimized=maybe);
-ERROR:  invalid value for option "appendonly"
+ERROR:  appendoptimized requires a Boolean value
 CREATE TABLE tenk_ao14 (like tenk_heap) with (appendoptimized=true, appendoptimized=true);
 ERROR:  parameter "appendonly" specified more than once
 CREATE TABLE tenk_ao15 (like tenk_heap) with (appendoptimized=true) 
@@ -86,23 +82,37 @@ START (2) end (3) WITH (appendoptimized=true)
 );
 ERROR:  parameter "appendonly" specified more than once
 -- also make sure appendoptimized works in the gp_default_storage_options GUC
-SET gp_default_storage_options = 'appendonly=true,blocksize=32768,compresstype=none,checksum=true,orientation=row,appendoptimized=false';
-ERROR:  parameter "appendonly" specified more than once
-SET gp_default_storage_options = 'appendoptimized=true,blocksize=32768,compresstype=none,checksum=true,orientation=row';
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,orientation=row,appendoptimized=false';
+ERROR:  invalid storage option "orientation"
+HINT:  For table access methods use "default_table_access_method" instead.
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,orientation=row';
+ERROR:  invalid storage option "orientation"
+HINT:  For table access methods use "default_table_access_method" instead.
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,blocksize=8';
+ERROR:  parameter "blocksize" specified more than once
+SET gp_default_storage_options = 'blocksize=65536,compresstype=none,checksum=true';
 SHOW gp_default_storage_options;
-                           gp_default_storage_options                            
----------------------------------------------------------------------------------
- appendonly=true,blocksize=32768,compresstype=none,checksum=true,orientation=row
+           gp_default_storage_options            
+-------------------------------------------------
+ blocksize=65536,compresstype=none,checksum=true
+(1 row)
+
+SET default_table_access_method = 'appendoptimized';
+SHOW default_table_access_method;
+ default_table_access_method 
+-----------------------------
+ appendoptimized
 (1 row)
 
 CREATE TABLE tenk_ao14 (like tenk_heap);
-SELECT relstorage FROM pg_catalog.pg_class WHERE relname = 'tenk_ao14';
- relstorage 
-------------
- a
+SELECT amhandler, reloptions FROM pg_class c, PG_AM a WHERE c.relname = 'tenk_ao14' AND c.relam = a.oid;
+         amhandler          |    reloptions     
+----------------------------+-------------------
+ appendonly_tableam_handler | {blocksize=65536}
 (1 row)
 
 RESET gp_default_storage_options;
+RESET default_table_access_method;
 -------------------- 
 -- catalog checks
 --------------------
@@ -113,7 +123,7 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
 -------------------+-----------+--------------+---------------+----------
  tenk_ao1          |     32768 |              |             0 | t
  tenk_ao13         |     32768 |              |             0 | t
- tenk_ao14         |     32768 |              |             0 | t
+ tenk_ao14         |     65536 |              |             0 | t
  tenk_ao15         |     32768 |              |             0 | t
  tenk_ao15_1_prt_1 |     32768 |              |             0 | t
  tenk_ao15_1_prt_2 |     32768 |              |             0 | t

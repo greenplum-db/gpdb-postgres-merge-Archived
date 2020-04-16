@@ -65,12 +65,17 @@ START (2) end (3) WITH (appendoptimized=true)
 );
 
 -- also make sure appendoptimized works in the gp_default_storage_options GUC
-SET gp_default_storage_options = 'appendonly=true,blocksize=32768,compresstype=none,checksum=true,orientation=row,appendoptimized=false';
-SET gp_default_storage_options = 'appendoptimized=true,blocksize=32768,compresstype=none,checksum=true,orientation=row';
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,orientation=row,appendoptimized=false';
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,orientation=row';
+SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,blocksize=8';
+SET gp_default_storage_options = 'blocksize=65536,compresstype=none,checksum=true';
 SHOW gp_default_storage_options;
+SET default_table_access_method = 'appendoptimized';
+SHOW default_table_access_method;
 CREATE TABLE tenk_ao14 (like tenk_heap);
-SELECT relstorage FROM pg_catalog.pg_class WHERE relname = 'tenk_ao14';
+SELECT amhandler, reloptions FROM pg_class c, PG_AM a WHERE c.relname = 'tenk_ao14' AND c.relam = a.oid;
 RESET gp_default_storage_options;
+RESET default_table_access_method;
 
 -------------------- 
 -- catalog checks
