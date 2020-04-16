@@ -505,6 +505,13 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 	ExecSetExecProcNode(result, result->ExecProcNode);
 
+	if ((estate->es_instrument & INSTRUMENT_MEMORY_DETAIL) != 0)
+	{
+		Assert(CurrentMemoryContext == nodecxt);
+		result->node_context = nodecxt;
+		MemoryContextSwitchTo(oldcxt);
+	}
+
 	/*
 	 * Initialize any initPlans present in this node.  The planner put them in
 	 * a separate list for us.
@@ -647,6 +654,7 @@ static TupleTableSlot *
 ExecProcNodeGPDB(PlanState *node)
 {
 	TupleTableSlot *result;
+	MemoryContext oldcxt = NULL;
 
 	/*
 	 * Even if we are requested to finish query, Motion has to do its work
@@ -675,7 +683,16 @@ ExecProcNodeGPDB(PlanState *node)
 	if (node->instrument)
 		InstrStartNode(node->instrument);
 
+	if ((node->state->es_instrument & INSTRUMENT_MEMORY_DETAIL) != 0)
+		oldcxt = MemoryContextSwitchTo(node->node_context);
+
 	result = node->ExecProcNodeReal(node);
+
+	if ((node->state->es_instrument & INSTRUMENT_MEMORY_DETAIL) != 0)
+	{
+		Assert(CurrentMemoryContext == node->node_context);
+		MemoryContextSwitchTo(oldcxt);
+	}
 
 	if (node->instrument)
 		InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
