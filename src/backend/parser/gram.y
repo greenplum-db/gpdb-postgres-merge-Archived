@@ -3714,7 +3714,6 @@ alter_table_partition_id_spec_with_opt_default:
 				}
 			| DEFAULT PARTITION 
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
 					GpAlterPartitionId *n = makeNode(GpAlterPartitionId);
 					n->idtype = AT_AP_IDDefault;
                     n->partiddef = NULL;
@@ -3844,65 +3843,36 @@ alter_table_partition_cmd:
             alter_table_partition_id_spec	 
             opt_drop_behavior
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpDropPartitionCmd *dpc = makeNode(GpDropPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					DropStmt *ds = makeNode(DropStmt);
 
-					ds->missing_ok = true;
-					ds->behavior = $6;
-
-                    /* 
-                       build an (incomplete) drop statement for arg1: 
-                       fill in the rest after the partition id spec is
-                       validated
-                    */
-
-                    pc->partid = (Node *)$5;
-                    pc->arg1 = (Node *)ds;
-                    pc->arg2 = NULL;
-                    pc->location = @5;
+					dpc->partid = (Node *) $5;
+					dpc->behavior = $6;
+					dpc->missing_ok = true;
 
 					n->subtype = AT_PartDrop;
-					n->def = (Node *)pc;
-					$$ = (Node *)n;
-#endif
+					n->def = (Node *) dpc;
+					$$ = (Node *) n;
+
 				}
 			| DROP DEFAULT PARTITION IF_P EXISTS 
             opt_drop_behavior
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionId *id = makeNode(GpAlterPartitionId);
+					GpDropPartitionCmd *dpc = makeNode(GpDropPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					DropStmt *ds = makeNode(DropStmt);
-					AlterPartitionId *pid = makeNode(AlterPartitionId);
 
-					pid->idtype = AT_AP_IDDefault;
-                    pid->partiddef = NULL;
-                    pid->location  = @2;
+					id->idtype = AT_AP_IDDefault;
+					id->partiddef = NULL;
+					id->location  = @1;
 
-					ds->missing_ok = true;
-					ds->behavior = $6;
-
-                    /* 
-                       build an (incomplete) drop statement for arg1: 
-                       fill in the rest after the partition id spec is
-                       validated
-                    */
-
-                    pc->partid = (Node *)pid;
-                    pc->arg1 = (Node *)ds;
-                    pc->arg2 = NULL;
-                    pc->location = @3;
+					dpc->partid = (Node *) id;
+					dpc->behavior = $6;
+					dpc->missing_ok = true;
 
 					n->subtype = AT_PartDrop;
-					n->def = (Node *)pc;
-					$$ = (Node *)n;
-#endif
+					n->def = (Node *) dpc;
+					$$ = (Node *) n;
 				}
 			| DROP 
             alter_table_partition_id_spec_with_opt_default

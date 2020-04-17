@@ -102,7 +102,8 @@ FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isn
 }
 
 static Oid
-find_target_partition(Relation parent, GpAlterPartitionId *partid)
+find_target_partition(Relation parent, GpAlterPartitionId *partid,
+					  bool missing_ok)
 {
 	Oid			target_relid = InvalidOid;
 
@@ -112,7 +113,7 @@ find_target_partition(Relation parent, GpAlterPartitionId *partid)
 			/* Find default partition */
 			target_relid =
 				get_default_oid_from_partdesc(RelationGetPartitionDesc(parent));
-			if (!OidIsValid(target_relid))
+			if (!OidIsValid(target_relid) && !missing_ok)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("DEFAULT partition of relation \"%s\" does not exist",
@@ -129,9 +130,12 @@ find_target_partition(Relation parent, GpAlterPartitionId *partid)
 			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
 			partname     = pstrdup(strVal(partid->partiddef));
 			partrv       = makeRangeVar(schemaname, partname, -1);
-			partRel      = table_openrv(partrv, AccessShareLock);
-			target_relid = RelationGetRelid(partRel);
-			table_close(partRel, AccessShareLock);
+			partRel      = table_openrv_extended(partrv, AccessShareLock, missing_ok);
+			if (partRel)
+			{
+				target_relid = RelationGetRelid(partRel);
+				table_close(partRel, AccessShareLock);
+			}
 			break;
 		}
 
@@ -147,10 +151,14 @@ find_target_partition(Relation parent, GpAlterPartitionId *partid)
 												  partdesc, values, isnull);
 
 				if (partidx < 0)
+				{
+					if (missing_ok)
+						break;
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("partition for specified value of %s does not exist",
 									RelationGetRelationName(parent))));
+				}
 
 				if (!partdesc->is_leaf[partidx])
 					elog(ERROR, "not implemented yet");
@@ -186,7 +194,12 @@ ATExecPartDrop(Relation parent, GpDropPartitionCmd *cmd)
 	Oid			target_relid;
 	ObjectAddress obj;
 
-	target_relid = find_target_partition(parent, castNode(GpAlterPartitionId, cmd->partid));
+	target_relid = find_target_partition(parent,
+										 castNode(GpAlterPartitionId, cmd->partid),
+										 cmd->missing_ok);
+
+	if (!OidIsValid(target_relid))
+		return;
 
 	obj.classId = RelationRelationId;
 	obj.objectId = target_relid;

@@ -5035,6 +5035,7 @@ _outGpDropPartitionCmd(StringInfo str, const GpDropPartitionCmd *node)
 
 	WRITE_NODE_FIELD(partid);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 
 static void

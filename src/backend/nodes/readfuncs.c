@@ -4227,6 +4227,7 @@ _readGpDropPartitionCmd(void)
 
 	READ_NODE_FIELD(partid);
 	READ_ENUM_FIELD(behavior,DropBehavior);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }

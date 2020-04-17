@@ -2047,6 +2047,7 @@ typedef struct GpDropPartitionCmd
 	NodeTag		type;
 	Node	   *partid;			/* partition id of the partition to drop */
 	DropBehavior behavior;		/* RESTRICT or CASCADE */
+	bool	   missing_ok;
 } GpDropPartitionCmd;
 
 typedef struct GpAddPartitionCmd
