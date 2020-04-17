@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "utils/faultinjector.h"
+#include "utils/syscache.h"
 
 void
 AlterTableCreateAoBlkdirTable(Oid relOid)
@@ -37,17 +38,35 @@ AlterTableCreateAoBlkdirTable(Oid relOid)
 	SIMPLE_FAULT_INJECTOR("before_acquire_lock_during_create_ao_blkdir_table");
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.  (This is probably redundant in all present
-	 * uses...)
+	 * Check if this is an appendoptimized table, without acquiring any lock.
+	 *
+	 * GPDB_12_MERGE_FIXME: we need a new API such as get_rel_am() for this in
+	 * lsyscache.c.  Similar boilerplate code also exists in DefineIndex.
+	 */
+	{
+		bool isAO;
+		HeapTuple tuple;
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+		Form_pg_class pgc = (Form_pg_class) GETSTRUCT(tuple);
+		isAO = (pgc->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+				pgc->relam == AOCO_TABLE_AM_OID);
+		ReleaseSysCache(tuple);
+		if (!isAO)
+			return;
+	}
+
+	/*
+	 * GPDB_12_MERGE_FIXME: Block directory creation must block any
+	 * transactions that may create or update indexes such as insert, vacuum
+	 * and create-index.  Concurrent sequential scans (select) transactions
+	 * need not be blocked.  Index scans cannot happen because the fact that
+	 * we are creating block directory implies no index is yet defined on this
+	 * appendoptimized table.  ShareRowExclusiveLock seems appropriate for
+	 * this purpose.  See if using that instead of the sledgehammer of
+	 * AccessExclusiveLock.  New tests will be needed to validate concurrent
+	 * select with index creation.
 	 */
 	rel = table_open(relOid, AccessExclusiveLock);
-
-	if (!RelationIsAppendOptimized(rel))
-	{
-		table_close(rel, NoLock);
-		return;
-	}
 
 	/* Create a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(4);
