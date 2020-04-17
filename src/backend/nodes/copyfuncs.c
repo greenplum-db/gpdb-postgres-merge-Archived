@@ -5497,6 +5497,7 @@ _copyPartitionSpec(const PartitionSpec *from)
 	COPY_STRING_FIELD(strategy);
 	COPY_NODE_FIELD(partParams);
 	COPY_NODE_FIELD(gpPartSpec);
+	COPY_NODE_FIELD(subPartSpec);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -5582,7 +5583,6 @@ _copyGpPartitionSpec(const GpPartitionSpec *from)
 
 	COPY_NODE_FIELD(partElem);
 	COPY_NODE_FIELD(enc_clauses);
-	COPY_NODE_FIELD(subSpec);
 	COPY_SCALAR_FIELD(istemplate);
 	COPY_LOCATION_FIELD(location);
 

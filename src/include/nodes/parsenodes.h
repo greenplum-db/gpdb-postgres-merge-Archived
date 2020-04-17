@@ -852,6 +852,7 @@ typedef struct PartitionSpec
 	List	   *partParams;		/* List of PartitionElems */
 
 	struct GpPartitionSpec *gpPartSpec;
+	struct PartitionSpec *subPartSpec;     /* subpartition specification */
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
@@ -2532,7 +2533,6 @@ typedef struct GpPartitionSpec			/* a Partition Specification */
 	NodeTag				type;
 	List			   *partElem;		/* partition element list */
 	List			   *enc_clauses;	/* ENCODING () clauses */
-	Node			   *subSpec;		/* subpartition spec */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
 } GpPartitionSpec;

@@ -18815,6 +18815,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	newspec->partParams = NIL;
 	newspec->location = partspec->location;
 	newspec->gpPartSpec = partspec->gpPartSpec;
+	newspec->subPartSpec = partspec->subPartSpec;
 
 	/* Parse partitioning strategy name */
 	if (pg_strcasecmp(partspec->strategy, "hash") == 0)

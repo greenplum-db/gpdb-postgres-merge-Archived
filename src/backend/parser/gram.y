@@ -5417,8 +5417,7 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 OptFirstPartitionSpec: PartitionSpec opt_list_subparts OptTabPartitionSpec
 				{
 					$1->gpPartSpec = (GpPartitionSpec *) $3;
-					if (PointerIsValid($1->gpPartSpec))
-						$1->gpPartSpec->subSpec = $2;
+					$1->subPartSpec = (PartitionSpec *) $2;
 
 					$$ = $1;
 
@@ -5440,8 +5439,7 @@ OptSecondPartitionSpec:
 					n->strategy = $3;
 					n->partParams = $5;
 					n->gpPartSpec = (GpPartitionSpec *) $8;
-					if (PointerIsValid(n->gpPartSpec))
-						n->gpPartSpec->subSpec = $7;
+					n->subPartSpec = (PartitionSpec *) $7;
 					n->location = @1;
 
 					$$ = n;
@@ -5634,7 +5632,6 @@ OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
 					n->partElem  = $2;
-					n->subSpec   = NULL;
 					n->location  = @2;
 					$$ = (Node *) n;
 				}
@@ -5646,7 +5643,6 @@ OptTabSubPartitionSpec:
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
 					n->partElem  = $2;
-					n->subSpec   = NULL;
 					n->location  = @2;
 					$$ = (Node *) n;
 				}
@@ -6033,14 +6029,10 @@ TabSubPartition:
 			| TabSubPartitionBy { $$ = $1; }
 			|  TabSubPartitionBy TabSubPartition
 				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-					elog(ERROR, "not implemented yet");
-#if 0
-					PartitionBy *pby = (PartitionBy *)$1;
-					pby->subPart = $2;
-					$$ = (Node *)pby;
-#endif
+					PartitionSpec *n = (PartitionSpec *) $1;
+					n->subPartSpec = (PartitionSpec *) $2;
+
+					$$ = $1;
 				}
 			| TabSubPartitionBy TabSubPartitionTemplate TabSubPartition
 				{

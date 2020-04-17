@@ -43,6 +43,7 @@ extern Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 										   const char *colName, Oid colType, int32 colTypmod,
 										   Oid partCollation);
 extern List *generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
+								PartitionSpec *subPartSpec,
 								const char *queryString);
 extern List *generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
 								   const char *queryString, int *num_unnamed_parts);

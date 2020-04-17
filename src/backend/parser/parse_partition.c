@@ -93,7 +93,7 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
  */
 List *
 generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
-				   const char *queryString)
+				   PartitionSpec *subPartSpec, const char *queryString)
 {
 	Relation	parentrel;
 	List	   *result = NIL;
@@ -114,16 +114,11 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 		{
 			GpPartitionElem *elem = (GpPartitionElem *) n;
 			List	   *new_parts;
-			PartitionSpec *subspec = NULL;
 
-			if (gpPartSpec->subSpec)
-			{
-				Assert(IsA(gpPartSpec->subSpec, PartitionSpec));
-				subspec = (PartitionSpec*) gpPartSpec->subSpec;
-				subspec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
-			}
+			if (subPartSpec)
+				subPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
 
-			new_parts = generateSinglePartition(parentrel, elem, subspec, queryString, &num_unnamed_parts);
+			new_parts = generateSinglePartition(parentrel, elem, subPartSpec, queryString, &num_unnamed_parts);
 			result = list_concat(result, new_parts);
 		}
 		else if (IsA(n, ColumnReferenceStorageDirective))
