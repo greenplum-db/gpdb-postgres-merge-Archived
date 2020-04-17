@@ -691,7 +691,7 @@ DefineIndex(Oid relationId,
 	 */
 	{
 		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
-		Form_pg_class pgc = GETSTRUCT(tuple);
+		Form_pg_class pgc = (Form_pg_class) GETSTRUCT(tuple);
 		if (pgc->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
 			pgc->relam == AOCO_TABLE_AM_OID)
 			lockmode = ShareRowExclusiveLock;
@@ -2841,91 +2841,6 @@ ReindexIndex(ReindexStmt *stmt)
 }
 
 /*
- * Perform REINDEX on each relation of the relids list.  The function
- * opens and closes a transaction per relation.  This is designed for
- * QD/utility, and is not useful for QE.
- */
-static void
-ReindexRelationList(List *relids, int options, bool multiple)
-{
-	ListCell   *lc;
-
-	Assert(Gp_role != GP_ROLE_EXECUTE);
-
-	/*
-	 * Commit ongoing transaction so that we can start a new
-	 * transaction per relation.
-	 */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
-
-	SIMPLE_FAULT_INJECTOR("reindex_db");
-
-	foreach (lc, relids)
-	{
-		Oid			relid = lfirst_oid(lc);
-		Relation	rel = NULL;
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-
-		/*
-		 * Try to open the relation. If the try fails it may mean that
-		 * someone dropped the relation before we started processing
-		 * (reindexing) it. This should be tolerable. Move on to the next
-		 * one.
-		 */
-		rel = try_table_open(relid, ShareLock, false);
-
-		if (rel != NULL)
-		{
-			ReindexStmt	   *stmt;
-
-			stmt = makeNode(ReindexStmt);
-
-			stmt->relid = relid;
-			stmt->kind = REINDEX_OBJECT_TABLE;
-
-			/* perform reindex locally */
-			if (!reindex_relation(relid,
-								  REINDEX_REL_PROCESS_TOAST |
-								  REINDEX_REL_CHECK_CONSTRAINTS, options))
-			{
-				if (!multiple)
-					ereport(NOTICE,
-							(errmsg("table \"%s\" has no indexes",
-									RelationGetRelationName(rel))));
-				else if (options & REINDEXOPT_VERBOSE)
-					ereport(INFO,
-							(errmsg("table \"%s.%s\" was reindexed",
-									get_namespace_name(get_rel_namespace(relid)),
-									get_rel_name(relid))));
-			}
-			/* no need to dispatch if the relation has no indexes. */
-			else if (Gp_role == GP_ROLE_DISPATCH)
-				CdbDispatchUtilityStatement((Node *) stmt,
-											DF_CANCEL_ON_ERROR |
-											DF_WITH_SNAPSHOT,
-											GetAssignedOidsForDispatch(), /* FIXME */
-											NULL);
-
-			/* keep lock until end of transaction (which comes soon) */
-			heap_close(rel, NoLock);
-		}
-
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-
-	/*
-	 * We committed the transaction above, so start a new one before
-	 * returning.
-	 */
-	StartTransactionCommand();
-}
-
-/*
  * Check permissions on table before acquiring relation lock; also lock
  * the heap before the RangeVarGetRelidExtended takes the index lock, to avoid
  * deadlocks.
@@ -3081,6 +2996,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot reindex system catalogs concurrently")));
+
+	SIMPLE_FAULT_INJECTOR("reindex_db");
 
 	/*
 	 * Get OID of object to reindex, being the database currently being used
