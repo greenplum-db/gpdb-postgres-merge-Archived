@@ -52,6 +52,10 @@ static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
 
+/*
+ * TODO: rename this. This may not just return a single partition for the case of
+ * start () end () every ()
+ */
 List *
 generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
 						const char *queryString, int *num_unnamed_parts)
@@ -85,6 +89,190 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 	}
 
 	return new_parts;
+}
+
+static PartitionKey partKey = NULL;
+/*
+ * qsort_stmt_cmp
+ *
+ * Used when sorting CreateStmts across all partitions.
+ */
+static int32
+qsort_stmt_cmp(const void *a, const void *b)
+{
+	int32		cmpval = 0;
+	CreateStmt	   *b1cstmt = (CreateStmt *) lfirst(*(ListCell **) a);
+	CreateStmt	   *b2cstmt = (CreateStmt *) lfirst(*(ListCell **) b);
+	PartitionBoundSpec *b1 = b1cstmt->partbound;
+	PartitionBoundSpec *b2 = b2cstmt->partbound;
+	int partnatts = partKey->partnatts;
+	FmgrInfo *partsupfunc = partKey->partsupfunc;
+	Oid *partcollation = partKey->partcollation;
+	int			i;
+	List	   *b1lowerdatums = b1->lowerdatums;
+	List	   *b2lowerdatums = b2->lowerdatums;
+	List	   *b1upperdatums = b1->upperdatums;
+	List	   *b2upperdatums = b2->upperdatums;
+
+	if (b1lowerdatums != NULL && b2lowerdatums != NULL)
+	{
+		for (i = 0; i < partnatts; i++)
+		{
+			ListCell *lc;
+			Const *n;
+			Datum b1lowerdatum;
+			Datum b2lowerdatum;
+
+			lc = list_nth_cell(b1lowerdatums, i);
+			n = lfirst(lc);
+			b1lowerdatum = n->constvalue;
+
+			lc = list_nth_cell(b2lowerdatums, i);
+			n = lfirst(lc);
+			b2lowerdatum = n->constvalue;
+
+			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+													 partcollation[i],
+													 b1lowerdatum,
+													 b2lowerdatum));
+			if (cmpval != 0)
+				break;
+		}
+	}
+	else if (b1upperdatums != NULL && b2upperdatums != NULL)
+	{
+		for (i = 0; i < partnatts; i++)
+		{
+			ListCell *lc;
+			Const *n;
+			Datum b1upperdatum;
+			Datum b2upperdatum;
+
+			lc = list_nth_cell(b1upperdatums, i);
+			n = lfirst(lc);
+			b1upperdatum = n->constvalue;
+
+			lc = list_nth_cell(b2upperdatums, i);
+			n = lfirst(lc);
+			b2upperdatum = n->constvalue;
+
+			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+													 partcollation[i],
+													 b1upperdatum,
+													 b2upperdatum));
+			if (cmpval != 0)
+				break;
+		}
+	}
+	else if (b1lowerdatums != NULL && b2upperdatums != NULL)
+	{
+		for (i = 0; i < partnatts; i++)
+		{
+			ListCell *lc;
+			Const *n;
+			Datum b1lowerdatum;
+			Datum b2upperdatum;
+
+			lc = list_nth_cell(b1lowerdatums, i);
+			n = lfirst(lc);
+			b1lowerdatum = n->constvalue;
+
+			lc = list_nth_cell(b2upperdatums, i);
+			n = lfirst(lc);
+			b2upperdatum = n->constvalue;
+
+			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+													 partcollation[i],
+													 b1lowerdatum,
+													 b2upperdatum));
+			if (cmpval != 0)
+				break;
+		}
+	}
+	else if (b1upperdatums != NULL && b2lowerdatums != NULL)
+	{
+		for (i = 0; i < partnatts; i++)
+		{
+			ListCell *lc;
+			Const *n;
+			Datum b1upperdatum;
+			Datum b2lowerdatum;
+
+			lc = list_nth_cell(b1upperdatums, i);
+			n = lfirst(lc);
+			b1upperdatum = n->constvalue;
+
+			lc = list_nth_cell(b2lowerdatums, i);
+			n = lfirst(lc);
+			b2lowerdatum = n->constvalue;
+
+			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+													 partcollation[i],
+													 b1upperdatum,
+													 b2lowerdatum));
+			if (cmpval != 0)
+				break;
+		}
+	}
+
+	return cmpval;
+}
+
+/*
+ * Sort the list of GpPartitionBoundSpecs based first on the START, if START
+ * does not exists, use END. After sort, if any stmt contains an implicit START
+ * or END, deduce the value and update the corresponding list of CreateStmts.
+ */
+static List *
+deduceImplicitRangeBounds(ParseState *pstate, List *origstmts, PartitionKey key)
+{
+	List *stmts;
+	ListCell *lc;
+	CreateStmt *prevstmt = NULL;
+
+	partKey = key;
+	stmts = list_qsort(origstmts, qsort_stmt_cmp);
+	partKey = NULL;
+
+	foreach(lc, stmts)
+	{
+		Node	   *n = lfirst(lc);
+		CreateStmt *stmt;
+
+		Assert(IsA(n, CreateStmt));
+		stmt = (CreateStmt *) n;
+		if (!stmt->partbound->lowerdatums)
+		{
+			if (prevstmt)
+				stmt->partbound->lowerdatums = prevstmt->partbound->upperdatums;
+			else
+			{
+				ColumnRef  *minvalue = makeNode(ColumnRef);
+				minvalue->location = -1;
+				minvalue->fields = lcons(makeString("minvalue"), NIL);
+				stmt->partbound->lowerdatums = list_make1(minvalue);
+			}
+
+		}
+		if (!stmt->partbound->upperdatums)
+		{
+			Node *next = lc->next ? lfirst(lc->next) : NULL;
+			if (next)
+			{
+				CreateStmt *nextstmt = (CreateStmt *)next;
+				stmt->partbound->upperdatums = nextstmt->partbound->lowerdatums;
+			}
+			else
+			{
+				ColumnRef  *maxvalue = makeNode(ColumnRef);
+				maxvalue->location = -1;
+				maxvalue->fields = lcons(makeString("maxvalue"), NIL);
+				stmt->partbound->upperdatums = list_make1(maxvalue);
+			}
+		}
+		prevstmt = stmt;
+	}
+	return stmts;
 }
 
 /*
@@ -128,6 +316,18 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 		}
 	}
 
+	/*
+	 * Validate and maybe update range partitions bound here instead of in
+	 * check_new_partition_bound(), because we need to modify the lower or upper
+	 * bounds for implicit START/END.
+	 */
+	/* GPDB range partition */
+	PartitionKey key = RelationGetPartitionKey(parentrel);
+	if (key->strategy == PARTITION_STRATEGY_RANGE)
+	{
+		result = deduceImplicitRangeBounds(pstate, result, key);
+	}
+
 	free_parsestate(pstate);
 
 	table_close(parentrel, NoLock);
@@ -159,8 +359,8 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 					  Node *start, Node *end, Node *every)
 {
 	PartEveryIterator *iter;
-	Datum		startVal;
-	Datum		endVal;
+	Datum		startVal = 0;
+	Datum		endVal = 0;
 	Datum		everyVal;
 	Oid			plusop;
 	Oid			part_col_typid;
@@ -189,15 +389,6 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 			elog(ERROR, "NULL not allowed in START"); // GPDB_12_MERGE_FIXME: improve message
 		startVal = startConst->constvalue;
 	}
-	else
-	{
-		if (part_col_typid != INT4OID)
-		{
-			// GPDB_12_MERGE_FIXME: support other types, and do this properly
-			elog(ERROR, "leaving out start value is only supported for integer column");
-		}
-		startVal = DatumGetInt32(INT_MAX);
-	}
 
 	if (end)
 	{
@@ -213,15 +404,6 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 			elog(ERROR, "NULL not allowed in END"); // GPDB_12_MERGE_FIXME: improve message
 		endVal = endConst->constvalue;
 	}
-	else
-	{
-		if (part_col_typid != INT4OID)
-		{
-			// GPDB_12_MERGE_FIXME: support other types, and do this properly
-			elog(ERROR, "leaving out end value is only supported for integer column");
-		}
-		endVal = DatumGetInt32(INT_MAX);
-	}
 
 	iter = palloc0(sizeof(PartEveryIterator));
 	iter->partkey = partkey;
@@ -231,6 +413,12 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 	{
 		Node	   *plusexpr;
 		Param	   *param;
+
+		if (start == NULL || end == NULL)
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("EVERY clause requires START and END"),
+					 parser_errposition(pstate, -1)));
 
 		/*
 		 * NOTE: We don't use transformPartitionBoundValue() here. We don't want to cast
@@ -430,7 +618,7 @@ generateRangePartitions(ParseState *pstate,
 	PartitionKey partkey;
 	char	   *partcolname;
 	PartEveryIterator *boundIter;
-	Node	   *start;
+	Node	   *start = NULL;
 	Node	   *end = NULL;
 	Node	   *every = NULL;
 
@@ -465,12 +653,12 @@ generateRangePartitions(ParseState *pstate,
 				 errmsg("START/END/EVERY not supported when partition key is an expression")));
 	partcolname = NameStr(TupleDescAttr(RelationGetDescr(parentrel), partkey->partattrs[0] - 1)->attname);
 
-	if (list_length(boundspec->partStart) != partkey->partnatts)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("invalid use of mixed named and unnamed RANGE boundary specifications"),
-				 parser_errposition(pstate, boundspec->location)));
-	start = linitial(boundspec->partStart);
+	if (boundspec->partStart)
+	{
+		if (list_length(boundspec->partStart) != partkey->partnatts)
+			elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
+		start = linitial(boundspec->partStart);
+	}
 
 	if (boundspec->partEnd)
 	{
@@ -499,7 +687,8 @@ generateRangePartitions(ParseState *pstate,
 		boundspec = makeNode(PartitionBoundSpec);
 		boundspec->strategy = PARTITION_STRATEGY_RANGE;
 		boundspec->is_default = false;
-		boundspec->lowerdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
+		if (start)
+			boundspec->lowerdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
 													  boundIter->partkey->parttypmod[0],
 													  boundIter->partkey->parttypcoll[0],
 													  boundIter->partkey->parttyplen[0],
@@ -508,7 +697,8 @@ generateRangePartitions(ParseState *pstate,
 																boundIter->partkey->parttyplen[0]),
 													  false,
 													  boundIter->partkey->parttypbyval[0]));
-		boundspec->upperdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
+		if (end)
+			boundspec->upperdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
 													  boundIter->partkey->parttypmod[0],
 													  boundIter->partkey->parttypcoll[0],
 													  boundIter->partkey->parttyplen[0],
