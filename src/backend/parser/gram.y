@@ -3888,39 +3888,6 @@ alter_table_partition_cmd:
 					n->def = (Node *) dpc;
 					$$ = (Node *) n;
 				}
-			| DROP PARTITION 
-				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					DropStmt *ds = makeNode(DropStmt);
-					AlterPartitionId *pid = makeNode(AlterPartitionId);
-
-					ds->missing_ok = false;
-					ds->behavior = DROP_RESTRICT; /* default */ 
-
-                    /* 
-                       build an (incomplete) drop statement for arg1: 
-                       fill in the rest after the partition id spec is
-                       validated
-                    */
-
-                    /* just try to drop the first partition if not specified */
-					pid->idtype = AT_AP_IDNone;
-                    pid->location  = @2;
-
-                    pc->partid = (Node *)pid;
-                    pc->arg1 = (Node *)ds;
-                    pc->arg2 = NULL;
-                    pc->location = @2;
-
-					n->subtype = AT_PartDrop;
-					n->def = (Node *)pc;
-					$$ = (Node *)n;
-#endif
-				}
 			| EXCHANGE 
             alter_table_partition_id_spec_with_opt_default 
             WITH TABLE qualified_name
