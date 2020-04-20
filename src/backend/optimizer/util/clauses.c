@@ -3366,8 +3366,13 @@ eval_const_expressions_mutator(Node *node,
 
 				/* Copy the node and const-simplify its arguments */
 				node = ece_generic_processing(node);
+
 				/* If all arguments are Consts, we can fold to a constant */
-				if (ece_all_arguments_const(node))
+				/* In gpdb, RowExpr's TupleDesc will lost in QE if we evaluate
+				 * expr in planner. It is hard to dispatch these TupleDesc to QE
+				 * since it affect typecache more complex.
+				 */
+				if (ece_all_arguments_const(node) && nodeTag(node) != T_RowExpr)
 					return ece_evaluate_expr(node);
 				return node;
 			}
