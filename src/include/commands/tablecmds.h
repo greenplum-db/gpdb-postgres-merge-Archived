@@ -118,6 +118,8 @@ extern bool PartConstraintImpliedByRelConstraint(Relation scanrel,
 extern List * rel_get_column_encodings(Relation rel);
 
 /* prototypes for Greenplum extensions in tablecmds_gp.c */
+extern Oid GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
+						  bool missing_ok);
 extern void ATExecPartDrop(Relation parent, GpDropPartitionCmd *cmd);
 
 

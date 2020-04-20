@@ -4357,7 +4357,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 										RelationGetRelationName(rel))));
 					}
 
-					GpAddPartitionCmd *add_cmd = castNode(GpAddPartitionCmd, cmd->def);
+					GpAlterPartitionCmd *add_cmd = castNode(GpAlterPartitionCmd, cmd->def);
 					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
 					List *cstmts = generateSinglePartition(rel, pelem, NULL, queryString, &num_unnamed_parts);
 					foreach(l, cstmts)
@@ -4368,12 +4368,41 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				}
 				break;
 
-			case AT_PartAlter:			/* Alter */
+			case AT_PartTruncate:
+				{
+					GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+					GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+					TruncateStmt *truncstmt = (TruncateStmt *) pc->arg;
+					Oid partrelid;
+					RangeVar *rv;
+					Relation partrel;
+
+					if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("table \"%s\" is not partitioned",
+										RelationGetRelationName(rel))));
+					}
+
+					partrelid = GpFindTargetPartition(rel, pid, false);
+					Assert(OidIsValid(partrelid));
+					partrel = table_open(partrelid, AccessShareLock);
+					rv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+									  pstrdup(RelationGetRelationName(partrel)),
+									  pc->location);
+					truncstmt->relations = list_make1(rv);
+					table_close(partrel, AccessShareLock);
+
+					cxt.blist = lappend(cxt.blist, truncstmt);
+				}
+				break;
+
+			case AT_PartAlter:          /* Alter */
             case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */
             case AT_PartSplit:			/* Split */
-            case AT_PartTruncate:		/* Truncate */
 				/* GDPB_12_MERGE_FIXME: need to re-implement this */
 				elog(ERROR, "not implemented");
 #if 0

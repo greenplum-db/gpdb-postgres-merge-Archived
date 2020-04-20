@@ -4275,8 +4275,9 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
-			case AT_PartAdd: /* Do we need exclusive lock for partition add ? */
+			case AT_PartAdd:
 			case AT_PartDrop:
+			case AT_PartTruncate:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -5124,10 +5125,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 			ATExecPartDrop(rel, castNode(GpDropPartitionCmd, cmd->def));
 			break;
+
 		case AT_PartAdd:
+		case AT_PartTruncate:
 			/*
-			 * Partition add is transformed to create stmt, hence should never
-			 * reach here.
+			 * Partition add/truncate is transformed to create/truncate stmt,
+			 * hence should never reach here.
 			 */
 			Assert(0);
 			break;

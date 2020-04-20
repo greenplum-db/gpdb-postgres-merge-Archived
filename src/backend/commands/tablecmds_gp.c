@@ -101,8 +101,8 @@ FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isn
 	}
 }
 
-static Oid
-find_target_partition(Relation parent, GpAlterPartitionId *partid,
+Oid
+GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 					  bool missing_ok)
 {
 	Oid			target_relid = InvalidOid;
@@ -194,7 +194,7 @@ ATExecPartDrop(Relation parent, GpDropPartitionCmd *cmd)
 	Oid			target_relid;
 	ObjectAddress obj;
 
-	target_relid = find_target_partition(parent,
+	target_relid = GpFindTargetPartition(parent,
 										 castNode(GpAlterPartitionId, cmd->partid),
 										 cmd->missing_ok);
 

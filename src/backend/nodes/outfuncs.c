@@ -5039,9 +5039,9 @@ _outGpDropPartitionCmd(StringInfo str, const GpDropPartitionCmd *node)
 }
 
 static void
-_outGpAddPartitionCmd(StringInfo str, const GpAddPartitionCmd *node)
+_outGpAlterPartitionCmd(StringInfo str, const GpAlterPartitionCmd *node)
 {
-	WRITE_NODE_TYPE("GPADDPARTITIONCMD");
+	WRITE_NODE_TYPE("GPALTERPARTITIONCMD");
 
 	WRITE_NODE_FIELD(partid);
 	WRITE_NODE_FIELD(arg);

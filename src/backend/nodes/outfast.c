@@ -1636,8 +1636,8 @@ _outNode(StringInfo str, void *obj)
 			case T_GpDropPartitionCmd:
 				_outGpDropPartitionCmd(str, obj);
 				break;
-			case T_GpAddPartitionCmd:
-				_outGpAddPartitionCmd(str, obj);
+			case T_GpAlterPartitionCmd:
+				_outGpAlterPartitionCmd(str, obj);
 				break;
 
 			case T_CreateSchemaStmt:

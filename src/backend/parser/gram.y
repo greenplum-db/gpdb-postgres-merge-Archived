@@ -3730,7 +3730,7 @@ alter_table_partition_cmd:
            
 				{
 					GpAlterPartitionId  *pid   = makeNode(GpAlterPartitionId);
-					GpAddPartitionCmd *pc = makeNode(GpAddPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
 					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
@@ -3748,6 +3748,7 @@ alter_table_partition_cmd:
 					pelem->storeAttr = $4;
 
 					pc->arg = (Node *) pelem;
+					pc->location = @3;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
@@ -3760,7 +3761,7 @@ alter_table_partition_cmd:
 			OptTabSubPartitionSpec 
 				{
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$4;
-					GpAddPartitionCmd *pc = makeNode(GpAddPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
 					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
@@ -3779,6 +3780,7 @@ alter_table_partition_cmd:
                     pelem->storeAttr = $6;
 
 					pc->arg = (Node *) pelem;
+					pc->location = @5;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
@@ -3791,7 +3793,7 @@ alter_table_partition_cmd:
 			OptTabSubPartitionSpec 
 				{
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$3;
-					GpAddPartitionCmd *pc    = makeNode(GpAddPartitionCmd);
+					GpAlterPartitionCmd *pc    = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
 					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
 
@@ -3810,6 +3812,7 @@ alter_table_partition_cmd:
 					pelem->storeAttr = $5;
 
 					pc->arg = (Node *) pelem;
+					pc->location = @4;
 
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
@@ -4075,30 +4078,25 @@ alter_table_partition_cmd:
             alter_table_partition_id_spec_with_opt_default
             opt_drop_behavior
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					TruncateStmt *ts = makeNode(TruncateStmt);
 
-                    /* 
-                       build an (incomplete) truncate statement for arg1: 
-                       fill in the rest after the partition id spec is
-                       validated
-                    */
+					/*
+					 * build an (incomplete) truncate statement. Fill in the
+					 * rest after the Fill in the rest after the partition id
+					 * spec is validated.
+					 */
 					ts->relations = NULL;
 					ts->behavior = $3;
 
-                    pc->partid = (Node *)$2;
-                    pc->arg1 = (Node *)ts;
-                    pc->arg2 = NULL;
-                    pc->location = @2;
+					pc->partid = (Node *) $2;
+					pc->arg = (Node *) ts;
+					pc->location = @2;
 
 					n->subtype = AT_PartTruncate;
-					n->def = (Node *)pc;
-					$$ = (Node *)n;
-#endif
+					n->def = (Node *) pc;
+					$$ = (Node *) n;
 				}
 		;
 

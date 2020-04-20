@@ -4232,10 +4232,10 @@ _readGpDropPartitionCmd(void)
 	READ_DONE();
 }
 
-static GpAddPartitionCmd *
-_readGpAddPartitionCmd(void)
+static GpAlterPartitionCmd *
+_readGpAlterPartitionCmd(void)
 {
-	READ_LOCALS(GpAddPartitionCmd);
+	READ_LOCALS(GpAlterPartitionCmd);
 
 	READ_NODE_FIELD(partid);
 	READ_NODE_FIELD(arg);
