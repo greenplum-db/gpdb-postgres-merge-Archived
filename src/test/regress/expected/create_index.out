@@ -178,11 +178,12 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
      1
 (1 row)
 
-SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+-- In gpdb, we intentional filter out point (1e-300, -1e-300) every order by related queries
+-- in this test case file. It is an underflow point, rank it cause randomly results( (0,0),
+-- (1e-300, -1e-300) are equal).
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (0,0)
- (1e-300,-1e-300)
  (-3,4)
  (-10,0)
  (10,10)
@@ -190,8 +191,7 @@ SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
  (5.1,34.5)
  (1e+300,Infinity)
  (NaN,NaN)
- 
-(10 rows)
+(7 rows)
 
 SELECT * FROM point_tbl WHERE f1 IS NULL;
  f1 
@@ -199,11 +199,9 @@ SELECT * FROM point_tbl WHERE f1 IS NULL;
  
 (1 row)
 
-SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 IS NOT NULL ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (1e-300,-1e-300)
- (0,0)
  (-3,4)
  (-10,0)
  (10,10)
@@ -211,17 +209,15 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
  (5.1,34.5)
  (1e+300,Infinity)
  (NaN,NaN)
-(9 rows)
+(7 rows)
 
-SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
-        f1        
-------------------
- (0,0)
- (1e-300,-1e-300)
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+   f1    
+---------
  (-3,4)
  (-10,0)
  (10,10)
-(5 rows)
+(3 rows)
 
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
                        f1                        
@@ -553,21 +549,20 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' ORDER BY f1 <-> '0,1';
                      QUERY PLAN                     
 ----------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: ((f1 <-> '(0,1)'::point))
    ->  Index Only Scan using gpointind on point_tbl
          Order By: (f1 <-> '(0,1)'::point)
+         Filter: (f1 <> '(1e-300,-1e-300)'::point)
  Optimizer: Postgres query optimizer
-(5 rows)
+(6 rows)
 
-SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (0,0)
- (1e-300,-1e-300)
  (-3,4)
  (-10,0)
  (10,10)
@@ -575,8 +570,7 @@ SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
  (5.1,34.5)
  (1e+300,Infinity)
  (NaN,NaN)
- 
-(10 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 IS NULL;
@@ -595,7 +589,7 @@ SELECT * FROM point_tbl WHERE f1 IS NULL;
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 IS NOT NULL ORDER BY f1 <-> '0,1';
                      QUERY PLAN                     
 ----------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -603,14 +597,13 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
    ->  Index Only Scan using gpointind on point_tbl
          Index Cond: (f1 IS NOT NULL)
          Order By: (f1 <-> '(0,1)'::point)
+         Filter: (f1 <> '(1e-300,-1e-300)'::point)
  Optimizer: Postgres query optimizer
-(6 rows)
+(7 rows)
 
-SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 IS NOT NULL ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (0,0)
- (1e-300,-1e-300)
  (-3,4)
  (-10,0)
  (10,10)
@@ -618,10 +611,10 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
  (5.1,34.5)
  (1e+300,Infinity)
  (NaN,NaN)
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
                       QUERY PLAN                      
 ------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -629,18 +622,17 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
    ->  Index Only Scan using gpointind on point_tbl
          Index Cond: (f1 <@ '(10,10),(-10,-10)'::box)
          Order By: (f1 <-> '(0,1)'::point)
+         Filter: (f1 <> '(1e-300,-1e-300)'::point)
  Optimizer: Postgres query optimizer
-(6 rows)
+(7 rows)
 
-SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
-        f1        
-------------------
- (0,0)
- (1e-300,-1e-300)
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+   f1    
+---------
  (-3,4)
  (-10,0)
  (10,10)
-(5 rows)
+(3 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
@@ -703,7 +695,7 @@ SET enable_seqscan = OFF;
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
-SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -712,20 +704,19 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
          Sort Key: ((f1 <-> '(0,1)'::point))
          ->  Bitmap Heap Scan on point_tbl
                Recheck Cond: (f1 <@ '(10,10),(-10,-10)'::box)
+               Filter: (f1 <> '(1e-300,-1e-300)'::point)
                ->  Bitmap Index Scan on gpointind
                      Index Cond: (f1 <@ '(10,10),(-10,-10)'::box)
  Optimizer: Postgres query optimizer
-(9 rows)
+(10 rows)
 
-SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
-        f1        
-------------------
- (0,0)
- (1e-300,-1e-300)
+SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+   f1    
+---------
  (-3,4)
  (-10,0)
  (10,10)
-(5 rows)
+(3 rows)
 
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
