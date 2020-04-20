@@ -617,7 +617,7 @@ AppendOnlyBlockDirectory_GetEntry(
 		else
 		{
 			/* MPP-17061: index look up failed, row is invisible */
-			systable_endscan(idxScanDesc);
+			systable_endscan_ordered(idxScanDesc);
 			return false;
 		}
 
