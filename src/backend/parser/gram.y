@@ -3756,7 +3756,6 @@ alter_table_partition_cmd:
 				}
 			| ADD_P DEFAULT PARTITION 
             alter_table_partition_id_spec 
-            OptTabPartitionBoundarySpec
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
@@ -3773,11 +3772,10 @@ alter_table_partition_cmd:
                     pc->partid = (Node *) pid;
 
 					pelem->partName  = strVal(pid->partiddef);
-                    pelem->boundSpec = $5;
-                    pelem->subSpec   = $7;
+                    pelem->subSpec   = $6;
                     pelem->location  = @5;
                     pelem->isDefault = true;
-                    pelem->storeAttr = $6;
+                    pelem->storeAttr = $5;
 
 					pc->arg = (Node *) pelem;
 					pc->location = @5;
@@ -5775,21 +5773,18 @@ TabPartitionElem:
                         $$ = (Node *)n;
 				}
 
-/* allow boundary spec for default partition in parser, but complain later */
 			| TabPartitionDefaultNameDecl 
-              OptTabPartitionBoundarySpec
               OptTabPartitionStorageAttr
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
                         GpPartitionElem *n = makeNode(GpPartitionElem); 
                         n->partName  = $1;
-                        n->boundSpec = $2;
-                        n->subSpec   = $5;
+                        n->subSpec   = $4;
                         n->location  = @1;
                         n->isDefault = true;
-                        n->storeAttr = $3;
-                        n->colencs   = $4;
+                        n->storeAttr = $2;
+                        n->colencs   = $3;
                         $$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpec 
