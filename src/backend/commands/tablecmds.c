@@ -4275,9 +4275,17 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
+				/*
+				 * GPDB: For these commands lookup root partition to construct
+				 * the appropriate stmt. Hence, AccessShareLock should be
+				 * good. Stronger lock is mostly not required.
+				 */
+			case AT_PartTruncate:
+				cmd_lockmode = AccessShareLock;
+				break;
+
 			case AT_PartAdd:
 			case AT_PartDrop:
-			case AT_PartTruncate:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
