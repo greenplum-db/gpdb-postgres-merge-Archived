@@ -622,6 +622,7 @@ static char *greenplumLegacyAOoptions(const char *accessMethod, List **options);
 %type <node> 	TabPartitionElem TabSubPartitionElem  /* PartitionElem */
 
 %type <node> 	TabPartitionBoundarySpec OptTabPartitionBoundarySpec  /* PartitionBoundSpec */
+%type <node>    TabAddPartitionBoundarySpec OptTabAddPartitionBoundarySpec  /* AddPartitionBoundSpec */
 %type <list> 	TabPartitionBoundarySpecValList
 				part_values_or_spec_list
 %type <list> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
@@ -3724,7 +3725,7 @@ alter_table_partition_id_spec_with_opt_default:
 
 alter_table_partition_cmd:
 			ADD_P PARTITION 
-            OptTabPartitionBoundarySpec
+            OptTabAddPartitionBoundarySpec
  			OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec
            
@@ -3786,7 +3787,7 @@ alter_table_partition_cmd:
 				}
 			| ADD_P PARTITION 
             alter_table_partition_id_spec 
-            OptTabPartitionBoundarySpec
+            OptTabAddPartitionBoundarySpec
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
@@ -5705,6 +5706,43 @@ TabPartitionBoundarySpec:
 
 OptTabPartitionBoundarySpec:
             TabPartitionBoundarySpec				{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+/* VALUES for LIST, start..end for RANGE. */
+TabAddPartitionBoundarySpec:
+			part_values_clause
+				{
+					GpPartitionValuesSpec *n = makeNode(GpPartitionValuesSpec); 
+
+					n->partValues = $1;
+					n->location  = @1;
+					$$ = (Node *)n;
+				}
+			| TabPartitionBoundarySpecStart
+              OptTabPartitionBoundarySpecEnd
+				{
+					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec);
+					n->partStart = $1;
+					n->partEnd   = $2;
+					n->pWithTnameStr = NULL;
+					n->location  = @1;
+					$$ = (Node *)n;
+				}
+			| TabPartitionBoundarySpecEnd
+				{
+					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec); 
+					n->partStart = NULL;
+					n->partEnd   = $1;
+					n->pWithTnameStr = NULL;
+					n->location  = @1;
+					$$ = (Node *)n;
+				}
+            ;
+
+OptTabAddPartitionBoundarySpec:
+            TabAddPartitionBoundarySpec				{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
