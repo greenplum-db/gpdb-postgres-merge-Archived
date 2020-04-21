@@ -4348,7 +4348,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
             case AT_PartAdd:			/* Add */
 				{
-					int num_unnamed_parts = 0;
 					if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 					{
 						ereport(ERROR,
@@ -4359,7 +4358,10 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 					GpAlterPartitionCmd *add_cmd = castNode(GpAlterPartitionCmd, cmd->def);
 					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
-					List *cstmts = generateSinglePartition(rel, pelem, NULL, queryString, &num_unnamed_parts);
+					GpPartitionSpec *gpPartSpec = makeNode(GpPartitionSpec);
+
+					gpPartSpec->partElem = list_make1(pelem);
+					List *cstmts = generatePartitions(RelationGetRelid(rel), gpPartSpec, NULL, queryString);
 					foreach(l, cstmts)
 					{
 						Node *stmt = (Node *) lfirst(l);

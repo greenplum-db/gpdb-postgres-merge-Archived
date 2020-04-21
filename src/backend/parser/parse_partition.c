@@ -56,7 +56,7 @@ static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
  * TODO: rename this. This may not just return a single partition for the case of
  * start () end () every ()
  */
-List *
+static List *
 generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
 						const char *queryString, int *num_unnamed_parts)
 {
