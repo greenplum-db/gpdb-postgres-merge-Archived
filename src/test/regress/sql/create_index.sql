@@ -159,7 +159,6 @@ SELECT circle_center(f1), round(radius(f1)) as radius FROM gcircle_tbl ORDER BY 
 
 -- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
 
@@ -269,7 +268,6 @@ SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10)
 SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 
@@ -280,7 +278,6 @@ RESET enable_bitmapscan;
 --
 
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
 
@@ -341,7 +338,6 @@ SELECT * FROM array_op_test WHERE i = '{NULL}' ORDER BY seqno;
 SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 
@@ -584,7 +580,6 @@ INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 
@@ -653,7 +648,6 @@ SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
   ORDER BY unique2 DESC LIMIT 2;
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 
@@ -664,7 +658,6 @@ DROP TABLE onek_with_null;
 --
 
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 
@@ -720,12 +713,10 @@ WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 SET enable_indexonlyscan = OFF;
-SET random_page_cost = 4; -- prefer index san.
 
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
@@ -736,7 +727,6 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-RESET random_page_cost;
 RESET enable_indexonlyscan;
 RESET enable_indexscan;
 

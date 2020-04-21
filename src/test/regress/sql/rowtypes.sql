@@ -440,7 +440,6 @@ select row_to_json(ss) from
 select row_to_json(ss) from
   (select q1 as a, q2 as b from int8_tbl offset 0) as ss(x,y);
 
-set enable_bitmapscan = off;
 explain (costs off)
 select row_to_json(q) from
   (select thousand, tenthous from tenk1
@@ -454,8 +453,6 @@ select row_to_json(q) from
 select row_to_json(q) from
   (select thousand as x, tenthous as y from tenk1
    where thousand = 42 and tenthous < 2000 offset 0) q(a,b);
--- GPDB: restore to the default or previously set values.
-reset enable_bitmapscan;
 
 create temp table tt1 as select * from int8_tbl order by 1 limit 2;
 create temp table tt2 () inherits(tt1);

@@ -1082,7 +1082,6 @@ select row_to_json(ss) from
  {"x":4567890123456789,"y":-4567890123456789}
 (5 rows)
 
-set enable_bitmapscan = off;
 explain (costs off)
 select row_to_json(q) from
   (select thousand, tenthous from tenk1
@@ -1123,8 +1122,6 @@ select row_to_json(q) from
  {"a":42,"b":1042}
 (2 rows)
 
--- GPDB: restore to the default or previously set values.
-reset enable_bitmapscan;
 create temp table tt1 as select * from int8_tbl order by 1 limit 2;
 create temp table tt2 () inherits(tt1);
 insert into tt2 values(0,0);

@@ -3660,15 +3660,6 @@ compute_scalar_stats(VacAttrStatsP stats,
 		}
 
 		/* Generate a correlation entry if there are multiple values */
-		/*
-		 * GPDB: Don't calculate correlation for AO-tables, however.
-		 * The rows are not necessarily in the order that our sampling
-		 * query returned them, for an append-only table.
-		 *
-		 * GPDB_12_MERGE_FIXME: Removed the check for AO tables. So
-		 * we now collect correlation for AO tables too. Is that really
-		 * such a bad idea?
-		 */
 		if (values_cnt > 1)
 		{
 			MemoryContext old_context;

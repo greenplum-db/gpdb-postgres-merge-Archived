@@ -280,7 +280,7 @@ explain (costs off)
                      ->  Seq Scan on ec1 ec1_3
                            Filter: ((ff + 4) = '42'::bigint)
  Optimizer: Postgres query optimizer
-(18 rows)
+(24 rows)
 
 explain (costs off)
   select * from ec1,

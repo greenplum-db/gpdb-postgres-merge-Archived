@@ -251,7 +251,6 @@ SELECT circle_center(f1), round(radius(f1)) as radius FROM gcircle_tbl ORDER BY 
 
 -- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
 EXPLAIN (COSTS OFF)
@@ -719,7 +718,6 @@ SELECT * FROM point_tbl WHERE NOT f1 ~= '(1e-300, -1e-300)' AND f1 <@ '(-10,-10)
 (3 rows)
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 --
@@ -728,7 +726,6 @@ RESET enable_bitmapscan;
 -- Note: GIN currently supports only bitmap scans, not plain indexscans
 --
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
@@ -1265,7 +1262,6 @@ SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 (1 row)
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 --
@@ -1431,20 +1427,12 @@ DETAIL:  Key (f2)=(b) is duplicated.
 DELETE FROM concur_heap WHERE f1 = 'b';
 VACUUM FULL concur_heap;
 \d concur_heap
-<<<<<<< HEAD
 Table "public.concur_heap"
  Column | Type | Modifiers 
 --------+------+-----------
  dk     | text | 
  f1     | text | 
  f2     | text | 
-=======
-           Table "public.concur_heap"
- Column | Type | Collation | Nullable | Default 
---------+------+-----------+----------+---------
- f1     | text |           |          | 
- f2     | text |           |          | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Indexes:
     "concur_index2" UNIQUE, btree (dk, f1)
     "concur_index3" UNIQUE, btree (dk, f2) INVALID
@@ -1513,20 +1501,12 @@ ERROR:  syntax error at or near "CONCURRENTLY"
 LINE 1: DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
                    ^
 \d concur_heap
-<<<<<<< HEAD
 Table "public.concur_heap"
  Column | Type | Modifiers 
 --------+------+-----------
  f1     | text | 
  f2     | text | 
  dk     | text | 
-=======
-           Table "public.concur_heap"
- Column | Type | Collation | Nullable | Default 
---------+------+-----------+----------+---------
- f1     | text |           |          | 
- f2     | text |           |          | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Indexes:
     "concur_index2" UNIQUE, btree (dk, f1)
     "concur_index3" UNIQUE, btree (dk, f2) INVALID
@@ -1621,7 +1601,6 @@ CREATE TABLE onek_with_null AS SELECT unique1, unique2 FROM onek DISTRIBUTED BY 
 INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
@@ -1831,7 +1810,6 @@ SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
 (2 rows)
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 DROP TABLE onek_with_null;
@@ -1839,7 +1817,6 @@ DROP TABLE onek_with_null;
 -- Check bitmap index path planning
 --
 SET enable_seqscan = OFF;
-SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
@@ -1975,11 +1952,9 @@ ORDER BY thousand;
 (2 rows)
 
 RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 SET enable_indexonlyscan = OFF;
-SET random_page_cost = 4; -- prefer index san.
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -2004,7 +1979,6 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
-RESET random_page_cost;
 RESET enable_indexonlyscan;
 RESET enable_indexscan;
 --
