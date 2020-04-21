@@ -621,6 +621,7 @@ generateRangePartitions(ParseState *pstate,
 	Node	   *start = NULL;
 	Node	   *end = NULL;
 	Node	   *every = NULL;
+	int i;
 
 	if (elem->boundSpec == NULL)
 		elog(ERROR, "missing boundary specification in partition%s of type RANGE",
@@ -678,11 +679,13 @@ generateRangePartitions(ParseState *pstate,
 
 	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, every);
 
+	i = 0;
 	while (nextPartBound(boundIter))
 	{
 		PartitionBoundSpec *boundspec;
 		CreateStmt *childstmt;
 		char	   *partname;
+		char partsubstring[NAMEDATALEN];
 
 		boundspec = makeNode(PartitionBoundSpec);
 		boundspec->strategy = PARTITION_STRATEGY_RANGE;
@@ -709,8 +712,16 @@ generateRangePartitions(ParseState *pstate,
 													  boundIter->partkey->parttypbyval[0]));
 		boundspec->location = -1;
 
+		if (every && elem->partName)
+		{
+			snprintf(partsubstring, NAMEDATALEN, "%s_%d", elem->partName, ++i);
+			partname = &partsubstring[0];
+		}
+		else
+			partname = elem->partName;
+
 		/* GPDB_12_MERGE_FIXME: pass correct level */
-		partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
+		partname = ChoosePartitionName(parentrel, "1", partname, ++(*num_unnamed_parts_p));
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
 
 		result = lappend(result, childstmt);
