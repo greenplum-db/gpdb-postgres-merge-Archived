@@ -188,6 +188,14 @@ qsort_stmt_cmp(const void *a, const void *b)
 			if (cmpval != 0)
 				break;
 		}
+
+		/*
+		 * if after comparison, b1 lower and b2 upper are same, we should get
+		 * b2 before b1 so that its start can be adjusted properly. Hence,
+		 * return b1 is greater than b2 to flip the order.
+		 */
+		if (cmpval == 0)
+			cmpval = 1;
 	}
 	else if (b1upperdatums != NULL && b2lowerdatums != NULL)
 	{
