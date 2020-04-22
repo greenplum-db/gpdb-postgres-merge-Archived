@@ -18,7 +18,7 @@ CREATE TABLE toolkit_aopart (
             N_COMMENT VARCHAR(152)
             )
 partition by range (n_nationkey)
-subpartition by range (n_regionkey) subpartition template (start('0') end('1') inclusive,start('1') exclusive
+subpartition by range (n_regionkey) subpartition template (start('0') end('2') exclusive,start('2') inclusive
 )
 (
 partition p1 start('0') end('10') WITH (appendonly=true,checksum=true,compresslevel=9), partition p2 start('10') end('25') WITH (checksum=false,appendonly=true,compresslevel=7)
@@ -206,7 +206,7 @@ create table gptoolkit_user_table_ao (
             N_COMMENT VARCHAR(152)
             )
 partition by range (n_nationkey)
-subpartition by range (n_regionkey) subpartition template (start('0') end('1') inclusive,start('1') exclusive
+subpartition by range (n_regionkey) subpartition template (start('0') end('2') exclusive,start('2') inclusive
 )
 (
 partition p1 start('0') end('10') WITH (appendonly=true,checksum=true,compresslevel=9), partition p2 start('10') end('25') WITH (checksum=false,appendonly=true,compresslevel=7)
