@@ -476,10 +476,13 @@ yield {'tab': [('first', 1), ('second', 2)],
               {'first': 'fourth', 'second': 4}]}
 $$ LANGUAGE plpythonu;
 SELECT * FROM composite_types_table();
-ERROR:  malformed record literal: "first"
-DETAIL:  Missing left parenthesis.
-CONTEXT:  while creating return value
-PL/Python function "composite_types_table"
+            tab             |            typ             
+----------------------------+----------------------------
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+ {"(first,1)","(second,2)"} | {"(third,3)","(fourth,4)"}
+(3 rows)
+
 -- check what happens if the output record descriptor changes
 CREATE FUNCTION return_record(t text) RETURNS record AS $$
 return {'t': t, 'val': 10}
