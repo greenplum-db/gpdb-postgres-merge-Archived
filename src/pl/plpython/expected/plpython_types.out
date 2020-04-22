@@ -642,33 +642,10 @@ INFO:  ([[[[0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6], 
  {{{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}},{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}},{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}}},{{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}},{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}},{{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6},{0,1,2,3,4,5,6}}}}
 (1 row)
 
-<<<<<<< HEAD
 CREATE FUNCTION test_type_conversion_array_text(x text[]) RETURNS text[] AS $$
 plpy.info(x, type(x))
 return x
 $$ LANGUAGE plpythonu;
-SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
-INFO:  (['foo', 'bar'], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_text"
- test_type_conversion_array_text 
----------------------------------
- {foo,bar}
-(1 row)
-
-SELECT * FROM test_type_conversion_array_text(ARRAY[['foo', 'bar'],['foo2', 'bar2']]);
-INFO:  ([['foo', 'bar'], ['foo2', 'bar2']], <type 'list'>)
- test_type_conversion_array_text 
----------------------------------
- {{foo,bar},{foo2,bar2}}
-(1 row)
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-CREATE FUNCTION test_type_conversion_array_text(x text[]) RETURNS text[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-ERROR:  function "test_type_conversion_array_text" already exists with same argument types
 SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
 INFO:  (['foo', 'bar'], <type 'list'>)
  test_type_conversion_array_text 
@@ -714,12 +691,8 @@ CREATE FUNCTION test_type_conversion_mdarray_malformed() RETURNS int[] AS $$
 return [[1,2,3],[4,5]]
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_mdarray_malformed();
-<<<<<<< HEAD
-ERROR:  multidimensional arrays must have array expressions with matching dimensions. PL/Python function return value has sequence length 2 while expected 3
-=======
 ERROR:  wrong length of inner sequence: has length 2, but 3 was expected
 DETAIL:  To construct a multidimensional array, the inner sequences must all have the same length.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_mdarray_malformed"
 CREATE FUNCTION test_type_conversion_mdarray_toodeep() RETURNS int[] AS $$

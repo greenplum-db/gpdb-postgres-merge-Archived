@@ -307,66 +307,6 @@ SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
 SELECT * FROM test_type_conversion_array_text(ARRAY[['foo', 'bar'],['foo2', 'bar2']]);
 
 
-CREATE FUNCTION test_type_conversion_array_date(x date[]) RETURNS date[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-
-SELECT * FROM test_type_conversion_array_date(ARRAY[[['2016-09-21','2016-09-22',NULL],[NULL,'2016-10-21','2016-10-22']],
-            [[NULL,'2016-11-21','2016-10-21'],['2015-09-21','2015-09-22','2014-09-21']]]::date[]);
-
-CREATE FUNCTION test_type_conversion_array_timestamp(x timestamp[]) RETURNS timestamp[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-
-SELECT * FROM test_type_conversion_array_timestamp(ARRAY[[['2016-09-21 15:34:24.078792-04','2016-10-22 11:34:24.078795-04',NULL],
-            [NULL,'2016-10-21 11:34:25.078792-04','2016-10-21 11:34:24.098792-04']],
-            [[NULL,'2016-01-21 11:34:24.078792-04','2016-11-21 11:34:24.108792-04'],
-            ['2015-09-21 11:34:24.079792-04','2014-09-21 11:34:24.078792-04','2013-09-21 11:34:24.078792-04']]]::timestamp[]);
-
-
-CREATE OR REPLACE FUNCTION pyreturnmultidemint4(h int4, i int4, j int4, k int4 ) RETURNS int4[] AS $BODY$
-m = [[[[x for x in range(h)] for y in range(i)] for z in range(j)] for w in range(k)]
-plpy.info(m, type(m))
-return m
-$BODY$ LANGUAGE plpythonu;
-
-select pyreturnmultidemint4(8,5,3,2);
-
-CREATE OR REPLACE FUNCTION pyreturnmultidemint8(h int4, i int4, j int4, k int4 ) RETURNS int8[] AS $BODY$
-m = [[[[x for x in range(h)] for y in range(i)] for z in range(j)] for w in range(k)]
-plpy.info(m, type(m))
-return m
-$BODY$ LANGUAGE plpythonu;
-
-select pyreturnmultidemint8(5,5,3,2);
-
-CREATE OR REPLACE FUNCTION pyreturnmultidemfloat4(h int4, i int4, j int4, k int4 ) RETURNS float4[] AS $BODY$
-m = [[[[x for x in range(h)] for y in range(i)] for z in range(j)] for w in range(k)]
-plpy.info(m, type(m))
-return m
-$BODY$ LANGUAGE plpythonu;
-
-select pyreturnmultidemfloat4(6,5,3,2);
-
-CREATE OR REPLACE FUNCTION pyreturnmultidemfloat8(h int4, i int4, j int4, k int4 ) RETURNS float8[] AS $BODY$
-m = [[[[x for x in range(h)] for y in range(i)] for z in range(j)] for w in range(k)]
-plpy.info(m, type(m))
-return m
-$BODY$ LANGUAGE plpythonu;
-
-select pyreturnmultidemfloat8(7,5,3,2);
-
-CREATE FUNCTION test_type_conversion_array_text(x text[]) RETURNS text[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-
-SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
-SELECT * FROM test_type_conversion_array_text(ARRAY[['foo', 'bar'],['foo2', 'bar2']]);
-
-
 CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
 plpy.info(x, type(x))
 return x

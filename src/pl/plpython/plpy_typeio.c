@@ -1261,9 +1261,11 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 {
 	int			i;
 
+	/* GPDB_12_MERGE_FIXME: This has no errcode in upstream. Submit that to upstream? */
 	if (PySequence_Length(list) != dims[dim])
 		ereport(ERROR,
-				(errmsg("wrong length of inner sequence: has length %d, but %d was expected",
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				 errmsg("wrong length of inner sequence: has length %d, but %d was expected",
 						(int) PySequence_Length(list), dims[dim]),
 				 (errdetail("To construct a multidimensional array, the inner sequences must all have the same length."))));
 
