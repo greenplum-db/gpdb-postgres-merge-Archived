@@ -1920,9 +1920,18 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		return NULL;
 	motionpath = (CdbMotionPath *) subpath;
 
-	if (!IsA(motionpath->subpath, GroupResultPath) &&
-		!IsA(motionpath->subpath, ProjectionPath))
+	if (IsA(motionpath->subpath, GroupResultPath))
+	{
+		/* ok */
+	}
+	else if (IsA(motionpath->subpath, ProjectionPath) &&
+			 IsA(((ProjectionPath *) motionpath->subpath)->subpath, GroupResultPath))
+	{
+		/* ProjectionPath with a GroupResultPath beneath is also ok. */
+	}
+	else
 		return NULL;
+
 	resultpath = motionpath->subpath;
 
 	if (contain_mutable_functions((Node *) resultpath->pathtarget->exprs))
@@ -1930,7 +1939,11 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 
 	resultplan = (Result *) create_plan_recurse(subroot, resultpath, createplan_flags);
 	if (!IsA(resultplan, Result))
+	{
+		/* A GroupResultPath really should produce a Result node. */
+		Assert(false);
 		return NULL;
+	}
 
 	/* Suppose caller already hold proper locks for relation. */
 	rel = relation_open(rte->relid, NoLock);
