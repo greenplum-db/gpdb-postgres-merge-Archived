@@ -110,11 +110,9 @@ REGRESS = \
 	plpython_composite \
 	plpython_subtransaction \
 	plpython_transaction \
-	plpython_drop
-
-REGRESS += \
 	plpython_returns \
-	plpython_gpdb
+	plpython_gpdb \
+	plpython_drop
 
 REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
