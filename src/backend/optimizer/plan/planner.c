@@ -2701,7 +2701,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		{
 			Path	   *path = (Path *) lfirst(lc);
 
-			if (!IS_DUMMY_APPEND(path))
+			if (!path->parent || !IS_DUMMY_REL(path->parent))
 			{
 				all_dummy = false;
 				break;
