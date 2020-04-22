@@ -1484,6 +1484,14 @@ vac_update_datfrozenxid(void)
 			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_TOASTVALUE)
 		{
+			/* GPDB_12_MERGE_FIXME: this was crashing in regression test.
+			 * Add a runtime check to avoid the crash. */
+			if (TransactionIdIsValid(classForm->relfrozenxid))
+				elog(ERROR, "relation \"%s\" of kind \"%c\" has non-zero relfrozenxid",
+					 NameStr(classForm->relname), classForm->relkind);
+			if (MultiXactIdIsValid(classForm->relminmxid))
+				elog(ERROR, "relation \"%s\" of kind \"%c\" has non-zero relminmxid",
+					 NameStr(classForm->relname), classForm->relkind);
 			Assert(!TransactionIdIsValid(classForm->relfrozenxid));
 			Assert(!MultiXactIdIsValid(classForm->relminmxid));
 			continue;
