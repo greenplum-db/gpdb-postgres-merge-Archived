@@ -1478,14 +1478,16 @@ vac_update_datfrozenxid(void)
 		 * Only consider relations able to hold unfrozen XIDs (anything else
 		 * should have InvalidTransactionId in relfrozenxid anyway).
 		 *
-		 * GPDB_12_MERGE_FIXME: should AO aux rels be included here?
+		 * GPDB_12_MERGE_FIXME: should more AO aux rels be included here?
 		 */
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW &&
-			classForm->relkind != RELKIND_TOASTVALUE)
+			classForm->relkind != RELKIND_TOASTVALUE &&
+			classForm->relkind != RELKIND_AOSEGMENTS)
 		{
 			/* GPDB_12_MERGE_FIXME: this was crashing in regression test.
-			 * Add a runtime check to avoid the crash. */
+			 * Add a runtime check to avoid the crash, until we've fixed the list of
+			 * relkinds above. */
 			if (TransactionIdIsValid(classForm->relfrozenxid))
 				elog(ERROR, "relation \"%s\" of kind \"%c\" has non-zero relfrozenxid",
 					 NameStr(classForm->relname), classForm->relkind);
