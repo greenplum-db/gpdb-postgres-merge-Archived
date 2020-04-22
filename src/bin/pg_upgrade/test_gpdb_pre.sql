@@ -3,13 +3,15 @@
 -- exist at the time of running upgrades. If objects are to be manipulated
 -- in other databases, make sure to change to the correct database first.
 
+-- GPDB_12_MERGE_FIXME: We don't need to drop partitioned table with indexes
+-- anymore, do we?
 --partition tables with indexes requires dropping for now
 --NOTE: 'isolation2test' and 'regression' database must already exist
-\c isolation2test;
-\i test_gpdb_pre_drop_partition_indices.sql;
+--\c isolation2test;
+--\i test_gpdb_pre_drop_partition_indices.sql;
 
-\c regression;
-\i test_gpdb_pre_drop_partition_indices.sql;
+--\c regression;
+--\i test_gpdb_pre_drop_partition_indices.sql;
 
 -- This one's interesting:
 --    No match found in new cluster for old relation with OID 173472 in database "regression": "public.sales_1_prt_bb_pkey" which is an index on "public.newpart"
