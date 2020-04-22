@@ -657,10 +657,6 @@ DROP TABLE onek_with_null;
 -- Check bitmap index path planning
 --
 
-SET enable_seqscan = OFF;
-SET enable_indexscan = ON;
-SET enable_bitmapscan = ON;
-
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
@@ -712,10 +708,6 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-RESET enable_seqscan;
-RESET enable_indexscan;
-RESET enable_bitmapscan;
-
 SET enable_indexonlyscan = OFF;
 
 explain (costs off)
@@ -728,7 +720,6 @@ WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
 RESET enable_indexonlyscan;
-RESET enable_indexscan;
 
 --
 -- Check elimination of constant-NULL subexpressions
