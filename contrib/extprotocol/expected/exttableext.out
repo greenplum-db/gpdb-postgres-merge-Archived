@@ -678,13 +678,13 @@ NOTICE:  protocol "demoprot" does not exist, skipping
     -- Check external table exttabtest_r_newname exists
     -- and is using demoprot protocol
     \d exttabtest_r_newname
-     Foreign table "exttableext.exttabtest_r_newname"
- Column |         Type          | Modifiers | FDW Options 
---------+-----------------------+-----------+-------------
- id     | integer               |           | 
- name   | character varying(20) |           | 
- value1 | integer               |           | 
- value2 | integer               |           | 
+               Foreign table "exttableext.exttabtest_r_newname"
+ Column |         Type          | Collation | Nullable | Default | FDW options 
+--------+-----------------------+-----------+----------+---------+-------------
+ id     | integer               |           |          |         | 
+ name   | character varying(20) |           |          |         | 
+ value1 | integer               |           |          |         | 
+ value2 | integer               |           |          |         | 
 Type: readable
 Encoding: UTF8
 Format type: text
@@ -852,13 +852,13 @@ NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
     FORMAT 'CUSTOM' (FORMATTER='formatter_import_s');
     -- Displaying table info
     \d format_w
-           Foreign table "exttableext.format_w"
- Column |         Type          | Modifiers | FDW Options 
---------+-----------------------+-----------+-------------
- name   | character varying(40) |           | 
- id     | double precision      |           | 
- value1 | double precision      |           | 
- value2 | double precision      |           | 
+                     Foreign table "exttableext.format_w"
+ Column |         Type          | Collation | Nullable | Default | FDW options 
+--------+-----------------------+-----------+----------+---------+-------------
+ name   | character varying(40) |           |          |         | 
+ id     | double precision      |           |          |         | 
+ value1 | double precision      |           |          |         | 
+ value2 | double precision      |           |          |         | 
 Type: writable
 Encoding: UTF8
 Format type: custom
@@ -869,13 +869,13 @@ Execute on: all segments
 Distributed by: (id)
 
     \d format_r
-           Foreign table "exttableext.format_r"
- Column |         Type          | Modifiers | FDW Options 
---------+-----------------------+-----------+-------------
- name   | character varying(40) |           | 
- id     | double precision      |           | 
- value1 | double precision      |           | 
- value2 | double precision      |           | 
+                     Foreign table "exttableext.format_r"
+ Column |         Type          | Collation | Nullable | Default | FDW options 
+--------+-----------------------+-----------+----------+---------+-------------
+ name   | character varying(40) |           |          |         | 
+ id     | double precision      |           |          |         | 
+ value1 | double precision      |           |          |         | 
+ value2 | double precision      |           |          |         | 
 Type: readable
 Encoding: UTF8
 Format type: custom
@@ -1161,8 +1161,8 @@ select max(cnt) - min(cnt)  > 20 from t;
     -- Write to WET
     -- insert should fail since MAX_FORMAT_STRING (4096) is exceeded
     INSERT INTO format_long_w (SELECT * FROM format_long);
-ERROR:  formatter_export: buffer too small (gpformatter.c:182)  (seg0 rh55-qavm55:7532 pid=22752) (cdbdisp.c:1453)
-    -- ERROR:  formatter_export: buffer too small (gpformatter.c:182)  (seg2 rh55-qavm58:5532 pid=20093) 
+ERROR:  formatter_export: buffer too small (gpformatter.c:183)  (seg0 rh55-qavm55:7532 pid=22752) (cdbdisp.c:1453)
+    -- ERROR:  formatter_export: buffer too small (gpformatter.c:183)  (seg2 rh55-qavm58:5532 pid=20093) 
 -- Test 72: Verify limit of MAX_FORMAT_STRING 4096 bytes does not apply to fixed length strings - varchar()
 -- MAX_FORMAT_STRING limit should not apply to fixed length strings (char or varchar)
     --  Create format_long table for formatter long record test
@@ -1302,8 +1302,8 @@ NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
     -- Write to WET
     -- insert should fail since INT type is not supported
     INSERT INTO format_long_w (SELECT * FROM format_long);
-ERROR:  formatter_export error: unsupported data type (gpformatter.c:100)  (seg1 rh55-qavm55:7533 pid=27134) (cdbdisp.c:1453)
-    -- ERROR:  formatter_export error: unsupported data type (gpformatter.c:100)  (seg2 rh55-qavm58:5532 pid=20668) (cdbdisp.c:1458)
+ERROR:  formatter_export error: unsupported data type (gpformatter.c:101)  (seg1 rh55-qavm55:7533 pid=27134) (cdbdisp.c:1453)
+    -- ERROR:  formatter_export error: unsupported data type (gpformatter.c:101)  (seg2 rh55-qavm58:5532 pid=20668) (cdbdisp.c:1458)
     -- Read from RET using data file format_long_test13 create by previous test
     -- select should fail since INT type is not supported
     select count(*) from format_long_r;
@@ -1345,8 +1345,8 @@ NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
     -- Write to WET
     -- insert should failed because of dropped column value1
     INSERT INTO format_w (SELECT * FROM formatsource);
-ERROR:  formatter_export: dropped columns (gpformatter.c:80)  (seg0 rh55-qavm55:7532 pid=27212) (cdbdisp.c:1453)
-    -- ERROR:  formatter_export: dropped columns (gpformatter.c:80)  (seg1 rh55-qavm57:5533 pid=20454) (cdbdisp.c:1458)
+ERROR:  formatter_export: dropped columns (gpformatter.c:81)  (seg0 rh55-qavm55:7532 pid=27212) (cdbdisp.c:1453)
+    -- ERROR:  formatter_export: dropped columns (gpformatter.c:81)  (seg1 rh55-qavm57:5533 pid=20454) (cdbdisp.c:1458)
     -- Read from RET using data file format_long_test13 create by previous test
     select count(*) from format_r;
 ERROR:  demoprot_import: could not open file "format_long_test13" for reading: No such file or directory  (seg0 slice1 rh55-qavm55:7532 pid=27212)
@@ -1592,13 +1592,13 @@ NOTICE:  foreign table "exttabtest_r" does not exist, skipping
 
     -- Check existing ext table that created still refer to old protocol name
     \d exttabtest_r
-         Foreign table "exttableext.exttabtest_r"
- Column |         Type          | Modifiers | FDW Options 
---------+-----------------------+-----------+-------------
- id     | integer               |           | 
- name   | character varying(20) |           | 
- value1 | integer               |           | 
- value2 | integer               |           | 
+                   Foreign table "exttableext.exttabtest_r"
+ Column |         Type          | Collation | Nullable | Default | FDW options 
+--------+-----------------------+-----------+----------+---------+-------------
+ id     | integer               |           |          |         | 
+ name   | character varying(20) |           |          |         | 
+ value1 | integer               |           |          |         | 
+ value2 | integer               |           |          |         | 
 Type: readable
 Encoding: UTF8
 Format type: text
@@ -1705,7 +1705,7 @@ NOTICE:  foreign table "exttabtest_w_new" does not exist, skipping
     -- which is the owner of trusted demoprot 
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -1770,7 +1770,7 @@ HINT:  Only superusers may use untrusted protocols.
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -1834,7 +1834,7 @@ RESET ROLE;
     -- connect as a different superuser "demoprot_super"
     SET ROLE demoprot_super;
     select user;
-  current_user  
+      user      
 ----------------
  demoprot_super
 (1 row)
@@ -1894,7 +1894,7 @@ NOTICE:  foreign table "exttabtest_w" does not exist, skipping
     -- connect as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2015,7 +2015,7 @@ NOTICE:  foreign table "exttabtest_w_new" does not exist, skipping
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2067,7 +2067,7 @@ NOTICE:  no privileges could be revoked
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2119,7 +2119,7 @@ NOTICE:  foreign table "exttabtest_w_new" does not exist, skipping
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2163,7 +2163,7 @@ NOTICE:  no privileges could be revoked
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2198,7 +2198,7 @@ NOTICE:  foreign table "exttabtest_w_new" does not exist, skipping
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
@@ -2242,7 +2242,7 @@ NOTICE:  no privileges could be revoked
     -- login as non-privileged user "demoprot_nopriv"
     SET ROLE demoprot_nopriv;
     select user;
-  current_user   
+      user       
 -----------------
  demoprot_nopriv
 (1 row)
