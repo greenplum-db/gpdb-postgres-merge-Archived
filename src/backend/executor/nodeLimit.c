@@ -246,7 +246,7 @@ ExecLimit(PlanState *node)
 	result = ExecLimit_guts(node);
 
 	if (TupIsNull(result) && ScanDirectionIsForward(node->state->es_direction) &&
-		!node->expect_rescan)
+		!((LimitState *) node)->expect_rescan)
 	{
 		/*
 		 * CDB: We'll read no more from inner subtree. To keep our sibling
