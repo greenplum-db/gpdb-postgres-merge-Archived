@@ -142,6 +142,11 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	}
 
 	/* If we didn't get the lock ourselves, assert that caller holds one */
+	/* GPDB_12_MERGE_FIXME: we're tripping this assertion in many regression tests.
+	 * Until we fix things, let's avoid the crash */
+	if (lockmode == NoLock && !CheckRelationLockedByMe(r, AccessShareLock, true))
+		elog(ERROR, "try_relation_open() called with NoLock, but no lock is already held.");
+
 	Assert(lockmode != NoLock ||
 		   CheckRelationLockedByMe(r, AccessShareLock, true));
 
