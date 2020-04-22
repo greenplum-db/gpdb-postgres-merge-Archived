@@ -2,7 +2,7 @@ include: helpers/gp_management_utils_helpers.sql;
 CREATE
 
 
--- When pg_basebackup runs with --slot and stream as xlog-method
+-- When pg_basebackup runs with --slot and stream as wal-method
 select pg_basebackup(address, dbid, port, 'some_replication_slot', '@testtablespace@/some_isolation2_pg_basebackup', false, 'stream') from gp_segment_configuration where content = 0 and role = 'p';
  pg_basebackup 
 ---------------

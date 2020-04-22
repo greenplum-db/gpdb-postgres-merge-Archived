@@ -23,9 +23,9 @@ create or replace function pg_basebackup(host text, dbid int, port int, slotname
         cmd += ' --force-overwrite'
 
     if xlog_method == 'stream':
-        cmd += ' --xlog-method stream'
+        cmd += ' --wal-method stream'
     elif xlog_method == 'fetch':
-        cmd += ' --xlog-method fetch'
+        cmd += ' --wal-method fetch'
     else:
         plpy.error('invalid xlog method')
 
