@@ -91,18 +91,18 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 	return new_parts;
 }
 
-static PartitionKey partKey = NULL;
 /*
  * qsort_stmt_cmp
  *
  * Used when sorting CreateStmts across all partitions.
  */
 static int32
-qsort_stmt_cmp(const void *a, const void *b)
+qsort_stmt_cmp(const void *a, const void *b, void *arg)
 {
 	int32		cmpval = 0;
 	CreateStmt	   *b1cstmt = (CreateStmt *) lfirst(*(ListCell **) a);
 	CreateStmt	   *b2cstmt = (CreateStmt *) lfirst(*(ListCell **) b);
+	PartitionKey partKey = (PartitionKey) arg;
 	PartitionBoundSpec *b1 = b1cstmt->partbound;
 	PartitionBoundSpec *b2 = b2cstmt->partbound;
 	int partnatts = partKey->partnatts;
@@ -238,9 +238,7 @@ deduceImplicitRangeBounds(ParseState *pstate, List *origstmts, PartitionKey key)
 	ListCell *lc;
 	CreateStmt *prevstmt = NULL;
 
-	partKey = key;
-	stmts = list_qsort(origstmts, qsort_stmt_cmp);
-	partKey = NULL;
+	stmts = list_qsort(origstmts, qsort_stmt_cmp, key);
 
 	foreach(lc, stmts)
 	{
