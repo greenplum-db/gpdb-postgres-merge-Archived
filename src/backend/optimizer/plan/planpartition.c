@@ -529,26 +529,6 @@ add_restrictinfos(PlannerInfo *root, DynamicScanInfo *dsinfo, Bitmapset *childre
 	}
 }
 
-RestrictInfo *
-make_mergeclause(Node *outer, Node *inner)
-{
-	OpExpr	   *opxpr;
-	Expr	   *xpr;
-	RestrictInfo *rinfo;
-
-	opxpr = (OpExpr *) make_op(NULL, list_make1(makeString("=")),
-							   outer,
-							   inner, NULL, -1);
-	opxpr->xpr.type = T_DistinctExpr;
-
-	xpr = make_notclause((Expr *) opxpr);
-
-	rinfo = make_restrictinfo(xpr, false, false, false, 0, NULL, NULL, NULL);
-	rinfo->mergeopfamilies = get_mergejoin_opfamilies(opxpr->opno);
-
-	return rinfo;
-}
-
 /*
  * Does the given expression correspond to a var on partitioned relation.
  * This function ignores relabeling wrappers

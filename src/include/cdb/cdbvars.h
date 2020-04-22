@@ -26,6 +26,8 @@
  * ----- Declarations of Greenplum-specific global variables ------
  */
 
+#define WRITER_IS_MISSING_MSG "reader could not find writer proc entry"
+
 #ifndef PRIO_MAX
 #define PRIO_MAX 20
 #endif

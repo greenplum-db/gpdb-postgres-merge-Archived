@@ -245,7 +245,8 @@ ExecLimit(PlanState *node)
 
 	result = ExecLimit_guts(node);
 
-	if (TupIsNull(result) && ScanDirectionIsForward(node->state->es_direction))
+	if (TupIsNull(result) && ScanDirectionIsForward(node->state->es_direction) &&
+		!node->expect_rescan)
 	{
 		/*
 		 * CDB: We'll read no more from inner subtree. To keep our sibling
@@ -412,6 +413,8 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	 * node appropriately
 	 */
 	limitstate->ps.ps_ProjInfo = NULL;
+
+	limitstate->expect_rescan = ((eflags & EXEC_FLAG_REWIND) != 0);
 
 	return limitstate;
 }

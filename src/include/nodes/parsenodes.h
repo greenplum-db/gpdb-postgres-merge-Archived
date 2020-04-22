@@ -2291,6 +2291,7 @@ typedef struct CreateStmt
 	Oid			ownerid;		/* OID of the role to own this. if InvalidOid, GetUserId() */
 	bool		buildAoBlkdir; /* whether to build the block directory for an AO table */
 	List	   *attr_encodings; /* attribute storage directives */
+	bool		isCtas;			/* CDB: is create table as */
 
 	/* names chosen for partition indexes */
 	List	   *part_idx_oids;

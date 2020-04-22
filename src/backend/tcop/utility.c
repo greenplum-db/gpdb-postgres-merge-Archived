@@ -78,6 +78,7 @@
 #include "utils/rel.h"
 
 #include "catalog/oid_dispatch.h"
+#include "catalog/pg_attribute_encoding.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 
@@ -1232,6 +1233,14 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * one needs a secondary relation too.
 							 */
 							CommandCounterIncrement();
+
+							/* Add column encoding entries based on the WITH clauses */
+							if (cstmt->isCtas && cstmt->options)
+							{
+								Relation rel = heap_open(address.objectId, AccessExclusiveLock);
+								AddDefaultRelationAttributeOptions(rel, cstmt->options);
+								heap_close(rel, NoLock);
+							}
 
 							if (relKind != RELKIND_COMPOSITE_TYPE)
 							{

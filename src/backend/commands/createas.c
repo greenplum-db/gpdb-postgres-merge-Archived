@@ -153,6 +153,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	create->relKind = relkind;
 	create->ownerid = GetUserId();
 	create->accessMethod = into->accessMethod;
+	create->isCtas = true;
 
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
@@ -227,6 +228,7 @@ create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
 	List	   *attrList;
 	ListCell   *t,
 			   *lc;
+	ObjectAddress intoRelationAddr;
 
 	/*
 	 * Build list of ColumnDefs from non-junk elements of the tlist.  If a
@@ -282,7 +284,16 @@ create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
 				 errmsg("too many column names were specified")));
 
 	/* Create the relation definition using the ColumnDef list */
-	return create_ctas_internal(attrList, into, queryDesc, true);
+	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc, true);
+
+	/* Add column encoding entries based on the WITH clause */
+	if (into->options)
+	{
+		Relation rel = heap_open(intoRelationAddr.objectId, AccessExclusiveLock);
+		AddDefaultRelationAttributeOptions(rel, into->options);
+		heap_close(rel, NoLock);
+	}
+	return intoRelationAddr;
 }
 
 

@@ -3718,6 +3718,11 @@ heap_truncate(List *relids)
 	}
 }
 
+/*
+ *	 heap_truncate_one_relid
+ *
+ *	 This routine deletes all data within the specified relation.
+ */
 static void
 heap_truncate_one_relid(Oid relid)
 {
@@ -3789,8 +3794,6 @@ heap_truncate_one_rel(Relation rel)
 		/* keep the lock... */
 		table_close(toastrel, NoLock);
 	}
-
-	ao_aux_tables_truncate(rel);
 }
 
 /*

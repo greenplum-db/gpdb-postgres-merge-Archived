@@ -1485,6 +1485,7 @@ _outRefreshClause(StringInfo str, const RefreshClause *node)
 	WRITE_NODE_TYPE("REFRESHCLAUSE");
 
 	WRITE_BOOL_FIELD(concurrent);
+	WRITE_BOOL_FIELD(skipData);
 	WRITE_NODE_FIELD(relation);
 }
 
@@ -3162,6 +3163,7 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_OID_FIELD(ownerid);
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
+	WRITE_BOOL_FIELD(isCtas);
 
 	WRITE_NODE_FIELD(part_idx_oids);
 	WRITE_NODE_FIELD(part_idx_names);

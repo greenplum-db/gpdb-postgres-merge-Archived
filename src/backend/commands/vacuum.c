@@ -2050,6 +2050,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		return false;
 	}
 
+#ifdef FAULT_INJECTOR
 	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
 	{
 		FaultInjector_InjectFaultIfSet(
@@ -2064,6 +2065,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 			"",	// databaseName
 			RelationGetRelationName(onerel)); // tableName
 	}
+#endif
 
 	/*
 	 * Silently ignore tables that are temp tables of other backends ---
@@ -2181,6 +2183,17 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
+
+#ifdef FAULT_INJECTOR
+	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		FaultInjector_InjectFaultIfSet(
+			"vacuum_post_cleanup_committed",
+			DDLNotSpecified,
+			"",	// databaseName
+			""); // tableName
+	}
+#endif
 
 	if (is_appendoptimized && ao_vacuum_phase == 0)
 	{
