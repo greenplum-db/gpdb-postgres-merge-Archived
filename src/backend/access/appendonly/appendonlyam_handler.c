@@ -1223,11 +1223,8 @@ appendonly_relation_needs_toast_table(Relation rel)
 	int			i;
 
 	/*
-	 * GPDB_12_MERGE_FIXME: the toast table will inherit the access method of
-	 * the relation. This is fine but it leads to estimate_rel_size() ->
-	 * table_relation_estimate_size -> appendonly_estimate_rel_size ->
-	 * RelationGetNumberOfBlocksInFork() which does not allow to be called for
-	 * appendonly access methods. Disable here for now.
+	 * GPDB_12_MERGE_FIXME: does the AO relation really needs a toast table?
+	 * Deactivate for now.
 	 */
 	return false;
 
