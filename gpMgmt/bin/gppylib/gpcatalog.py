@@ -506,14 +506,15 @@ class GPCatalogTable():
 
         # If a primary key was not specified try to locate a unique index
         # If a table has multiple matching indexes, we'll pick the first index
-        # order by indkey to avoid the issue of MPP-16663. 
+        # order by indkey to avoid the issue of MPP-16663. We don't want to
+        # pick the index on OID, if any, though.
         if self._pkey == []:
             qry = """
             SELECT attname FROM (
               SELECT unnest(indkey) as keynum FROM (
                 SELECT indkey 
-                FROM pg_index 
-                WHERE indisunique and not (indkey @> '-2'::int2vector) and
+                FROM pg_index idx LEFT JOIN pg_attribute oidatt ON oidatt.attname='oid' and oidatt.attrelid = 'pg_catalog.{catname}'::regclass
+                WHERE indisunique and (oidatt.attnum is null or not indkey @> oidatt.attnum::text::int2vector) and
                       indrelid = 'pg_catalog.{catname}'::regclass
                 ORDER BY indkey LIMIT 1
               ) index_keys

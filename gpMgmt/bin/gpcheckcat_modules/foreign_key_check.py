@@ -15,7 +15,7 @@ class ForeignKeyCheck:
         self.shared_option = shared_option
         self.autoCast = autoCast
         self.query_filters = dict()
-        self.query_filters['pg_appendonly.relid'] = "(relstorage='a' or relstorage='c')"
+        self.query_filters['pg_appendonly.relid'] = "(select amname from pg_am am where am.oid = relam) IN ('appendoptimized', 'aoco')"
         self.query_filters['pg_attribute.attrelid'] = "true"
         self.query_filters["pg_index.indexrelid"] = "(relkind='i')"
 

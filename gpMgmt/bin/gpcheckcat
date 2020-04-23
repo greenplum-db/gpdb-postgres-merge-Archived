@@ -1914,7 +1914,12 @@ def checkDepend():
     db = connect2(GV.cfg[GV.master_dbid], utilityMode=False)
 
     # Catalogs that link up to pg_depend/pg_shdepend
-    qry = "select relname from pg_class where relnamespace=%d and relhasoids" % PG_CATALOG_OID
+    qry = """
+             select relname from pg_class c
+              where relkind='r'
+                and relnamespace=%d
+                and exists (select 1 from pg_attribute a where attname = 'oid' and a.attrelid = c.oid)
+          """ % PG_CATALOG_OID
     curs = db.query(qry)
     catalogs = []
     for row in curs.getresult():
@@ -2481,11 +2486,14 @@ def transformTextArrayCols(catname, columns, colnames, coltypes):
     #
     # We should fix the text[] hash expression issue, but
     # for this script, this seems like a reasonable workaround.
+    #
+    # GPDB_12_MERGE_FIXME: was this fixed by the hashing changes
+    # in GPDB 6?
 
     transformed = []
     for i in range(len(columns)):
         if coltypes[colnames[i]] == '_text':
-            transformed.append("array_to_string(" + columns[i] + ", ',')")
+            transformed.append("array_to_string(" + columns[i] + ", ',') AS " + columns[i])
         else:
             transformed.append(columns[i])
 
@@ -2539,7 +2547,13 @@ def checkTableInconsistentEntry(cat):
 
     # transform text[] cols for sure. See comments on transformTextArrayCols
     castcols = transformTextArrayCols(catname, castcols, columns, cat.getTableColtypes())
-    castcols = [castcols[i] + ' AS ' + columns[i] for i in range(len(columns))]
+
+    # pg_attribute.attmissingval has pseudo-type 'any', which doesn't allow
+    # much operations on it. Cast it to text, by replacing it with
+    # "attmissingval::text" in the columns list.
+    columns = list(map(lambda b: b.replace("attmissingval","attmissingval::text"), columns))
+    castcols = list(map(lambda b: b.replace("attmissingval","attmissingval::text"), castcols))
+
     if cat.tableHasConsistentOids():
         qry = inconsistentEntryQuery(GV.max_content, catname, ['oid'], columns, castcols)
     else:
@@ -2596,13 +2610,9 @@ def inconsistentEntryQuery(max_content, catname, pkey, columns, castcols):
     # --   the majority individually.
     # --
     # --   Majority gets reported with gp_segment_id == null
-    # --
-    # -- SET GUC due to MPP-14531:
 
     qry = """
               SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-
-              SET gp_enable_mk_sort=off;
 
               -- distribute catalog table from master, so that we can avoid to gather
               CREATE TEMPORARY TABLE _tmp_master ON COMMIT DROP AS
