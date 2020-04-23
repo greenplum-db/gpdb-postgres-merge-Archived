@@ -4050,9 +4050,9 @@ select typname from pg_type where typarray = '_xchg_tab1'::regtype;
 -- Test with an incomplete operator class. Create a custom operator class and
 -- only define equality on it. You can't do much with that.
 --
--- Currently in GPDB, you can use the incomplete opclass in list partitioning,
--- but inserting to the table will fail. In PostgreSQL v10, the CREATE TABLE
--- will fail.
+-- Before GPDB 7, Greenplum used to allow creating the table, but you got an
+-- error when inserting to it. Nowadays we rely on PostgreSQL partitioning
+-- code, which rejects it at CREATE TABLE already.
 create type employee_type as (empid int, empname text);
 create function emp_equal(employee_type, employee_type) returns boolean
   as 'select $1.empid = $2.empid;'
@@ -4071,11 +4071,6 @@ create table employee_table(timest date, user_id numeric(16,0) not null, tag1 ch
   distributed by (user_id)
   partition by list(emp)
   (partition part1 values('(1, ''foo'')'::employee_type), partition part2 values('(2, ''foo'')'::employee_type));
-create index user_id_idx1 on employee_table_1_prt_part1(user_id);
-create index user_id_idx2 on employee_table_1_prt_part2(user_id);
-
-insert into employee_table values('01-03-2012'::date,0,'tag1','(1, ''foo'')'::employee_type);
-select * from employee_table where user_id = 2;
 
 
 -- Test partition table with ACL.
