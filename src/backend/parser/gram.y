@@ -6072,6 +6072,10 @@ CreateAsStmt:
 		CREATE OptTemp TABLE create_as_target AS SelectStmt opt_with_data OptDistributedBy OptFirstPartitionSpec
 				{
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
+
+					/* reset the hack set in OptFirstPartitionSpec */
+					pg_yyget_extra(yyscanner)->tail_partition_magic = false;
+
 					ctas->query = $6;
 					ctas->into = $4;
 					ctas->relkind = OBJECT_TABLE;
