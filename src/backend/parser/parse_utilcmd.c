@@ -4361,7 +4361,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					GpPartitionSpec *gpPartSpec = makeNode(GpPartitionSpec);
 
 					gpPartSpec->partElem = list_make1(pelem);
-					List *cstmts = generatePartitions(RelationGetRelid(rel), gpPartSpec, NULL, queryString);
+					List *cstmts = generatePartitions(RelationGetRelid(rel), gpPartSpec, NULL, queryString, NIL, NULL);
 					foreach(l, cstmts)
 					{
 						Node *stmt = (Node *) lfirst(l);

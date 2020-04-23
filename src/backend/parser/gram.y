@@ -631,7 +631,6 @@ static char *greenplumLegacyAOoptions(const char *accessMethod, List **options);
 %type <str> 	TabPartitionNameDecl TabSubPartitionNameDecl
 				TabPartitionDefaultNameDecl TabSubPartitionDefaultNameDecl 
 %type <node>	opt_table_partition_split_into
-%type <node> 	OptTabPartitionStorageAttr
 %type <node>	opt_time
 
 %type <node>	column_reference_storage_directive
@@ -3726,7 +3725,8 @@ alter_table_partition_id_spec_with_opt_default:
 alter_table_partition_cmd:
 			ADD_P PARTITION 
             OptTabAddPartitionBoundarySpec
- 			OptTabPartitionStorageAttr
+			OptWith
+			OptTableSpace
 			OptTabSubPartitionSpec
            
 				{
@@ -3743,10 +3743,12 @@ alter_table_partition_cmd:
 
 					pelem->partName  = NULL;
 					pelem->boundSpec = $3;
-					pelem->subSpec   = $5;
+					pelem->subSpec   = $6;
 					pelem->location  = @3;
 					pelem->isDefault = false; /* not default */
-					pelem->storeAttr = $4;
+					pelem->options = $4;
+					pelem->accessMethod = greenplumLegacyAOoptions(NULL, &pelem->options);
+					pelem->tablespacename = $5;
 
 					pc->arg = (Node *) pelem;
 					pc->location = @3;
@@ -3756,8 +3758,9 @@ alter_table_partition_cmd:
 					$$ = (Node *)n;
 				}
 			| ADD_P DEFAULT PARTITION 
-            alter_table_partition_id_spec 
-            OptTabPartitionStorageAttr
+			alter_table_partition_id_spec
+			OptWith
+			OptTableSpace
 			OptTabSubPartitionSpec 
 				{
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$4;
@@ -3773,10 +3776,12 @@ alter_table_partition_cmd:
                     pc->partid = (Node *) pid;
 
 					pelem->partName  = strVal(pid->partiddef);
-                    pelem->subSpec   = $6;
-                    pelem->location  = @5;
-                    pelem->isDefault = true;
-                    pelem->storeAttr = $5;
+					pelem->subSpec   = $7;
+					pelem->location  = @5;
+					pelem->isDefault = true;
+					pelem->options = $5;
+					pelem->accessMethod = greenplumLegacyAOoptions(NULL, &pelem->options);
+					pelem->tablespacename = $6;
 
 					pc->arg = (Node *) pelem;
 					pc->location = @5;
@@ -3786,10 +3791,11 @@ alter_table_partition_cmd:
 					$$ = (Node *)n;
 				}
 			| ADD_P PARTITION 
-            alter_table_partition_id_spec 
-            OptTabAddPartitionBoundarySpec
-            OptTabPartitionStorageAttr
-			OptTabSubPartitionSpec 
+			alter_table_partition_id_spec
+			OptTabAddPartitionBoundarySpec
+			OptWith
+			OptTableSpace
+			OptTabSubPartitionSpec
 				{
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$3;
 					GpAlterPartitionCmd *pc    = makeNode(GpAlterPartitionCmd);
@@ -3805,10 +3811,12 @@ alter_table_partition_cmd:
 
 					pelem->partName  = strVal(pid->partiddef);
 					pelem->boundSpec = $4;
-					pelem->subSpec   = $6;
+					pelem->subSpec   = $7;
 					pelem->location  = @4;
 					pelem->isDefault = false;
-					pelem->storeAttr = $5;
+					pelem->options = $5;
+					pelem->accessMethod = greenplumLegacyAOoptions(NULL, &pelem->options);
+					pelem->tablespacename = $6;
 
 					pc->arg = (Node *) pelem;
 					pc->location = @4;
@@ -5516,52 +5524,6 @@ TabPartitionColumnEncList:
 				}
 	;
 
-OptTabPartitionStorageAttr: WITH definition TABLESPACE name 
-				{
-                    /* re-use alterpartitioncmd struct here... */
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
-                    pc->partid = NULL;
-                    pc->arg1 = (Node *)$2;
-                    pc->arg2 = (Node *)makeString($4);
-                    pc->location = @1;
-					$$ = (Node *)pc;
-#endif
-                }
-			| WITH definition
-				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(WARNING, "FIXME: WITH storage options not implemented");
-					$$ = NULL;
-#if 0
-                    /* re-use alterpartitioncmd struct here... */
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
-                    pc->partid = NULL;
-                    pc->arg1 = (Node *)$2;
-                    pc->arg2 = NULL;
-                    pc->location = @1;
-					$$ = (Node *)pc;
-#endif
- 				}
-			| TABLESPACE name 
-				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-                    /* re-use alterpartitioncmd struct here... */
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
-                    pc->partid = NULL;
-                    pc->arg1 = NULL;
-                    pc->arg2 = (Node *)makeString($2);
-                    pc->location = @1;
-					$$ = (Node *)pc;
-#endif
-				}
-			| /*EMPTY*/ { $$ = NULL; }
-		;
-
 OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
@@ -5795,50 +5757,58 @@ part_values_or_spec_list: TabPartitionBoundarySpecValList { $$ = $1; }
 
 /* a "Partition Element" closely corresponds to a "Partition Declaration" */
 TabPartitionElem: 
-            TabPartitionNameDecl 
-            OptTabPartitionBoundarySpec	OptTabPartitionStorageAttr
+			TabPartitionNameDecl
+			OptTabPartitionBoundarySpec	OptWith OptTableSpace
 			OptTabPartitionColumnEncList
 			OptTabSubPartitionSpec 
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem); 
-                        n->partName  = $1;
-                        n->boundSpec = $2;
-                        n->subSpec   = $5;
-                        n->location  = @1;
-                        n->isDefault = 0;
-                        n->storeAttr = $3;
-                        n->colencs   = $4;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = $1;
+						n->boundSpec = $2;
+						n->subSpec   = $6;
+						n->location  = @1;
+						n->isDefault = 0;
+						n->options = $3;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $4;
+						n->colencs   = $5;
+						$$ = (Node *)n;
 				}
 
 			| TabPartitionDefaultNameDecl 
-              OptTabPartitionStorageAttr
+			  OptWith
+			  OptTableSpace
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem); 
-                        n->partName  = $1;
-                        n->subSpec   = $4;
-                        n->location  = @1;
-                        n->isDefault = true;
-                        n->storeAttr = $2;
-                        n->colencs   = $3;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = $1;
+						n->subSpec   = $5;
+						n->location  = @1;
+						n->isDefault = true;
+						n->options = $2;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $3;
+						n->colencs   = $4;
+						$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpec 
-              OptTabPartitionStorageAttr
+			  OptWith
+			  OptTableSpace
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem); 
-                        n->partName  = NULL;
-                        n->boundSpec = $1;
-                        n->subSpec   = $4;
-                        n->location  = @1;
-                        n->isDefault = 0;
-                        n->storeAttr = $2;
-                        n->colencs   = $3;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = NULL;
+						n->boundSpec = $1;
+						n->subSpec   = $5;
+						n->location  = @1;
+						n->isDefault = 0;
+						n->options = $2;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $3;
+						n->colencs   = $4;
+						$$ = (Node *)n;
 				}
 			| column_reference_storage_directive
 				{
@@ -5847,57 +5817,66 @@ TabPartitionElem:
             ;
 
 TabSubPartitionElem: 
-            TabSubPartitionNameDecl OptTabPartitionBoundarySpec	
-			OptTabPartitionStorageAttr
+			TabSubPartitionNameDecl OptTabPartitionBoundarySpec
+			OptWith
+			OptTableSpace
 			OptTabPartitionColumnEncList
-            OptTabSubPartitionSpec
+			OptTabSubPartitionSpec
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem);
-                        n->partName  = $1;
-                        n->boundSpec = $2;
-                        n->subSpec   = $5;
-                        n->location  = @1;
-                        n->isDefault = 0;
-                        n->storeAttr = $3;
-                        n->colencs   = $4;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = $1;
+						n->boundSpec = $2;
+						n->subSpec   = $6;
+						n->location  = @1;
+						n->isDefault = 0;
+						n->options = $3;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $4;
+						n->colencs   = $5;
+						$$ = (Node *)n;
 				}
 /* allow boundary spec for default partition in parser, but complain later */
 			| TabSubPartitionDefaultNameDecl OptTabPartitionBoundarySpec	
- 			  OptTabPartitionStorageAttr
+			  OptWith
+			  OptTableSpace
 			  OptTabPartitionColumnEncList
-              OptTabSubPartitionSpec
+			  OptTabSubPartitionSpec
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem);
-                        n->partName  = $1;
-                        n->boundSpec = $2;
-                        n->subSpec   = $5;
-                        n->location  = @1;
-                        n->isDefault = true;
-                        n->storeAttr = $3;
-                        n->colencs   = $4;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = $1;
+						n->boundSpec = $2;
+						n->subSpec   = $6;
+						n->location  = @1;
+						n->isDefault = true;
+						n->options = $3;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $4;
+						n->colencs   = $5;
+						$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpec
-              OptTabPartitionStorageAttr
+			  OptWith
+			  OptTableSpace
 			  OptTabPartitionColumnEncList
  			  OptTabSubPartitionSpec	
 				{
-                        GpPartitionElem *n = makeNode(GpPartitionElem); 
-                        n->partName  = NULL;
-                        n->boundSpec = $1;
-                        n->subSpec   = $4;
-                        n->location  = @1;
-                        n->isDefault = false;
-                        n->colencs   = $3;
-                        n->storeAttr = $2;
-                        $$ = (Node *)n;
+						GpPartitionElem *n = makeNode(GpPartitionElem);
+						n->partName  = NULL;
+						n->boundSpec = $1;
+						n->subSpec   = $5;
+						n->location  = @1;
+						n->isDefault = false;
+						n->colencs   = $4;
+						n->options = $2;
+						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
+						n->tablespacename = $3;
+						$$ = (Node *)n;
 				}
 			| column_reference_storage_directive
 				{
 					$$ = (Node *)$1;
 				}
-            ;
+			;
 
 TabPartitionNameDecl: PARTITION PartitionColId
 				{

@@ -18,6 +18,7 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
@@ -47,7 +48,9 @@ static List *generateDefaultPartition(ParseState *pstate,
 									  PartitionSpec *subPart);
 
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
-										   PartitionBoundSpec *boundspec, PartitionSpec *subPart);
+										   PartitionBoundSpec *boundspec,
+										   PartitionSpec *subPart,
+										   GpPartitionElem *elem);
 
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
@@ -287,7 +290,8 @@ deduceImplicitRangeBounds(ParseState *pstate, List *origstmts, PartitionKey key)
  */
 List *
 generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
-				   PartitionSpec *subPartSpec, const char *queryString)
+				   PartitionSpec *subPartSpec, const char *queryString,
+				   List *parentoptions, const char *parentaccessmethod)
 {
 	Relation	parentrel;
 	List	   *result = NIL;
@@ -311,6 +315,11 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 
 			if (subPartSpec)
 				subPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
+
+			if (elem->options == NIL)
+				elem->options = parentoptions;
+			if (elem->accessMethod == NULL)
+				elem->accessMethod = parentaccessmethod;
 
 			new_parts = generateSinglePartition(parentrel, elem, subPartSpec, queryString, &num_unnamed_parts);
 			result = list_concat(result, new_parts);
@@ -728,7 +737,8 @@ generateRangePartitions(ParseState *pstate,
 
 		/* GPDB_12_MERGE_FIXME: pass correct level */
 		partname = ChoosePartitionName(parentrel, "1", partname, ++(*num_unnamed_parts_p));
-		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
+		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec,
+											subPart, elem);
 
 		result = lappend(result, childstmt);
 	}
@@ -797,7 +807,8 @@ generateListPartition(ParseState *pstate,
 	partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
+	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
+										elem);
 
 	return list_make1(childstmt);
 }
@@ -818,14 +829,15 @@ generateDefaultPartition(ParseState *pstate,
 
 	/* GPDB_12_MERGE_FIXME: pass correct level */
 	partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart);
+	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
+										elem);
 
 	return list_make1(childstmt);
 }
 
 static CreateStmt *
 makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
-						PartitionSpec *subPart)
+						PartitionSpec *subPart, GpPartitionElem *elem)
 {
 	CreateStmt *childstmt;
 	RangeVar   *parentrv;
@@ -842,10 +854,10 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->partspec = subPart;
 	childstmt->ofTypename = NULL;
 	childstmt->constraints = NIL;
-	childstmt->options = NIL; // FIXME: copy from parent stmt?
+	childstmt->options = elem->options;
 	childstmt->oncommit = ONCOMMIT_NOOP;  // FIXME: copy from parent stmt?
-	childstmt->tablespacename = NULL;   // FIXME: copy from parent stmt?
-	childstmt->accessMethod = get_am_name(parentrel->rd_rel->relam);
+	childstmt->tablespacename = elem->tablespacename ? pstrdup(elem->tablespacename) : NULL;
+	childstmt->accessMethod = elem->accessMethod ? pstrdup(elem->accessMethod) : NULL;
 	childstmt->if_not_exists = false;
 	childstmt->distributedBy = make_distributedby_for_rel(parentrel);
 	childstmt->partitionBy = NULL;

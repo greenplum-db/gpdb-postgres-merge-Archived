@@ -2493,7 +2493,9 @@ typedef struct GpPartitionElem
 	Node			   *boundSpec;	/* boundary specification */
 	Node			   *subSpec;	/* subpartition spec */
 	bool                isDefault;	/* TRUE if default partition declaration */
-	Node			   *storeAttr;	/* storage clause attributes */
+	List 			   *options;	/* options from WITH clause */
+	char 			   *accessMethod;	/* table access method */
+	char			   *tablespacename; /* table space to use, or NULL */
 	int					partno;		/* number of the partition element */
 	long				rrand;		/* if not zero, "random" id for relname */
 	List			   *colencs;	/* column encoding clauses */

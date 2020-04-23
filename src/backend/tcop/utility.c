@@ -1189,6 +1189,8 @@ ProcessUtilitySlow(ParseState *pstate,
 							char		relKind = RELKIND_RELATION;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+							List *options = NIL;
+							char *accessmethod = NULL;
 
 							/*
 							 * If this T_CreateStmt was dispatched and we're a QE
@@ -1202,6 +1204,26 @@ ProcessUtilitySlow(ParseState *pstate,
 							}
 							else
 								cstmt->relKind = relKind;
+
+							/*
+							 * Upstream postgres does not support user specified
+							 * RelOptions and TableAM for a parent partitioned
+							 * table. The legacy Greenplum behavior is to have
+							 * the RelOptions and TableAM specified for the
+							 * parent table to be inherited by the child
+							 * partitions. Hence we need to remove these from
+							 * the parent table's CreateStmt and store them to
+							 * pass down to create the child partition's
+							 * CreateStmt. This is only done when creating
+							 * partitions with Greenplum legacy syntax.
+							 */
+							if (cstmt->partspec && cstmt->partspec->gpPartSpec)
+							{
+								options = cstmt->options;
+								cstmt->options = NIL;
+								accessmethod = cstmt->accessMethod;
+								cstmt->accessMethod = NULL;
+							}
 
 							/*
 							 * GPDB: Don't dispatch it yet, as we haven't
@@ -1221,7 +1243,8 @@ ProcessUtilitySlow(ParseState *pstate,
 								parts = generatePartitions(address.objectId,
 														   cstmt->partspec->gpPartSpec,
 														   cstmt->partspec->subPartSpec,
-														   queryString);
+														   queryString, options,
+														   accessmethod);
 								more_stmts = list_concat(more_stmts, parts);
 							}
 
