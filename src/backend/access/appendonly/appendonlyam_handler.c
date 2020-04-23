@@ -56,10 +56,53 @@ static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
 									 Datum *values, bool *isnull, RewriteState rwstate);
 
+static void reset_insert_context_callback(void *arg);
+
 static const TableAmRoutine appendonly_methods;
 
-/* GPDB_12_MERGE_FIXME: do we need more than one of these? */
-static AppendOnlyInsertDesc insertDesc = NULL;
+static struct AppendOnlyLocalData {
+	AppendOnlyInsertDesc	insertDesc;
+
+	MemoryContext			localContext;
+	MemoryContextCallback	cb;
+} appendOnlyLocal	= {
+	.localContext	= NULL,
+	.insertDesc		= NULL,
+	.cb				= {
+		.func	= reset_insert_context_callback,
+		.arg	= NULL,
+	},
+};
+
+static MemoryContext
+get_insertdesc_context(void)
+{
+	if (!appendOnlyLocal.localContext)
+	{
+		appendOnlyLocal.localContext = AllocSetContextCreate(CurrentMemoryContext,
+											  "AO InsertDesc context",
+											  ALLOCSET_SMALL_SIZES);
+		MemoryContextRegisterResetCallback(appendOnlyLocal.localContext, &appendOnlyLocal.cb);
+	}
+
+	return appendOnlyLocal.localContext;
+}
+
+static void
+reset_insert_context_callback(void *arg)
+{
+	Assert(appendOnlyLocal.localContext);
+	appendOnlyLocal.localContext = NULL;
+
+	/*
+	 * There are two cases that we are called from, during context destruction
+	 * after a successfull completion and after a transaction abort. Only in the
+	 * second case we should have leaked the insertDesc. We need to reset our
+	 * globale state. Then actual clean up is taken care elsewhere.
+	 */
+	if (appendOnlyLocal.insertDesc)
+		appendOnlyLocal.insertDesc = NULL;
+}
 
 
 /* ------------------------------------------------------------------------
@@ -112,7 +155,7 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
 		slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
 
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	result = memtuple_form(insertDesc->mt_bind,
+	result = memtuple_form(appendOnlyLocal.insertDesc->mt_bind,
 						   slot->tts_values,
 						   slot->tts_isnull);
 	MemoryContextSwitchTo(oldContext);
@@ -283,12 +326,18 @@ appendonly_compute_xid_horizon_for_tuples(Relation rel,
 void
 appendonly_dml_init(Relation relation, CmdType operation)
 {
+	MemoryContext oldContext;
+
 	switch(operation)
 	{
 	case CMD_INSERT:
-		Assert(insertDesc == NULL);
-		insertDesc = appendonly_insert_init(
-			relation, ChooseSegnoForWrite(relation), false);
+		oldContext = MemoryContextSwitchTo(get_insertdesc_context());
+		Assert(appendOnlyLocal.insertDesc == NULL);
+		appendOnlyLocal.insertDesc = appendonly_insert_init(
+												relation,
+												ChooseSegnoForWrite(relation),
+												false);
+		MemoryContextSwitchTo(oldContext);
 		break;
 	default:
 		elog(ERROR, "not implemented");
@@ -302,9 +351,9 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 	switch(operation)
 	{
 	case CMD_INSERT:
-		Assert(insertDesc->aoi_rel == relation);
-		appendonly_insert_finish(insertDesc);
-		insertDesc = NULL;
+		Assert(appendOnlyLocal.insertDesc->aoi_rel == relation);
+		appendonly_insert_finish(appendOnlyLocal.insertDesc);
+		appendOnlyLocal.insertDesc = NULL;
 		break;
 	default:
 		elog(ERROR, "not implemented");
@@ -328,7 +377,7 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	slot->tts_tableOid = RelationGetRelid(relation);
 
 	/* Perform the insertion, and copy the resulting ItemPointer */
-	appendonly_insert(insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
+	appendonly_insert(appendOnlyLocal.insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
 	// GPDB_12_MERGE_FIXME
 	//(resultRelInfo->ri_aoprocessed)++;
 
