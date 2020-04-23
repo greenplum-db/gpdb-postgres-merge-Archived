@@ -6134,9 +6134,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		ExecDropSingleTupleTableSlot(oldslot);
 		if (newslot)
 			ExecDropSingleTupleTableSlot(newslot);
-
-		if (newrel && RelationIsAoRows(newrel))
-			appendonly_dml_finish(newrel, CMD_INSERT);
 	}
 
 	FreeExecutorState(estate);

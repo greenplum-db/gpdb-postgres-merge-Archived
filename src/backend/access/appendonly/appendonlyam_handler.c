@@ -401,11 +401,23 @@ appendonly_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
 	elog(ERROR, "speculative insertion not supported on AO tables");
 }
 
+/*
+ *	appendonly_multi_insert	- insert multiple tuples into an ao relation
+ *
+ * This is like appendonly_tuple_insert(), but inserts multiple tuples in one
+ * operation. Typicaly used by COPY. This is preferrable than calling
+ * appendonly_tuple_insert() in a loop because ... WAL??
+ */
 static void
 appendonly_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 						CommandId cid, int options, BulkInsertState bistate)
 {
-	elog(ERROR, "multi-insert not yet implemented on AO tables");
+	/*
+	 * GPDB_12_MERGE_FIXME: Poor man's implementation for now in order to make
+	 * the tests pass. Implement properly.
+	 */
+	for (int i = 0; i < ntuples; i++)
+		appendonly_tuple_insert(relation, slots[i], cid, options, bistate);
 }
 
 static TM_Result
@@ -497,6 +509,13 @@ appendonly_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 appendonly_finish_bulk_insert(Relation relation, int options)
 {
+	/* GPDB_12_MERGE_FIXME: is it legal to double call? Assert to be certain */
+	Assert(appendOnlyLocal.insertDesc);
+	if (appendOnlyLocal.insertDesc)
+	{
+		appendonly_insert_finish(appendOnlyLocal.insertDesc);
+		appendOnlyLocal.insertDesc = NULL;
+	}
 }
 
 

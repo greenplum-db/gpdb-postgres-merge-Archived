@@ -766,9 +766,6 @@ intorel_shutdown(DestReceiver *self)
 
 	table_finish_bulk_insert(myState->rel, myState->ti_options);
 
-	if (RelationIsAoRows(into_rel))
-		appendonly_dml_finish(into_rel, CMD_INSERT);
-
 	/* close rel, but keep lock until commit */
 	table_close(myState->rel, NoLock);
 	myState->rel = NULL;

@@ -490,7 +490,6 @@ typedef struct ResultRelInfo
 
 	struct MemTupleBinding *mt_bind;
 
-	struct AppendOnlyInsertDescData *ri_aoInsertDesc;
 	struct AOCSInsertDescData *ri_aocsInsertDesc;
 	struct ExternalInsertDescData *ri_extInsertDesc;
 
