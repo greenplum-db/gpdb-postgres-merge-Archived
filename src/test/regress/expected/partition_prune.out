@@ -1345,70 +1345,76 @@ EXPLAIN (COSTS OFF) SELECT tableoid::regclass as part, a, b FROM part WHERE a IS
 --
 -- pruning won't work for mc3p, because some keys are Params
 explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = t1.b and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Nested Loop
-   ->  Gather Motion 1:1  (slice1; segments: 1)
-         ->  Append
-               ->  Seq Scan on mc2p1 t1
-                     Filter: (a = 1)
-               ->  Seq Scan on mc2p2 t1_1
-                     Filter: (a = 1)
-               ->  Seq Scan on mc2p_default t1_2
-                     Filter: (a = 1)
    ->  Materialize
-         ->  Finalize Aggregate
-               ->  Gather Motion 3:1  (slice2; segments: 3)
-                     ->  Partial Aggregate
-                           ->  Append
-                                 ->  Seq Scan on mc3p0 t2
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p1 t2_1
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p2 t2_2
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p3 t2_3
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p4 t2_4
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p5 t2_5
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p6 t2_6
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p7 t2_7
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p_default t2_8
-                                       Filter: ((c = 1) AND (abs(b) = 1))
+         ->  Gather Motion 1:1  (slice1; segments: 1)
+               ->  Append
+                     ->  Seq Scan on mc2p1 t1
+                           Filter: (a = 1)
+                     ->  Seq Scan on mc2p2 t1_1
+                           Filter: (a = 1)
+                     ->  Seq Scan on mc2p_default t1_2
+                           Filter: (a = 1)
+   ->  Materialize
+         ->  Aggregate
+               ->  Result
+                     Filter: (t2.a = t1.b)
+                     ->  Materialize
+                           ->  Gather Motion 3:1  (slice2; segments: 3)
+                                 ->  Append
+                                       ->  Seq Scan on mc3p0 t2
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p1 t2_1
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p2 t2_2
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p3 t2_3
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p4 t2_4
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p5 t2_5
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p6 t2_6
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p7 t2_7
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p_default t2_8
+                                             Filter: ((c = 1) AND (abs(b) = 1))
  Optimizer: Postgres query optimizer
-(33 rows)
+(36 rows)
 
 -- pruning should work fine, because values for a prefix of keys (a, b) are
 -- available
 explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.c = t1.b and abs(t2.b) = 1 and t2.a = 1) s where t1.a = 1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Nested Loop
-   ->  Gather Motion 1:1  (slice1; segments: 1)
-         ->  Append
-               ->  Seq Scan on mc2p1 t1
-                     Filter: (a = 1)
-               ->  Seq Scan on mc2p2 t1_1
-                     Filter: (a = 1)
-               ->  Seq Scan on mc2p_default t1_2
-                     Filter: (a = 1)
    ->  Materialize
-         ->  Finalize Aggregate
-               ->  Gather Motion 1:1  (slice2; segments: 1)
-                     ->  Partial Aggregate
-                           ->  Append
-                                 ->  Seq Scan on mc3p0 t2
-                                       Filter: ((a = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p1 t2_1
-                                       Filter: ((a = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p_default t2_2
-                                       Filter: ((a = 1) AND (abs(b) = 1))
+         ->  Gather Motion 1:1  (slice1; segments: 1)
+               ->  Append
+                     ->  Seq Scan on mc2p1 t1
+                           Filter: (a = 1)
+                     ->  Seq Scan on mc2p2 t1_1
+                           Filter: (a = 1)
+                     ->  Seq Scan on mc2p_default t1_2
+                           Filter: (a = 1)
+   ->  Materialize
+         ->  Aggregate
+               ->  Result
+                     Filter: (t2.c = t1.b)
+                     ->  Materialize
+                           ->  Gather Motion 1:1  (slice2; segments: 1)
+                                 ->  Append
+                                       ->  Seq Scan on mc3p0 t2
+                                             Filter: ((a = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p1 t2_1
+                                             Filter: ((a = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p_default t2_2
+                                             Filter: ((a = 1) AND (abs(b) = 1))
  Optimizer: Postgres query optimizer
-(21 rows)
+(24 rows)
 
 -- also here, because values for all keys are provided
 explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = 1 and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
@@ -2093,12 +2099,7 @@ declare cur SCROLL CURSOR for select 1 from list_part where a > (select 1) and a
 move 3 from cur;
 -- Ensure we get two rows.
 fetch backward all from cur;
- ?column? 
-----------
-        1
-        1
-(2 rows)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
 commit;
 begin;
 -- Test run-time pruning using stable functions
@@ -2214,22 +2215,21 @@ execute ab_q4 (1, 8);
 (1 row)
 
 select explain_parallel_append('execute ab_q4 (2, 2)');
-                            explain_parallel_append                            
--------------------------------------------------------------------------------
+                         explain_parallel_append                         
+-------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
-         Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=N)
+   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Append (never executed)
                      Subplans Removed: 6
-                     ->  Parallel Seq Scan on ab_a2_b1 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b1 (never executed)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
-                     ->  Parallel Seq Scan on ab_a2_b2 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b2 (never executed)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
-                     ->  Parallel Seq Scan on ab_a2_b3 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b3 (never executed)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
-(13 rows)
+ Optimizer: Postgres query optimizer
+(12 rows)
 
 -- Test run-time pruning with IN lists.
 prepare ab_q5 (int, int, int) as
@@ -4019,21 +4019,22 @@ from (
       select 1, 1, 1
      ) s(a, b, c)
 where s.a = 1 and s.b = 1 and s.c = (select 1);
-                        QUERY PLAN                        
-----------------------------------------------------------
- Append
-   InitPlan 1 (returns $0)  (slice1)
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Gather Motion 2:1  (slice1; segments: 2)
+   InitPlan 1 (returns $0)  (slice2)
      ->  Result
-   ->  Gather Motion 1:1  (slice2; segments: 1)
+   ->  Append
          ->  Seq Scan on p1
                Filter: ((a = 1) AND (b = 1) AND (c = $0))
-   ->  Gather Motion 1:1  (slice3; segments: 1)
          ->  Seq Scan on q111
                Filter: ((a = 1) AND (b = 1) AND (c = $0))
-   ->  Result
-         One-Time Filter: (1 = $0)
+         ->  Result
+               One-Time Filter: (gp_execution_segment() = 0)
+               ->  Result
+                     One-Time Filter: (1 = $0)
  Optimizer: Postgres query optimizer
-(12 rows)
+(13 rows)
 
 select *
 from (
@@ -4061,23 +4062,24 @@ from (
 where s.a = $1 and s.b = $2 and s.c = (select 1);
 set plan_cache_mode to force_generic_plan;
 explain (costs off) execute q (1, 1);
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Append
-   InitPlan 1 (returns $0)  (slice1)
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   InitPlan 1 (returns $0)  (slice2)
      ->  Result
-   ->  Gather Motion 3:1  (slice2; segments: 3)
+   ->  Append
          ->  Append
                Subplans Removed: 1
                ->  Seq Scan on p1
                      Filter: ((a = $1) AND (b = $2) AND (c = $0))
-   ->  Gather Motion 3:1  (slice3; segments: 3)
          ->  Seq Scan on q111
                Filter: ((a = $1) AND (b = $2) AND (c = $0))
-   ->  Result
-         One-Time Filter: ((1 = $1) AND (1 = $2) AND (1 = $0))
+         ->  Result
+               One-Time Filter: (gp_execution_segment() = 0)
+               ->  Result
+                     One-Time Filter: ((1 = $1) AND (1 = $2) AND (1 = $0))
  Optimizer: Postgres query optimizer
-(14 rows)
+(15 rows)
 
 execute q (1, 1);
  a | b | c 
@@ -4143,15 +4145,13 @@ explain (costs off) select * from listp1 where a = 2;
 (2 rows)
 
 explain (costs off) update listp1 set a = 1 where a = 2;
-                          QUERY PLAN                           
----------------------------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  Update on listp1
-   ->  Explicit Redistribute Motion 1:3  (slice1; segments: 1)
-         ->  Split
-               ->  Result
-                     One-Time Filter: false
+   ->  Result
+         One-Time Filter: false
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 reset constraint_exclusion;
 reset enable_partition_pruning;
