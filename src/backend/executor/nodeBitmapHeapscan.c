@@ -659,8 +659,13 @@ ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 		tbm_end_shared_iterate(node->shared_tbmiterator);
 	if (node->shared_prefetch_iterator)
 		tbm_end_shared_iterate(node->shared_prefetch_iterator);
+#if 0
+	/* In gpdb, tbm life cycle is controled by BitmapIndexscan. This is only
+	 * a share pointer, do not free here, just set it to NULL later.
+	 */
 	if (node->tbm)
 		tbm_generic_free(node->tbm);
+#endif
 	if (node->vmbuffer != InvalidBuffer)
 		ReleaseBuffer(node->vmbuffer);
 	if (node->pvmbuffer != InvalidBuffer)
