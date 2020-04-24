@@ -1477,13 +1477,13 @@ vac_update_datfrozenxid(void)
 		/*
 		 * Only consider relations able to hold unfrozen XIDs (anything else
 		 * should have InvalidTransactionId in relfrozenxid anyway).
-		 *
-		 * GPDB_12_MERGE_FIXME: should more AO aux rels be included here?
 		 */
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_TOASTVALUE &&
-			classForm->relkind != RELKIND_AOSEGMENTS)
+			classForm->relkind != RELKIND_AOSEGMENTS &&
+			classForm->relkind != RELKIND_AOVISIMAP &&
+			classForm->relkind != RELKIND_AOBLOCKDIR)
 		{
 			/* GPDB_12_MERGE_FIXME: this was crashing in regression test.
 			 * Add a runtime check to avoid the crash, until we've fixed the list of

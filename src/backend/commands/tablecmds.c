@@ -14202,7 +14202,10 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	{
 		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
-			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+			   rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
+			   rel->rd_rel->relkind == RELKIND_AOSEGMENTS ||
+			   rel->rd_rel->relkind == RELKIND_AOBLOCKDIR ||
+			   rel->rd_rel->relkind == RELKIND_AOVISIMAP);
 		table_relation_copy_data(rel, &newrnode);
 	}
 
