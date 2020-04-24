@@ -378,7 +378,7 @@ extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
 extern void appendonly_dml_finish(Relation relation, CmdType operation);
 extern BlockNumber RelationGuessNumberOfBlocks(double totalbytes);
 
-extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel);
+extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot);
 extern TM_Result appendonly_delete(
 		AppendOnlyDeleteDesc aoDeleteDesc,
 		AOTupleId* aoTupleId);

@@ -62,10 +62,3 @@ table ao_ctas;
 
 insert into ao_ctas select * from heap_t2;
 table ao_ctas;
-
---delete
-delete from ao_ctas where a < 5;
-select * from ao_ctas;
-
-delete from ao_basic_t1 where a in (1, 10, 4);
-select * from ao_basic_t1 where a = 1;

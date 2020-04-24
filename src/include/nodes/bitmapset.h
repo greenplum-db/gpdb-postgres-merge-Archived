@@ -32,19 +32,7 @@ struct List;
  * they're not wider than the processor can handle efficiently.  We use
  * 64-bit words if pointers are that large, else 32-bit words.
  */
-/*
- * GPDB_12_MERGE_FIXME Disable larger word size for bitmap sets.
- * Appenoptimized tables use bitmapset interface to encode tuple visibility.
- * These bitmap sets make their way to disk, inside aovisimap tuples.
- * Increasing word size will affect existing appendoptimized visibility data
- * written with shorter word size.  Therefore, we must continue to use shorter
- * words or rewrite all existing appendoptimized tables during upgrade (not
- * viable).  The goal of this fixme is to explore if we can still have the
- * performance benefit of larger bitmapwords.  Is it possible to keep two
- * bitmapsets, short words for on-disk bitmapsets and longer words for
- * bitmapsets that are strictly in-memory?
- */
-#if false && SIZEOF_VOID_P >= 8
+#if SIZEOF_VOID_P >= 8
 
 #define BITS_PER_BITMAPWORD 64
 typedef uint64 bitmapword;		/* must be an unsigned type */

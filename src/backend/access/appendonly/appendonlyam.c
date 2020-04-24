@@ -2524,7 +2524,7 @@ appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc)
  * data structured.
  */
 AppendOnlyDeleteDesc
-appendonly_delete_init(Relation rel)
+appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot)
 {
 	Assert(!IsolationUsesXactSnapshot());
 
@@ -2536,7 +2536,7 @@ appendonly_delete_init(Relation rel)
 	AppendOnlyDeleteDesc aoDeleteDesc = palloc0(sizeof(AppendOnlyDeleteDescData));
 
 	aoDeleteDesc->aod_rel = rel;
-	aoDeleteDesc->appendOnlyMetaDataSnapshot = GetActiveSnapshot();
+	aoDeleteDesc->appendOnlyMetaDataSnapshot = appendOnlyMetaDataSnapshot;
 
 	AppendOnlyVisimap_Init(&aoDeleteDesc->visibilityMap,
 						   visimaprelid,
