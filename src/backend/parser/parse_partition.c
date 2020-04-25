@@ -36,16 +36,19 @@ static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
 									 GpPartitionElem *elem,
 									 PartitionSpec *subPart,
-									 int *num_unnamed_parts_p);
+									 int *num_unnamed_parts_p,
+									 char *tablename);
 static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
 								   GpPartitionElem *elem,
 								   PartitionSpec *subPart,
-								   int *num_unnamed_parts_p);
+								   int *num_unnamed_parts_p,
+								   char *tablename);
 static List *generateDefaultPartition(ParseState *pstate,
 									  Relation parentrel,
 									  GpPartitionElem *elem,
-									  PartitionSpec *subPart);
+									  PartitionSpec *subPart,
+									  char *tablename);
 
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec,
@@ -55,13 +58,15 @@ static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
 
+static char *extract_tablename_from_options(List **options);
+
 /*
  * TODO: rename this. This may not just return a single partition for the case of
  * start () end () every ()
  */
 static List *
 generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
-						const char *queryString, int *num_unnamed_parts)
+						const char *queryString, int *num_unnamed_parts, char *tablename)
 {
 	List *new_parts;
 	ParseState *pstate;
@@ -70,7 +75,7 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 	pstate->p_sourcetext = queryString;
 
 	if (elem->isDefault)
-		new_parts = generateDefaultPartition(pstate, parentrel, elem, subPart);
+		new_parts = generateDefaultPartition(pstate, parentrel, elem, subPart, tablename);
 	else
 	{
 		PartitionKey key = RelationGetPartitionKey(parentrel);
@@ -79,12 +84,12 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 		{
 			case PARTITION_STRATEGY_RANGE:
 				new_parts = generateRangePartitions(pstate, parentrel, elem, subPart,
-													num_unnamed_parts);
+													num_unnamed_parts, tablename);
 				break;
 
 			case PARTITION_STRATEGY_LIST:
 				new_parts = generateListPartition(pstate, parentrel, elem, subPart,
-												  num_unnamed_parts);
+												  num_unnamed_parts, tablename);
 				break;
 			default:
 				elog(ERROR, "Not supported partition strategy");
@@ -295,14 +300,17 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 {
 	Relation	parentrel;
 	List	   *result = NIL;
-	ListCell   *lc;
 	ParseState *pstate;
 	int			num_unnamed_parts = 0;
+	ListCell	*lc;
 
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	parentrel = table_open(parentrelid, NoLock);
+
+	/* Remove "tablename" cell from parentOptions, if exists */
+	extract_tablename_from_options(&parentoptions);
 
 	foreach(lc, gpPartSpec->partElem)
 	{
@@ -311,17 +319,23 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 		if (IsA(n, GpPartitionElem))
 		{
 			GpPartitionElem *elem = (GpPartitionElem *) n;
+			char *tablename;
 			List	   *new_parts;
 
 			if (subPartSpec)
 				subPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
 
-			if (elem->options == NIL)
-				elem->options = parentoptions;
-			if (elem->accessMethod == NULL)
-				elem->accessMethod = parentaccessmethod;
+			/* if WITH has "tablename" then it will be used as name for partition */
+			tablename = extract_tablename_from_options(&elem->options);
 
-			new_parts = generateSinglePartition(parentrel, elem, subPartSpec, queryString, &num_unnamed_parts);
+			if (elem->options == NIL)
+				elem->options = parentoptions ? copyObject(parentoptions) : NIL;
+			if (elem->accessMethod == NULL)
+				elem->accessMethod = parentaccessmethod ? pstrdup(parentaccessmethod) : NULL;
+
+			new_parts = generateSinglePartition(parentrel, elem, subPartSpec,
+												queryString, &num_unnamed_parts,
+												tablename);
 			result = list_concat(result, new_parts);
 		}
 		else if (IsA(n, ColumnReferenceStorageDirective))
@@ -626,7 +640,8 @@ generateRangePartitions(ParseState *pstate,
 						Relation parentrel,
 						GpPartitionElem *elem,
 						PartitionSpec *subPart,
-						int *num_unnamed_parts_p)
+						int *num_unnamed_parts_p,
+						char *tablename)
 {
 	GpPartitionBoundSpec *boundspec;
 	List	   *result = NIL;
@@ -736,7 +751,11 @@ generateRangePartitions(ParseState *pstate,
 			partname = elem->partName;
 
 		/* GPDB_12_MERGE_FIXME: pass correct level */
-		partname = ChoosePartitionName(parentrel, "1", partname, ++(*num_unnamed_parts_p));
+		if (tablename)
+			partname = tablename;
+		else
+			partname = ChoosePartitionName(parentrel, "1", partname, ++(*num_unnamed_parts_p));
+
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec,
 											subPart, elem);
 
@@ -753,7 +772,8 @@ generateListPartition(ParseState *pstate,
 					  Relation parentrel,
 					  GpPartitionElem *elem,
 					  PartitionSpec *subPart,
-					  int *num_unnamed_parts_p)
+					  int *num_unnamed_parts_p,
+					  char *tablename)
 {
 	GpPartitionValuesSpec *gpvaluesspec;
 	PartitionBoundSpec *boundspec;
@@ -804,9 +824,12 @@ generateListPartition(ParseState *pstate,
 	boundspec->location = -1;
 
 	/* GPDB_12_MERGE_FIXME: pass correct level */
-	partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
-	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
+	if (tablename)
+		partname = tablename;
+	else
+		partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
 
+	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
 										elem);
 
@@ -817,7 +840,8 @@ static List *
 generateDefaultPartition(ParseState *pstate,
 						 Relation parentrel,
 						 GpPartitionElem *elem,
-						 PartitionSpec *subPart)
+						 PartitionSpec *subPart,
+						 char *tablename)
 {
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
@@ -828,7 +852,10 @@ generateDefaultPartition(ParseState *pstate,
 	boundspec->location = -1;
 
 	/* GPDB_12_MERGE_FIXME: pass correct level */
-	partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
+	if (tablename)
+		partname = tablename;
+	else
+		partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
 	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
 										elem);
 
@@ -854,7 +881,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->partspec = subPart;
 	childstmt->ofTypename = NULL;
 	childstmt->constraints = NIL;
-	childstmt->options = elem->options;
+	childstmt->options = elem->options ? copyObject(elem->options) : NIL;
 	childstmt->oncommit = ONCOMMIT_NOOP;  // FIXME: copy from parent stmt?
 	childstmt->tablespacename = elem->tablespacename ? pstrdup(elem->tablespacename) : NULL;
 	childstmt->accessMethod = elem->accessMethod ? pstrdup(elem->accessMethod) : NULL;
@@ -885,4 +912,38 @@ ChoosePartitionName(Relation parentrel, const char *levelstr,
 							  partsubstring,
 							  RelationGetNamespace(parentrel),
 							  false);
+}
+
+static char *
+extract_tablename_from_options(List **options)
+{
+	ListCell *o_lc;
+	ListCell *prev_lc = NULL;
+	char *tablename = NULL;
+
+	foreach (o_lc, *options)
+	{
+		DefElem    *pDef = (DefElem *) lfirst(o_lc);
+
+		/*
+		 * get the tablename from the WITH, then remove this element
+		 * from the list
+		 */
+		if (0 == strcmp(pDef->defname, "tablename"))
+		{
+			/* if the string isn't quoted you get a typename ? */
+			if (!IsA(pDef->arg, String))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid tablename specification")));
+
+			char *relname_str = defGetString(pDef);
+			*options = list_delete_cell(*options, o_lc, prev_lc);
+			tablename = pstrdup(relname_str);
+			break;
+		}
+		prev_lc = o_lc;
+	}
+
+	return tablename;
 }
