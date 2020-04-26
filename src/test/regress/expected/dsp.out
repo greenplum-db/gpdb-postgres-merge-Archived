@@ -897,11 +897,11 @@ create external table ext_t3 (a int, b int)
     location ('file:///tmp/test.txt') format 'text'
     log errors persistently segment reject limit 100;
 \d+ ext_t3
-                           Foreign table "public.ext_t3"
- Column |  Type   | Modifiers | FDW Options | Storage | Stats target | Description 
---------+---------+-----------+-------------+---------+--------------+-------------
- a      | integer |           |             | plain   |              | 
- b      | integer |           |             | plain   |              | 
+                                     Foreign table "public.ext_t3"
+ Column |  Type   | Collation | Nullable | Default | FDW options | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+-------------+---------+--------------+-------------
+ a      | integer |           |          |         |             | plain   |              | 
+ b      | integer |           |          |         |             | plain   |              | 
 Type: readable
 Encoding: UTF8
 Format type: text
