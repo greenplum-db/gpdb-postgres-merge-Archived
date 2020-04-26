@@ -228,43 +228,12 @@ alter table foo_p split partition for(rank(1)) at (2) into (partition prt_11, pa
 
 drop table foo_p;
 drop role part_role;
--- with and without OIDs
--- MPP-8405: disallow OIDS on partitioned tables 
+-- WITH OIDS is no longer supported. Check that it't rejected with the GPDB
+-- partitioning syntax, too.
 create table foo_p (i int, j int) with (oids = true) distributed by (i)
 partition by range(j)
 (start(1) end(10) every(1));
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_1" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_2" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_3" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_4" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_5" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_6" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_7" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
-ERROR:  OIDS=TRUE is not allowed on partitioned tables
-HINT:  Use OIDS=FALSE.
--- but disallow exchange if different oid settings
-create table foo_p (i int, j int) with (oids = false) distributed by (i)
-partition by range(j)
-(start(1) end(10) every(1));
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_1" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_2" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_3" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_4" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_5" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_6" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_7" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
-create table bar_p (i int, j int) with (oids = true) distributed by (i);
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
--- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  "foo_p" and "bar_p" must have same OIDs setting
-drop table foo_p;
-drop table bar_p;
+ERROR:  tables declared WITH OIDS are not supported
 -- non-partition table involved in inheritance
 create table foo_p (i int, j int) distributed by (i)
 partition by range(j)
@@ -3458,16 +3427,12 @@ ERROR:  can't alter inheritance on "rank_damage_1_prt_1"; it is a partitioned ta
 alter table rank_damage_1_prt_1 alter column i type bigint;
 ERROR:  can't alter a column datatype of "rank_damage_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
-alter table rank_damage_1_prt_1 set without oids;
-ERROR:  can't alter the oid setting of "rank_damage_1_prt_1"; it is part of a partitioned table
-HINT:  You may be able to perform the operation on the partitioned table as a whole.
+alter table rank_damage_1_prt_1 set without oids; -- no-op
 alter table rank_damage_1_prt_1 drop constraint rank_damage_1_prt_1_check;
 ERROR:  can't drop a constraint from "rank_damage_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table rank_damage add partition ppo end (22) with (oids = true);
-NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_ppo" for table "rank_damage"
-ERROR:  OIDS=TRUE is not allowed on partitioned tables
-HINT:  Use OIDS=FALSE.
+ERROR:  tables declared WITH OIDS are not supported
 drop table rank_damage, rank2_damage;
 -- MPP-5831, type cast in SPLIT
 CREATE TABLE sg_cal_event_silvertail_hour (

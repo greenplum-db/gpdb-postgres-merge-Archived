@@ -1436,7 +1436,6 @@ alter table fff_main_1_prt_1 add column c int;
 create table fff_main2 (like fff_main);
 alter table fff_main_1_prt_1 inherit fff_main2;
 alter table fff_main_1_prt_1 alter column i type bigint;
-alter table fff_main_1_prt_1 set without oids;
 alter table fff_main_1_prt_1 drop constraint fff_main_1_prt_1_check;
 
 -- Add default partition

@@ -143,20 +143,12 @@ alter table foo_p split partition for(rank(1)) at (2) into (partition prt_11, pa
 drop table foo_p;
 
 drop role part_role;
--- with and without OIDs
--- MPP-8405: disallow OIDS on partitioned tables 
+
+-- WITH OIDS is no longer supported. Check that it't rejected with the GPDB
+-- partitioning syntax, too.
 create table foo_p (i int, j int) with (oids = true) distributed by (i)
 partition by range(j)
 (start(1) end(10) every(1));
--- but disallow exchange if different oid settings
-create table foo_p (i int, j int) with (oids = false) distributed by (i)
-partition by range(j)
-(start(1) end(10) every(1));
-create table bar_p (i int, j int) with (oids = true) distributed by (i);
--- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-drop table foo_p;
-drop table bar_p;
 
 -- non-partition table involved in inheritance
 create table foo_p (i int, j int) distributed by (i)
@@ -1775,7 +1767,7 @@ alter table rank_damage_1_prt_1 no inherit rank_damage;
 create table rank2_damage(like rank_damage);
 alter table rank_damage_1_prt_1 inherit rank2_damage;
 alter table rank_damage_1_prt_1 alter column i type bigint;
-alter table rank_damage_1_prt_1 set without oids;
+alter table rank_damage_1_prt_1 set without oids; -- no-op
 alter table rank_damage_1_prt_1 drop constraint rank_damage_1_prt_1_check;
 alter table rank_damage add partition ppo end (22) with (oids = true);
 drop table rank_damage, rank2_damage;

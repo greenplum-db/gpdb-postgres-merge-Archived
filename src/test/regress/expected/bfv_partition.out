@@ -3768,9 +3768,6 @@ ERROR:  can't alter inheritance on "fff_main_1_prt_1"; it is a partitioned table
 alter table fff_main_1_prt_1 alter column i type bigint;
 ERROR:  can't alter a column datatype of "fff_main_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
-alter table fff_main_1_prt_1 set without oids;
-ERROR:  can't alter the oid setting of "fff_main_1_prt_1"; it is part of a partitioned table
-HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table fff_main_1_prt_1 drop constraint fff_main_1_prt_1_check;
 ERROR:  can't drop a constraint from "fff_main_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
