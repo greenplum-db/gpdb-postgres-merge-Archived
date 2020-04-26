@@ -1,6 +1,9 @@
 --
 -- exercises for the hash join code
 --
+-- GPDB: Greenplum doesn't support parallel scans at the moment, so all the upstream
+-- parallelism tests don't really apply. We still run the tests, but they won't
+-- exercise parallelism.
 
 begin;
 
@@ -145,6 +148,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join simple s using (id);
 select count(*) from simple r join simple s using (id);
@@ -159,6 +163,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
@@ -174,6 +179,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '192kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
@@ -194,6 +200,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
 select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
@@ -208,6 +215,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -223,6 +231,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '192kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -244,6 +253,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
 select count(*) from simple r join extremely_skewed s using (id);
@@ -257,6 +267,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
@@ -271,6 +282,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '128kB';
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
@@ -313,6 +325,7 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
+set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -367,6 +380,7 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
+set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -452,10 +466,16 @@ rollback to settings;
 
 -- parallel with parallel-aware hash join (hits ExecParallelHashLoadTuple and
 -- sts_puttuple oversized tuple cases because it's multi-batch)
+
+-- GPDB_12_MERGE_FIXME: I (Heikki) could not cajole the planner to create a
+-- plan like in upstream. I accepted the plan you get, but now this doesn't
+-- exercise the special code path it's supposed to.
+
 savepoint settings;
 set max_parallel_workers_per_gather = 2;
 set enable_parallel_hash = on;
 set work_mem = '128kB';
+insert into wide select generate_series(3, 100) as id, rpad('', 320000, 'x') as t;
 explain (costs off)
   select length(max(s.t))
   from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);

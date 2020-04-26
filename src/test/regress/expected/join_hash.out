@@ -1,6 +1,9 @@
 --
 -- exercises for the hash join code
 --
+-- GPDB: Greenplum doesn't support parallel scans at the moment, so all the upstream
+-- parallelism tests don't really apply. We still run the tests, but they won't
+-- exercise parallelism.
 begin;
 -- GPDB requires allow_system_table_mods=on to modify pg_class.reltuples.
 set allow_system_table_mods=on;
@@ -61,6 +64,7 @@ analyze simple;
 create table bigger_than_it_looks as
   select generate_series(1, 20000) as id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 alter table bigger_than_it_looks set (autovacuum_enabled = 'false');
+WARNING:  autovacuum is not supported in Greenplum
 alter table bigger_than_it_looks set (parallel_workers = 2);
 analyze bigger_than_it_looks;
 update pg_class set reltuples = 1000 where relname = 'bigger_than_it_looks';
@@ -69,6 +73,7 @@ update pg_class set reltuples = 1000 where relname = 'bigger_than_it_looks';
 -- 2 rows, but actually there are 20,000 rows with the same key.
 create table extremely_skewed (id int, t text);
 alter table extremely_skewed set (autovacuum_enabled = 'false');
+WARNING:  autovacuum is not supported in Greenplum
 alter table extremely_skewed set (parallel_workers = 2);
 analyze extremely_skewed;
 insert into extremely_skewed
@@ -87,6 +92,7 @@ alter table wide set (parallel_workers = 2);
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 explain (costs off)
   select count(*) from simple r join simple s using (id);
                      QUERY PLAN                     
@@ -123,20 +129,21 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-                      QUERY PLAN                       
--------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
                ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
+                     ->  Seq Scan on simple r
                      ->  Hash
                            ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join simple s using (id);
@@ -160,20 +167,21 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-                         QUERY PLAN                          
--------------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Hash Join
+               ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on simple s
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join simple s using (id);
@@ -200,6 +208,8 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join simple s using (id);
                      QUERY PLAN                     
@@ -236,20 +246,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-                      QUERY PLAN                       
--------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
                ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
+                     ->  Seq Scan on simple r
                      ->  Hash
                            ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join simple s using (id);
@@ -273,20 +285,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '192kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
-                         QUERY PLAN                          
--------------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Hash Join
+               ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on simple s
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join simple s using (id);
@@ -314,6 +328,8 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
                             QUERY PLAN                            
@@ -350,20 +366,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
                ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
+                     ->  Seq Scan on simple r
                      ->  Hash
                            ->  Seq Scan on bigger_than_it_looks s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -387,20 +405,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '192kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 1
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Hash Join
+               ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on bigger_than_it_looks s
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on bigger_than_it_looks s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -429,6 +449,8 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
                           QUERY PLAN                          
@@ -464,20 +486,23 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
-                       QUERY PLAN                       
---------------------------------------------------------
- Aggregate
-   ->  Gather
-         Workers Planned: 2
-         ->  Hash Join
-               Hash Cond: (r.id = s.id)
-               ->  Parallel Seq Scan on simple r
-               ->  Hash
-                     ->  Seq Scan on extremely_skewed s
-(8 rows)
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on extremely_skewed s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) from simple r join extremely_skewed s using (id);
  count 
@@ -499,20 +524,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 1
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Hash Join
+               ->  Hash Join
                      Hash Cond: (r.id = s.id)
-                     ->  Parallel Seq Scan on simple r
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on extremely_skewed s
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on extremely_skewed s
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select count(*) from simple r join extremely_skewed s using (id);
@@ -527,7 +554,7 @@ $$
 $$);
  original | final 
 ----------+-------
-        1 |     4
+        1 |     2
 (1 row)
 
 rollback to settings;
@@ -536,6 +563,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 set local parallel_leader_participation = off;
 select * from hash_join_batches(
 $$
@@ -564,24 +592,29 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
     on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Aggregate
-   ->  Nested Loop Left Join
-         Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
-         ->  Seq Scan on join_foo
-         ->  Gather
-               Workers Planned: 2
-               ->  Hash Join
-                     Hash Cond: (b1.id = b2.id)
-                     ->  Parallel Seq Scan on join_bar b1
-                     ->  Hash
-                           ->  Seq Scan on join_bar b2
-(11 rows)
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Nested Loop Left Join
+                     Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
+                     ->  Seq Scan on join_foo
+                     ->  Materialize
+                           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                 ->  Hash Join
+                                       Hash Cond: (b1.id = b2.id)
+                                       ->  Seq Scan on join_bar b1
+                                       ->  Hash
+                                             ->  Seq Scan on join_bar b2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select count(*) from join_foo
   left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -615,24 +648,28 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
     on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Aggregate
-   ->  Nested Loop Left Join
-         Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
-         ->  Seq Scan on join_foo
-         ->  Gather
-               Workers Planned: 2
-               ->  Hash Join
-                     Hash Cond: (b1.id = b2.id)
-                     ->  Parallel Seq Scan on join_bar b1
-                     ->  Hash
-                           ->  Seq Scan on join_bar b2
-(11 rows)
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Nested Loop Left Join
+                     Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
+                     ->  Seq Scan on join_foo
+                     ->  Materialize
+                           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                 ->  Hash Join
+                                       Hash Cond: (b1.id = b2.id)
+                                       ->  Seq Scan on join_bar b1
+                                       ->  Hash
+                                             ->  Seq Scan on join_bar b2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select count(*) from join_foo
   left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -666,24 +703,29 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
     on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Aggregate
-   ->  Nested Loop Left Join
-         Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
-         ->  Seq Scan on join_foo
-         ->  Gather
-               Workers Planned: 2
-               ->  Parallel Hash Join
-                     Hash Cond: (b1.id = b2.id)
-                     ->  Parallel Seq Scan on join_bar b1
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on join_bar b2
-(11 rows)
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Nested Loop Left Join
+                     Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
+                     ->  Seq Scan on join_foo
+                     ->  Materialize
+                           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                 ->  Hash Join
+                                       Hash Cond: (b1.id = b2.id)
+                                       ->  Seq Scan on join_bar b1
+                                       ->  Hash
+                                             ->  Seq Scan on join_bar b2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select count(*) from join_foo
   left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -717,24 +759,28 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '4MB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
     on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Aggregate
-   ->  Nested Loop Left Join
-         Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
-         ->  Seq Scan on join_foo
-         ->  Gather
-               Workers Planned: 2
-               ->  Parallel Hash Join
-                     Hash Cond: (b1.id = b2.id)
-                     ->  Parallel Seq Scan on join_bar b1
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on join_bar b2
-(11 rows)
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Nested Loop Left Join
+                     Join Filter: ((join_foo.id < (b1.id + 1)) AND (join_foo.id > (b1.id - 1)))
+                     ->  Seq Scan on join_foo
+                     ->  Materialize
+                           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                 ->  Hash Join
+                                       Hash Cond: (b1.id = b2.id)
+                                       ->  Seq Scan on join_bar b1
+                                       ->  Hash
+                                             ->  Seq Scan on join_bar b2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select count(*) from join_foo
   left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -763,15 +809,18 @@ savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 explain (costs off)
      select  count(*) from simple r full outer join simple s using (id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Full Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on simple s
-(6 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Full Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select  count(*) from simple r full outer join simple s using (id);
  count 
@@ -785,15 +834,18 @@ savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 explain (costs off)
      select  count(*) from simple r full outer join simple s using (id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Full Join
-         Hash Cond: (r.id = s.id)
-         ->  Seq Scan on simple r
-         ->  Hash
-               ->  Seq Scan on simple s
-(6 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Full Join
+                     Hash Cond: (r.id = s.id)
+                     ->  Seq Scan on simple r
+                     ->  Hash
+                           ->  Seq Scan on simple s
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select  count(*) from simple r full outer join simple s using (id);
  count 
@@ -808,15 +860,20 @@ savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 explain (costs off)
      select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Full Join
-         Hash Cond: ((0 - s.id) = r.id)
-         ->  Seq Scan on simple s
-         ->  Hash
-               ->  Seq Scan on simple r
-(6 rows)
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Full Join
+                     Hash Cond: ((0 - s.id) = r.id)
+                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                           Hash Key: (0 - s.id)
+                           ->  Seq Scan on simple s
+                     ->  Hash
+                           ->  Seq Scan on simple r
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
  count 
@@ -830,15 +887,20 @@ savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 explain (costs off)
      select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
-               QUERY PLAN               
-----------------------------------------
- Aggregate
-   ->  Hash Full Join
-         Hash Cond: ((0 - s.id) = r.id)
-         ->  Seq Scan on simple s
-         ->  Hash
-               ->  Seq Scan on simple r
-(6 rows)
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Partial Aggregate
+               ->  Hash Full Join
+                     Hash Cond: ((0 - s.id) = r.id)
+                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                           Hash Key: (0 - s.id)
+                           ->  Seq Scan on simple s
+                     ->  Hash
+                           ->  Seq Scan on simple r
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
  count 
@@ -852,24 +914,29 @@ rollback to settings;
 -- the hash table)
 -- parallel with parallel-aware hash join (hits ExecParallelHashLoadTuple and
 -- sts_puttuple oversized tuple cases because it's multi-batch)
+-- GPDB_12_MERGE_FIXME: I (Heikki) could not cajole the planner to create a
+-- plan like in upstream. I accepted the plan you get, but now this doesn't
+-- exercise the special code path it's supposed to.
 savepoint settings;
 set max_parallel_workers_per_gather = 2;
 set enable_parallel_hash = on;
 set work_mem = '128kB';
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
+insert into wide select generate_series(3, 100) as id, rpad('', 320000, 'x') as t;
 explain (costs off)
   select length(max(s.t))
   from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 2
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Hash Left Join
-                     Hash Cond: (wide.id = wide_1.id)
-                     ->  Parallel Seq Scan on wide
-                     ->  Parallel Hash
-                           ->  Parallel Seq Scan on wide wide_1
+               ->  Hash Right Join
+                     Hash Cond: (wide_1.id = wide.id)
+                     ->  Seq Scan on wide wide_1
+                     ->  Hash
+                           ->  Seq Scan on wide
+ Optimizer: Postgres query optimizer
 (9 rows)
 
 select length(max(s.t))
@@ -887,7 +954,7 @@ $$
 $$);
  multibatch 
 ------------
- t
+ f
 (1 row)
 
 rollback to settings;
