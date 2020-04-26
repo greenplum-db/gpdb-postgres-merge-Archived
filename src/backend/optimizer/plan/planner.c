@@ -7834,6 +7834,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										   grouped_rel,
 										   grouped_rel->reltarget,
 										   partially_grouped_target,
+										   havingQual,
                                            ((extra->flags & GROUPING_CAN_USE_SORT) != 0), /* can_sort */
 										   can_mpp_hash,
 										   dNumGroups,

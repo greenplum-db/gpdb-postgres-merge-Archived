@@ -54,6 +54,7 @@ typedef struct
 {
 	/* Inputs from the caller */
 	DQAType     type;
+	List	   *havingQual;
 	PathTarget *target;
 	PathTarget *partial_grouping_target;
 	double		dNumGroups;
@@ -145,6 +146,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 								   RelOptInfo *output_rel,
 								   PathTarget *target,
 								   PathTarget *partial_grouping_target,
+								   List *havingQual,
 								   bool can_sort,
 								   bool can_hash,
 								   double dNumGroups,
@@ -186,6 +188,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 		return;
 
 	memset(&ctx, 0, sizeof(ctx));
+	ctx.havingQual = havingQual;
 	ctx.target = target;
 	ctx.partial_grouping_target = partial_grouping_target;
 	ctx.dNumGroups = dNumGroups;
@@ -585,7 +588,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 										AGGSPLIT_FINAL_DESERIAL,
 										false, /* streaming */
 										grouping_sets_groupClause,
-										(List *) parse->havingQual,
+										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroups);
 	}
@@ -599,7 +602,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 										AGGSPLIT_FINAL_DESERIAL,
 										false, /* streaming */
 										parse->groupClause,
-										(List *) parse->havingQual,
+										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroups);
 	}
@@ -665,7 +668,7 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 									AGGSPLIT_FINAL_DESERIAL,
 									false, /* streaming */
 									parse->groupClause,
-									(List *) parse->havingQual,
+									ctx->havingQual,
 									ctx->agg_final_costs,
 									ctx->dNumGroups);
 	add_path(output_rel, path);
@@ -772,7 +775,7 @@ static void add_single_mixed_dqa_hash_agg_path(PlannerInfo *root,
 		                                AGGSPLIT_FINAL_DESERIAL,
 		                                false, /* streaming */
 		                                parse->groupClause,
-		                                (List *) parse->havingQual,
+		                                ctx->havingQual,
 		                                ctx->agg_final_costs,
 		                                ctx->dNumGroups);
 		add_path(output_rel, path);
@@ -878,7 +881,7 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										AGGSPLIT_DEDUPLICATED,
 										false, /* streaming */
 										parse->groupClause,
-										(List *) parse->havingQual,
+										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroups);
 		add_path(output_rel, path);
@@ -935,7 +938,7 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										AGGSPLIT_DEDUPLICATED,
 										false, /* streaming */
 										parse->groupClause,
-										(List *) parse->havingQual,
+										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroups);
 		add_path(output_rel, path);
@@ -1005,7 +1008,7 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										AGGSPLIT_FINAL_DESERIAL | AGGSPLITOP_DEDUPLICATED,
 										false, /* streaming */
 										parse->groupClause,
-										(List *) parse->havingQual,
+										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroups);
 
@@ -1179,7 +1182,7 @@ add_multi_dqas_hash_agg_path(PlannerInfo *root,
 									AGGSPLIT_FINAL_DESERIAL | DEDUPLICATED_FLAG,
 									false, /* streaming */
 									root->parse->groupClause,
-									(List *) root->parse->havingQual,
+									ctx->havingQual,
 									ctx->agg_final_costs,
 									ctx->dNumGroups);
 
