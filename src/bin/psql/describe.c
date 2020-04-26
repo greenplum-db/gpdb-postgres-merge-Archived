@@ -55,6 +55,7 @@ static bool isGPDB(void);
 static bool isGPDB4200OrLater(void);
 static bool isGPDB5000OrLater(void);
 static bool isGPDB6000OrLater(void);
+static bool isGPDB7000OrLater(void);
 
 static bool isGPDB(void)
 {
@@ -167,7 +168,28 @@ isGPDB6000OrLater(void)
 		return false;		/* Not Greenplum at all. */
 
 	/* GPDB 6 is based on PostgreSQL 8.4 */
+	/* GPDB_12_MERGE_FIXME: This isn't new with the merge, but GPDB 6 is based on 9.4, not 8.4 */
 	return pset.sversion >= 80400;
+}
+
+static bool
+isGPDB6000OrBelow(void)
+{
+	if (!isGPDB())
+		return false;		/* Not Greenplum at all. */
+
+	/* GPDB 6 is based on PostgreSQL 9.4 */
+	return pset.sversion <= 90400;
+}
+
+static bool
+isGPDB7000OrLater(void)
+{
+	if (!isGPDB())
+		return false;		/* Not Greenplum at all. */
+
+	/* GPDB 7 is based on PostgreSQL v12 */
+	return pset.sversion >= 120000;
 }
 
 /*----------------
@@ -4558,12 +4580,27 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	/* Show Storage type for tables */
 	if (showTables && isGPDB())
 	{
-		appendPQExpBuffer(&buf, ", CASE c.relam");
-		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", HEAP_TABLE_AM_OID, gettext_noop("heap"));
-		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", APPENDOPTIMIZED_TABLE_AM_OID, gettext_noop("append only"));
-		appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only"));
-		/* GPDB_12_MERGE_FIXME fill other storage types */
-		appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
+		if (isGPDB7000OrLater())
+		{
+			appendPQExpBuffer(&buf, ", CASE c.relam");
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", HEAP_TABLE_AM_OID, gettext_noop("heap"));
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", APPENDOPTIMIZED_TABLE_AM_OID, gettext_noop("append only"));
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only"));
+			/* GPDB_12_MERGE_FIXME fill other storage types */
+			appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
+		}
+		else
+		{
+			appendPQExpBuffer(&buf, ", CASE c.relstorage");
+			appendPQExpBuffer(&buf, " WHEN 'h' THEN '%s'", gettext_noop("heap"));
+			appendPQExpBuffer(&buf, " WHEN 'x' THEN '%s'", gettext_noop("external"));
+			appendPQExpBuffer(&buf, " WHEN 'a' THEN '%s'", gettext_noop("append only"));
+			appendPQExpBuffer(&buf, " WHEN 'v' THEN '%s'", gettext_noop("none"));
+			appendPQExpBuffer(&buf, " WHEN 'c' THEN '%s'", gettext_noop("append only columnar"));
+			appendPQExpBuffer(&buf, " WHEN 'p' THEN '%s'", gettext_noop("Apache Parquet"));
+			appendPQExpBuffer(&buf, " WHEN 'f' THEN '%s'", gettext_noop("foreign"));
+			appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
+		}
 	}
 
 	if (showIndexes)
@@ -4600,7 +4637,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 							 "\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid");
 
 	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
-	if (showTables || showExternal)
+	if (showTables ||
+		(showExternal && isGPDB6000OrBelow()))
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_RELATION) ","
 							 CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
 	if (showViews)
@@ -4620,8 +4658,12 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBufferStr(&buf, "''");	/* dummy */
 	appendPQExpBufferStr(&buf, ")\n");
 
-#if 0 /* GPDB_12_MERGE_FIXME */
-	if (isGPDB())   /* GPDB? */
+	/*
+	 * GDPB 6 and earlier versions had pg_class.relstorage column, to distinguish
+	 * external and other kinds of tables. It's gone in GPDB 6, we use relkind and
+	 * relam fields now.
+	 */
+	if (isGPDB6000OrBelow())   /* GPDB? */
 	{
 		appendPQExpBuffer(&buf, "AND c.relstorage IN (");
 		if (showTables || showIndexes || showSeq || (showSystem && showTables))
@@ -4635,7 +4677,6 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 		appendPQExpBuffer(&buf, "''");		/* dummy */
 		appendPQExpBuffer(&buf, ")\n");
 	}
-#endif
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
