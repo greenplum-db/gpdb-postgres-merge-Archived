@@ -7196,8 +7196,8 @@ NOTICE:  CREATE TABLE will create partition "part_tab_1_prt_4" for table "part_t
 NOTICE:  CREATE TABLE will create partition "part_tab_1_prt_5" for table "part_tab"
 -- Wrong part
 insert into part_tab_1_prt_1 values(5,5);
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: part_tab_1_prt_3, provided partition: part_tab_1_prt_1.
+ERROR:  new row for relation "part_tab_1_prt_1" violates partition constraint  (seg2 127.0.0.1:40002 pid=18534)
+DETAIL:  Failing row contains (5, 5).
 select * from part_tab;
  i | j 
 ---+---
@@ -7209,8 +7209,8 @@ select * from part_tab_1_prt_1;
 (0 rows)
 
 insert into part_tab_1_prt_2 values(5,5);
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: part_tab_1_prt_3, provided partition: part_tab_1_prt_2.
+ERROR:  new row for relation "part_tab_1_prt_2" violates partition constraint  (seg2 127.0.0.1:40002 pid=18534)
+DETAIL:  Failing row contains (5, 5).
 select * from part_tab;
  i | j 
 ---+---
@@ -7259,8 +7259,8 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 insert into input2 select i, i from (select generate_series(1,10) as i) as t;
 -- Multiple range table entries in the plan
 insert into part_tab_1_prt_1 select i1.x, i2.y from input1 as i1 join input2 as i2 on i1.x = i2.x where i2.y = 5;
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: part_tab_1_prt_3, provided partition: part_tab_1_prt_1.
+ERROR:  new row for relation "part_tab_1_prt_1" violates partition constraint  (seg2 127.0.0.1:40002 pid=18534)
+DETAIL:  Failing row contains (5, 5).
 analyze part_tab;
 select * from part_tab;
  i | j 
@@ -7275,8 +7275,8 @@ select * from part_tab_1_prt_1;
 (0 rows)
 
 insert into part_tab_1_prt_2 select i1.x, i2.y from input1 as i1 join input2 as i2 on i1.x = i2.x where i2.y = 5;
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: part_tab_1_prt_3, provided partition: part_tab_1_prt_2.
+ERROR:  new row for relation "part_tab_1_prt_2" violates partition constraint  (seg2 127.0.0.1:40002 pid=18534)
+DETAIL:  Failing row contains (5, 5).
 select * from part_tab;
  i | j 
 ---+---
