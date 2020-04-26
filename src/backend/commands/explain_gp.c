@@ -57,6 +57,7 @@ typedef struct CdbExplain_StatInst
 	instr_time	firststart;		/* Start time of first iteration of node */
 	int			numPartScanned; /* Number of part tables scanned */
 	TuplesortInstrumentation sortstats; /* Sort stats, if this is a Sort node */
+	HashInstrumentation hashstats; /* Hash stats, if this is a Hash node */
 	int			bnotes;			/* Offset to beginning of node's extra text */
 	int			enotes;			/* Offset to end of node's extra text */
 } CdbExplain_StatInst;
@@ -833,6 +834,12 @@ cdbexplain_collectStatsFromNode(PlanState *planstate, CdbExplain_SendStatCtx *ct
 
 		si->sortstats = sortstate->sortstats;
 	}
+	if (IsA(planstate, HashState))
+	{
+		HashState *hashstate = (HashState *) planstate;
+
+		ExecHashGetInstrumentation(&si->hashstats, hashstate->hashtable);
+	}
 }								/* cdbexplain_collectStatsFromNode */
 
 
@@ -1034,6 +1041,14 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 									  (double) rsi->sortstats.spaceUsed, rsh, rsi, nsi);
 		}
 
+		Assert(rsi->sortstats.sortMethod < NUM_SORT_METHOD);
+		Assert(rsi->sortstats.spaceType < NUM_SORT_SPACE_TYPE);
+		if (rsi->sortstats.sortMethod != SORT_TYPE_STILL_IN_PROGRESS)
+		{
+			cdbexplain_depStatAcc_upd(&sortSpaceUsed[rsi->sortstats.spaceType][rsi->sortstats.sortMethod],
+									  (double) rsi->sortstats.spaceUsed, rsh, rsi, nsi);
+		}
+
 		/* Update per-slice accumulators. */
 		cdbexplain_depStatAcc_upd(&peakmemused, rsh->worker.peakmemused, rsh, rsi, nsi);
 		cdbexplain_depStatAcc_upd(&vmem_reserved, rsh->worker.vmem_reserved, rsh, rsi, nsi);
@@ -1112,6 +1127,39 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 		if (!saved ||
 			ntuples.agg.vmax > 1.05 * cdbexplain_agg_avg(&ntuples.agg))
 			cdbexplain_depStatAcc_saveText(&ntuples, ctx->extratextbuf, &saved);
+	}
+
+	/*
+	 * If this is a HashState, construct a SharedHashInfo with the stats from
+	 * all the QEs. In PostgreSQL, SharedHashInfo is used to show stats of all
+	 * the worker processes, we use it to show stats from all the QEs instead.
+	 *
+	 * GPDB_12_MERGE_FIXME: Should we do the same for Sort stats nowadays?
+	 */
+	if (IsA(planstate, HashState))
+	{
+		/* GPDB: Collect the results from all QE processes */
+		HashState *hashstate = (HashState *) planstate;
+		SharedHashInfo *shared_state;
+
+		size_t		size;
+
+		size = offsetof(SharedHashInfo, hinstrument) +
+			ctx->nmsgptr * sizeof(HashInstrumentation);
+		shared_state = palloc0(size);
+		shared_state->num_workers = ctx->nmsgptr;
+
+		/* Examine the statistics from each qExec. */
+		for (imsgptr = 0; imsgptr < ctx->nmsgptr; imsgptr++)
+		{
+			/* Locate PlanState node's StatInst received from this qExec. */
+			rsh = ctx->msgptrs[imsgptr];
+			rsi = &rsh->inst[ctx->iStatInst];
+
+			memcpy(&shared_state->hinstrument[imsgptr], &rsi->hashstats, sizeof(HashInstrumentation));
+		}
+
+		hashstate->shared_info = shared_state;
 	}
 }								/* cdbexplain_depositStatsToNode */
 
