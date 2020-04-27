@@ -1128,12 +1128,12 @@ FROM tenk1 WHERE unique1 < 10
 WINDOW w AS (order by four range between current row and unbounded following);
  first_value | nth_2 | last_value | unique1 | four 
 -------------+-------+------------+---------+------
-           4 |     0 |          7 |       4 |    0
-           4 |     0 |          7 |       0 |    0
-           4 |     0 |          7 |       8 |    0
-           1 |     5 |          7 |       1 |    1
-           1 |     5 |          7 |       5 |    1
-           1 |     5 |          7 |       9 |    1
+           0 |     8 |          7 |       0 |    0
+           0 |     8 |          7 |       8 |    0
+           0 |     8 |          7 |       4 |    0
+           5 |     9 |          7 |       5 |    1
+           5 |     9 |          7 |       9 |    1
+           5 |     9 |          7 |       1 |    1
            6 |     2 |          7 |       6 |    2
            6 |     2 |          7 |       2 |    2
            3 |     7 |          7 |       3 |    3
@@ -2110,10 +2110,10 @@ window w as (order by f_time desc range between
  10 | 20:00:00 |          10 |          8
   9 | 19:00:00 |          10 |          7
   8 | 18:00:00 |           9 |          7
-  7 | 17:00:00 |           8 |          5
-  6 | 15:00:00 |           6 |          3
-  5 | 15:00:00 |           6 |          3
-  4 | 14:00:00 |           6 |          2
+  7 | 17:00:00 |           8 |          6
+  5 | 15:00:00 |           5 |          3
+  6 | 15:00:00 |           5 |          3
+  4 | 14:00:00 |           5 |          2
   3 | 13:00:00 |           4 |          1
   2 | 12:00:00 |           3 |          1
   1 | 11:00:00 |           2 |          1
@@ -2146,10 +2146,10 @@ window w as (order by f_timetz desc range between
  10 | 20:00:00+01 |          10 |          8
   9 | 19:00:00+01 |          10 |          7
   8 | 18:00:00+01 |           9 |          7
-  7 | 17:00:00+01 |           8 |          5
-  6 | 15:00:00+01 |           6 |          3
-  5 | 15:00:00+01 |           6 |          3
-  4 | 14:00:00+01 |           6 |          2
+  7 | 17:00:00+01 |           8 |          6
+  6 | 15:00:00+01 |           5 |          3
+  5 | 15:00:00+01 |           5 |          3
+  4 | 14:00:00+01 |           5 |          2
   3 | 13:00:00+01 |           4 |          1
   2 | 12:00:00+01 |           3 |          1
   1 | 11:00:00+01 |           2 |          1
@@ -2183,9 +2183,9 @@ window w as (order by f_interval desc range between
   9 | @ 9 years  |          10 |          8
   8 | @ 8 years  |           9 |          7
   7 | @ 7 years  |           8 |          7
-  6 | @ 5 years  |           6 |          4
-  5 | @ 5 years  |           6 |          4
-  4 | @ 4 years  |           6 |          3
+  6 | @ 5 years  |           5 |          4
+  5 | @ 5 years  |           5 |          4
+  4 | @ 4 years  |           5 |          3
   3 | @ 3 years  |           4 |          2
   2 | @ 2 years  |           3 |          1
   1 | @ 1 year   |           2 |          1
@@ -2221,10 +2221,10 @@ window w as (order by f_timestamptz desc range between
   7 | Wed Oct 19 02:23:54 2005 PDT |           8 |          6
   6 | Tue Oct 19 02:23:54 2004 PDT |           7 |          5
   5 | Sun Oct 19 02:23:54 2003 PDT |           6 |          4
-  4 | Sat Oct 19 02:23:54 2002 PDT |           5 |          2
+  4 | Sat Oct 19 02:23:54 2002 PDT |           5 |          3
   3 | Fri Oct 19 02:23:54 2001 PDT |           4 |          1
   2 | Fri Oct 19 02:23:54 2001 PDT |           4 |          1
-  1 | Thu Oct 19 02:23:54 2000 PDT |           3 |          1
+  1 | Thu Oct 19 02:23:54 2000 PDT |           2 |          1
 (10 rows)
 
 select id, f_timestamp, first_value(id) over w, last_value(id) over w
@@ -2257,10 +2257,10 @@ window w as (order by f_timestamp desc range between
   7 | Wed Oct 19 10:23:54 2005 |           8 |          6
   6 | Tue Oct 19 10:23:54 2004 |           7 |          5
   5 | Sun Oct 19 10:23:54 2003 |           6 |          4
-  4 | Sat Oct 19 10:23:54 2002 |           5 |          2
+  4 | Sat Oct 19 10:23:54 2002 |           5 |          3
   3 | Fri Oct 19 10:23:54 2001 |           4 |          1
   2 | Fri Oct 19 10:23:54 2001 |           4 |          1
-  1 | Thu Oct 19 10:23:54 2000 |           3 |          1
+  1 | Thu Oct 19 10:23:54 2000 |           2 |          1
 (10 rows)
 
 -- RANGE offset PRECEDING/FOLLOWING error cases
@@ -3038,20 +3038,21 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
  Subquery Scan on emp
    ->  Gather Motion 1:1  (slice1; segments: 1)
          Merge Key: (((empsalary.depname)::text || 'A'::text))
          ->  WindowAgg
+               Partition By: empsalary.depname
                ->  WindowAgg
-                     Partition By: (((empsalary.depname)::text || 'A'::text))
+                     Partition By: (((empsalary.depname)::text || 'A'::text)), empsalary.depname
                      ->  Sort
                            Sort Key: (((empsalary.depname)::text || 'A'::text))
                            ->  Seq Scan on empsalary
                                  Filter: ((depname)::text = 'sales'::text)
  Optimizer: Postgres query optimizer
-(11 rows)
+(12 rows)
 
 -- pushdown is unsafe because there's a PARTITION BY clause without depname:
 EXPLAIN (COSTS OFF)
