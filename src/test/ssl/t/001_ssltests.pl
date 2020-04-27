@@ -2,13 +2,8 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 40;
-use ServerSetup;
-=======
 use Test::More;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 use File::Copy;
 
 use FindBin;
@@ -35,55 +30,10 @@ my $SERVERHOSTADDR = '127.0.0.1';
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
 
-<<<<<<< HEAD
-sub run_test_psql
-{
-	my $connstr   = $_[0];
-	my $logstring = $_[1];
-
-	local $ENV{PGOPTIONS} = '-c gp_session_role=utility';
-
-	my $cmd = [
-		'psql', '-X', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
-		'-d', "$connstr" ];
-
-	my $result = run_log($cmd);
-	return $result;
-}
-
-#
-# The first argument is a (part of a) connection string, and it's also printed
-# out as the test case name. It is appended to $common_connstr global variable,
-# which also contains a libpq connection string.
-#
-# The second argument is a hostname to connect to.
-sub test_connect_ok
-{
-	my $connstr = $_[0];
-
-	my $result =
-	  run_test_psql("$common_connstr $connstr", "(should succeed)");
-	ok($result, $connstr);
-}
-
-sub test_connect_fails
-{
-	my $connstr = $_[0];
-
-	my $result = run_test_psql("$common_connstr $connstr", "(should fail)");
-	ok(!$result, "$connstr (should fail)");
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 # The client's private key must not be world-readable, so take a copy
 # of the key stored in the code tree and update its permissions.
 copy("ssl/client.key", "ssl/client_tmp.key");
 chmod 0600, "ssl/client_tmp.key";
-<<<<<<< HEAD
-
-#### Part 0. Set up the server.
-=======
 copy("ssl/client-revoked.key", "ssl/client-revoked_tmp.key");
 chmod 0600, "ssl/client-revoked_tmp.key";
 
@@ -94,7 +44,6 @@ copy("ssl/client.key", "ssl/client_wrongperms_tmp.key");
 chmod 0644, "ssl/client_wrongperms_tmp.key";
 
 #### Set up the server.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 note "setting up data directory";
 my $node = get_new_node('master');
@@ -145,45 +94,12 @@ $node->_update_pid(1);
 ### client certificate is used in these tests.
 
 note "running client tests";
-<<<<<<< HEAD
-=======
 
 switch_server_cert($node, 'server-cn-only');
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 $common_connstr =
   "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
-<<<<<<< HEAD
-# The server should not accept non-SSL connections
-note "test that the server doesn't accept non-SSL connections";
-test_connect_fails("sslmode=disable");
-
-# Try without a root cert. In sslmode=require, this should work. In verify-ca
-# or verify-full mode it should fail
-note "connect without server root cert";
-test_connect_ok("sslrootcert=invalid sslmode=require");
-test_connect_fails("sslrootcert=invalid sslmode=verify-ca");
-test_connect_fails("sslrootcert=invalid sslmode=verify-full");
-
-# Try with wrong root cert, should fail. (we're using the client CA as the
-# root, but the server's key is signed by the server CA)
-note "connect without wrong server root cert";
-test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=require");
-test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=verify-ca");
-test_connect_fails("sslrootcert=ssl/client_ca.crt sslmode=verify-full");
-
-# Try with just the server CA's cert. This fails because the root file
-# must contain the whole chain up to the root CA.
-note "connect with server CA cert, without root CA";
-test_connect_fails("sslrootcert=ssl/server_ca.crt sslmode=verify-ca");
-
-# And finally, with the correct root cert.
-note "connect with correct server CA cert file";
-test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=require");
-test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca");
-test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-full");
-=======
 # The server should not accept non-SSL connections.
 test_connect_fails(
 	$common_connstr, "sslmode=disable",
@@ -238,7 +154,6 @@ test_connect_ok(
 	$common_connstr,
 	"sslrootcert=ssl/root+server_ca.crt sslmode=verify-full",
 	"connect with correct server CA cert file sslmode=verify-full");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # Test with cert root file that contains two certificates. The client should
 # be able to pick the right one, regardless of the order in the file.
@@ -251,11 +166,7 @@ test_connect_ok(
 	"sslrootcert=ssl/both-cas-2.crt sslmode=verify-ca",
 	"cert root file that contains two certificates, order 2");
 
-<<<<<<< HEAD
-note "testing sslcrl option with a non-revoked cert";
-=======
 # CRL tests
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # Invalid CRL filename is the same as no CRL, succeeds
 test_connect_ok(
@@ -278,10 +189,6 @@ test_connect_ok(
 
 # Check that connecting with verify-full fails, when the hostname doesn't
 # match the hostname in the server's certificate.
-<<<<<<< HEAD
-note "test mismatch between hostname and server certificate";
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 $common_connstr =
   "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
@@ -391,10 +298,6 @@ test_connect_fails(
 	"server certificate without CN or SANs sslmode=verify-full");
 
 # Test that the CRL works
-<<<<<<< HEAD
-note "testing client-side CRL";
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
@@ -421,20 +324,16 @@ command_like(
 		"$common_connstr sslrootcert=invalid", '-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_$}mx,
+	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_\r?$}mx,
 	'pg_stat_ssl view without client certificate');
 
 ### Server-side tests.
 ###
 ### Test certificate authorization.
 
-<<<<<<< HEAD
-note "testing certificate authorization";
-=======
 note "running server tests";
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 $common_connstr =
   "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
 
@@ -447,13 +346,6 @@ test_connect_fails(
 
 # correct client cert
 test_connect_ok(
-<<<<<<< HEAD
-	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key");
-
-# client cert belonging to another user
-test_connect_fails(
-	"user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key");
-=======
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	"certificate authorization succeeds with correct client cert");
@@ -473,16 +365,21 @@ command_like(
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E$}mx,
+	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,
 	'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions
-test_connect_fails(
-	$common_connstr,
-	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
-	qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
-	"certificate authorization fails because of file permissions");
+SKIP:
+{
+	skip "Permissions check not enforced on Windows", 2 if ($windows_os);
+
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
+		qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
+		"certificate authorization fails because of file permissions");
+}
 
 # client cert belonging to another user
 test_connect_fails(
@@ -491,7 +388,6 @@ test_connect_fails(
 	qr/certificate authentication failed for user "anotheruser"/,
 	"certificate authorization fails with client cert belonging to another user"
 );
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # revoked client cert
 test_connect_fails(
@@ -512,18 +408,6 @@ test_connect_ok(
 	"auth_option clientcert=verify-full succeeds with matching username and Common Name"
 );
 
-<<<<<<< HEAD
-# intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
-switch_server_cert($node, 'server-cn-only', 'root_ca');
-$common_connstr =
-"user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
-
-test_connect_ok("sslmode=require sslcert=ssl/client+client_ca.crt");
-test_connect_fails("sslmode=require sslcert=ssl/client.crt");
-
-# clean up
-unlink "ssl/client_tmp.key";
-=======
 test_connect_fails(
 	$common_connstr,
 	"user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
@@ -554,4 +438,3 @@ test_connect_fails($common_connstr, "sslmode=require sslcert=ssl/client.crt",
 # clean up
 unlink("ssl/client_tmp.key", "ssl/client_wrongperms_tmp.key",
 	"ssl/client-revoked_tmp.key");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
