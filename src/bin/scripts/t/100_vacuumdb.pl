@@ -112,4 +112,3 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
 	qr/GREATEST.*relfrozenxid.*2147483001/,
 	'vacuumdb --table --min-xid-age');
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
