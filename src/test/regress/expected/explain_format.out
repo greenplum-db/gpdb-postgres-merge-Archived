@@ -63,8 +63,10 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
                            Hash Key: boxes.apple_id
                            ->  Seq Scan on boxes  (cost=0.00..879.00 rows=25967 width=12) (never executed)
                      ->  Hash  (cost=1111.00..1111.00 rows=33334 width=36) (actual time=39.093..39.093 rows=33462 loops=1)
+                           Buckets: 131072  Batches: 1  Memory Usage: 2332kB
                            ->  Seq Scan on apples  (cost=0.00..1111.00 rows=33334 width=36) (actual time=0.075..10.163 rows=33462 loops=1)
          ->  Hash  (cost=596.00..596.00 rows=16534 width=36) (never executed)
+               Buckets: 131072  Batches: 1  Memory Usage: 1024kB
                ->  Seq Scan on box_locations  (cost=0.00..596.00 rows=16534 width=36) (never executed)
  Planning Time: 2.219 ms
    (slice0)    Executor memory: 127K bytes.
@@ -369,6 +371,11 @@ QUERY PLAN
                     Actual Total Time: 58.354
                     Actual Rows: 33462
                     Actual Loops: 1
+                    Hash Buckets: 131072
+                    Original Hash Buckets: 131072
+                    Hash Batches: 1
+                    Original Hash Batches: 1
+                    Peak Memory Usage: 2332
                     Plans: 
                       - Node Type: "Seq Scan"
                         Parent Relationship: "Outer"
@@ -400,6 +407,11 @@ QUERY PLAN
             Actual Total Time: 0.000
             Actual Rows: 0
             Actual Loops: 0
+            Hash Buckets: 131072
+            Original Hash Buckets: 131072
+            Hash Batches: 1
+            Original Hash Batches: 1
+            Peak Memory Usage: 1024
             Plans: 
               - Node Type: "Seq Scan"
                 Parent Relationship: "Outer"
