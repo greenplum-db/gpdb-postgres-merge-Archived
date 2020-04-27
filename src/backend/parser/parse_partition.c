@@ -698,7 +698,15 @@ generateRangePartitions(ParseState *pstate,
 		end = linitial(boundspec->partEnd);
 	}
 
-	if (boundspec->partEvery)
+	/*
+	 * Tablename is used by legacy dump and restore ONLY. If tablename is
+	 * specified expectation is to ignore the EVERY clause even if
+	 * specified. Ideally, dump should never dump the partition CREATE stmts
+	 * with EVERY clause, but somehow old code didn't remove EVERY clause from
+	 * dump instead ignored the same during restores. Hence, we need to carry
+	 * the same hack in new code.
+	 */
+	if (tablename == NULL && boundspec->partEvery)
 	{
 		if (list_length(boundspec->partEvery) != partkey->partnatts)
 			elog(ERROR, "invalid number of every values"); // GPDB_12_MERGE_FIXME: improve message
