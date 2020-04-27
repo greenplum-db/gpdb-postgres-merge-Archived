@@ -872,12 +872,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 #endif
 
 	/*
-	 * Ensure that jointree has been normalized. See
-	 * normalize_query_jointree_mutator()
-	 */
-	AssertImply(parse->jointree->fromlist, list_length(parse->jointree->fromlist) == 1);
-
-	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
 	 * that we don't need so many special cases to deal with that situation.
 	 */

@@ -60,6 +60,8 @@ struct ChunkTransportState;             /* #include "cdb/cdbinterconnect.h" */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
 #define EXEC_FLAG_SKIP_TRIGGERS 0x0010	/* skip AfterTrigger calls */
 #define EXEC_FLAG_WITH_NO_DATA	0x0020	/* rel scannability doesn't matter */
+/* CDB: explain flag to check if it is safe to eliminate alien node on master */
+#define EXEC_FLAG_EXPLAIN		0x0100
 
 #define RelinfoGetStorage(relinfo) ((relinfo)->ri_RelationDesc->rd_rel->relstorage)
 

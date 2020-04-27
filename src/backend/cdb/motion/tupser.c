@@ -62,6 +62,7 @@ static void addByteStringToChunkList(TupleChunkList tcList, char *data, int data
 		addByteStringToChunkList((tcList), (char *)&y, sizeof(y), (c));	\
 	} while (0)
 
+
 /* Look up all of the information that SerializeTuple() and DeserializeTuple()
  * need to perform their jobs quickly.	Also, scratchpad space is allocated
  * for serialization and desrialization of datum values, and for formation/
