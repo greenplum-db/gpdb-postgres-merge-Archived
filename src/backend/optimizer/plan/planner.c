@@ -7593,14 +7593,18 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		/*
 		 * Instead of operating directly on the input relation, we can
 		 * consider finalizing a partially aggregated path.
-		 *
-		 * GPDB_12_MERGE_FIXME: need to handle locus here, to make this MPP?
 		 */
 		if (partially_grouped_rel != NULL)
 		{
 			foreach(lc, partially_grouped_rel->pathlist)
 			{
 				Path	   *path = (Path *) lfirst(lc);
+				CdbPathLocus locus;
+				bool		need_redistribute;
+
+				locus = cdb_choose_grouping_locus(root, cheapest_path,
+												  parse->groupClause, NIL,
+												  &need_redistribute);
 
 				/*
 				 * Insert a Sort node, if required.  But there's no point in
@@ -7610,11 +7614,46 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				{
 					if (path != partially_grouped_rel->cheapest_total_path)
 						continue;
+
+					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
+						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+
 					path = (Path *) create_sort_path(root,
 													 grouped_rel,
 													 path,
 													 root->group_pathkeys,
 													 -1.0);
+
+					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
+						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+				}
+				else
+				{
+					/*
+					 * The input is already conveniently sorted. We could
+					 * redistribute it by hash, but then we'd need to re-sort
+					 * it. That doesn't seem like a good idea, so we prefer to
+					 * gather it all, and take advantage of the sort order.
+					 *
+					 * If the grouping doesn't require any sorting (I think that
+					 * case only arises with plain aggregates, and no GROUP BY)
+					 * then we do redistribute so that we can run the aggregation
+					 * in parallel.
+					 */
+					if (need_redistribute)
+					{
+						if (root->group_pathkeys)
+						{
+							CdbPathLocus locus;
+
+							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+						}
+						else
+						{
+							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+						}
+					}
 				}
 
 				//if (parse->hasAggs)
@@ -7714,8 +7753,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		 * Generate a Finalize HashAgg Path atop of the cheapest partially
 		 * grouped path, assuming there is one. Once again, we'll only do this
 		 * if it looks as though the hash table won't exceed work_mem.
-		 *
-		 * GPDB_12_MERGE_FIXME: need to handle locus here, to make this MPP?
 		 */
 		if (partially_grouped_rel && partially_grouped_rel->pathlist)
 		{
@@ -7726,6 +7763,24 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 														  dNumGroups);
 
 			if (hashaggtablesize < work_mem * 1024L)
+			{
+				CdbPathLocus locus;
+				bool		need_redistribute;
+
+				locus = cdb_choose_grouping_locus(root, path,
+												  parse->groupClause, NIL,
+												  &need_redistribute);
+
+				/*
+				 * Redistribute if needed.
+				 *
+				 * The hash agg doesn't care about input order, and it destroys any order there was,
+				 * so don't bother doing a order-preserving Motion even if we could.
+				 */
+				if (need_redistribute)
+					path = cdbpath_create_motion_path(root, path,
+													  NIL /* pathkeys */, false, locus);
+
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root,
 										 grouped_rel,
@@ -7738,6 +7793,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										 havingQual,
 										 agg_final_costs,
 										 dNumGroups));
+			}
 		}
 	}
 
