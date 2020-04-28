@@ -4714,17 +4714,14 @@ CREATE AGGREGATE median2(numeric) (
 -- Queries.
 --
 explain select x, "median"(y) from qp_misc_jiras.tbl9613 group by x; -- this should be allowed
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=28.17..38.09 rows=496 width=36)
-   ->  GroupAggregate  (cost=28.17..38.09 rows=166 width=36)
-         Group By: x
-         ->  Sort  (cost=28.17..29.41 rows=166 width=36)
-               Sort Key: x
-               ->  Seq Scan on tbl9613  (cost=0.00..5.96 rows=166 width=36)
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer=off; optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(8 rows)
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=844.00..1124.00 rows=1000 width=36)
+   ->  HashAggregate  (cost=844.00..1104.00 rows=334 width=36)
+         Group Key: x
+         ->  Seq Scan on tbl9613  (cost=0.00..596.00 rows=16534 width=36)
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 select x, "median"(y) from qp_misc_jiras.tbl9613 group by x; -- this should be allowed
  x |       median       
@@ -4733,17 +4730,14 @@ select x, "median"(y) from qp_misc_jiras.tbl9613 group by x; -- this should be a
 (1 row)
 
 explain select x, median2(y) from qp_misc_jiras.tbl9613 group by x; -- this should be disallowed
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=28.17..38.09 rows=496 width=36)
-   ->  GroupAggregate  (cost=28.17..38.09 rows=166 width=36)
-         Group By: x
-         ->  Sort  (cost=28.17..29.41 rows=166 width=36)
-               Sort Key: x
-               ->  Seq Scan on tbl9613  (cost=0.00..5.96 rows=166 width=36)
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer=off; optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(8 rows)
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=844.00..1124.00 rows=1000 width=36)
+   ->  HashAggregate  (cost=844.00..1104.00 rows=334 width=36)
+         Group Key: x
+         ->  Seq Scan on tbl9613  (cost=0.00..596.00 rows=16534 width=36)
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 select x, median2(y) from qp_misc_jiras.tbl9613 group by x; -- this should be disallowed
 ERROR:  function cannot execute on a QE slice because it accesses relation "qp_misc_jiras.tbl9613"  (seg0 slice1 nikos-mac:25432 pid=94006)
