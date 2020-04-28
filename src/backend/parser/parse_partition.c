@@ -53,7 +53,9 @@ static List *generateDefaultPartition(ParseState *pstate,
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec,
 										   PartitionSpec *subPart,
-										   GpPartitionElem *elem);
+										   GpPartitionElem *elem,
+										   char *tablename,
+										   int num_unnamed_parts_p);
 
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
@@ -758,14 +760,9 @@ generateRangePartitions(ParseState *pstate,
 		else
 			partname = elem->partName;
 
-		/* GPDB_12_MERGE_FIXME: pass correct level */
-		if (tablename)
-			partname = tablename;
-		else
-			partname = ChoosePartitionName(parentrel, "1", partname, ++(*num_unnamed_parts_p));
-
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec,
-											subPart, elem);
+											subPart, elem, tablename,
+											++(*num_unnamed_parts_p));
 
 		result = lappend(result, childstmt);
 	}
@@ -786,7 +783,6 @@ generateListPartition(ParseState *pstate,
 	GpPartitionValuesSpec *gpvaluesspec;
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
-	char	   *partname;
 	PartitionKey partkey;
 	ListCell   *lc;
 	List	  *listdatums;
@@ -831,15 +827,9 @@ generateListPartition(ParseState *pstate,
 	boundspec->listdatums = listdatums;
 	boundspec->location = -1;
 
-	/* GPDB_12_MERGE_FIXME: pass correct level */
-	if (tablename)
-		partname = tablename;
-	else
-		partname = ChoosePartitionName(parentrel, "1", elem->partName, ++(*num_unnamed_parts_p));
-
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
-										elem);
+	childstmt = makePartitionCreateStmt(parentrel, elem->partName, boundspec, subPart,
+										elem, tablename, ++(*num_unnamed_parts_p));
 
 	return list_make1(childstmt);
 }
@@ -853,36 +843,39 @@ generateDefaultPartition(ParseState *pstate,
 {
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
-	char	   *partname;
 
 	boundspec = makeNode(PartitionBoundSpec);
 	boundspec->is_default = true;
 	boundspec->location = -1;
 
-	/* GPDB_12_MERGE_FIXME: pass correct level */
-	if (tablename)
-		partname = tablename;
-	else
-		partname = ChoosePartitionName(parentrel, "1", elem->partName, -1);
-	childstmt = makePartitionCreateStmt(parentrel, partname, boundspec, subPart,
-										elem);
+	/* default partition always needs name to be specified */
+	Assert(elem->partName != NULL);
+	childstmt = makePartitionCreateStmt(parentrel, elem->partName, boundspec, subPart,
+										elem, tablename, -1);
 
 	return list_make1(childstmt);
 }
 
 static CreateStmt *
 makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
-						PartitionSpec *subPart, GpPartitionElem *elem)
+						PartitionSpec *subPart, GpPartitionElem *elem, char *tablename,
+						int partnum)
 {
 	CreateStmt *childstmt;
 	RangeVar   *parentrv;
 	char	   *schemaname;
+	char	   *final_part_name;
+
+	if (tablename)
+		final_part_name = tablename;
+	else
+		final_part_name = ChoosePartitionName(parentrel, "1", partname, partnum);
 
 	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);
 	parentrv = makeRangeVar(schemaname, pstrdup(RelationGetRelationName(parentrel)), -1);
 
 	childstmt = makeNode(CreateStmt);
-	childstmt->relation = makeRangeVar(schemaname, partname, -1);
+	childstmt->relation = makeRangeVar(schemaname, final_part_name, -1);
 	childstmt->tableElts = NIL;
 	childstmt->inhRelations = list_make1(parentrv);
 	childstmt->partbound = boundspec;
@@ -909,12 +902,15 @@ ChoosePartitionName(Relation parentrel, const char *levelstr,
 	char partsubstring[NAMEDATALEN];
 
 	if (partname)
+	{
 		snprintf(partsubstring, NAMEDATALEN, "prt_%s", partname);
-	else if (partnum == -1)
-		snprintf(partsubstring, NAMEDATALEN, "prt_default");
-	else
-		snprintf(partsubstring, NAMEDATALEN, "prt_%d", partnum);
+		return makeObjectName(RelationGetRelationName(parentrel),
+							  levelstr,
+							  partsubstring);
+	}
 
+	Assert(partnum > 0);
+	snprintf(partsubstring, NAMEDATALEN, "prt_%d", partnum);
 	return ChooseRelationName(RelationGetRelationName(parentrel),
 							  levelstr,
 							  partsubstring,
