@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "catalog/partition.h"
 #include "catalog/pg_attribute.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -128,12 +129,16 @@ GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 			char		*partname;
 			Relation	partRel;
 			char partsubstring[NAMEDATALEN];
+			List	   *ancestors = get_partition_ancestors(RelationGetRelid(parent));
+			int			level = list_length(ancestors) + 1;
+			char levelStr[NAMEDATALEN];
 
+			snprintf(levelStr, NAMEDATALEN, "%d", level);
 			snprintf(partsubstring, NAMEDATALEN, "prt_%s",
 					 strVal(partid->partiddef));
-			/* GPDB_12_MERGE_FIXME: pass correct level */
+
 			partname = makeObjectName(RelationGetRelationName(parent),
-									  "1", partsubstring);
+									  levelStr, partsubstring);
 
 			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
 			partrv       = makeRangeVar(schemaname, partname, -1);

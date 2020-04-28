@@ -2004,7 +2004,7 @@ Partition key: RANGE (buydate)
 Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_auction_1_prt_y2001"
+   Table "public.mpp_2914b_1_prt_auction_2_prt_y2001"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2013,7 +2013,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_auction FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_auction_1_prt_y2002"
+   Table "public.mpp_2914b_1_prt_auction_2_prt_y2002"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2022,7 +2022,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_auction FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_auction_1_prt_y2003"
+   Table "public.mpp_2914b_1_prt_auction_2_prt_y2003"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2031,7 +2031,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_auction FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_auction_1_prt_y2004"
+   Table "public.mpp_2914b_1_prt_auction_2_prt_y2004"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2040,7 +2040,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_auction FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_auction_1_prt_y2005"
+   Table "public.mpp_2914b_1_prt_auction_2_prt_y2005"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2060,7 +2060,7 @@ Partition key: RANGE (buydate)
 Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_buyitnow_1_prt_y2001"
+   Table "public.mpp_2914b_1_prt_buyitnow_2_prt_y2001"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2069,7 +2069,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_buyitnow FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_buyitnow_1_prt_y2002"
+   Table "public.mpp_2914b_1_prt_buyitnow_2_prt_y2002"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2078,7 +2078,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_buyitnow FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_buyitnow_1_prt_y2003"
+   Table "public.mpp_2914b_1_prt_buyitnow_2_prt_y2003"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2087,7 +2087,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_buyitnow FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_buyitnow_1_prt_y2004"
+   Table "public.mpp_2914b_1_prt_buyitnow_2_prt_y2004"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2096,7 +2096,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_buyitnow FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_buyitnow_1_prt_y2005"
+   Table "public.mpp_2914b_1_prt_buyitnow_2_prt_y2005"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2116,7 +2116,7 @@ Partition key: RANGE (buydate)
 Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_catchall_1_prt_y2001"
+   Table "public.mpp_2914b_1_prt_catchall_2_prt_y2001"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2125,7 +2125,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_catchall FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_catchall_1_prt_y2002"
+   Table "public.mpp_2914b_1_prt_catchall_2_prt_y2002"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2134,7 +2134,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_catchall FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_catchall_1_prt_y2003"
+   Table "public.mpp_2914b_1_prt_catchall_2_prt_y2003"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2143,7 +2143,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_catchall FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_catchall_1_prt_y2004"
+   Table "public.mpp_2914b_1_prt_catchall_2_prt_y2004"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 
@@ -2152,7 +2152,7 @@ Distributed by: (id)
 Partition of: mpp_2914b_1_prt_catchall FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
 Distributed by: (id)
 
-   Table "public.mpp_2914b_1_prt_catchall_1_prt_y2005"
+   Table "public.mpp_2914b_1_prt_catchall_2_prt_y2005"
  Column  |     Type     | Collation | Nullable | Default 
 ---------+--------------+-----------+----------+---------
  id      | integer      |           |          | 

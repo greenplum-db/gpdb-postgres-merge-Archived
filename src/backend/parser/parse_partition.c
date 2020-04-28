@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "catalog/partition.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -37,25 +38,25 @@ static List *generateRangePartitions(ParseState *pstate,
 									 GpPartitionElem *elem,
 									 PartitionSpec *subPart,
 									 int *num_unnamed_parts_p,
-									 char *tablename);
+									 char *tablename, int level);
 static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
 								   GpPartitionElem *elem,
 								   PartitionSpec *subPart,
 								   int *num_unnamed_parts_p,
-								   char *tablename);
+								   char *tablename, int level);
 static List *generateDefaultPartition(ParseState *pstate,
 									  Relation parentrel,
 									  GpPartitionElem *elem,
 									  PartitionSpec *subPart,
-									  char *tablename);
+									  char *tablename, int level);
 
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec,
 										   PartitionSpec *subPart,
 										   GpPartitionElem *elem,
 										   char *tablename,
-										   int num_unnamed_parts_p);
+										   int num_unnamed_parts_p, int level);
 
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
@@ -68,7 +69,8 @@ static char *extract_tablename_from_options(List **options);
  */
 static List *
 generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec *subPart,
-						const char *queryString, int *num_unnamed_parts, char *tablename)
+						const char *queryString, int *num_unnamed_parts,
+						char *tablename, int level)
 {
 	List *new_parts;
 	ParseState *pstate;
@@ -77,7 +79,7 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 	pstate->p_sourcetext = queryString;
 
 	if (elem->isDefault)
-		new_parts = generateDefaultPartition(pstate, parentrel, elem, subPart, tablename);
+		new_parts = generateDefaultPartition(pstate, parentrel, elem, subPart, tablename, level);
 	else
 	{
 		PartitionKey key = RelationGetPartitionKey(parentrel);
@@ -86,12 +88,12 @@ generateSinglePartition(Relation parentrel, GpPartitionElem *elem, PartitionSpec
 		{
 			case PARTITION_STRATEGY_RANGE:
 				new_parts = generateRangePartitions(pstate, parentrel, elem, subPart,
-													num_unnamed_parts, tablename);
+													num_unnamed_parts, tablename, level);
 				break;
 
 			case PARTITION_STRATEGY_LIST:
 				new_parts = generateListPartition(pstate, parentrel, elem, subPart,
-												  num_unnamed_parts, tablename);
+												  num_unnamed_parts, tablename, level);
 				break;
 			default:
 				elog(ERROR, "Not supported partition strategy");
@@ -305,6 +307,8 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 	ParseState *pstate;
 	int			num_unnamed_parts = 0;
 	ListCell	*lc;
+	List	   *ancestors = get_partition_ancestors(parentrelid);
+	int			level = list_length(ancestors) + 1;
 
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -337,7 +341,7 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 
 			new_parts = generateSinglePartition(parentrel, elem, subPartSpec,
 												queryString, &num_unnamed_parts,
-												tablename);
+												tablename, level);
 			result = list_concat(result, new_parts);
 		}
 		else if (IsA(n, ColumnReferenceStorageDirective))
@@ -643,7 +647,8 @@ generateRangePartitions(ParseState *pstate,
 						GpPartitionElem *elem,
 						PartitionSpec *subPart,
 						int *num_unnamed_parts_p,
-						char *tablename)
+						char *tablename,
+						int level)
 {
 	GpPartitionBoundSpec *boundspec;
 	List	   *result = NIL;
@@ -762,7 +767,7 @@ generateRangePartitions(ParseState *pstate,
 
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec,
 											subPart, elem, tablename,
-											++(*num_unnamed_parts_p));
+											++(*num_unnamed_parts_p), level);
 
 		result = lappend(result, childstmt);
 	}
@@ -778,7 +783,7 @@ generateListPartition(ParseState *pstate,
 					  GpPartitionElem *elem,
 					  PartitionSpec *subPart,
 					  int *num_unnamed_parts_p,
-					  char *tablename)
+					  char *tablename, int level)
 {
 	GpPartitionValuesSpec *gpvaluesspec;
 	PartitionBoundSpec *boundspec;
@@ -829,7 +834,7 @@ generateListPartition(ParseState *pstate,
 
 	boundspec = transformPartitionBound(pstate, parentrel, boundspec);
 	childstmt = makePartitionCreateStmt(parentrel, elem->partName, boundspec, subPart,
-										elem, tablename, ++(*num_unnamed_parts_p));
+										elem, tablename, ++(*num_unnamed_parts_p), level);
 
 	return list_make1(childstmt);
 }
@@ -839,7 +844,7 @@ generateDefaultPartition(ParseState *pstate,
 						 Relation parentrel,
 						 GpPartitionElem *elem,
 						 PartitionSpec *subPart,
-						 char *tablename)
+						 char *tablename, int level)
 {
 	PartitionBoundSpec *boundspec;
 	CreateStmt *childstmt;
@@ -851,7 +856,7 @@ generateDefaultPartition(ParseState *pstate,
 	/* default partition always needs name to be specified */
 	Assert(elem->partName != NULL);
 	childstmt = makePartitionCreateStmt(parentrel, elem->partName, boundspec, subPart,
-										elem, tablename, -1);
+										elem, tablename, -1, level);
 
 	return list_make1(childstmt);
 }
@@ -859,18 +864,19 @@ generateDefaultPartition(ParseState *pstate,
 static CreateStmt *
 makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
 						PartitionSpec *subPart, GpPartitionElem *elem, char *tablename,
-						int partnum)
+						int partnum, int level)
 {
 	CreateStmt *childstmt;
 	RangeVar   *parentrv;
 	char	   *schemaname;
 	char	   *final_part_name;
+	char levelStr[NAMEDATALEN];
 
-	/* GPDB_12_MERGE_FIXME: pass correct level */
+	snprintf(levelStr, NAMEDATALEN, "%d", level);
 	if (tablename)
 		final_part_name = tablename;
 	else
-		final_part_name = ChoosePartitionName(parentrel, "1", partname, partnum);
+		final_part_name = ChoosePartitionName(parentrel, levelStr, partname, partnum);
 
 	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);
 	parentrv = makeRangeVar(schemaname, pstrdup(RelationGetRelationName(parentrel)), -1);
