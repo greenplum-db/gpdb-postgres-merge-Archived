@@ -2602,13 +2602,13 @@ ALTER TABLE tenk1 set (parallel_workers = 4);
 SET LOCAL parallel_setup_cost=0;
 SET LOCAL max_parallel_workers_per_gather=4;
 EXPLAIN (COSTS OFF) SELECT balk(hundred) FROM tenk1;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Finalize Aggregate
-   ->  Gather
-         Workers Planned: 4
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Parallel Index Only Scan using tenk1_hundred on tenk1
+               ->  Seq Scan on tenk1
+ Optimizer: Postgres query optimizer
 (5 rows)
 
 SELECT balk(hundred) FROM tenk1;
@@ -2636,7 +2636,6 @@ EXPLAIN (COSTS OFF, VERBOSE)
    Output: variance(unique1), sum((unique1)::bigint), regr_count((unique1)::double precision, (unique1)::double precision)
    ->  Gather Motion 3:1  (slice1; segments: 3)
          Output: (PARTIAL variance(unique1)), (PARTIAL sum((unique1)::bigint)), (PARTIAL regr_count((unique1)::double precision, (unique1)::double precision))
-         Workers Planned: 4
          ->  Partial Aggregate
                Output: PARTIAL variance(unique1), PARTIAL sum((unique1)::bigint), PARTIAL regr_count((unique1)::double precision, (unique1)::double precision)
                ->  Seq Scan on public.tenk1
@@ -2701,15 +2700,21 @@ select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
 explain (costs off)
   select 1 from tenk1
    where (hundred, thousand) in (select twothousand, twothousand from onek);
-                         QUERY PLAN                          
--------------------------------------------------------------
- Hash Join
-   Hash Cond: (tenk1.hundred = onek.twothousand)
-   ->  Seq Scan on tenk1
-         Filter: (hundred = thousand)
-   ->  Hash
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Result
          ->  HashAggregate
-               Group Key: onek.twothousand, onek.twothousand
-               ->  Seq Scan on onek
-(8 rows)
+               Group Key: (RowIdExpr)
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                     Hash Key: (RowIdExpr)
+                     ->  Hash Join
+                           Hash Cond: (onek.twothousand = tenk1.hundred)
+                           ->  Seq Scan on onek
+                           ->  Hash
+                                 ->  Broadcast Motion 3:3  (slice3; segments: 3)
+                                       ->  Seq Scan on tenk1
+                                             Filter: (hundred = thousand)
+ Optimizer: Postgres query optimizer
+(14 rows)
 
