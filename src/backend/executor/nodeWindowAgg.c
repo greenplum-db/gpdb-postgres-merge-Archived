@@ -973,7 +973,7 @@ eval_windowaggregates(WindowAggState *winstate)
 		 * the old and the new frame. In that case, we would restart
 		 * all the aggregates anyway.)
 		 */
-		else if (!row_is_in_frame(winstate, winstate->aggregatedupto - 1, agg_row_slot))
+		else if (row_is_in_frame(winstate, winstate->aggregatedupto - 1, agg_row_slot) != 1)
 		{
 			frame_tail_moved_backwards = true;
 		}
@@ -982,7 +982,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	}
 
 	/*
-	 * Likewise, if the frame tail moves backwards, then we need to restart the
+	 * Likewise, if the frame head moves backwards, then we need to restart the
 	 * aggregation. (We could instead call the transition function on the rows
 	 * that became part of the frame again, but let's keep this simple for now.)
 	 */
@@ -1097,7 +1097,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 *
 	 * We assume that aggregates using the shared context always restart if
 	 * *any* aggregate restarts, and we may thus clean up the shared
-	 * aggcontext if that is the case.	Private aggcontexts are reset by
+	 * aggcontext if that is the case.  Private aggcontexts are reset by
 	 * initialize_windowaggregate() if their owning aggregate restarts. If we
 	 * aren't restarting an aggregate, we need to free any previously saved
 	 * result for it, else we'll leak memory.
@@ -1134,9 +1134,9 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * (i.e., frameheadpos) and aggregatedupto, while restarted aggregates
 	 * contain no rows.  If there are any restarted aggregates, we must thus
 	 * begin aggregating anew at frameheadpos, otherwise we may simply
-	 * continue at aggregatedupto.	We must remember the old value of
+	 * continue at aggregatedupto.  We must remember the old value of
 	 * aggregatedupto to know how long to skip advancing non-restarted
-	 * aggregates.	If we modify aggregatedupto, we must also clear
+	 * aggregates.  If we modify aggregatedupto, we must also clear
 	 * agg_row_slot, per the loop invariant below.
 	 */
 	aggregatedupto_nonrestarted = winstate->aggregatedupto;
@@ -1440,12 +1440,14 @@ begin_partition(WindowAggState *winstate)
 			 node->ordNumCols != 0) ||
 			(frameOptions & FRAMEOPTION_START_OFFSET))
 			winstate->framehead_ptr =
-				tuplestore_alloc_read_pointer(winstate->buffer, 0);
+				tuplestore_alloc_read_pointer(winstate->buffer,
+											  winstate->start_offset_var_free ? 0 : EXEC_FLAG_REWIND);
 		if (((frameOptions & FRAMEOPTION_END_CURRENT_ROW) &&
 			 node->ordNumCols != 0) ||
 			(frameOptions & FRAMEOPTION_END_OFFSET))
 			winstate->frametail_ptr =
-				tuplestore_alloc_read_pointer(winstate->buffer, 0);
+				tuplestore_alloc_read_pointer(winstate->buffer,
+											  winstate->end_offset_var_free ? 0 : EXEC_FLAG_REWIND);
 	}
 
 	/*
@@ -1832,6 +1834,21 @@ update_frameheadpos(WindowAggState *winstate)
 
 			tuplestore_select_read_pointer(winstate->buffer,
 										   winstate->framehead_ptr);
+			/*
+			 * GPDB: If the start offset is not a constant, always start from
+			 * the beginning.
+			 *
+			 * XXX: This is very expensive. A smarter strategy might be
+			 * to walk backwards from the previous frame head, until we reach
+			 * a row that doesn't belong in the frame anymore.
+			 */
+			if (!winstate->start_offset_var_free)
+			{
+				winstate->frameheadpos = 0;
+				ExecClearTuple(winstate->framehead_slot);
+				tuplestore_rescan(winstate->buffer);
+			}
+
 			if (winstate->frameheadpos == 0 &&
 				TupIsNull(winstate->framehead_slot))
 			{
@@ -2088,6 +2105,21 @@ update_frametailpos(WindowAggState *winstate)
 
 			tuplestore_select_read_pointer(winstate->buffer,
 										   winstate->frametail_ptr);
+			/*
+			 * GPDB: If the end offset is not a constant, always start from
+			 * the beginning.
+			 *
+			 * XXX: This is very expensive. A smarter strategy might be
+			 * to walk backwards from the previous frame tail until
+			 * we reach the last row that's in the frame. Or at least we
+			 * should begin from frame headpos.
+			 */
+			if (!winstate->end_offset_var_free)
+			{
+				winstate->frametailpos = 0;
+				ExecClearTuple(winstate->frametail_slot);
+				tuplestore_rescan(winstate->buffer);
+			}
 			if (winstate->frametailpos == 0 &&
 				TupIsNull(winstate->frametail_slot))
 			{
@@ -2385,6 +2417,11 @@ ExecWindowAgg(PlanState *pstate)
 		winstate->framehead_valid = false;
 		winstate->frametail_valid = false;
 		/* we don't need to invalidate grouptail here; see below */
+
+		if (!winstate->start_offset_var_free)
+			winstate->start_offset_valid = false;
+		if (!winstate->end_offset_var_free)
+			winstate->end_offset_valid = false;
 	}
 
 	/*
