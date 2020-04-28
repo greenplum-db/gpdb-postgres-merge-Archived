@@ -866,6 +866,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	char	   *schemaname;
 	char	   *final_part_name;
 
+	/* GPDB_12_MERGE_FIXME: pass correct level */
 	if (tablename)
 		final_part_name = tablename;
 	else

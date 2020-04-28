@@ -18,6 +18,7 @@
 
 #include "access/table.h"
 #include "catalog/pg_attribute.h"
+#include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "executor/execPartition.h"
 #include "nodes/parsenodes.h"
@@ -126,9 +127,15 @@ GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 			char		*schemaname;
 			char		*partname;
 			Relation	partRel;
+			char partsubstring[NAMEDATALEN];
+
+			snprintf(partsubstring, NAMEDATALEN, "prt_%s",
+					 strVal(partid->partiddef));
+			/* GPDB_12_MERGE_FIXME: pass correct level */
+			partname = makeObjectName(RelationGetRelationName(parent),
+									  "1", partsubstring);
 
 			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
-			partname     = pstrdup(strVal(partid->partiddef));
 			partrv       = makeRangeVar(schemaname, partname, -1);
 			partRel      = table_openrv_extended(partrv, AccessShareLock, missing_ok);
 			if (partRel)
