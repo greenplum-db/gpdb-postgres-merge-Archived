@@ -35,7 +35,6 @@
 #include "access/htup_details.h"
 #include "access/bitmap.h"		/* XXX: remove once pull_stream is generic */
 #include "executor/instrument.h"	/* Instrumentation */
-#include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
@@ -1052,11 +1051,11 @@ tbm_extract_page_tuple(PagetableEntry *page, TBMIterateResult *output)
 
 	for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 	{
-		bitmapword	w = page->words[wordnum];
+		tbm_bitmapword	w = page->words[wordnum];
 
 		if (w != 0)
 		{
-			int			off = wordnum * BITS_PER_BITMAPWORD + 1;
+			int			off = wordnum * TBM_BITS_PER_BITMAPWORD + 1;
 
 			while (w != 0)
 			{
@@ -1110,7 +1109,7 @@ tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)
 		int			wordnum = WORDNUM(schunkbit);
 		int			bitnum = BITNUM(schunkbit);
 
-		if ((chunk->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0)
+		if ((chunk->words[wordnum] & ((tbm_bitmapword) 1 << bitnum)) != 0)
 			break;
 		schunkbit++;
 	}
