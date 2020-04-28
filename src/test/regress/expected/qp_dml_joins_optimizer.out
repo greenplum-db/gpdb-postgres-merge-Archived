@@ -736,7 +736,8 @@ SELECT COUNT(*) FROM (SELECT dml_ao_pt_r.b, NULL, dml_ao_pt_r.c FROM dml_ao_pt_r
 (1 row)
 
 INSERT INTO dml_ao_pt_r SELECT dml_ao_pt_r.b, NULL, dml_ao_pt_r.c FROM dml_ao_pt_r, dml_ao_pt_s WHERE dml_ao_pt_r.b = dml_ao_pt_s.b;
-ERROR:  no partition for partitioning key  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  no partition of relation "dml_ao_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_ao_pt_r;
  count 
 -------
@@ -757,7 +758,8 @@ SELECT COUNT(*) FROM (SELECT dml_ao_pt_r.b ,dml_ao_pt_r.a + dml_ao_pt_s.a + 100,
 (1 row)
 
 INSERT INTO dml_ao_pt_r SELECT dml_ao_pt_r.b ,dml_ao_pt_r.a + dml_ao_pt_s.a + 100, dml_ao_pt_r.c FROM dml_ao_pt_r, dml_ao_pt_s WHERE dml_ao_pt_r.a = dml_ao_pt_s.b;
-ERROR:  no partition for partitioning key  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  no partition of relation "dml_ao_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_ao_pt_r;
  count 
 -------
@@ -1606,7 +1608,8 @@ SELECT COUNT(*) FROM (SELECT dml_co_pt_r.b, NULL, dml_co_pt_r.c FROM dml_co_pt_r
 (1 row)
 
 INSERT INTO dml_co_pt_r SELECT dml_co_pt_r.b, NULL, dml_co_pt_r.c FROM dml_co_pt_r, dml_co_pt_s WHERE dml_co_pt_r.b = dml_co_pt_s.b;
-ERROR:  no partition for partitioning key  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  no partition of relation "dml_co_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_co_pt_r;
  count 
 -------
@@ -1621,7 +1624,8 @@ SELECT COUNT(*) FROM dml_co_pt_r;
 (1 row)
 
 INSERT INTO dml_co_pt_r SELECT dml_co_pt_r.b ,dml_co_pt_r.a + dml_co_pt_s.a + 100, dml_co_pt_r.c FROM dml_co_pt_r, dml_co_pt_s WHERE dml_co_pt_r.a = dml_co_pt_s.b;
-ERROR:  no partition for partitioning key  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  no partition of relation "dml_co_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_co_pt_r;
  count 
 -------
@@ -3044,7 +3048,8 @@ SELECT COUNT(*) FROM dml_heap_pt_r;
 (1 row)
 
 INSERT INTO dml_heap_pt_r SELECT dml_heap_pt_r.b, NULL, dml_heap_pt_r.c FROM dml_heap_pt_r, dml_heap_pt_s WHERE dml_heap_pt_r.b = dml_heap_pt_s.b;
-ERROR:  no partition for partitioning key  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  no partition of relation "dml_heap_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_heap_pt_r;
  count 
 -------
@@ -3059,7 +3064,8 @@ SELECT COUNT(*) FROM dml_heap_pt_r;
 (1 row)
 
 INSERT INTO dml_heap_pt_r SELECT dml_heap_pt_r.b ,dml_heap_pt_r.a + dml_heap_pt_s.a + 100, dml_heap_pt_r.c FROM dml_heap_pt_r, dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b;
-ERROR:  no partition for partitioning key  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  no partition of relation "dml_heap_pt_r" found for row  (seg0 127.0.0.1:40000 pid=29426)
+DETAIL:  Partition key of the failing row contains (b) = (null).
 SELECT COUNT(*) FROM dml_heap_pt_r;
  count 
 -------
@@ -3473,7 +3479,8 @@ SELECT SUM(b) FROM dml_heap_pt_r;
 (1 row)
 
 UPDATE dml_heap_pt_r SET b = dml_heap_pt_r.a + 3000000 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.a;
-ERROR:  no partition for partitioning key  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  no partition of relation "dml_heap_pt_r" found for row  (seg1 127.0.0.1:40001 pid=29427)
+DETAIL:  Partition key of the failing row contains (b) = (3000001).
 SELECT SUM(b) FROM dml_heap_pt_r;
   sum  
 -------
