@@ -62,12 +62,14 @@ static const TableAmRoutine appendonly_methods;
 
 static struct AppendOnlyLocalData {
 	AppendOnlyInsertDesc	insertDesc;
+	AppendOnlyDeleteDesc	deleteDesc;
 
 	MemoryContext			localContext;
 	MemoryContextCallback	cb;
 } appendOnlyLocal	= {
 	.localContext	= NULL,
 	.insertDesc		= NULL,
+	.deleteDesc		= NULL,
 	.cb				= {
 		.func	= reset_insert_context_callback,
 		.arg	= NULL,
@@ -102,6 +104,8 @@ reset_insert_context_callback(void *arg)
 	 */
 	if (appendOnlyLocal.insertDesc)
 		appendOnlyLocal.insertDesc = NULL;
+	if (appendOnlyLocal.deleteDesc)
+		appendOnlyLocal.deleteDesc = NULL;
 }
 
 
@@ -327,22 +331,26 @@ void
 appendonly_dml_init(Relation relation, CmdType operation)
 {
 	MemoryContext oldContext;
+	oldContext = MemoryContextSwitchTo(get_insertdesc_context());
 
 	switch(operation)
 	{
 	case CMD_INSERT:
-		oldContext = MemoryContextSwitchTo(get_insertdesc_context());
 		Assert(appendOnlyLocal.insertDesc == NULL);
 		appendOnlyLocal.insertDesc = appendonly_insert_init(
 												relation,
 												ChooseSegnoForWrite(relation),
 												false);
-		MemoryContextSwitchTo(oldContext);
+		break;
+	case CMD_DELETE:
+		Assert(appendOnlyLocal.deleteDesc == NULL);
+		appendOnlyLocal.deleteDesc = appendonly_delete_init(relation);
 		break;
 	default:
 		elog(ERROR, "not implemented");
 		break;
 	}
+	MemoryContextSwitchTo(oldContext);
 }
 
 void
@@ -354,6 +362,11 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 		Assert(appendOnlyLocal.insertDesc->aoi_rel == relation);
 		appendonly_insert_finish(appendOnlyLocal.insertDesc);
 		appendOnlyLocal.insertDesc = NULL;
+		break;
+	case CMD_DELETE:
+		// Assert(appendOnlyLocal.deleteDesc->aod_rel == relation);
+		appendonly_delete_finish(appendOnlyLocal.deleteDesc);
+		appendOnlyLocal.deleteDesc = NULL;
 		break;
 	default:
 		elog(ERROR, "not implemented");
@@ -425,8 +438,6 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 					Snapshot snapshot, Snapshot crosscheck, bool wait,
 					TM_FailureData *tmfd, bool changingPart)
 {
-	AppendOnlyDeleteDesc deleteDesc = NULL;
-
 	if (IsolationUsesXactSnapshot())
 	{
 		/*
@@ -437,17 +448,8 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("deletes and updates on append-only tables are not supported in serializable transactions")));
 	}
-
-	// GPDB_12_MERGE_FIXME: Where to store this?
-#if 0
-	if (resultRelInfo->ri_deleteDesc == NULL)
-	{
-		resultRelInfo->ri_deleteDesc = 
-			appendonly_delete_init(resultRelationDesc, GetActiveSnapshot());
-	}
-#endif
 	
-	return appendonly_delete(deleteDesc, (AOTupleId *) tid);
+	return appendonly_delete(appendOnlyLocal.deleteDesc, (AOTupleId *) tid);
 }
 
 
