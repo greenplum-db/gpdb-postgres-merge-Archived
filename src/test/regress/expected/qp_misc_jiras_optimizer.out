@@ -1050,7 +1050,7 @@ show gp_interconnect_setup_timeout;
 (1 row)
 
 set gp_interconnect_setup_timeout=10000;
-ERROR:  10000 is outside the valid range for parameter "gp_interconnect_setup_timeout" (0 .. 7200)
+ERROR:  10000 s is outside the valid range for parameter "gp_interconnect_setup_timeout" (0 .. 7200)
 set gp_interconnect_setup_timeout=4000;
 create schema tbl5352_test;
 select tablename from pg_tables where schemaname='tbl5352_test' and tablename not in( select partitiontablename from pg_partitions where partitionschemaname = 'tbl5352_test' );
