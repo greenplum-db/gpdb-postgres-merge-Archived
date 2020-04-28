@@ -1374,15 +1374,6 @@ UPDATE dml_heap_pt_r SET a = a;
 SELECT COUNT(*) FROM (SELECT DISTINCT(a) FROM dml_heap_pt_r)foo;
 rollback;
 
---Update and generate_series
-begin;
-SELECT COUNT(*) FROM dml_heap_pt_r WHERE a = 1;
-SELECT COUNT(*) FROM dml_heap_pt_r WHERE c ='n';
-UPDATE dml_heap_pt_r SET a = generate_series(1,10), c ='n';
-SELECT COUNT(*) FROM dml_heap_pt_r WHERE c ='n';
-SELECT COUNT(*) FROM dml_heap_pt_r WHERE a = 1;
-rollback;
-
 --Update distcol where join on target table non dist key
 begin;
 SELECT SUM(a) FROM dml_heap_pt_r;
