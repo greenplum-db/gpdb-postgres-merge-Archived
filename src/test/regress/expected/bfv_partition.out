@@ -143,7 +143,8 @@ SELECT * FROM TIMESTAMP_MONTH_rangep_STARTINCL WHERE f2 = TO_DATE('2000-12-31', 
 (1 row)
 
 INSERT INTO TIMESTAMP_MONTH_rangep_STARTINCL values (5, '2001-01-01'); -- should fail, no such partition
-ERROR:  no partition for partitioning key  (seg1 office-4-160.pa.pivotal.io:25433 pid=9457)
+ERROR:  no partition of relation "timestamp_month_rangep_startincl" found for row  (seg2 127.0.0.1:40002 pid=28965)
+DETAIL:  Partition key of the failing row contains (f2) = (Mon Jan 01 00:00:00 2001).
 SELECT * FROM TIMESTAMP_MONTH_rangep_STARTINCL WHERE f2 = '2001-01-01';
  i1 | f2 
 ----+----
@@ -642,9 +643,9 @@ subpartition template (
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 NOTICE:  CREATE TABLE will create partition "mpp3541_1_prt_pst" for table "mpp3541"
-ERROR:  invalid use of LIST boundary specification in partition "male" of type RANGE (at depth 2)
+ERROR:  invalid boundary specification for RANGE partition
 LINE 5:   subpartition male values ('Male','M'),
-                            ^
+          ^
 CREATE TABLE mpp3541 (f1 time(2) with time zone, f2 char(4), f3 varchar(10))
 partition by range (f2)
 subpartition by list (f3)
@@ -657,9 +658,9 @@ subpartition template (
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  invalid use of LIST boundary specification in partition "pst" of type RANGE
+ERROR:  invalid boundary specification for RANGE partition
 LINE 8: ( partition pst values ('PST'),
-                        ^
+          ^
 CREATE TABLE mpp3541 (f1 time(2) with time zone, f2 char(4), f3 varchar(10))
 partition by range (f2)
 subpartition by range (f3)
@@ -672,9 +673,9 @@ subpartition template (
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  invalid use of LIST boundary specification in partition "pst" of type RANGE
+ERROR:  invalid boundary specification for RANGE partition
 LINE 8: ( partition pst values ('PST'),
-                        ^
+          ^
 CREATE TABLE mpp3542_000000000011111111112222222222333333333344444444445555555555556666666666777777777788888888889999999999 (f1 time(2) with time zone)
 partition by range (f1)
 (
@@ -684,9 +685,7 @@ partition by range (f1)
 NOTICE:  identifier "mpp3542_000000000011111111112222222222333333333344444444445555555555556666666666777777777788888888889999999999" will be truncated to "mpp3542_0000000000111111111122222222223333333333444444444455555"
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "Los Angeles_1" overlaps previous range
-LINE 4:   partition "Los Angeles" start (time with time zone '00:00 ...
-                                  ^
+ERROR:  partition "mpp3542_00000000001111111111222222222233333_1_prt_Los Angeles_1" would overlap partition "mpp3542_00000000001111111111222222222233333333_1_prt_New York_4"
 -- Truncates the table name to mpp3542_0000000000111111111122222222223333333333444444444455555, but partition name is too long, so ERROR
 alter table mpp3542_000000000011111111112222222222333333333344444444445555555555556666666666777777777788888888889999999999 rename partition "Los Angeles_1" to "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 NOTICE:  identifier "mpp3542_000000000011111111112222222222333333333344444444445555555555556666666666777777777788888888889999999999" will be truncated to "mpp3542_0000000000111111111122222222223333333333444444444455555"
@@ -744,9 +743,8 @@ partition by range (b)
 (        
      partition aa start ('2008-01-01') end ('2006-01-01')           
   );
-ERROR:  START greater than END for partition "aa"
-LINE 5:      partition aa start ('2008-01-01') end ('2006-01-01')   ...
-                          ^
+ERROR:  empty range bound specified for partition "mpp3058_1_prt_aa"
+DETAIL:  Specified lower bound ('01-01-2008') is greater than or equal to upper bound ('01-01-2006').
 drop table mpp3058;
 ERROR:  table "mpp3058" does not exist
 -- Expected Error
@@ -757,6 +755,8 @@ partition by range (b)
      partition aa start ('2008-01-01') end ('-2009-01-01')           
   );
 ERROR:  time zone displacement out of range: "-2009-01-01"
+LINE 5:      partition aa start ('2008-01-01') end ('-2009-01-01')  ...
+                                                    ^
 drop table mpp3058;
 ERROR:  table "mpp3058" does not exist
 -- Expected Error
@@ -767,6 +767,8 @@ partition by range (b)
      partition aa start ('-2008-01-01') end ('2009-01-01')           
   );
 ERROR:  time zone displacement out of range: "-2008-01-01"
+LINE 5:      partition aa start ('-2008-01-01') end ('2009-01-01')  ...
+                                 ^
 drop table mpp3058;
 ERROR:  table "mpp3058" does not exist
 create table mpp3058 (a char(1), b date, d char(3))   
@@ -857,34 +859,33 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' a
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_foo" for table "mpp3607"
 alter table mpp3607 add partition baz end (3); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition baz end (4); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition aa end (2); -- OK as of 4.2.0.0 (RIO)
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 add partition bb end (1); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition baz end (3); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition baz end (4); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition baz end (2); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition bb end (0); -- Expected Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa end (-4); -- partition rule aa < -4, foo >=2
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 add partition bb end (-3); -- Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa end (0); -- partition rule aa < 0, foo >=2
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa start (4); -- Overlaps
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "mpp3607_1_prt_aa" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition aa start (3) end (4); -- Overlaps
-ERROR:  new partition overlaps existing partition "foo"
+ERROR:  partition "mpp3607_1_prt_aa" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition aa start (0) end (1); -- partition rule aa bb>=0 and bb<1, foo bb>=2
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 add partition bb start (-1) end (0); -- partition rule bb bb>=-1 and bb<0
@@ -2299,9 +2300,7 @@ partition by range (f1)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "pst_1" overlaps previous range
-LINE 4:   partition pst start (time with time zone '00:00 PST') end ...
-                        ^
+ERROR:  partition "mpp3114_1_prt_pst_1" would overlap partition "mpp3114_1_prt_est_4"
 DROP TABLE mpp3114;
 ERROR:  table "mpp3114" does not exist
 CREATE TABLE sg_cal_detail_r1 (
@@ -2687,9 +2686,9 @@ start (date '2005-01-01')
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  cannot coerce partition parameter to column type "integer"
+ERROR:  specified value cannot be cast to type integer for column "i"
 LINE 6: start (date '2001-01-01'),
-                    ^
+               ^
 set optimizer_analyze_root_partition=on;
 create table mpp3487 (i int) partition by range (i) (start(1) end(10) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
