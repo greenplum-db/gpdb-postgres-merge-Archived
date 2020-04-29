@@ -5905,13 +5905,8 @@ TabSubPartitionTemplate:
 			SUBPARTITION TEMPLATE
 			'(' TabSubPartitionElemList ')'
 				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-					elog(ERROR, "not implemented yet");
-#if 0
-					PartitionSpec *n = makeNode(PartitionSpec); 
+					GpPartitionSpec *n = makeNode(GpPartitionSpec);
 					n->partElem  = $4;
-					n->subSpec   = NULL;
 					n->istemplate  = true;
 					n->location  = @3;
 					$$ = (Node *)n;
@@ -5926,18 +5921,16 @@ TabSubPartitionTemplate:
 						elems = (List *)n->partElem;
 						foreach(lc, elems)
 						{
-							PartitionElem *e = lfirst(lc);
+							GpPartitionElem *e = lfirst(lc);
 
-							if (!IsA(e, PartitionElem)) continue;
+							if (!IsA(e, GpPartitionElem)) continue;
 
 							if (e->subSpec)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
 										 errmsg("template cannot contain specification for child partition")));
 						}
-
 					}
-#endif
 				}
 		;
 
@@ -5962,19 +5955,13 @@ TabSubPartitionBy: SUBPARTITION BY
 TabSubPartition:
 			TabSubPartitionBy TabSubPartitionTemplate
 				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-					elog(ERROR, "not implemented yet");
-#if 0
-					PartitionBy *pby = (PartitionBy *)$1;
-
-					((PartitionBy *)pby)->partSpec = $2;
+					PartitionSpec *n = (PartitionSpec *) $1;
+					n->gpPartSpec = (GpPartitionSpec *) $2;
 
 					$$ = $1;
-#endif
 				}
 			| TabSubPartitionBy { $$ = $1; }
-			|  TabSubPartitionBy TabSubPartition
+			| TabSubPartitionBy TabSubPartition
 				{
 					PartitionSpec *n = (PartitionSpec *) $1;
 					n->subPartSpec = (PartitionSpec *) $2;
@@ -5983,15 +5970,11 @@ TabSubPartition:
 				}
 			| TabSubPartitionBy TabSubPartitionTemplate TabSubPartition
 				{
-/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
- * the old GPDB one. */
-					elog(ERROR, "not implemented yet");
-#if 0
-					PartitionBy *pby = (PartitionBy *)$1;
-					pby->partSpec = $2;
-					pby->subPart = $3;
-					$$ = (Node *)pby;
-#endif
+					PartitionSpec *n = (PartitionSpec *) $1;
+					n->gpPartSpec = (GpPartitionSpec *) $2;
+					n->subPartSpec = (PartitionSpec *) $3;
+
+					$$ = $1;
 				}
 		;
 /* END GPDB LEGACY PARTITION SYNTAX RULES */

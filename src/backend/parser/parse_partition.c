@@ -309,6 +309,7 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 	ListCell	*lc;
 	List	   *ancestors = get_partition_ancestors(parentrelid);
 	partname_comp partcomp = {.tablename=NULL, .level=0, .partnum=0};
+	bool isSubTemplate;
 
 	partcomp.level = list_length(ancestors) + 1;
 
@@ -320,6 +321,17 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 	/* Remove "tablename" cell from parentOptions, if exists */
 	extract_tablename_from_options(&parentoptions);
 
+	if (subPartSpec)
+	{
+		if (subPartSpec->gpPartSpec)
+		{
+			Assert(subPartSpec->gpPartSpec->istemplate);
+			isSubTemplate = subPartSpec->gpPartSpec->istemplate;
+		}
+		else
+			isSubTemplate = false;
+	}
+
 	foreach(lc, gpPartSpec->partElem)
 	{
 		Node	   *n = lfirst(lc);
@@ -328,9 +340,14 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 		{
 			GpPartitionElem *elem = (GpPartitionElem *) n;
 			List	   *new_parts;
+			PartitionSpec *tmpSubPartSpec = NULL;
 
 			if (subPartSpec)
-				subPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
+			{
+				tmpSubPartSpec = copyObject(subPartSpec);
+				if (!isSubTemplate)
+					tmpSubPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
+			}
 
 			/* if WITH has "tablename" then it will be used as name for partition */
 			partcomp.tablename = extract_tablename_from_options(&elem->options);
@@ -340,7 +357,7 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 			if (elem->accessMethod == NULL)
 				elem->accessMethod = parentaccessmethod ? pstrdup(parentaccessmethod) : NULL;
 
-			new_parts = generateSinglePartition(parentrel, elem, subPartSpec,
+			new_parts = generateSinglePartition(parentrel, elem, tmpSubPartSpec,
 												queryString, &partcomp);
 
 			result = list_concat(result, new_parts);
