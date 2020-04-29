@@ -409,7 +409,7 @@ typedef struct
 
 static PartEveryIterator *
 initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char *part_col_name,
-					  Node *start, Node *end, Node *every)
+					  Node *start, Node *end, Node *every, int location)
 {
 	PartEveryIterator *iter;
 	Datum		startVal = 0;
@@ -468,10 +468,12 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 		Param	   *param;
 
 		if (start == NULL || end == NULL)
+		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("EVERY clause requires START and END"),
-					 parser_errposition(pstate, -1)));
+				 errmsg("EVERY clause requires START and END"),
+				 parser_errposition(pstate, location)));
+		}
 
 		/*
 		 * NOTE: We don't use transformPartitionBoundValue() here. We don't want to cast
@@ -738,7 +740,8 @@ generateRangePartitions(ParseState *pstate,
 
 	partkey = RelationGetPartitionKey(parentrel);
 
-	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, every);
+	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, every,
+									  boundspec->location);
 
 	i = 0;
 	while (nextPartBound(boundIter))

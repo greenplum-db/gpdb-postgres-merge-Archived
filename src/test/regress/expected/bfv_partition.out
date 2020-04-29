@@ -834,7 +834,7 @@ create table mpp3058 (a char(1), b date, d char(3))
   (           
     partition aa end ('2009-01-01') every( interval '1 day')  
      );
-ERROR:  EVERY clause in partition "aa" requires START and END
+ERROR:  EVERY clause requires START and END
 LINE 5:     partition aa end ('2009-01-01') every( interval '1 day')...
                          ^
 drop table mpp3058;
@@ -846,7 +846,7 @@ create table mpp3058 (a char(1), b date, d char(3))
   (           
     partition aa start ('2006-01-01') every( interval '1 day')  
      );
-ERROR:  EVERY clause in partition "aa" requires START and END
+ERROR:  EVERY clause requires START and END
 LINE 5:     partition aa start ('2006-01-01') every( interval '1 day...
                          ^
 drop table mpp3058;
