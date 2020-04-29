@@ -92,7 +92,7 @@ FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isn
 											  partcollation);
 
 		values[i] = result->constvalue;
-		isnull[i] = false;
+		isnull[i] = result->constisnull;
 		i++;
 	}
 
