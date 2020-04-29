@@ -3939,97 +3939,93 @@ alter table mpp6612 alter column unique2 type char(15);
 alter table mpp6612 alter column unique2 type char(10);
 -- Show the dsecription
 \d mpp6612*
-      Table "bfv_partition.mpp6612"
-   Column    |     Type      | Modifiers 
--------------+---------------+-----------
- unique1     | integer       | 
- unique2     | character(10) | 
- two         | integer       | 
- four        | integer       | 
- ten         | integer       | 
- twenty      | integer       | 
- hundred     | integer       | 
- thousand    | integer       | 
- twothousand | integer       | 
- fivethous   | integer       | 
- tenthous    | integer       | 
- odd         | integer       | 
- even        | integer       | 
- stringu1    | name          | 
- stringu2    | name          | 
- string4     | name          | 
-Number of child tables: 3 (Use \d+ to list them.)
-Distributed by: (unique1)
-Partition by: (unique1)
-
-Table "bfv_partition.mpp6612_1_prt_aa_1"
-   Column    |     Type      | Modifiers 
--------------+---------------+-----------
- unique1     | integer       | 
- unique2     | character(10) | 
- two         | integer       | 
- four        | integer       | 
- ten         | integer       | 
- twenty      | integer       | 
- hundred     | integer       | 
- thousand    | integer       | 
- twothousand | integer       | 
- fivethous   | integer       | 
- tenthous    | integer       | 
- odd         | integer       | 
- even        | integer       | 
- stringu1    | name          | 
- stringu2    | name          | 
- string4     | name          | 
-Check constraints:
-    "mpp6612_1_prt_aa_1_check" CHECK (unique1 >= 0 AND unique1 < 500)
-Inherits: mpp6612
+          Partitioned table "bfv_partition.mpp6612"
+   Column    |     Type      | Collation | Nullable | Default 
+-------------+---------------+-----------+----------+---------
+ unique1     | integer       |           |          | 
+ unique2     | character(10) |           |          | 
+ two         | integer       |           |          | 
+ four        | integer       |           |          | 
+ ten         | integer       |           |          | 
+ twenty      | integer       |           |          | 
+ hundred     | integer       |           |          | 
+ thousand    | integer       |           |          | 
+ twothousand | integer       |           |          | 
+ fivethous   | integer       |           |          | 
+ tenthous    | integer       |           |          | 
+ odd         | integer       |           |          | 
+ even        | integer       |           |          | 
+ stringu1    | name          |           |          | 
+ stringu2    | name          |           |          | 
+ string4     | name          |           |          | 
+Partition key: RANGE (unique1)
+Number of partitions: 3 (Use \d+ to list them.)
 Distributed by: (unique1)
 
-Table "bfv_partition.mpp6612_1_prt_aa_2"
-   Column    |     Type      | Modifiers 
--------------+---------------+-----------
- unique1     | integer       | 
- unique2     | character(10) | 
- two         | integer       | 
- four        | integer       | 
- ten         | integer       | 
- twenty      | integer       | 
- hundred     | integer       | 
- thousand    | integer       | 
- twothousand | integer       | 
- fivethous   | integer       | 
- tenthous    | integer       | 
- odd         | integer       | 
- even        | integer       | 
- stringu1    | name          | 
- stringu2    | name          | 
- string4     | name          | 
-Check constraints:
-    "mpp6612_1_prt_aa_2_check" CHECK (unique1 >= 500 AND unique1 < 1000)
-Inherits: mpp6612
+           Table "bfv_partition.mpp6612_1_prt_aa_1"
+   Column    |     Type      | Collation | Nullable | Default 
+-------------+---------------+-----------+----------+---------
+ unique1     | integer       |           |          | 
+ unique2     | character(10) |           |          | 
+ two         | integer       |           |          | 
+ four        | integer       |           |          | 
+ ten         | integer       |           |          | 
+ twenty      | integer       |           |          | 
+ hundred     | integer       |           |          | 
+ thousand    | integer       |           |          | 
+ twothousand | integer       |           |          | 
+ fivethous   | integer       |           |          | 
+ tenthous    | integer       |           |          | 
+ odd         | integer       |           |          | 
+ even        | integer       |           |          | 
+ stringu1    | name          |           |          | 
+ stringu2    | name          |           |          | 
+ string4     | name          |           |          | 
+Partition of: mpp6612 FOR VALUES FROM (0) TO (500)
 Distributed by: (unique1)
 
-Table "bfv_partition.mpp6612_1_prt_default_part"
-   Column    |     Type      | Modifiers 
--------------+---------------+-----------
- unique1     | integer       | 
- unique2     | character(10) | 
- two         | integer       | 
- four        | integer       | 
- ten         | integer       | 
- twenty      | integer       | 
- hundred     | integer       | 
- thousand    | integer       | 
- twothousand | integer       | 
- fivethous   | integer       | 
- tenthous    | integer       | 
- odd         | integer       | 
- even        | integer       | 
- stringu1    | name          | 
- stringu2    | name          | 
- string4     | name          | 
-Inherits: mpp6612
+           Table "bfv_partition.mpp6612_1_prt_aa_2"
+   Column    |     Type      | Collation | Nullable | Default 
+-------------+---------------+-----------+----------+---------
+ unique1     | integer       |           |          | 
+ unique2     | character(10) |           |          | 
+ two         | integer       |           |          | 
+ four        | integer       |           |          | 
+ ten         | integer       |           |          | 
+ twenty      | integer       |           |          | 
+ hundred     | integer       |           |          | 
+ thousand    | integer       |           |          | 
+ twothousand | integer       |           |          | 
+ fivethous   | integer       |           |          | 
+ tenthous    | integer       |           |          | 
+ odd         | integer       |           |          | 
+ even        | integer       |           |          | 
+ stringu1    | name          |           |          | 
+ stringu2    | name          |           |          | 
+ string4     | name          |           |          | 
+Partition of: mpp6612 FOR VALUES FROM (500) TO (1000)
+Distributed by: (unique1)
+
+       Table "bfv_partition.mpp6612_1_prt_default_part"
+   Column    |     Type      | Collation | Nullable | Default 
+-------------+---------------+-----------+----------+---------
+ unique1     | integer       |           |          | 
+ unique2     | character(10) |           |          | 
+ two         | integer       |           |          | 
+ four        | integer       |           |          | 
+ ten         | integer       |           |          | 
+ twenty      | integer       |           |          | 
+ hundred     | integer       |           |          | 
+ thousand    | integer       |           |          | 
+ twothousand | integer       |           |          | 
+ fivethous   | integer       |           |          | 
+ tenthous    | integer       |           |          | 
+ odd         | integer       |           |          | 
+ even        | integer       |           |          | 
+ stringu1    | name          |           |          | 
+ stringu2    | name          |           |          | 
+ string4     | name          |           |          | 
+Partition of: mpp6612 DEFAULT
 Distributed by: (unique1)
 
 -- Modify the partition definition. MPP-3724
@@ -4070,63 +4066,61 @@ NOTICE:  CREATE TABLE will create partition "mpp6573_1_prt_1" for table "mpp6573
 NOTICE:  CREATE TABLE will create partition "mpp6573_1_prt_2" for table "mpp6573"
 alter table mpp6573 add primary key (id, date) ;
 \d mpp6573*
-   Table "bfv_partition.mpp6573"
- Column |     Type      | Modifiers 
---------+---------------+-----------
- id     | integer       | not null
- date   | date          | not null
- amt    | numeric(10,2) | 
+        Partitioned table "bfv_partition.mpp6573"
+ Column |     Type      | Collation | Nullable | Default 
+--------+---------------+-----------+----------+---------
+ id     | integer       |           | not null | 
+ date   | date          |           | not null | 
+ amt    | numeric(10,2) |           |          | 
+Partition key: RANGE (date)
 Indexes:
     "mpp6573_pkey" PRIMARY KEY, btree (id, date)
-Number of child tables: 2 (Use \d+ to list them.)
+Number of partitions: 2 (Use \d+ to list them.)
 Distributed by: (id)
-Partition by: (date)
 
-Table "bfv_partition.mpp6573_1_prt_1"
- Column |     Type      | Modifiers 
---------+---------------+-----------
- id     | integer       | not null
- date   | date          | not null
- amt    | numeric(10,2) | 
+          Table "bfv_partition.mpp6573_1_prt_1"
+ Column |     Type      | Collation | Nullable | Default 
+--------+---------------+-----------+----------+---------
+ id     | integer       |           | not null | 
+ date   | date          |           | not null | 
+ amt    | numeric(10,2) |           |          | 
+Partition of: mpp6573 FOR VALUES FROM ('01-01-2008') TO ('01-02-2008')
 Indexes:
     "mpp6573_1_prt_1_pkey" PRIMARY KEY, btree (id, date)
-Check constraints:
-    "mpp6573_1_prt_1_check" CHECK (date >= '01-01-2008'::date AND date < '01-02-2008'::date)
-Inherits: mpp6573
 Distributed by: (id)
 
 Index "bfv_partition.mpp6573_1_prt_1_pkey"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
- date   | date    | date
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+ date   | date    | yes  | date
+Partition of: mpp6573_pkey 
 primary key, btree, for table "bfv_partition.mpp6573_1_prt_1"
 
-Table "bfv_partition.mpp6573_1_prt_2"
- Column |     Type      | Modifiers 
---------+---------------+-----------
- id     | integer       | not null
- date   | date          | not null
- amt    | numeric(10,2) | 
+          Table "bfv_partition.mpp6573_1_prt_2"
+ Column |     Type      | Collation | Nullable | Default 
+--------+---------------+-----------+----------+---------
+ id     | integer       |           | not null | 
+ date   | date          |           | not null | 
+ amt    | numeric(10,2) |           |          | 
+Partition of: mpp6573 FOR VALUES FROM ('01-02-2008') TO ('01-03-2008')
 Indexes:
     "mpp6573_1_prt_2_pkey" PRIMARY KEY, btree (id, date)
-Check constraints:
-    "mpp6573_1_prt_2_check" CHECK (date >= '01-02-2008'::date AND date < '01-03-2008'::date)
-Inherits: mpp6573
 Distributed by: (id)
 
 Index "bfv_partition.mpp6573_1_prt_2_pkey"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
- date   | date    | date
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+ date   | date    | yes  | date
+Partition of: mpp6573_pkey 
 primary key, btree, for table "bfv_partition.mpp6573_1_prt_2"
 
-Index "bfv_partition.mpp6573_pkey"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
- date   | date    | date
+Partitioned index "bfv_partition.mpp6573_pkey"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+ date   | date    | yes  | date
 primary key, btree, for table "bfv_partition.mpp6573"
 
 drop table mpp6573;
@@ -4246,15 +4240,13 @@ GRANT SELECT ON part_acl_test TO part_acl_u1;
 ALTER TABLE part_acl_test ADD PARTITION p2 VALUES (2);
 -- View permissions
 \dp part_acl_*
-                                                   Access privileges
-    Schema     |          Name          | Type  |           Access privileges           | Column privileges | Policies 
----------------+------------------------+-------+---------------------------------------+-------------------+----------
- bfv_partition | part_acl_test          | table | part_acl_owner=arwdDxt/part_acl_owner+|                   | 
-               |                        |       | part_acl_u1=r/part_acl_owner          |                   | 
- bfv_partition | part_acl_test_1_prt_p1 | table | part_acl_owner=arwdDxt/part_acl_owner+|                   | 
-               |                        |       | part_acl_u1=r/part_acl_owner          |                   | 
- bfv_partition | part_acl_test_1_prt_p2 | table | part_acl_owner=arwdDxt/part_acl_owner+|                   | 
-               |                        |       | part_acl_u1=r/part_acl_owner          |                   | 
+                                                         Access privileges
+    Schema     |          Name          |       Type        |           Access privileges           | Column privileges | Policies 
+---------------+------------------------+-------------------+---------------------------------------+-------------------+----------
+ bfv_partition | part_acl_test          | partitioned table | part_acl_owner=arwdDxt/part_acl_owner+|                   | 
+               |                        |                   | part_acl_u1=r/part_acl_owner          |                   | 
+ bfv_partition | part_acl_test_1_prt_p1 | table             |                                       |                   | 
+ bfv_partition | part_acl_test_1_prt_p2 | table             |                                       |                   | 
 (3 rows)
 
 -- View dependencies
