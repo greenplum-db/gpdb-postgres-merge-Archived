@@ -1,6 +1,6 @@
-create schema cursor_@orientation@;
-set search_path="$user",cursor_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema cursor_@amname@;
+set search_path="$user",cursor_@amname@,public;
+SET default_table_access_method=@amname@;
 begin;
 create table uao_tab_cur_1 (a int, b int) with (appendonly=true)
 distributed by (a);
@@ -56,7 +56,7 @@ fetch 1 from uao_cursor_2;
 
 -- Should fail
 update uao_tab_cur_1 set b = a where current of uao_cursor_2;
-ERROR:  "uao_tab_cur_1" is not simply updatable
+ERROR:  cursor "uao_cursor_2" is not a simply updatable scan of table "uao_tab_cur_1"
 end;
 select * from uao_tab_cur_1;
  a | b  

@@ -1,6 +1,6 @@
-create schema compresstype_@orientation@;
-set search_path="$user",compresstype_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema compresstype_@amname@;
+set search_path="$user",compresstype_@amname@,public;
+SET default_table_access_method=@amname@;
 -- Test compress types.  The objective is to verify basic
 -- insert/update/delete works and NOT to test compression algorithm.
 -- So don't bother inserting large data and checking compression

@@ -1,6 +1,6 @@
-create schema alter_ao_part_exch_@orientation@;
-set search_path="$user",alter_ao_part_exch_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema alter_ao_part_exch_@amname@;
+set search_path="$user",alter_ao_part_exch_@amname@,public;
+SET default_table_access_method=@amname@;
 --- Define a multi-leveled partitioned table with partitions of
 --- different types (ao, aoco, heap). Then, exchange these partitions
 --- with other tables.
@@ -29,14 +29,14 @@ analyze ao_part;
 select count(*) FROM pg_appendonly WHERE visimapidxid is not NULL AND
 visimapidxid is not NULL AND relid in (SELECT c.oid FROM pg_class c
 inner join pg_namespace n ON c.relnamespace = n.oid and c.relname like
-'ao_part%' and n.nspname = 'alter_ao_part_exch_@orientation@');
+'ao_part%' and n.nspname = 'alter_ao_part_exch_@amname@');
 
 \t
 select relkind, case when relstorage = 'c' then 'column' when
 relstorage='a' then 'row' end from pg_class c inner join
 pg_namespace n on c.relnamespace = n.oid and relname like
 'ao_part_1_prt_5_2_prt_subothers%' and n.nspname =
-'alter_ao_part_exch_@orientation@';
+'alter_ao_part_exch_@amname@';
 \t
 
 --- Exchange partitions
@@ -73,7 +73,7 @@ select relkind, case when relstorage = 'c' then 'column' when
 relstorage='a' then 'row' end from pg_class c inner join
 pg_namespace n on c.relnamespace = n.oid and relname like
 'ao_part_1_prt_5_2_prt_subothers%' and n.nspname =
-'alter_ao_part_exch_@orientation@';
+'alter_ao_part_exch_@amname@';
 \t
 
 select count(*) from exh_ao_ao;

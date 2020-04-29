@@ -1,6 +1,6 @@
-create schema alter_ao_part_tables_@orientation@;
-set search_path="$user",alter_ao_part_tables_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema alter_ao_part_tables_@amname@;
+set search_path="$user",alter_ao_part_tables_@amname@,public;
+SET default_table_access_method=@amname@;
 BEGIN;
 Create table sto_alt_ao_part(a int, b int, c int, d int)
  with(appendonly=true) distributed by (a)

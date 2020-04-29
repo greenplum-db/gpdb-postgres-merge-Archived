@@ -486,7 +486,7 @@ typedef struct replacements
 	char *dlpath;
 	char *dlsuffix;
 	char *bindir;
-	char *orientation;
+	char *amname;
 	char *cgroup_mnt_point;
 	char *content_zero_hostname;
 	const char *username;
@@ -542,10 +542,10 @@ convert_line(char *line, replacements *repls)
 	replace_string(line, "@bindir@", repls->bindir);
 	replace_string(line, "@hostname@", repls->content_zero_hostname);
 	replace_string(line, "@curusername@", (char *) repls->username);
-	if (repls->orientation)
+	if (repls->amname)
 	{
-		replace_string(line, "@orientation@", repls->orientation);
-		if (strcmp(repls->orientation, "row") == 0)
+		replace_string(line, "@amname@", repls->amname);
+		if (strcmp(repls->amname, "appendoptimized") == 0)
 			replace_string(line, "@aoseg@", "aoseg");
 		else
 			replace_string(line, "@aoseg@", "aocsseg");
@@ -554,7 +554,7 @@ convert_line(char *line, replacements *repls)
 
 /*
  * Generate two files for each UAO test case, one for row and the
- * other for column orientation.
+ * other for column amname.
  */
 static int
 generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *suffix, replacements *repls)
@@ -652,9 +652,9 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 		while (fgets(line, sizeof(line), infile))
 		{
 			strlcpy(line_row, line, sizeof(line_row));
-			repls->orientation = "row";
+			repls->amname = "appendoptimized";
 			convert_line(line_row, repls);
-			repls->orientation = "column";
+			repls->amname = "aoco";
 			convert_line(line, repls);
 			fputs(line, outfile_col);
 			fputs(line_row, outfile_row);

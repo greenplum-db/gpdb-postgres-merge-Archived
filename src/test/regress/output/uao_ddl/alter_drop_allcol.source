@@ -1,6 +1,6 @@
-create schema alter_drop_allcol_@orientation@;
-set search_path="$user",alter_drop_allcol_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema alter_drop_allcol_@amname@;
+set search_path="$user",alter_drop_allcol_@amname@,public;
+SET default_table_access_method=@amname@;
 --
 -- Drop all columns one by one then add new column.
 -- Perform VACUUM and SELECT again.

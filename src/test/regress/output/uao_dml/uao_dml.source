@@ -1,6 +1,6 @@
-create schema uao_dml_@orientation@;
-set search_path=uao_dml_@orientation@;
-set gp_default_storage_options='orientation=@orientation@';
+create schema uao_dml_@amname@;
+set search_path=uao_dml_@amname@;
+set default_table_access_method=@amname@;
 -- Some of the UPDATE commands in this test fail with ORCA, with an error:
 -- ERROR:  multiple updates to a row by the same query is not allowed
 -- The queries in this test are not interesting from the point of view of
@@ -103,56 +103,56 @@ SELECT a, b FROM foo WHERE a < 10;
 ROLLBACK;
 -- @Description Checks analyze behavior w.r.t. to statistics
 -- 
-DROP TABLE IF EXISTS ao2_@orientation@;
-create table ao2_@orientation@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+DROP TABLE IF EXISTS ao2_@amname@;
+create table ao2_@amname@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         10
 (1 row)
 
-select count(*)  from ao2_@orientation@;
+select count(*)  from ao2_@amname@;
  count 
 -------
     10
 (1 row)
 
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select count(*)  from ao2_@orientation@;
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select count(*)  from ao2_@amname@;
  count 
 -------
     20
 (1 row)
 
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         10
 (1 row)
 
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         10
 (1 row)
 
-select count(*)  from ao2_@orientation@;
+select count(*)  from ao2_@amname@;
  count 
 -------
     30
 (1 row)
 
-delete from ao2_@orientation@ where i < 27;
-analyze ao2_@orientation@;
-select count(*)  from ao2_@orientation@;
+delete from ao2_@amname@ where i < 27;
+analyze ao2_@amname@;
+select count(*)  from ao2_@amname@;
  count 
 -------
     12
 (1 row)
 
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         12
@@ -405,57 +405,57 @@ SELECT count(*) as visible_and_invisible FROM foo;
 set gp_select_invisible = false;
 -- @Description Checks if gp_autostats gucs are correctly handled
 -- 
-DROP TABLE IF EXISTS ao2_@orientation@;
-create table ao2_@orientation@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
+DROP TABLE IF EXISTS ao2_@amname@;
+create table ao2_@amname@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
 set gp_autostats_on_change_threshold=1;
 set gp_autostats_mode=on_change;
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         10
 (1 row)
 
-select count(*)  from ao2_@orientation@;
+select count(*)  from ao2_@amname@;
  count 
 -------
     10
 (1 row)
 
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select count(*)  from ao2_@orientation@;
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select count(*)  from ao2_@amname@;
  count 
 -------
     20
 (1 row)
 
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         20
 (1 row)
 
-insert into ao2_@orientation@ select i,'aa'||i from generate_series(21,30) as i;
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         30
 (1 row)
 
-select count(*)  from ao2_@orientation@;
+select count(*)  from ao2_@amname@;
  count 
 -------
     30
 (1 row)
 
-delete from ao2_@orientation@ where i < 27;
-select count(*)  from ao2_@orientation@;
+delete from ao2_@amname@ where i < 27;
+select count(*)  from ao2_@amname@;
  count 
 -------
     12
 (1 row)
 
-select reltuples from pg_class where relname = 'ao2_@orientation@';
+select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
 -----------
         12
@@ -893,38 +893,38 @@ RESET enable_seqscan;
 RESET enable_bitmapscan;
 -- @Description Tests basic index stats after vacuuming
 -- 
-DROP TABLE if exists mytab_@orientation@;
-CREATE TABLE mytab_@orientation@(
+DROP TABLE if exists mytab_@amname@;
+CREATE TABLE mytab_@amname@(
           col_int int,
           col_text text,
           col_numeric numeric,
           col_unq int
           ) with(appendonly=true) DISTRIBUTED RANDOMLY;
-Create index mytab_int_idx1_@orientation@ on mytab_@orientation@(col_int);
-insert into mytab_@orientation@ values(1,'aa',1001,101),(2,'bb',1002,102);
-select * from mytab_@orientation@;
+Create index mytab_int_idx1_@amname@ on mytab_@amname@(col_int);
+insert into mytab_@amname@ values(1,'aa',1001,101),(2,'bb',1002,102);
+select * from mytab_@amname@;
  col_int | col_text | col_numeric | col_unq 
 ---------+----------+-------------+---------
        1 | aa       |        1001 |     101
        2 | bb       |        1002 |     102
 (2 rows)
 
-update mytab_@orientation@ set col_text=' new value' where col_int = 1;
-select * from mytab_@orientation@;
+update mytab_@amname@ set col_text=' new value' where col_int = 1;
+select * from mytab_@amname@;
  col_int |  col_text  | col_numeric | col_unq 
 ---------+------------+-------------+---------
        2 | bb         |        1002 |     102
        1 |  new value |        1001 |     101
 (2 rows)
 
-vacuum mytab_@orientation@;
-SELECT reltuples FROM pg_class WHERE relname = 'mytab_@orientation@';
+vacuum mytab_@amname@;
+SELECT reltuples FROM pg_class WHERE relname = 'mytab_@amname@';
  reltuples 
 -----------
          2
 (1 row)
 
-SELECT reltuples FROM pg_class WHERE relname = 'mytab_int_idx1_@orientation@';
+SELECT reltuples FROM pg_class WHERE relname = 'mytab_int_idx1_@amname@';
  reltuples 
 -----------
          2
@@ -1193,50 +1193,50 @@ SELECT * FROM foo;
 
 -- @Description Tests that pg_class statistics are up-to-date when deleting and updating.
 -- 
-DROP TABLE IF EXISTS foo_@orientation@;
-CREATE TABLE foo_@orientation@ (a INT, b INT, c CHAR(128)) WITH (appendonly=true) DISTRIBUTED BY (a);
-CREATE INDEX foo_@orientation@_index ON foo_@orientation@(b);
-INSERT INTO foo_@orientation@ SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@';
+DROP TABLE IF EXISTS foo_@amname@;
+CREATE TABLE foo_@amname@ (a INT, b INT, c CHAR(128)) WITH (appendonly=true) DISTRIBUTED BY (a);
+CREATE INDEX foo_@amname@_index ON foo_@amname@(b);
+INSERT INTO foo_@amname@ SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@';
  reltuples 
 -----------
       1000
 (1 row)
 
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@_index';
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@_index';
  reltuples 
 -----------
       1000
 (1 row)
 
-DELETE FROM foo_@orientation@ WHERE a < 100;
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@';
+DELETE FROM foo_@amname@ WHERE a < 100;
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@';
  reltuples 
 -----------
       1000
 (1 row)
 
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@_index';
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@_index';
  reltuples 
 -----------
       1000
 (1 row)
 
-UPDATE foo_@orientation@ SET b=42 WHERE a < 200;
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@';
+UPDATE foo_@amname@ SET b=42 WHERE a < 200;
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@';
  reltuples 
 -----------
       1000
 (1 row)
 
-SELECT reltuples FROM pg_class WHERE relname = 'foo_@orientation@_index';
+SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@_index';
  reltuples 
 -----------
       1000
 (1 row)
 
 set enable_seqscan=false;
-SELECT COUNT(*) FROM foo_@orientation@ WHERE b=42;
+SELECT COUNT(*) FROM foo_@amname@ WHERE b=42;
  count 
 -------
    100

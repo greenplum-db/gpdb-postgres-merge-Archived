@@ -1,10 +1,10 @@
-create schema create_ao_tables_@orientation@;
+create schema create_ao_tables_@amname@;
 -- start_matchsubs
 -- m/DETAIL:  Failing row contains \(.*\)/
 -- s/DETAIL:  Failing row contains \(.*\)/DETAIL:  Failing row contains (#####)/
 -- end_matchsubs
-set search_path="$user",create_ao_tables_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+set search_path="$user",create_ao_tables_@amname@,public;
+SET default_table_access_method=@amname@;
 -- Create Updatable AO tables , with indexes, with and without compression
 BEGIN;
 CREATE TABLE sto_uao_1(
@@ -123,17 +123,17 @@ insert into sto_uao_3 values ('2_two',25);
 select count(*) from sto_uao_3;
 
 --Create table in user created scehma
-Create schema uao_schema1_@orientation@;
-CREATE TABLE uao_schema1_@orientation@.sto_uao_5(
+Create schema uao_schema1_@amname@;
+CREATE TABLE uao_schema1_@amname@.sto_uao_5(
           stud_id int,
           stud_name varchar(20)
           ) with(appendonly=true) DISTRIBUTED by(stud_id);
-Insert into uao_schema1_@orientation@.sto_uao_5
+Insert into uao_schema1_@amname@.sto_uao_5
  values(generate_series(1,20), 'studentname1');
-delete from uao_schema1_@orientation@.sto_uao_5;
-Insert into uao_schema1_@orientation@.sto_uao_5
+delete from uao_schema1_@amname@.sto_uao_5;
+Insert into uao_schema1_@amname@.sto_uao_5
  values(generate_series(21, 25), 'studentname2');
-select count(*) from uao_schema1_@orientation@.sto_uao_5;
+select count(*) from uao_schema1_@amname@.sto_uao_5;
 
 -- Truncate, Drop table and index
 CREATE TABLE sto_uao_6 (did integer,

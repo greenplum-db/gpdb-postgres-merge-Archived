@@ -1,6 +1,6 @@
-create schema create_ao_table_500cols_@orientation@;
-set search_path="$user",create_ao_table_500cols_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema create_ao_table_500cols_@amname@;
+set search_path="$user",create_ao_table_500cols_@amname@,public;
+SET default_table_access_method=@amname@;
 Create table sto_uao_500cols (id SERIAL, a1 int, a2 char(5), a3
 numeric, a4 boolean DEFAULT false , a5 char DEFAULT 'd', a6 text, a7
 timestamp, a8 character varying(705), a9 bigint, a10 date, a11

@@ -1,6 +1,6 @@
-create schema blocksize_@orientation@;
-set search_path="$user",blocksize_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema blocksize_@amname@;
+set search_path="$user",blocksize_@amname@,public;
+SET default_table_access_method=@amname@;
 -- Insert/update/delete on UAO tables with different blocksizes
 BEGIN;
 CREATE TABLE uao_blocksize_8k with (appendonly=true, BLOCKSIZE=8192) AS (

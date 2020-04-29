@@ -1,6 +1,6 @@
-create schema alter_ao_table_owner_@orientation@;
-set search_path="$user",alter_ao_table_owner_@orientation@,public;
-SET gp_default_storage_options='orientation=@orientation@';
+create schema alter_ao_table_owner_@amname@;
+set search_path="$user",alter_ao_table_owner_@amname@,public;
+SET default_table_access_method=@amname@;
 --- start_ignore
 drop owned by uao_user2 cascade;
 Drop role if exists uao_user2 ;
