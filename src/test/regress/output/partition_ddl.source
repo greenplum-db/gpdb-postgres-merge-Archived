@@ -15,10 +15,8 @@ PARTITION BY LIST (gender)
 SUBPARTITION BY RANGE (year) 
 SUBPARTITION TEMPLATE (start ('2000') end ('2006') every (interval '1')) 
 (PARTITION girls VALUES ('F'), PARTITION boys VALUES ('M'));
-ERROR:  operator does not exist: smallint + interval
-LINE 4: SUBPARTITION TEMPLATE (start ('2000') end ('2006') every (in...
-                                      ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+ERROR:  operator does not exist: smallint pg_catalog.+ interval
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 drop table rank;
 create table ggg (a char(1), b char(2), d char(3))
 distributed by (a)
@@ -379,10 +377,10 @@ CREATE TABLE mpp3265 (
   default partition default_part );
 alter table mpp3265 drop partition for (100);
 alter table mpp3265 drop partition for (-5);
-ERROR:  FOR expression matches DEFAULT partition "default_part" of relation "mpp3265"
+ERROR:  FOR expression matches DEFAULT partition for specified value of mpp3265
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table mpp3265 drop partition for (0);
-ERROR:  FOR expression matches DEFAULT partition "default_part" of relation "mpp3265"
+ERROR:  FOR expression matches DEFAULT partition for specified value of mpp3265
 HINT:  FOR expression may only specify a non-default partition in this context.
 drop table mpp3265;
 -- Test very deeply nested subpartitioning
@@ -501,1525 +499,1371 @@ SUBPARTITION BY LIST (company_no) subpartition template
 )
 ( start ('2005-06-01') end ('2006-05-01') every (INTERVAL '1 month') );
 \d mpp2564_transactions*
-            Table "partition_ddl2.mpp2564_transactions"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Number of child tables: 11 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (obligation_trans_date)
-
-        Table "partition_ddl2.mpp2564_transactions_1_prt_1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_1_check" CHECK (obligation_trans_date >= '06-01-2005'::date AND obligation_trans_date < '07-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-        Table "partition_ddl2.mpp2564_transactions_1_prt_10"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_10_check" CHECK (obligation_trans_date >= '03-01-2006'::date AND obligation_trans_date < '04-01-2006'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-   Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_10_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_10_check" CHECK (obligation_trans_date >= '03-01-2006'::date AND obligation_trans_date < '04-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_10
+                 Partitioned table "partition_ddl2.mpp2564_transactions"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition key: RANGE (obligation_trans_date)
+Number of partitions: 11 (Use \d+ to list them.)
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_10_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_10_check" CHECK (obligation_trans_date >= '03-01-2006'::date AND obligation_trans_date < '04-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_10
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('06-01-2005') TO ('07-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_10_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_10_check" CHECK (obligation_trans_date >= '03-01-2006'::date AND obligation_trans_date < '04-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_10
+            Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_10"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('03-01-2006') TO ('04-01-2006')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_10_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_10_check" CHECK (obligation_trans_date >= '03-01-2006'::date AND obligation_trans_date < '04-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_10
+              Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_10 FOR VALUES IN ('047')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_11"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_11_check" CHECK (obligation_trans_date >= '04-01-2006'::date AND obligation_trans_date < '05-01-2006'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-   Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_11_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_11_check" CHECK (obligation_trans_date >= '04-01-2006'::date AND obligation_trans_date < '05-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_11
+              Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_10 FOR VALUES IN ('002')
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_11_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_11_check" CHECK (obligation_trans_date >= '04-01-2006'::date AND obligation_trans_date < '05-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_11
+              Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_10 FOR VALUES IN ('056')
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_11_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_11_check" CHECK (obligation_trans_date >= '04-01-2006'::date AND obligation_trans_date < '05-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_11
+              Table "partition_ddl2.mpp2564_transactions_1_prt_10_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_10 FOR VALUES IN ('022')
 Distributed randomly
 
-   Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_11_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_11_check" CHECK (obligation_trans_date >= '04-01-2006'::date AND obligation_trans_date < '05-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_11
+            Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_11"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('04-01-2006') TO ('05-01-2006')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_1_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_1_check" CHECK (obligation_trans_date >= '06-01-2005'::date AND obligation_trans_date < '07-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_1
+              Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_11 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_1_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_1_check" CHECK (obligation_trans_date >= '06-01-2005'::date AND obligation_trans_date < '07-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_1
+              Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_11 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_1_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_1_check" CHECK (obligation_trans_date >= '06-01-2005'::date AND obligation_trans_date < '07-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_1
+              Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_11 FOR VALUES IN ('056')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_1_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_1_check" CHECK (obligation_trans_date >= '06-01-2005'::date AND obligation_trans_date < '07-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_1
+              Table "partition_ddl2.mpp2564_transactions_1_prt_11_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_11 FOR VALUES IN ('022')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_2_check" CHECK (obligation_trans_date >= '07-01-2005'::date AND obligation_trans_date < '08-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_2_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_2_check" CHECK (obligation_trans_date >= '07-01-2005'::date AND obligation_trans_date < '08-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_2
+              Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_1 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_2_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_2_check" CHECK (obligation_trans_date >= '07-01-2005'::date AND obligation_trans_date < '08-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_2
+              Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_1 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_2_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_2_check" CHECK (obligation_trans_date >= '07-01-2005'::date AND obligation_trans_date < '08-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_2
+              Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_1 FOR VALUES IN ('056')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_2_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_2_check" CHECK (obligation_trans_date >= '07-01-2005'::date AND obligation_trans_date < '08-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_2
+              Table "partition_ddl2.mpp2564_transactions_1_prt_1_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_1 FOR VALUES IN ('022')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_3_check" CHECK (obligation_trans_date >= '08-01-2005'::date AND obligation_trans_date < '09-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_3_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_3_check" CHECK (obligation_trans_date >= '08-01-2005'::date AND obligation_trans_date < '09-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_3
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('07-01-2005') TO ('08-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_3_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_3_check" CHECK (obligation_trans_date >= '08-01-2005'::date AND obligation_trans_date < '09-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_3
+              Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_2 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_3_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_3_check" CHECK (obligation_trans_date >= '08-01-2005'::date AND obligation_trans_date < '09-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_3
+              Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_2 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_3_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_3_check" CHECK (obligation_trans_date >= '08-01-2005'::date AND obligation_trans_date < '09-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_3
+              Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_2 FOR VALUES IN ('056')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_4_check" CHECK (obligation_trans_date >= '09-01-2005'::date AND obligation_trans_date < '10-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_4_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_4_check" CHECK (obligation_trans_date >= '09-01-2005'::date AND obligation_trans_date < '10-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_4
+              Table "partition_ddl2.mpp2564_transactions_1_prt_2_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_2 FOR VALUES IN ('022')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_4_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_4_check" CHECK (obligation_trans_date >= '09-01-2005'::date AND obligation_trans_date < '10-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_4
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('08-01-2005') TO ('09-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_4_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_4_check" CHECK (obligation_trans_date >= '09-01-2005'::date AND obligation_trans_date < '10-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_4
+              Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_3 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_4_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_4_check" CHECK (obligation_trans_date >= '09-01-2005'::date AND obligation_trans_date < '10-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_4
+              Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_3 FOR VALUES IN ('002')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_5"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_5_check" CHECK (obligation_trans_date >= '10-01-2005'::date AND obligation_trans_date < '11-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_5_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_5_check" CHECK (obligation_trans_date >= '10-01-2005'::date AND obligation_trans_date < '11-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_5
+              Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_3 FOR VALUES IN ('056')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_5_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_5_check" CHECK (obligation_trans_date >= '10-01-2005'::date AND obligation_trans_date < '11-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_5
+              Table "partition_ddl2.mpp2564_transactions_1_prt_3_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_3 FOR VALUES IN ('022')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_5_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_5_check" CHECK (obligation_trans_date >= '10-01-2005'::date AND obligation_trans_date < '11-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_5
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('09-01-2005') TO ('10-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_5_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_5_check" CHECK (obligation_trans_date >= '10-01-2005'::date AND obligation_trans_date < '11-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_5
+              Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_4 FOR VALUES IN ('047')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_6"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_6_check" CHECK (obligation_trans_date >= '11-01-2005'::date AND obligation_trans_date < '12-01-2005'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_6_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_6_check" CHECK (obligation_trans_date >= '11-01-2005'::date AND obligation_trans_date < '12-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_6
+              Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_4 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_6_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_6_check" CHECK (obligation_trans_date >= '11-01-2005'::date AND obligation_trans_date < '12-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_6
+              Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_4 FOR VALUES IN ('056')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_6_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_6_check" CHECK (obligation_trans_date >= '11-01-2005'::date AND obligation_trans_date < '12-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_6
+              Table "partition_ddl2.mpp2564_transactions_1_prt_4_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_4 FOR VALUES IN ('022')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_6_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_6_check" CHECK (obligation_trans_date >= '11-01-2005'::date AND obligation_trans_date < '12-01-2005'::date)
-Inherits: mpp2564_transactions_1_prt_6
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_5"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('10-01-2005') TO ('11-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_7"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_7_check" CHECK (obligation_trans_date >= '12-01-2005'::date AND obligation_trans_date < '01-01-2006'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_7_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_7_check" CHECK (obligation_trans_date >= '12-01-2005'::date AND obligation_trans_date < '01-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_7
+              Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_5 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_7_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_7_check" CHECK (obligation_trans_date >= '12-01-2005'::date AND obligation_trans_date < '01-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_7
+              Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_5 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_7_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_7_check" CHECK (obligation_trans_date >= '12-01-2005'::date AND obligation_trans_date < '01-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_7
+              Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_5 FOR VALUES IN ('056')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_7_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_7_check" CHECK (obligation_trans_date >= '12-01-2005'::date AND obligation_trans_date < '01-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_7
+              Table "partition_ddl2.mpp2564_transactions_1_prt_5_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_5 FOR VALUES IN ('022')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_8"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_8_check" CHECK (obligation_trans_date >= '01-01-2006'::date AND obligation_trans_date < '02-01-2006'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_8_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_8_check" CHECK (obligation_trans_date >= '01-01-2006'::date AND obligation_trans_date < '02-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_8
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_6"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('11-01-2005') TO ('12-01-2005')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_8_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_8_check" CHECK (obligation_trans_date >= '01-01-2006'::date AND obligation_trans_date < '02-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_8
+              Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_6 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_8_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_8_check" CHECK (obligation_trans_date >= '01-01-2006'::date AND obligation_trans_date < '02-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_8
+              Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_6 FOR VALUES IN ('002')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_8_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_8_check" CHECK (obligation_trans_date >= '01-01-2006'::date AND obligation_trans_date < '02-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_8
+              Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_6 FOR VALUES IN ('056')
 Distributed randomly
 
-        Table "partition_ddl2.mpp2564_transactions_1_prt_9"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_9_check" CHECK (obligation_trans_date >= '02-01-2006'::date AND obligation_trans_date < '03-01-2006'::date)
-Inherits: mpp2564_transactions
-Number of child tables: 4 (Use \d+ to list them.)
-Distributed randomly
-Partition by: (company_no)
-
-    Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p1"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_9_2_prt_p1_check" CHECK (company_no = '047'::bpchar)
-    "mpp2564_transactions_1_prt_9_check" CHECK (obligation_trans_date >= '02-01-2006'::date AND obligation_trans_date < '03-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_9
+              Table "partition_ddl2.mpp2564_transactions_1_prt_6_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_6 FOR VALUES IN ('022')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p2"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_9_2_prt_p2_check" CHECK (company_no = '002'::bpchar)
-    "mpp2564_transactions_1_prt_9_check" CHECK (obligation_trans_date >= '02-01-2006'::date AND obligation_trans_date < '03-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_9
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_7"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('12-01-2005') TO ('01-01-2006')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p3"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_9_2_prt_p3_check" CHECK (company_no = '056'::bpchar)
-    "mpp2564_transactions_1_prt_9_check" CHECK (obligation_trans_date >= '02-01-2006'::date AND obligation_trans_date < '03-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_9
+              Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_7 FOR VALUES IN ('047')
 Distributed randomly
 
-    Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p4"
-          Column          |            Type             | Modifiers 
---------------------------+-----------------------------+-----------
- obligation_trans_date    | date                        | 
- cust_no                  | integer                     | 
- company_no               | character(3)                | 
- obligation_trans_no      | character varying(25)       | 
- item_no                  | integer                     | 
- orig_oblig_trans_no      | character varying(25)       | 
- split_ind                | character(1)                | 
- qty_sold                 | integer                     | 
- net_wgt_lbs              | numeric(10,5)               | 
- unit_price               | numeric(10,2)               | 
- ext_price                | numeric(10,2)               | 
- catch_wgt_ind            | character(1)                | 
- qty_sold_case_equivalent | numeric(10,5)               | 
- marketing_assoc_id       | character varying(10)       | 
- cost_of_goods_sold       | numeric(10,2)               | 
- adj_cost_good_sold       | numeric(10,2)               | 
- trade_sales_ind          | character(1)                | 
- create_date              | timestamp without time zone | 
-Check constraints:
-    "mpp2564_transactions_1_prt_9_2_prt_p4_check" CHECK (company_no = '022'::bpchar)
-    "mpp2564_transactions_1_prt_9_check" CHECK (obligation_trans_date >= '02-01-2006'::date AND obligation_trans_date < '03-01-2006'::date)
-Inherits: mpp2564_transactions_1_prt_9
+              Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_7 FOR VALUES IN ('002')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_7 FOR VALUES IN ('056')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_7_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_7 FOR VALUES IN ('022')
+Distributed randomly
+
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_8"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('01-01-2006') TO ('02-01-2006')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_8 FOR VALUES IN ('047')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_8 FOR VALUES IN ('002')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_8 FOR VALUES IN ('056')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_8_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_8 FOR VALUES IN ('022')
+Distributed randomly
+
+             Partitioned table "partition_ddl2.mpp2564_transactions_1_prt_9"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions FOR VALUES FROM ('02-01-2006') TO ('03-01-2006')
+Partition key: LIST (company_no)
+Number of partitions: 4 (Use \d+ to list them.)
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p1"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_9 FOR VALUES IN ('047')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p2"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_9 FOR VALUES IN ('002')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p3"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_9 FOR VALUES IN ('056')
+Distributed randomly
+
+              Table "partition_ddl2.mpp2564_transactions_1_prt_9_2_prt_p4"
+          Column          |            Type             | Collation | Nullable | Default 
+--------------------------+-----------------------------+-----------+----------+---------
+ obligation_trans_date    | date                        |           |          | 
+ cust_no                  | integer                     |           |          | 
+ company_no               | character(3)                |           |          | 
+ obligation_trans_no      | character varying(25)       |           |          | 
+ item_no                  | integer                     |           |          | 
+ orig_oblig_trans_no      | character varying(25)       |           |          | 
+ split_ind                | character(1)                |           |          | 
+ qty_sold                 | integer                     |           |          | 
+ net_wgt_lbs              | numeric(10,5)               |           |          | 
+ unit_price               | numeric(10,2)               |           |          | 
+ ext_price                | numeric(10,2)               |           |          | 
+ catch_wgt_ind            | character(1)                |           |          | 
+ qty_sold_case_equivalent | numeric(10,5)               |           |          | 
+ marketing_assoc_id       | character varying(10)       |           |          | 
+ cost_of_goods_sold       | numeric(10,2)               |           |          | 
+ adj_cost_good_sold       | numeric(10,2)               |           |          | 
+ trade_sales_ind          | character(1)                |           |          | 
+ create_date              | timestamp without time zone |           |          | 
+Partition of: mpp2564_transactions_1_prt_9 FOR VALUES IN ('022')
 Distributed randomly
 
 -- Check that DEFAULT can be used as partition's name with ALTER TABLE ADD PARTITION. (MPP-3363)
