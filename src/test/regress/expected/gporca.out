@@ -8403,14 +8403,14 @@ set optimizer_plan_id = 2;
 explain select * from orca.t_text where user_id=9;
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)  (cost=0.00..7.19 rows=3 width=21)
-   ->  Append  (cost=0.00..7.19 rows=1 width=21)
+ Gather Motion 1:1  (slice1; segments: 1)  (cost=0.00..9.26 rows=3 width=21)
+   ->  Append  (cost=0.00..9.20 rows=3 width=21)
+         ->  Seq Scan on t_text_1_prt_partbad  (cost=0.00..3.06 rows=1 width=21)
+               Filter: (user_id = '9'::numeric)
          ->  Seq Scan on t_text_1_prt_partgood  (cost=0.00..3.06 rows=1 width=20)
-               Filter: user_id = 9::numeric
-         ->  Seq Scan on t_text_1_prt_partbad  (cost=0.00..2.06 rows=1 width=21)
-               Filter: user_id = 9::numeric
-         ->  Seq Scan on t_text_1_prt_partugly  (cost=0.00..2.06 rows=1 width=21)
-               Filter: user_id = 9::numeric
+               Filter: (user_id = '9'::numeric)
+         ->  Seq Scan on t_text_1_prt_partugly  (cost=0.00..3.06 rows=1 width=21)
+               Filter: (user_id = '9'::numeric)
  Optimizer: Postgres query optimizer
 (9 rows)
 
