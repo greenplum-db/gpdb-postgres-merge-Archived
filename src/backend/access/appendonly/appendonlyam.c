@@ -2638,6 +2638,12 @@ appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc)
 	pfree(aoUpdateDesc);
 }
 
+MemTupleBinding *
+AppendOnlyUpdateMTBind(AppendOnlyUpdateDesc aoUpdateDesc)
+{
+	return aoUpdateDesc->aoInsertDesc->mt_bind;
+}
+
 TM_Result
 appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
 				  MemTuple memTuple,

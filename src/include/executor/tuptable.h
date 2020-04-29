@@ -330,7 +330,7 @@ extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 								 int lastAttNum);
 extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
-extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree);
+extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, CmdType operation);
 extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
 										 MemTupleBinding *mt_bind,
 										 TupleTableSlot *slot,

@@ -1528,17 +1528,14 @@ lreplace:;
 				 * can re-execute the UPDATE (assuming it can figure out how)
 				 * and then return NULL to cancel the outer update.
 				 *
-				 * In GPDB, for AO tables HeapTupleSelfUpdated is returned only
+				 * In GPDB, for AO tables TM_SelfModified is returned only
 				 * in case of same command tuple update based on visimap dirty
-				 * list checking. Also, hufd is not initialized and can't be for
+				 * list checking. Also, tmfd is not initialized and can't be for
 				 * AO case, as visimap update within same command happens at end
 				 * of command.
-				 * GPDB_12_MERGE_FIXME: Is the above comment and the commented out
-				 * check for RelationIsAppendOptimized still relevant? Shouldn't
-				 * all that be hidden behind the table AM API?
 				 */
-				//if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
-				if (tmfd.cmax != estate->es_output_cid)
+				if (!RelationIsAppendOptimized(resultRelationDesc) &&
+					tmfd.cmax != estate->es_output_cid)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 									errmsg("tuple to be updated was already modified by an operation triggered by the current command"),

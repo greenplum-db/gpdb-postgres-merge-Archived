@@ -291,7 +291,7 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
-	tuple = ExecFetchSlotMemTuple(slot, &shouldFree);
+	tuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_INSERT);
 	appendonly_insert(insertDesc,
 					  tuple,
 					  &newAoTupleId);

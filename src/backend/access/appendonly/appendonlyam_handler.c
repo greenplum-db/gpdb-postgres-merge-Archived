@@ -63,6 +63,7 @@ static const TableAmRoutine appendonly_methods;
 static struct AppendOnlyLocalData {
 	AppendOnlyInsertDesc	insertDesc;
 	AppendOnlyDeleteDesc	deleteDesc;
+	AppendOnlyUpdateDesc	updateDesc;
 
 	MemoryContext			localContext;
 	MemoryContextCallback	cb;
@@ -70,6 +71,7 @@ static struct AppendOnlyLocalData {
 	.localContext	= NULL,
 	.insertDesc		= NULL,
 	.deleteDesc		= NULL,
+	.updateDesc		= NULL,
 	.cb				= {
 		.func	= reset_insert_context_callback,
 		.arg	= NULL,
@@ -100,12 +102,26 @@ reset_insert_context_callback(void *arg)
 	 * There are two cases that we are called from, during context destruction
 	 * after a successfull completion and after a transaction abort. Only in the
 	 * second case we should have leaked the insertDesc. We need to reset our
-	 * globale state. Then actual clean up is taken care elsewhere.
+	 * global state. Then actual clean up is taken care elsewhere.
 	 */
 	if (appendOnlyLocal.insertDesc)
 		appendOnlyLocal.insertDesc = NULL;
 	if (appendOnlyLocal.deleteDesc)
 		appendOnlyLocal.deleteDesc = NULL;
+	if (appendOnlyLocal.updateDesc)
+		appendOnlyLocal.updateDesc = NULL;
+}
+
+static MemTupleBinding *
+appendonly_dml_mt_bind(CmdType operation)
+{
+	if (operation == CMD_UPDATE)
+		return AppendOnlyUpdateMTBind(appendOnlyLocal.updateDesc);
+	if (operation == CMD_INSERT)
+		return appendOnlyLocal.insertDesc->mt_bind;
+	else
+		elog(ERROR, "memtuple binding cannot be obtained for operaiton %d",
+			 operation);
 }
 
 
@@ -144,7 +160,7 @@ appendonly_slot_callbacks(Relation relation)
 }
 
 MemTuple
-ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
+ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, CmdType operation)
 {
 	MemTuple		result;
 	MemoryContext	oldContext;
@@ -159,7 +175,7 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
 		slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
 
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	result = memtuple_form(appendOnlyLocal.insertDesc->mt_bind,
+	result = memtuple_form(appendonly_dml_mt_bind(operation),
 						   slot->tts_values,
 						   slot->tts_isnull);
 	MemoryContextSwitchTo(oldContext);
@@ -344,7 +360,26 @@ appendonly_dml_init(Relation relation, CmdType operation)
 		break;
 	case CMD_DELETE:
 		Assert(appendOnlyLocal.deleteDesc == NULL);
+		if (IsolationUsesXactSnapshot())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("deletes on append-only tables are not supported in serializable transactions")));
+		}
 		appendOnlyLocal.deleteDesc = appendonly_delete_init(relation);
+		break;
+	case CMD_UPDATE:
+		Assert(appendOnlyLocal.updateDesc == NULL);
+		if (IsolationUsesXactSnapshot())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("updates on append-only tables are not supported in serializable transactions")));
+		}
+		appendOnlyLocal.updateDesc = appendonly_update_init(
+												relation,
+												GetActiveSnapshot(),
+												ChooseSegnoForWrite(relation));
 		break;
 	default:
 		elog(ERROR, "not implemented");
@@ -368,6 +403,11 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 		appendonly_delete_finish(appendOnlyLocal.deleteDesc);
 		appendOnlyLocal.deleteDesc = NULL;
 		break;
+	case CMD_UPDATE:
+		// Assert(appendOnlyLocal.updateDesc->aoInsertDesc->aoi_rel == relation);
+		appendonly_update_finish(appendOnlyLocal.updateDesc);
+		appendOnlyLocal.updateDesc = NULL;
+		break;
 	default:
 		elog(ERROR, "not implemented");
 		break;
@@ -384,7 +424,7 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 					int options, BulkInsertState bistate)
 {
 	bool		shouldFree = true;
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree);
+	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_INSERT);
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
@@ -438,17 +478,6 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 					Snapshot snapshot, Snapshot crosscheck, bool wait,
 					TM_FailureData *tmfd, bool changingPart)
 {
-	if (IsolationUsesXactSnapshot())
-	{
-		/*
-		 * say "deletes and updates" because this could be a cross-segment
-		 * or cross-partition update.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("deletes and updates on append-only tables are not supported in serializable transactions")));
-	}
-	
 	return appendonly_delete(appendOnlyLocal.deleteDesc, (AOTupleId *) tid);
 }
 
@@ -459,32 +488,14 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 					bool wait, TM_FailureData *tmfd,
 					LockTupleMode *lockmode, bool *update_indexes)
 {
-	AppendOnlyUpdateDesc updateDesc = NULL;
 	bool		shouldFree = true;
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree);
+	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_UPDATE);
 	TM_Result	result;
 
-	if (IsolationUsesXactSnapshot())
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("updates on append-only tables are not supported in serializable transactions")));
-	}
-
-	// GPDB_12_MERGE_FIXME: Where to store this?
-#if 0
-	if (resultRelInfo->ri_updateDesc == NULL)
-	{
-		ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-		resultRelInfo->ri_updateDesc = (AppendOnlyUpdateDesc)
-			appendonly_update_init(resultRelationDesc, GetActiveSnapshot(), resultRelInfo->ri_aosegno);
-	}
-#endif
-	
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
 
-	result = appendonly_update(updateDesc,
+	result = appendonly_update(appendOnlyLocal.updateDesc,
 							   mtuple, (AOTupleId *) otid, (AOTupleId *) &slot->tts_tid);
 	// GPDB_12_MERGE_FIXME
 	//(resultRelInfo->ri_aoprocessed)++;

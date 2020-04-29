@@ -391,6 +391,8 @@ extern TM_Result appendonly_update(
 		AOTupleId* aoTupleId,
 		AOTupleId* newAoTupleId);
 
+extern MemTupleBinding *AppendOnlyUpdateMTBind(AppendOnlyUpdateDesc aoUpdateDesc);
+
 extern void appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc);
 
 extern int acquire_sample_rows_ao(Relation onerel, int elevel,

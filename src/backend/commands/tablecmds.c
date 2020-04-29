@@ -17160,6 +17160,7 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		else if (RelationIsAoRows(targetRelation))
 		{
 			MemTuple	mtuple;
+			bool		shouldFree;
 
 			if (!(*targetAODescPtr))
 			{
@@ -17170,11 +17171,13 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 			}
 
-			mtuple = ExecFetchSlotMemTuple(targetSlot);
+			mtuple = ExecFetchSlotMemTuple(targetSlot, &shouldFree, CMD_INSERT);
 			appendonly_insert(*targetAODescPtr, mtuple, InvalidOid, &aoTupleId);
 
 			/* cache TID for later updating of indexes */
 			tid = (ItemPointer) &aoTupleId;
+			if (shouldFree)
+				pfree(mtuple);
 		}
 		else if (RelationIsAoCols(targetRelation))
 		{
