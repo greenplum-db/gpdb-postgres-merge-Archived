@@ -706,12 +706,12 @@ appendonly_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 	bool ret = false;
 	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
 
-	while (aoscan->targetTupleId > aoscan->currentTupleId)
+	while (aoscan->targetTupleId >= aoscan->currentTupleId)
 	{
 		ret = appendonly_getnextslot(scan, ForwardScanDirection, slot);
 		aoscan->currentTupleId ++;
+		*liverows += 1;
 	}
-	*liverows += 1;
 
 	return ret;
 }
