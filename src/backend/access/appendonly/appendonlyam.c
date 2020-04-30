@@ -1776,6 +1776,13 @@ appendonly_beginscan(Relation relation,
 												key,
 												pscan,
 												flags);
+
+	if (flags & SO_TYPE_ANALYZE)
+	{
+		aoscan->currentTupleId = 0;
+		aoscan->targetTupleId  = 0;
+	}
+
 	return (TableScanDesc) aoscan;
 }
 

@@ -692,9 +692,10 @@ static bool
 appendonly_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
 							   BufferAccessStrategy bstrategy)
 {
-	// GPDB_12_MERGE_FIXME: Re-implement the logic from acquire_sample_rows_ao()
-	// in these two functions.
-	return false;
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+	aoscan->targetTupleId = blockno;
+
+	return true;
 }
 
 static bool
@@ -702,7 +703,17 @@ appendonly_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 							   double *liverows, double *deadrows,
 							   TupleTableSlot *slot)
 {
-	return false;
+	bool ret = false;
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+
+	while (aoscan->targetTupleId > aoscan->currentTupleId)
+	{
+		ret = appendonly_getnextslot(scan, ForwardScanDirection, slot);
+		aoscan->currentTupleId ++;
+	}
+	*liverows += 1;
+
+	return ret;
 }
 
 static double

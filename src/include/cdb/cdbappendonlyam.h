@@ -228,6 +228,13 @@ typedef struct AppendOnlyScanDescData
 	 */ 
 	AppendOnlyVisimap visibilityMap;
 
+
+	/*
+	 * Only used by `analyze`
+	 */
+	int64 currentTupleId;
+	int64 targetTupleId;
+
 }	AppendOnlyScanDescData;
 
 typedef AppendOnlyScanDescData *AppendOnlyScanDesc;
