@@ -152,10 +152,12 @@ select count(*)  from ao2_@amname@;
     12
 (1 row)
 
-select reltuples from pg_class where relname = 'ao2_@amname@';
- reltuples 
------------
-        12
+select relname ,pg_stat_get_live_tuples(c.oid) as livetuples, pg_stat_get_dead_tuples(c.oid) as deadtuples 
+from pg_class c 
+where relname = 'ao2_@amname@';
+       relname       | livetuples | deadtuples 
+---------------------+------------+------------
+ ao2_appendoptimized |         12 |         18
 (1 row)
 
 -- @Description Tests delete on compressed ao tables

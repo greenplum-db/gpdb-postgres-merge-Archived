@@ -1376,7 +1376,10 @@ appendonlygettup(AppendOnlyScanDesc scan,
 			{
 				/*
 				 * The tuple is invisible.
+				 * In `analyze`, we can simply return false
 				 */
+				if ((scan->rs_base.rs_flags & SO_TYPE_ANALYZE) != 0)
+					return false;
 			}
 			else
 			{
@@ -1779,7 +1782,7 @@ appendonly_beginscan(Relation relation,
 
 	if (flags & SO_TYPE_ANALYZE)
 	{
-		aoscan->currentTupleId = 0;
+		aoscan->nextTupleId= 0;
 		aoscan->targetTupleId  = 0;
 	}
 

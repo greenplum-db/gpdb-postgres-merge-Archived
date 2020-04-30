@@ -232,7 +232,7 @@ typedef struct AppendOnlyScanDescData
 	/*
 	 * Only used by `analyze`
 	 */
-	int64 currentTupleId;
+	int64 nextTupleId;
 	int64 targetTupleId;
 
 }	AppendOnlyScanDescData;
