@@ -19614,6 +19614,15 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	if (appendoptimized)
 		return pstrdup("appendoptimized");
 
+	/*
+	 * appendonly=false is different from appendonly option not existing in
+	 * WITH clause. Hence, explicitly if this exists means heap is
+	 * intended. Returning NULL will let the table creation use the default
+	 * options or parents options which is not the intent.
+	 */
+	if (appendoptimized_found)
+		return pstrdup("heap");
+
 	return NULL;
 #else
 	return (char *)accessMethod;	
