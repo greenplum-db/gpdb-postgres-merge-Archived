@@ -5601,6 +5601,7 @@ _copyGpPartitionElem(const GpPartitionElem *from)
 	COPY_NODE_FIELD(subSpec);
 	COPY_SCALAR_FIELD(isDefault);
 	COPY_NODE_FIELD(options);
+	COPY_STRING_FIELD(accessMethod);
 	COPY_STRING_FIELD(tablespacename);
 	COPY_SCALAR_FIELD(partno);
 	COPY_SCALAR_FIELD(rrand);
