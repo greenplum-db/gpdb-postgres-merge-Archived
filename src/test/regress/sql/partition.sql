@@ -29,8 +29,8 @@ subpartition by list (r_name) subpartition template
 );
 
 -- root and internal parent partitions should have relfrozenxid as 0
-select relname from pg_class where relkind = 'r' and relname like 'region%' and relfrozenxid=0;
-select gp_segment_id, relname from gp_dist_random('pg_class') where relkind = 'r' and relname like 'region%' and relfrozenxid=0;
+select relname, relkind from pg_class where relkind in ('r', 'p') and relname like 'region%' and relfrozenxid=0;
+select gp_segment_id, relname, relkind from gp_dist_random('pg_class') where relkind in ('r', 'p') and relname like 'region%' and relfrozenxid=0;
 
 create unique index region_pkey on region(r_regionkey, r_name);
 
@@ -372,30 +372,6 @@ Create table sto_ao_ao
  subpartition template ( default subpartition subothers, subpartition sub1 values ('one'), subpartition sub2 values ('two'))
  (default partition others, start(date '2008-01-01') end(date '2008-04-30') every(interval '1 month'));
 
--- Non-leaf (empty) partitions along with their auxiliary tables
--- should have relfrozenxid = 0.  Select the names of those tables
--- within this partition hierarchy whose aoseg auxiliary tables have
--- relfrozenxid = 0.
-select c1.relname from pg_appendonly a, pg_class c1, pg_class c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.segrelid = c2.oid;
--- Same query as above but obtain relnames from segments.
-select c2.gp_segment_id, c1.relname from pg_appendonly a, pg_class c1,
-gp_dist_random('pg_class') c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.segrelid = c2.oid;
--- Same two queries as above but for visimap auxiliary table.
-select c1.relname from pg_appendonly a, pg_class c1, pg_class c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.visimaprelid = c2.oid;
--- Obtain relnames from segments whose visimap tables have relfrozenxid = 0.
-select c2.gp_segment_id, c1.relname from pg_appendonly a, pg_class c1,
-gp_dist_random('pg_class') c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.visimaprelid = c2.oid;
--- Same validation toast - select all relnames whose toast tables have relfrozenxid = 0.
-select c1.relname from pg_class c1, pg_class c2 where c1.relname like 'sto_ao_ao%' and
-c2.relfrozenxid = 0 and c1.reltoastrelid = c2.oid;
--- Obtain relnames from segments whose toast tables have relfrozenxid = 0.
-select c2.gp_segment_id, c1.relname from pg_class c1, gp_dist_random('pg_class') c2 where
-c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and c1.reltoastrelid = c2.oid;
-
 create table exh_ao_ao (like sto_ao_ao) with (appendonly=true);
 
 -- Exchange default sub-partition, should fail
@@ -409,21 +385,6 @@ alter table sto_ao_ao alter default partition exchange partition for ('one') wit
 
 -- Exchange a partition that has sub partitions, should fail.
 alter table sto_ao_ao exchange partition for ('2008-01-01') with table exh_ao_ao;
-
--- Alter table that causes rewrite.  Then validate that auxiliary
--- tables of non-leaf partitions still have relfrozenxid = 0.
-alter table sto_ao_ao alter column col4 type bigint;
--- aoseg
-select c1.relname from pg_appendonly a, pg_class c1, pg_class c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.segrelid = c2.oid;
-select c2.gp_segment_id, c1.relname from pg_appendonly a, pg_class c1,
-gp_dist_random('pg_class') c2 where
-c1.oid = a.relid and c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and a.segrelid = c2.oid;
--- toast
-select c1.relname from pg_class c1, pg_class c2 where c1.relname like 'sto_ao_ao%' and
-c2.relfrozenxid = 0 and c1.reltoastrelid = c2.oid;
-select c2.gp_segment_id, c1.relname from pg_class c1, gp_dist_random('pg_class') c2 where
-c1.relname like 'sto_ao_ao%' and c2.relfrozenxid = 0 and c1.reltoastrelid = c2.oid;
 
 -- XXX: not yet: VALIDATE parameter
 
@@ -3918,13 +3879,13 @@ distributed by (pkid) partition by range (option3)
 );
 
 -- root partition (and only root) should have relfrozenxid as 0
-select relname from pg_class where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
-select gp_segment_id, relname from gp_dist_random('pg_class') where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
+select relname, relkind from pg_class where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+select gp_segment_id, relname, relkind from gp_dist_random('pg_class') where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
 
 alter table sales add column tax float;
 -- root partition (and only root) continues to have relfrozenxid as 0
-select relname from pg_class where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
-select gp_segment_id, relname from gp_dist_random('pg_class') where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
+select relname, relkind from pg_class where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+select gp_segment_id, relname, relkind from gp_dist_random('pg_class') where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
 
 alter table sales drop column tax;
 
