@@ -4765,9 +4765,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 
-		/* GPDB ALTER/DROP/ADD/EXCHANGE/SPLIT PARTITION commands */
-		case AT_PartDrop:			/* DROP PARTITION */
+		case AT_PartAdd:
+		case AT_PartDrop:
+		case AT_PartAlter:
+		case AT_PartTruncate:
 			ATSimplePermissions(rel, ATT_TABLE);
+			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 
@@ -5129,19 +5132,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				 (int) cmd->subtype);
 			break;
 
-		case AT_PartDrop:
-			/* ATPrepCmd ensures it must be a table */
-			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-			ATExecPartDrop(rel, castNode(GpDropPartitionCmd, cmd->def));
-			break;
-
 		case AT_PartAdd:
+		case AT_PartDrop:
+		case AT_PartAlter:
 		case AT_PartTruncate:
-			/*
-			 * Partition add/truncate is transformed to create/truncate stmt,
-			 * hence should never reach here.
-			 */
-			Assert(0);
+			ATExecGPPartCmds(rel, cmd);
 			break;
 	}
 

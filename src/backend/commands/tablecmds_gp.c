@@ -19,6 +19,7 @@
 #include "access/table.h"
 #include "catalog/partition.h"
 #include "catalog/pg_attribute.h"
+#include "cdb/cdbvars.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "executor/execPartition.h"
@@ -27,6 +28,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
+#include "tcop/utility.h"
 #include "utils/partcache.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -103,7 +105,7 @@ FormPartitionKeyDatumFromExpr(Relation rel, Node *expr, Datum *values, bool *isn
 	}
 }
 
-Oid
+static Oid
 GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 					  bool missing_ok)
 {
@@ -172,15 +174,12 @@ GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 									RelationGetRelationName(parent))));
 				}
 
-				if (!partdesc->is_leaf[partidx])
-					elog(ERROR, "not implemented yet");
-
 				if (partdesc->oids[partidx] ==
 					get_default_oid_from_partdesc(RelationGetPartitionDesc(parent)))
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("FOR expression matches DEFAULT partition for specified value of %s",
+							 errmsg("FOR expression matches DEFAULT partition for specified value of relation \"%s\"",
 									RelationGetRelationName(parent)),
 							 errhint("FOR expression may only specify a non-default partition in this context.")));
 				}
@@ -197,25 +196,141 @@ GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 	return target_relid;
 }
 
-/*
- * ALTER TABLE DROP PARTITION
- */
 void
-ATExecPartDrop(Relation parent, GpDropPartitionCmd *cmd)
+ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 {
-	Oid			target_relid;
-	ObjectAddress obj;
+	Relation rel = origrel;
+	PlannedStmt *pstmt;
+	List *stmts = NIL;
+	ListCell *l;
 
-	target_relid = GpFindTargetPartition(parent,
-										 castNode(GpAlterPartitionId, cmd->partid),
-										 cmd->missing_ok);
-
-	if (!OidIsValid(target_relid))
+	if (Gp_role != GP_ROLE_DISPATCH)
 		return;
 
-	obj.classId = RelationRelationId;
-	obj.objectId = target_relid;
-	obj.objectSubId = 0;
+	while (cmd->subtype == AT_PartAlter)
+	{
+		GpAlterPartitionCmd *pc;
+		GpAlterPartitionId  *pid;
+		Oid                 partrelid;
 
-	performDeletion(&obj, cmd->behavior, 0);
+		pc  = castNode(GpAlterPartitionCmd, cmd->def);
+		pid = (GpAlterPartitionId *) pc->partid;
+		cmd = (AlterTableCmd *) pc->arg;
+
+		if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("table \"%s\" is not partitioned",
+							RelationGetRelationName(rel))));
+		}
+
+		partrelid = GpFindTargetPartition(rel, pid, false);
+		Assert(OidIsValid(partrelid));
+
+		if (rel != origrel)
+			table_close(rel, AccessShareLock);
+		rel = table_open(partrelid, AccessShareLock);
+	}
+
+	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("table \"%s\" is not partitioned",
+						RelationGetRelationName(rel))));
+	}
+
+	switch (cmd->subtype)
+	{
+		case AT_PartTruncate:
+		{
+			GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+			TruncateStmt *truncstmt = (TruncateStmt *) pc->arg;
+			Oid partrelid;
+			RangeVar *rv;
+			Relation partrel;
+
+			partrelid = GpFindTargetPartition(rel, pid, false);
+			Assert(OidIsValid(partrelid));
+			partrel = table_open(partrelid, AccessShareLock);
+			rv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+							  pstrdup(RelationGetRelationName(partrel)),
+							  pc->location);
+			truncstmt->relations = list_make1(rv);
+			table_close(partrel, AccessShareLock);
+			stmts = lappend(stmts, (Node *) truncstmt);
+		}
+		break;
+
+		case AT_PartAdd:			/* Add */
+		{
+			ListCell *l;
+
+			GpAlterPartitionCmd *add_cmd = castNode(GpAlterPartitionCmd, cmd->def);
+			GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
+			GpPartitionSpec *gpPartSpec = makeNode(GpPartitionSpec);
+			gpPartSpec->partElem = list_make1(pelem);
+			List *cstmts = generatePartitions(RelationGetRelid(rel),
+											  gpPartSpec, NULL, NULL,
+											  NIL, NULL);
+			foreach(l, cstmts)
+			{
+				Node *stmt = (Node *) lfirst(l);
+				stmts = lappend(stmts, (Node *) stmt);
+			}
+		}
+		break;
+
+		case AT_PartDrop:			/* Drop */
+		{
+			GpDropPartitionCmd *pc = castNode(GpDropPartitionCmd, cmd->def);
+			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+			DropStmt *dropstmt = makeNode(DropStmt);
+			Oid partrelid;
+			Relation partrel;
+
+			partrelid = GpFindTargetPartition(rel, pid, pc->missing_ok);
+			if (!OidIsValid(partrelid))
+				break;
+			partrel = table_open(partrelid, AccessShareLock);
+			dropstmt->objects = list_make1(
+				list_make2(makeString(
+							   get_namespace_name(RelationGetNamespace(partrel))),
+						   makeString(pstrdup(RelationGetRelationName(partrel)))));
+			dropstmt->removeType = OBJECT_TABLE;
+			dropstmt->behavior = pc->behavior;
+			dropstmt->missing_ok = pc->missing_ok;
+			table_close(partrel, AccessShareLock);
+			stmts = lappend(stmts, (Node *)dropstmt);
+		}
+		break;
+
+		default:
+			elog(ERROR, "Not implemented");
+			break;
+	}
+
+	if (rel != origrel)
+		table_close(rel, AccessShareLock);
+
+	foreach (l, stmts)
+	{
+		/* No planning needed, just make a wrapper PlannedStmt */
+		Node *stmt = (Node *) lfirst(l);
+		pstmt = makeNode(PlannedStmt);
+		pstmt->commandType = CMD_UTILITY;
+		pstmt->canSetTag = false;
+		pstmt->utilityStmt = stmt;
+		pstmt->stmt_location = -1;
+		pstmt->stmt_len = 0;
+		ProcessUtility(pstmt,
+					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
+					   NULL,
+					   NULL,
+					   None_Receiver,
+					   NULL);
+	}
 }

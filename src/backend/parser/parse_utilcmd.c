@@ -4333,49 +4333,13 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				break;
 
 				/* CDB: Partitioned Tables */
-            case AT_PartDrop:			/* Drop */
-				if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("table \"%s\" is not partitioned",
-									RelationGetRelationName(rel))));
-				}
-
-				newcmds = lappend(newcmds, cmd);
-				break;
-
-            case AT_PartAdd:			/* Add */
-				{
-					if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("table \"%s\" is not partitioned",
-										RelationGetRelationName(rel))));
-					}
-
-					GpAlterPartitionCmd *add_cmd = castNode(GpAlterPartitionCmd, cmd->def);
-					GpPartitionElem *pelem = castNode(GpPartitionElem, add_cmd->arg);
-					GpPartitionSpec *gpPartSpec = makeNode(GpPartitionSpec);
-
-					gpPartSpec->partElem = list_make1(pelem);
-					List *cstmts = generatePartitions(RelationGetRelid(rel), gpPartSpec, NULL, queryString, NIL, NULL);
-					foreach(l, cstmts)
-					{
-						Node *stmt = (Node *) lfirst(l);
-						cxt.blist = lappend(cxt.blist, stmt);
-					}
-				}
-				break;
 
 			case AT_PartAlter:
+			case AT_PartAdd:
 			case AT_PartTruncate:
-			{
-				List *stmts = gpTransformAlterTableStmt(pstate, stmt, cmd, rel);
-				cxt.blist = list_concat(cxt.blist, stmts);
-			}
-			break;
+			case AT_PartDrop:
+				newcmds = lappend(newcmds, cmd);
+				break;
 
             case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */

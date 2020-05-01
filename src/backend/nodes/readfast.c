@@ -2179,6 +2179,9 @@ readNodeBinary(void)
 			case T_GpDropPartitionCmd:
 				return_value = _readGpDropPartitionCmd();
 				break;
+			case T_GpAlterPartitionCmd:
+				return_value = _readGpAlterPartitionCmd();
+				break;
 			case T_PartitionBoundSpec:
 				return_value = _readPartitionBoundSpec();
 				break;
