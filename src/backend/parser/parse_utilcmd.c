@@ -4162,7 +4162,6 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	table_close(rel, NoLock);
 }
 
-
 /*
  * transformAlterTableStmt -
  *		parse analysis for ALTER TABLE
@@ -4370,37 +4369,14 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				}
 				break;
 
+			case AT_PartAlter:
 			case AT_PartTruncate:
-				{
-					GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
-					GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
-					TruncateStmt *truncstmt = (TruncateStmt *) pc->arg;
-					Oid partrelid;
-					RangeVar *rv;
-					Relation partrel;
+			{
+				List *stmts = gpTransformAlterTableStmt(pstate, stmt, cmd, rel);
+				cxt.blist = list_concat(cxt.blist, stmts);
+			}
+			break;
 
-					if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("table \"%s\" is not partitioned",
-										RelationGetRelationName(rel))));
-					}
-
-					partrelid = GpFindTargetPartition(rel, pid, false);
-					Assert(OidIsValid(partrelid));
-					partrel = table_open(partrelid, AccessShareLock);
-					rv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
-									  pstrdup(RelationGetRelationName(partrel)),
-									  pc->location);
-					truncstmt->relations = list_make1(rv);
-					table_close(partrel, AccessShareLock);
-
-					cxt.blist = lappend(cxt.blist, truncstmt);
-				}
-				break;
-
-			case AT_PartAlter:          /* Alter */
             case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */

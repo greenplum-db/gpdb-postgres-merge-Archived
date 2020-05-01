@@ -3829,25 +3829,20 @@ alter_table_partition_cmd:
             alter_table_partition_id_spec_with_opt_default
             alter_table_cmd
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-                    /* NOTE: only allow a subset of valid ALTER TABLE
-                       cmds for partitions.
-                    */
-
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					/*
+					 * NOTE: only allow a subset of valid ALTER TABLE
+					 * cmds for partitions.
+					 */
+					GpAlterPartitionCmd *pc    = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-                    pc->partid = (Node *)$2;
-                    pc->arg1 = (Node *)$3;
-                    pc->arg2 = NULL;
-                    pc->location = @3;
+					pc->partid = (Node *)$2;
+					pc->arg = (Node *)$3;
+					pc->location = @3;
 
 					n->subtype = AT_PartAlter;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| DROP PARTITION IF_P EXISTS 
             alter_table_partition_id_spec	 

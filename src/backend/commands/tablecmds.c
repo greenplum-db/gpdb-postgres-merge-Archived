@@ -4281,6 +4281,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * good. Stronger lock is mostly not required.
 				 */
 			case AT_PartTruncate:
+			case AT_PartAlter:
 				cmd_lockmode = AccessShareLock;
 				break;
 

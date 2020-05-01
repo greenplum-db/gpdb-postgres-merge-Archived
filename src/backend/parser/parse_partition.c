@@ -974,3 +974,81 @@ extract_tablename_from_options(List **options)
 
 	return tablename;
 }
+
+List *
+gpTransformAlterTableStmt(
+	ParseState *pstate,
+	AlterTableStmt *stmt,
+	AlterTableCmd *cmd,
+	Relation origrel)
+{
+	Relation rel = origrel;
+	List *resultstmts = NIL;
+
+	while (cmd->subtype == AT_PartAlter)
+	{
+		GpAlterPartitionCmd *pc;
+		GpAlterPartitionId  *pid;
+		Oid                 partrelid;
+
+		pc  = castNode(GpAlterPartitionCmd, cmd->def);
+		pid = (GpAlterPartitionId *) pc->partid;
+		cmd = (AlterTableCmd *) pc->arg;
+
+		if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("table \"%s\" is not partitioned",
+							RelationGetRelationName(rel))));
+		}
+
+		partrelid = GpFindTargetPartition(rel, pid, false);
+		Assert(OidIsValid(partrelid));
+
+		if (rel != origrel)
+			table_close(rel, AccessShareLock);
+		rel = table_open(partrelid, AccessShareLock);
+	}
+
+	switch (cmd->subtype)
+	{
+		case AT_PartTruncate:
+		{
+			GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+			TruncateStmt *truncstmt = (TruncateStmt *) pc->arg;
+			Oid partrelid;
+			RangeVar *rv;
+			Relation partrel;
+
+			if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("table \"%s\" is not partitioned",
+								RelationGetRelationName(rel))));
+			}
+
+			partrelid = GpFindTargetPartition(rel, pid, false);
+			Assert(OidIsValid(partrelid));
+			if (rel != origrel)
+				table_close(rel, AccessShareLock);
+			partrel = table_open(partrelid, AccessShareLock);
+			rv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+							  pstrdup(RelationGetRelationName(partrel)),
+							  pc->location);
+			truncstmt->relations = list_make1(rv);
+			table_close(partrel, AccessShareLock);
+
+			resultstmts = lappend(resultstmts, truncstmt);
+		}
+			break;
+
+		default:
+			elog(ERROR, "Not implemented");
+			break;
+	}
+
+	return resultstmts;
+}
