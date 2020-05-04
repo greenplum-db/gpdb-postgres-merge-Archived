@@ -69,7 +69,7 @@ declare -F before_standby > /dev/null && before_standby
 rm -rf $TEST_STANDBY
 
 # Base backup is taken with xlog files included
-pg_basebackup -D $TEST_STANDBY -p $PORT_MASTER -x --target-gp-dbid $STANDBY_DBID --verbose >>$log_path 2>&1
+pg_basebackup -D $TEST_STANDBY -p $PORT_MASTER --target-gp-dbid $STANDBY_DBID --verbose >>$log_path 2>&1
 
 echo "port = $PORT_STANDBY" >> $TEST_STANDBY/postgresql.conf
 echo "wal_keep_segments = 5" >> $TEST_STANDBY/postgresql.conf
