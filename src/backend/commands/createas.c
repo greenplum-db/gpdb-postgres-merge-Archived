@@ -76,7 +76,7 @@ typedef struct
 	BulkInsertState bistate;	/* bulk insert state */
 } DR_intorel;
 
-static void intorel_startup_gp(DestReceiver *self, int operation, TupleDesc typeinfo);
+static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
 /* utility functions for CTAS definition creation */
 static ObjectAddress create_ctas_internal(List *attrList, IntoClause *into,
 										  QueryDesc *queryDesc, bool dispatch);
@@ -528,7 +528,7 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
 
 	self->pub.receiveSlot = intorel_receive;
-	self->pub.rStartup = intorel_startup_gp;
+	self->pub.rStartup = intorel_startup_dummy;
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
@@ -538,19 +538,14 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 }
 
 /*
- * intorel_startup_gp --- NOT PG intorel_startup().
- * See intorel_initplan() for commends.
- *
- * Appendoptimized relations need a specific initialization before being able to
- * perform insertions. Handle this special case here.
+ * intorel_startup_dummy --- executor startup
  */
 static void
-intorel_startup_gp(DestReceiver *self, int operation, TupleDesc typeinfo)
+intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-	Relation rel = ((DR_intorel *)self)->rel;
+	/* no-op */
 
-	if (RelationIsAoRows(rel))
-		appendonly_dml_init(rel, CMD_INSERT);
+	/* See intorel_initplan() for explanation */
 }
 
 /*

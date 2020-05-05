@@ -80,6 +80,7 @@
 
 #include "access/distributedlog.h"
 #include "catalog/oid_dispatch.h"
+#include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbdistributedsnapshot.h"
 #include "cdb/cdbgang.h"
 #include "cdb/cdblocaldistribxact.h"
@@ -2772,6 +2773,13 @@ CommitTransaction(void)
 	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
 
+	/*
+	 * Flush tuple buffers in AO am. Cannot insert/update zedstore tables
+	 * in this transaction after this. This must happen before ON COMMIT
+	 * actions, so we don't fail on flushing to ON COMMIT DROP tables.
+	 */
+	AtEOXact_appendonly(true);
+
 	AtEOXact_SharedSnapshot();
 
 	/* Perform any Resource Scheduler commit procesing. */
@@ -3088,6 +3096,13 @@ PrepareTransaction(void)
 
 	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
+
+	/*
+	 * Flush tuple buffers in AO am. Cannot insert/update zedstore tables
+	 * in this transaction after this. This must happen before ON COMMIT
+	 * actions, so we don't fail on flushing to ON COMMIT DROP tables.
+	 */
+	AtEOXact_appendonly(true);
 
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
@@ -3463,6 +3478,7 @@ AbortTransaction(void)
 	 */
 	AfterTriggerEndXact(false); /* 'false' means it's abort */
 	AtAbort_Portals();
+	AtEOXact_appendonly(false);
 	AtAbort_DispatcherState();
 	AtEOXact_SharedSnapshot();
 
@@ -5929,6 +5945,8 @@ CommitSubTransaction(void)
 		s->parallelModeLevel = 0;
 	}
 
+	AtEOSubXact_appendonly(true);
+	
 	/* Do the actual "commit", such as it is */
 	s->state = TRANS_COMMIT;
 
@@ -6106,6 +6124,7 @@ AbortSubTransaction(void)
 						   s->parent->subTransactionId,
 						   s->curTransactionOwner,
 						   s->parent->curTransactionOwner);
+		AtEOSubXact_appendonly(false);
 		AtSubAbort_DispatcherState();
 		AtEOXact_DispatchOids(false);
 		AtEOSubXact_LargeObject(false, s->subTransactionId,

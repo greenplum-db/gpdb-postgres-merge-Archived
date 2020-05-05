@@ -5991,20 +5991,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		scan = table_beginscan(oldrel, snapshot, 0, NULL);
 
 		/*
-		 * Initialize state for inserting into new relation, needed for
-		 * appendoptimized row-oriented tables only.
-		 */
-		if (newrel && RelationIsAoRows(newrel))
-		{
-			/*
-			 * Table access method is not allowed to be changed by alter table
-			 * commands.
-			 */
-			Assert(RelationIsAoRows(oldrel));
-			appendonly_dml_init(newrel, CMD_INSERT);
-		}
-
-		/*
 		 * Switch to per-tuple memory context and reset it for each tuple
 		 * produced, so we don't leak memory.
 		 */

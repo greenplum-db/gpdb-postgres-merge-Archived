@@ -2602,16 +2602,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	i = 0;
 	foreach(l, node->plans)
 	{
-		/*
-		 * GPDB_12_MERGE_FIXME: workaround to capture state needed by
-		 * appendonly DML operations.  The state is currently captured as a
-		 * global variable in appendonly handler.  We should make room for
-		 * this state either in the executor state or relation state or
-		 * similar and provide a way to pass it to the access method.
-		 */
-		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_dml_init(resultRelInfo->ri_RelationDesc,	operation);
-
 		subplan = (Plan *) lfirst(l);
 
 		/* Initialize the usesFdwDirectModify flag */

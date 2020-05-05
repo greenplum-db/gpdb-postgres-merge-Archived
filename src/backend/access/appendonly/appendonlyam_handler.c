@@ -72,22 +72,45 @@ static struct AppendOnlyLocal
 {
 	AppendOnlyDMLState	   *last_used_state;
 	HTAB				   *dmlDescriptorTab;
-	MemoryContextCallback	cb;
 } appendOnlyLocal	  = {
 	.last_used_state  = NULL,
 	.dmlDescriptorTab = NULL,
-	.cb	= {
-		.func	= reset_insert_context_callback,
-		.arg	= NULL
-	},
 };
+
+/*
+ * This function should be called with a current memory context whose life
+ * span is enough to last until the end of this command execution.
+ */
+static void
+init_appendonly_local(void)
+{
+	HASHCTL hash_ctl;
+
+	if (!appendOnlyLocal.dmlDescriptorTab)
+	{
+		memset(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(Oid);
+		hash_ctl.entrysize = sizeof(AppendOnlyDMLState);
+		hash_ctl.hcxt = TopTransactionContext;
+		appendOnlyLocal.dmlDescriptorTab =
+			hash_create("AppendOnly DML state", 128, &hash_ctl,
+						HASH_CONTEXT | HASH_ELEM | HASH_BLOBS);
+	}
+}
 
 static inline AppendOnlyDMLState *
 get_dml_state(const Oid relationOid, HASHACTION action)
 {
 	AppendOnlyDMLState *state;
+	bool		found;
 
-	Assert(appendOnlyLocal.dmlDescriptorTab);
+	if (!appendOnlyLocal.dmlDescriptorTab)
+	{
+		if (action == HASH_REMOVE || action == HASH_FIND)
+			return NULL;
+
+		init_appendonly_local();
+	}
 
 	if (action != HASH_REMOVE &&
 		appendOnlyLocal.last_used_state &&
@@ -98,9 +121,18 @@ get_dml_state(const Oid relationOid, HASHACTION action)
 										appendOnlyLocal.dmlDescriptorTab,
 									   &relationOid,
 										action,
-										NULL);
+										&found);
+	if (!found && state)
+	{
+		state->insertDesc = NULL;
+		state->deleteDesc = NULL;
+		state->updateDesc = NULL;
+	}
 
-	appendOnlyLocal.last_used_state = state;
+	if (action == HASH_REMOVE)
+		appendOnlyLocal.last_used_state = NULL;
+	else
+		appendOnlyLocal.last_used_state = state;
 
 	return state;
 }
@@ -112,12 +144,24 @@ get_dml_state(const Oid relationOid, HASHACTION action)
  * the hash table. We need to reset our global state. The actual clean up is
  * taken care elsewhere.
  */
-static void
-reset_insert_context_callback(void *arg)
+void
+AtEOXact_appendonly(bool isCommit)
+{
+	/* GPDB_12_MERGE_FIXME: On commit, we should check here that all the
+	 * operations have been finished by calling appendonly_dml_finish().
+	 * Or do it here on behalf of the callers?
+	 */
+	appendOnlyLocal.dmlDescriptorTab = NULL;
+	appendOnlyLocal.last_used_state = NULL;
+}
+
+void
+AtEOSubXact_appendonly(bool isCommit)
 {
 	appendOnlyLocal.dmlDescriptorTab = NULL;
 	appendOnlyLocal.last_used_state = NULL;
 }
+
 
 /* ------------------------------------------------------------------------
  * Slot related callbacks for appendonly AM
@@ -337,104 +381,52 @@ appendonly_compute_xid_horizon_for_tuples(Relation rel,
 	elog(ERROR, "not implemented yet");
 }
 
-/*
- * This function should be called with a current memory context whose life
- * span is enough to last until the end of this command execution.
- */
-static void
-init_appendonly_local(void)
-{
-	HASHCTL hash_ctl;
-	if (!appendOnlyLocal.dmlDescriptorTab)
-	{
-		memset(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize = sizeof(Oid);
-		hash_ctl.entrysize = sizeof(AppendOnlyDMLState);
-		hash_ctl.hcxt = CurrentMemoryContext;
-		appendOnlyLocal.dmlDescriptorTab =
-			hash_create("AppendOnly DML state", 128, &hash_ctl,
-						HASH_CONTEXT | HASH_ELEM);
-
-		MemoryContextRegisterResetCallback(
-			CurrentMemoryContext,
-			&appendOnlyLocal.cb);
-	}
-}
-
-void
-appendonly_dml_init(Relation relation, CmdType operation)
-{
-	AppendOnlyDMLState *state;
-
-	init_appendonly_local();
-	Assert(get_dml_state(RelationGetRelid(relation), HASH_FIND) == NULL);
-	state = get_dml_state(RelationGetRelid(relation), HASH_ENTER);
-	state->relationOid = RelationGetRelid(relation);
-
-	switch(operation)
-	{
-	case CMD_INSERT:
-		state->insertDesc = appendonly_insert_init(
-												relation,
-												ChooseSegnoForWrite(relation),
-												false);
-		break;
-	case CMD_DELETE:
-		if (IsolationUsesXactSnapshot())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("deletes on append-only tables are not supported in serializable transactions")));
-		}
-		state->deleteDesc = appendonly_delete_init(relation);
-		break;
-	case CMD_UPDATE:
-		if (IsolationUsesXactSnapshot())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("updates on append-only tables are not supported in serializable transactions")));
-		}
-		state->updateDesc = appendonly_update_init(
-												relation,
-												GetActiveSnapshot(),
-												ChooseSegnoForWrite(relation));
-		/*
-		 * It could be an update to distribution key or partition key, in
-		 * which case, it is actually a delete and insert operation.
-		 */
-		state->insertDesc = AppendOnlyUpdateGetInsertDesc(state->updateDesc);
-		state->deleteDesc = appendonly_delete_init(relation);
-
-		break;
-	default:
-		elog(ERROR, "not implemented");
-		break;
-	}
-}
-
 void
 appendonly_dml_finish(Relation relation, CmdType operation)
 {
-	AppendOnlyDMLState *state =
-		get_dml_state(RelationGetRelid(relation), HASH_REMOVE);
+	AppendOnlyDMLState *state;
 
-	Assert(state);
+	appendOnlyLocal.last_used_state = NULL;
+	state = get_dml_state(RelationGetRelid(relation), HASH_REMOVE);
+	if (!state)
+		return;
 
 	switch(operation)
 	{
 	case CMD_INSERT:
-		Assert(state->insertDesc->aoi_rel == relation);
-		appendonly_insert_finish(state->insertDesc);
+		if (state->insertDesc)
+		{
+			Assert(state->insertDesc->aoi_rel == relation);
+			appendonly_insert_finish(state->insertDesc);
+			state->insertDesc = NULL;
+		}
 		break;
 	case CMD_DELETE:
-		appendonly_delete_finish(state->deleteDesc);
+		if (state->deleteDesc)
+		{
+			appendonly_delete_finish(state->deleteDesc);
+			state->deleteDesc = NULL;
+		}
 		break;
 	case CMD_UPDATE:
-		Assert(AppendOnlyUpdateGetInsertDesc(state->updateDesc)->aoi_rel
-			   == relation);
-		appendonly_update_finish(state->updateDesc);
-		appendonly_delete_finish(state->deleteDesc);
+		if (state->updateDesc)
+		{
+			Assert(AppendOnlyUpdateGetInsertDesc(state->updateDesc)->aoi_rel
+				   == relation);
+			appendonly_update_finish(state->updateDesc);
+			state->updateDesc = NULL;
+			state->insertDesc = NULL;
+		}
+		if (state->insertDesc)
+		{
+			appendonly_insert_finish(state->insertDesc);
+			state->insertDesc = NULL;
+		}
+		if (state->deleteDesc)
+		{
+			appendonly_delete_finish(state->deleteDesc);
+			state->deleteDesc = NULL;
+		}
 		break;
 	default:
 		elog(ERROR, "not implemented");
@@ -455,8 +447,28 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	AppendOnlyDMLState *state;
 	MemTuple	mtuple;
 
-	state = get_dml_state(RelationGetRelid(relation), HASH_FIND);
-	Assert(state);
+	/*
+	 * GPDB_12_MERGE_FIXME: workaround to capture state needed by
+	 * appendonly DML operations.  The state is currently captured in
+	 * the hash table.  We should make room for this state either in the
+	 * executor state or relation state or similar and provide a way to pass
+	 * it to the access method.
+	 *
+	 * Also, what if we update and insert the same table in the same command?
+	 * Don't we mix up the insertDesc of the UPDATE and the INSERT?
+	 */
+	state = get_dml_state(RelationGetRelid(relation), HASH_ENTER);
+	if (state->insertDesc == NULL)
+	{
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
+		state->insertDesc = appendonly_insert_init(
+												relation,
+												ChooseSegnoForWrite(relation),
+												false);
+		MemoryContextSwitchTo(oldcxt);
+	}
 
 	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree,
 								   state->insertDesc->mt_bind);
@@ -513,8 +525,31 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 					Snapshot snapshot, Snapshot crosscheck, bool wait,
 					TM_FailureData *tmfd, bool changingPart)
 {
-	AppendOnlyDMLState *state = get_dml_state(RelationGetRelid(relation),
-											  HASH_FIND);
+	AppendOnlyDMLState *state;
+
+	/*
+	 * GPDB_12_MERGE_FIXME: workaround to capture state needed by
+	 * appendonly DML operations.  The state is currently captured in
+	 * the hash table.  We should make room for this state either in the
+	 * executor state or relation state or similar and provide a way to pass
+	 * it to the access method.
+	 */
+	state = get_dml_state(RelationGetRelid(relation), HASH_ENTER);
+	if (state->deleteDesc == NULL)
+	{
+		MemoryContext oldcxt;
+
+		if (IsolationUsesXactSnapshot())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("deletes on append-only tables are not supported in serializable transactions")));
+		}
+		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
+		state->deleteDesc = appendonly_delete_init(relation);
+		MemoryContextSwitchTo(oldcxt);
+	}
+
 	return appendonly_delete(state->deleteDesc, (AOTupleId *) tid);
 }
 
@@ -526,10 +561,45 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 					LockTupleMode *lockmode, bool *update_indexes)
 {
 	bool		shouldFree = true;
-	AppendOnlyDMLState *state = get_dml_state(RelationGetRelid(relation),
-											  HASH_FIND);
+	AppendOnlyDMLState *state;
 	MemTuple	mtuple;
 	TM_Result	result;
+
+	/*
+	 * GPDB_12_MERGE_FIXME: workaround to capture state needed by
+	 * appendonly DML operations.  The state is currently captured in
+	 * the hash table.  We should make room for this state either in the
+	 * executor state or relation state or similar and provide a way to pass
+	 * it to the access method.
+	 */
+	state = get_dml_state(RelationGetRelid(relation), HASH_ENTER);
+	if (state->updateDesc == NULL)
+	{
+		MemoryContext oldcxt;
+
+		if (IsolationUsesXactSnapshot())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("updates on append-only tables are not supported in serializable transactions")));
+		}
+
+		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
+		state->updateDesc = appendonly_update_init(
+												relation,
+												GetActiveSnapshot(),
+												ChooseSegnoForWrite(relation));
+		/*
+		 * It could be an update to distribution key or partition key, in
+		 * which case, it is actually a delete and insert operation.
+		 */
+		if (state->insertDesc)
+			appendonly_insert_finish(state->insertDesc);
+		state->insertDesc = AppendOnlyUpdateGetInsertDesc(state->updateDesc);
+		if (!state->deleteDesc)
+			state->deleteDesc = appendonly_delete_init(relation);
+		MemoryContextSwitchTo(oldcxt);
+	}
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
