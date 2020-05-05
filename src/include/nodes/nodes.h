@@ -538,7 +538,7 @@ typedef enum NodeTag
 	T_NewConstraint,
 	T_NewColumnValue,
 	T_GpPartitionSpec,
-	T_GpPartitionElem,
+	T_GpPartDef,
 	T_GpPartitionRangeItem,
 	T_GpPartitionRangeSpec,
 	T_GpPartitionListSpec,

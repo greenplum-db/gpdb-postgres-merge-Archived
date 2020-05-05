@@ -2486,7 +2486,7 @@ typedef struct Constraint
  * An element in a partition configuration. This represents a single clause --
  * or perhaps an expansion of a single clause.
  */
-typedef struct GpPartitionElem
+typedef struct GpPartDef
 {
 	NodeTag				type;
 	char			   *partName;	/* partition name (optional) */
@@ -2500,7 +2500,7 @@ typedef struct GpPartitionElem
 	long				rrand;		/* if not zero, "random" id for relname */
 	List			   *colencs;	/* column encoding clauses */
 	int					location;	/* token location, or -1 if unknown */
-} GpPartitionElem;
+} GpPartDef;
 
 /* GPDB_12_MERGE_FIXME: In PostgreSQL, the lower boundary is always inclusive
  * and the upper boundary is exclusive. The legacy syntax was more flexible.
@@ -2536,7 +2536,7 @@ typedef struct GpPartitionListSpec
 typedef struct GpPartitionSpec			/* a Partition Specification */
 {
 	NodeTag				type;
-	List			   *partElem;		/* partition element list */
+	List			   *partDefs;		/* partition element list */
 	List			   *enc_clauses;	/* ENCODING () clauses */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */

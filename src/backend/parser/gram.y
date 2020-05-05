@@ -3733,7 +3733,7 @@ alter_table_partition_cmd:
 					GpAlterPartitionId  *pid   = makeNode(GpAlterPartitionId);
 					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
+					GpPartDef     *pelem = makeNode(GpPartDef);
 
 					pid->idtype = AT_AP_IDNone;
 					pid->location = @3;
@@ -3766,7 +3766,7 @@ alter_table_partition_cmd:
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$4;
 					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
+					GpPartDef     *pelem = makeNode(GpPartDef);
 
                     if (pid->idtype != AT_AP_IDName)
 						ereport(ERROR,
@@ -3800,7 +3800,7 @@ alter_table_partition_cmd:
 					GpAlterPartitionId  *pid   = (GpAlterPartitionId *)$3;
 					GpAlterPartitionCmd *pc    = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-					GpPartitionElem     *pelem = makeNode(GpPartitionElem);
+					GpPartDef     *pelem = makeNode(GpPartDef);
 
                     if (pid->idtype != AT_AP_IDName)
 						ereport(ERROR,
@@ -3959,7 +3959,7 @@ alter_table_partition_cmd:
 					/* build a subpartition spec and add it to CREATE TABLE */
 					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
 #if 0
-					ps->partElem   = $5; 
+					ps->partDefs   = $5;
 					ps->subSpec	   = NULL;
 					ps->istemplate = true;
 					ps->location   = @4;
@@ -3977,13 +3977,13 @@ alter_table_partition_cmd:
 					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
 #if 0
 					/* a little (temporary?) syntax check on templates */
-					if (ps->partElem)
+					if (ps->partDefs)
 					{
 						List *elems;
 						ListCell *lc;
-						Assert(IsA(ps->partElem, List));
+						Assert(IsA(ps->partDefs, List));
 
-						elems = (List *)ps->partElem;
+						elems = (List *)ps->partDefs;
 						foreach(lc, elems)
 						{
 							PartitionElem *e = lfirst(lc);
@@ -5522,7 +5522,7 @@ TabPartitionColumnEncList:
 OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
-					n->partElem  = $2;
+					n->partDefs  = $2;
 					n->location  = @2;
 					$$ = (Node *) n;
 				}
@@ -5533,7 +5533,7 @@ OptTabSubPartitionSpec:
             '(' TabSubPartitionElemList ')' 
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
-					n->partElem  = $2;
+					n->partDefs  = $2;
 					n->location  = @2;
 					$$ = (Node *) n;
 				}
@@ -5757,7 +5757,7 @@ TabPartitionElem:
 			OptTabPartitionColumnEncList
 			OptTabSubPartitionSpec 
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = $1;
 						n->boundSpec = $2;
 						n->subSpec   = $6;
@@ -5776,7 +5776,7 @@ TabPartitionElem:
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = $1;
 						n->subSpec   = $5;
 						n->location  = @1;
@@ -5793,7 +5793,7 @@ TabPartitionElem:
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = NULL;
 						n->boundSpec = $1;
 						n->subSpec   = $5;
@@ -5818,7 +5818,7 @@ TabSubPartitionElem:
 			OptTabPartitionColumnEncList
 			OptTabSubPartitionSpec
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = $1;
 						n->boundSpec = $2;
 						n->subSpec   = $6;
@@ -5837,7 +5837,7 @@ TabSubPartitionElem:
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = $1;
 						n->boundSpec = $2;
 						n->subSpec   = $6;
@@ -5855,7 +5855,7 @@ TabSubPartitionElem:
 			  OptTabPartitionColumnEncList
  			  OptTabSubPartitionSpec	
 				{
-						GpPartitionElem *n = makeNode(GpPartitionElem);
+						GpPartDef *n = makeNode(GpPartDef);
 						n->partName  = NULL;
 						n->boundSpec = $1;
 						n->subSpec   = $5;
@@ -5901,24 +5901,24 @@ TabSubPartitionTemplate:
 			'(' TabSubPartitionElemList ')'
 				{
 					GpPartitionSpec *n = makeNode(GpPartitionSpec);
-					n->partElem  = $4;
+					n->partDefs  = $4;
 					n->istemplate  = true;
 					n->location  = @3;
 					$$ = (Node *)n;
 
 					/* a little (temporary?) syntax check on templates */
-					if (n->partElem)
+					if (n->partDefs)
 					{
 						List *elems;
 						ListCell *lc;
-						Assert(IsA(n->partElem, List));
+						Assert(IsA(n->partDefs, List));
 
-						elems = (List *)n->partElem;
+						elems = (List *)n->partDefs;
 						foreach(lc, elems)
 						{
-							GpPartitionElem *e = lfirst(lc);
+							GpPartDef *e = lfirst(lc);
 
-							if (!IsA(e, GpPartitionElem)) continue;
+							if (!IsA(e, GpPartDef)) continue;
 
 							if (e->subSpec)
 								ereport(ERROR,

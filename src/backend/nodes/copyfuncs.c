@@ -5583,7 +5583,7 @@ _copyGpPartitionSpec(const GpPartitionSpec *from)
 {
 	GpPartitionSpec *newnode = makeNode(GpPartitionSpec);
 
-	COPY_NODE_FIELD(partElem);
+	COPY_NODE_FIELD(partDefs);
 	COPY_NODE_FIELD(enc_clauses);
 	COPY_SCALAR_FIELD(istemplate);
 	COPY_LOCATION_FIELD(location);
@@ -5591,10 +5591,10 @@ _copyGpPartitionSpec(const GpPartitionSpec *from)
 	return newnode;
 }
 
-static GpPartitionElem *
-_copyGpPartitionElem(const GpPartitionElem *from)
+static GpPartDef *
+_copyGpPartDef(const GpPartDef *from)
 {
-	GpPartitionElem *newnode = makeNode(GpPartitionElem);
+	GpPartDef *newnode = makeNode(GpPartDef);
 
 	COPY_STRING_FIELD(partName);
 	COPY_NODE_FIELD(boundSpec);
@@ -6854,8 +6854,8 @@ copyObjectImpl(const void *from)
 		case T_GpPartitionSpec:
 			retval = _copyGpPartitionSpec(from);
 			break;
-		case T_GpPartitionElem:
-			retval = _copyGpPartitionElem(from);
+		case T_GpPartDef:
+			retval = _copyGpPartDef(from);
 			break;
 		case T_GpPartitionRangeSpec:
 			retval = _copyGpPartitionRangeSpec(from);

@@ -64,22 +64,22 @@ static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionBoundSpec *boundspec,
 										   PartitionSpec *subPart,
-										   GpPartitionElem *elem,
+										   GpPartDef *elem,
 										   partname_comp *partnamecomp);
 
 static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
-									 GpPartitionElem *elem,
+									 GpPartDef *elem,
 									 PartitionSpec *subPart,
 									 partname_comp *partnamecomp);
 static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
-								   GpPartitionElem *elem,
+								   GpPartDef *elem,
 								   PartitionSpec *subPart,
 								   partname_comp *partnamecomp);
 static List *generateDefaultPartition(ParseState *pstate,
 									  Relation parentrel,
-									  GpPartitionElem *elem,
+									  GpPartDef *elem,
 									  PartitionSpec *subPart,
 									  partname_comp *partnamecomp);
 
@@ -557,7 +557,7 @@ ChoosePartitionName(Relation parentrel, const char *levelstr,
 
 static CreateStmt *
 makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
-						PartitionSpec *subPart, GpPartitionElem *elem,
+						PartitionSpec *subPart, GpPartDef *elem,
 						partname_comp *partnamecomp)
 {
 	CreateStmt *childstmt;
@@ -601,7 +601,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 static List *
 generateRangePartitions(ParseState *pstate,
 						Relation parentrel,
-						GpPartitionElem *elem,
+						GpPartDef *elem,
 						PartitionSpec *subPart,
 						partname_comp *partnamecomp)
 {
@@ -734,7 +734,7 @@ generateRangePartitions(ParseState *pstate,
 static List *
 generateListPartition(ParseState *pstate,
 					  Relation parentrel,
-					  GpPartitionElem *elem,
+					  GpPartDef *elem,
 					  PartitionSpec *subPart,
 					  partname_comp *partnamecomp)
 {
@@ -795,7 +795,7 @@ generateListPartition(ParseState *pstate,
 static List *
 generateDefaultPartition(ParseState *pstate,
 						 Relation parentrel,
-						 GpPartitionElem *elem,
+						 GpPartDef *elem,
 						 PartitionSpec *subPart,
 						 partname_comp *partnamecomp)
 {
@@ -885,14 +885,14 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 			isSubTemplate = false;
 	}
 
-	foreach(lc, gpPartSpec->partElem)
+	foreach(lc, gpPartSpec->partDefs)
 	{
 		Node	   *n = lfirst(lc);
 
-		if (IsA(n, GpPartitionElem))
+		if (IsA(n, GpPartDef))
 		{
-			GpPartitionElem *elem = (GpPartitionElem *) n;
-			List	   *new_parts;
+			GpPartDef     *elem           = (GpPartDef *) n;
+			List          *new_parts;
 			PartitionSpec *tmpSubPartSpec = NULL;
 
 			if (subPartSpec)
