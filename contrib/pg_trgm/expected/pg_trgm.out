@@ -3896,209 +3896,6 @@ select * from test2 where t ~ '  z foo';
 (1 row)
 
 select * from test2 where t ~ 'qua(?!foo)';
-<<<<<<< HEAD
-=======
-   t   
--------
- quark
-(1 row)
-
-select * from test2 where t ~ '/\d+/-\d';
-     t     
------------
- /123/-45/
-(1 row)
-
-drop index test2_idx_gin;
-create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
-set enable_seqscan=off;
-explain (costs off)
-  select * from test2 where t like '%BCD%';
-                QUERY PLAN                
-------------------------------------------
- Index Scan using test2_idx_gist on test2
-   Index Cond: (t ~~ '%BCD%'::text)
-(2 rows)
-
-explain (costs off)
-  select * from test2 where t ilike '%BCD%';
-                QUERY PLAN                
-------------------------------------------
- Index Scan using test2_idx_gist on test2
-   Index Cond: (t ~~* '%BCD%'::text)
-(2 rows)
-
-select * from test2 where t like '%BCD%';
- t 
----
-(0 rows)
-
-select * from test2 where t like '%bcd%';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t like E'%\\bcd%';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ilike '%BCD%';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ilike 'qua%';
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-   t   
--------
- quark
-(1 row)
-
-<<<<<<< HEAD
-select * from test2 where t ~ '/\d+/-\d';
-     t     
------------
- /123/-45/
-=======
-select * from test2 where t like '%z foo bar%';
-      t      
--------------
-   z foo bar
-(1 row)
-
-select * from test2 where t like '  z foo%';
-      t      
--------------
-   z foo bar
-(1 row)
-
-explain (costs off)
-  select * from test2 where t ~ '[abc]{3}';
-                QUERY PLAN                
-------------------------------------------
- Index Scan using test2_idx_gist on test2
-   Index Cond: (t ~ '[abc]{3}'::text)
-(2 rows)
-
-explain (costs off)
-  select * from test2 where t ~* 'DEF';
-                QUERY PLAN                
-------------------------------------------
- Index Scan using test2_idx_gist on test2
-   Index Cond: (t ~* 'DEF'::text)
-(2 rows)
-
-select * from test2 where t ~ '[abc]{3}';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ~ 'a[bc]+d';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ~ '(abc)*$';
-      t      
--------------
- abcdef
- quark
-   z foo bar
- /123/-45/
-(4 rows)
-
-select * from test2 where t ~* 'DEF';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ~ 'dEf';
- t 
----
-(0 rows)
-
-select * from test2 where t ~* '^q';
-   t   
--------
- quark
-(1 row)
-
-select * from test2 where t ~* '[abc]{3}[def]{3}';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ~* 'ab[a-z]{3}';
-   t    
---------
- abcdef
-(1 row)
-
-select * from test2 where t ~* '(^| )qua';
-   t   
--------
- quark
-(1 row)
-
-select * from test2 where t ~ 'q.*rk$';
-   t   
--------
- quark
-(1 row)
-
-select * from test2 where t ~ 'q';
-   t   
--------
- quark
-(1 row)
-
-select * from test2 where t ~ '[a-z]{3}';
-      t      
--------------
- abcdef
- quark
-   z foo bar
-(3 rows)
-
-select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
- t 
----
-(0 rows)
-
-select * from test2 where t ~ 'z foo bar';
-      t      
--------------
-   z foo bar
-(1 row)
-
-select * from test2 where t ~ ' z foo bar';
-      t      
--------------
-   z foo bar
-(1 row)
-
-select * from test2 where t ~ '  z foo bar';
-      t      
--------------
-   z foo bar
-(1 row)
-
-select * from test2 where t ~ '  z foo';
-      t      
--------------
-   z foo bar
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-(1 row)
-
-select * from test2 where t ~ 'qua(?!foo)';
    t   
 -------
  quark
@@ -4126,19 +3923,17 @@ SELECT similarity('Szczecin', 'Warsaw');
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
   FROM restaurants WHERE city % 'Warsaw';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  GroupAggregate
-         Group Key: city, (similarity(city, 'Warsaw'::text)), ('0.3'::real)
-         ->  Sort
-               Sort Key: city, (similarity(city, 'Warsaw'::text))
-               ->  Bitmap Heap Scan on restaurants
-                     Recheck Cond: (city % 'Warsaw'::text)
-                     ->  Bitmap Index Scan on restaurants_city_idx
-                           Index Cond: (city % 'Warsaw'::text)
+   ->  HashAggregate
+         Group Key: city, similarity(city, 'Warsaw'::text), show_limit()
+         ->  Bitmap Heap Scan on restaurants
+               Recheck Cond: (city % 'Warsaw'::text)
+               ->  Bitmap Index Scan on restaurants_city_idx
+                     Index Cond: (city % 'Warsaw'::text)
  Optimizer: Postgres query optimizer
-(10 rows)
+(8 rows)
 
 SELECT set_limit(0.3);
  set_limit 
