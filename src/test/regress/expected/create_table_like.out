@@ -213,31 +213,13 @@ CREATE TABLE ctlt4 (a text, c text);
 ALTER TABLE ctlt4 ALTER COLUMN c SET STORAGE EXTERNAL;
 CREATE TABLE ctlt12_storage (LIKE ctlt1 INCLUDING STORAGE, LIKE ctlt2 INCLUDING STORAGE);
 \d+ ctlt12_storage
-<<<<<<< HEAD
-                   Table "public.ctlt12_storage"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | 
- b      | text |           | extended |              | 
- c      | text |           | external |              | 
-Distributed by: (a)
-
-CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDING COMMENTS);
-\d+ ctlt12_comments
-                  Table "public.ctlt12_comments"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | extended |              | A
- b      | text |           | extended |              | B
- c      | text |           | extended |              | C
-Distributed by: (a)
-=======
                              Table "public.ctlt12_storage"
  Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+------+-----------+----------+---------+----------+--------------+-------------
  a      | text |           | not null |         | main     |              | 
  b      | text |           |          |         | extended |              | 
  c      | text |           |          |         | external |              | 
+Distributed by: (a)
 
 CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDING COMMENTS);
 \d+ ctlt12_comments
@@ -247,7 +229,7 @@ CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDIN
  a      | text |           | not null |         | extended |              | A
  b      | text |           |          |         | extended |              | B
  c      | text |           |          |         | extended |              | C
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Distributed by: (a)
 
 CREATE TABLE ctlt1_inh (LIKE ctlt1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
@@ -320,12 +302,9 @@ Indexes:
     "ctlt_all_expr_idx" btree ((a || b))
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
-<<<<<<< HEAD
-Distributed by: (a)
-=======
 Statistics objects:
     "public"."ctlt_all_a_b_stat" (ndistinct, dependencies, mcv) ON a, b FROM ctlt_all
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+Distributed by: (a)
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 'ctlt_all'::regclass ORDER BY c.relname, objsubid;
     relname     | objsubid | description 
