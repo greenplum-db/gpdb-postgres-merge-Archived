@@ -505,7 +505,8 @@ static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
 
 static RangeVar *make_temp_table_name(Relation rel, BackendId id);
-static bool prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List *opts,
+static bool prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro,
+								char *amname, List *opts,
 								bool isTmpTableAo, bool useExistingColumnAttributes);
 
 
@@ -15547,6 +15548,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	s->fromClause = list_make1(from_tbl);
 
 	pre_built = prebuild_temp_table(rel, tmprel, dist_clause,
+									get_am_name(rel->rd_rel->relam),
 									storage_opts,
 									RelationIsAppendOptimized(rel),
 									useExistingColumnAttributes);
@@ -15567,6 +15569,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 
 		into = makeNode(IntoClause);
 		into->rel = tmprel;
+		into->accessMethod = get_am_name(rel->rd_rel->relam);
 		into->options = storage_opts;
 		into->tableSpaceName = get_tablespace_name(tblspc);
 		into->distributedBy = (Node *)dist_clause;
@@ -15694,7 +15697,8 @@ make_temp_table_name(Relation rel, BackendId id)
  * a value that matches 'opts'.
  */
 static bool
-prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List *opts,
+prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro,
+					char *amname, List *opts,
 					bool isTmpTableAo, bool useExistingColumnAttributes)
 {
 	bool need_rebuild = false;
@@ -15740,6 +15744,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List
 		List **col_encs = NULL;
 
 		cs->relKind = RELKIND_RELATION;
+		cs->accessMethod = amname;
 		cs->distributedBy = distro;
 		cs->relation = tmpname;
 		cs->ownerid = rel->rd_rel->relowner;
