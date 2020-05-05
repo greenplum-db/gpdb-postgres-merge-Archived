@@ -759,7 +759,7 @@ AppendOnlyCompact(Relation aorel,
 		}
 		if (*insert_segno != -1)
 		{
-			insertDesc = appendonly_insert_init(aorel, *insert_segno, false);
+			insertDesc = appendonly_insert_init(aorel, *insert_segno);
 			AppendOnlySegmentFileFullCompaction(aorel,
 												insertDesc,
 												fsinfo,

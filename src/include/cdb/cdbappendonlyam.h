@@ -108,8 +108,6 @@ typedef struct AppendOnlyInsertDescData
 
 	/* The block directory for the appendonly relation. */
 	AppendOnlyBlockDirectory blockDirectory;
-
-	bool update_mode;
 } AppendOnlyInsertDescData;
 
 typedef AppendOnlyInsertDescData *AppendOnlyInsertDesc;
@@ -330,7 +328,6 @@ typedef struct AppendOnlyFetchDescData
 
 typedef AppendOnlyFetchDescData *AppendOnlyFetchDesc;
 
-typedef struct AppendOnlyUpdateDescData *AppendOnlyUpdateDesc;
 typedef struct AppendOnlyDeleteDescData *AppendOnlyDeleteDesc;
 
 /*
@@ -376,7 +373,7 @@ extern bool appendonly_fetch(
 	TupleTableSlot *slot);
 extern void appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc);
 extern void appendonly_dml_init(Relation relation, CmdType operation);
-extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel, int segno, bool update_mode);
+extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel, int segno);
 extern void appendonly_insert(
 		AppendOnlyInsertDesc aoInsertDesc, 
 		MemTuple instup, 
@@ -390,19 +387,6 @@ extern TM_Result appendonly_delete(
 		AppendOnlyDeleteDesc aoDeleteDesc,
 		AOTupleId* aoTupleId);
 extern void appendonly_delete_finish(AppendOnlyDeleteDesc aoDeleteDesc);
-
-extern AppendOnlyInsertDesc AppendOnlyUpdateGetInsertDesc(AppendOnlyUpdateDesc updateDesc);
-
-extern AppendOnlyUpdateDesc appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno);
-extern TM_Result appendonly_update(
-		AppendOnlyUpdateDesc aoUpdateDesc,
-		MemTuple memTuple,
-		AOTupleId* aoTupleId,
-		AOTupleId* newAoTupleId);
-
-extern MemTupleBinding *AppendOnlyUpdateMTBind(AppendOnlyUpdateDesc aoUpdateDesc);
-
-extern void appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc);
 
 extern int acquire_sample_rows_ao(Relation onerel, int elevel,
 								  HeapTuple *rows, int targrows,

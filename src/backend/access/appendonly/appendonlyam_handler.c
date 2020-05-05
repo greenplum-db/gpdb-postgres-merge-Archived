@@ -49,6 +49,7 @@
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/faultinjector.h"
 #include "utils/rel.h"
 
 
@@ -65,7 +66,6 @@ typedef struct AppendOnlyDMLState
 	Oid relationOid;
 	AppendOnlyInsertDesc	insertDesc;
 	AppendOnlyDeleteDesc	deleteDesc;
-	AppendOnlyUpdateDesc	updateDesc;
 } AppendOnlyDMLState;
 
 static struct AppendOnlyLocal
@@ -126,7 +126,6 @@ get_dml_state(const Oid relationOid, HASHACTION action)
 	{
 		state->insertDesc = NULL;
 		state->deleteDesc = NULL;
-		state->updateDesc = NULL;
 	}
 
 	if (action == HASH_REMOVE)
@@ -391,46 +390,16 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 	if (!state)
 		return;
 
-	switch(operation)
+	if (state->insertDesc)
 	{
-	case CMD_INSERT:
-		if (state->insertDesc)
-		{
-			Assert(state->insertDesc->aoi_rel == relation);
-			appendonly_insert_finish(state->insertDesc);
-			state->insertDesc = NULL;
-		}
-		break;
-	case CMD_DELETE:
-		if (state->deleteDesc)
-		{
-			appendonly_delete_finish(state->deleteDesc);
-			state->deleteDesc = NULL;
-		}
-		break;
-	case CMD_UPDATE:
-		if (state->updateDesc)
-		{
-			Assert(AppendOnlyUpdateGetInsertDesc(state->updateDesc)->aoi_rel
-				   == relation);
-			appendonly_update_finish(state->updateDesc);
-			state->updateDesc = NULL;
-			state->insertDesc = NULL;
-		}
-		if (state->insertDesc)
-		{
-			appendonly_insert_finish(state->insertDesc);
-			state->insertDesc = NULL;
-		}
-		if (state->deleteDesc)
-		{
-			appendonly_delete_finish(state->deleteDesc);
-			state->deleteDesc = NULL;
-		}
-		break;
-	default:
-		elog(ERROR, "not implemented");
-		break;
+		Assert(state->insertDesc->aoi_rel == relation);
+		appendonly_insert_finish(state->insertDesc);
+		state->insertDesc = NULL;
+	}
+	if (state->deleteDesc)
+	{
+		appendonly_delete_finish(state->deleteDesc);
+		state->deleteDesc = NULL;
 	}
 }
 
@@ -463,10 +432,8 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
-		state->insertDesc = appendonly_insert_init(
-												relation,
-												ChooseSegnoForWrite(relation),
-												false);
+		state->insertDesc = appendonly_insert_init(relation,
+												   ChooseSegnoForWrite(relation));
 		MemoryContextSwitchTo(oldcxt);
 	}
 
@@ -480,6 +447,8 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	appendonly_insert(state->insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
 	// GPDB_12_MERGE_FIXME
 	//(resultRelInfo->ri_aoprocessed)++;
+
+	pgstat_count_heap_insert(relation, 1);
 
 	if (shouldFree)
 		pfree(mtuple);
@@ -526,6 +495,7 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 					TM_FailureData *tmfd, bool changingPart)
 {
 	AppendOnlyDMLState *state;
+	TM_Result	result;
 
 	/*
 	 * GPDB_12_MERGE_FIXME: workaround to capture state needed by
@@ -550,7 +520,10 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 		MemoryContextSwitchTo(oldcxt);
 	}
 
-	return appendonly_delete(state->deleteDesc, (AOTupleId *) tid);
+	result = appendonly_delete(state->deleteDesc, (AOTupleId *) tid);
+	if (result == TM_Ok)
+		pgstat_count_heap_delete(relation);
+	return result;
 }
 
 
@@ -573,7 +546,7 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 	 * it to the access method.
 	 */
 	state = get_dml_state(RelationGetRelid(relation), HASH_ENTER);
-	if (state->updateDesc == NULL)
+	if (state->insertDesc == NULL || state->deleteDesc == NULL)
 	{
 		MemoryContext oldcxt;
 
@@ -585,17 +558,9 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 		}
 
 		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
-		state->updateDesc = appendonly_update_init(
-												relation,
-												GetActiveSnapshot(),
-												ChooseSegnoForWrite(relation));
-		/*
-		 * It could be an update to distribution key or partition key, in
-		 * which case, it is actually a delete and insert operation.
-		 */
-		if (state->insertDesc)
-			appendonly_insert_finish(state->insertDesc);
-		state->insertDesc = AppendOnlyUpdateGetInsertDesc(state->updateDesc);
+		if (!state->insertDesc)
+			state->insertDesc = appendonly_insert_init(relation,
+													   ChooseSegnoForWrite(relation));
 		if (!state->deleteDesc)
 			state->deleteDesc = appendonly_delete_init(relation);
 		MemoryContextSwitchTo(oldcxt);
@@ -605,13 +570,27 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 	slot->tts_tableOid = RelationGetRelid(relation);
 
 	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree,
-								   AppendOnlyUpdateMTBind(state->updateDesc));
+								   state->insertDesc->mt_bind);
 
-	result = appendonly_update(state->updateDesc, mtuple,
-							   (AOTupleId *) otid, (AOTupleId *) &slot->tts_tid);
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet(
+								   "appendonly_update",
+								   DDLNotSpecified,
+								   "", //databaseName
+								   RelationGetRelationName(state->insertDesc->aoi_rel));
+	/* tableName */
+#endif
+
+	result = appendonly_delete(state->deleteDesc, (AOTupleId *) otid);
+	if (result != TM_Ok)
+		return result;
+
+	appendonly_insert(state->insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
+
 	// GPDB_12_MERGE_FIXME
 	//(resultRelInfo->ri_aoprocessed)++;
 
+	pgstat_count_heap_update(relation, false);
 	/* No HOT updates with AO tables. */
 	*update_indexes = true;
 

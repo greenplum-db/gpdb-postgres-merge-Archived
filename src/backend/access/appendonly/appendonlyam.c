@@ -2597,101 +2597,6 @@ appendonly_delete(AppendOnlyDeleteDesc aoDeleteDesc,
 }
 
 /*
- * appendonly_update_init
- *
- * before using appendonly_update() to update tuples from append-only segment
- * files, we need to call this function to initialize the update desc
- * data structured.
- */
-AppendOnlyUpdateDesc
-appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno)
-{
-	Assert(!IsolationUsesXactSnapshot());
-
-	Oid visimaprelid;
-	Oid visimapidxid;
-
-	GetAppendOnlyEntryAuxOids(rel->rd_id, NULL, NULL, NULL, NULL, &visimaprelid, &visimapidxid);
-
-	/*
-	 * allocate and initialize the insert descriptor
-	 */
-	AppendOnlyUpdateDesc aoUpdateDesc = (AppendOnlyUpdateDesc) palloc0(sizeof(AppendOnlyUpdateDescData));
-
-	aoUpdateDesc->aoInsertDesc = appendonly_insert_init(rel, segno, true);
-
-	AppendOnlyVisimap_Init(&aoUpdateDesc->visibilityMap,
-						   visimaprelid,
-						   visimapidxid,
-						   RowExclusiveLock,
-						   appendOnlyMetaDataSnapshot);
-
-	AppendOnlyVisimapDelete_Init(&aoUpdateDesc->visiMapDelete,
-								 &aoUpdateDesc->visibilityMap);
-
-	return aoUpdateDesc;
-}
-
-void
-appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc)
-{
-	Assert(aoUpdateDesc);
-
-	AppendOnlyVisimapDelete_Finish(&aoUpdateDesc->visiMapDelete);
-
-	appendonly_insert_finish(aoUpdateDesc->aoInsertDesc);
-	aoUpdateDesc->aoInsertDesc = NULL;
-
-	/* Keep lock until the end of the transaction */
-	AppendOnlyVisimap_Finish(&aoUpdateDesc->visibilityMap, NoLock);
-
-	pfree(aoUpdateDesc);
-}
-
-MemTupleBinding *
-AppendOnlyUpdateMTBind(AppendOnlyUpdateDesc aoUpdateDesc)
-{
-	return aoUpdateDesc->aoInsertDesc->mt_bind;
-}
-
-AppendOnlyInsertDesc
-AppendOnlyUpdateGetInsertDesc(AppendOnlyUpdateDesc aoUpdateDesc)
-{
-	return aoUpdateDesc->aoInsertDesc;
-}
-
-TM_Result
-appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
-				  MemTuple memTuple,
-				  AOTupleId *aoTupleId,
-				  AOTupleId *newAoTupleId)
-{
-	TM_Result result;
-
-	Assert(aoUpdateDesc);
-	Assert(aoTupleId);
-
-#ifdef FAULT_INJECTOR
-	FaultInjector_InjectFaultIfSet(
-								   "appendonly_update",
-								   DDLNotSpecified,
-								   "", //databaseName
-								   RelationGetRelationName(aoUpdateDesc->aoInsertDesc->aoi_rel));
-	/* tableName */
-#endif
-
-	result = AppendOnlyVisimapDelete_Hide(&aoUpdateDesc->visiMapDelete, aoTupleId);
-	if (result != TM_Ok)
-		return result;
-
-	appendonly_insert(aoUpdateDesc->aoInsertDesc,
-					  memTuple,
-					  newAoTupleId);
-
-	return result;
-}
-
-/*
  * appendonly_insert_init
  *
  * 'segno' must be a segment that has been previously locked for this
@@ -2705,7 +2610,7 @@ appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
  * append only tables.
  */
 AppendOnlyInsertDesc
-appendonly_insert_init(Relation rel, int segno, bool update_mode)
+appendonly_insert_init(Relation rel, int segno)
 {
 	AppendOnlyInsertDesc aoInsertDesc;
 	int			maxtupsize;
@@ -2758,7 +2663,6 @@ appendonly_insert_init(Relation rel, int segno, bool update_mode)
 
 	Assert(segno >= 0);
 	aoInsertDesc->cur_segno = segno;
-	aoInsertDesc->update_mode = update_mode;
 
 	/*
 	 * Adding a NOTOAST table attribute in 3.3.3 would require a catalog
@@ -3124,10 +3028,6 @@ appendonly_insert(AppendOnlyInsertDesc aoInsertDesc,
 	}
 
 	aoInsertDesc->insertCount++;
-	if (!aoInsertDesc->update_mode)
-		pgstat_count_heap_insert(relation, 1);
-	else
-		pgstat_count_heap_update(relation, false);
 	aoInsertDesc->lastSequence++;
 	if (aoInsertDesc->numSequences > 0)
 		(aoInsertDesc->numSequences)--;
