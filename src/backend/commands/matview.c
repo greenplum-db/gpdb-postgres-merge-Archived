@@ -575,6 +575,9 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	/* Not using WAL requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(transientrel) == InvalidBlockNumber);
+
+	if (RelationIsAoRows(transientrel))
+		appendonly_dml_init(transientrel, CMD_INSERT);
 }
 
 /*

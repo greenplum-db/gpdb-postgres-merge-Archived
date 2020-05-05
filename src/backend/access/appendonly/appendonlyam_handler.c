@@ -94,16 +94,11 @@ get_dml_state(const Oid relationOid, HASHACTION action)
 		appendOnlyLocal.last_used_state->relationOid == relationOid)
 		return appendOnlyLocal.last_used_state;
 
-	if (appendOnlyLocal.dmlDescriptorTab)
-	{
-		state = (AppendOnlyDMLState *) hash_search(
-			appendOnlyLocal.dmlDescriptorTab,
-			&relationOid,
-			action,
-			NULL);
-	}
-	else
-		state = NULL;
+	state = (AppendOnlyDMLState *) hash_search(
+		appendOnlyLocal.dmlDescriptorTab,
+		&relationOid,
+		action,
+		NULL);
 
 	appendOnlyLocal.last_used_state = state;
 
@@ -436,10 +431,6 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 {
 	AppendOnlyDMLState *state =
 		get_dml_state(RelationGetRelid(relation), HASH_REMOVE);
-
-	if (!state)
-		return;
-
 	switch(operation)
 	{
 	case CMD_INSERT:
