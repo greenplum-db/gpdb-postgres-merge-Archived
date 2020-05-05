@@ -3964,12 +3964,37 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR |
-									DF_WITH_SNAPSHOT |
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
+		/* do we need to copy the stmt? */
+		AlterTableStmt *dispatchstmt = stmt;
+		ListCell *o_lc;
+		List *newcmds = NIL;
+
+		foreach (o_lc, dispatchstmt->cmds)
+		{
+			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(o_lc);
+
+			switch (cmd->subtype)
+			{
+				case AT_PartAdd:
+				case AT_PartDrop:
+				case AT_PartAlter:
+				case AT_PartTruncate:
+					break;
+				default:
+					newcmds = lappend(newcmds, cmd);
+					break;
+			}
+		}
+
+		dispatchstmt->cmds = newcmds;
+
+		if (dispatchstmt->cmds)
+			CdbDispatchUtilityStatement((Node *) dispatchstmt,
+										DF_CANCEL_ON_ERROR |
+										DF_WITH_SNAPSHOT |
+										DF_NEED_TWO_PHASE,
+										GetAssignedOidsForDispatch(),
+										NULL);
 	}
 }
 

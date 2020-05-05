@@ -204,6 +204,7 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 	List *stmts = NIL;
 	ListCell *l;
 
+	Assert(Gp_role != GP_ROLE_EXECUTE);
 	if (Gp_role != GP_ROLE_DISPATCH)
 		return;
 
