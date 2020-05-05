@@ -19580,7 +19580,6 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	}
 	*options = amendedOptions;
 
-#ifdef GPDB_12_MERGE_FIXME
 	/* GPDB_12_MERGE_FIXME: during the development of the ao/aoco tableam we
 	 * need to have this layer turned off. When removing this fixme, make
 	 * certain that any sanity checks on the options are also introduced if
@@ -19624,9 +19623,6 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 		return pstrdup("heap");
 
 	return NULL;
-#else
-	return (char *)accessMethod;	
-#endif
 }
 
 /* parser_init()
