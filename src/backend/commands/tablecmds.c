@@ -7016,6 +7016,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		if (!defval && RelationIsAppendOptimized(rel))
 		{
 			defval = (Expr *) makeNullConst(typeOid, -1, collOid);
+			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
 		}
 
 		if (defval)
