@@ -391,6 +391,8 @@ extern TM_Result appendonly_delete(
 		AOTupleId* aoTupleId);
 extern void appendonly_delete_finish(AppendOnlyDeleteDesc aoDeleteDesc);
 
+extern AppendOnlyInsertDesc AppendOnlyUpdateGetInsertDesc(AppendOnlyUpdateDesc updateDesc);
+
 extern AppendOnlyUpdateDesc appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno);
 extern TM_Result appendonly_update(
 		AppendOnlyUpdateDesc aoUpdateDesc,

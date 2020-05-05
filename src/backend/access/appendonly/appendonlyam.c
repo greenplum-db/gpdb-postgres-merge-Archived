@@ -2654,6 +2654,12 @@ AppendOnlyUpdateMTBind(AppendOnlyUpdateDesc aoUpdateDesc)
 	return aoUpdateDesc->aoInsertDesc->mt_bind;
 }
 
+AppendOnlyInsertDesc
+AppendOnlyUpdateGetInsertDesc(AppendOnlyUpdateDesc aoUpdateDesc)
+{
+	return aoUpdateDesc->aoInsertDesc;
+}
+
 TM_Result
 appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
 				  MemTuple memTuple,
