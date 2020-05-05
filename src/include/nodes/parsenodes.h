@@ -2513,7 +2513,7 @@ typedef enum GpPartitionEdgeBounding
 } GpPartitionEdgeBounding;
 
 /* partition boundary specification */
-typedef struct GpPartitionBoundSpec
+typedef struct GpPartitionRangeSpec
 {
 	NodeTag				type;
 
@@ -2523,15 +2523,15 @@ typedef struct GpPartitionBoundSpec
 	/* MPP-6297: check for WITH (tablename=name) clause */
 	char			   *pWithTnameStr;	/* and disable EVERY if tname set */
 	int					location;		/* token location, or -1 if unknown */
-} GpPartitionBoundSpec;
+} GpPartitionRangeSpec;
 
 /* VALUES clause specification */
-typedef struct GpPartitionValuesSpec
+typedef struct GpPartitionListSpec
 {
 	NodeTag				type;
 	List			   *partValues;		/* VALUES clause for LIST partition */
 	int					location;
-} GpPartitionValuesSpec;
+} GpPartitionListSpec;
 
 typedef struct GpPartitionSpec			/* a Partition Specification */
 {

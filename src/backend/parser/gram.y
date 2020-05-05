@@ -5630,7 +5630,7 @@ OptTabPartitionBoundarySpecEnd:
 TabPartitionBoundarySpec:
 			part_values_clause
 				{
-					GpPartitionValuesSpec *n = makeNode(GpPartitionValuesSpec); 
+					GpPartitionListSpec *n = makeNode(GpPartitionListSpec);
 
 					n->partValues = $1;
 					n->location  = @1;
@@ -5640,7 +5640,7 @@ TabPartitionBoundarySpec:
               OptTabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery  
 				{
-					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec);
+					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = $1;
 					n->partEnd   = $2;
 					n->partEvery = $3;
@@ -5651,7 +5651,7 @@ TabPartitionBoundarySpec:
 			| TabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery	
 				{
-					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec); 
+					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = NULL;
 					n->partEnd   = $1;
 					n->partEvery = $2;
@@ -5671,7 +5671,7 @@ OptTabPartitionBoundarySpec:
 TabAddPartitionBoundarySpec:
 			part_values_clause
 				{
-					GpPartitionValuesSpec *n = makeNode(GpPartitionValuesSpec); 
+					GpPartitionListSpec *n = makeNode(GpPartitionListSpec);
 
 					n->partValues = $1;
 					n->location  = @1;
@@ -5680,7 +5680,7 @@ TabAddPartitionBoundarySpec:
 			| TabPartitionBoundarySpecStart
               OptTabPartitionBoundarySpecEnd
 				{
-					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec);
+					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = $1;
 					n->partEnd   = $2;
 					n->pWithTnameStr = NULL;
@@ -5689,7 +5689,7 @@ TabAddPartitionBoundarySpec:
 				}
 			| TabPartitionBoundarySpecEnd
 				{
-					GpPartitionBoundSpec *n = makeNode(GpPartitionBoundSpec); 
+					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = NULL;
 					n->partEnd   = $1;
 					n->pWithTnameStr = NULL;

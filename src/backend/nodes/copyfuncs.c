@@ -5611,10 +5611,10 @@ _copyGpPartitionElem(const GpPartitionElem *from)
 	return newnode;
 }
 
-static GpPartitionBoundSpec *
-_copyGpPartitionBoundSpec(const GpPartitionBoundSpec *from)
+static GpPartitionRangeSpec *
+_copyGpPartitionRangeSpec(const GpPartitionRangeSpec *from)
 {
-	GpPartitionBoundSpec *newnode = makeNode(GpPartitionBoundSpec);
+	GpPartitionRangeSpec *newnode = makeNode(GpPartitionRangeSpec);
 
 	COPY_NODE_FIELD(partStart);
 	COPY_NODE_FIELD(partEnd);
@@ -5625,10 +5625,10 @@ _copyGpPartitionBoundSpec(const GpPartitionBoundSpec *from)
 	return newnode;
 }
 
-static GpPartitionValuesSpec *
-_copyGpPartitionValuesSpec(const GpPartitionValuesSpec *from)
+static GpPartitionListSpec *
+_copyGpPartitionListSpec(const GpPartitionListSpec *from)
 {
-	GpPartitionValuesSpec *newnode = makeNode(GpPartitionValuesSpec);
+	GpPartitionListSpec *newnode = makeNode(GpPartitionListSpec);
 
 	COPY_NODE_FIELD(partValues);
 	COPY_LOCATION_FIELD(location);
@@ -6857,11 +6857,11 @@ copyObjectImpl(const void *from)
 		case T_GpPartitionElem:
 			retval = _copyGpPartitionElem(from);
 			break;
-		case T_GpPartitionBoundSpec:
-			retval = _copyGpPartitionBoundSpec(from);
+		case T_GpPartitionRangeSpec:
+			retval = _copyGpPartitionRangeSpec(from);
 			break;
-		case T_GpPartitionValuesSpec:
-			retval = _copyGpPartitionValuesSpec(from);
+		case T_GpPartitionListSpec:
+			retval = _copyGpPartitionListSpec(from);
 			break;
 		case T_CdbProcess:
 			retval = _copyCdbProcess(from);

@@ -605,27 +605,27 @@ generateRangePartitions(ParseState *pstate,
 						PartitionSpec *subPart,
 						partname_comp *partnamecomp)
 {
-	GpPartitionBoundSpec *boundspec;
-	List	   *result = NIL;
-	PartitionKey partkey;
-	char	   *partcolname;
-	PartEveryIterator *boundIter;
-	Node	   *start = NULL;
-	Node	   *end = NULL;
-	Node	   *every = NULL;
-	int i;
+	GpPartitionRangeSpec *boundspec;
+	List				 *result = NIL;
+	PartitionKey		 partkey;
+	char				 *partcolname;
+	PartEveryIterator	 *boundIter;
+	Node				 *start = NULL;
+	Node				 *end = NULL;
+	Node				 *every = NULL;
+	int					 i;
 
 	if (elem->boundSpec == NULL)
 		elog(ERROR, "missing boundary specification in partition%s of type RANGE",
 			 elem->partName);
 
-	if (!IsA(elem->boundSpec, GpPartitionBoundSpec))
+	if (!IsA(elem->boundSpec, GpPartitionRangeSpec))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("invalid boundary specification for RANGE partition"),
 				 parser_errposition(pstate, elem->location)));
 
-	boundspec = (GpPartitionBoundSpec *) elem->boundSpec;
+	boundspec = (GpPartitionRangeSpec *) elem->boundSpec;
 	partkey = RelationGetPartitionKey(parentrel);
 
 	/*
@@ -738,12 +738,12 @@ generateListPartition(ParseState *pstate,
 					  PartitionSpec *subPart,
 					  partname_comp *partnamecomp)
 {
-	GpPartitionValuesSpec *gpvaluesspec;
-	PartitionBoundSpec *boundspec;
-	CreateStmt *childstmt;
-	PartitionKey partkey;
-	ListCell   *lc;
-	List	  *listdatums;
+	GpPartitionListSpec *gpvaluesspec;
+	PartitionBoundSpec  *boundspec;
+	CreateStmt			*childstmt;
+	PartitionKey		partkey;
+	ListCell			*lc;
+	List				*listdatums;
 
 	if (elem->boundSpec == NULL)
 		ereport(ERROR,
@@ -752,13 +752,13 @@ generateListPartition(ParseState *pstate,
 							 elem->partName),
 							 parser_errposition(pstate, elem->location)));
 
-	if (!IsA(elem->boundSpec, GpPartitionValuesSpec))
+	if (!IsA(elem->boundSpec, GpPartitionListSpec))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					  errmsg("invalid boundary specification for LIST partition"),
 					  parser_errposition(pstate, elem->location)));
 
-	gpvaluesspec = (GpPartitionValuesSpec *) elem->boundSpec;
+	gpvaluesspec = (GpPartitionListSpec *) elem->boundSpec;
 
 	partkey = RelationGetPartitionKey(parentrel);
 
