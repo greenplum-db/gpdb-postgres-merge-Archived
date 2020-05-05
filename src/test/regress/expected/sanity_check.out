@@ -120,12 +120,10 @@ pg_db_role_setting|t
 pg_default_acl|t
 pg_depend|t
 pg_description|t
-pg_exttable|t
-pg_foreign_data_wrapper|t
-pg_foreign_server|t
 pg_enum|t
 pg_event_trigger|t
 pg_extension|t
+pg_exttable|t
 pg_foreign_data_wrapper|t
 pg_foreign_server|t
 pg_foreign_table|t
@@ -213,10 +211,7 @@ time_tbl|f
 timestamp_tbl|f
 timestamptz_tbl|f
 timetz_tbl|f
-<<<<<<< HEAD
-=======
 tmp|f
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 varchar_tbl|f
 view_base_table|t
 -- restore normal output mode

@@ -2349,15 +2349,9 @@ pg_user_mappings| SELECT u.oid AS umid,
             ELSE a.rolname
         END AS usename,
         CASE
-<<<<<<< HEAD
-            WHEN (((((u.umuser <> (0)::oid) AND (a.rolname = "current_user"())) AND (pg_has_role(s.srvowner, 'USAGE'::text) OR has_server_privilege(s.oid, 'USAGE'::text))) OR ((u.umuser = (0)::oid) AND pg_has_role(s.srvowner, 'USAGE'::text))) OR ( SELECT pg_authid.rolsuper
-               FROM pg_authid
-              WHERE (pg_authid.rolname = "current_user"()))) THEN u.umoptions
-=======
             WHEN (((u.umuser <> (0)::oid) AND (a.rolname = CURRENT_USER) AND (pg_has_role(s.srvowner, 'USAGE'::text) OR has_server_privilege(s.oid, 'USAGE'::text))) OR ((u.umuser = (0)::oid) AND pg_has_role(s.srvowner, 'USAGE'::text)) OR ( SELECT pg_authid.rolsuper
                FROM pg_authid
               WHERE (pg_authid.rolname = CURRENT_USER))) THEN u.umoptions
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
             ELSE NULL::text[]
         END AS umoptions
    FROM ((pg_user_mapping u
@@ -2476,17 +2470,10 @@ pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS
    WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;
 rtest_emp|rtest_emp_del|CREATE RULE rtest_emp_del AS
     ON DELETE TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-<<<<<<< HEAD
-  VALUES (old.ename, "current_user"(), 'fired'::bpchar, '$0.00'::money, old.salary);
-rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
-    ON INSERT TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (new.ename, "current_user"(), 'hired'::bpchar, new.salary, '$0.00'::money);
-=======
   VALUES (old.ename, CURRENT_USER, 'fired'::bpchar, '$0.00'::money, old.salary);
 rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
     ON INSERT TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (new.ename, CURRENT_USER, 'hired'::bpchar, new.salary, '$0.00'::money);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 rtest_emp|rtest_emp_upd|CREATE RULE rtest_emp_upd AS
     ON UPDATE TO public.rtest_emp
    WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
@@ -3410,12 +3397,6 @@ SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
  
 (1 row)
 
-<<<<<<< HEAD
--- test rule for select-for-update
-create table t_test_rules_select_for_update (c int) distributed randomly;
-create rule myrule as on insert to t_test_rules_select_for_update
-do instead select * from t_test_rules_select_for_update for update;
-=======
 SELECT pg_get_partkeydef(0);
  pg_get_partkeydef 
 -------------------
@@ -3463,4 +3444,7 @@ SELECT * FROM ruletest2;
 
 DROP TABLE ruletest1;
 DROP TABLE ruletest2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- test rule for select-for-update
+create table t_test_rules_select_for_update (c int) distributed randomly;
+create rule myrule as on insert to t_test_rules_select_for_update
+do instead select * from t_test_rules_select_for_update for update;

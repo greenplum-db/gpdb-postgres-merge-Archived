@@ -1434,8 +1434,6 @@ explain (costs off) delete from t1 where a = 1;
 (10 rows)
 
 delete from t1 where a = 1;
-<<<<<<< HEAD
-=======
 -- Test a primary key with attributes located in later attnum positions
 -- compared to the fk attributes.
 create table pktable2 (a int, b int, c int, d int, e int, primary key (d, e));
@@ -1469,7 +1467,6 @@ select conname from pg_constraint where conrelid = 'fktable2'::regclass order by
 (3 rows)
 
 drop table pktable1, pktable2, fktable2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
@@ -1504,8 +1501,6 @@ alter table fktable2 drop constraint fktable2_f1_fkey;
 ERROR:  cannot ALTER TABLE "pktable2" because it has pending trigger events
 commit;
 drop table pktable2, fktable2;
-<<<<<<< HEAD
-=======
 --
 -- Test keys that "look" different but compare as equal
 --
@@ -2390,4 +2385,3 @@ DROP SCHEMA fkpart7 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table fkpart7.pkpart
 drop cascades to table fkpart7.fk
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
