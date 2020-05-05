@@ -842,7 +842,7 @@ AppendOnlyBlockDirectory_DeleteSegmentFile(Relation aoRel,
 	{
 		CatalogTupleDelete(blkdirRel, &tuple->t_self);
 	}
-	systable_endscan(indexScan);
+	systable_endscan_ordered(indexScan);
 
 	index_close(blkdirIdx, RowExclusiveLock);
 	table_close(blkdirRel, RowExclusiveLock);

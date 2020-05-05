@@ -119,19 +119,6 @@ reset_insert_context_callback(void *arg)
 	appendOnlyLocal.last_used_state = NULL;
 }
 
-static MemTupleBinding *
-appendonly_dml_mt_bind(CmdType operation)
-{
-	if (operation == CMD_UPDATE)
-		return AppendOnlyUpdateMTBind(appendOnlyLocal.last_used_state->updateDesc);
-	if (operation == CMD_INSERT)
-		return appendOnlyLocal.last_used_state->insertDesc->mt_bind;
-	else
-		elog(ERROR, "memtuple binding cannot be obtained for operaiton %d",
-			 operation);
-}
-
-
 /* ------------------------------------------------------------------------
  * Slot related callbacks for appendonly AM
  * ------------------------------------------------------------------------
@@ -167,7 +154,7 @@ appendonly_slot_callbacks(Relation relation)
 }
 
 MemTuple
-ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, CmdType operation)
+ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, MemTupleBinding *mt_bind)
 {
 	MemTuple		result;
 	MemoryContext	oldContext;
@@ -182,7 +169,7 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, CmdType operation)
 		slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
 
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	result = memtuple_form(appendonly_dml_mt_bind(operation),
+	result = memtuple_form(mt_bind,
 						   slot->tts_values,
 						   slot->tts_isnull);
 	MemoryContextSwitchTo(oldContext);
@@ -465,10 +452,14 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 					int options, BulkInsertState bistate)
 {
 	bool		shouldFree = true;
-	AppendOnlyDMLState *state = get_dml_state(RelationGetRelid(relation),
-											  HASH_FIND);
+	AppendOnlyDMLState *state;
+	MemTuple	mtuple;
+
+	state = get_dml_state(RelationGetRelid(relation), HASH_FIND);
 	Assert(state);
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_INSERT);
+
+	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree,
+								   state->insertDesc->mt_bind);
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
@@ -537,11 +528,14 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 	bool		shouldFree = true;
 	AppendOnlyDMLState *state = get_dml_state(RelationGetRelid(relation),
 											  HASH_FIND);
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_UPDATE);
+	MemTuple	mtuple;
 	TM_Result	result;
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
+
+	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree,
+								   AppendOnlyUpdateMTBind(state->updateDesc));
 
 	result = appendonly_update(state->updateDesc, mtuple,
 							   (AOTupleId *) otid, (AOTupleId *) &slot->tts_tid);

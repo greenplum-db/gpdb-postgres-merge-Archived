@@ -121,6 +121,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		freeze = false;
 	bool		full = false;
 	bool		disable_page_skipping = false;
+	int			ao_phase = 0;
 	ListCell   *lc;
 
 	/* Set default value */
@@ -156,6 +157,11 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 			params.index_cleanup = get_vacopt_ternary_value(opt);
 		else if (strcmp(opt->defname, "truncate") == 0)
 			params.truncate = get_vacopt_ternary_value(opt);
+		else if (Gp_role == GP_ROLE_EXECUTE && strcmp(opt->defname, "ao_phase") == 0)
+		{
+			ao_phase = defGetInt32(opt);
+			Assert((ao_phase & VACUUM_AO_PHASE_MASK) == ao_phase);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -172,6 +178,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		(freeze ? VACOPT_FREEZE : 0) |
 		(full ? VACOPT_FULL : 0) |
 		(disable_page_skipping ? VACOPT_DISABLE_PAGE_SKIPPING : 0);
+
+	params.options |= ao_phase;
 
 	/* sanity checks on options */
 	Assert(params.options & (VACOPT_VACUUM | VACOPT_ANALYZE));
@@ -2186,6 +2194,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
+	/* all done with this class, but hold lock until commit */
+	if (onerel)
+		relation_close(onerel, NoLock);
+
+	/*
+	 * Complete the transaction and free all temporary memory used.
+	 */
+	PopActiveSnapshot();
+	CommitTransactionCommand();
+
 #ifdef FAULT_INJECTOR
 	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
 	{
@@ -2206,31 +2224,21 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		 * was left behind from previous VACUUMs. This runs under local
 		 * transactions.
 		 */
-		params->options |= VACOPT_AO_PRE_CLEANUP_PHASE;
+		params->options = orig_options | VACOPT_AO_PRE_CLEANUP_PHASE;
 		vacuum_rel(relid, this_rangevar, params, false);
 
 		/* Compact. This runs in a distributed transaction.  */
-		params->options |= VACOPT_AO_COMPACT_PHASE,
+		params->options = orig_options | VACOPT_AO_COMPACT_PHASE;
 		vacuum_rel(relid, this_rangevar, params, false);
 
 		/* Do a final round of cleanup. Hopefully, this can drop the segments
 		 * that were compacted in the previous phase.
 		 */
-		params->options |= VACOPT_AO_POST_CLEANUP_PHASE,
+		params->options = orig_options | VACOPT_AO_POST_CLEANUP_PHASE;
 		vacuum_rel(relid, this_rangevar, params, false);
 
 		params->options = orig_options;
 	}
-
-	/* all done with this class, but hold lock until commit */
-	if (onerel)
-		relation_close(onerel, NoLock);
-
-	/*
-	 * Complete the transaction and free all temporary memory used.
-	 */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
@@ -2428,8 +2436,8 @@ dispatchVacuum(VacuumParams *params, RangeVar *relation,
 	VacuumRelation *rel;
 
 	// GPDB_12_MERGE_FIXME
-	//if ((options & VACUUM_AO_PHASE_MASK) == VACOPT_AO_COMPACT_PHASE)
-	//	flags |= DF_NEED_TWO_PHASE;
+	if ((params->options & VACUUM_AO_PHASE_MASK) == VACOPT_AO_COMPACT_PHASE)
+		flags |= DF_NEED_TWO_PHASE;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
@@ -2499,6 +2507,14 @@ vacuum_params_to_options_list(VacuumParams *params)
 	{
 		options = lappend(options, makeDefElem("disable_page_skipping", (Node *) makeInteger(1), -1));
 		optmask &= ~VACOPT_DISABLE_PAGE_SKIPPING;
+	}
+
+	if (optmask & VACUUM_AO_PHASE_MASK)
+	{
+		options = lappend(options, makeDefElem("ao_phase",
+											   (Node *) makeInteger(optmask & VACUUM_AO_PHASE_MASK),
+											   -1));
+		optmask &= ~VACUUM_AO_PHASE_MASK;
 	}
 	if (optmask != 0)
 		elog(ERROR, "unrecognized vacuum option %x", optmask);

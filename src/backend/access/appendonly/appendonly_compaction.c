@@ -291,7 +291,7 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
-	tuple = ExecFetchSlotMemTuple(slot, &shouldFree, CMD_INSERT);
+	tuple = ExecFetchSlotMemTuple(slot, &shouldFree, mt_bind);
 	appendonly_insert(insertDesc,
 					  tuple,
 					  &newAoTupleId);
@@ -384,9 +384,9 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	}
 	relname = RelationGetRelationName(aorel);
 
-    GetAppendOnlyEntryAuxOids(aorel->rd_id, appendOnlyMetaDataSnapshot,
-                              &blkdirrelid, NULL, NULL,
-                              &visimaprelid, &visimapidxid);
+	GetAppendOnlyEntryAuxOids(aorel->rd_id, appendOnlyMetaDataSnapshot,
+							  NULL, &blkdirrelid, NULL,
+							  &visimaprelid, &visimapidxid);
 
 	AppendOnlyVisimap_Init(&visiMap,
 						   visimaprelid,
@@ -410,6 +410,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 
 	tupDesc = RelationGetDescr(aorel);
 	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsVirtual);
+	slot->tts_tableOid = RelationGetRelid(aorel);
 	mt_bind = create_memtuple_binding(tupDesc);
 
 	/*
