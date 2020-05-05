@@ -64,9 +64,6 @@ typedef struct
 	CommandId	output_cid;		/* cmin to insert in output tuples */
 	int			ti_options;		/* table_tuple_insert performance options */
 	BulkInsertState bistate;	/* bulk insert state */
-
-	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
-	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
 } DR_transientrel;
 
 static int	matview_maintenance_depth = 0;
@@ -573,6 +570,9 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		myState->ti_options |= TABLE_INSERT_SKIP_WAL;
 	myState->bistate = GetBulkInsertState();
 
+	if (RelationIsAoRows(myState->transientrel))
+		appendonly_dml_init(myState->transientrel, CMD_INSERT);
+
 	/* Not using WAL requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(transientrel) == InvalidBlockNumber);
 
@@ -622,11 +622,6 @@ transientrel_shutdown(DestReceiver *self)
 	FreeBulkInsertState(myState->bistate);
 
 	table_finish_bulk_insert(myState->transientrel, myState->ti_options);
-
-	if (RelationIsAoRows(myState->transientrel) && myState->ao_insertDesc)
-		appendonly_insert_finish(myState->ao_insertDesc);
-	else if (RelationIsAoCols(myState->transientrel) && myState->aocs_insertDes)
-		aocs_insert_finish(myState->aocs_insertDes);
 
 	/* close transientrel, but keep lock until commit */
 	table_close(myState->transientrel, NoLock);

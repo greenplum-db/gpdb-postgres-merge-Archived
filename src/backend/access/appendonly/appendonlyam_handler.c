@@ -70,24 +70,24 @@ typedef struct AppendOnlyDMLState
 
 static struct AppendOnlyLocal
 {
-	AppendOnlyDMLState *last_used_state;
-	HTAB *dmlDescriptorTab;
-	MemoryContextCallback cb;
-} appendOnlyLocal	= {
+	AppendOnlyDMLState	   *last_used_state;
+	HTAB				   *dmlDescriptorTab;
+	MemoryContextCallback	cb;
+} appendOnlyLocal	  = {
 	.last_used_state  = NULL,
 	.dmlDescriptorTab = NULL,
 	.cb	= {
-		.func = reset_insert_context_callback,
-		.arg = NULL
+		.func	= reset_insert_context_callback,
+		.arg	= NULL
 	},
 };
-
-
 
 static inline AppendOnlyDMLState *
 get_dml_state(const Oid relationOid, HASHACTION action)
 {
 	AppendOnlyDMLState *state;
+
+	Assert(appendOnlyLocal.dmlDescriptorTab);
 
 	if (action != HASH_REMOVE &&
 		appendOnlyLocal.last_used_state &&
@@ -95,10 +95,10 @@ get_dml_state(const Oid relationOid, HASHACTION action)
 		return appendOnlyLocal.last_used_state;
 
 	state = (AppendOnlyDMLState *) hash_search(
-		appendOnlyLocal.dmlDescriptorTab,
-		&relationOid,
-		action,
-		NULL);
+										appendOnlyLocal.dmlDescriptorTab,
+									   &relationOid,
+										action,
+										NULL);
 
 	appendOnlyLocal.last_used_state = state;
 
@@ -431,6 +431,9 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 {
 	AppendOnlyDMLState *state =
 		get_dml_state(RelationGetRelid(relation), HASH_REMOVE);
+
+	Assert(state);
+
 	switch(operation)
 	{
 	case CMD_INSERT:
