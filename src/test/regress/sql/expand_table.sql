@@ -5,7 +5,7 @@ create extension if not exists gp_debug_numsegments;
 drop schema if exists test_expand_table cascade;
 create schema test_expand_table;
 set search_path=test_expand_table,public;
-set gp_default_storage_options='appendonly=false';
+set default_table_access_method='heap';
 set allow_system_table_mods=true;
 
 -- Hash distributed tables

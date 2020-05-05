@@ -5,7 +5,7 @@ create extension if not exists gp_debug_numsegments;
 drop schema if exists test_expand_table_aoco cascade;
 create schema test_expand_table_aoco;
 set search_path=test_expand_table_aoco,public;
-set gp_default_storage_options='appendonly=true,orientation=column';
+set default_table_access_method='aoco';
 set allow_system_table_mods=true;
 
 -- Hash distributed tables
