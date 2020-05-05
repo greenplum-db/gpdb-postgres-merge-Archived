@@ -553,7 +553,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	ListCell   *listptr;
 	AttrNumber	attnum;
 	bool		partitioned;
-	GpPartitionSpec *gpPartSpec = NULL;
+	GpPartitionDefinition *gpPartitionDef = NULL;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
 	ObjectAddress address;
@@ -1357,7 +1357,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
 	 */
-	if (!gpPartSpec)
+	if (!gpPartitionDef)
 		relation_close(rel, NoLock);
 
 	return address;

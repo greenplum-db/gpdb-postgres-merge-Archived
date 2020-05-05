@@ -852,7 +852,7 @@ extract_tablename_from_options(List **options)
  * specification.
  */
 List *
-generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
+generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 				   PartitionSpec *subPartSpec, const char *queryString,
 				   List *parentoptions, const char *parentaccessmethod)
 {
@@ -899,7 +899,7 @@ generatePartitions(Oid parentrelid, GpPartitionSpec *gpPartSpec,
 			{
 				tmpSubPartSpec = copyObject(subPartSpec);
 				if (!isSubTemplate)
-					tmpSubPartSpec->gpPartSpec = (GpPartitionSpec*) elem->subSpec;
+					tmpSubPartSpec->gpPartSpec = (GpPartitionDefinition*) elem->subSpec;
 			}
 
 			/* if WITH has "tablename" then it will be used as name for partition */

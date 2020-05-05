@@ -851,9 +851,9 @@ typedef struct PartitionSpec
 								 * 'range') */
 	List	   *partParams;		/* List of PartitionElems */
 
-	struct GpPartitionSpec *gpPartSpec;
-	struct PartitionSpec *subPartSpec;     /* subpartition specification */
-	int			location;		/* token location, or -1 if unknown */
+	struct GpPartitionDefinition *gpPartSpec;
+	struct PartitionSpec         *subPartSpec;     /* subpartition specification */
+	int                          location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
 /* Internal codes for partitioning strategies */
@@ -2533,14 +2533,14 @@ typedef struct GpPartitionListSpec
 	int					location;
 } GpPartitionListSpec;
 
-typedef struct GpPartitionSpec			/* a Partition Specification */
+typedef struct GpPartitionDefinition			/* a Partition Specification */
 {
 	NodeTag				type;
 	List			   *partDefs;		/* partition element list */
 	List			   *enc_clauses;	/* ENCODING () clauses */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
-} GpPartitionSpec;
+} GpPartitionDefinition;
 
 /* ----------------------
  *		Create/Drop TableSpace Statements

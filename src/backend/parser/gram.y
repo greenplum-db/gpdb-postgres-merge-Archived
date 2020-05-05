@@ -5353,7 +5353,7 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 /* Optional partition key specification (at the position where PostgreSQL has it) */
 OptFirstPartitionSpec: PartitionSpec opt_list_subparts OptTabPartitionSpec
 				{
-					$1->gpPartSpec = (GpPartitionSpec *) $3;
+					$1->gpPartSpec = (GpPartitionDefinition *) $3;
 					$1->subPartSpec = (PartitionSpec *) $2;
 
 					$$ = $1;
@@ -5375,7 +5375,7 @@ OptSecondPartitionSpec:
 
 					n->strategy = $3;
 					n->partParams = $5;
-					n->gpPartSpec = (GpPartitionSpec *) $8;
+					n->gpPartSpec = (GpPartitionDefinition *) $8;
 					n->subPartSpec = (PartitionSpec *) $7;
 					n->location = @1;
 
@@ -5521,7 +5521,7 @@ TabPartitionColumnEncList:
 
 OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
-					GpPartitionSpec *n = makeNode(GpPartitionSpec);
+					GpPartitionDefinition *n = makeNode(GpPartitionDefinition);
 					n->partDefs  = $2;
 					n->location  = @2;
 					$$ = (Node *) n;
@@ -5532,7 +5532,7 @@ OptTabPartitionSpec: '(' TabPartitionElemList ')'
 OptTabSubPartitionSpec: 
             '(' TabSubPartitionElemList ')' 
 				{
-					GpPartitionSpec *n = makeNode(GpPartitionSpec);
+					GpPartitionDefinition *n = makeNode(GpPartitionDefinition);
 					n->partDefs  = $2;
 					n->location  = @2;
 					$$ = (Node *) n;
@@ -5900,7 +5900,7 @@ TabSubPartitionTemplate:
 			SUBPARTITION TEMPLATE
 			'(' TabSubPartitionElemList ')'
 				{
-					GpPartitionSpec *n = makeNode(GpPartitionSpec);
+					GpPartitionDefinition *n = makeNode(GpPartitionDefinition);
 					n->partDefs  = $4;
 					n->istemplate  = true;
 					n->location  = @3;
@@ -5951,7 +5951,7 @@ TabSubPartition:
 			TabSubPartitionBy TabSubPartitionTemplate
 				{
 					PartitionSpec *n = (PartitionSpec *) $1;
-					n->gpPartSpec = (GpPartitionSpec *) $2;
+					n->gpPartSpec = (GpPartitionDefinition *) $2;
 
 					$$ = $1;
 				}
@@ -5966,7 +5966,7 @@ TabSubPartition:
 			| TabSubPartitionBy TabSubPartitionTemplate TabSubPartition
 				{
 					PartitionSpec *n = (PartitionSpec *) $1;
-					n->gpPartSpec = (GpPartitionSpec *) $2;
+					n->gpPartSpec = (GpPartitionDefinition *) $2;
 					n->subPartSpec = (PartitionSpec *) $3;
 
 					$$ = $1;

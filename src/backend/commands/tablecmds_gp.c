@@ -269,9 +269,9 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		{
 			ListCell *l;
 
-			GpAlterPartitionCmd *add_cmd    = castNode(GpAlterPartitionCmd, cmd->def);
-			GpPartDef           *pelem      = castNode(GpPartDef, add_cmd->arg);
-			GpPartitionSpec     *gpPartSpec = makeNode(GpPartitionSpec);
+			GpAlterPartitionCmd   *add_cmd    = castNode(GpAlterPartitionCmd, cmd->def);
+			GpPartDef             *pelem      = castNode(GpPartDef, add_cmd->arg);
+			GpPartitionDefinition *gpPartSpec = makeNode(GpPartitionDefinition);
 			gpPartSpec->partDefs = list_make1(pelem);
 			List *cstmts = generatePartitions(RelationGetRelid(rel),
 											  gpPartSpec, NULL, NULL,
