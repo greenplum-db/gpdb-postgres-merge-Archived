@@ -34,6 +34,7 @@
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
 
+#include "cdb/cdbappendonlyam.h"
 
 /*-----------------------
  * PartitionTupleRouting - Encapsulates all information required to
@@ -870,6 +871,12 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		lappend(estate->es_tuple_routing_result_relations,
 				leaf_part_rri);
 
+	/*
+	 * Initialize the DML state needed by appendoptimized access method.
+	 */
+	if (RelationIsAoRows(leaf_part_rri->ri_RelationDesc))
+		appendonly_dml_init(leaf_part_rri->ri_RelationDesc, mtstate->operation);
+
 	MemoryContextSwitchTo(oldcxt);
 
 	return leaf_part_rri;
@@ -1151,6 +1158,13 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 			if (found)
 				continue;
 		}
+
+		/*
+		 * Only leaf node can have a valid access method.  If we find an
+		 * appendoptimized table, ensure the DML operation is finished.
+		 */
+		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
+			appendonly_dml_finish(resultRelInfo->ri_RelationDesc, mtstate->operation);
 
 		ExecCloseIndices(resultRelInfo);
 		table_close(resultRelInfo->ri_RelationDesc, NoLock);

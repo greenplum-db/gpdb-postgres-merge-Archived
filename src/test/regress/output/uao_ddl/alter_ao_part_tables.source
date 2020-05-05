@@ -349,6 +349,12 @@ select distinct a.visimaprelid is NULL, a.visimapidxid is NULL
 ----------+----------
 (0 rows)
 
+-- Validate that the state needed by appendoptimized AM is correctly
+-- initialized when the query involves partitioned tables with a
+-- subplan.
+update sto_alt_ao_part set c = -c where b in (select c from sto_alt_ao_part_1_prt_3);
+UPDATE 10
+
 COMMIT;
 -- Vacuum full to test compaction
 set gp_select_invisible=true;

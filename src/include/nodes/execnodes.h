@@ -401,9 +401,6 @@ typedef struct OnConflictSetState
 	ExprState  *oc_WhereClause; /* state for the WHERE clause */
 } OnConflictSetState;
 
-typedef void *RelationUpdateDesc;
-typedef void *RelationDeleteDesc;
-
 /*
  * ResultRelInfo
  *
@@ -488,13 +485,8 @@ typedef struct ResultRelInfo
 	AttrNumber  ri_segid_attno;		/* gp_segment_id of old tuple */
 	AttrNumber	ri_action_attno;	/* is this an INSERT or DELETE ? */
 
-	struct MemTupleBinding *mt_bind;
-
 	struct AOCSInsertDescData *ri_aocsInsertDesc;
 	struct ExternalInsertDescData *ri_extInsertDesc;
-
-	RelationDeleteDesc ri_deleteDesc;
-	RelationUpdateDesc ri_updateDesc;
 
 	/* GPDB_12_MERGE_FIXME: These need to go behind the table AM API */
 #if 0

@@ -2308,8 +2308,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	resultRelInfo->ri_aocsInsertDesc = NULL;
 	resultRelInfo->ri_extInsertDesc = NULL;
-	resultRelInfo->ri_deleteDesc = NULL;
-	resultRelInfo->ri_updateDesc = NULL;
 
 	/*
 	 * Partition constraint, which also includes the partition constraint of
