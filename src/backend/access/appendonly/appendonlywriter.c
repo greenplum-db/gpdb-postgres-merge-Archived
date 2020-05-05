@@ -190,7 +190,7 @@ LockSegnoForWrite(Relation rel, int segno)
 		LogDistributedSnapshotInfo(snapshot, "Used snapshot: ");
 	}
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, snapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, snapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		int32		this_segno;
@@ -402,7 +402,7 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	 * Scan through all the pg_aoseg (or pg_aocs) entries, and make note of
 	 * all "candidates".
 	 */
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, snapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, snapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		int32		segno;

@@ -526,7 +526,7 @@ AppendOnlyRecycleDeadSegments(Relation aorel)
 	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, appendOnlyMetaDataSnapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		bool		visible_to_all;
@@ -658,7 +658,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 	pg_aoseg_rel = heap_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, appendOnlyMetaDataSnapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		int			segno;

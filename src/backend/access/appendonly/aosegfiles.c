@@ -200,7 +200,7 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/* Do heap scan on pg_aoseg relation */
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, appendOnlyMetaDataSnapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
@@ -426,7 +426,7 @@ GetAllFileSegInfo_pg_aoseg_rel(char *relationName,
 	/*
 	 * Now get the actual segfile information
 	 */
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, appendOnlyMetaDataSnapshot, 0, NULL);
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		/* dynamically expand space for FileSegInfo* array */
@@ -968,7 +968,7 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false,
 								appendOnlyMetaDataSnapshot, 0, NULL);
 
 	while ((tuple = systable_getnext(aoscan)) != NULL)
@@ -1033,7 +1033,7 @@ GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false,
 								appendOnlyMetaDataSnapshot, 0, NULL);
 
 	while ((tuple = systable_getnext(aoscan)) != NULL)

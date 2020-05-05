@@ -1330,7 +1330,7 @@ appendonly_relation_size(Relation rel, ForkNumber forkNumber)
 	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, NULL, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, false, NULL, 0, NULL);
 
 	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{

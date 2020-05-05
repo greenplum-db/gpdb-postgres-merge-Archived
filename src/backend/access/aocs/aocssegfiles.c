@@ -174,7 +174,7 @@ GetAOCSFileSegInfo(Relation prel,
 	tupdesc = RelationGetDescr(segrel);
 
 	/* Scan aoseg relation for tuple. */
-	scan = systable_beginscan(segrel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, appendOnlyMetaDataSnapshot, 0, NULL);
 	while ((segtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(segtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -347,7 +347,7 @@ GetAllAOCSFileSegInfo_pg_aocsseg_rel(int numOfColumns,
 
 	cur_seg = 0;
 
-	scan = systable_beginscan(pg_aocsseg_rel, InvalidOid, true, snapshot, 0, NULL);
+	scan = systable_beginscan(pg_aocsseg_rel, InvalidOid, false, snapshot, 0, NULL);
 	while ((tup = systable_getnext(scan)) != NULL)
 	{
 		/* dynamically expand space for AOCSFileSegInfo* array */
@@ -574,7 +574,7 @@ MarkAOCSFileSegInfoAwaitingDrop(Relation prel, int segno)
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, NULL, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, NULL, 0, NULL);
 	while (segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -669,7 +669,7 @@ ClearAOCSFileSegInfo(Relation prel, int segno)
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, NULL, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, NULL, 0, NULL);
 	while (segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -760,7 +760,7 @@ UpdateAOCSFileSegInfo(AOCSInsertDesc idesc)
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, idesc->appendOnlyMetaDataSnapshot, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, idesc->appendOnlyMetaDataSnapshot, 0, NULL);
 	while (idesc->cur_segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -955,7 +955,7 @@ AOCSFileSegInfoAddVpe(Relation prel, int32 segno,
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, NULL, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, NULL, 0, NULL);
 	while (segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -1075,7 +1075,7 @@ AOCSFileSegInfoAddCount(Relation prel, int32 segno,
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = systable_beginscan(segrel, InvalidOid, true, NULL, 0, NULL);
+	scan = systable_beginscan(segrel, InvalidOid, false, NULL, 0, NULL);
 	while (segno != tuple_segno && (oldtup = systable_getnext(scan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
