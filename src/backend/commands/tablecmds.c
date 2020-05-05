@@ -2500,8 +2500,13 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		 * Check for active uses of the parent partitioned table in the
 		 * current transaction, such as being used in some manner by an
 		 * enclosing command.
+		 *
+		 * GPDB_12_MERGE_FIXME: ALTER TABLE ADD PARTITION can't meet this
+		 * upstream expectation on QD. As during alter, reference is already
+		 * held by alter command, and when we generate CREATE STMT and execute
+		 * them we have 2 reference instead on 1 here.
 		 */
-		if (is_partition)
+		if (is_partition && (Gp_role != GP_ROLE_DISPATCH))
 			CheckTableNotInUse(relation, "CREATE TABLE .. PARTITION OF");
 
 		/*
