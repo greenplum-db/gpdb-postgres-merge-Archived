@@ -1166,7 +1166,7 @@ toast_insert_or_update_generic(Relation rel, void *newtup, void *oldtup,
 	{
 		if(ismemtuple)
 		{
-			result_gtuple = (void *) memtuple_form(tupleDesc, toast_values, toast_isnull);
+			result_gtuple = (void *) memtuple_form(pbind, toast_values, toast_isnull);
 		}
 		else
 		{
