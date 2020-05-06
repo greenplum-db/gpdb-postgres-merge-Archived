@@ -375,14 +375,8 @@ FROM gp_dist_random('gp_fastsequence')
 WHERE objid IN (SELECT segrelid FROM pg_appendonly WHERE relid IN (
   SELECT oid FROM pg_class WHERE relname='tenk_ao2'));
 
--- OIDS
+-- WITH OIDS is no longer supported
 CREATE TABLE aowithoids(a int, b int) WITH (appendonly=true,oids=true);
-COPY aowithoids FROM STDIN;
-1	1
-2	2
-\.
-SELECT * FROM aowithoids ORDER BY a; -- this should show a,b only
-SELECT oideq(oid,-1) FROM aowithoids; -- kind of stupid but checks that oid actually exists and is queriable. should always be 'f'
 
 -- CREATE INDEX
 CREATE INDEX tenk_ao1_unique1 ON tenk_ao1 USING btree(unique1 int4_ops);
