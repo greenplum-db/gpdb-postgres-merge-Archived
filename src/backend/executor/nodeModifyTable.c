@@ -2645,6 +2645,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExecInitExtraTupleSlot(mtstate->ps.state, ExecGetResultType(mtstate->mt_plans[i]),
 								   table_slot_callbacks(resultRelInfo->ri_RelationDesc));
 
+		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
+			appendonly_dml_init(resultRelInfo->ri_RelationDesc, operation);
+
 		/* Also let FDWs init themselves for foreign-table result rels */
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
 			resultRelInfo->ri_FdwRoutine != NULL &&

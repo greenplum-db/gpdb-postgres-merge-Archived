@@ -871,6 +871,9 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		lappend(estate->es_tuple_routing_result_relations,
 				leaf_part_rri);
 
+	if (RelationIsAoRows(leaf_part_rri->ri_RelationDesc))
+		appendonly_dml_init(leaf_part_rri->ri_RelationDesc, mtstate->operation);
+
 	MemoryContextSwitchTo(oldcxt);
 
 	return leaf_part_rri;

@@ -392,7 +392,4 @@ extern int acquire_sample_rows_ao(Relation onerel, int elevel,
 								  HeapTuple *rows, int targrows,
 								  double *totalrows, double *totaldeadrows);
 
-extern void AtEOXact_appendonly(bool isCommit);
-extern void AtEOSubXact_appendonly(bool isCommit);
-
 #endif   /* CDBAPPENDONLYAM_H */

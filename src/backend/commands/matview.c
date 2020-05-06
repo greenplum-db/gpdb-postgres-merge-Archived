@@ -570,6 +570,9 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		myState->ti_options |= TABLE_INSERT_SKIP_WAL;
 	myState->bistate = GetBulkInsertState();
 
+	if (RelationIsAoRows(myState->transientrel))
+		appendonly_dml_init(myState->transientrel, CMD_INSERT);
+
 	/* Not using WAL requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(transientrel) == InvalidBlockNumber);
 }

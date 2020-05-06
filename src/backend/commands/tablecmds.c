@@ -5990,6 +5990,13 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
 		scan = table_beginscan(oldrel, snapshot, 0, NULL);
 
+		if (newrel && RelationIsAoRows(newrel))
+		{
+			/* Table access method is not permitted to change */
+			Assert(RelationIsAoRows(oldrel));
+			appendonly_dml_init(newrel, CMD_INSERT);
+		}
+
 		/*
 		 * Switch to per-tuple memory context and reset it for each tuple
 		 * produced, so we don't leak memory.
