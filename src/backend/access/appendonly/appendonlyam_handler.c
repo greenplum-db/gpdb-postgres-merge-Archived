@@ -235,7 +235,7 @@ void
 appendonly_dml_init(Relation relation, CmdType operation)
 {
 	init_dml_local_state();
-	(void *)enter_dml_state(RelationGetRelid(relation));
+	(void) enter_dml_state(RelationGetRelid(relation));
 }
 
 /*
