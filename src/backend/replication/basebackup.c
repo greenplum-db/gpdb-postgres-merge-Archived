@@ -1624,6 +1624,7 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 							"differ",
 							readfilename, blkno, (int) cnt, BLCKSZ)));
 			verify_checksum = false;
+			checksum_failures++;
 		}
 
 		if (verify_checksum)
