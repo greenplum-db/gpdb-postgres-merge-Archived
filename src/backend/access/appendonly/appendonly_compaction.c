@@ -295,6 +295,7 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	appendonly_insert(insertDesc,
 					  tuple,
 					  &newAoTupleId);
+	slot->tts_tid = *((ItemPointerData *) &newAoTupleId);
 
 	/* insert index' tuples if needed */
 	if (resultRelInfo->ri_NumIndices > 0)
