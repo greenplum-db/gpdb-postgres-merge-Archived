@@ -909,6 +909,15 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 				tmpSubPartSpec = copyObject(subPartSpec);
 				if (!isSubTemplate)
 					tmpSubPartSpec->gpPartDef = (GpPartitionDefinition*) elem->subSpec;
+
+				if (tmpSubPartSpec->gpPartDef == NULL)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								errmsg("no partitions specified at depth %d",
+									   partcomp.level + 1),
+								parser_errposition(pstate, subPartSpec->location)));
+				}
 			}
 
 			/* if WITH has "tablename" then it will be used as name for partition */
