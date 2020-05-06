@@ -248,16 +248,25 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 
 	state = remove_dml_state(RelationGetRelid(relation));
 
+	if (state->deleteDesc)
+	{
+		appendonly_delete_finish(state->deleteDesc);
+		state->deleteDesc = NULL;
+
+		/*
+		 * Bump up the modcount. If we inserted something (meaning that
+		 * this was an UPDATE), we can skip this, as the insertion bumped
+		 * up the modcount already.
+		 */
+		if (!state->insertDesc)
+			AORelIncrementModCount(relation);
+	}
+
 	if (state->insertDesc)
 	{
 		Assert(state->insertDesc->aoi_rel == relation);
 		appendonly_insert_finish(state->insertDesc);
 		state->insertDesc = NULL;
-	}
-	if (state->deleteDesc)
-	{
-		appendonly_delete_finish(state->deleteDesc);
-		state->deleteDesc = NULL;
 	}
 }
 
