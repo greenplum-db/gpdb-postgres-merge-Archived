@@ -186,6 +186,12 @@ class PgBaseBackup(Command):
         cmd_tokens.append(port)
         cmd_tokens.extend(self._xlog_arguments(replication_slot_name))
 
+        # GPDB_12_MERGE_FIXME: avoid checking checksum for heap tables
+        # till we code logic to skip/verify checksum for
+        # appendoptimized tables. Enabling this results in basebackup
+        # failures with appendoptimized tables.
+        cmd_tokens.append('--no-verify-checksums')
+
         if forceoverwrite:
             cmd_tokens.append('--force-overwrite')
 
