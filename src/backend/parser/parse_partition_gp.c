@@ -49,6 +49,10 @@ typedef struct
 	Datum		currEnd;
 	bool		called;
 	bool		endReached;
+
+	/* for context in error messages */
+	ParseState *pstate;
+	int			every_location;
 } PartEveryIterator;
 
 typedef struct partname_comp
@@ -425,6 +429,9 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 	iter->called = false;
 	iter->endReached = false;
 
+	iter->pstate = pstate;
+	iter->every_location = exprLocation(every);
+
 	return iter;
 }
 
@@ -500,7 +507,8 @@ nextPartBound(PartEveryIterator *iter)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("EVERY parameter too small")));
+							 errmsg("EVERY parameter too small"),
+							 parser_errposition(iter->pstate, iter->every_location)));
 				}
 				else
 				{
@@ -510,7 +518,8 @@ nextPartBound(PartEveryIterator *iter)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("END parameter not reached before type overflows")));
+							 errmsg("END parameter not reached before type overflows"),
+							 parser_errposition(iter->pstate, iter->every_location)));
 				}
 			}
 
