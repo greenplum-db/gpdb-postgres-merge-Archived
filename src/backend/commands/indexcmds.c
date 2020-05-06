@@ -2959,6 +2959,27 @@ ReindexTable(ReindexStmt *stmt)
 							relation->relname)));
 	}
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		ReindexStmt	   *qestmt;
+
+		qestmt = makeNode(ReindexStmt);
+
+		qestmt->kind = REINDEX_OBJECT_TABLE;
+		qestmt->relation = NULL;
+		qestmt->options = options;
+		qestmt->concurrent = concurrent;
+		qestmt->relid = heapOid;
+
+		PushActiveSnapshot(GetTransactionSnapshot());
+		CdbDispatchUtilityStatement((Node *) qestmt,
+									DF_CANCEL_ON_ERROR |
+									DF_WITH_SNAPSHOT,
+									GetAssignedOidsForDispatch(),
+									NULL);
+		PopActiveSnapshot();
+	}
+
 	return heapOid;
 }
 
@@ -3167,6 +3188,28 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 								get_namespace_name(get_rel_namespace(relid)),
 								get_rel_name(relid))));
 
+			PopActiveSnapshot();
+		}
+
+		/* Dispatch a separate REINDEX command for each table. */
+		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			ReindexStmt	   *stmt;
+
+			stmt = makeNode(ReindexStmt);
+
+			stmt->kind = REINDEX_OBJECT_TABLE;
+			stmt->relation = NULL;
+			stmt->options = options;
+			stmt->concurrent = concurrent;
+			stmt->relid = relid;
+
+			PushActiveSnapshot(GetTransactionSnapshot());
+			CdbDispatchUtilityStatement((Node *) stmt,
+										DF_CANCEL_ON_ERROR |
+										DF_WITH_SNAPSHOT,
+										GetAssignedOidsForDispatch(),
+										NULL);
 			PopActiveSnapshot();
 		}
 

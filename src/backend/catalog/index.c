@@ -3807,7 +3807,7 @@ reindex_relation(Oid relid, int flags, int options)
 	 */
 	if (OidIsValid(aoblkdir_relid))
 		result |= reindex_relation(aoblkdir_relid, 0, options);
-	
+
 	/*
 	 * If an AO rel has a secondary visibility map rel, reindex that too while we
 	 * still hold the lock on the master table.
