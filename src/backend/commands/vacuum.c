@@ -56,6 +56,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
@@ -64,6 +65,7 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 #include "libpq-int.h"
+#include "libpq/pqformat.h"
 #include "utils/faultinjector.h"
 #include "utils/lsyscache.h"
 
@@ -1234,8 +1236,6 @@ vac_update_relstats(Relation relation,
 	 * "non-distributed" tables than system relations here, but for now
 	 * it's effectively the same.)
 	 */
-	/* GPDB_12_MERGE_FIXME: is this stil needed, and in the right place? */
-#if 0
 	if (!IsSystemRelation(relation) && isvacuum)
 	{
 		if (Gp_role == GP_ROLE_DISPATCH)
@@ -1298,7 +1298,6 @@ vac_update_relstats(Relation relation,
 		Assert(num_tuples < 1.0);
 		num_pages = 1.0;
 	}
-#endif
 
 	rd = table_open(RelationRelationId, RowExclusiveLock);
 

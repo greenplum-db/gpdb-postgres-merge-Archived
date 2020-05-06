@@ -391,8 +391,19 @@ calculate_relation_size(Relation rel, ForkNumber forknum)
 
 	relationpath = relpathbackend(rel->rd_node, rel->rd_backend, forknum);
 
-if (RelationIsHeap(rel))
-{
+	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
+	{
+		/* AO tables don't have any extra forks. */
+		if (forknum == MAIN_FORKNUM)
+		{
+			if (RelationIsAoRows(rel))
+				totalsize = GetAOTotalBytes(rel, GetActiveSnapshot());
+			else
+				totalsize = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
+		}
+		return totalsize;
+	}
+
 	/* Ordinary relation, including heap and index.
 	 * They take form of relationpath, or relationpath.%d
 	 * There will be no holes, therefore, we can stop when
@@ -422,19 +433,6 @@ if (RelationIsHeap(rel))
 		}
 		totalsize += fst.st_size;
 	}
-}
-/* AO tables don't have any extra forks. */
-else if (forknum == MAIN_FORKNUM)
-{
-	if (RelationIsAoRows(rel))
-	{
-		totalsize = GetAOTotalBytes(rel, GetActiveSnapshot());
-	}
-	else if (RelationIsAoCols(rel))
-	{
-		totalsize = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
-	}
-}
 
 	/* RELSTORAGE_VIRTUAL has no space usage */
 	return totalsize;
