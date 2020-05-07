@@ -1443,6 +1443,10 @@ TidPath *
 create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 					Relids required_outer)
 {
+
+	if (!REL_SUPPORTS_TID_SCAN(rel))
+		return NULL;
+
 	TidPath    *pathnode = makeNode(TidPath);
 
 	pathnode->path.pathtype = T_TidScan;

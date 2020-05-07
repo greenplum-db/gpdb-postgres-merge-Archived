@@ -818,7 +818,7 @@ typedef struct RelOptInfo
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
     struct GpPolicy   *cdbpolicy;      /* distribution of stored tuples */
-	char		relstorage;		/* from pg_class.relstorage */
+	Oid			relam;			/* form_pg_class access method */
 	double		allvisfrac;
 	PlannerInfo *subroot;		/* if subquery (in GPDB: or CTE) */
 	List	   *subplan_params; /* if subquery */
@@ -893,6 +893,13 @@ typedef struct RelOptInfo
 #define REL_HAS_ALL_PART_PROPS(rel)	\
 	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0 && \
 	 (rel)->part_rels && (rel)->partexprs && (rel)->nullable_partexprs)
+
+/*
+ * Convenience macro to verify if a relation supports TID scans
+ */
+#define REL_SUPPORTS_TID_SCAN(rel) \
+	((rel)->relam != AOCO_TABLE_AM_OID && \
+	 (rel)->relam != APPENDOPTIMIZED_TABLE_AM_OID)
 
 /*
  * IndexOptInfo
