@@ -551,14 +551,27 @@ static void
 appendonly_get_latest_tid(TableScanDesc sscan,
 						  ItemPointer tid)
 {
-	/* No HOT, so nothing to do here. */
+	/*
+	 * Tid scans are not supported for appendoptimized relation. This function
+	 * should not have been called in the first place, but if it is called,
+	 * better to error out.
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("feature not supported on appendoptimized relations")));
 }
 
 static bool
 appendonly_tuple_tid_valid(TableScanDesc scan, ItemPointer tid)
 {
-	// GPDB_12_MERGE_FIXME: what should this do?
-	elog(ERROR, "not implemented yet");
+	/*
+	 * Tid scans are not supported for appendoptimized relation. This function
+	 * should not have been called in the first place, but if it is called,
+	 * better to error out.
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("feature not supported on appendoptimized relations")));
 }
 
 static bool
