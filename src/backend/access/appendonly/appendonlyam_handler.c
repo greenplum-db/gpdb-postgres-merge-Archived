@@ -591,11 +591,6 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	MemTuple				mtuple;
 	bool					shouldFree = true;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: What if we update and insert the same table in the
-	 * same command?
-	 * Don't we mix up the insertDesc of the UPDATE and the INSERT?
-	 */
 	insertDesc = get_insert_descriptor(relation);
 	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree, insertDesc->mt_bind);
 
