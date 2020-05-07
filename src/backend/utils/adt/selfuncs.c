@@ -2433,7 +2433,7 @@ eqjoinsel_semi(Oid opfuncoid,
 		{
 			int			j;
 
-			for (j = 0; j < sslot2->nvalues; j++)
+			for (j = 0; j < clamped_nvalues2; j++)
 			{
 				if (hasmatch2[j])
 					continue;
