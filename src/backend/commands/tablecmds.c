@@ -794,7 +794,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 									 stdRdOptions->compresslevel,
 									 stdRdOptions->compresstype,
 									 stdRdOptions->checksum,
-									 (accessMethodId == APPENDOPTIMIZED_TABLE_AM_OID));
+									 (accessMethodId == AOCO_TABLE_AM_OID));
 
 		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
 	} else if (relkind == RELKIND_VIEW)
