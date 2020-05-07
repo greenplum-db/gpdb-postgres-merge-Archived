@@ -3719,44 +3719,6 @@ heap_truncate(List *relids)
 }
 
 /*
- *	 heap_truncate_one_relid
- *
- *	 This routine deletes all data within the specified relation.
- */
-static void
-heap_truncate_one_relid(Oid relid)
-{
-	if (OidIsValid(relid))
-	{
-		Relation rel = relation_open(relid, AccessExclusiveLock);
-		heap_truncate_one_rel(rel);
-		relation_close(rel, NoLock);
-	}
-}
-
-static void
-ao_aux_tables_truncate(Relation rel)
-{
-	Oid ao_base_relid = RelationGetRelid(rel);
-
-	Oid			aoseg_relid = InvalidOid;
-	Oid			aoblkdir_relid = InvalidOid;
-	Oid			aovisimap_relid = InvalidOid;
-
-	if (!RelationIsAppendOptimized(rel))
-		return;
-
-	GetAppendOnlyEntryAuxOids(ao_base_relid, NULL,
-							  &aoseg_relid,
-							  &aoblkdir_relid, NULL,
-							  &aovisimap_relid, NULL);
-
-	heap_truncate_one_relid(aoseg_relid);
-	heap_truncate_one_relid(aoblkdir_relid);
-	heap_truncate_one_relid(aovisimap_relid);
-}
-
-/*
  *	 heap_truncate_one_rel
  *
  *	 This routine deletes all data within the specified relation.
