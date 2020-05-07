@@ -234,9 +234,9 @@ typedef struct AppendOnlyScanDescData
 	int64 targetTupleId;
 
 	/* For Bitmap scan */
-	int			rs_cindex;		/* current tuple's index in vistuples */
-	int			rs_ntuples;		/* number of visible tuples on page */
+	int			rs_cindex;		/* current tuple's index in tbmres->offsets */
 	struct AppendOnlyFetchDescData *aofetch;
+
 }	AppendOnlyScanDescData;
 
 typedef AppendOnlyScanDescData *AppendOnlyScanDesc;

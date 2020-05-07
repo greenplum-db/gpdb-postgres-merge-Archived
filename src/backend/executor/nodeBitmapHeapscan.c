@@ -864,6 +864,10 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 			scanstate->prefetch_maximum = rint(maximum);
 	}
 
+	/* Prefetching hasn't been implemented for AO tables */
+	if (RelationIsAoRows(currentRelation) || RelationIsAoCols(currentRelation))
+		scanstate->prefetch_maximum = 0;
+
 	scanstate->ss.ss_currentRelation = currentRelation;
 
 	scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,

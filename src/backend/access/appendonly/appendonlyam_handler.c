@@ -1245,7 +1245,9 @@ appendonly_index_validate_scan(Relation heapRelation,
 	EState	   *estate;
 	ExprContext *econtext;
 	BlockNumber root_blkno = InvalidBlockNumber;
+#if 0
 	OffsetNumber root_offsets[MaxHeapTuplesPerPage];
+#endif
 	bool		in_index[MaxHeapTuplesPerPage];
 
 	/* state variables for the merge */
@@ -1601,32 +1603,33 @@ static bool
 appendonly_scan_bitmap_next_block(TableScanDesc scan,
 								  TBMIterateResult *tbmres)
 {
-	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc)scan;
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+
 	/* If tbmres contains no tuples, continue. */
 	if (tbmres->ntuples == 0)
 		return false;
 
-
 	/* Make sure we never cross 15-bit offset number [MPP-24326] */
 	Assert(tbmres->ntuples <= INT16_MAX + 1);
 
+	/*
+	 * Start scanning from the beginning of the offsets array (or
+	 * at first "offset number" if it's a lossy page).
+	 */
 	aoscan->rs_cindex = 0;
-	aoscan->rs_ntuples = IS_LOSSY(tbmres) ?
-	                     INT16_MAX + 1 :
-	                     tbmres->ntuples;
 
 	return true;
 }
 
 static bool
 appendonly_scan_bitmap_next_tuple(TableScanDesc scan,
-							  TBMIterateResult *tbmres,
-							  TupleTableSlot *slot)
+								  TBMIterateResult *tbmres,
+								  TupleTableSlot *slot)
 {
 	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
-	OffsetNumber psuedoHeapOffset;
-	ItemPointerData psudeoHeapTid;
-	AOTupleId aoTid;
+	OffsetNumber pseudoHeapOffset;
+	ItemPointerData pseudoHeapTid;
+	AOTupleId	aoTid;
 
 	if (aoscan->aofetch == NULL)
 	{
@@ -1637,23 +1640,49 @@ appendonly_scan_bitmap_next_tuple(TableScanDesc scan,
 
 	}
 
-	if (aoscan->rs_cindex < 0 || aoscan->rs_cindex >= aoscan->rs_ntuples)
-		return false;
+	for (;;)
+	{
+		/*
+		 * If it's a lossy pase, iterate through all possible "offset numbers".
+		 * Otherwise iterate through the array of "offset numbers".
+		 */
+		if (tbmres->ntuples == -1)
+		{
+			if (aoscan->rs_cindex == INT16_MAX)
+				return false;
 
-	psuedoHeapOffset = IS_LOSSY(tbmres) ?
-	                   aoscan->rs_cindex:
-	                   tbmres->offsets[aoscan->rs_cindex];
-	aoscan->rs_cindex ++;
+			/*
+			 * +1 to convert index to offset, since TID offsets are not zero
+			 * based.
+			 */
+			pseudoHeapOffset = aoscan->rs_cindex + 1;
+		}
+		else
+		{
+			if (aoscan->rs_cindex == tbmres->ntuples)
+				return false;
 
-	ItemPointerSet(&psudeoHeapTid,tbmres->blockno,psuedoHeapOffset);
-	tbm_convert_appendonly_tid_out(&psudeoHeapTid, &aoTid);
+			pseudoHeapOffset = tbmres->offsets[aoscan->rs_cindex];
+		}
+		aoscan->rs_cindex++;
 
-	appendonly_fetch(aoscan->aofetch, &aoTid, slot);
+		/*
+		 * Okay to fetch the tuple
+		 */
+		ItemPointerSet(&pseudoHeapTid, tbmres->blockno, pseudoHeapOffset);
 
-	if (TupIsNull(slot))
-		return false;
+		tbm_convert_appendonly_tid_out(&pseudoHeapTid, &aoTid);
 
-	return true;
+		appendonly_fetch(aoscan->aofetch, &aoTid, slot);
+
+		if (TupIsNull(slot))
+			continue;
+
+		pgstat_count_heap_fetch(aoscan->aos_rd);
+
+		/* OK to return this tuple */
+		return true;
+	}
 }
 
 static bool
