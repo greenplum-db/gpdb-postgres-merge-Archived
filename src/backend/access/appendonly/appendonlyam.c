@@ -1780,12 +1780,6 @@ appendonly_beginscan(Relation relation,
 												pscan,
 												flags);
 
-	if (flags & SO_TYPE_ANALYZE)
-	{
-		aoscan->nextTupleId= 0;
-		aoscan->targetTupleId  = 0;
-	}
-
 	return (TableScanDesc) aoscan;
 }
 
@@ -1856,6 +1850,14 @@ appendonly_endscan(TableScanDesc scan)
 	AppendOnlyExecutorReadBlock_Finish(&aoscan->executorReadBlock);
 
 	AppendOnlyVisimap_Finish(&aoscan->visibilityMap, AccessShareLock);
+
+	if (aoscan->aofetch)
+	{
+		appendonly_fetch_finish(aoscan->aofetch);
+		pfree(aoscan->aofetch);
+		aoscan->aofetch = NULL;
+	}
+
 	pfree(aoscan->aos_filenamepath);
 
 	pfree(aoscan->title);

@@ -52,6 +52,7 @@
 #include "utils/faultinjector.h"
 #include "utils/rel.h"
 
+#define IS_LOSSY(t) (t->ntuples < 0)
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
@@ -1588,10 +1589,21 @@ static bool
 appendonly_scan_bitmap_next_block(TableScanDesc scan,
 								  TBMIterateResult *tbmres)
 {
-	//AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc)scan;
+	/* If tbmres contains no tuples, continue. */
+	if (tbmres->ntuples == 0)
+		return false;
 
-	// GPDB_12_MERGE_FIXME: re-implement this
-	elog(ERROR, "bitmap scan on AO table not yet implemented");
+
+	/* Make sure we never cross 15-bit offset number [MPP-24326] */
+	Assert(tbmres->ntuples <= INT16_MAX + 1);
+
+	aoscan->rs_cindex = 0;
+	aoscan->rs_ntuples = IS_LOSSY(tbmres) ?
+	                     INT16_MAX + 1 :
+	                     tbmres->ntuples;
+
+	return true;
 }
 
 static bool
@@ -1599,8 +1611,37 @@ appendonly_scan_bitmap_next_tuple(TableScanDesc scan,
 							  TBMIterateResult *tbmres,
 							  TupleTableSlot *slot)
 {
-	// GPDB_12_MERGE_FIXME: re-implement this
-	elog(ERROR, "bitmap scan on AO table not yet implemented");
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+	OffsetNumber psuedoHeapOffset;
+	ItemPointerData psudeoHeapTid;
+	AOTupleId aoTid;
+
+	if (aoscan->aofetch == NULL)
+	{
+		aoscan->aofetch =
+			appendonly_fetch_init(aoscan->rs_base.rs_rd,
+			                      aoscan->snapshot,
+			                      aoscan->appendOnlyMetaDataSnapshot);
+
+	}
+
+	if (aoscan->rs_cindex < 0 || aoscan->rs_cindex >= aoscan->rs_ntuples)
+		return false;
+
+	psuedoHeapOffset = IS_LOSSY(tbmres) ?
+	                   aoscan->rs_cindex:
+	                   tbmres->offsets[aoscan->rs_cindex];
+	aoscan->rs_cindex ++;
+
+	ItemPointerSet(&psudeoHeapTid,tbmres->blockno,psuedoHeapOffset);
+	tbm_convert_appendonly_tid_out(&psudeoHeapTid, &aoTid);
+
+	appendonly_fetch(aoscan->aofetch, &aoTid, slot);
+
+	if (TupIsNull(slot))
+		return false;
+
+	return true;
 }
 
 static bool
