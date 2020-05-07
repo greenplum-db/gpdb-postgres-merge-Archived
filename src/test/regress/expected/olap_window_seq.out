@@ -7010,7 +7010,7 @@ select cn,pn,qty,sum(qty) over (partition by cn order by pn range between cn*100
 (12 rows)
 
 select pn,vn,max(vn) over (order by pn range between cn-1 following and cn-2 following) as max from sale;
-ERROR:  RANGE parameter cannot be negative
+ERROR:  invalid preceding or following size in window function
 -- MPP-2036
 select cn,qty,sum(qty) over(order by cn range cn preceding) as sum from (select sale.* from sale,customer,vendor where sale.cn=customer.cn and sale.vn=vendor.vn) sale; --mvd 1->3
  cn | qty  | sum  
