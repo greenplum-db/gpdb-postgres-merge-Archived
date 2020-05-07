@@ -18854,7 +18854,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	newspec->strategy = partspec->strategy;
 	newspec->partParams = NIL;
 	newspec->location = partspec->location;
-	newspec->gpPartSpec = partspec->gpPartSpec;
+	newspec->gpPartDef = partspec->gpPartDef;
 	newspec->subPartSpec = partspec->subPartSpec;
 
 	/* Parse partitioning strategy name */

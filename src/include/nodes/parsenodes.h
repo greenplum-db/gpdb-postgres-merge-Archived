@@ -851,7 +851,7 @@ typedef struct PartitionSpec
 								 * 'range') */
 	List	   *partParams;		/* List of PartitionElems */
 
-	struct GpPartitionDefinition *gpPartSpec;
+	struct GpPartitionDefinition *gpPartDef;
 	struct PartitionSpec         *subPartSpec;     /* subpartition specification */
 	int                          location;		/* token location, or -1 if unknown */
 } PartitionSpec;

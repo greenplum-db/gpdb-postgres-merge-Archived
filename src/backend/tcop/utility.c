@@ -1217,7 +1217,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * CreateStmt. This is only done when creating
 							 * partitions with Greenplum legacy syntax.
 							 */
-							if (cstmt->partspec && cstmt->partspec->gpPartSpec)
+							if (cstmt->partspec && cstmt->partspec->gpPartDef)
 							{
 								options = cstmt->options;
 								cstmt->options = NIL;
@@ -1236,12 +1236,12 @@ ProcessUtilitySlow(ParseState *pstate,
 													 ((CreateStmt *) stmt)->ownerid, NULL,
 													 queryString, false, true, NULL);
 
-							if (cstmt->partspec && cstmt->partspec->gpPartSpec)
+							if (cstmt->partspec && cstmt->partspec->gpPartDef)
 							{
 								List *parts;
 
 								parts = generatePartitions(address.objectId,
-														   cstmt->partspec->gpPartSpec,
+														   cstmt->partspec->gpPartDef,
 														   cstmt->partspec->subPartSpec,
 														   queryString, options,
 														   accessmethod);

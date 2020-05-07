@@ -5353,7 +5353,7 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 /* Optional partition key specification (at the position where PostgreSQL has it) */
 OptFirstPartitionSpec: PartitionSpec opt_list_subparts OptTabPartitionSpec
 				{
-					$1->gpPartSpec = (GpPartitionDefinition *) $3;
+					$1->gpPartDef = (GpPartitionDefinition *) $3;
 					$1->subPartSpec = (PartitionSpec *) $2;
 
 					$$ = $1;
@@ -5375,7 +5375,7 @@ OptSecondPartitionSpec:
 
 					n->strategy = $3;
 					n->partParams = $5;
-					n->gpPartSpec = (GpPartitionDefinition *) $8;
+					n->gpPartDef = (GpPartitionDefinition *) $8;
 					n->subPartSpec = (PartitionSpec *) $7;
 					n->location = @1;
 
@@ -5951,7 +5951,7 @@ TabSubPartition:
 			TabSubPartitionBy TabSubPartitionTemplate
 				{
 					PartitionSpec *n = (PartitionSpec *) $1;
-					n->gpPartSpec = (GpPartitionDefinition *) $2;
+					n->gpPartDef = (GpPartitionDefinition *) $2;
 
 					$$ = $1;
 				}
@@ -5966,7 +5966,7 @@ TabSubPartition:
 			| TabSubPartitionBy TabSubPartitionTemplate TabSubPartition
 				{
 					PartitionSpec *n = (PartitionSpec *) $1;
-					n->gpPartSpec = (GpPartitionDefinition *) $2;
+					n->gpPartDef = (GpPartitionDefinition *) $2;
 					n->subPartSpec = (PartitionSpec *) $3;
 
 					$$ = $1;

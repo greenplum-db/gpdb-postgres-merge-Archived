@@ -857,7 +857,7 @@ extract_tablename_from_options(List **options)
 }
 
 /*
- * Create a list of CreateStmts, to create partitions based on 'gpPartSpec'
+ * Create a list of CreateStmts, to create partitions based on 'gpPartDef'
  * specification.
  */
 List *
@@ -885,10 +885,10 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 
 	if (subPartSpec)
 	{
-		if (subPartSpec->gpPartSpec)
+		if (subPartSpec->gpPartDef)
 		{
-			Assert(subPartSpec->gpPartSpec->istemplate);
-			isSubTemplate = subPartSpec->gpPartSpec->istemplate;
+			Assert(subPartSpec->gpPartDef->istemplate);
+			isSubTemplate = subPartSpec->gpPartDef->istemplate;
 		}
 		else
 			isSubTemplate = false;
@@ -908,7 +908,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			{
 				tmpSubPartSpec = copyObject(subPartSpec);
 				if (!isSubTemplate)
-					tmpSubPartSpec->gpPartSpec = (GpPartitionDefinition*) elem->subSpec;
+					tmpSubPartSpec->gpPartDef = (GpPartitionDefinition*) elem->subSpec;
 			}
 
 			/* if WITH has "tablename" then it will be used as name for partition */

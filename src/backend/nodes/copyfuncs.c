@@ -5497,7 +5497,7 @@ _copyPartitionSpec(const PartitionSpec *from)
 
 	COPY_STRING_FIELD(strategy);
 	COPY_NODE_FIELD(partParams);
-	COPY_NODE_FIELD(gpPartSpec);
+	COPY_NODE_FIELD(gpPartDef);
 	COPY_NODE_FIELD(subPartSpec);
 	COPY_LOCATION_FIELD(location);
 
