@@ -1740,12 +1740,6 @@ ProcessUtilitySlow(ParseState *pstate,
 					/* Run parse analysis ... */
 					stmt = transformIndexStmt(relid, stmt, queryString);
 
-					/*
-					 * Create block directory if this is an appendoptimized
-					 * relation
-					 */
-					AlterTableCreateAoBlkdirTable(relid);
-
 					/* ... and do it */
 					EventTriggerAlterTableStart(parsetree);
 					address =

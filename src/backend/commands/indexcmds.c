@@ -1266,7 +1266,13 @@ DefineIndex(Oid relationId,
 	 * index.  The caller should also decline any index build.
 	 */
 	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !stmt->concurrent));
-	
+
+	/*
+	 * Create block directory if this is an appendoptimized
+	 * relation
+	 */
+	AlterTableCreateAoBlkdirTable(RelationGetRelid(rel));
+
 	/*
 	 * Make the catalog entries for the index, including constraints. This
 	 * step also actually builds the index, except if caller requested not to
