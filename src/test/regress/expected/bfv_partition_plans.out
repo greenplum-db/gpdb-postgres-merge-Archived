@@ -1313,25 +1313,24 @@ analyze r_part;
 explain select * from r_part r1, r_part r2 where r1.a=1; -- should eliminate partitions in the r1 copy of r_part
                                            QUERY PLAN                                            
 -------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=10000000000.00..10000000010.44 rows=9 width=16)
-   ->  Nested Loop  (cost=10000000000.00..10000000010.44 rows=3 width=16)
-         ->  Broadcast Motion 1:3  (slice1; segments: 1)  (cost=0.00..1.05 rows=3 width=8)
-               ->  Append  (cost=0.00..1.01 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_1 r1  (cost=0.00..1.01 rows=1 width=8)
-                           Filter: a = 1
-         ->  Materialize  (cost=0.00..9.08 rows=3 width=8)
-               ->  Append  (cost=0.00..9.03 rows=3 width=8)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000010.72 rows=9 width=16)
+   ->  Nested Loop  (cost=10000000000.00..10000000010.54 rows=3 width=16)
+         ->  Broadcast Motion 1:3  (slice2; segments: 1)  (cost=0.00..1.05 rows=3 width=8)
+               ->  Seq Scan on r_part_1_prt_1 r1  (cost=0.00..1.01 rows=1 width=8)
+                     Filter: (a = 1)
+         ->  Materialize  (cost=0.00..9.17 rows=3 width=8)
+               ->  Append  (cost=0.00..9.12 rows=3 width=8)
                      ->  Seq Scan on r_part_1_prt_1 r2  (cost=0.00..1.01 rows=1 width=8)
                      ->  Seq Scan on r_part_1_prt_2 r2_1  (cost=0.00..1.01 rows=1 width=8)
                      ->  Seq Scan on r_part_1_prt_3 r2_2  (cost=0.00..1.01 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_4 r2_3  (cost=0.00..1.00 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_5 r2_4  (cost=0.00..1.00 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_6 r2_5  (cost=0.00..1.00 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_7 r2_6  (cost=0.00..1.00 rows=1 width=8)
-                     ->  Seq Scan on r_part_1_prt_8 r2_7  (cost=0.00..1.00 rows=1 width=8)
+                     ->  Seq Scan on r_part_1_prt_4 r2_3  (cost=0.00..1.01 rows=1 width=8)
+                     ->  Seq Scan on r_part_1_prt_5 r2_4  (cost=0.00..1.01 rows=1 width=8)
+                     ->  Seq Scan on r_part_1_prt_6 r2_5  (cost=0.00..1.01 rows=1 width=8)
+                     ->  Seq Scan on r_part_1_prt_7 r2_6  (cost=0.00..1.01 rows=1 width=8)
+                     ->  Seq Scan on r_part_1_prt_8 r2_7  (cost=0.00..1.01 rows=1 width=8)
                      ->  Seq Scan on r_part_1_prt_9 r2_8  (cost=0.00..1.00 rows=1 width=8)
  Optimizer: Postgres query optimizer
-(18 rows)
+(17 rows)
 
 -- the numbers in the filter should be both on segment 0
 explain select * from r_part where a in (7,8); -- should eliminate partitions
@@ -1368,45 +1367,42 @@ execute f2(2);
 (1 row)
 
 explain select * from r_part where a = 1 order by a,b; -- should eliminate partitions
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.03 rows=1 width=8)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.05 rows=1 width=8)
    Merge Key: r_part_1_prt_1.b
    ->  Sort  (cost=1.02..1.03 rows=1 width=8)
          Sort Key: r_part_1_prt_1.b
-         ->  Append  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_1  (cost=0.00..1.01 rows=1 width=8)
-                     Filter: a = 1
+         ->  Seq Scan on r_part_1_prt_1  (cost=0.00..1.01 rows=1 width=8)
+               Filter: (a = 1)
  Optimizer: Postgres query optimizer
-(8 rows)
+(7 rows)
 
 --force_explain
 explain execute f1(1); -- should eliminate partitions 
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.03 rows=1 width=8)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.05 rows=1 width=8)
    Merge Key: r_part_1_prt_1.b
    ->  Sort  (cost=1.02..1.03 rows=1 width=8)
          Sort Key: r_part_1_prt_1.b
-         ->  Append  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_1  (cost=0.00..1.01 rows=1 width=8)
-                     Filter: a = 1
+         ->  Seq Scan on r_part_1_prt_1  (cost=0.00..1.01 rows=1 width=8)
+               Filter: (a = 1)
  Optimizer: Postgres query optimizer
-(8 rows)
+(7 rows)
 
 --force_explain
 explain execute f2(2); -- should eliminate partitions
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.03 rows=1 width=8)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)  (cost=1.02..1.05 rows=1 width=8)
    Merge Key: r_part_1_prt_2.b
    ->  Sort  (cost=1.02..1.03 rows=1 width=8)
          Sort Key: r_part_1_prt_2.b
-         ->  Append  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_2  (cost=0.00..1.01 rows=1 width=8)
-                     Filter: a = 2
+         ->  Seq Scan on r_part_1_prt_2  (cost=0.00..1.01 rows=1 width=8)
+               Filter: (a = 2)
  Optimizer: Postgres query optimizer
-(8 rows)
+(7 rows)
 
 -- Test partition elimination on CO tables
 insert into r_co values (1,1), (2,2), (3,3);
@@ -1468,32 +1464,32 @@ select '2009-01-02'::date = to_date('2009-01-02','YYYY-MM-DD'); -- ensure that b
 explain select * from fact where dd < '2009-01-02'::date; -- partitions eliminated
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.00 rows=1 width=40)
-   ->  Append  (cost=0.00..1.00 rows=1 width=40)
-         ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: dd < '01-02-2009'::date
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.02 rows=1 width=40)
+   ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
+         Filter: (dd < '01-02-2009'::date)
  Optimizer: Postgres query optimizer
-(5 rows)
+(4 rows)
 
 explain select * from fact where dd < to_date('2009-01-02','YYYY-MM-DD'); -- partitions eliminated
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.00 rows=1 width=40)
-   ->  Append  (cost=0.00..1.00 rows=1 width=40)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..4.10 rows=4 width=40)
+   ->  Append  (cost=0.00..4.02 rows=2 width=40)
+         Subplans Removed: 3
          ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: dd < '01-02-2009'::date
+               Filter: (dd < to_date('2009-01-02'::text, 'YYYY-MM-DD'::text))
  Optimizer: Postgres query optimizer
-(5 rows)
+(6 rows)
 
 explain select * from fact where dd < current_date; --partitions eliminated
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.00 rows=1 width=40)
-   ->  Append  (cost=0.00..1.00 rows=1 width=40)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..4.10 rows=4 width=40)
+   ->  Append  (cost=0.00..4.02 rows=2 width=40)
+         Subplans Removed: 3
          ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: dd < '10-22-2017'::date
- Settings:  optimizer=off
- Optimizer status: Postgres query optimizer
+               Filter: (dd < CURRENT_DATE)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 -- Test partition elimination in prepared statements
@@ -1502,23 +1498,21 @@ prepare f1(date) as select * from fact where dd < $1;
 explain execute f1('2009-01-02'::date); -- should eliminate partitions
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.00 rows=1 width=40)
-   ->  Append  (cost=0.00..1.00 rows=1 width=40)
-         ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: dd < '01-02-2009'::date
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.02 rows=1 width=40)
+   ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
+         Filter: (dd < '01-02-2009'::date)
  Optimizer: Postgres query optimizer
-(5 rows)
+(4 rows)
 
 -- force_explain
 explain execute f1(to_date('2009-01-02', 'YYYY-MM-DD')); -- should eliminate partitions
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.00 rows=1 width=40)
-   ->  Append  (cost=0.00..1.00 rows=1 width=40)
-         ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: dd < '01-02-2009'::date
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.02 rows=1 width=40)
+   ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
+         Filter: (dd < '01-02-2009'::date)
  Optimizer: Postgres query optimizer
-(5 rows)
+(4 rows)
 
 -- start_ignore
 drop table fact;
