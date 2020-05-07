@@ -526,8 +526,25 @@ appendonly_fetch_row_version(Relation relation,
 						 Snapshot snapshot,
 						 TupleTableSlot *slot)
 {
-	// GPDB_12_MERGE_FIXME: what should this do?
-	elog(ERROR, "not implemented yet");
+	/*
+	 * This is a generic interface. It is currently used in three distinct
+	 * cases, only one of which is currently invoking it for AO tables.
+	 * This is DELETE RETURNING. In order to return the slot via the tid for
+	 * AO tables one would have to scan the block directory and the visibility
+	 * map. A block directory is not guarranteed to exist. Even if it exists, a
+	 * state would have to be created and dropped for every tuple look up since
+	 * this interface does not allow for the state to be passed around. This is
+	 * a very costly operation to be performed per tuple lookup. Furthermore, if
+	 * a DELETE operation is currently on the fly, the corresponding visibility
+	 * map entries will not have been finalized into a visibility map tuple.
+	 *
+	 * Error out with feature not supported. Given that this is a generic
+	 * interface, we can not really say which feature is that, although we do
+	 * know that is DELETE RETURNING.
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("feature not supported on appendoptimized relations")));
 }
 
 static void

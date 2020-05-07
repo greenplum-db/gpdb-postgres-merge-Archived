@@ -1148,22 +1148,6 @@ ldelete:;
 			}
 			else
 			{
-#if 0
-				// GPDB_12_MERGE_FIXME: Move this ereport() to the AO implementation
-				// of table_tuple_fetch_row_version() function
-				/*
-				 * If it's an AO table, we cannot fetch the old tuple. Punt.
-				 *
-				 * We could use the same AO fetcher mechanism that we use for
-				 * (bitmap) index scans on AO tables, but that only works if
-				 * the AO table has a block directory, which it might not have,
-				 * if there are no indexes on it.
-				 */
-				if (!RelationIsHeap(resultRelationDesc))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("DELETE RETURNING is not supported on appendonly tables")));
-#endif
 				if (!table_tuple_fetch_row_version(resultRelationDesc, tupleid,
 												   SnapshotAny, slot))
 					elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
