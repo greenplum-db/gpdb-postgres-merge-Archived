@@ -2316,8 +2316,8 @@ SELECT * FROM v1 WHERE a=8;
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
-                                                                                         QUERY PLAN                                                                                          
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1
    Update on public.t1
    Update on public.t11
@@ -2327,9 +2327,12 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
          Output: 100, t1.b, t1.c, t1.ctid, t1.gp_segment_id, (DMLAction)
          ->  Split
                Output: 100, t1.b, t1.c, t1.ctid, t1.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t1
+               ->  Bitmap Heap Scan on public.t1
                      Output: 100, t1.b, t1.c, t1.ctid, t1.gp_segment_id
-                     Filter: ((t1.a > 5) AND (t1.a < 7) AND (t1.a <> 6) AND (alternatives: SubPlan 1 (copy 11) or hashed SubPlan 2 (copy 12)) AND snoop(t1.a) AND leakproof(t1.a))
+                     Recheck Cond: ((t1.a > 5) AND (t1.a < 7))
+                     Filter: ((t1.a <> 6) AND (alternatives: SubPlan 1 (copy 11) or hashed SubPlan 2 (copy 12)) AND snoop(t1.a) AND leakproof(t1.a))
+                     ->  Bitmap Index Scan on t1_a_idx
+                           Index Cond: ((t1.a > 5) AND (t1.a < 7))
                      SubPlan 1 (copy 11)
                        ->  Result
                              Filter: (t12_1.a = t1.a)
@@ -2354,9 +2357,12 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
          Output: 100, t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id, (DMLAction)
          ->  Split
                Output: 100, t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t11
+               ->  Bitmap Heap Scan on public.t11
                      Output: 100, t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id
-                     Filter: ((t11.a > 5) AND (t11.a < 7) AND (t11.a <> 6) AND (alternatives: SubPlan 1 (copy 13) or hashed SubPlan 2 (copy 14)) AND snoop(t11.a) AND leakproof(t11.a))
+                     Recheck Cond: ((t11.a > 5) AND (t11.a < 7))
+                     Filter: ((t11.a <> 6) AND (alternatives: SubPlan 1 (copy 13) or hashed SubPlan 2 (copy 14)) AND snoop(t11.a) AND leakproof(t11.a))
+                     ->  Bitmap Index Scan on t11_a_idx
+                           Index Cond: ((t11.a > 5) AND (t11.a < 7))
                      SubPlan 1 (copy 13)
                        ->  Result
                              Filter: (t12_3.a = t11.a)
@@ -2381,9 +2387,12 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
          Output: 100, t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id, (DMLAction)
          ->  Split
                Output: 100, t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t12
+               ->  Bitmap Heap Scan on public.t12
                      Output: 100, t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id
-                     Filter: ((t12.a > 5) AND (t12.a < 7) AND (t12.a <> 6) AND (alternatives: SubPlan 1 (copy 15) or hashed SubPlan 2 (copy 16)) AND snoop(t12.a) AND leakproof(t12.a))
+                     Recheck Cond: ((t12.a > 5) AND (t12.a < 7))
+                     Filter: ((t12.a <> 6) AND (alternatives: SubPlan 1 (copy 15) or hashed SubPlan 2 (copy 16)) AND snoop(t12.a) AND leakproof(t12.a))
+                     ->  Bitmap Index Scan on t12_a_idx
+                           Index Cond: ((t12.a > 5) AND (t12.a < 7))
                      SubPlan 1 (copy 15)
                        ->  Result
                              Filter: (t12_5.a = t12.a)
@@ -2408,9 +2417,12 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
          Output: 100, t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id, (DMLAction)
          ->  Split
                Output: 100, t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t111
+               ->  Bitmap Heap Scan on public.t111
                      Output: 100, t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id
-                     Filter: ((t111.a > 5) AND (t111.a < 7) AND (t111.a <> 6) AND (alternatives: SubPlan 1 (copy 17) or hashed SubPlan 2 (copy 18)) AND snoop(t111.a) AND leakproof(t111.a))
+                     Recheck Cond: ((t111.a > 5) AND (t111.a < 7))
+                     Filter: ((t111.a <> 6) AND (alternatives: SubPlan 1 (copy 17) or hashed SubPlan 2 (copy 18)) AND snoop(t111.a) AND leakproof(t111.a))
+                     ->  Bitmap Index Scan on t111_a_idx
+                           Index Cond: ((t111.a > 5) AND (t111.a < 7))
                      SubPlan 1 (copy 17)
                        ->  Result
                              Filter: (t12_7.a = t111.a)
@@ -2433,7 +2445,7 @@ UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
                                          Output: t111_8.a
  Optimizer: Postgres query optimizer
  Settings: enable_mergejoin=on, enable_nestloop=on, optimizer=off
-(115 rows)
+(127 rows)
 
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
@@ -2448,8 +2460,8 @@ SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
-                                                                                QUERY PLAN                                                                                 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
  Update on public.t1
    Update on public.t1
    Update on public.t11
@@ -2459,9 +2471,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
          Output: ((t1.a + 1)), t1.b, t1.c, t1.ctid, t1.gp_segment_id, (DMLAction)
          ->  Split
                Output: ((t1.a + 1)), t1.b, t1.c, t1.ctid, t1.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t1
+               ->  Index Scan using t1_a_idx on public.t1
                      Output: (t1.a + 1), t1.b, t1.c, t1.ctid, t1.gp_segment_id
-                     Filter: ((t1.a > 5) AND (t1.a = 8) AND (alternatives: SubPlan 1 (copy 11) or hashed SubPlan 2 (copy 12)) AND snoop(t1.a) AND leakproof(t1.a))
+                     Index Cond: ((t1.a > 5) AND (t1.a = 8))
+                     Filter: ((alternatives: SubPlan 1 (copy 11) or hashed SubPlan 2 (copy 12)) AND snoop(t1.a) AND leakproof(t1.a))
                      SubPlan 1 (copy 11)
                        ->  Result
                              Filter: (t12_1.a = t1.a)
@@ -2486,9 +2499,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
          Output: ((t11.a + 1)), t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id, (DMLAction)
          ->  Split
                Output: ((t11.a + 1)), t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t11
+               ->  Index Scan using t11_a_idx on public.t11
                      Output: (t11.a + 1), t11.b, t11.c, t11.d, t11.ctid, t11.gp_segment_id
-                     Filter: ((t11.a > 5) AND (t11.a = 8) AND (alternatives: SubPlan 1 (copy 13) or hashed SubPlan 2 (copy 14)) AND snoop(t11.a) AND leakproof(t11.a))
+                     Index Cond: ((t11.a > 5) AND (t11.a = 8))
+                     Filter: ((alternatives: SubPlan 1 (copy 13) or hashed SubPlan 2 (copy 14)) AND snoop(t11.a) AND leakproof(t11.a))
                      SubPlan 1 (copy 13)
                        ->  Result
                              Filter: (t12_3.a = t11.a)
@@ -2513,9 +2527,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
          Output: ((t12.a + 1)), t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id, (DMLAction)
          ->  Split
                Output: ((t12.a + 1)), t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t12
+               ->  Index Scan using t12_a_idx on public.t12
                      Output: (t12.a + 1), t12.b, t12.c, t12.e, t12.ctid, t12.gp_segment_id
-                     Filter: ((t12.a > 5) AND (t12.a = 8) AND (alternatives: SubPlan 1 (copy 15) or hashed SubPlan 2 (copy 16)) AND snoop(t12.a) AND leakproof(t12.a))
+                     Index Cond: ((t12.a > 5) AND (t12.a = 8))
+                     Filter: ((alternatives: SubPlan 1 (copy 15) or hashed SubPlan 2 (copy 16)) AND snoop(t12.a) AND leakproof(t12.a))
                      SubPlan 1 (copy 15)
                        ->  Result
                              Filter: (t12_5.a = t12.a)
@@ -2540,9 +2555,10 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
          Output: ((t111.a + 1)), t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id, (DMLAction)
          ->  Split
                Output: ((t111.a + 1)), t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id, DMLAction
-               ->  Seq Scan on public.t111
+               ->  Index Scan using t111_a_idx on public.t111
                      Output: (t111.a + 1), t111.b, t111.c, t111.d, t111.e, t111.ctid, t111.gp_segment_id
-                     Filter: ((t111.a > 5) AND (t111.a = 8) AND (alternatives: SubPlan 1 (copy 17) or hashed SubPlan 2 (copy 18)) AND snoop(t111.a) AND leakproof(t111.a))
+                     Index Cond: ((t111.a > 5) AND (t111.a = 8))
+                     Filter: ((alternatives: SubPlan 1 (copy 17) or hashed SubPlan 2 (copy 18)) AND snoop(t111.a) AND leakproof(t111.a))
                      SubPlan 1 (copy 17)
                        ->  Result
                              Filter: (t12_7.a = t111.a)
@@ -2565,7 +2581,7 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
                                          Output: t111_8.a
  Optimizer: Postgres query optimizer
  Settings: enable_mergejoin=on, enable_nestloop=on, optimizer=off
-(115 rows)
+(119 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 NOTICE:  snooped value: 8  (seg0 slice4 127.0.0.1:40000 pid=26920)
