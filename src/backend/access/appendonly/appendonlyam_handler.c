@@ -313,7 +313,7 @@ get_insert_descriptor(const Relation relation)
  * Retrieve the deleteDescriptor for a relation. Initialize it if needed.
  */
 static AppendOnlyDeleteDesc
-get_delete_descriptor(const Relation relation)
+get_delete_descriptor(const Relation relation, bool forUpdate)
 {
 	AppendOnlyDMLState *state;
 
@@ -329,9 +329,14 @@ get_delete_descriptor(const Relation relation)
 		MemoryContext oldcxt;
 		if (IsolationUsesXactSnapshot())
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("deletes on append-only tables are not supported in serializable transactions")));
+			if (forUpdate)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("updates on append-only tables are not supported in serializable transactions")));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("deletes on append-only tables are not supported in serializable transactions")));
 		}
 
 		oldcxt = MemoryContextSwitchTo(appendOnlyLocal.stateCxt);
@@ -664,7 +669,7 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 	AppendOnlyDeleteDesc	deleteDesc;
 	TM_Result				result;
 
-	deleteDesc = get_delete_descriptor(relation);
+	deleteDesc = get_delete_descriptor(relation, false);
 	result = appendonly_delete(deleteDesc, (AOTupleId *) tid);
 	if (result == TM_Ok)
 		pgstat_count_heap_delete(relation);
@@ -685,7 +690,7 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 	bool					shouldFree = true;
 
 	insertDesc = get_insert_descriptor(relation);
-	deleteDesc = get_delete_descriptor(relation);
+	deleteDesc = get_delete_descriptor(relation, true);
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
