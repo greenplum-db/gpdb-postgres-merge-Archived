@@ -470,15 +470,18 @@ DefineQueryRewrite(const char *rulename,
 						 errmsg("cannot convert partition \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
-			/* GPDB_12_MERGE_FIXME: Is still restriction still needed? */
-#if 0
-			/* In GPDB, also forbid turning AO tables or external tables into views. */
+			/*
+			 * In GPDB, also forbid turning AO tables into views. It might
+			 * work, or at least it wouldn't be hard to make it work, but
+			 * turning a table into a view is a very old legacy PostgreSQL
+			 * feature that no one should be using anymore anyway, so let's
+			 * just error out.
+			 */
 			if (!RelationIsHeap(event_relation))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("cannot convert non-heap table \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
-#endif
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = table_beginscan(event_relation, snapshot, 0, NULL);
