@@ -630,11 +630,9 @@ explain (costs off)
                ->  Merge Join
                      Merge Cond: (tenk1.unique1 = tenk2.unique1)
                      ->  Index Only Scan using tenk1_unique1 on tenk1
-                     ->  Sort
-                           Sort Key: tenk2.unique1
-                           ->  Seq Scan on tenk2
+                     ->  Index Only Scan using tenk2_unique1 on tenk2
  Optimizer: Postgres query optimizer
-(10 rows)
+(8 rows)
 
 select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
  count 
@@ -1098,13 +1096,13 @@ UNION ALL
 SELECT unique1 FROM tenk1 WHERE fivethous = tenthous + 1;
                      QUERY PLAN                     
 ----------------------------------------------------
- Gather
-   Workers Planned: 4
-   ->  Parallel Append
-         ->  Parallel Seq Scan on tenk1
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Append
+         ->  Seq Scan on tenk1
                Filter: (fivethous = (tenthous + 1))
-         ->  Parallel Seq Scan on tenk1 tenk1_1
+         ->  Seq Scan on tenk1 tenk1_1
                Filter: (fivethous = (tenthous + 1))
+ Optimizer: Postgres query optimizer
 (7 rows)
 
 ROLLBACK TO SAVEPOINT settings;
@@ -1116,34 +1114,31 @@ UNION ALL
 SELECT unique1 FROM tenk1 WHERE fivethous =
 	(SELECT unique2 FROM tenk1 WHERE fivethous = 1 LIMIT 1)
 ORDER BY 1;
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Sort
-   Sort Key: tenk1.unique1
-   ->  Append
-         ->  Gather
-               Workers Planned: 4
-               Params Evaluated: $1
-               InitPlan 1 (returns $1)
-                 ->  Limit
-                       ->  Gather
-                             Workers Planned: 4
-                             ->  Parallel Seq Scan on tenk1 tenk1_2
-                                   Filter: (fivethous = 1)
-               ->  Parallel Seq Scan on tenk1
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: tenk1.unique1
+   ->  Sort
+         Sort Key: tenk1.unique1
+         ->  Append
+               ->  Seq Scan on tenk1
+                     Filter: (fivethous = $0)
+                     InitPlan 1 (returns $0)  (slice2)
+                       ->  Limit
+                             ->  Gather Motion 3:1  (slice3; segments: 3)
+                                   ->  Limit
+                                         ->  Seq Scan on tenk1 tenk1_2
+                                               Filter: (fivethous = 1)
+               ->  Seq Scan on tenk1 tenk1_1
                      Filter: (fivethous = $1)
-         ->  Gather
-               Workers Planned: 4
-               Params Evaluated: $3
-               InitPlan 2 (returns $3)
-                 ->  Limit
-                       ->  Gather
-                             Workers Planned: 4
-                             ->  Parallel Seq Scan on tenk1 tenk1_3
-                                   Filter: (fivethous = 1)
-               ->  Parallel Seq Scan on tenk1 tenk1_1
-                     Filter: (fivethous = $3)
-(25 rows)
+                     InitPlan 2 (returns $1)  (slice4)
+                       ->  Limit
+                             ->  Gather Motion 3:1  (slice5; segments: 3)
+                                   ->  Limit
+                                         ->  Seq Scan on tenk1 tenk1_3
+                                               Filter: (fivethous = 1)
+ Optimizer: Postgres query optimizer
+(22 rows)
 
 -- test interaction with SRFs
 SELECT * FROM information_schema.foreign_data_wrapper_options
@@ -1166,10 +1161,10 @@ PREPARE pstmt(text, int[]) AS SELECT * FROM fooarr WHERE f1 = $1 AND f2 = $2;
 EXPLAIN (COSTS OFF) EXECUTE pstmt('1', make_some_array(1,2));
                             QUERY PLAN                            
 ------------------------------------------------------------------
- Gather
-   Workers Planned: 3
-   ->  Parallel Seq Scan on fooarr
+ Gather Motion 1:1  (slice1; segments: 1)
+   ->  Seq Scan on fooarr
          Filter: ((f1 = '1'::text) AND (f2 = '{1,2}'::integer[]))
+ Optimizer: Postgres query optimizer
 (4 rows)
 
 EXECUTE pstmt('1', make_some_array(1,2));
@@ -1184,17 +1179,20 @@ CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
 EXPLAIN (COSTS OFF)
 SELECT 1 FROM tenk1_vw_sec
   WHERE (SELECT sum(f1) FROM int4_tbl WHERE f1 < unique1) < 100;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Subquery Scan on tenk1_vw_sec
-   Filter: ((SubPlan 1) < 100)
-   ->  Gather
-         Workers Planned: 4
-         ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
-   SubPlan 1
-     ->  Aggregate
-           ->  Seq Scan on int4_tbl
-                 Filter: (f1 < tenk1_vw_sec.unique1)
-(9 rows)
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on tenk1_vw_sec
+         Filter: ((SubPlan 1) < 100)
+         ->  Seq Scan on tenk1
+         SubPlan 1
+           ->  Aggregate
+                 ->  Result
+                       Filter: (int4_tbl.f1 < tenk1_vw_sec.unique1)
+                       ->  Materialize
+                             ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                   ->  Seq Scan on int4_tbl
+ Optimizer: Postgres query optimizer
+(12 rows)
 
 rollback;
