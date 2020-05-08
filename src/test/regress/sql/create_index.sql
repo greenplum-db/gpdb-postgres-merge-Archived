@@ -769,7 +769,7 @@ CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
 -- Normal index with text column
 CREATE INDEX concur_reindex_ind2 ON concur_reindex_tab(c2);
 -- UNIQUE index with expression
-CREATE UNIQUE INDEX concur_reindex_ind3 ON concur_reindex_tab(abs(c1));
+CREATE UNIQUE INDEX concur_reindex_ind3 ON concur_reindex_tab(c1, abs(c1));
 -- Duplicate column names
 CREATE INDEX concur_reindex_ind4 ON concur_reindex_tab(c1, c1, c2);
 -- Create table for check on foreign key dependence switch with indexes swapped
@@ -779,6 +779,14 @@ INSERT INTO concur_reindex_tab VALUES  (1, 'a');
 INSERT INTO concur_reindex_tab VALUES  (2, 'a');
 -- Reindex concurrently of exclusion constraint currently not supported
 CREATE TABLE concur_reindex_tab3 (c1 int, c2 int4range, EXCLUDE USING gist (c2 WITH &&));
+
+-- GPDB: The above fails, because the exclusion constraint doesn't include the
+-- distribution key. But this works.
+CREATE TABLE concur_reindex_tab3 (c1 int, c2 int4range,
+      distkey int4range DEFAULT 'empty',
+      EXCLUDE USING gist (c2 WITH &&, distkey WITH =))
+DISTRIBUTED BY (distkey);
+
 INSERT INTO concur_reindex_tab3 VALUES  (3, '[1,2]');
 REINDEX INDEX CONCURRENTLY  concur_reindex_tab3_c2_excl;  -- error
 REINDEX TABLE CONCURRENTLY concur_reindex_tab3;  -- succeeds with warning
