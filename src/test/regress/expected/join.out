@@ -3364,22 +3364,22 @@ select * from tenk1 a join tenk1 b on
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR ((a.unique2 = 3) AND (b.hundred = 4)))
-         ->  Bitmap Heap Scan on tenk1 b
-               Recheck Cond: ((unique1 = 2) OR (hundred = 4))
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 2)
-                     ->  Bitmap Index Scan on tenk1_hundred
-                           Index Cond: (hundred = 4)
+         ->  Broadcast Motion 3:3  (slice2; segments: 3)
+               ->  Bitmap Heap Scan on tenk1 a
+                     Recheck Cond: ((unique1 = 1) OR (unique2 = 3))
+                     ->  BitmapOr
+                           ->  Bitmap Index Scan on tenk1_unique1
+                                 Index Cond: (unique1 = 1)
+                           ->  Bitmap Index Scan on tenk1_unique2
+                                 Index Cond: (unique2 = 3)
          ->  Materialize
-               ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Bitmap Heap Scan on tenk1 a
-                           Recheck Cond: ((unique1 = 1) OR (unique2 = 3))
-                           ->  BitmapOr
-                                 ->  Bitmap Index Scan on tenk1_unique1
-                                       Index Cond: (unique1 = 1)
-                                 ->  Bitmap Index Scan on tenk1_unique2
-                                       Index Cond: (unique2 = 3)
+               ->  Bitmap Heap Scan on tenk1 b
+                     Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+                     ->  BitmapOr
+                           ->  Bitmap Index Scan on tenk1_unique1
+                                 Index Cond: (unique1 = 2)
+                           ->  Bitmap Index Scan on tenk1_hundred
+                                 Index Cond: (hundred = 4)
  Optimizer: Postgres query optimizer
 (20 rows)
 
@@ -3414,24 +3414,24 @@ select * from tenk1 a join tenk1 b on
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
          Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR (((a.unique2 = 3) OR (a.unique2 = 7)) AND (b.hundred = 4)))
-         ->  Bitmap Heap Scan on tenk1 b
-               Recheck Cond: ((unique1 = 2) OR (hundred = 4))
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 2)
-                     ->  Bitmap Index Scan on tenk1_hundred
-                           Index Cond: (hundred = 4)
+         ->  Broadcast Motion 3:3  (slice2; segments: 3)
+               ->  Bitmap Heap Scan on tenk1 a
+                     Recheck Cond: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
+                     ->  BitmapOr
+                           ->  Bitmap Index Scan on tenk1_unique1
+                                 Index Cond: (unique1 = 1)
+                           ->  Bitmap Index Scan on tenk1_unique2
+                                 Index Cond: (unique2 = 3)
+                           ->  Bitmap Index Scan on tenk1_unique2
+                                 Index Cond: (unique2 = 7)
          ->  Materialize
-               ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Bitmap Heap Scan on tenk1 a
-                           Recheck Cond: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
-                           ->  BitmapOr
-                                 ->  Bitmap Index Scan on tenk1_unique1
-                                       Index Cond: (unique1 = 1)
-                                 ->  Bitmap Index Scan on tenk1_unique2
-                                       Index Cond: (unique2 = 3)
-                                 ->  Bitmap Index Scan on tenk1_unique2
-                                       Index Cond: (unique2 = 7)
+               ->  Bitmap Heap Scan on tenk1 b
+                     Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+                     ->  BitmapOr
+                           ->  Bitmap Index Scan on tenk1_unique1
+                                 Index Cond: (unique1 = 2)
+                           ->  Bitmap Index Scan on tenk1_hundred
+                                 Index Cond: (hundred = 4)
  Optimizer: Postgres query optimizer
 (22 rows)
 
@@ -3635,17 +3635,18 @@ select * from
 (values (1, array[10,20]), (2, array[20,30])) as v1(v1x,v1ys)
 left join (values (1, 10), (2, 20)) as v2(v2x,v2y) on v2x = v1x
 left join unnest(v1ys) as u1(u1y) on u1y = v2y;
-                         QUERY PLAN                          
--------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Nested Loop Left Join
-   ->  Values Scan on "*VALUES*"
-   ->  Hash Right Join
-         Hash Cond: (u1.u1y = "*VALUES*_1".column2)
-         Filter: ("*VALUES*_1".column1 = "*VALUES*".column1)
-         ->  Function Scan on unnest u1
+   Join Filter: (u1.u1y = "*VALUES*_1".column2)
+   ->  Hash Left Join
+         Hash Cond: ("*VALUES*".column1 = "*VALUES*_1".column1)
+         ->  Values Scan on "*VALUES*"
          ->  Hash
                ->  Values Scan on "*VALUES*_1"
-(8 rows)
+   ->  Function Scan on unnest u1
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select * from
 (values (1, array[10,20]), (2, array[20,30])) as v1(v1x,v1ys)
