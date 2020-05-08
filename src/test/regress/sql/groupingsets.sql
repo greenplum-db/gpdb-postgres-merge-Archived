@@ -2,6 +2,71 @@
 -- grouping sets
 --
 
+-- GPDB: Some of the tests in this file test the case that some columns are
+-- unsortable, and some are unhashable. For the unhashable column, the upstream
+-- tests use 'bit' datatype. However, we have added a hash opclass for 'bit'
+-- in GPDB, which makes the tests ineffective in testing that.
+--
+-- To work around that, create a new datatype that is just like the built-in
+-- 'bit' type, but doesn't have the hash opclass.
+create type unhashable_bit;
+create function unhashable_bit_out (unhashable_bit) returns cstring immutable
+language internal as 'bit_out';
+create function unhashable_bit_in (cstring) returns unhashable_bit immutable
+language internal as 'bit_in';
+create type unhashable_bit (
+  input = unhashable_bit_in,
+  output = unhashable_bit_out,
+  typmod_in = bittypmodin,
+  typmod_out = bittypmodout,
+  like = bit);
+
+create function unhashable_biteq(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'biteq';
+create function unhashable_bitne(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'bitne';
+create function unhashable_bitge(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'bitge';
+create function unhashable_bitgt(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'bitgt';
+create function unhashable_bitle(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'bitle';
+create function unhashable_bitlt(unhashable_bit, unhashable_bit) returns bool
+immutable language internal as 'bitlt';
+create function unhashable_bitcmp(unhashable_bit, unhashable_bit) returns int4
+immutable language internal as 'bitcmp';
+
+create operator = (function=unhashable_biteq, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   merges, commutator = "=", negator = "<>",
+		   restrict = 'eqsel', join = 'eqjoinsel');
+create operator <> (function=unhashable_bitne, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   commutator = "<>", negator = "=",
+		   restrict = 'neqsel', join = 'neqjoinsel');
+create operator >= (function=unhashable_bitge, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   commutator = "<=", negator = "<",
+		   restrict = 'scalargesel', join = 'scalargejoinsel');
+create operator > (function=unhashable_bitgt, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   commutator = "<", negator = "<=",
+		   restrict = 'scalargtsel', join = 'scalargtjoinsel');
+create operator <= (function=unhashable_bitle, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   commutator = ">=", negator = ">",
+		   restrict = 'scalarlesel', join = 'scalarlejoinsel');
+create operator < (function=unhashable_bitlt, leftarg=unhashable_bit, rightarg=unhashable_bit,
+                   commutator = ">", negator = ">=",
+		   restrict = 'scalarltsel', join = 'scalarltjoinsel');
+
+create operator class unhashable_bit_ops
+  default for type unhashable_bit using btree as
+    operator 1 <  ,
+    operator 2 <= ,
+    operator 3 =  ,
+    operator 4 >= ,
+    operator 5 >  ,
+    function 1 unhashable_bitcmp(unhashable_bit, unhashable_bit);
+
+create cast (bit as unhashable_bit) without function as assignment;
+
+
 -- test data sources
 
 create temp view gstest1(a,b,v)
@@ -32,7 +97,7 @@ copy gstest3 from stdin;
 alter table gstest3 add primary key (a);
 
 create temp table gstest4(id integer, v integer,
-                          unhashable_col bit(4), unsortable_col xid);
+                          unhashable_col unhashable_bit(4), unsortable_col xid);
 insert into gstest4
 values (1,1,b'0000','1'), (2,2,b'0001','1'),
        (3,4,b'0010','2'), (4,8,b'0011','2'),
