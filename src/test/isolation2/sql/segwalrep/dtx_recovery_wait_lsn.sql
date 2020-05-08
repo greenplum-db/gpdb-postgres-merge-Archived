@@ -9,15 +9,21 @@ include: helpers/server_helpers.sql;
 !\retcode gpconfig -c gp_fts_probe_retries -v 2 --masteronly;
 
 1: create or replace function wait_until_standby_in_state(targetstate text)
-returns void as $$
+returns text as $$
 declare
    replstate text; /* in func */
+   i int; /* in func */
 begin
-   loop
+   i := 0; /* in func */
+   while i < 1200 loop
       select state into replstate from pg_stat_replication; /* in func */
-      exit when replstate = targetstate; /* in func */
+      if replstate = targetstate then
+          return replstate; /* in func */
+      end if; /* in func */
       perform pg_sleep(0.1); /* in func */
+      i := i + 1; /* in func */
    end loop; /* in func */
+   return replstate; /* in func */
 end; /* in func */
 $$ language plpgsql;
 

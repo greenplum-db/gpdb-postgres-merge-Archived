@@ -75,7 +75,7 @@ server closed the connection unexpectedly
 -1U: select wait_until_standby_in_state('streaming');
  wait_until_standby_in_state 
 -----------------------------
-                             
+ streaming                   
 (1 row)
 
 -- wait for FTS to 'sync off' the mirror, meanwhile, dtx recovery process will restart repeatedly
