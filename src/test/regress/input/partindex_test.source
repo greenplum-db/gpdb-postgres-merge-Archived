@@ -168,12 +168,8 @@ order by indKey;
 
 -- Create an index on the mid-level -- internal part -- will not show up
 -- in the result.  Adding indexes to mid-level/internal root partitions will
--- recurse to their children. Upstream Postgres has CREATE INDEX ONLY, but GPDB
--- does not have this feature yet.  Set SQL_inheritance to false temporarily to
--- force it to be created on the mid-level partition
-set SQL_inheritance to false;
-create index idummy1 on part_table2_1_prt_9(date); 
-set SQL_inheritance to true;
+-- recurse to their children.
+create index idummy1 on only part_table2_1_prt_9(date);
 select indKey, defaultLevels, partCons from gp_build_logical_index('part_table2'::regclass)
 order by indKey;
 

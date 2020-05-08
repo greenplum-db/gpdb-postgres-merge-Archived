@@ -1078,9 +1078,7 @@ select relhassubclass from pg_class where relname = 'idxpart_idx';
 drop index idxpart_idx;
 -- Even with partitions, relhassubclass should not be set if a partitioned
 -- index is created only on the parent.
-set sql_inheritance to off;
-create index idxpart_idx on idxpart(a);
-set sql_inheritance to on;
+create index idxpart_idx on only idxpart(a);
 select relhassubclass from pg_class where relname = 'idxpart_idx';
  relhassubclass 
 ----------------
