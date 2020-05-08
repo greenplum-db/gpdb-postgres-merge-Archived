@@ -1,4 +1,4 @@
--- Test for verifying if xlog seg created while basebackup
+-- Test for verifying if wal seg created while basebackup
 -- dumps out data does not get cleaned
 
 include: helpers/gp_management_utils_helpers.sql;
@@ -9,7 +9,7 @@ FROM gp_segment_configuration WHERE content=-1 and role='p';
 
 -- Run pg_basebackup which should trigger and suspend at the fault
 1&: SELECT pg_basebackup(hostname, 100, port, NULL,
-        '/tmp/master_xlog_switch_test', true, 'fetch')
+        '/tmp/master_wal_switch_test', true, 'fetch')
     from gp_segment_configuration where content=-1 and role='p';
 
 -- Wait until fault has been triggered
@@ -19,15 +19,15 @@ FROM gp_segment_configuration WHERE content=-1 and role='p';
 -- See that pg_basebackup is still running
 SELECT application_name, state FROM pg_stat_replication;
 
--- Switch to a new WAL segment file.  Two pg_switch_xlog() invocations
+-- Switch to a new WAL segment file.  Two pg_switch_wal() invocations
 -- with a command that generates WAL in between the invocations are
 -- suffice to generate new WAL file.
-CREATE TEMP TABLE xlogfile(fname text) DISTRIBUTED BY (fname);
-INSERT INTO xlogfile SELECT pg_xlogfile_name(pg_switch_xlog());
-CREATE TABLE master_xlog_dummy();
+CREATE TEMP TABLE walfile(fname text) DISTRIBUTED BY (fname);
+INSERT INTO walfile SELECT pg_walfile_name(pg_switch_wal());
+CREATE TABLE master_wal_dummy();
 -- This should return false, indicating current WAL segment is
--- different than what was previously recorded xlogfile table.
-SELECT fname = pg_xlogfile_name(pg_switch_xlog()) FROM xlogfile;
+-- different than what was previously recorded walfile table.
+SELECT fname = pg_walfile_name(pg_switch_wal()) FROM walfile;
 
 -- Checkpoint should retain WAL that is still needed by basebackup.
 CHECKPOINT;
@@ -42,4 +42,4 @@ FROM gp_segment_configuration WHERE content=-1 and role='p';
 -- Verify if basebackup completed successfully
 -- See if recovery.conf exists (Yes - Pass)
 SELECT application_name, state FROM pg_stat_replication;
-!\retcode ls /tmp/master_xlog_switch_test/recovery.conf;
+!\retcode ls /tmp/master_wal_switch_test/recovery.conf;
