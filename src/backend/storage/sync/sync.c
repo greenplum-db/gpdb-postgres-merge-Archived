@@ -32,6 +32,8 @@
 #include "utils/memutils.h"
 #include "utils/inval.h"
 
+#include "utils/faultinjector.h"
+
 static MemoryContext pendingOpsCxt; /* context for the pending ops state  */
 
 /*
@@ -314,6 +316,44 @@ ProcessSyncRequests(void)
 	while ((entry = (PendingFsyncEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		int			failures;
+
+#ifdef FAULT_INJECTOR
+		if (entry->cycle_ctr != sync_cycle_ctr &&
+			SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip
+/* GPDB_12_MERGE_FIXME: is 'ao_fsync_counter' fault still used? */
+#if 0
+			|| (entry->tag.is_ao_segnos &&
+			 SIMPLE_FAULT_INJECTOR("ao_fsync_counter") == FaultInjectorTypeSkip)
+#endif
+			)
+		{
+			if (MyAuxProcType == CheckpointerProcess)
+			{
+				if (entry->tag.segno == 0)
+					elog(LOG, "checkpoint performing fsync for %d/%d/%d",
+						 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
+						 entry->tag.rnode.relNode);
+				else
+					elog(LOG, "checkpoint performing fsync for %d/%d/%d.%d",
+						 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
+						 entry->tag.rnode.relNode, entry->tag.segno);
+			}
+			else
+			{
+				int level = (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip) ? ERROR : LOG;
+				if (entry->tag.segno == 0)
+					elog(level, "non checkpoint process trying to fsync "
+						 "%d/%d/%d when fsync_counter fault is set",
+						 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
+						 entry->tag.rnode.relNode);
+				else
+					elog(level, "non checkpoint process trying to fsync "
+						 "%d/%d/%d.%d when fsync_counter fault is set",
+						 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
+						 entry->tag.rnode.relNode, entry->tag.segno);
+			}
+		}
+#endif
 
 		/*
 		 * If fsync is off then we don't have to bother opening the file at
