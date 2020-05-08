@@ -13,6 +13,11 @@ CREATE TABLE trigger_test_generated (
     j int GENERATED ALWAYS AS (i * 2) STORED
 );
 
+-- GPDB: The UPDATEs below fail otherwise:
+-- ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
+alter table trigger_test set distributed randomly;
+alter table trigger_test_generated set distributed randomly;
+
 CREATE OR REPLACE FUNCTION trigger_data() RETURNS trigger LANGUAGE plperl AS $$
 
   # make sure keys are sorted for consistent results - perl no longer
