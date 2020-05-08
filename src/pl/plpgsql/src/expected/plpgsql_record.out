@@ -458,10 +458,10 @@ create trigger mutable_trig before update on mutable for each row
 execute procedure sillytrig();
 insert into mutable values ('foo'), ('bar');
 update mutable set f2 = f2 || ' baz';
-NOTICE:  old.ctid = (0,1)
-NOTICE:  old.tableoid = mutable
-NOTICE:  old.ctid = (0,2)
-NOTICE:  old.tableoid = mutable
+NOTICE:  old.ctid = (0,1)  (seg1 127.0.0.1:40001 pid=21564)
+NOTICE:  old.tableoid = mutable  (seg1 127.0.0.1:40001 pid=21564)
+NOTICE:  old.ctid = (0,1)  (seg2 127.0.0.1:40002 pid=21565)
+NOTICE:  old.tableoid = mutable  (seg2 127.0.0.1:40002 pid=21565)
 table mutable;
    f2    
 ---------
