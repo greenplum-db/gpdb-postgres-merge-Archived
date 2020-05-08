@@ -15,6 +15,14 @@
 -- s/\(cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+\)/(cost=##.###..##.### rows=### width=###)/
 -- m/Memory used:  \d+\w?B/
 -- s/Memory used:  \d+\w?B/Memory used: ###B/
+-- m/Memory Usage: \d+\w?B/
+-- s/Memory Usage: \d+\w?B/Memory Usage: ###B/
+-- m/Peak Memory Usage: \d+/
+-- s/Peak Memory Usage: \d+/Peak Memory Usage: ###/
+-- m/Buckets: \d+/
+-- s/Buckets: \d+/Buckets: ###/
+-- m/Batches: \d+/
+-- s/Batches: \d+/Batches: ###/
 -- end_matchsubs
 --
 -- DEFAULT syntax
