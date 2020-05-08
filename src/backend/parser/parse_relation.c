@@ -2428,9 +2428,7 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 			break;
 		}
 
-		/* GPDB_12_MERGE_FIXME: How to check this now? Look at rel->rd_rel->relam? */
-#if 0
-		if (rel->rd_rel->relstorage != RELSTORAGE_HEAP)
+		if (!RelationIsHeap(rel))
 		{
 			if (!noerror)
 				ereport(ERROR,
@@ -2440,7 +2438,6 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 			return_value = false;
 			break;
 		}
-#endif
 
 		/*
 		 * A row in replicated table cannot be identified by (ctid + gp_segment_id)
