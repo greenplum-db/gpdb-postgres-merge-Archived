@@ -3350,61 +3350,57 @@ CREATE TABLE ao_crtb_with_row_zlib_8192_1_uncompr(id SERIAL,a1 int,a2 char(5),a3
 -- ********Validation******* 
 --
 \d+ ao_crtb_with_row_zlib_8192_1
-                                                 Append-Only Table "public.ao_crtb_with_row_zlib_8192_1"
- Column |            Type             |                                 Modifiers                                 | Storage  | Stats target | Description 
---------+-----------------------------+---------------------------------------------------------------------------+----------+--------------+-------------
- id     | integer                     | not null default nextval('ao_crtb_with_row_zlib_8192_1_id_seq'::regclass) | plain    |              | 
- a1     | integer                     |                                                                           | plain    |              | 
- a2     | character(5)                |                                                                           | extended |              | 
- a3     | numeric                     |                                                                           | main     |              | 
- a4     | boolean                     | default false                                                             | plain    |              | 
- a5     | character(1)                | default 'd'::bpchar                                                       | extended |              | 
- a6     | text                        |                                                                           | extended |              | 
- a7     | timestamp without time zone |                                                                           | plain    |              | 
- a8     | character varying(705)      |                                                                           | extended |              | 
- a9     | bigint                      |                                                                           | plain    |              | 
- a10    | date                        |                                                                           | plain    |              | 
- a11    | character varying(600)      |                                                                           | extended |              | 
- a12    | text                        |                                                                           | extended |              | 
- a13    | numeric                     |                                                                           | main     |              | 
- a14    | real                        |                                                                           | plain    |              | 
- a15    | bigint                      |                                                                           | plain    |              | 
- a16    | integer                     |                                                                           | plain    |              | 
- a17    | bytea                       |                                                                           | extended |              | 
- a18    | timestamp with time zone    |                                                                           | plain    |              | 
- a19    | time with time zone         |                                                                           | plain    |              | 
- a20    | path                        |                                                                           | extended |              | 
- a21    | box                         |                                                                           | plain    |              | 
- a22    | macaddr                     |                                                                           | plain    |              | 
- a23    | interval                    |                                                                           | plain    |              | 
- a24    | character varying(800)      |                                                                           | extended |              | 
- a25    | lseg                        |                                                                           | plain    |              | 
- a26    | point                       |                                                                           | plain    |              | 
- a27    | double precision            |                                                                           | plain    |              | 
- a28    | circle                      |                                                                           | plain    |              | 
- a29    | integer                     |                                                                           | plain    |              | 
- a30    | numeric(8,0)                |                                                                           | main     |              | 
- a31    | polygon                     |                                                                           | extended |              | 
- a32    | date                        |                                                                           | plain    |              | 
- a33    | real                        |                                                                           | plain    |              | 
- a34    | money                       |                                                                           | plain    |              | 
- a35    | cidr                        |                                                                           | main     |              | 
- a36    | inet                        |                                                                           | main     |              | 
- a37    | time without time zone      |                                                                           | plain    |              | 
- a38    | text                        |                                                                           | extended |              | 
- a39    | bit(1)                      |                                                                           | extended |              | 
- a40    | bit varying(5)              |                                                                           | extended |              | 
- a41    | smallint                    |                                                                           | plain    |              | 
- a42    | integer                     |                                                                           | plain    |              | 
-Compression Type: zlib
-Compression Level: 1
-Block Size: 8192
-Checksum: t
+                                                          Table "public.ao_crtb_with_row_zlib_8192_1"
+ Column |            Type             | Collation | Nullable |                         Default                          | Storage  | Stats target | Description 
+--------+-----------------------------+-----------+----------+----------------------------------------------------------+----------+--------------+-------------
+ id     | integer                     |           | not null | nextval('ao_crtb_with_row_zlib_8192_1_id_seq'::regclass) | plain    |              | 
+ a1     | integer                     |           |          |                                                          | plain    |              | 
+ a2     | character(5)                |           |          |                                                          | extended |              | 
+ a3     | numeric                     |           |          |                                                          | main     |              | 
+ a4     | boolean                     |           |          | false                                                    | plain    |              | 
+ a5     | character(1)                |           |          | 'd'::bpchar                                              | extended |              | 
+ a6     | text                        |           |          |                                                          | extended |              | 
+ a7     | timestamp without time zone |           |          |                                                          | plain    |              | 
+ a8     | character varying(705)      |           |          |                                                          | extended |              | 
+ a9     | bigint                      |           |          |                                                          | plain    |              | 
+ a10    | date                        |           |          |                                                          | plain    |              | 
+ a11    | character varying(600)      |           |          |                                                          | extended |              | 
+ a12    | text                        |           |          |                                                          | extended |              | 
+ a13    | numeric                     |           |          |                                                          | main     |              | 
+ a14    | real                        |           |          |                                                          | plain    |              | 
+ a15    | bigint                      |           |          |                                                          | plain    |              | 
+ a16    | integer                     |           |          |                                                          | plain    |              | 
+ a17    | bytea                       |           |          |                                                          | extended |              | 
+ a18    | timestamp with time zone    |           |          |                                                          | plain    |              | 
+ a19    | time with time zone         |           |          |                                                          | plain    |              | 
+ a20    | path                        |           |          |                                                          | extended |              | 
+ a21    | box                         |           |          |                                                          | plain    |              | 
+ a22    | macaddr                     |           |          |                                                          | plain    |              | 
+ a23    | interval                    |           |          |                                                          | plain    |              | 
+ a24    | character varying(800)      |           |          |                                                          | extended |              | 
+ a25    | lseg                        |           |          |                                                          | plain    |              | 
+ a26    | point                       |           |          |                                                          | plain    |              | 
+ a27    | double precision            |           |          |                                                          | plain    |              | 
+ a28    | circle                      |           |          |                                                          | plain    |              | 
+ a29    | integer                     |           |          |                                                          | plain    |              | 
+ a30    | numeric(8,0)                |           |          |                                                          | main     |              | 
+ a31    | polygon                     |           |          |                                                          | extended |              | 
+ a32    | date                        |           |          |                                                          | plain    |              | 
+ a33    | real                        |           |          |                                                          | plain    |              | 
+ a34    | money                       |           |          |                                                          | plain    |              | 
+ a35    | cidr                        |           |          |                                                          | main     |              | 
+ a36    | inet                        |           |          |                                                          | main     |              | 
+ a37    | time without time zone      |           |          |                                                          | plain    |              | 
+ a38    | text                        |           |          |                                                          | extended |              | 
+ a39    | bit(1)                      |           |          |                                                          | extended |              | 
+ a40    | bit varying(5)              |           |          |                                                          | extended |              | 
+ a41    | smallint                    |           |          |                                                          | plain    |              | 
+ a42    | integer                     |           |          |                                                          | plain    |              | 
 Indexes:
     "ao_crtb_with_row_zlib_8192_1_idx_bitmap" bitmap (a1)
     "ao_crtb_with_row_zlib_8192_1_idx_btree" btree (a9)
 Distributed randomly
-Options: appendonly=true, orientation=row, compresstype=zlib, compresslevel=1, blocksize=8192
+Options: compresstype=zlib, compresslevel=1, blocksize=8192
 
 --Select from pg_attribute_encoding to see the table entry 
 select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_attribute_encoding e  where c.relname = 'ao_crtb_with_row_zlib_8192_1' and c.oid=e.attrelid  order by relname, attnum limit 3; 

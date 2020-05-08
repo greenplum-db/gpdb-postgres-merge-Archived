@@ -1706,226 +1706,182 @@ select count(*) from mpp_2914A;
 (1 row)
 
 \d mpp_2914a*
-      Table "public.mpp_2914a"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Number of child tables: 3 (Use \d+ to list them.)
-Distributed by: (id)
-Partition by: (kind)
-
-Table "public.mpp_2914a_1_prt_auction"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a
-Number of child tables: 5 (Use \d+ to list them.)
-Distributed by: (id)
-Partition by: (buydate)
-
-Table "public.mpp_2914a_1_prt_auction_2_prt_1"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_2_prt_1_check" CHECK (buydate >= '01-01-2001'::date AND buydate < '01-01-2002'::date)
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a_1_prt_auction
+          Partitioned table "public.mpp_2914a"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition key: LIST (kind)
+Number of partitions: 3 (Use \d+ to list them.)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_auction_2_prt_2"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_2_prt_2_check" CHECK (buydate >= '01-01-2002'::date AND buydate < '01-01-2003'::date)
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a_1_prt_auction
+   Partitioned table "public.mpp_2914a_1_prt_auction"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a FOR VALUES IN ('a', 'A')
+Partition key: RANGE (buydate)
+Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_auction_2_prt_3"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_2_prt_3_check" CHECK (buydate >= '01-01-2003'::date AND buydate < '01-01-2004'::date)
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a_1_prt_auction
+     Table "public.mpp_2914a_1_prt_auction_2_prt_1"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_auction FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_auction_2_prt_4"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_2_prt_4_check" CHECK (buydate >= '01-01-2004'::date AND buydate < '01-01-2005'::date)
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a_1_prt_auction
+     Table "public.mpp_2914a_1_prt_auction_2_prt_2"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_auction FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_auction_2_prt_5"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_auction_2_prt_5_check" CHECK (buydate >= '01-01-2005'::date)
-    "mpp_2914a_1_prt_auction_check" CHECK (kind = 'a'::bpchar OR kind = 'A'::bpchar)
-Inherits: mpp_2914a_1_prt_auction
+     Table "public.mpp_2914a_1_prt_auction_2_prt_3"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_auction FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_buyitnow"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a
-Number of child tables: 5 (Use \d+ to list them.)
-Distributed by: (id)
-Partition by: (buydate)
-
-Table "public.mpp_2914a_1_prt_buyitnow_2_prt_1"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_2_prt_1_check" CHECK (buydate >= '01-01-2001'::date AND buydate < '01-01-2002'::date)
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a_1_prt_buyitnow
+     Table "public.mpp_2914a_1_prt_auction_2_prt_4"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_auction FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_buyitnow_2_prt_2"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_2_prt_2_check" CHECK (buydate >= '01-01-2002'::date AND buydate < '01-01-2003'::date)
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a_1_prt_buyitnow
+     Table "public.mpp_2914a_1_prt_auction_2_prt_5"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_auction FOR VALUES FROM ('01-01-2005') TO (MAXVALUE)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_buyitnow_2_prt_3"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_2_prt_3_check" CHECK (buydate >= '01-01-2003'::date AND buydate < '01-01-2004'::date)
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a_1_prt_buyitnow
+   Partitioned table "public.mpp_2914a_1_prt_buyitnow"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a FOR VALUES IN ('b', 'B')
+Partition key: RANGE (buydate)
+Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_buyitnow_2_prt_4"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_2_prt_4_check" CHECK (buydate >= '01-01-2004'::date AND buydate < '01-01-2005'::date)
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a_1_prt_buyitnow
+     Table "public.mpp_2914a_1_prt_buyitnow_2_prt_1"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_buyitnow FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_buyitnow_2_prt_5"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_buyitnow_2_prt_5_check" CHECK (buydate >= '01-01-2005'::date)
-    "mpp_2914a_1_prt_buyitnow_check" CHECK (kind = 'b'::bpchar OR kind = 'B'::bpchar)
-Inherits: mpp_2914a_1_prt_buyitnow
+     Table "public.mpp_2914a_1_prt_buyitnow_2_prt_2"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_buyitnow FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_catchall"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Inherits: mpp_2914a
-Number of child tables: 5 (Use \d+ to list them.)
-Distributed by: (id)
-Partition by: (buydate)
-
-Table "public.mpp_2914a_1_prt_catchall_2_prt_1"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_catchall_2_prt_1_check" CHECK (buydate >= '01-01-2001'::date AND buydate < '01-01-2002'::date)
-Inherits: mpp_2914a_1_prt_catchall
+     Table "public.mpp_2914a_1_prt_buyitnow_2_prt_3"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_buyitnow FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_catchall_2_prt_2"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_catchall_2_prt_2_check" CHECK (buydate >= '01-01-2002'::date AND buydate < '01-01-2003'::date)
-Inherits: mpp_2914a_1_prt_catchall
+     Table "public.mpp_2914a_1_prt_buyitnow_2_prt_4"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_buyitnow FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_catchall_2_prt_3"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_catchall_2_prt_3_check" CHECK (buydate >= '01-01-2003'::date AND buydate < '01-01-2004'::date)
-Inherits: mpp_2914a_1_prt_catchall
+     Table "public.mpp_2914a_1_prt_buyitnow_2_prt_5"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_buyitnow FOR VALUES FROM ('01-01-2005') TO (MAXVALUE)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_catchall_2_prt_4"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_catchall_2_prt_4_check" CHECK (buydate >= '01-01-2004'::date AND buydate < '01-01-2005'::date)
-Inherits: mpp_2914a_1_prt_catchall
+   Partitioned table "public.mpp_2914a_1_prt_catchall"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a DEFAULT
+Partition key: RANGE (buydate)
+Number of partitions: 5 (Use \d+ to list them.)
 Distributed by: (id)
 
-Table "public.mpp_2914a_1_prt_catchall_2_prt_5"
- Column  |     Type     | Modifiers 
----------+--------------+-----------
- id      | integer      | 
- buydate | date         | 
- kind    | character(1) | 
-Check constraints:
-    "mpp_2914a_1_prt_catchall_2_prt_5_check" CHECK (buydate >= '01-01-2005'::date)
-Inherits: mpp_2914a_1_prt_catchall
+     Table "public.mpp_2914a_1_prt_catchall_2_prt_1"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_catchall FOR VALUES FROM ('01-01-2001') TO ('01-01-2002')
+Distributed by: (id)
+
+     Table "public.mpp_2914a_1_prt_catchall_2_prt_2"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_catchall FOR VALUES FROM ('01-01-2002') TO ('01-01-2003')
+Distributed by: (id)
+
+     Table "public.mpp_2914a_1_prt_catchall_2_prt_3"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_catchall FOR VALUES FROM ('01-01-2003') TO ('01-01-2004')
+Distributed by: (id)
+
+     Table "public.mpp_2914a_1_prt_catchall_2_prt_4"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_catchall FOR VALUES FROM ('01-01-2004') TO ('01-01-2005')
+Distributed by: (id)
+
+     Table "public.mpp_2914a_1_prt_catchall_2_prt_5"
+ Column  |     Type     | Collation | Nullable | Default 
+---------+--------------+-----------+----------+---------
+ id      | integer      |           |          | 
+ buydate | date         |           |          | 
+ kind    | character(1) |           |          | 
+Partition of: mpp_2914a_1_prt_catchall FOR VALUES FROM ('01-01-2005') TO (MAXVALUE)
 Distributed by: (id)
 
 create table mpp_2914B(id int,  buyDate date, kind char(1))
