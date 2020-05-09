@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "access/xact.h"
 #include "catalog/partition.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_collation.h"
@@ -33,6 +34,7 @@
 #include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
 #include "tcop/utility.h"
+#include "utils/builtins.h"
 #include "utils/partcache.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -328,6 +330,169 @@ generatePartitionSpec(Relation rel)
 	return subpart;
 }
 
+/*
+ * ------------------------------
+ * Implementation for command:
+ *
+ * ALTER TABLE <tab> EXCHANGE PARTITION <oldpart> with table <newpart>
+ *
+ * Above alter is converted into following sequence of cmds on QD:
+ *
+ * 1. ALTER TABLE <tab> DETACH PARTITION <oldpart>;
+ * 2. ALTER TABLE <oldpart> RENAME TO tmp;
+ * 3. ALTER TABLE <newpart> RENAME TO <oldpart>;
+ * 4. ALTER TABLE <tab> ATTACH PARTITION <oldpart>;
+ * 5. ALTER TABLE tmp RENAME TO <newpart>
+ * ------------------------------
+ */
+static List *
+AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
+{
+	GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+	RangeVar *newpartrv = (RangeVar *) pc->arg;
+	PartitionBoundSpec *boundspec;
+	RangeVar *oldpartrv;
+	RangeVar *tmprv;
+	List	 *stmts = NIL;
+
+	/* detach oldpart partition cmd construction */
+	{
+		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
+		GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+		AlterTableCmd *atcmd = makeNode(AlterTableCmd);
+		PartitionCmd *pcmd = makeNode(PartitionCmd);
+		char tmpname[NAMEDATALEN];
+		Oid partrelid;
+		Relation partrel;
+		HeapTuple tuple;
+
+		if (pid->idtype == AT_AP_IDDefault &&
+			!gp_enable_exchange_default_partition)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("cannot exchange DEFAULT partition")));
+		}
+
+		partrelid = GpFindTargetPartition(rel, pid, false);
+		Assert(OidIsValid(partrelid));
+		partrel = table_open(partrelid, AccessShareLock);
+
+		oldpartrv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+								 pstrdup(RelationGetRelationName(partrel)),
+								 pc->location);
+
+		snprintf(tmpname, sizeof(tmpname), "pg_temp_%u", partrelid);
+		tmprv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+							 pstrdup(tmpname),
+							 pc->location);
+
+		/*
+		 * Get the oldpart's boundspec which will be used for attaching
+		 * newpart. Fetch the tuple from the catcache, for speed. Relcache
+		 * doesn't store the part bound hence need to fetch from catalog.
+		 */
+		tuple = SearchSysCache1(RELOID, partrelid);
+		if (HeapTupleIsValid(tuple))
+		{
+			Datum		datum;
+			bool		isnull;
+
+			datum = SysCacheGetAttr(RELOID, tuple,
+									Anum_pg_class_relpartbound,
+									&isnull);
+			if (!isnull)
+				boundspec = stringToNode(TextDatumGetCString(datum));
+			else
+				boundspec = NULL;
+			ReleaseSysCache(tuple);
+		}
+		else
+			elog(ERROR, "pg_class tuple not found for relation %s",
+				 RelationGetRelationName(partrel));
+
+		table_close(partrel, AccessShareLock);
+
+		pcmd->name = oldpartrv;
+		pcmd->bound = NULL;
+		atcmd->subtype = AT_DetachPartition;
+		atcmd->def = (Node *) pcmd;
+
+		atstmt->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+										pstrdup(RelationGetRelationName(rel)),
+										pc->location);
+		atstmt->relkind = OBJECT_TABLE;
+		atstmt->missing_ok = false;
+		atstmt->cmds = list_make1(atcmd);
+		atstmt->is_internal = true; /* set this to avoid transform */
+
+		stmts = lappend(stmts, (Node *) atstmt);
+	}
+
+	/* rename oldpart to tmp */
+	{
+		RenameStmt *rstmt = makeNode(RenameStmt);
+
+		rstmt->renameType = OBJECT_TABLE;
+		rstmt->relation = oldpartrv;
+		rstmt->subname = NULL;
+		rstmt->newname = pstrdup(tmprv->relname);
+		rstmt->missing_ok = false;
+
+		stmts = lappend(stmts, (Node *) rstmt);
+	}
+
+	/* rename newpart to oldpart */
+	{
+		RenameStmt *rstmt = makeNode(RenameStmt);
+
+		rstmt->renameType = OBJECT_TABLE;
+		rstmt->relation = newpartrv;
+		rstmt->subname = NULL;
+		rstmt->newname = pstrdup(oldpartrv->relname);
+		rstmt->missing_ok = false;
+
+		stmts = lappend(stmts, (Node *) rstmt);
+	}
+
+	/* attach newpart partition cmd construction */
+	{
+		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
+		AlterTableCmd  *atcmd  = makeNode(AlterTableCmd);
+		PartitionCmd   *pcmd   = makeNode(PartitionCmd);
+
+		pcmd->name = oldpartrv;
+		pcmd->bound = boundspec;
+		atcmd->subtype = AT_AttachPartition;
+		atcmd->def = (Node *) pcmd;
+
+		atstmt->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+										pstrdup(RelationGetRelationName(rel)),
+										pc->location);
+		atstmt->relkind = OBJECT_TABLE;
+		atstmt->missing_ok = false;
+		atstmt->cmds = list_make1(atcmd);
+		atstmt->is_internal = true; /* set this to avoid transform */
+
+		stmts = lappend(stmts, (Node *) atstmt);
+	}
+
+	/* rename tmp to newpart */
+	{
+		RenameStmt *rstmt = makeNode(RenameStmt);
+
+		rstmt->renameType = OBJECT_TABLE;
+		rstmt->relation = tmprv;
+		rstmt->subname = NULL;
+		rstmt->newname = pstrdup(newpartrv->relname);
+		rstmt->missing_ok = false;
+
+		stmts = lappend(stmts, (Node *) rstmt);
+	}
+
+	return stmts;
+}
+
 void
 ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 {
@@ -482,6 +647,13 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 			dropstmt->missing_ok = pc->missing_ok;
 			table_close(partrel, AccessShareLock);
 			stmts = lappend(stmts, (Node *)dropstmt);
+		}
+		break;
+
+		case AT_PartExchange:
+		{
+			List *returnstmt = AtExecGPExchangePartition(rel, cmd);
+			stmts = list_concat(stmts, returnstmt);
 		}
 		break;
 

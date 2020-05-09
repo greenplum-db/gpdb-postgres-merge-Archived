@@ -3959,7 +3959,13 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 	/* Caller is required to provide an adequate lock. */
 	rel = relation_open(relid, NoLock);
 
-	CheckTableNotInUse(rel, "ALTER TABLE");
+	/*
+	 * GPDB creates ALTER stmts and executes them internally as part of some
+	 * partition related ALTER stmts, hence for such internal ALTER stmts
+	 * can't meet this requirement.
+	 */
+	if (!stmt->is_internal)
+		CheckTableNotInUse(rel, "ALTER TABLE");
 
 	ATController(stmt, rel, stmt->cmds, stmt->relation->inh, lockmode);
 
@@ -3980,6 +3986,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 				case AT_PartDrop:
 				case AT_PartAlter:
 				case AT_PartTruncate:
+				case AT_PartExchange:
 					break;
 				default:
 					newcmds = lappend(newcmds, cmd);
@@ -4318,6 +4325,7 @@ AlterTableGetLockLevel(List *cmds)
 
 			case AT_PartAdd:
 			case AT_PartDrop:
+			case AT_PartExchange:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -4800,6 +4808,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_PartDrop:
 		case AT_PartAlter:
 		case AT_PartTruncate:
+		case AT_PartExchange:
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -5167,6 +5176,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_PartDrop:
 		case AT_PartAlter:
 		case AT_PartTruncate:
+		case AT_PartExchange:
 			ATExecGPPartCmds(rel, cmd);
 			break;
 	}

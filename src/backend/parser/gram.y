@@ -3898,23 +3898,16 @@ alter_table_partition_cmd:
             WITH TABLE qualified_name
             opt_table_partition_exchange_validate	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
-					AlterPartitionCmd *pc2 = makeNode(AlterPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-                    pc->partid = (Node *)$2;
-                    pc->arg1 = (Node *)$5;
-                    pc->arg2 = (Node *)pc2;
-                    pc2->arg1 = (Node *)makeInteger($6);
-                    pc->location = @5;
+					pc->partid = (Node *)$2;
+					pc->arg = (Node *)$5;
+					pc->location = @5;
 
 					n->subtype = AT_PartExchange;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| RENAME 
             alter_table_partition_id_spec_with_opt_default TO IDENT	

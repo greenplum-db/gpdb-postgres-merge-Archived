@@ -3823,6 +3823,7 @@ _copyAlterTableStmt(const AlterTableStmt *from)
 	COPY_NODE_FIELD(cmds);
 	COPY_SCALAR_FIELD(relkind);
 	COPY_SCALAR_FIELD(missing_ok);
+	COPY_SCALAR_FIELD(is_internal);
 
 	COPY_SCALAR_FIELD(lockmode);
 	COPY_NODE_FIELD(wqueue);

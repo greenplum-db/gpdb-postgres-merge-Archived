@@ -4338,10 +4338,10 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 			case AT_PartAdd:
 			case AT_PartTruncate:
 			case AT_PartDrop:
+			case AT_PartExchange:
 				newcmds = lappend(newcmds, cmd);
 				break;
 
-            case AT_PartExchange:		/* Exchange */
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */
             case AT_PartSplit:			/* Split */
@@ -4500,9 +4500,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				{
 					PartitionCmd *partcmd = (PartitionCmd *) cmd->def;
 
-					transformPartitionCmd(&cxt, partcmd);
-					/* assign transformed value of the partition bound */
-					partcmd->bound = cxt.partbound;
+					if (!stmt->is_internal)
+					{
+						transformPartitionCmd(&cxt, partcmd);
+						/* assign transformed value of the partition bound */
+						partcmd->bound = cxt.partbound;
+					}
 				}
 
 				newcmds = lappend(newcmds, cmd);

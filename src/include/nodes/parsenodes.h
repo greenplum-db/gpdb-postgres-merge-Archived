@@ -1895,6 +1895,7 @@ typedef struct AlterTableStmt
 
 	int			lockmode;
 	List	   *wqueue;
+	bool	   is_internal;     /* GPDB: set for internal generated alter table stmt */
 } AlterTableStmt;
 
 typedef enum AlterTableType
