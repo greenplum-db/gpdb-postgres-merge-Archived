@@ -74,27 +74,27 @@ partition by range(j)
 -- policies are different
 create table bar_p_diff_pol (i int, j int) distributed by (j);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_pol;
+alter table foo_p exchange partition for(6) with table bar_p_diff_pol;
 
 -- random policy vs. hash policy
 create table bar_p_rand_pol (i int, j int) distributed randomly;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_rand_pol;
+alter table foo_p exchange partition for(6) with table bar_p_rand_pol;
 
 -- different number of columns
 create table bar_p_diff_col (i int, j int, k int) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_col;
+alter table foo_p exchange partition for(6) with table bar_p_diff_col;
 
 -- different types
 create table bar_p_diff_typ (i int, j int8) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_typ;
+alter table foo_p exchange partition for(6) with table bar_p_diff_typ;
 
 -- different column names
 create table bar_p_diff_colnam (i int, m int) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_colnam;
+alter table foo_p exchange partition for(6) with table bar_p_diff_colnam;
 
 -- still different schema, but more than one level partitioning
 CREATE TABLE two_level_pt(a int, b int, c int)
@@ -117,18 +117,18 @@ create role part_role;
 create table bar_p (i int, j int) distributed by (i);
 set session authorization part_role;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 
 -- back to superuser
 \c -
 alter table bar_p owner to part_role;
 set session authorization part_role;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 \c -
 
 -- owners should be the same, error out 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 drop table foo_p;
 drop table bar_p;
 
@@ -158,7 +158,7 @@ partition by range(j)
 create table barparent(i int, j int) distributed by (i);
 create table bar_p () inherits(barparent);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 drop table bar_p;
 drop table barparent;
 
@@ -166,7 +166,7 @@ drop table barparent;
 create table bar_p(i int, j int) distributed by (i);
 create table barchild () inherits(bar_p);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 drop table barchild;
 drop table bar_p;
 
@@ -176,7 +176,7 @@ create table baz_p(i int, j int) distributed by (i);
 create rule bar_baz as on insert to bar_p do instead insert into baz_p
   values(NEW.i, NEW.j);
 
-alter table foo_p exchange partition for(rank(2)) with table bar_p;
+alter table foo_p exchange partition for(2) with table bar_p;
 drop table foo_p, bar_p, baz_p;
 
 -- Should fail: A constraint on bar_p isn't shared by all the parts.  
@@ -190,19 +190,19 @@ partition by range(j)
 (start(1) end(5) every(1));
 
 create table bar_a(i int, j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_a;
+alter table foo_p exchange partition for(2) with table bar_a;
 
 -- Should fail: A constraint on bar_p isn't shared by all the parts.
 -- Allowing this would make an inconsistent partitioned table. 
 -- Prior versions allowed this, so parts could have differing constraints
 -- as long as they avoided the partition columns.
 create table bar_b(i int check (i > 1000), j int) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_b;
+alter table foo_p exchange partition for(2) with table bar_b;
 
 -- like above, but with two contraints, just to check that the error
 -- message can print that correctly.
 create table bar_c(i int check (i > 1000), j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_c;
+alter table foo_p exchange partition for(2) with table bar_c;
 
 -- Shouldn't fail: check constraint matches partition rule.
 -- Note this test is slightly different from prior versions to get
@@ -210,7 +210,7 @@ alter table foo_p exchange partition for(rank(2)) with table bar_c;
 create table bar_d(i int, j int check (j >= 2 and j < 3 ))
 distributed by (i);
 insert into bar_d values(100000, 2);
-alter table foo_p exchange partition for(rank(2)) with table bar_d;
+alter table foo_p exchange partition for(2) with table bar_d;
 insert into bar_d values(200000, 2);
 select * from bar_d;
 
@@ -240,8 +240,8 @@ create table bar_p (i int);
 insert into bar_p values(6);
 insert into bar_p values(100);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-alter table foo_p exchange partition for(rank(6)) with table bar_p without
+alter table foo_p exchange partition for(6) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p without
 validation;
 analyze foo_p;
 select * from foo_p;
@@ -254,7 +254,7 @@ partition by range(j)
 create table bar_p(i int, j int) distributed by (i);
 
 insert into bar_p values(6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
 select * from bar_p;
@@ -268,7 +268,7 @@ partition by range(j)
 create table bar_p(i int, j int) distributed by (i);
 
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 -- Should fail.  Prior releases didn't convey constraints out via exchange
 -- but we do now, so the following tries to insert a value that can't go
 -- in part 6.
@@ -288,7 +288,7 @@ create table bar_p(i int, j int) distributed by (i);
 
 insert into foo_p values(1, 1), (2, 1), (3, 1);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
 drop table bar_p;
@@ -302,7 +302,7 @@ create table bar_p(i int, j int) with(appendonly = true) distributed by (i);
 
 insert into foo_p values(1, 1), (2, 1), (3, 2);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
 drop table bar_p;
@@ -316,7 +316,7 @@ create table bar_p(i int, j int) with(appendonly = true) distributed by (i);
 
 insert into foo_p values(1, 2), (2, 3), (3, 4);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
 drop table bar_p;
@@ -329,16 +329,16 @@ partition by range(j)
 create table bar_p(i int, j int) distributed by (i);
 
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
 select * from bar_p;
 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select * from foo_p;
 select * from bar_p;
 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select * from foo_p;
 select * from bar_p;
 drop table foo_p;
@@ -2864,7 +2864,7 @@ pc.relnamespace=ns.oid and relname like ('mpp6979%');
 
 -- exchange the partition with the ao table.  
 -- Now we have an ao partition and mpp6979tab is heap!
-alter table mpp6979part exchange partition for (rank(1)) 
+alter table mpp6979part exchange partition for (1) 
 with table mpp6979dummy.mpp6979tab;
 
 -- after the exchange, all partitions are still in public
