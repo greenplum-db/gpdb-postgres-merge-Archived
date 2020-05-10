@@ -470,7 +470,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 		/*
 		 * The tuple fits in the direct transport buffer.
 		 */
-		memcpy(b->pri + TUPLE_CHUNK_HEADER_SIZE, &tuplen, sizeof(tuplen));
+		memcpy(b->pri + TUPLE_CHUNK_HEADER_SIZE, &tupbodylen, sizeof(tupbodylen));
 		memcpy(b->pri + TUPLE_CHUNK_HEADER_SIZE + sizeof(int), tupbody, tupbodylen);
 
 		dataSize += tuplen;
@@ -494,7 +494,7 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 
 	AssertState(s_tupSerMemCtxt != NULL);
 
-	addByteStringToChunkList(tcList, (char *) &tuplen, sizeof(tuplen), &pSerInfo->chunkCache);
+	addByteStringToChunkList(tcList, (char *) &tupbodylen, sizeof(tupbodylen), &pSerInfo->chunkCache);
 	addByteStringToChunkList(tcList, tupbody, tupbodylen, &pSerInfo->chunkCache);
 
 	/*
