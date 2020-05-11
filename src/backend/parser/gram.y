@@ -198,6 +198,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 static char *greenplumLegacyAOoptions(const char *accessMethod, List **options);
+static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_t yyscanner);
 
 %}
 
@@ -5348,7 +5349,12 @@ OptFirstPartitionSpec: PartitionSpec opt_list_subparts OptTabPartitionSpec
 				{
 					$1->gpPartDef = (GpPartitionDefinition *) $3;
 					$1->subPartSpec = (PartitionSpec *) $2;
-
+					/*
+					 * Only if GPDB legacy partition syntax, check for expression in partition
+					 * key. If gpPartDef is present then only its legacy syntax.
+					 */
+					if ($1->gpPartDef)
+						check_expressions_in_partition_key($1, yyscanner);
 					$$ = $1;
 
 					pg_yyget_extra(yyscanner)->tail_partition_magic = true;
@@ -5371,7 +5377,12 @@ OptSecondPartitionSpec:
 					n->gpPartDef = (GpPartitionDefinition *) $8;
 					n->subPartSpec = (PartitionSpec *) $7;
 					n->location = @1;
-
+					/*
+					 * Only if GPDB legacy partition syntax, check for expression in partition
+					 * key. If gpPartDef is present then only its legacy syntax.
+					 */
+					if (n->gpPartDef)
+						check_expressions_in_partition_key(n, yyscanner);
 					$$ = n;
 
 					pg_yyget_extra(yyscanner)->tail_partition_magic = false;
@@ -5936,6 +5947,7 @@ TabSubPartitionBy: SUBPARTITION BY
 					n->partParams = $5;
 					n->location = @1;
 
+					check_expressions_in_partition_key(n, yyscanner);
 					$$ = (Node *)n;
 				}
 			;
@@ -19611,6 +19623,22 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 		return pstrdup("heap");
 
 	return NULL;
+}
+
+static void
+check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_t yyscanner)
+{
+	ListCell *lc;
+	foreach(lc, spec->partParams)
+	{
+		PartitionElem *e = lfirst(lc);
+
+		if (e->expr)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("expressions in partition key not supported in legacy GPDB partition syntax"),
+					 parser_errposition(e->location)));
+	}
 }
 
 /* parser_init()

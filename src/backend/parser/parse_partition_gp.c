@@ -648,11 +648,8 @@ generateRangePartitions(ParseState *pstate,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("too many columns for RANGE partition -- only one column is allowed")));
 
-	/* not sure if the syntax allows this, but better safe than sorry */
-	if (partkey->partattrs[0] == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("START/END/EVERY not supported when partition key is an expression")));
+	/* Syntax doesn't allow expressions in partition key */
+	Assert(partkey->partattrs[0] != 0);
 	partcolname = NameStr(TupleDescAttr(RelationGetDescr(parentrel), partkey->partattrs[0] - 1)->attname);
 
 	if (boundspec->partStart)

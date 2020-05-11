@@ -278,8 +278,10 @@ generatePartitionSpec(Relation rel)
 							Anum_pg_partitioned_table_partexprs, &isnull);
 	if (!isnull)
 	{
-		elog(ERROR, "Subpartition key contains expressions, GPDB add partition "
-					"syntax does not support");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SUBPARTITION BY contain expressions. Cannot ADD PARTITION if expressions in partition key using legacy syntax"),
+				 errhint("Table was created using new partition syntax. Hence, use CREATE TABLE... PARTITION OF instead.")));
 	}
 
 	subpart->partParams = NIL;
