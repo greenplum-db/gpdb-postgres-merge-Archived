@@ -56,7 +56,7 @@ fetch 1 from uao_cursor_2;
 
 -- Should fail
 update uao_tab_cur_1 set b = a where current of uao_cursor_2;
-ERROR:  cursor "uao_cursor_2" is not a simply updatable scan of table "uao_tab_cur_1"
+ERROR:  "uao_tab_cur_1" is not simply updatable
 end;
 select * from uao_tab_cur_1;
  a | b  
