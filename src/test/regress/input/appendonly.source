@@ -632,7 +632,6 @@ DROP TABLE tenk_ao2;
 DROP TABLE tenk_ao3;
 DROP TABLE tenk_ao4;
 DROP TABLE tenk_ao5;
-DROP TABLE aowithoids;
 DROP TABLE ao_selection;
 
 ---------------------------------------------------------------

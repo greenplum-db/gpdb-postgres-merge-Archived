@@ -841,7 +841,7 @@ analyze ao;
 select tablename, attname, avg_width, n_distinct from pg_stats where tablename = 'ao' order by attname, tablename;
  tablename | attname | avg_width | n_distinct 
 -----------+---------+-----------+------------
- ao        | i       |         4 |  -0.666667
+ ao        | i       |         4 | -0.6666667
  ao        | k       |         5 |       -0.5
 (2 rows)
 
@@ -1358,7 +1358,6 @@ DROP TABLE tenk_ao2;
 DROP TABLE tenk_ao3;
 DROP TABLE tenk_ao4;
 DROP TABLE tenk_ao5;
-DROP TABLE aowithoids;
 DROP TABLE ao_selection;
 ---------------------------------------------------------------
 -- Sub-transaction tests to validate AO behavior
