@@ -70,7 +70,7 @@ CREATE TABLE uao_allalter_uncompr (id SERIAL,a1 int,a2 char(5),a3 numeric,a4 boo
 SELECT count(*) as count_uncompressed from  uao_allalter_uncompr ;
  count_uncompressed 
 --------------------
-                880
+                 20
 (1 row)
 
 --
@@ -79,7 +79,7 @@ SELECT count(*) as count_uncompressed from  uao_allalter_uncompr ;
 SELECT count(*) as count_compressed from  uao_allalter;
  count_compressed 
 ------------------
-              880
+               20
 (1 row)
 
 --
@@ -89,7 +89,7 @@ SELECT count(*) as count_compressed from  uao_allalter;
 Select count(*) as count_join from uao_allalter t1 full outer join uao_allalter_uncompr t2 on t1.id=t2.id and t1.a1=t2.a1 and t1.a2=t2.a2 and t1.a3=t2.a3 and t1.a4=t2.a4 and t1.a5=t2.a5 and t1.a6=t2.a6 and t1.a7=t2.a7 and t1.a8=t2.a8 and t1.a9=t2.a9 and t1.a10=t2.a10 and t1.a11=t2.a11 and t1.a12=t2.a12 and t1.a13=t2.a13 and t1.a14=t2.a14 and t1.a15=t2.a15 and t1.a16=t2.a16 and t1.a17=t2.a17 and t1.a18=t2.a18 and t1.a19=t2.a19 and t1.a22=t2.a22 and t1.a23=t2.a23 and t1.a24=t2.a24 and t1.a27=t2.a27 and t1.a29=t2.a29 and t1.a30=t2.a30 and t1.a32=t2.a32 and t1.a33=t2.a33 and t1.a34=t2.a34 and t1.a35=t2.a35 and t1.a36=t2.a36 and t1.a37=t2.a37 and t1.a38=t2.a38 and t1.a39=t2.a39 and t1.a40=t2.a40 and t1.a41=t2.a41 and t1.a42=t2.a42 ;
  count_join 
 ------------
-        880
+         29
 (1 row)
 
 --
@@ -106,7 +106,7 @@ insert into uao_allalter select * from uao_allalter_uncompr order by a1;
 Select count(*) as count_join from uao_allalter t1 full outer join uao_allalter_uncompr t2 on t1.id=t2.id and t1.a1=t2.a1 and t1.a2=t2.a2 and t1.a3=t2.a3 and t1.a4=t2.a4 and t1.a5=t2.a5 and t1.a6=t2.a6 and t1.a7=t2.a7 and t1.a8=t2.a8 and t1.a9=t2.a9 and t1.a10=t2.a10 and t1.a11=t2.a11 and t1.a12=t2.a12 and t1.a13=t2.a13 and t1.a14=t2.a14 and t1.a15=t2.a15 and t1.a16=t2.a16 and t1.a17=t2.a17 and t1.a18=t2.a18 and t1.a19=t2.a19 and t1.a22=t2.a22 and t1.a23=t2.a23 and t1.a24=t2.a24 and t1.a27=t2.a27 and t1.a29=t2.a29 and t1.a30=t2.a30 and t1.a32=t2.a32 and t1.a33=t2.a33 and t1.a34=t2.a34 and t1.a35=t2.a35 and t1.a36=t2.a36 and t1.a37=t2.a37 and t1.a38=t2.a38 and t1.a39=t2.a39 and t1.a40=t2.a40 and t1.a41=t2.a41 and t1.a42=t2.a42 ;
  count_join 
 ------------
-        880
+         29
 (1 row)
 
 --Alter table alter type of a column 
@@ -116,7 +116,7 @@ Insert into uao_allalter(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,
 Select count(*) from uao_allalter; 
  count 
 -------
-   881
+    21
 (1 row)
 
 --Alter table drop a column 
@@ -125,7 +125,7 @@ Insert into uao_allalter(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a13,a14,a15,a16,a17,
 Select count(*) from uao_allalter; 
  count 
 -------
-   882
+    22
 (1 row)
 
 --Alter table rename a column 
@@ -135,7 +135,7 @@ Insert into uao_allalter(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,after_rename_a13,a14
 Select count(*) from uao_allalter; 
  count 
 -------
-   883
+    23
 (1 row)
 
 update uao_allalter set  a9 = a9 + 10 where a1 = 10;
