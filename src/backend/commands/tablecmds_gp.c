@@ -341,9 +341,9 @@ generatePartitionSpec(Relation rel)
  * Above alter is converted into following sequence of cmds on QD:
  *
  * 1. ALTER TABLE <tab> DETACH PARTITION <oldpart>;
- * 2. ALTER TABLE <oldpart> RENAME TO tmp;
- * 3. ALTER TABLE <newpart> RENAME TO <oldpart>;
- * 4. ALTER TABLE <tab> ATTACH PARTITION <oldpart>;
+ * 2. ALTER TABLE <tab> ATTACH PARTITION <oldpart>;
+ * 3. ALTER TABLE <oldpart> RENAME TO tmp;
+ * 4. ALTER TABLE <newpart> RENAME TO <oldpart>;
  * 5. ALTER TABLE tmp RENAME TO <newpart>
  * ------------------------------
  */
@@ -431,6 +431,28 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 		stmts = lappend(stmts, (Node *) atstmt);
 	}
 
+	/* attach newpart partition cmd construction */
+	{
+		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
+		AlterTableCmd  *atcmd  = makeNode(AlterTableCmd);
+		PartitionCmd   *pcmd   = makeNode(PartitionCmd);
+
+		pcmd->name = newpartrv;
+		pcmd->bound = boundspec;
+		atcmd->subtype = AT_AttachPartition;
+		atcmd->def = (Node *) pcmd;
+
+		atstmt->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+										pstrdup(RelationGetRelationName(rel)),
+										pc->location);
+		atstmt->relkind = OBJECT_TABLE;
+		atstmt->missing_ok = false;
+		atstmt->cmds = list_make1(atcmd);
+		atstmt->is_internal = true; /* set this to avoid transform */
+
+		stmts = lappend(stmts, (Node *) atstmt);
+	}
+
 	/* rename oldpart to tmp */
 	{
 		RenameStmt *rstmt = makeNode(RenameStmt);
@@ -455,28 +477,6 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 		rstmt->missing_ok = false;
 
 		stmts = lappend(stmts, (Node *) rstmt);
-	}
-
-	/* attach newpart partition cmd construction */
-	{
-		AlterTableStmt *atstmt = makeNode(AlterTableStmt);
-		AlterTableCmd  *atcmd  = makeNode(AlterTableCmd);
-		PartitionCmd   *pcmd   = makeNode(PartitionCmd);
-
-		pcmd->name = oldpartrv;
-		pcmd->bound = boundspec;
-		atcmd->subtype = AT_AttachPartition;
-		atcmd->def = (Node *) pcmd;
-
-		atstmt->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-										pstrdup(RelationGetRelationName(rel)),
-										pc->location);
-		atstmt->relkind = OBJECT_TABLE;
-		atstmt->missing_ok = false;
-		atstmt->cmds = list_make1(atcmd);
-		atstmt->is_internal = true; /* set this to avoid transform */
-
-		stmts = lappend(stmts, (Node *) atstmt);
 	}
 
 	/* rename tmp to newpart */
