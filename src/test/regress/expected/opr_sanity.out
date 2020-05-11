@@ -2166,10 +2166,11 @@ FROM (SELECT indexrelid, indrelid, unnest(indkey) as ikey,
 WHERE a.attrelid = indrelid AND a.attnum = ikey AND opc.oid = iclass AND
       (opcintype != atttypid OR icoll != attcollation)
 ORDER BY 1;
-        indexrelid        |   indrelid   | attname  | atttypid | opcname 
---------------------------+--------------+----------+----------+---------
- pg_aggregate_fnoid_index | pg_aggregate | aggfnoid | regproc  | oid_ops
-(1 row)
+                indexrelid                 |     indrelid     | attname  | atttypid | opcname 
+-------------------------------------------+------------------+----------+----------+---------
+ pg_aggregate_fnoid_index                  | pg_aggregate     | aggfnoid | regproc  | oid_ops
+ pg_proc_callback_profnoid_promethod_index | pg_proc_callback | profnoid | regproc  | oid_ops
+(2 rows)
 
 -- Check for system catalogs with collation-sensitive ordering.  This is not
 -- a representational error in pg_index, but simply wrong catalog design.
