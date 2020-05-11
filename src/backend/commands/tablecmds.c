@@ -19519,6 +19519,13 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
 
+	if (!GpPolicyEqual(rel->rd_cdbpolicy, attachrel->rd_cdbpolicy))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("distribution policy for \"%s\" must be the same as that for \"%s\"",
+						RelationGetRelationName(attachrel),
+						RelationGetRelationName(rel))));
+
 	/* Check if there are any columns in attachrel that aren't in the parent */
 	tupleDesc = RelationGetDescr(attachrel);
 	natts = tupleDesc->natts;
