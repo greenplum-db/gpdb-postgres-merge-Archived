@@ -4588,7 +4588,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
 			OptTypedTableElementList PartitionBoundSpec OptFirstPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptSecondPartitionSpec
+			OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4596,12 +4596,12 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $8;
 					n->inhRelations = list_make1($7);
 					n->partbound = $9;
-					if ($10 && $16)
+					if ($10 && $15)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("only one PARTITION BY clause is allowed"),
-								 parser_errposition(@16)));
-					n->partspec = $10 ? $10 : $16;
+								 parser_errposition(@15)));
+					n->partspec = $10 ? $10 : $15;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->accessMethod = $11;
@@ -4609,7 +4609,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $13;
 					n->tablespacename = $14;
 					n->if_not_exists = false;
-					n->distributedBy = (DistributedBy *) $15;
+					n->distributedBy = NULL;
 					n->relKind = RELKIND_RELATION;
 
 					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
@@ -4619,7 +4619,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
 			qualified_name OptTypedTableElementList PartitionBoundSpec OptFirstPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptSecondPartitionSpec
+			OptSecondPartitionSpec
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4627,12 +4627,12 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $11;
 					n->inhRelations = list_make1($10);
 					n->partbound = $12;
-					if ($13 && $19)
+					if ($13 && $18)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("only one PARTITION BY clause is allowed"),
-								 parser_errposition(@19)));
-					n->partspec = $13 ? $13 : $19;
+								 parser_errposition(@18)));
+					n->partspec = $13 ? $13 : $18;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
 					n->accessMethod = $14;
@@ -4640,7 +4640,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $16;
 					n->tablespacename = $17;
 					n->if_not_exists = true;
-					n->distributedBy = (DistributedBy *) $18;
+					n->distributedBy = NULL;
 					n->relKind = RELKIND_RELATION;
 
 					n->accessMethod = greenplumLegacyAOoptions(n->accessMethod, &n->options);
