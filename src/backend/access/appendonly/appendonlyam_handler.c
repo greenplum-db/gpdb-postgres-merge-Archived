@@ -54,8 +54,6 @@
 #include "utils/faultinjector.h"
 #include "utils/rel.h"
 
-#define IS_LOSSY(t) (t->ntuples < 0)
-
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
 									 Datum *values, bool *isnull, RewriteState rwstate);
@@ -423,11 +421,16 @@ ExecStoreMemTuple(MemTuple tuple,
 	return slot;
 }
 
+/*
+ * GPDB_12_MERGE_FIXME:
+ * So far, it seem only shared input scan require memtuple as tuple store
+ * in executor. After Shared scan PR merged, we will do the fellow
+ * two callback.
+ */
 MemTuple
 ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
 					   char *dest, unsigned int *len)
 {
-	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
 	elog(ERROR, "ExecCopySlotMemTupleTo not implemented");
 }
 
@@ -435,7 +438,6 @@ void
 ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
 					   bool shouldFree)
 {
-	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
 	elog(ERROR, "ExecForceStoreMemTuple not implemented");
 }
 
@@ -585,8 +587,12 @@ static bool
 appendonly_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 								Snapshot snapshot)
 {
-	// GPDB_12_MERGE_FIXME: what should this do?
-	elog(ERROR, "not implemented yet");
+	/*
+	 * AO table dose not support unique and tidscan yet.
+	 */
+	ereport(ERROR,
+	        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		        errmsg("feature not supported on appendoptimized relations")));
 }
 
 static TransactionId
@@ -594,7 +600,7 @@ appendonly_compute_xid_horizon_for_tuples(Relation rel,
 										  ItemPointerData *tids,
 										  int nitems)
 {
-	// GPDB_12_MERGE_FIXME: what should this do?
+	// GPDB_12_MERGE_FIXME: vacuum related call back.
 	elog(ERROR, "not implemented yet");
 }
 
