@@ -124,7 +124,6 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
  tenk_ao1          |     32768 |              |             0 | t
  tenk_ao13         |     32768 |              |             0 | t
  tenk_ao14         |     65536 |              |             0 | t
- tenk_ao15         |     32768 |              |             0 | t
  tenk_ao15_1_prt_1 |     32768 |              |             0 | t
  tenk_ao15_1_prt_2 |     32768 |              |             0 | t
  tenk_ao15_1_prt_3 |     32768 |              |             0 | t
@@ -132,7 +131,7 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
  tenk_ao3          |   1048576 | zlib         |             6 | t
  tenk_ao4          |     32768 | zlib         |             1 | t
  tenk_ao5          |   1048576 | zlib         |             6 | t
-(11 rows)
+(10 rows)
 
 --------------------
 -- fn needed later
@@ -517,7 +516,6 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
  tenk_ao1          |     32768 |              |             0 | t
  tenk_ao13         |     32768 |              |             0 | t
  tenk_ao14         |     32768 |              |             0 | t
- tenk_ao15         |     32768 |              |             0 | t
  tenk_ao15_1_prt_1 |     32768 |              |             0 | t
  tenk_ao15_1_prt_2 |     32768 |              |             0 | t
  tenk_ao15_1_prt_3 |     32768 |              |             0 | t
@@ -525,7 +523,7 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
  tenk_ao3          |   1048576 | zlib         |             6 | t
  tenk_ao4          |     32768 | zlib         |             1 | t
  tenk_ao5          |   1048576 | zlib         |             6 | t
-(11 rows)
+(10 rows)
 
 SELECT count(*) FROM tenk_ao1;
  count 
