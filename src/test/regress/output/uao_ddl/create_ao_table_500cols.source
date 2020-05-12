@@ -609,14 +609,14 @@ delete from sto_uao_500cols where id = 4;
 select count(*) as visible_tuples from sto_uao_500cols;
  visible_tuples 
 ----------------
-             11
+              3
 (1 row)
 
 set gp_select_invisible = true;
 select count(*) as all_tuples from sto_uao_500cols;
  all_tuples 
 ------------
-         13
+          5
 (1 row)
 
 set gp_select_invisible = false;
