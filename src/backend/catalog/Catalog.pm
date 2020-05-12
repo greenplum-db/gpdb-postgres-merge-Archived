@@ -479,6 +479,13 @@ sub GenerateBitmapOpClasses
 		$bitmap_opclass{opcmethod} = 'bitmap';
 		$bitmap_opclass{opcfamily} =~ s/btree/bitmap/;
 
+		# Undo the "ugly little hack" on name_ops opclass to use
+		# 'cstring' as the key type for 'name' datatype.
+		if ($opclass->{opcname} eq 'name_ops')
+		{
+			$bitmap_opclass{opckeytype} = 0;
+		}
+
 		# Clear out OIDs
 		delete $bitmap_opclass{oid};
 		delete $bitmap_opclass{oid_symbol};
