@@ -135,7 +135,7 @@ accidental overdoses, the company says in a news release.', '1', '0',
 select count(*) from sto_uao_2 order by 1;
  count 
 -------
-    12
+     4
 (1 row)
 
 -- Create table with constriants
