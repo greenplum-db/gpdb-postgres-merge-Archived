@@ -850,15 +850,29 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * Select name for index if caller didn't specify
+	 *
+	 * In GPDB, we need to coordinate the index name between the QD and the
+	 * QEs. In the QD, after creating the child index, we stash the chosen
+	 * index name in the "oid assignments" list that's normally used to sync
+	 * OIDs between QD and QEs. Here, in the QE, we fetch the stashed name
+	 * from the list.
 	 */
 	indexRelationName = stmt->idxname;
 	if (indexRelationName == NULL)
-		indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
+	{
+		if (OidIsValid(parentIndexId) && Gp_role == GP_ROLE_EXECUTE)
+			indexRelationName = GetPreassignedIndexNameForChildIndex(parentIndexId,
+																	 relationId);
+		else
+		{
+			indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
 											namespaceId,
 											indexColNames,
 											stmt->excludeOpNames,
 											stmt->primary,
 											stmt->isconstraint);
+		}
+	}
 
 	/*
 	 * look up the access method, verify it can handle the requested features
@@ -1341,6 +1355,17 @@ DefineIndex(Oid relationId,
 		return address;
 	}
 
+	/*
+	 * In the QD, remember the chosen index name and stash it with the
+	 * chosen OIDs, so that it's dispatched to the QE later.
+	 */
+	if (OidIsValid(parentIndexId) && Gp_role == GP_ROLE_DISPATCH)
+	{
+		RememberPreassignedIndexNameForChildIndex(parentIndexId,
+												  relationId,
+												  indexRelationName);
+	}
+
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
 		CreateComments(indexRelationId, RelationRelationId, 0,
@@ -1531,18 +1556,8 @@ DefineIndex(Oid relationId,
 					 * a new name.  Likewise, the existing target relation
 					 * field is wrong, and if indexOid or oldNode are set,
 					 * they mustn't be applied to the child either.
-					 *
-					 * In GPDB, we need to coordinate the index name between
-					 * the QD and the QEs. In the QD, after creating the child
-					 * index, we stash the chosen index name in the "oid
-					 * assignments" list that's normally used to sync OIDs
-					 * between QD and QEs. Here, in the QE, we fetch the
-					 * stashed name from the list.
 					 */
 					childStmt->idxname = NULL;
-					if (Gp_role == GP_ROLE_EXECUTE)
-						childStmt->idxname = GetPreassignedIndexNameForChildIndex(parentIndexId,
-																				  childRelid);
 					childStmt->relation = NULL;
 					childStmt->indexOid = InvalidOid;
 					childStmt->oldNode = InvalidOid;
@@ -1584,17 +1599,6 @@ DefineIndex(Oid relationId,
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
 								skip_build, quiet);
-
-					/*
-					 * In the QD, remember the chosen index name and stash it with the
-					 * chosen OIDs, so that it's dispatched to the QE later.
-					 */
-					if (Gp_role == GP_ROLE_DISPATCH)
-					{
-						RememberPreassignedIndexNameForChildIndex(parentIndexId,
-																  childRelid,
-																  childStmt->idxname);
-					}
 				}
 
 				pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_DONE,
