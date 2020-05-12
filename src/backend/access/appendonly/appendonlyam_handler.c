@@ -442,6 +442,29 @@ ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
 }
 
 /* ------------------------------------------------------------------------
+ * Parallel aware Seq Scan callbacks for appendonly AM
+ * ------------------------------------------------------------------------
+ */
+
+static Size
+appendonly_parallelscan_estimate(Relation rel)
+{
+	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+}
+
+static Size
+appendonly_parallelscan_initialize(Relation rel, ParallelTableScanDesc pscan)
+{
+	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+}
+
+static void
+appendonly_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
+{
+	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+}
+
+/* ------------------------------------------------------------------------
  * Seq Scan callbacks for appendonly AM
  *
  * These are in appendonlyam.c
@@ -1819,9 +1842,9 @@ static const TableAmRoutine appendonly_methods = {
 	.scan_rescan = appendonly_rescan,
 	.scan_getnextslot = appendonly_getnextslot,
 
-	.parallelscan_estimate = table_block_parallelscan_estimate,
-	.parallelscan_initialize = table_block_parallelscan_initialize,
-	.parallelscan_reinitialize = table_block_parallelscan_reinitialize,
+	.parallelscan_estimate = appendonly_parallelscan_estimate,
+	.parallelscan_initialize = appendonly_parallelscan_initialize,
+	.parallelscan_reinitialize = appendonly_parallelscan_reinitialize,
 
 	.index_fetch_begin = appendonly_index_fetch_begin,
 	.index_fetch_reset = appendonly_index_fetch_reset,

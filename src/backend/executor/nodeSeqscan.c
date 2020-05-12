@@ -306,44 +306,6 @@ ExecReScanSeqScan(SeqScanState *node)
 	ExecScanReScan((ScanState *) node);
 }
 
-static void
-InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation)
-{
-	/* Initialize AOCS projection info */
-	bool	   *proj;
-	int			ncol;
-	int			i;
-
-	Assert(currentRelation != NULL);
-
-	ncol = currentRelation->rd_att->natts;
-	proj = palloc0(ncol * sizeof(bool));
-	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->targetlist, proj, ncol);
-	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->qual, proj, ncol);
-
-	for (i = 0; i < ncol; i++)
-	{
-		if (proj[i])
-			break;
-	}
-
-	/*
-	 * In some cases (for example, count(*)), no columns are specified.
-	 * We always scan the first column.
-	 */
-	if (i == ncol)
-		proj[0] = true;
-
-	/*
-	 * GPDB_12_MERGE_FIXME: how to do this stuff now? Should we backport the
-	 * patches that we submitted for PostgreSQL v13 to get the needed columns?
-	 */
-#if 0
-	scanstate->ss_aocs_ncol = ncol;
-	scanstate->ss_aocs_proj = proj;
-#endif
-}
-
 /* ----------------------------------------------------------------
  *						Parallel Scan Support
  * ----------------------------------------------------------------
@@ -380,9 +342,6 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 {
 	EState	   *estate = node->ss.ps.state;
 	ParallelTableScanDesc pscan;
-
-	if (!RelationIsHeap(node->ss.ss_currentRelation))
-		elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
 
 	pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
 	table_parallelscan_initialize(node->ss.ss_currentRelation,
