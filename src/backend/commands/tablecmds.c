@@ -3489,7 +3489,7 @@ renameatt(RenameStmt *stmt)
 
 	if (!OidIsValid(relid))
 	{
-		ereport(NOTICE,
+		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
 		return InvalidObjectAddress;
@@ -3647,7 +3647,7 @@ RenameConstraint(RenameStmt *stmt)
 										 NULL);
 		if (!OidIsValid(relid))
 		{
-			ereport(NOTICE,
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 					(errmsg("relation \"%s\" does not exist, skipping",
 							stmt->relation->relname)));
 			return InvalidObjectAddress;
@@ -3694,7 +3694,7 @@ RenameRelation(RenameStmt *stmt)
 
 	if (!OidIsValid(relid))
 	{
-		ereport(NOTICE,
+		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
 		return InvalidObjectAddress;
@@ -7280,7 +7280,7 @@ check_for_column_name_collision(Relation rel, const char *colname,
 	{
 		if (if_not_exists)
 		{
-			ereport(NOTICE,
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 					(errcode(ERRCODE_DUPLICATE_COLUMN),
 					 errmsg("column \"%s\" of relation \"%s\" already exists, skipping",
 							colname, RelationGetRelationName(rel))));
@@ -7968,7 +7968,7 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 							colName, RelationGetRelationName(rel))));
 		else
 		{
-			ereport(NOTICE,
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 					(errmsg("column \"%s\" of relation \"%s\" is not an identity column, skipping",
 							colName, RelationGetRelationName(rel))));
 			heap_freetuple(tuple);
@@ -8376,7 +8376,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 		}
 		else
 		{
-			ereport(NOTICE,
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 					(errmsg("column \"%s\" of relation \"%s\" does not exist, skipping",
 							colName, RelationGetRelationName(rel))));
 			return InvalidObjectAddress;
@@ -11558,7 +11558,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		}
 		else
 		{
-			ereport(NOTICE,
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 					(errmsg("constraint \"%s\" of relation \"%s\" does not exist, skipping",
 							constrName, RelationGetRelationName(rel))));
 			table_close(conrel, RowExclusiveLock);
@@ -18095,7 +18095,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 
 	if (!OidIsValid(relid))
 	{
-		ereport(NOTICE,
+		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->relation->relname)));
 		return InvalidObjectAddress;

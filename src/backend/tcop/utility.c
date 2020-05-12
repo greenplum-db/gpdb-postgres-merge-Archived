@@ -1471,7 +1471,8 @@ ProcessUtilitySlow(ParseState *pstate,
 						EventTriggerAlterTableEnd();
 					}
 					else
-						ereport(NOTICE,
+						ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
+
 								(errmsg("relation \"%s\" does not exist, skipping",
 										atstmt->relation->relname)));
 				}

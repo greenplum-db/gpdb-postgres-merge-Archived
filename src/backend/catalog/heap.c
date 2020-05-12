@@ -3350,7 +3350,7 @@ MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
 							ccname, RelationGetRelationName(rel))));
 
 		/* OK to update the tuple */
-		ereport(NOTICE,
+		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
 				(errmsg("merging constraint \"%s\" with inherited definition",
 						ccname)));
 

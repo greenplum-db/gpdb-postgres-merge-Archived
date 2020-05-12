@@ -1306,7 +1306,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 			if (PartConstraintImpliedByRelConstraint(part_rel,
 													 def_part_constraints))
 			{
-				ereport(INFO,
+				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : INFO,
 						(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
 								RelationGetRelationName(part_rel))));
 
