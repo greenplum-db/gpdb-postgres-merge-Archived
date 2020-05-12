@@ -624,12 +624,10 @@ Create table sto_ao_ao
 create table exh_ao_ao (like sto_ao_ao) with (appendonly=true);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 -- Exchange default sub-partition, should fail
-alter table sto_ao_ao alter partition for (rank(3)) exchange default partition with table exh_ao_ao;
+alter table sto_ao_ao alter partition for ('2008-03-01') exchange default partition with table exh_ao_ao;
 ERROR:  cannot exchange DEFAULT partition
 set gp_enable_exchange_default_partition = on;
-alter table sto_ao_ao alter partition for (rank(3)) exchange default partition with table exh_ao_ao;
-WARNING:  Exchanging default partition may result in unexpected query results if the data being exchanged should have been inserted into a different partition
-NOTICE:  exchanged partition "subothers" of partition for rank 3 of relation "sto_ao_ao" with relation "exh_ao_ao"
+alter table sto_ao_ao alter partition for ('2008-03-01') exchange default partition with table exh_ao_ao;
 reset gp_enable_exchange_default_partition;
 -- Exchange a non-default sub-partition of a default partition, should fail
 alter table sto_ao_ao alter default partition exchange partition for ('one') with table exh_ao_ao;
@@ -642,7 +640,7 @@ ERROR:  cannot EXCHANGE PARTITION for relation "sto_ao_ao" -- partition has chil
 -- WITHOUT VALIDATION and that the new partition won't be included in TRUNCATE
 create table foo_p (i int, j int) distributed by (i) partition by range(j) (start(1) end(10) every(2));
 create readable external table bar_p(i int, j int) location ('gpfdist://host.invalid:8000/file') format 'text';
-alter table foo_p exchange partition for(rank(3)) with table bar_p;
+alter table foo_p exchange partition for(3) with table bar_p;
 ERROR:  validation of external tables not supported
 HINT:  Use WITHOUT VALIDATION.
 alter table foo_p exchange partition for(rank(3)) with table bar_p without validation;
@@ -1484,33 +1482,31 @@ NOTICE:  CREATE TABLE will create partition "ataprank2_1_prt_girls_2_prt_jan05_3
 NOTICE:  CREATE TABLE will create partition "ataprank2_1_prt_girls_2_prt_jan05_3_prt_ohio" for table "ataprank2_1_prt_girls_2_prt_jan05"
 -- ok
 alter table ataprank truncate partition girls;
-NOTICE:  truncated partition "girls" for relation "ataprank" and its children
-alter table ataprank alter partition girls truncate partition for (rank(1));
-NOTICE:  truncated partition "jan01" for partition "girls" of relation "ataprank" and its children
+alter table ataprank alter partition girls truncate partition for ('2001-01-01');
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) truncate partition mass;
-NOTICE:  truncated partition "mass" for partition "jan01" of partition "girls" of relation "ataprank"
+for ('2001-01-01') truncate partition mass;
 -- don't NOTIFY of children if cascade
 alter table ataprank truncate partition girls cascade;
--- fail - no rank 100
-alter table ataprank alter partition girls truncate partition for (rank(100));
-ERROR:  partition for rank 100 of partition "girls" of relation "ataprank" does not exist
+-- fail - no partition for '1999-01-01'
+alter table ataprank alter partition girls truncate partition for ('1999-01-01');
+ERROR:  partition for specified value of ataprank_1_prt_girls does not exist
 -- fail - no funky
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) truncate partition "funky";
-ERROR:  partition "funky" of partition "jan01" of partition "girls" of relation "ataprank" does not exist
+for ('2001-01-01') truncate partition "funky";
+ERROR:  relation "public.ataprank_1_prt_girls_2_prt_jan01_3_prt_funky" does not exist
 -- fail - no funky (drop)
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) drop partition "funky";
-ERROR:  partition "funky" of partition "jan01" of partition "girls" of relation "ataprank" does not exist
+for ('2001-01-01') drop partition "funky";
+ERROR:  relation "public.ataprank_1_prt_girls_2_prt_jan01_3_prt_funky" does not exist
 -- fail - missing name
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) drop partition ;
-ERROR:  missing name or value for DROP for partition "jan01" of partition "girls" of relation "ataprank"
+for ('2001-01-01') drop partition ;
+ERROR:  syntax error at or near ";"
+LINE 2: for ('2001-01-01') drop partition ;
+                                          ^
 -- ok
 alter table ataprank alter partition girls drop partition 
-for (rank(1)) ;
-NOTICE:  dropped partition "jan01" for partition "girls" of relation "ataprank" and its children
+for ('2001-01-01') ;
 -- ok , skipping
 alter table ataprank alter partition girls drop partition if exists jan01;
 NOTICE:  partition "jan01" of partition "girls" of relation "ataprank" does not exist, skipping
@@ -1522,8 +1518,7 @@ NOTICE:  dropped partition "jan03" for partition "girls" of relation "ataprank" 
 alter table ataprank alter partition girls drop partition for ('2004-01-01');
 NOTICE:  dropped partition "jan04" for partition "girls" of relation "ataprank" and its children
 -- ok, skipping
-alter table ataprank alter partition girls drop partition if exists for (rank(5));
-NOTICE:  partition for specified rank of partition "girls" of relation "ataprank" does not exist, skipping
+alter table ataprank alter partition girls drop partition if exists for ('2006-01-01');
 -- ok
 alter table ataprank alter partition girls rename partition jan05 
 to "funky fresh";
@@ -2755,9 +2750,9 @@ NOTICE:  CREATE TABLE will create partition "list_test_1_prt_b" for table "list_
 NOTICE:  CREATE TABLE will create partition "list_test_1_prt_b_2_prt_c" for table "list_test_1_prt_b"
 -- should fail
 alter table list_test drop column b;
-ERROR:  cannot drop partitioning column "b"
+ERROR:  cannot drop column named in partition key
 alter table list_test drop column c;
-ERROR:  cannot drop partitioning column "c"
+ERROR:  cannot drop column named in partition key
 drop table list_test;
 -- MPP-3678: allow exchange and split on tables with subpartitioning
 CREATE TABLE rank_exc (
@@ -3172,13 +3167,12 @@ NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_3" for table "ran
 NOTICE:  CREATE TABLE will create partition "rank_damage_1_prt_4" for table "rank_damage"
 -- should all fail
 alter table rank_damage_1_prt_1 no inherit rank_damage;
-ERROR:  can't alter inheritance on "rank_damage_1_prt_1"; it is a partitioned table or part thereof
+ERROR:  cannot change inheritance of a partition
 create table rank2_damage(like rank_damage);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 alter table rank_damage_1_prt_1 inherit rank2_damage;
-ERROR:  can't alter inheritance on "rank_damage_1_prt_1"; it is a partitioned table or part thereof
+ERROR:  cannot change inheritance of a partition
 alter table rank_damage_1_prt_1 alter column i type bigint;
-ERROR:  can't alter a column datatype of "rank_damage_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table rank_damage_1_prt_1 set without oids; -- no-op
 alter table rank_damage_1_prt_1 drop constraint rank_damage_1_prt_1_check;
@@ -5727,7 +5721,7 @@ partition by funky (b)
 (
 start (1) end (10) every (1)
 );
-ERROR:  PARTITION BY must specify RANGE or LIST
+ERROR:  unrecognized partitioning strategy "funky"
 drop table cov1;
 ERROR:  table "cov1" does not exist
 create table cov1 (a int, b int)
@@ -5751,7 +5745,7 @@ ERROR:  syntax error at or near ")"
 LINE 1: alter table cov1 drop partition for (funky(1));
                                                      ^
 -- no rank for default
-alter table cov1 drop default partition for (rank(1));
+alter table cov1 drop default partition for (1);
 ERROR:  cannot specify a name, rank, or value for a DEFAULT partition in this context
 -- no default
 alter table cov1 split default partition at (9);
@@ -5759,7 +5753,7 @@ ERROR:  DEFAULT partition of relation "cov1" does not exist
 alter table cov1 drop default partition;
 ERROR:  DEFAULT partition of relation "cov1" does not exist
 -- cannot add except by name
-alter table cov1 add partition for (rank(1));
+alter table cov1 add partition for (1);
 ERROR:  can only ADD a partition by name
 -- bad template
 alter table cov1 set subpartition template (values (1,2) (values (2,3)));
@@ -6011,7 +6005,7 @@ create table child_r
         end (2) 
         every (1)
     );
-ERROR:  cannot mix inheritance with partitioning
+ERROR:  cannot create partitioned table as inheritance child
  -- If (incorrectly) the previous statement works, the next one is 
  -- likely to fail with in unexpected internal error.  This is residual 
  -- issue MPP-7898.
@@ -7026,7 +7020,8 @@ select * from part_tab_1_prt_3;
 
 -- Root part but no matching part for i2.y == 10
 insert into part_tab select i1.x, i2.y from input1 as i1 join input2 as i2 on i1.x = i2.x;
-ERROR:  no partition for partitioning key  (seg1 slarimac:40001 pid=97900)
+ERROR:  no partition of relation "part_tab" found for row  (seg2 127.0.1.1:7004 pid=17912)
+DETAIL:  Partition key of the failing row contains (j) = (10).
 select * from part_tab;
  i | j 
 ---+---
@@ -7220,7 +7215,8 @@ select * from deep_part_1_prt_female_2_prt_5_3_prt_5;
 
 -- Out of range partition
 insert into deep_part values (9, 9, 10, 'F');
-ERROR:  no partition for partitioning key  (seg0 slarimac:40000 pid=97899)
+ERROR:  no partition of relation "deep_part_1_prt_female_2_prt_5" found for row  (seg2 127.0.1.1:7004 pid=17912)
+DETAIL:  Partition key of the failing row contains (k) = (10).
 select * from deep_part;
  i | j | k |   s   
 ---+---+---+-------
@@ -7371,7 +7367,8 @@ select * from part_tab_1_prt_3;
 
 -- Root part but no matching part for i2.y == 10
 insert into part_tab select i1.x, i2.y from input1 as i1 join input2 as i2 on i1.x = i2.x;
-ERROR:  no partition for partitioning key  (seg1 slarimac:40001 pid=97900)
+ERROR:  no partition of relation "part_tab" found for row  (seg2 127.0.1.1:7004 pid=17912)
+DETAIL:  Partition key of the failing row contains (j) = (10).
 select * from part_tab;
  i | j 
 ---+---
@@ -7579,7 +7576,8 @@ select * from deep_part_1_prt_female_2_prt_5_3_prt_5;
 
 -- Out of range partition
 insert into deep_part values (9, 9, 10, 'F');
-ERROR:  no partition for partitioning key  (seg2 127.0.1.1:25434 pid=22690)
+ERROR:  no partition of relation "deep_part_1_prt_female_2_prt_5" found for row  (seg2 127.0.1.1:7004 pid=17912)
+DETAIL:  Partition key of the failing row contains (k) = (10).
 select * from deep_part;
  i | j | k |   s   
 ---+---+---+-------

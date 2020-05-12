@@ -819,31 +819,31 @@ subpartition ohio values ('OH')
 
 -- ok
 alter table ataprank truncate partition girls;
-alter table ataprank alter partition girls truncate partition for (rank(1));
+alter table ataprank alter partition girls truncate partition for ('2001-01-01');
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) truncate partition mass;
+for ('2001-01-01') truncate partition mass;
 
 -- don't NOTIFY of children if cascade
 alter table ataprank truncate partition girls cascade;
 
--- fail - no rank 100
-alter table ataprank alter partition girls truncate partition for (rank(100));
+-- fail - no partition for '1999-01-01'
+alter table ataprank alter partition girls truncate partition for ('1999-01-01');
 
 -- fail - no funky
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) truncate partition "funky";
+for ('2001-01-01') truncate partition "funky";
 
 -- fail - no funky (drop)
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) drop partition "funky";
+for ('2001-01-01') drop partition "funky";
 
 -- fail - missing name
 alter table ataprank alter partition girls alter partition 
-for (rank(1)) drop partition ;
+for ('2001-01-01') drop partition ;
 
 -- ok
 alter table ataprank alter partition girls drop partition 
-for (rank(1)) ;
+for ('2001-01-01') ;
 
 -- ok , skipping
 alter table ataprank alter partition girls drop partition if exists jan01;
@@ -854,7 +854,7 @@ alter table ataprank alter partition girls drop partition for ('2003-01-01');
 alter table ataprank alter partition girls drop partition for ('2004-01-01');
 
 -- ok, skipping
-alter table ataprank alter partition girls drop partition if exists for (rank(5));
+alter table ataprank alter partition girls drop partition if exists for ('2006-01-01');
 
 -- ok
 alter table ataprank alter partition girls rename partition jan05 
@@ -2224,7 +2224,7 @@ pg_get_partition_def(
 (select oid from pg_class 
 where relname='mpp6297')::pg_catalog.oid, true);
 
-alter table mpp6297 drop partition for (rank(3));
+alter table mpp6297 drop partition for (3);
 
 -- note that the every clause splits into two parts: 1-3 and 4-10
 select
@@ -2318,7 +2318,7 @@ pg_get_partition_def(
 (select oid from pg_class 
 where relname='mpp6297')::pg_catalog.oid, true);
 
-alter table mpp6297 drop partition for (rank(3));
+alter table mpp6297 drop partition for (3);
 
 -- note that the every clause splits into two parts: 1-3 and 4-10 (and
 -- inclusive/exclusive is listed correctly)
@@ -2714,14 +2714,14 @@ start (1) end (10) every (1)
 alter table cov1 drop partition for (funky(1));
 
 -- no rank for default
-alter table cov1 drop default partition for (rank(1));
+alter table cov1 drop default partition for (1);
 
 -- no default
 alter table cov1 split default partition at (9);
 alter table cov1 drop default partition;
 
 -- cannot add except by name
-alter table cov1 add partition for (rank(1));
+alter table cov1 add partition for (1);
 
 -- bad template
 alter table cov1 set subpartition template (values (1,2) (values (2,3)));
