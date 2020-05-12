@@ -179,30 +179,9 @@ create rule bar_baz as on insert to bar_p do instead insert into baz_p
 alter table foo_p exchange partition for(2) with table bar_p;
 drop table foo_p, bar_p, baz_p;
 
--- Should fail: A constraint on bar_p isn't shared by all the parts.  
--- Allowing this would make an inconsistent partitioned table.  Note
--- that it is possible to have a constraint that prevents rows from 
--- going into one or more parts.  This isn't a conflict, though prior
--- versions would fail because "a constraint on bar_p conflicts with
--- partitioning rule". 
 create table foo_p (i int, j int) distributed by (i)
 partition by range(j)
 (start(1) end(5) every(1));
-
-create table bar_a(i int, j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(2) with table bar_a;
-
--- Should fail: A constraint on bar_p isn't shared by all the parts.
--- Allowing this would make an inconsistent partitioned table. 
--- Prior versions allowed this, so parts could have differing constraints
--- as long as they avoided the partition columns.
-create table bar_b(i int check (i > 1000), j int) distributed by (i);
-alter table foo_p exchange partition for(2) with table bar_b;
-
--- like above, but with two contraints, just to check that the error
--- message can print that correctly.
-create table bar_c(i int check (i > 1000), j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(2) with table bar_c;
 
 -- Shouldn't fail: check constraint matches partition rule.
 -- Note this test is slightly different from prior versions to get
@@ -214,7 +193,7 @@ alter table foo_p exchange partition for(2) with table bar_d;
 insert into bar_d values(200000, 2);
 select * from bar_d;
 
-drop table foo_p, bar_a, bar_b, bar_c, bar_d;
+drop table foo_p, bar_d;
 
 -- permissions
 create role part_role;
@@ -225,7 +204,7 @@ grant select on foo_p to part_role;
 revoke all on bar_p from part_role;
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
 select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
 select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
 drop table foo_p;
@@ -253,7 +232,7 @@ partition by range(j)
 (start(1) end(10) every(1));
 create table bar_p(i int, j int) distributed by (i);
 
-insert into bar_p values(6);
+insert into bar_p values(0,6);
 alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
@@ -375,9 +354,9 @@ Create table sto_ao_ao
 create table exh_ao_ao (like sto_ao_ao) with (appendonly=true);
 
 -- Exchange default sub-partition, should fail
-alter table sto_ao_ao alter partition for (rank(3)) exchange default partition with table exh_ao_ao;
+alter table sto_ao_ao alter partition for ('2008-03-01') exchange default partition with table exh_ao_ao;
 set gp_enable_exchange_default_partition = on;
-alter table sto_ao_ao alter partition for (rank(3)) exchange default partition with table exh_ao_ao;
+alter table sto_ao_ao alter partition for ('2008-03-01') exchange default partition with table exh_ao_ao;
 reset gp_enable_exchange_default_partition;
 
 -- Exchange a non-default sub-partition of a default partition, should fail
@@ -392,8 +371,8 @@ alter table sto_ao_ao exchange partition for ('2008-01-01') with table exh_ao_ao
 -- WITHOUT VALIDATION and that the new partition won't be included in TRUNCATE
 create table foo_p (i int, j int) distributed by (i) partition by range(j) (start(1) end(10) every(2));
 create readable external table bar_p(i int, j int) location ('gpfdist://host.invalid:8000/file') format 'text';
-alter table foo_p exchange partition for(rank(3)) with table bar_p;
-alter table foo_p exchange partition for(rank(3)) with table bar_p without validation;
+alter table foo_p exchange partition for(3) with table bar_p;
+alter table foo_p exchange partition for(3) with table bar_p without validation;
 truncate foo_p;
 drop table foo_p;
 drop table bar_p;

@@ -149,28 +149,30 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 -- policies are different
 create table bar_p_diff_pol (i int, j int) distributed by (j);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_pol;
+alter table foo_p exchange partition for(6) with table bar_p_diff_pol;
 ERROR:  distribution policy for "bar_p_diff_pol" must be the same as that for "foo_p"
 -- random policy vs. hash policy
 create table bar_p_rand_pol (i int, j int) distributed randomly;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_rand_pol;
+alter table foo_p exchange partition for(6) with table bar_p_rand_pol;
 ERROR:  distribution policy for "bar_p_rand_pol" must be the same as that for "foo_p"
 -- different number of columns
 create table bar_p_diff_col (i int, j int, k int) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_col;
-ERROR:  relation "bar_p_diff_col" must have the same number columns as relation "foo_p"
+alter table foo_p exchange partition for(6) with table bar_p_diff_col;
+ERROR:  table "bar_p_diff_col" contains column "k" not found in parent "foo_p"
+DETAIL:  The new partition may contain only the columns present in parent.
 -- different types
 create table bar_p_diff_typ (i int, j int8) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_typ;
-ERROR:  type mismatch for attribute "j"
+alter table foo_p exchange partition for(6) with table bar_p_diff_typ;
+ERROR:  child table "bar_p_diff_typ" has different type for column "j"
 -- different column names
 create table bar_p_diff_colnam (i int, m int) distributed by (i);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p_diff_colnam;
-ERROR:  relation "bar_p_diff_colnam" must have the same column names and column order as "foo_p"
+alter table foo_p exchange partition for(6) with table bar_p_diff_colnam;
+ERROR:  table "bar_p_diff_colnam" contains column "m" not found in parent "foo_p"
+DETAIL:  The new partition may contain only the columns present in parent.
 -- still different schema, but more than one level partitioning
 CREATE TABLE two_level_pt(a int, b int, c int)
 DISTRIBUTED BY (a)
@@ -187,26 +189,25 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 -- should fail
 ALTER TABLE two_level_pt ALTER PARTITION FOR (1)
       EXCHANGE PARTITION FOR (11) WITH TABLE candidate_for_leaf;
-ERROR:  relation "candidate_for_leaf" must have the same column names and column order as "two_level_pt"
+ERROR:  child table is missing column "b"
 -- different owner 
 create role part_role;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 create table bar_p (i int, j int) distributed by (i);
 set session authorization part_role;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  must be owner of relation foo_p
+alter table foo_p exchange partition for(6) with table bar_p;
+ERROR:  must be owner of table foo_p
 -- back to superuser
 \c -
 alter table bar_p owner to part_role;
 set session authorization part_role;
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  must be owner of relation foo_p
+alter table foo_p exchange partition for(6) with table bar_p;
+ERROR:  must be owner of table foo_p
 \c -
 -- owners should be the same, error out 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  owner of "bar_p" must be the same as that of "foo_p"
+alter table foo_p exchange partition for(6) with table bar_p;
 drop table foo_p;
 drop table bar_p;
 -- should work, and new partition should inherit ownership (mpp-6538)
@@ -251,8 +252,8 @@ create table barparent(i int, j int) distributed by (i);
 create table bar_p () inherits(barparent);
 NOTICE:  table has parent, setting distribution columns to match parent table
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  cannot exchange table "bar_p" as it inherits other table(s)
+alter table foo_p exchange partition for(6) with table bar_p;
+ERROR:  cannot attach inheritance child as partition
 drop table bar_p;
 drop table barparent;
 -- non-partition table involved in inheritance
@@ -260,8 +261,8 @@ create table bar_p(i int, j int) distributed by (i);
 create table barchild () inherits(bar_p);
 NOTICE:  table has parent, setting distribution columns to match parent table
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  cannot EXCHANGE table "bar_p" as it has child table(s)
+alter table foo_p exchange partition for(6) with table bar_p;
+ERROR:  cannot attach inheritance parent as partition
 drop table barchild;
 drop table bar_p;
 -- rules on non-partition table
@@ -269,47 +270,18 @@ create table bar_p(i int, j int) distributed by (i);
 create table baz_p(i int, j int) distributed by (i);
 create rule bar_baz as on insert to bar_p do instead insert into baz_p
   values(NEW.i, NEW.j);
-alter table foo_p exchange partition for(rank(2)) with table bar_p;
-ERROR:  cannot exchange table which has rules defined on it
+alter table foo_p exchange partition for(2) with table bar_p;
 drop table foo_p, bar_p, baz_p;
--- Should fail: A constraint on bar_p isn't shared by all the parts.  
--- Allowing this would make an inconsistent partitioned table.  Note
--- that it is possible to have a constraint that prevents rows from 
--- going into one or more parts.  This isn't a conflict, though prior
--- versions would fail because "a constraint on bar_p conflicts with
--- partitioning rule". 
 create table foo_p (i int, j int) distributed by (i)
 partition by range(j)
 (start(1) end(5) every(1));
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_1" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_2" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_3" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_4" for table "foo_p"
-create table bar_a(i int, j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_a;
-ERROR:  invalid constraint(s) found on "bar_a": "bar_a_j_check"
-HINT:  drop the invalid constraints and retry
--- Should fail: A constraint on bar_p isn't shared by all the parts.
--- Allowing this would make an inconsistent partitioned table. 
--- Prior versions allowed this, so parts could have differing constraints
--- as long as they avoided the partition columns.
-create table bar_b(i int check (i > 1000), j int) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_b;
-ERROR:  invalid constraint(s) found on "bar_b": "bar_b_i_check"
-HINT:  drop the invalid constraints and retry
--- like above, but with two contraints, just to check that the error
--- message can print that correctly.
-create table bar_c(i int check (i > 1000), j int check (j > 1000)) distributed by (i);
-alter table foo_p exchange partition for(rank(2)) with table bar_c;
-ERROR:  invalid constraint(s) found on "bar_c": "bar_c_j_check", "bar_c_i_check"
-HINT:  drop the invalid constraints and retry
 -- Shouldn't fail: check constraint matches partition rule.
 -- Note this test is slightly different from prior versions to get
 -- in line with constraint consistency requirement.
 create table bar_d(i int, j int check (j >= 2 and j < 3 ))
 distributed by (i);
 insert into bar_d values(100000, 2);
-alter table foo_p exchange partition for(rank(2)) with table bar_d;
+alter table foo_p exchange partition for(2) with table bar_d;
 insert into bar_d values(200000, 2);
 select * from bar_d;
    i    | j 
@@ -317,7 +289,7 @@ select * from bar_d;
  200000 | 2
 (1 row)
 
-drop table foo_p, bar_a, bar_b, bar_c, bar_d;
+drop table foo_p, bar_d;
 -- permissions
 create role part_role;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
@@ -352,7 +324,7 @@ select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
  f
 (1 row)
 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
  has_table_privilege 
 ---------------------
@@ -388,9 +360,9 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 insert into bar_p values(6);
 insert into bar_p values(100);
 -- should fail
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
-ERROR:  exchange table contains a row which violates the partitioning specification of "foo_p"  (seg1 slarimac:40001 pid=97876)
-alter table foo_p exchange partition for(rank(6)) with table bar_p without
+alter table foo_p exchange partition for(6) with table bar_p;
+ERROR:  partition constraint is violated by some row  (seg2 127.0.1.1:7004 pid=9703)
+alter table foo_p exchange partition for(6) with table bar_p without
 validation;
 analyze foo_p;
 select * from foo_p;
@@ -415,13 +387,13 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_7" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) distributed by (i);
-insert into bar_p values(6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+insert into bar_p values(0,6);
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
  i | j 
 ---+---
- 6 |  
+ 0 | 6
 (1 row)
 
 select * from bar_p;
@@ -434,7 +406,7 @@ drop table bar_p;
 select * from foo_p;
  i | j 
 ---+---
- 6 |  
+ 0 | 6
 (1 row)
 
 drop table foo_p;
@@ -452,7 +424,7 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) distributed by (i);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 -- Should fail.  Prior releases didn't convey constraints out via exchange
 -- but we do now, so the following tries to insert a value that can't go
 -- in part 6.
@@ -490,7 +462,7 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) distributed by (i);
 insert into foo_p values(1, 1), (2, 1), (3, 1);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
  i | j 
@@ -519,7 +491,7 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) with(appendonly = true) distributed by (i);
 insert into foo_p values(1, 1), (2, 1), (3, 2);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
  i | j 
@@ -548,7 +520,7 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) with(appendonly = true) distributed by (i);
 insert into foo_p values(1, 2), (2, 3), (3, 4);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
  i | j 
@@ -576,7 +548,7 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_8" for table "foo_p"
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) distributed by (i);
 insert into bar_p values(6, 6);
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 analyze foo_p;
 select * from foo_p;
  i | j 
@@ -589,7 +561,7 @@ select * from bar_p;
 ---+---
 (0 rows)
 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select * from foo_p;
  i | j 
 ---+---
@@ -601,7 +573,7 @@ select * from bar_p;
  6 | 6
 (1 row)
 
-alter table foo_p exchange partition for(rank(6)) with table bar_p;
+alter table foo_p exchange partition for(6) with table bar_p;
 select * from foo_p;
  i | j 
 ---+---
@@ -623,7 +595,7 @@ NOTICE:  table "exh_abc" does not exist, skipping
 create table dex (i int,  j int) partition by range(j)
 (partition a start (1) end(10), partition b start(11) end(20),
 default partition abc);
-NOTICE:  table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 NOTICE:  CREATE TABLE will create partition "dex_1_prt_abc" for table "dex"
 NOTICE:  CREATE TABLE will create partition "dex_1_prt_a" for table "dex"
@@ -634,8 +606,6 @@ alter table dex exchange default partition with table exh_abc;
 ERROR:  cannot exchange DEFAULT partition
 set gp_enable_exchange_default_partition = on;
 alter table dex exchange default partition with table exh_abc;
-WARNING:  Exchanging default partition may result in unexpected query results if the data being exchanged should have been inserted into a different partition
-NOTICE:  exchanged partition "abc" of relation "dex" with relation "exh_abc"
 reset gp_enable_exchange_default_partition;
 drop table dex;
 drop table exh_abc;
@@ -5981,7 +5951,7 @@ pc.relnamespace=ns.oid and relname like ('mpp6979%');
 
 -- exchange the partition with the ao table.  
 -- Now we have an ao partition and mpp6979tab is heap!
-alter table mpp6979part exchange partition for (rank(1)) 
+alter table mpp6979part exchange partition for (1) 
 with table mpp6979dummy.mpp6979tab;
 -- after the exchange, all partitions are still in public
 select schemaname, tablename, partitionschemaname, partitiontablename
@@ -6082,9 +6052,9 @@ insert into child_t values
 -- Try to exchange in the child and parent.  
 -- Correct behavior: ERROR in both cases.
 alter table parent_r exchange partition for (1) with table child_t;
-ERROR:  cannot exchange table "child_t" as it inherits other table(s)
+ERROR:  cannot attach inheritance child as partition
 alter table parent_r exchange partition for (1) with table parent_s;
-ERROR:  cannot EXCHANGE table "parent_s" as it has child table(s)
+ERROR:  cannot attach inheritance parent as partition
 drop table child_t cascade; --ignore
 drop table parent_s cascade; --ignore
 drop table parent_r cascade; --ignore
@@ -7923,7 +7893,8 @@ select * from sales order by pkid;
 create table newpart2(like sales);
 alter table sales drop column option2;
 alter table sales exchange partition for (101) with table newpart2;
-ERROR:  relation "newpart2" must have the same column names and column order as "sales"
+ERROR:  table "newpart2" contains column "option2" not found in parent "sales"
+DETAIL:  The new partition may contain only the columns present in parent.
 select * from sales order by pkid;
  pkid | option1 | option3 
 ------+---------+---------
