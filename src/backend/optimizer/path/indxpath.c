@@ -808,9 +808,14 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * The appendonlyam.c module will optimize fetches in TID order by keeping
 		 * the last decompressed block between fetch calls.
 		 *
-		 * GPDB_12_MERGE_FIXME: no relstorage in RelOptInfo anymore...
+		 * GPDB_12_MERGE_FIXME: Also there is no code in place in order to be
+		 * able to use index only scans on AO/AOCO relations. However it is
+		 * suboptimal to have to expose the relation's access method here. There
+		 * are no straight forward solutions though.
 		 */
-		if (index->amhasgettuple /* && rel->relstorage == RELSTORAGE_HEAP */)
+		if (index->amhasgettuple &&
+				(rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
+				 rel->relam != AOCO_TABLE_AM_OID))
 			add_path(rel, (Path *) ipath);
 
 		if (index->amhasgetbitmap &&
