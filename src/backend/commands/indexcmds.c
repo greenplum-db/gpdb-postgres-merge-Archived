@@ -1531,26 +1531,18 @@ DefineIndex(Oid relationId,
 					 * a new name.  Likewise, the existing target relation
 					 * field is wrong, and if indexOid or oldNode are set,
 					 * they mustn't be applied to the child either.
+					 *
+					 * In GPDB, we need to coordinate the index name between
+					 * the QD and the QEs. In the QD, after creating the child
+					 * index, we stash the chosen index name in the "oid
+					 * assignments" list that's normally used to sync OIDs
+					 * between QD and QEs. Here, in the QE, we fetch the
+					 * stashed name from the list.
 					 */
 					childStmt->idxname = NULL;
 					if (Gp_role == GP_ROLE_EXECUTE)
-					{
-						ListCell   *lc;
-						int			i;
-
-						i = 0;
-						foreach (lc, stmt->part_oids)
-						{
-							if (lfirst_oid(lc) == childRelid)
-							{
-								childStmt->idxname = strVal(list_nth(stmt->part_idx_names, i));
-								break;
-							}
-							i++;
-						}
-						if (!childStmt->idxname)
-							elog(ERROR, "no index name received from QD for partition %u", childRelid);
-					}
+						childStmt->idxname = GetPreassignedIndexNameForChildIndex(parentIndexId,
+																				  childRelid);
 					childStmt->relation = NULL;
 					childStmt->indexOid = InvalidOid;
 					childStmt->oldNode = InvalidOid;
@@ -1593,10 +1585,15 @@ DefineIndex(Oid relationId,
 								is_alter_table, check_rights, check_not_in_use,
 								skip_build, quiet);
 
+					/*
+					 * In the QD, remember the chosen index name and stash it with the
+					 * chosen OIDs, so that it's dispatched to the QE later.
+					 */
 					if (Gp_role == GP_ROLE_DISPATCH)
 					{
-						stmt->part_oids = lappend_oid(stmt->part_oids, childRelid);
-						stmt->part_idx_names = lappend(stmt->part_idx_names, makeString(childStmt->idxname));
+						RememberPreassignedIndexNameForChildIndex(parentIndexId,
+																  childRelid,
+																  childStmt->idxname);
 					}
 				}
 

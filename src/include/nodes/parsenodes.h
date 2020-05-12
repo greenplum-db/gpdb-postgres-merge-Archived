@@ -3231,15 +3231,6 @@ typedef struct IndexStmt
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 	bool		reset_default_tblspc;	/* reset default_tablespace prior to
 										 * executing */
-
-	/*
-	 * CREATE INDEX is expanded to create the index on all partitions. To
-	 * make sure the same name is used on all QEs as in the QD, the index
-	 * names chosen by the QD for each partition are stashed in
-	 * part_idx_oid/names.
-	 */
-	List	   *part_oids;
-	List	   *part_idx_names;	/* list of Value strings */
 } IndexStmt;
 
 /* ----------------------

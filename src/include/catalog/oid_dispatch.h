@@ -99,6 +99,9 @@ extern Oid GetNewOidForPublication(Relation relation, Oid indexId, AttrNumber oi
 extern Oid GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 									  Oid prrelid, Oid prpubid);
 
+extern char *GetPreassignedIndexNameForChildIndex(Oid parentIdxOid, Oid childRelId);
+extern void RememberPreassignedIndexNameForChildIndex(Oid parentIdxOid, Oid childRelId,
+													  const char *idxname);
 
 
 /* Functions used in master and QE nodes */

@@ -3286,9 +3286,6 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(concurrent);
 	WRITE_BOOL_FIELD(if_not_exists);
 	WRITE_BOOL_FIELD(reset_default_tblspc);
-
-	WRITE_NODE_FIELD(part_oids);
-	WRITE_NODE_FIELD(part_idx_names);
 }
 
 static void

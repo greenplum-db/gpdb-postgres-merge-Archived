@@ -1488,9 +1488,6 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_SCALAR_FIELD(reset_default_tblspc);
 
-	COMPARE_NODE_FIELD(part_oids);
-	COMPARE_NODE_FIELD(part_idx_names);
-
 	return true;
 }
 

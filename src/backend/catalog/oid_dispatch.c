@@ -1057,6 +1057,71 @@ GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
+/*
+ * We also use the oid assignment list to remember the index names chosen for
+ * partitioned indexes. This is slightly different from the normal use to
+ * dispatch OIDs. The key is the parent index OID + child table OID, and
+ * the thing we remember/dispatch is the index name chosen (compare with
+ * the normal use, where the key is typically an object name, and we
+ * remember/dispatch the OID of that object).
+ */
+char *
+GetPreassignedIndexNameForChildIndex(Oid parentIdxOid, Oid childRelId)
+{
+	ListCell   *cur_item;
+	ListCell   *prev_item;
+	char	   *result = NULL;
+
+	prev_item = NULL;
+	cur_item = list_head(preassigned_oids);
+
+	while (cur_item != NULL)
+	{
+		OidAssignment *p = (OidAssignment *) lfirst(cur_item);
+
+		if (p->catalog == INDEX_NAME_ASSIGNMENT &&
+			p->keyOid1 == parentIdxOid &&
+			p->keyOid2 == childRelId)
+		{
+#ifdef OID_DISPATCH_DEBUG
+			elog(NOTICE, "using index name assignment: parentIdxOid: %u childRelId: %u: %s",
+				 p->keyOid1, p->keyOid2, p->objname);
+#endif
+
+			result = pstrdup(p->objname);
+			preassigned_oids = list_delete_cell(preassigned_oids, cur_item, prev_item);
+			pfree(p);
+			return result;
+		}
+		prev_item = cur_item;
+		cur_item = lnext(cur_item);
+	}
+
+	if (result == NULL)
+		elog(ERROR, "no pre-assigned index name for parent index %u, child %u",
+			 parentIdxOid, childRelId);
+	return result;
+}
+
+void
+RememberPreassignedIndexNameForChildIndex(Oid parentIdxOid, Oid childRelId, const char *idxname)
+{
+	MemoryContext oldcontext;
+	OidAssignment *key;
+
+	oldcontext = MemoryContextSwitchTo(get_oids_context());
+
+	key = makeNode(OidAssignment);
+	key->catalog = INDEX_NAME_ASSIGNMENT;
+	key->keyOid1 = parentIdxOid;
+	key->keyOid2 = childRelId;
+	key->objname = (char *) pstrdup(idxname);
+
+	dispatch_oids = lappend(dispatch_oids, key);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
 /* ----------------------------------------------------------------
  * Functions for use in binary-upgrade mode
  * ----------------------------------------------------------------

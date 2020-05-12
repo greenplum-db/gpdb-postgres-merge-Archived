@@ -255,6 +255,13 @@ typedef struct
 
 } OidAssignment;
 
+/*
+ * Special value stored in OidAssignment.catalog, when the entry is used to
+ * store the choice of index name for a partitioned index, instead of the
+ * choice of an OID like normally.
+ */
+#define INDEX_NAME_ASSIGNMENT		1
+
 /* ----------------
  *		query descriptor:
  *

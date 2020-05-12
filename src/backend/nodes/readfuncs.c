@@ -791,9 +791,6 @@ _readIndexStmt(void)
 	READ_BOOL_FIELD(if_not_exists);
 	READ_BOOL_FIELD(reset_default_tblspc);
 
-	READ_NODE_FIELD(part_oids);
-	READ_NODE_FIELD(part_idx_names);
-
 	READ_DONE();
 }
 

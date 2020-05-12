@@ -4209,9 +4209,6 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_SCALAR_FIELD(if_not_exists);
 	COPY_SCALAR_FIELD(reset_default_tblspc);
 
-	COPY_NODE_FIELD(part_oids);
-	COPY_NODE_FIELD(part_idx_names);
-
 	return newnode;
 }
 
