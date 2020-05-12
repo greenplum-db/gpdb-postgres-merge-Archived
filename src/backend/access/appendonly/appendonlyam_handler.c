@@ -1892,10 +1892,3 @@ appendoptimized_tableam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&appendonly_methods);
 }
-
-Datum
-aoco_tableam_handler(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "aoco_tableam_handler not implemented");
-	//PG_RETURN_POINTER(&appendonly_methods);
-}
