@@ -994,8 +994,6 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider index and bitmap scans */
 	create_index_paths(root, rel);
 
-	// FIXME: We used to not create tidscan paths on AO tables.
-	//if (rel->relstorage == RELSTORAGE_HEAP)
 	create_tidscan_paths(root, rel);
 }
 
