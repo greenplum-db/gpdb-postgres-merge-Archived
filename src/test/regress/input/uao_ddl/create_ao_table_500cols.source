@@ -108,7 +108,7 @@ bytea, a480 timestamp with time zone, a481 timetz, a482 path, a483
 box, a484 macaddr, a485 interval, a486 character varying(800), a487
 lseg, a488 point, a489 double precision, a490 circle, a491 int4, a492
 numeric(8), a493 polygon, a494 date, a495 real, a496 money, a497 cidr,
-a498 inet, a499 time, a500 text)  with (appendonly=true)
+a498 inet, a499 time, a500 text)
  DISTRIBUTED BY (id);
 
 SELECT 1 AS VisimapPresent FROM pg_appendonly WHERE visimaprelid is not NULL AND

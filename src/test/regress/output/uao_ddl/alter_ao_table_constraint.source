@@ -7,7 +7,7 @@ CREATE TABLE sto_alt_uao2_constraint(
   bigint_col bigint,
   char_vary_col character varying(30),
   numeric_col numeric
-  ) with(appendonly=true) DISTRIBUTED RANDOMLY;
+  ) DISTRIBUTED RANDOMLY;
 insert into sto_alt_uao2_constraint values ('1_zero', 1, '1_zero', 1);
 SELECT 1 AS VisimapPresent  FROM pg_appendonly WHERE visimapidxid is not NULL
  AND visimapidxid is not NULL AND relid='sto_alt_uao2_constraint'::regclass;

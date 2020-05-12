@@ -9,7 +9,7 @@ CREATE TABLE sto_uao_city_analyze_everydml (
     countrycode character(3) NOT NULL,
     district text NOT NULL,
     population integer NOT NULL
-) with (appendonly=true) distributed by(id);
+) distributed by(id);
 -- gucs set to auto update statistics after each dml
 set gp_autostats_on_change_threshold=1;
 set gp_autostats_mode=on_change;

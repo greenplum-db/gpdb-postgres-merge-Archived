@@ -16,7 +16,7 @@ $$ language sql;
 
 begin;
 create temp table temp_delrows(a int, b int)
- with (appendonly=true) on commit delete rows distributed by(a);
+ on commit delete rows distributed by(a);
 insert into temp_delrows select i, i from generate_series(1,20)i;
 create index idelrows on temp_delrows using bitmap(a);
 update temp_delrows set b = -a;

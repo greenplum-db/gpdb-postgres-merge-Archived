@@ -6,7 +6,7 @@ SET default_table_access_method=@amname@;
 -- Perform VACUUM and SELECT again.
 --
 BEGIN;
-CREATE TABLE alter_drop_allcoll (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE alter_drop_allcoll (a INT, b INT, c CHAR(128));
 CREATE INDEX alter_drop_allcoll_index ON alter_drop_allcoll(b);
 INSERT INTO alter_drop_allcoll SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,5) AS i;
 

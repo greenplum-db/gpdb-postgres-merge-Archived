@@ -13,7 +13,7 @@ CREATE TABLE sto_alt_uao1_setstorage(
           before_rename_col int4,
           change_datatype_col numeric,
           date_column date,
-          col_set_default numeric) with(appendonly=true) DISTRIBUTED BY (text_col);
+          col_set_default numeric) DISTRIBUTED BY (text_col);
 
 insert into sto_alt_uao1_setstorage values ('0_zero', 0, '0_zero', 0, 0, 0, '{0}', 0, 0, '1-1-2000',0);
 insert into sto_alt_uao1_setstorage values ('1_zero', 1, '1_zero', 1, 1, 1, '{1}', 1, 1, '1-1-2001',1);
