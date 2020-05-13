@@ -13,7 +13,7 @@ set enable_indexonlyscan=off;
 -- @Description Tests basic delete feature with two AO blocks
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,10) AS i;
 SELECT COUNT(*) FROM foo;
@@ -55,7 +55,7 @@ SELECT a FROM foo WHERE a > 10;
 -- between them.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c 
 	FROM generate_series(1, 100000) AS i;
@@ -104,7 +104,7 @@ ROLLBACK;
 -- @Description Checks analyze behavior w.r.t. to statistics
 -- 
 DROP TABLE IF EXISTS ao2_@amname@;
-create table ao2_@amname@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
+create table ao2_@amname@ (i int, j varchar(10)) distributed by (i);
 insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
 select reltuples from pg_class where relname = 'ao2_@amname@';
  reltuples 
@@ -163,7 +163,7 @@ where relname = 'ao2_@amname@';
 -- @Description Tests delete on compressed ao tables
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true, compresstype = zlib, compresslevel=3);
+CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (compresstype = zlib, compresslevel=3);
 INSERT INTO FOO VALUES (1, 1, 'c');
 SELECT * FROM foo;
  a | b |                                                                c                                                                 
@@ -180,7 +180,7 @@ SELECT * FROM foo;
 -- @Description Tests that aborting a delete works as expected.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,10) AS i;
 SELECT COUNT(*) FROM foo;
@@ -208,8 +208,8 @@ SELECT COUNT(*) FROM foo;
 -- 
 drop table if exists foo;
 drop table if exists bar;
-CREATE TABLE foo (a INT, b int, c int, d int) with (appendonly = true);
-CREATE TABLE bar (a INT, b int, c int, d int) with (appendonly = true);
+CREATE TABLE foo (a INT, b int, c int, d int);
+CREATE TABLE bar (a INT, b int, c int, d int);
 INSERT INTO foo SELECT i as a,i,i,i  FROM generate_series(1, 100000) AS i;
 INSERT INTO bar SELECT i as a,i,i,i  FROM generate_series(1, 100000) AS i;
 set enable_hashjoin=off;
@@ -226,7 +226,7 @@ reset enable_mergejoin;
 -- @Description Tests that delete in a serializable transaction is not supported
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -258,7 +258,7 @@ ROLLBACK;
 -- @Description Tests that delete with sub transactions
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,100) AS i;
 BEGIN;
@@ -330,9 +330,9 @@ COMMIT;
 -- 
 DROP TABLE IF EXISTS foo;
 DROP TABLE IF EXISTS bar;
-CREATE TABLE foo (a INT) WITH (appendonly=true);
+CREATE TABLE foo (a INT);
 INSERT INTO foo VALUES (1);
-CREATE TABLE bar (a INT) WITH (appendonly=true);
+CREATE TABLE bar (a INT);
 INSERT INTO bar VALUES (1);
 INSERT INTO bar VALUES (1);
 SELECT * FROM foo;
@@ -350,7 +350,7 @@ SELECT * FROM foo;
 -- @Description Tests that deleting tuples twice is handled as expected.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
 SELECT COUNT(*) FROM foo;
@@ -378,9 +378,9 @@ SELECT COUNT(*) FROM foo;
 -- 
 DROP TABLE IF EXISTS foo;
 DROP TABLE IF EXISTS bar;
-CREATE TABLE foo (a INT, b INT) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT);
 INSERT INTO foo VALUES (10, 10);
-CREATE TABLE bar (a INT, b INT) WITH (appendonly=true);
+CREATE TABLE bar (a INT, b INT);
 INSERT INTO bar VALUES (15, 10);
 INSERT INTO bar VALUES (20, 10);
 SELECT * FROM foo;
@@ -408,7 +408,7 @@ set gp_select_invisible = false;
 -- @Description Checks if gp_autostats gucs are correctly handled
 -- 
 DROP TABLE IF EXISTS ao2_@amname@;
-create table ao2_@amname@ (i int, j varchar(10)) with (appendonly=true) distributed by (i);
+create table ao2_@amname@ (i int, j varchar(10)) distributed by (i);
 set gp_autostats_on_change_threshold=1;
 set gp_autostats_mode=on_change;
 insert into ao2_@amname@ select i,'aa'||i from generate_series(21,30) as i;
@@ -468,7 +468,7 @@ reset gp_autostats_mode;
 -- @Description Tests that gp_select_invisible is handled correctly with row append-only.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,10) AS i;
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(11,20) AS i;
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(21,30) AS i;
@@ -490,7 +490,7 @@ SET gp_select_invisible=false;
 -- with an index.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 CREATE INDEX foo_index2 ON foo(a);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
@@ -543,7 +543,7 @@ RESET enable_seqscan;
 -- @Description Tests that gp_select_invisible is handled correctly with UAO
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,10) AS i;
 SELECT COUNT(*) FROM foo WHERE a < 4;
@@ -592,7 +592,7 @@ SELECT COUNT(*) FROM foo WHERE a = 4;
 -- 
 DROP table IF EXISTS bar2;
 set gp_select_invisible = true;
-create table bar2 ( a int, b int) with (appendonly = true);
+create table bar2 ( a int, b int);
 insert into bar2 select x , x from generate_series(1,10) as x;
 SET gp_select_invisible=false;
 set gp_select_invisible = true;
@@ -872,7 +872,7 @@ set gp_select_invisible = false;
 -- @Description Checks if delete using an index works correctly
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo VALUES (0, 64000, 'c');
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1, 10) AS i;
@@ -901,7 +901,7 @@ CREATE TABLE mytab_@amname@(
           col_text text,
           col_numeric numeric,
           col_unq int
-          ) with(appendonly=true) DISTRIBUTED RANDOMLY;
+          ) DISTRIBUTED RANDOMLY;
 Create index mytab_int_idx1_@amname@ on mytab_@amname@(col_int);
 insert into mytab_@amname@ values(1,'aa',1001,101),(2,'bb',1002,102);
 select * from mytab_@amname@;
@@ -935,7 +935,7 @@ SELECT reltuples FROM pg_class WHERE relname = 'mytab_int_idx1_@amname@';
 -- @Description Checks that deleting works with many AO blocks.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 BEGIN;
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1, 100000) AS i;
@@ -1000,7 +1000,7 @@ SELECT COUNT(*) FROM foo;
 -- Bug verification for mpp-23510
 drop table  if exists mpp23510 cascade;
 NOTICE:  table "mpp23510" does not exist, skipping
-create table mpp23510 (a int, b int, c char(128)) with (appendonly=true);
+create table mpp23510 (a int, b int, c char(128));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into mpp23510 select i, i-2 ,'Hello World'  from generate_series(-10,10) i;
@@ -1054,7 +1054,7 @@ reset enable_seqscan;
 -- an append-only table that have no index on them.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT);
 INSERT INTO foo VALUES (0, 0);
 INSERT INTO foo VALUES (1, 1);
 UPDATE foo SET b=2 WHERE a = 1;
@@ -1073,11 +1073,11 @@ DROP TABLE IF EXISTS bar;
 -- This contrived choice of distribution key is to ensure that
 -- subsequent DELETE operations happen on a single GPDB segment.
 -- Otherwise, we may not exercise the case of out-of-order delete.
-CREATE TABLE foo (a INT, b INT, c CHAR(100)) WITH (appendonly=true)
+CREATE TABLE foo (a INT, b INT, c CHAR(100))
 DISTRIBUTED BY (b);
 INSERT INTO foo SELECT i as a, 1 as b, '' as c FROM generate_series(1, 100000) AS i;
 INSERT INTO foo SELECT i as a, 2 as b, '' as c FROM generate_series(1, 100000) AS i;
-CREATE TABLE bar (a INT, b INT, c CHAR(100)) DISTRIBUTED BY (b);
+CREATE TABLE bar (a INT, b INT, c CHAR(100)) USING heap DISTRIBUTED BY (b);
 -- Populate bar such that at least one segment contains multiple
 -- occurences of the same value for a.
 INSERT INTO bar SELECT i as a, 1 as b, '' as c  FROM generate_series(1, 100000) AS i;
@@ -1118,7 +1118,7 @@ DROP TABLE IF EXISTS bar;
 -- This contrived choice of distribution key is to ensure that
 -- subsequent UPDATE operations happen on a single GPDB segment.
 -- Otherwise, we may not exercise the case of out-of-order updates.
-CREATE TABLE foo (a INT, b INT, c CHAR(100)) WITH (appendonly=true)
+CREATE TABLE foo (a INT, b INT, c CHAR(100))
 DISTRIBUTED BY(b);
 INSERT INTO foo SELECT i as a, 1 as b, '' as c FROM generate_series(1, 100000) AS i;
 INSERT INTO foo SELECT i as a, 2 as b, '' as c FROM generate_series(1, 100000) AS i;
@@ -1157,7 +1157,7 @@ reset enable_nestloop;
 DROP TABLE IF EXISTS uao_orders_into;
 DROP TABLE IF EXISTS new_uao_orders_into;
 CREATE TABLE uao_orders_into(order_id serial , customer_id integer,
-      order_datetime timestamp, order_total numeric(10,2)) with (appendonly=true);
+      order_datetime timestamp, order_total numeric(10,2));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column(s) named 'order_id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 INSERT INTO uao_orders_into(customer_id, order_datetime, order_total)
@@ -1179,7 +1179,7 @@ select * from new_uao_orders_into;
 -- @Description Very simple test of delete
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 INSERT INTO FOO VALUES (1, 1, 'c');
 SELECT * FROM foo;
  a | b |                                                                c                                                                 
@@ -1196,7 +1196,7 @@ SELECT * FROM foo;
 -- @Description Tests that pg_class statistics are up-to-date when deleting and updating.
 -- 
 DROP TABLE IF EXISTS foo_@amname@;
-CREATE TABLE foo_@amname@ (a INT, b INT, c CHAR(128)) WITH (appendonly=true) DISTRIBUTED BY (a);
+CREATE TABLE foo_@amname@ (a INT, b INT, c CHAR(128)) DISTRIBUTED BY (a);
 CREATE INDEX foo_@amname@_index ON foo_@amname@(b);
 INSERT INTO foo_@amname@ SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
 SELECT reltuples FROM pg_class WHERE relname = 'foo_@amname@';
@@ -1249,7 +1249,7 @@ reset enable_seqscan;
 -- Note that the contents of the visimap is not checked here.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,10) AS i;
 SELECT COUNT(*) FROM foo;
@@ -1283,11 +1283,11 @@ SELECT COUNT(*) FROM foo;
 -- 
 -- scenario 1
 drop table if exists uao_ooo_del_tab1;
-create table uao_ooo_del_tab1 (i int, j int ) with (appendonly=true);
+create table uao_ooo_del_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_del_tab2;
-create table uao_ooo_del_tab2 (i int, j int )  with (appendonly=true);
+create table uao_ooo_del_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_del_tab1 values (1,10);
@@ -1328,11 +1328,11 @@ select count(*) from uao_ooo_del_tab1 ;
 set gp_select_invisible = false;
 -- scenario 2
 drop table if exists uao_ooo_del_tab1;
-create table uao_ooo_del_tab1 (i int, j int ) with (appendonly=true);;
+create table uao_ooo_del_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_del_tab2;
-create table uao_ooo_del_tab2 (i int, j int ) with (appendonly=true); ;
+create table uao_ooo_del_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_del_tab1 values (1,10) ,(1,0) ;
@@ -1390,11 +1390,11 @@ select count(*) from uao_ooo_del_tab1 ;
 set gp_select_invisible = false;
 -- scenario 3
 drop table if exists uao_ooo_upd_tab1;
-create table uao_ooo_upd_tab1 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_upd_tab2;
-create table uao_ooo_upd_tab2 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_upd_tab1 values (1,10) ,(1,10) ;
@@ -1467,11 +1467,11 @@ set gp_select_invisible = false;
 -- 
 -- scenario 1
 drop table if exists uao_ooo_upd_tab1;
-create table uao_ooo_upd_tab1 (i int, j int ) with (appendonly=true);
+create table uao_ooo_upd_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_upd_tab2;
-create table uao_ooo_upd_tab2 (i int, j int )  with (appendonly=true);
+create table uao_ooo_upd_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_upd_tab1 values (1,10);
@@ -1512,11 +1512,11 @@ select count(*) from uao_ooo_upd_tab1 ;
 set gp_select_invisible = false;
 -- scenario 2
 drop table if exists uao_ooo_upd_tab1;
-create table uao_ooo_upd_tab1 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_upd_tab2;
-create table uao_ooo_upd_tab2 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_upd_tab1 values (1,10) ,(1,10) ;
@@ -1578,11 +1578,11 @@ select * from uao_ooo_upd_tab1 ;
 
 -- scenario 3
 drop table if exists uao_ooo_upd_tab1;
-create table uao_ooo_upd_tab1 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab1 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists uao_ooo_upd_tab2;
-create table uao_ooo_upd_tab2 (i int, j int ) with (appendonly=true) ;
+create table uao_ooo_upd_tab2 (i int, j int );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into  uao_ooo_upd_tab1 values (1,10) ,(1,10) ;
@@ -1661,7 +1661,7 @@ set gp_select_invisible = false;
 -- @Description Tests basic update commands on ao tables when aborted
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
 BEGIN;
@@ -1708,7 +1708,7 @@ set gp_select_invisible=false;
 -- @Description Tests basic update commands on ao tables.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1,1000) AS i;
 UPDATE foo SET b=42 WHERE a < 10;
@@ -1730,7 +1730,7 @@ UPDATE foo SET b=1002 WHERE a < 5;
 -- @Description Tests the update command with many blocks.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 BEGIN;
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1, 100000) AS i;
@@ -1806,8 +1806,8 @@ SELECT SUM(b) FROM foo WHERE a = 17;
 -- 
 drop table if exists foo;
 drop table if exists bar;
-CREATE TABLE foo (a INT, b int, c int, d int) with (appendonly = true);
-CREATE TABLE bar (a INT, b int, c int, d int) with (appendonly = true);
+CREATE TABLE foo (a INT, b int, c int, d int);
+CREATE TABLE bar (a INT, b int, c int, d int);
 INSERT INTO foo SELECT i as a,i,i,i  FROM generate_series(1, 100000) AS i;
 INSERT INTO bar SELECT i as a,i,i,i  FROM generate_series(1, 100000) AS i;
 set enable_hashjoin=off;
@@ -1824,7 +1824,7 @@ reset enable_mergejoin;
 -- @Description Tests that update is supported in a subtransaction.
 -- 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (a INT, b INT, c CHAR(128)) WITH (appendonly=true);
+CREATE TABLE foo (a INT, b INT, c CHAR(128));
 CREATE INDEX foo_index ON foo(b);
 INSERT INTO foo SELECT i as a, i as b, 'hello world' as c FROM generate_series(1, 100) AS i;
 BEGIN;
