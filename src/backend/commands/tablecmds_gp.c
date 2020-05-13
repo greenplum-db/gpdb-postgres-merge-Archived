@@ -149,6 +149,14 @@ GpFindTargetPartition(Relation parent, GpAlterPartitionId *partid,
 			partname = makeObjectName(RelationGetRelationName(parent),
 									  levelStr, partsubstring);
 
+			/*
+			 * GPDB_12_MERGE_FIXME: Child can be in different namespace from
+			 * parent. So, using parent's namespace to find the relation seems
+			 * incorrect. Need to find better way to find the relation. One
+			 * option is to use the OIDs of child partitions from parent
+			 * relation objects partDesc and then lookup which table matches
+			 * the given name. Though that might be expensive lookup.
+			 */
 			schemaname   = get_namespace_name(parent->rd_rel->relnamespace);
 			partrv       = makeRangeVar(schemaname, partname, -1);
 			partRel      = table_openrv_extended(partrv, AccessShareLock, missing_ok);
