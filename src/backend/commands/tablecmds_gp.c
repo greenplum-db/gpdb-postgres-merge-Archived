@@ -332,6 +332,33 @@ generatePartitionSpec(Relation rel)
 	return subpart;
 }
 
+static RenameStmt *
+generateRenameStmt(RangeVar *rv, const char *newname)
+{
+	RenameStmt *rstmt = makeNode(RenameStmt);
+
+	rstmt->renameType = OBJECT_TABLE;
+	rstmt->relation = rv;
+	rstmt->subname = NULL;
+	rstmt->newname = pstrdup(newname);
+	rstmt->missing_ok = false;
+
+	return rstmt;
+}
+
+static AlterObjectSchemaStmt *
+generateAlterSchema(RangeVar *rv, const char *newname)
+{
+	AlterObjectSchemaStmt *shstmt = makeNode(AlterObjectSchemaStmt);
+	shstmt->objectType = OBJECT_TABLE;
+	shstmt->relation = rv;
+	shstmt->newschema = pstrdup(newname);
+	shstmt->missing_ok = false;
+
+	return shstmt;
+}
+
+
 /*
  * ------------------------------
  * Implementation for command:
@@ -343,8 +370,12 @@ generatePartitionSpec(Relation rel)
  * 1. ALTER TABLE <tab> DETACH PARTITION <oldpart>;
  * 2. ALTER TABLE <tab> ATTACH PARTITION <oldpart>;
  * 3. ALTER TABLE <oldpart> RENAME TO tmp;
- * 4. ALTER TABLE <newpart> RENAME TO <oldpart>;
- * 5. ALTER TABLE tmp RENAME TO <newpart>
+ * 4. if namespace differ between oldpart and newpart
+ *      a. ALTER TABLE <tmp> SET SCHEMA <newpart_schema>
+ *      b. ALTER TABLE <newpart> RENAME TO <tmp2>
+ *      c. ALTER TABLE <tmp2> SET SCHEMA <oldpart_schema>
+ * 5. ALTER TABLE <newpart> RENAME TO <oldpart>;
+ * 6. ALTER TABLE tmp RENAME TO <newpart>
  * ------------------------------
  */
 static List *
@@ -356,6 +387,8 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 	RangeVar *oldpartrv;
 	RangeVar *tmprv;
 	List	 *stmts = NIL;
+	char	 *newpartname = pstrdup(newpartrv->relname);
+	char	 tmpname2[NAMEDATALEN];
 
 	/* detach oldpart partition cmd construction */
 	{
@@ -437,6 +470,11 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 		AlterTableCmd  *atcmd  = makeNode(AlterTableCmd);
 		PartitionCmd   *pcmd   = makeNode(PartitionCmd);
 
+		Relation newpartrel = table_openrv(newpartrv, AccessShareLock);
+		newpartrv->schemaname = get_namespace_name(RelationGetNamespace(newpartrel));
+		snprintf(tmpname2, sizeof(tmpname2), "pg_temp_%u", RelationGetRelid(newpartrel));
+		table_close(newpartrel, AccessShareLock);
+
 		pcmd->name = newpartrv;
 		pcmd->bound = boundspec;
 		atcmd->subtype = AT_AttachPartition;
@@ -454,43 +492,41 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 	}
 
 	/* rename oldpart to tmp */
+	stmts = lappend(stmts, (Node *) generateRenameStmt(oldpartrv, tmprv->relname));
+
+	/*
+	 * if schema is different for tables, need to swap the schema
+	 */
+	if (strcmp(oldpartrv->schemaname, newpartrv->schemaname) != 0)
 	{
-		RenameStmt *rstmt = makeNode(RenameStmt);
+		/* change schema for tmp to newpart schema */
+		stmts = lappend(stmts, (Node *) generateAlterSchema(tmprv, newpartrv->schemaname));
 
-		rstmt->renameType = OBJECT_TABLE;
-		rstmt->relation = oldpartrv;
-		rstmt->subname = NULL;
-		rstmt->newname = pstrdup(tmprv->relname);
-		rstmt->missing_ok = false;
+		/* reflect new reality in temprv for later use */
+		tmprv = makeRangeVar(pstrdup(newpartrv->schemaname),
+							 pstrdup(tmprv->relname),
+							 pc->location);
 
-		stmts = lappend(stmts, (Node *) rstmt);
+		/* rename newpart to tmp2 */
+		stmts = lappend(stmts, (Node *) generateRenameStmt(newpartrv, tmpname2));
+
+		/* change schema for temp2 to oldpart schema */
+		stmts = lappend(stmts, (Node *) generateAlterSchema(
+							makeRangeVar(pstrdup(newpartrv->schemaname),
+										 pstrdup(tmpname2),
+										 pc->location),
+							oldpartrv->schemaname));
+
+		/* reflect new reality in newpartrv for later use */
+		newpartrv = makeRangeVar(pstrdup(oldpartrv->schemaname),
+								 pstrdup(tmpname2),
+								 pc->location);
 	}
 
 	/* rename newpart to oldpart */
-	{
-		RenameStmt *rstmt = makeNode(RenameStmt);
-
-		rstmt->renameType = OBJECT_TABLE;
-		rstmt->relation = newpartrv;
-		rstmt->subname = NULL;
-		rstmt->newname = pstrdup(oldpartrv->relname);
-		rstmt->missing_ok = false;
-
-		stmts = lappend(stmts, (Node *) rstmt);
-	}
-
+	stmts = lappend(stmts, (Node *) generateRenameStmt(newpartrv, oldpartrv->relname));
 	/* rename tmp to newpart */
-	{
-		RenameStmt *rstmt = makeNode(RenameStmt);
-
-		rstmt->renameType = OBJECT_TABLE;
-		rstmt->relation = tmprv;
-		rstmt->subname = NULL;
-		rstmt->newname = pstrdup(newpartrv->relname);
-		rstmt->missing_ok = false;
-
-		stmts = lappend(stmts, (Node *) rstmt);
-	}
+	stmts = lappend(stmts, (Node *) generateRenameStmt(tmprv, newpartname));
 
 	return stmts;
 }
