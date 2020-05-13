@@ -58,8 +58,6 @@ static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
 									 Datum *values, bool *isnull, RewriteState rwstate);
 
-static void reset_state_cb(void *arg);
-
 static const TableAmRoutine appendonly_methods;
 
 typedef struct AppendOnlyDMLState
@@ -70,73 +68,10 @@ typedef struct AppendOnlyDMLState
 } AppendOnlyDMLState;
 
 
-/*
- * GPDB_12_MERGE_FIXME: This is a temporary state of things. A locally stored
- * state is needed currently because there is no viable place to store this
- * information outside of the table access method. Ideally the caller should be
- * responsible for initializing a state and passing it over using the table
- * access method api.
- *
- * Until this is in place, the local state is not to be accessed directly but
- * only via the *_dml_state functions.
- * It contains:
- *		a quick look up member for the common case
- *		a hash table which keeps per relation information
- *		a memory context that should be long lived enough and is
- *			responsible for reseting the state via its reset cb
- */
-static struct AppendOnlyLocal
-{
-	AppendOnlyDMLState	   *last_used_state;
-	HTAB				   *dmlDescriptorTab;
-
-	MemoryContext			stateCxt;
-	MemoryContextCallback	cb;
-} appendOnlyLocal	  = {
-	.last_used_state  = NULL,
-	.dmlDescriptorTab = NULL,
-
-	.stateCxt		  = NULL,
-	.cb				  = {
-		.func	= reset_state_cb,
-		.arg	= NULL
-	},
-};
-
 /* ------------------------------------------------------------------------
  * DML state related functions
  * ------------------------------------------------------------------------
  */
-
-/*
- * This function should be called with a current memory context whose life
- * span is enough to last until the end of this command execution.
- */
-static void
-init_dml_local_state(void)
-{
-	HASHCTL hash_ctl;
-
-	if (!appendOnlyLocal.dmlDescriptorTab)
-	{
-		Assert(appendOnlyLocal.stateCxt == NULL);
-		appendOnlyLocal.stateCxt = AllocSetContextCreate(
-												CurrentMemoryContext,
-												"AppendOnly DML State Context",
-												ALLOCSET_SMALL_SIZES);
-		MemoryContextRegisterResetCallback(
-								appendOnlyLocal.stateCxt,
-							   &appendOnlyLocal.cb);
-
-		memset(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize = sizeof(Oid);
-		hash_ctl.entrysize = sizeof(AppendOnlyDMLState);
-		hash_ctl.hcxt = appendOnlyLocal.stateCxt;
-		appendOnlyLocal.dmlDescriptorTab =
-			hash_create("AppendOnly DML state", 128, &hash_ctl,
-						HASH_CONTEXT | HASH_ELEM | HASH_BLOBS);
-	}
-}
 
 
 /*
@@ -145,98 +80,20 @@ init_dml_local_state(void)
  */
 
 /*
- * Create and insert a state entry for a relation. The actual descriptors will
- * be created lazily when/if needed.
- *
- * Should be called exactly once per relation.
- */
-static inline AppendOnlyDMLState *
-enter_dml_state(const Oid relationOid)
-{
-	AppendOnlyDMLState *state;
-	bool				found;
-
-	Assert(appendOnlyLocal.dmlDescriptorTab);
-
-	state = (AppendOnlyDMLState *) hash_search(
-										appendOnlyLocal.dmlDescriptorTab,
-									   &relationOid,
-										HASH_ENTER,
-									   &found);
-
-	Assert(!found);
-
-	state->insertDesc = NULL;
-	state->deleteDesc = NULL;
-
-	appendOnlyLocal.last_used_state = state;
-	return state;
-}
-
-/*
- * Retrieve the state information for a relation.
- * It is required that the state has been created before hand.
- */
-static inline AppendOnlyDMLState *
-find_dml_state(const Oid relationOid)
-{
-	AppendOnlyDMLState *state;
-	Assert(appendOnlyLocal.dmlDescriptorTab);
-
-	if (appendOnlyLocal.last_used_state &&
-			appendOnlyLocal.last_used_state->relationOid == relationOid)
-		return appendOnlyLocal.last_used_state;
-
-	state = (AppendOnlyDMLState *) hash_search(
-										appendOnlyLocal.dmlDescriptorTab,
-									   &relationOid,
-										HASH_FIND,
-										NULL);
-
-	Assert(state);
-
-	appendOnlyLocal.last_used_state = state;
-	return state;
-}
-
-/*
- * Remove the state information for a relation.
- * It is required that the state has been created before hand.
- *
- * Should be called exactly once per relation.
- */
-static inline AppendOnlyDMLState *
-remove_dml_state(const Oid relationOid)
-{
-	AppendOnlyDMLState *state;
-	Assert(appendOnlyLocal.dmlDescriptorTab);
-
-	state = (AppendOnlyDMLState *) hash_search(
-										appendOnlyLocal.dmlDescriptorTab,
-									   &relationOid,
-										HASH_REMOVE,
-										NULL);
-
-	Assert(state);
-
-	if (appendOnlyLocal.last_used_state &&
-			appendOnlyLocal.last_used_state->relationOid == relationOid)
-		appendOnlyLocal.last_used_state = NULL;
-
-	return state;
-}
-
-/*
- * Although the operation param is superfluous at the momment, the signature of
- * the function is such for balance between the init and finish.
- *
  * This function should be called exactly once per relation.
  */
 void
 appendonly_dml_init(Relation relation, CmdType operation)
 {
-	init_dml_local_state();
-	(void) enter_dml_state(RelationGetRelid(relation));
+	MemoryContext oldCtx;
+	AppendOnlyDMLState *state;
+
+	Assert(relation->rd_dmlPrivDesc == NULL);
+
+	oldCtx = MemoryContextSwitchTo(TopTransactionContext);
+	state = palloc0(sizeof(AppendOnlyDMLState));
+	relation->rd_dmlPrivDesc = list_make1(state);
+	MemoryContextSwitchTo(oldCtx);
 }
 
 /*
@@ -247,7 +104,9 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 {
 	AppendOnlyDMLState *state;
 
-	state = remove_dml_state(RelationGetRelid(relation));
+	Assert(relation->rd_dmlPrivDesc != NULL);
+
+	state = (AppendOnlyDMLState *)linitial(relation->rd_dmlPrivDesc);
 
 	if (state->deleteDesc)
 	{
@@ -269,21 +128,9 @@ appendonly_dml_finish(Relation relation, CmdType operation)
 		appendonly_insert_finish(state->insertDesc);
 		state->insertDesc = NULL;
 	}
-}
 
-/*
- * There are two cases that we are called from, during context destruction
- * after a successful completion and after a transaction abort. Only in the
- * second case we should not have cleaned up the DML state and the entries in
- * the hash table. We need to reset our global state. The actual clean up is
- * taken care elsewhere.
- */
-static void
-reset_state_cb(void *arg)
-{
-	appendOnlyLocal.dmlDescriptorTab = NULL;
-	appendOnlyLocal.last_used_state = NULL;
-	appendOnlyLocal.stateCxt = NULL;
+	list_free_deep(relation->rd_dmlPrivDesc);
+	relation->rd_dmlPrivDesc = NULL;
 }
 
 /*
@@ -292,19 +139,18 @@ reset_state_cb(void *arg)
 static AppendOnlyInsertDesc
 get_insert_descriptor(const Relation relation)
 {
+	MemoryContext oldCtx;
 	AppendOnlyDMLState *state;
 
-	state = find_dml_state(RelationGetRelid(relation));
+	Assert(relation->rd_dmlPrivDesc != NULL);
 
+	state = (AppendOnlyDMLState *) linitial(relation->rd_dmlPrivDesc);
+
+	oldCtx = MemoryContextSwitchTo(TopTransactionContext);
 	if (state->insertDesc == NULL)
-	{
-		MemoryContext oldcxt;
-
-		oldcxt = MemoryContextSwitchTo(appendOnlyLocal.stateCxt);
 		state->insertDesc = appendonly_insert_init(relation,
-												   ChooseSegnoForWrite(relation));
-		MemoryContextSwitchTo(oldcxt);
-	}
+		                                           ChooseSegnoForWrite(relation));
+	MemoryContextSwitchTo(oldCtx);
 
 	return state->insertDesc;
 }
@@ -315,9 +161,12 @@ get_insert_descriptor(const Relation relation)
 static AppendOnlyDeleteDesc
 get_delete_descriptor(const Relation relation, bool forUpdate)
 {
+	MemoryContext oldCtx;
 	AppendOnlyDMLState *state;
 
-	state = find_dml_state(RelationGetRelid(relation));
+	Assert(relation->rd_dmlPrivDesc != NULL);
+
+	state = (AppendOnlyDMLState *) linitial(relation->rd_dmlPrivDesc);
 
 	if (state->deleteDesc == NULL)
 	{
@@ -326,7 +175,6 @@ get_delete_descriptor(const Relation relation, bool forUpdate)
 		 * Example during init? Idealy should be called on master node first,
 		 * that way we will avoid the dispatch.
 		 */
-		MemoryContext oldcxt;
 		if (IsolationUsesXactSnapshot())
 		{
 			if (forUpdate)
@@ -339,9 +187,9 @@ get_delete_descriptor(const Relation relation, bool forUpdate)
 						 errmsg("deletes on append-only tables are not supported in serializable transactions")));
 		}
 
-		oldcxt = MemoryContextSwitchTo(appendOnlyLocal.stateCxt);
+		oldCtx = MemoryContextSwitchTo(TopTransactionContext);
 		state->deleteDesc = appendonly_delete_init(relation);
-		MemoryContextSwitchTo(oldcxt);
+		MemoryContextSwitchTo(oldCtx);
 	}
 
 	return state->deleteDesc;
@@ -1828,6 +1676,8 @@ static const TableAmRoutine appendonly_methods = {
 	.index_fetch_end = appendonly_index_fetch_end,
 	.index_fetch_tuple = appendonly_index_fetch_tuple,
 
+	.dml_start = appendonly_dml_init,
+	.dml_finish = appendonly_dml_finish,
 	.tuple_insert = appendonly_tuple_insert,
 	.tuple_insert_speculative = appendonly_tuple_insert_speculative,
 	.tuple_complete_speculative = appendonly_tuple_complete_speculative,

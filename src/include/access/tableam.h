@@ -353,6 +353,12 @@ typedef struct TableAmRoutine
 	 * ------------------------------------------------------------------------
 	 */
 
+	/* */
+	void        (*dml_start) (Relation rel, CmdType operation);
+
+	/* */
+	void        (*dml_finish) (Relation rel, CmdType operation);
+
 	/* see table_tuple_insert() for reference about parameters */
 	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot,
 								 CommandId cid, int options,
@@ -1219,6 +1225,20 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
 	return rel->rd_tableam->tuple_delete(rel, tid, cid,
 										 snapshot, crosscheck,
 										 wait, tmfd, changingPart);
+}
+
+static inline void
+table_dml_start(Relation rel, CmdType operation)
+{
+	if (rel->rd_tableam->dml_start)
+		rel->rd_tableam->dml_start(rel, operation);
+}
+
+static inline void
+table_dml_finish(Relation rel, CmdType operation)
+{
+	if (rel->rd_tableam->dml_finish)
+		rel->rd_tableam->dml_finish(rel, operation);
 }
 
 /*

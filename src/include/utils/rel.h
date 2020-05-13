@@ -146,6 +146,7 @@ typedef struct RelationData
 	 * Table access method.
 	 */
 	const struct TableAmRoutine *rd_tableam;
+	List *rd_dmlPrivDesc;
 
 	/* These are non-NULL only for an index relation: */
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
