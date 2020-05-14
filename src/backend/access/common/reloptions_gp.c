@@ -46,7 +46,7 @@ static relopt_bool boolRelOpts_gp[] =
 		{
 			SOPT_CHECKSUM,
 			"Append table checksum",
-			RELOPT_KIND_APPENDOPTIMIZED,
+			RELOPT_KIND_APPENDOPTIMIZED | RELOPT_KIND_HEAP,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_CHECKSUM
@@ -71,7 +71,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_BLOCKSIZE,
 			"AO tables block size in bytes",
-			RELOPT_KIND_APPENDOPTIMIZED,
+			RELOPT_KIND_APPENDOPTIMIZED | RELOPT_KIND_HEAP,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_BLOCKSIZE, MIN_APPENDONLY_BLOCK_SIZE, MAX_APPENDONLY_BLOCK_SIZE
@@ -80,7 +80,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_COMPLEVEL,
 			"AO table compression level",
-			RELOPT_KIND_APPENDOPTIMIZED,
+			RELOPT_KIND_APPENDOPTIMIZED| RELOPT_KIND_HEAP,
 			ShareUpdateExclusiveLock	/* since it applies only to later
 										 * inserts */
 		},
@@ -102,7 +102,7 @@ static relopt_string stringRelOpts_gp[] =
 		{
 			SOPT_COMPTYPE,
 			"AO tables compression type",
-			RELOPT_KIND_APPENDOPTIMIZED,
+			RELOPT_KIND_APPENDOPTIMIZED | RELOPT_KIND_HEAP,
 			AccessExclusiveLock
 		},
 		0, true, NULL, ""

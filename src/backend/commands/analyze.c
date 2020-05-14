@@ -1522,10 +1522,17 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * For AO and AOCO we directly give tuple number as block number
 	 */
-	if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-		onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
+	if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)
 	{
 		FileSegTotals * segTotals = GetSegFilesTotals(onerel, GetTransactionSnapshot());
+
+		totalblocks = segTotals->totaltuples > UINT_MAX ?
+		              UINT_MAX : segTotals->totaltuples;
+	}
+	else if (onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
+	{
+		FileSegTotals * segTotals =
+		GetAOCSSSegFilesTotals(onerel, GetTransactionSnapshot());
 
 		totalblocks = segTotals->totaltuples > UINT_MAX ?
 		              UINT_MAX : segTotals->totaltuples;

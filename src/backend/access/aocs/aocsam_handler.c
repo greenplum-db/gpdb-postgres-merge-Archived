@@ -51,10 +51,267 @@
 #include "utils/faultinjector.h"
 #include "utils/rel.h"
 
+typedef struct AOCODMLState
+{
+	Oid relationOid;
+	AOCSInsertDesc insertDesc;
+	AOCSDeleteDesc deleteDesc;
+} AOCODMLState;
+
+static void reset_state_cb(void *arg);
+/*
+ * GPDB_12_MERGE_FIXME: This is a temporary state of things. A locally stored
+ * state is needed currently because there is no viable place to store this
+ * information outside of the table access method. Ideally the caller should be
+ * responsible for initializing a state and passing it over using the table
+ * access method api.
+ *
+ * Until this is in place, the local state is not to be accessed directly but
+ * only via the *_dml_state functions.
+ * It contains:
+ *		a quick look up member for the common case
+ *		a hash table which keeps per relation information
+ *		a memory context that should be long lived enough and is
+ *			responsible for reseting the state via its reset cb
+ */
+static struct AOCOLocal
+{
+	AOCODMLState           *last_used_state;
+	HTAB				   *dmlDescriptorTab;
+
+	MemoryContext			stateCxt;
+	MemoryContextCallback	cb;
+} aocoLocal = {
+	.last_used_state  = NULL,
+	.dmlDescriptorTab = NULL,
+
+	.stateCxt		  = NULL,
+	.cb				  = {
+		.func	= reset_state_cb,
+		.arg	= NULL
+	},
+};
+
+/*
+ * There are two cases that we are called from, during context destruction
+ * after a successful completion and after a transaction abort. Only in the
+ * second case we should not have cleaned up the DML state and the entries in
+ * the hash table. We need to reset our global state. The actual clean up is
+ * taken care elsewhere.
+ */
+static void
+reset_state_cb(void *arg)
+{
+	aocoLocal.dmlDescriptorTab = NULL;
+	aocoLocal.last_used_state = NULL;
+	aocoLocal.stateCxt = NULL;
+}
+
+static void
+init_dml_local_state(void)
+{
+	HASHCTL hash_ctl;
+
+	if (!aocoLocal.dmlDescriptorTab)
+	{
+		Assert(aocoLocal.stateCxt == NULL);
+		aocoLocal.stateCxt = AllocSetContextCreate(
+			CurrentMemoryContext,
+			"AppendOnly DML State Context",
+			ALLOCSET_SMALL_SIZES);
+		MemoryContextRegisterResetCallback(
+			aocoLocal.stateCxt,
+			&aocoLocal.cb);
+
+		memset(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(Oid);
+		hash_ctl.entrysize = sizeof(AOCODMLState);
+		hash_ctl.hcxt = aocoLocal.stateCxt;
+		aocoLocal.dmlDescriptorTab =
+			hash_create("AppendOnly DML state", 128, &hash_ctl,
+			            HASH_CONTEXT | HASH_ELEM | HASH_BLOBS);
+	}
+}
+
+/*
+ * Create and insert a state entry for a relation. The actual descriptors will
+ * be created lazily when/if needed.
+ *
+ * Should be called exactly once per relation.
+ */
+static inline AOCODMLState *
+enter_dml_state(const Oid relationOid)
+{
+	AOCODMLState *state;
+	bool				found;
+
+	Assert(aocoLocal.dmlDescriptorTab);
+
+	state = (AOCODMLState *) hash_search(
+		aocoLocal.dmlDescriptorTab,
+		&relationOid,
+		HASH_ENTER,
+		&found);
+
+	Assert(!found);
+
+	state->insertDesc = NULL;
+	state->deleteDesc = NULL;
+
+	aocoLocal.last_used_state = state;
+	return state;
+}
+
+/*
+ * Retrieve the state information for a relation.
+ * It is required that the state has been created before hand.
+ */
+static inline AOCODMLState *
+find_dml_state(const Oid relationOid)
+{
+	AOCODMLState *state;
+	Assert(aocoLocal.dmlDescriptorTab);
+
+	if (aocoLocal.last_used_state &&
+		aocoLocal.last_used_state->relationOid == relationOid)
+		return aocoLocal.last_used_state;
+
+	state = (AOCODMLState *) hash_search(
+		aocoLocal.dmlDescriptorTab,
+		&relationOid,
+		HASH_FIND,
+		NULL);
+
+	Assert(state);
+
+	aocoLocal.last_used_state = state;
+	return state;
+}
+
+/*
+ * Remove the state information for a relation.
+ * It is required that the state has been created before hand.
+ *
+ * Should be called exactly once per relation.
+ */
+static inline AOCODMLState *
+remove_dml_state(const Oid relationOid)
+{
+	AOCODMLState *state;
+	Assert(aocoLocal.dmlDescriptorTab);
+
+	state = (AOCODMLState *) hash_search(
+		aocoLocal.dmlDescriptorTab,
+		&relationOid,
+		HASH_REMOVE,
+		NULL);
+
+	Assert(state);
+
+	if (aocoLocal.last_used_state &&
+		aocoLocal.last_used_state->relationOid == relationOid)
+		aocoLocal.last_used_state = NULL;
+
+	return state;
+}
+
+/*
+ * Although the operation param is superfluous at the momment, the signature of
+ * the function is such for balance between the init and finish.
+ *
+ * This function should be called exactly once per relation.
+ */
+void
+aoco_dml_init(Relation relation, CmdType operation)
+{
+	init_dml_local_state();
+	(void) enter_dml_state(RelationGetRelid(relation));
+}
+
+/*
+ * This function should be called exactly once per relation.
+ */
+void
+aoco_dml_finish(Relation relation, CmdType operation)
+{
+	AOCODMLState *state;
+
+	state = remove_dml_state(RelationGetRelid(relation));
+
+	if (state->deleteDesc)
+	{
+		aocs_delete_finish(state->deleteDesc);
+		state->deleteDesc = NULL;
+
+		/*
+		 * Bump up the modcount. If we inserted something (meaning that
+		 * this was an UPDATE), we can skip this, as the insertion bumped
+		 * up the modcount already.
+		 */
+		if (!state->insertDesc)
+			AORelIncrementModCount(relation);
+	}
+
+	if (state->insertDesc)
+	{
+		Assert(state->insertDesc->aoi_rel == relation);
+		aocs_insert_finish(state->insertDesc);
+		state->insertDesc = NULL;
+	}
+
+}
+
+/*
+ * Retrieve the insertDescriptor for a relation. Initialize it if needed.
+ */
+static AOCSInsertDesc
+get_insert_descriptor(const Relation relation, bool for_update)
+{
+	AOCODMLState *state;
+
+	state = find_dml_state(RelationGetRelid(relation));
+
+	if (state->insertDesc == NULL)
+	{
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(aocoLocal.stateCxt);
+		state->insertDesc = aocs_insert_init(relation,
+		                                     ChooseSegnoForWrite(relation),
+		                                     for_update);
+		MemoryContextSwitchTo(oldcxt);
+	}
+
+	return state->insertDesc;
+}
+
+static Datum
+tts_aocovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
+{
+	Datum result;
+
+	if (attnum == GpSegmentIdAttributeNumber)
+	{
+		*isnull = false;
+		result = Int32GetDatum(GpIdentity.segindex);
+	}
+	else
+		result = TTSOpsVirtual.getsysattr(slot, attnum, isnull);
+
+	return result;
+}
+
+/*
+ * AOCO access method uses virtual tuples with some minor modifications.
+ */
 static const TupleTableSlotOps *
 aoco_slot_callbacks(Relation relation)
 {
-	elog(ERROR, "not implemented yet");
+	TupleTableSlotOps *aoSlotOps = palloc(sizeof(TupleTableSlotOps));
+
+	*aoSlotOps = TTSOpsVirtual;
+	aoSlotOps->getsysattr = tts_aocovirtual_getsysattr;
+	return (const TupleTableSlotOps*) aoSlotOps;
 }
 
 static TableScanDesc
@@ -64,14 +321,15 @@ aoco_beginscan(Relation relation,
                      ParallelTableScanDesc pscan,
                      uint32 flags)
 {
-	elog(ERROR, "not implemented yet");
+	TableScanDesc scanDesc = palloc0(sizeof(TableScanDesc));
+	scanDesc->rs_rd = relation;
+	return scanDesc;
 }
 
 static void
 aoco_endscan(TableScanDesc scan)
 {
-	elog(ERROR, "not implemented yet");
-
+	pfree(scan);
 }
 
 static void
@@ -140,7 +398,15 @@ static void
 aoco_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
                         int options, BulkInsertState bistate)
 {
-	elog(ERROR, "not implemented yet");
+
+	AOCSInsertDesc          insertDesc;
+	bool					shouldFree = true;
+
+	insertDesc = get_insert_descriptor(relation, false);
+
+	aocs_insert(insertDesc, slot);
+
+	pgstat_count_heap_insert(relation, 1);
 }
 
 static void
@@ -332,7 +598,7 @@ static bool
 aoco_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
                                    BufferAccessStrategy bstrategy)
 {
-	elog(ERROR, "not implemented yet");
+	return false;
 }
 
 static bool
@@ -340,7 +606,7 @@ aoco_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
                                    double *liverows, double *deadrows,
                                    TupleTableSlot *slot)
 {
-	elog(ERROR, "not implemented yet");
+	return false;
 }
 
 static double
@@ -380,7 +646,7 @@ aoco_index_validate_scan(Relation heapRelation,
 static uint64
 aoco_relation_size(Relation rel, ForkNumber forkNumber)
 {
-	elog(ERROR, "not implemented yet");
+	return BLCKSZ;
 }
 
 static bool

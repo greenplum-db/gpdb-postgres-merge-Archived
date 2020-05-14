@@ -71,7 +71,7 @@ typedef struct AOCSInsertDescData
 	 * When initialized in update mode, the insert is really part of
 	 * an AO update.
 	 * Certain statistics are then counted differently.
-	 */ 
+	 */
 	bool update_mode;
 } AOCSInsertDescData;
 
@@ -268,4 +268,7 @@ extern void aocs_addcol_emptyvpe(
 		int32 nseg, int num_newcols);
 extern void aocs_addcol_setfirstrownum(AOCSAddColumnDesc desc,
 		int64 firstRowNum);
+
+extern void aoco_dml_init(Relation relation, CmdType operation);
+extern void aoco_dml_finish(Relation relation, CmdType operation);
 #endif   /* AOCSAM_H */
