@@ -208,19 +208,6 @@ aoco_finish_bulk_insert(Relation relation, int options)
 }
 
 
-/* ------------------------------------------------------------------------
- * DDL related callbacks for heap AM.
- * ------------------------------------------------------------------------
- */
-
-static void
-aoco_relation_set_new_filenode(Relation rel,
-                                     const RelFileNode *newrnode,
-                                     char persistence,
-                                     TransactionId *freezeXid,
-                                     MultiXactId *minmulti)
-{
-}
 
 
 /* ------------------------------------------------------------------------
@@ -399,7 +386,12 @@ aoco_relation_size(Relation rel, ForkNumber forkNumber)
 static bool
 aoco_relation_needs_toast_table(Relation rel)
 {
-	elog(ERROR, "not implemented yet");
+
+	/*
+	 * GPDB_12_MERGE_FIXME: does the AOCO relation really needs a toast table?
+	 * Deactivate for now.
+	 */
+	return false;
 }
 
 
@@ -468,6 +460,7 @@ aoco_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
  * ------------------------------------------------------------------------
  */
 static const TableAmRoutine aoco_methods = {
+	.type = T_TableAmRoutine,
 	.slot_callbacks = aoco_slot_callbacks,
 
 	.scan_begin = aoco_beginscan,
@@ -499,7 +492,7 @@ static const TableAmRoutine aoco_methods = {
 	.tuple_satisfies_snapshot = aoco_tuple_satisfies_snapshot,
 	.compute_xid_horizon_for_tuples = aoco_compute_xid_horizon_for_tuples,
 
-	.relation_set_new_filenode = aoco_relation_set_new_filenode,
+	.relation_set_new_filenode = appendonly_relation_set_new_filenode, /* shared with AO */
 	.relation_nontransactional_truncate = aoco_relation_nontransactional_truncate,
 	.relation_copy_data = aoco_relation_copy_data,
 	.relation_copy_for_cluster = aoco_relation_copy_for_cluster,
