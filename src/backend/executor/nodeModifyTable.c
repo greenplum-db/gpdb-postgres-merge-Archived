@@ -878,17 +878,7 @@ ldelete:;
 				 * If a trigger actually intends this type of interaction, it
 				 * can re-execute the DELETE and then return NULL to cancel
 				 * the outer delete.
-				 *
-				 * In GPDB, for AO tables HeapTupleSelfUpdated is returned only
-				 * in case of same command tuple update based on visimap dirty
-				 * list checking. Also, hufd is not initialized and can't be for
-				 * AO case, as visimap update within same command happens at end
-				 * of command.
-				 * GPDB_12_MERGE_FIXME: Is the above comment and the commented out
-				 * check for RelationIsAppendOptimized still relevant? Shouldn't
-				 * all that be hidden behind the table AM API?
 				 */
-				//if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
 				if (tmfd.cmax != estate->es_output_cid)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),

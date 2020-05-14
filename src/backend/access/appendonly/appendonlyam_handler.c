@@ -704,6 +704,18 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 	result = appendonly_delete(deleteDesc, (AOTupleId *) tid);
 	if (result == TM_Ok)
 		pgstat_count_heap_delete(relation);
+	else if (result == TM_SelfModified)
+	{
+		/*
+		 * The visibility map entry has been set and it was in this command.
+		 *
+		 * Our caller might want to investigate tmfd to decide on appropriate
+		 * action. Set it here to match expectations. The uglyness here is
+		 * preferrable to having to inspect the relation's am in the caller.
+		 */
+		tmfd->cmax = cid;
+	}
+
 	return result;
 }
 
