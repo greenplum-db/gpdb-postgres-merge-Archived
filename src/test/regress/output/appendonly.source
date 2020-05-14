@@ -339,7 +339,7 @@ WHERE relname='tenk_ao1'));
    case    | objmod | last_sequence | gp_segment_id 
 -----------+--------+---------------+---------------
  NormalXid |      0 |             0 |             1
- NormalXid |      1 |         17100 |             1
+ NormalXid |      1 |         17000 |             1
  NormalXid |      0 |             0 |             2
  NormalXid |      1 |         16400 |             2
  NormalXid |      0 |             0 |             0
