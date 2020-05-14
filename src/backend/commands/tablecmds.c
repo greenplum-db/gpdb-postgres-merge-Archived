@@ -19519,7 +19519,8 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
 
-	if (!GpPolicyEqual(rel->rd_cdbpolicy, attachrel->rd_cdbpolicy))
+	if (attachrel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		!GpPolicyEqual(rel->rd_cdbpolicy, attachrel->rd_cdbpolicy))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("distribution policy for \"%s\" must be the same as that for \"%s\"",
