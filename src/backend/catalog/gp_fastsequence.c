@@ -43,15 +43,15 @@ static void insert_or_update_fastsequence(
  * yield wrong results for index scans. Also, entries in gp_fastsequence must
  * only exist for lifespan of the corresponding table.
  *
- * Given those special needs, this function inserts 2 initial rows to
- * fastsequence for segfile 0 (used for special cases like CTAS and ALTER) and
- * segfile 1. Only segfile 0 or segfile 1 can be used to insert tuples within
- * same transaction creating the table hence initial entry is only created for
- * these. Entries for rest of segfiles will get created with frozenXids during
- * inserts. These entries are inserted while creating the AO/CO table to
- * leverage MVCC to clear out gp_fastsequence entries incase of
+ * Given those special needs, this function inserts one initial row to
+ * fastsequence for segfile 0 (used for special cases like CTAS, ALTER and
+ * same transaction create and insert).  Only segfile 0 can be used to insert
+ * tuples within same transaction creating the table hence initial entry is
+ * only created for these. Entries for rest of segfiles will get created with
+ * frozenXids during inserts. These entries are inserted while creating the
+ * AO/CO table to leverage MVCC to clear out gp_fastsequence entries incase of
  * aborts/failures. All future calls to insert_or_update_fastsequence() for
- * objmod 0 or objmod 1 will perform inplace updates to these tuples.
+ * segfile 0 will perform inplace update.
  */
 void
 InsertInitialFastSequenceEntries(Oid objid)
@@ -76,12 +76,6 @@ InsertInitialFastSequenceEntries(Oid objid)
 
 	/* Insert enrty for segfile 0 */
 	values[Anum_gp_fastsequence_objmod - 1] = Int64GetDatum(RESERVED_SEGNO);
-	tuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
-	CatalogTupleInsert(gp_fastsequence_rel, tuple);
-	heap_freetuple(tuple);
-
-	/* Insert entry for segfile 1 */
-	values[Anum_gp_fastsequence_objmod - 1] = Int64GetDatum(1);
 	tuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
 	CatalogTupleInsert(gp_fastsequence_rel, tuple);
 	heap_freetuple(tuple);

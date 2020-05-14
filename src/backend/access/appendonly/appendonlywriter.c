@@ -27,6 +27,7 @@
 #include "access/heapam.h"				/* heap_open */
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_authid.h"
@@ -37,6 +38,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/faultinjector.h"
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/int8.h"
 #include "utils/snapmgr.h"
@@ -214,6 +216,8 @@ LockSegnoForWrite(Relation rel, int segno)
 		/* Skip using the ao segment if not latest version (except as a compaction target) */
 		if (formatversion != AORelationVersion_GetLatest())
 			elog(ERROR, "segfile %d is not of the latest version", segno);
+
+		found = true;
 		break;
 	}
 
@@ -319,6 +323,49 @@ ChooseSegnoForCompaction(Relation rel, List *avoid_segnos)
 }
 
 /*
+ * Reserved segno is special: it is inserted as a regular tuple (not frozen)
+ * in gp_fastsequence to leverage MVCC for cleanup in case of abort.  Reserved
+ * segno should be chosen for insert when the insert command is part of the
+ * same transaction that created the table.  See
+ * InsertInitialFastSequenceEntries for more details.
+ */
+static bool
+ShouldUseReservedSegno(Relation rel, choose_segno_mode mode)
+{
+	Relation pg_class;
+	ScanKeyData scankey[1];
+	SysScanDesc scan;
+	HeapTuple tuple;
+	TransactionId xmin;
+
+	/*
+	 * Reserved segno can only be chosen for non-vacuum cases because vacuum
+	 * cannot be executed from inside a transaction.
+	 */
+	if (mode != CHOOSE_MODE_WRITE)
+		return false;
+
+	ScanKeyInit(&scankey[0],
+				Anum_pg_class_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	pg_class = table_open(RelationRelationId, AccessShareLock);
+	scan = systable_beginscan(pg_class, ClassOidIndexId, true,
+							  NULL, 1, scankey);
+	tuple = systable_getnext(scan);
+	if (!tuple)
+		elog(ERROR, "unable to find relation entry in pg_class for %s",
+			 RelationGetRelationName(rel));
+	
+	xmin = HeapTupleHeaderGetXmin(tuple->t_data);
+	systable_endscan(scan);
+	table_close(pg_class, NoLock);
+
+	return TransactionIdIsCurrentTransactionId(xmin);
+}
+
+
+/*
  * Decide which segment number should be used to write into during the COPY,
  * INSERT, or VACUUM operation we're executing. This contains the common
  * logic for all three ChooseSegno* variants.
@@ -361,6 +408,16 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 	bool		tried_creating_new_segfile = false;
 
 	memset(used, 0, sizeof(used));
+
+	if (ShouldUseReservedSegno(rel, mode))
+	{
+		Assert(avoid_segnos == NIL);
+		if (Debug_appendonly_print_segfile_choice)
+			elog(LOG, "choose_segno_internal: chose RESERVED_SEGNO for wrie");
+
+		LockSegnoForWrite(rel, RESERVED_SEGNO);
+		return RESERVED_SEGNO;
+	}
 
 	/*
 	 * The algorithm below for choosing a target segment is not concurrent-safe.
@@ -434,12 +491,11 @@ choose_segno_internal(Relation rel, List *avoid_segnos, choose_segno_mode mode)
 				continue;
 
 			/*
-			 * Historically, segment 0 was only used in utility mode. There is no
-			 * particular reason we couldn't use segment 0 these days, but keep
-			 * that behavior to avoid surprising external tools. Regression
-			 * tests also expect that.
+			 * Historically, segment 0 was only used in utility mode.
+			 * Nowadays, segment 0 is also used for CTAS and alter table
+			 * rewrite commands.
 			 */
-			if (Gp_role != GP_ROLE_UTILITY && segno == 0)
+			if (Gp_role != GP_ROLE_UTILITY && segno == RESERVED_SEGNO)
 				continue;
 
 			/*

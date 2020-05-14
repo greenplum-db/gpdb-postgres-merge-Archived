@@ -299,7 +299,7 @@ SELECT count(*) FROM tenk_ao4;
 BEGIN;
 CREATE TABLE appendonly_sametxn_create_insert(a int, b int) with (appendonly=true);
 INSERT INTO appendonly_sametxn_create_insert select * from generate_series(1, 10);
--- Make sure insert is using segfile 1 for the insert, as part of create table itself.
+-- Make sure insert is using segfile 0 for the insert, as part of create table itself.
 SELECT CASE WHEN xmin = 2 THEN 'FrozenXid' ELSE 'NormalXid' END, objmod,
 last_sequence, gp_segment_id from gp_dist_random('gp_fastsequence') WHERE objid
 IN (SELECT segrelid FROM pg_appendonly WHERE relid IN (SELECT oid FROM pg_class
@@ -654,14 +654,26 @@ COMMIT;
 BEGIN;
 SAVEPOINT sp1;
 CREATE TABLE appendonly_subxans_test(a int, b int) WITH (appendonly=true);
+
+select oid as appendonly_subxans_test_oid from pg_class
+where relname = 'appendonly_subxans_test' \gset
+
 SAVEPOINT sp2;
+
 INSERT INTO appendonly_subxans_test SELECT * FROM generate_series(1, 10);
+
 SELECT CASE WHEN xmin = 2 THEN 'FrozenXid' ELSE 'NormalXid' END, objmod,
-last_sequence, gp_segment_id from gp_dist_random('gp_fastsequence') WHERE objid
-IN (SELECT segrelid FROM pg_appendonly WHERE relid IN (SELECT oid FROM pg_class
-WHERE relname='appendonly_subxans_test'));
+last_sequence, gp_segment_id from gp_dist_random('gp_fastsequence')
+WHERE objid IN (SELECT segrelid FROM pg_appendonly WHERE relid =:appendonly_subxans_test_oid);
+
 ROLLBACK TO SAVEPOINT sp1;
 COMMIT;
+
+-- No entry should have leaked in gp_fastsequence after subtransaction
+-- rollback.
+SELECT CASE WHEN xmin = 2 THEN 'FrozenXid' ELSE 'NormalXid' END, objmod,
+last_sequence, gp_segment_id from gp_dist_random('gp_fastsequence')
+WHERE objid IN (SELECT segrelid FROM pg_appendonly WHERE relid =:appendonly_subxans_test_oid);
 
 -- create table and insert in independent subtransactions, validate insert to
 -- gp_fastsequence is using NormalXid and not FrozenXid and stays despite
