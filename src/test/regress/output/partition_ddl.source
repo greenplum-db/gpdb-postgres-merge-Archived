@@ -68,18 +68,22 @@ subpartition by list (r_comment) subpartition template (
 (
 partition p1 values('4','1','3','0','2')(subpartition sp1 values('MIDDLE EAST','AMERICA'),subpartition sp2 values('AFRICA','EUROPE','ASIA'))
 );
-select tablename, parentpartitionname, count(*)
-from pg_partitions
-where tablename = 'mpp3137_region'
-group by tablename, parentpartitionname
-order by 1,2 asc;
-   tablename    | parentpartitionname | count 
-----------------+---------------------+-------
- mpp3137_region | p1                  |     2
- mpp3137_region | sp1                 |     4
- mpp3137_region | sp2                 |     4
- mpp3137_region |                     |     1
-(4 rows)
+select * from pg_partition_tree('mpp3137_region');
+                   relid                   |            parentrelid            | isleaf | level 
+-------------------------------------------+-----------------------------------+--------+-------
+ mpp3137_region                            |                                   | f      |     0
+ mpp3137_region_1_prt_p1                   | mpp3137_region                    | f      |     1
+ mpp3137_region_1_prt_p1_2_prt_sp1         | mpp3137_region_1_prt_p1           | f      |     2
+ mpp3137_region_1_prt_p1_2_prt_sp2         | mpp3137_region_1_prt_p1           | f      |     2
+ mpp3137_region_1_prt_p1_2_prt_sp1_3_prt_1 | mpp3137_region_1_prt_p1_2_prt_sp1 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp1_3_prt_2 | mpp3137_region_1_prt_p1_2_prt_sp1 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp1_3_prt_3 | mpp3137_region_1_prt_p1_2_prt_sp1 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp1_3_prt_4 | mpp3137_region_1_prt_p1_2_prt_sp1 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp2_3_prt_1 | mpp3137_region_1_prt_p1_2_prt_sp2 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp2_3_prt_2 | mpp3137_region_1_prt_p1_2_prt_sp2 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp2_3_prt_3 | mpp3137_region_1_prt_p1_2_prt_sp2 | t      |     3
+ mpp3137_region_1_prt_p1_2_prt_sp2_3_prt_4 | mpp3137_region_1_prt_p1_2_prt_sp2 | t      |     3
+(12 rows)
 
 COPY mpp3137_region from STDIN delimiter '|';
 select count(*) from mpp3137_region;
@@ -204,7 +208,7 @@ PS_COMMENT VARCHAR(199) )
 partition by range (ps_supplycost)
  subpartition by range (ps_suppkey) subpartition template (start(1) end(10000) every(2499))
 (partition p1, partition p2, partition p3 );
-ERROR:  missing boundary specification
+ERROR:  missing boundary specification in partition "p1" of type RANGE
 LINE 9: (partition p1, partition p2, partition p3 );
          ^
 drop table if exists mpp3304_customer;
@@ -377,10 +381,10 @@ CREATE TABLE mpp3265 (
   default partition default_part );
 alter table mpp3265 drop partition for (100);
 alter table mpp3265 drop partition for (-5);
-ERROR:  FOR expression matches DEFAULT partition for specified value of mpp3265
+ERROR:  FOR expression matches DEFAULT partition for specified value of relation "mpp3265"
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table mpp3265 drop partition for (0);
-ERROR:  FOR expression matches DEFAULT partition for specified value of mpp3265
+ERROR:  FOR expression matches DEFAULT partition for specified value of relation "mpp3265"
 HINT:  FOR expression may only specify a non-default partition in this context.
 drop table mpp3265;
 -- Test very deeply nested subpartitioning
@@ -483,7 +487,7 @@ PARTITION BY RANGE(date1)
      PARTITION y1996  START('1996-01-01'),
      PARTITION y1997 start('1997-01-01') END('1997-12-31')
  );
-ERROR:  missing boundary specification
+ERROR:  missing boundary specification in partition "y1995" of type RANGE
 LINE 13:      PARTITION y1995,
               ^
 DROP TABLE INT_P1A;
@@ -1884,14 +1888,15 @@ drop table mpp3363;
 CREATE TABLE mpp3059(a int, b int, c int, d int, e int, f int, g int, h int, i int, j int, k int, l int, m int, n int, o int, p int, q int, r int, s int, t int, u int, v int, w int, x int, y int, z int)
 partition by range (a)
 ( partition aa start (1) end (5) every (1) );
-select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3059';
- tablename | partitionlevel | partitiontablename | partitionname | partitionrank |             partitionboundary              
------------+----------------+--------------------+---------------+---------------+--------------------------------------------
- mpp3059   |              0 | mpp3059_1_prt_aa_1 | aa_1          |             1 | PARTITION aa_1 START (1) END (2) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_2 | aa_2          |             2 | PARTITION aa_2 START (2) END (3) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_3 | aa_3          |             3 | PARTITION aa_3 START (3) END (4) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_4 | aa_4          |             4 | PARTITION aa_4 START (4) END (5) EVERY (1)
-(4 rows)
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3059') as t, pg_class as c where relid = oid;
+       relid        | parentrelid | isleaf | level |        pg_get_expr         
+--------------------+-------------+--------+-------+----------------------------
+ mpp3059            |             | f      |     0 | 
+ mpp3059_1_prt_aa_1 | mpp3059     | t      |     1 | FOR VALUES FROM (1) TO (2)
+ mpp3059_1_prt_aa_2 | mpp3059     | t      |     1 | FOR VALUES FROM (2) TO (3)
+ mpp3059_1_prt_aa_3 | mpp3059     | t      |     1 | FOR VALUES FROM (3) TO (4)
+ mpp3059_1_prt_aa_4 | mpp3059     | t      |     1 | FOR VALUES FROM (4) TO (5)
+(5 rows)
 
 alter table mpp3059 rename to mpp3059_rename; 
 select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3059_rename';
@@ -1904,14 +1909,15 @@ select tablename, partitionlevel, partitiontablename, partitionname, partitionra
 (4 rows)
 
 alter table mpp3059_rename rename to mpp3059; 
-select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3059';
- tablename | partitionlevel | partitiontablename | partitionname | partitionrank |             partitionboundary              
------------+----------------+--------------------+---------------+---------------+--------------------------------------------
- mpp3059   |              0 | mpp3059_1_prt_aa_1 | aa_1          |             1 | PARTITION aa_1 START (1) END (2) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_2 | aa_2          |             2 | PARTITION aa_2 START (2) END (3) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_3 | aa_3          |             3 | PARTITION aa_3 START (3) END (4) EVERY (1)
- mpp3059   |              0 | mpp3059_1_prt_aa_4 | aa_4          |             4 | PARTITION aa_4 START (4) END (5) EVERY (1)
-(4 rows)
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3059') as t, pg_class as c where relid = oid;
+       relid        | parentrelid | isleaf | level |        pg_get_expr         
+--------------------+-------------+--------+-------+----------------------------
+ mpp3059            |             | f      |     0 | 
+ mpp3059_1_prt_aa_1 | mpp3059     | t      |     1 | FOR VALUES FROM (1) TO (2)
+ mpp3059_1_prt_aa_2 | mpp3059     | t      |     1 | FOR VALUES FROM (2) TO (3)
+ mpp3059_1_prt_aa_3 | mpp3059     | t      |     1 | FOR VALUES FROM (3) TO (4)
+ mpp3059_1_prt_aa_4 | mpp3059     | t      |     1 | FOR VALUES FROM (4) TO (5)
+(5 rows)
 
 -- 2 level partition
 CREATE TABLE mpp3059a (
@@ -2057,7 +2063,8 @@ CREATE TABLE mpp3244a(a int, b int, c int, d int, e int, f int, g int, h int, i 
 partition by range (a)
 subpartition by range (b) subpartition template ( start (1) end (10) every (1))( partition aa start (1) end (11) every (1) );
 insert into mpp3244 (a,b) values (10,1);
-ERROR:  no partition for partitioning key  (seg2 localhost:18509 pid=12168)
+ERROR:  no partition of relation "mpp3244" found for row  (seg2 127.0.1.1:7004 pid=1450)
+DETAIL:  Partition key of the failing row contains (a) = (10).
 insert into mpp3244a (a,b) values (10,1);
 alter table mpp3244 add partition bb end (11);
 insert into mpp3244 (a,b) values (10,1);
@@ -2227,249 +2234,231 @@ ERROR:  no partitions specified at depth 2
 alter table mpp3438 add default partition default_part (default subpartition def2);
 alter table mpp3438 alter partition aa add default partition def3;
 \d mpp3438*
-  Table "partition_ddl2.mpp3438"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Number of child tables: 3 (Use \d+ to list them.)
-Distributed by: (unique1)
-Partition by: (unique1)
-
-Table "partition_ddl2.mpp3438_1_prt_aa"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_aa_check" CHECK (unique1 = 1 OR unique1 = 2 OR unique1 = 3 OR unique1 = 4 OR unique1 = 5 OR unique1 = 6 OR unique1 = 7 OR unique1 = 8 OR unique1 = 9 OR unique1 = 10)
-Inherits: mpp3438
-Number of child tables: 3 (Use \d+ to list them.)
-Distributed by: (unique1)
-Partition by: (unique2)
-
-Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_cc"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_aa_2_prt_cc_check" CHECK (unique2 = 1 OR unique2 = 2 OR unique2 = 3)
-    "mpp3438_1_prt_aa_check" CHECK (unique1 = 1 OR unique1 = 2 OR unique1 = 3 OR unique1 = 4 OR unique1 = 5 OR unique1 = 6 OR unique1 = 7 OR unique1 = 8 OR unique1 = 9 OR unique1 = 10)
-Inherits: mpp3438_1_prt_aa
+       Partitioned table "partition_ddl2.mpp3438"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition key: LIST (unique1)
+Number of partitions: 3 (Use \d+ to list them.)
 Distributed by: (unique1)
 
-Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_dd"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_aa_2_prt_dd_check" CHECK (unique2 = 4 OR unique2 = 5 OR unique2 = 6)
-    "mpp3438_1_prt_aa_check" CHECK (unique1 = 1 OR unique1 = 2 OR unique1 = 3 OR unique1 = 4 OR unique1 = 5 OR unique1 = 6 OR unique1 = 7 OR unique1 = 8 OR unique1 = 9 OR unique1 = 10)
-Inherits: mpp3438_1_prt_aa
+  Partitioned table "partition_ddl2.mpp3438_1_prt_aa"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438 FOR VALUES IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+Partition key: LIST (unique2)
+Number of partitions: 3 (Use \d+ to list them.)
 Distributed by: (unique1)
 
-Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_def3"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_aa_check" CHECK (unique1 = 1 OR unique1 = 2 OR unique1 = 3 OR unique1 = 4 OR unique1 = 5 OR unique1 = 6 OR unique1 = 7 OR unique1 = 8 OR unique1 = 9 OR unique1 = 10)
-Inherits: mpp3438_1_prt_aa
+    Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_cc"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_aa FOR VALUES IN (1, 2, 3)
 Distributed by: (unique1)
 
-Table "partition_ddl2.mpp3438_1_prt_bb"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_bb_check" CHECK (unique1 = 11 OR unique1 = 12 OR unique1 = 13 OR unique1 = 14 OR unique1 = 15 OR unique1 = 16 OR unique1 = 17 OR unique1 = 18 OR unique1 = 19 OR unique1 = 20)
-Inherits: mpp3438
-Number of child tables: 2 (Use \d+ to list them.)
-Distributed by: (unique1)
-Partition by: (unique2)
-
-Table "partition_ddl2.mpp3438_1_prt_bb_2_prt_cc"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_bb_2_prt_cc_check" CHECK (unique2 = 1 OR unique2 = 2 OR unique2 = 3)
-    "mpp3438_1_prt_bb_check" CHECK (unique1 = 11 OR unique1 = 12 OR unique1 = 13 OR unique1 = 14 OR unique1 = 15 OR unique1 = 16 OR unique1 = 17 OR unique1 = 18 OR unique1 = 19 OR unique1 = 20)
-Inherits: mpp3438_1_prt_bb
+    Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_dd"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_aa FOR VALUES IN (4, 5, 6)
 Distributed by: (unique1)
 
-Table "partition_ddl2.mpp3438_1_prt_bb_2_prt_dd"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Check constraints:
-    "mpp3438_1_prt_bb_2_prt_dd_check" CHECK (unique2 = 4 OR unique2 = 5 OR unique2 = 6)
-    "mpp3438_1_prt_bb_check" CHECK (unique1 = 11 OR unique1 = 12 OR unique1 = 13 OR unique1 = 14 OR unique1 = 15 OR unique1 = 16 OR unique1 = 17 OR unique1 = 18 OR unique1 = 19 OR unique1 = 20)
-Inherits: mpp3438_1_prt_bb
+   Table "partition_ddl2.mpp3438_1_prt_aa_2_prt_def3"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_aa DEFAULT
 Distributed by: (unique1)
 
-Table "partition_ddl2.mpp3438_1_prt_default_part"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Inherits: mpp3438
-Number of child tables: 1 (Use \d+ to list them.)
+  Partitioned table "partition_ddl2.mpp3438_1_prt_bb"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438 FOR VALUES IN (11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+Partition key: LIST (unique2)
+Number of partitions: 2 (Use \d+ to list them.)
 Distributed by: (unique1)
-Partition by: (unique2)
+
+    Table "partition_ddl2.mpp3438_1_prt_bb_2_prt_cc"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_bb FOR VALUES IN (1, 2, 3)
+Distributed by: (unique1)
+
+    Table "partition_ddl2.mpp3438_1_prt_bb_2_prt_dd"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_bb FOR VALUES IN (4, 5, 6)
+Distributed by: (unique1)
+
+Partitioned table "partition_ddl2.mpp3438_1_prt_default_part"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438 DEFAULT
+Partition key: LIST (unique2)
+Number of partitions: 1 (Use \d+ to list them.)
+Distributed by: (unique1)
 
 Table "partition_ddl2.mpp3438_1_prt_default_part_2_prt_def2"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
-Inherits: mpp3438_1_prt_default_part
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
+Partition of: mpp3438_1_prt_default_part DEFAULT
 Distributed by: (unique1)
 
 drop table mpp3438;
@@ -2531,33 +2520,35 @@ partition by range (q1)
 CREATE TABLE mpp3079a(q1 int2, q2 int2)
 partition by range (q1)
 (start (1) end (10) every (1));
-select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3079';
- tablename | partitionlevel | partitiontablename | partitionname | partitionrank |                partitionboundary                 
------------+----------------+--------------------+---------------+---------------+--------------------------------------------------
- mpp3079   |              0 | mpp3079_1_prt_1    |               |             1 | START ('1'::bigint) END ('2'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_2    |               |             2 | START ('2'::bigint) END ('3'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_3    |               |             3 | START ('3'::bigint) END ('4'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_4    |               |             4 | START ('4'::bigint) END ('5'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_5    |               |             5 | START ('5'::bigint) END ('6'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_6    |               |             6 | START ('6'::bigint) END ('7'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_7    |               |             7 | START ('7'::bigint) END ('8'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_8    |               |             8 | START ('8'::bigint) END ('9'::bigint) EVERY (1)
- mpp3079   |              0 | mpp3079_1_prt_9    |               |             9 | START ('9'::bigint) END ('10'::bigint) EVERY (1)
-(9 rows)
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3079') as t, pg_class as c where relid = oid;
+      relid      | parentrelid | isleaf | level |           pg_get_expr           
+-----------------+-------------+--------+-------+---------------------------------
+ mpp3079         |             | f      |     0 | 
+ mpp3079_1_prt_1 | mpp3079     | t      |     1 | FOR VALUES FROM ('1') TO ('2')
+ mpp3079_1_prt_2 | mpp3079     | t      |     1 | FOR VALUES FROM ('2') TO ('3')
+ mpp3079_1_prt_3 | mpp3079     | t      |     1 | FOR VALUES FROM ('3') TO ('4')
+ mpp3079_1_prt_4 | mpp3079     | t      |     1 | FOR VALUES FROM ('4') TO ('5')
+ mpp3079_1_prt_5 | mpp3079     | t      |     1 | FOR VALUES FROM ('5') TO ('6')
+ mpp3079_1_prt_6 | mpp3079     | t      |     1 | FOR VALUES FROM ('6') TO ('7')
+ mpp3079_1_prt_7 | mpp3079     | t      |     1 | FOR VALUES FROM ('7') TO ('8')
+ mpp3079_1_prt_8 | mpp3079     | t      |     1 | FOR VALUES FROM ('8') TO ('9')
+ mpp3079_1_prt_9 | mpp3079     | t      |     1 | FOR VALUES FROM ('9') TO ('10')
+(10 rows)
 
-select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3079a';
- tablename | partitionlevel | partitiontablename | partitionname | partitionrank |                  partitionboundary                   
------------+----------------+--------------------+---------------+---------------+------------------------------------------------------
- mpp3079a  |              0 | mpp3079a_1_prt_1   |               |             1 | START ('1'::smallint) END ('2'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_2   |               |             2 | START ('2'::smallint) END ('3'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_3   |               |             3 | START ('3'::smallint) END ('4'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_4   |               |             4 | START ('4'::smallint) END ('5'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_5   |               |             5 | START ('5'::smallint) END ('6'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_6   |               |             6 | START ('6'::smallint) END ('7'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_7   |               |             7 | START ('7'::smallint) END ('8'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_8   |               |             8 | START ('8'::smallint) END ('9'::smallint) EVERY (1)
- mpp3079a  |              0 | mpp3079a_1_prt_9   |               |             9 | START ('9'::smallint) END ('10'::smallint) EVERY (1)
-(9 rows)
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3079a') as t, pg_class as c where relid = oid;
+      relid       | parentrelid | isleaf | level |           pg_get_expr           
+------------------+-------------+--------+-------+---------------------------------
+ mpp3079a         |             | f      |     0 | 
+ mpp3079a_1_prt_1 | mpp3079a    | t      |     1 | FOR VALUES FROM ('1') TO ('2')
+ mpp3079a_1_prt_2 | mpp3079a    | t      |     1 | FOR VALUES FROM ('2') TO ('3')
+ mpp3079a_1_prt_3 | mpp3079a    | t      |     1 | FOR VALUES FROM ('3') TO ('4')
+ mpp3079a_1_prt_4 | mpp3079a    | t      |     1 | FOR VALUES FROM ('4') TO ('5')
+ mpp3079a_1_prt_5 | mpp3079a    | t      |     1 | FOR VALUES FROM ('5') TO ('6')
+ mpp3079a_1_prt_6 | mpp3079a    | t      |     1 | FOR VALUES FROM ('6') TO ('7')
+ mpp3079a_1_prt_7 | mpp3079a    | t      |     1 | FOR VALUES FROM ('7') TO ('8')
+ mpp3079a_1_prt_8 | mpp3079a    | t      |     1 | FOR VALUES FROM ('8') TO ('9')
+ mpp3079a_1_prt_9 | mpp3079a    | t      |     1 | FOR VALUES FROM ('9') TO ('10')
+(10 rows)
 
 drop table mpp3079;
 drop table mpp3079a;
@@ -2565,24 +2556,29 @@ CREATE TABLE mpp3242(a int, b int, c int, d int, e int, f int, g int, h int, i i
 partition by range (a)
 ( partition aa start (1) end (10) every (1) );
 alter table mpp3242 add default partition default_part;
+insert into mpp3242 values(-1);
+-- Needs to use ALTER SPLIT instead of ADD as value exists in default
+-- partition corresponding to new partition. It's not
 -- Needs to use ALTER SPLIT instead of ADD. It's not automatic. MPP-3242
+alter table mpp3242 add partition zz start ('-1') end (0);
 alter table mpp3242 add partition zz start ('-1') end (0);
 ERROR:  cannot add RANGE partition "zz" to relation "mpp3242" with DEFAULT partition "default_part"
 HINT:  need to SPLIT partition "default_part"
-select tablename, partitionlevel, partitiontablename, partitionname, partitionrank, partitionboundary from pg_partitions where tablename = 'mpp3242';
- tablename | partitionlevel |     partitiontablename     | partitionname | partitionrank |              partitionboundary              
------------+----------------+----------------------------+---------------+---------------+---------------------------------------------
- mpp3242   |              0 | mpp3242_1_prt_default_part | default_part  |               | DEFAULT PARTITION default_part 
- mpp3242   |              0 | mpp3242_1_prt_aa_1         | aa_1          |             1 | PARTITION aa_1 START (1) END (2) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_2         | aa_2          |             2 | PARTITION aa_2 START (2) END (3) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_3         | aa_3          |             3 | PARTITION aa_3 START (3) END (4) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_4         | aa_4          |             4 | PARTITION aa_4 START (4) END (5) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_5         | aa_5          |             5 | PARTITION aa_5 START (5) END (6) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_6         | aa_6          |             6 | PARTITION aa_6 START (6) END (7) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_7         | aa_7          |             7 | PARTITION aa_7 START (7) END (8) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_8         | aa_8          |             8 | PARTITION aa_8 START (8) END (9) EVERY (1)
- mpp3242   |              0 | mpp3242_1_prt_aa_9         | aa_9          |             9 | PARTITION aa_9 START (9) END (10) EVERY (1)
-(10 rows)
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3242') as t, pg_class as c where relid = oid;
+           relid            | parentrelid | isleaf | level |         pg_get_expr         
+----------------------------+-------------+--------+-------+-----------------------------
+ mpp3242                    |             | f      |     0 | 
+ mpp3242_1_prt_aa_1         | mpp3242     | t      |     1 | FOR VALUES FROM (1) TO (2)
+ mpp3242_1_prt_aa_2         | mpp3242     | t      |     1 | FOR VALUES FROM (2) TO (3)
+ mpp3242_1_prt_aa_3         | mpp3242     | t      |     1 | FOR VALUES FROM (3) TO (4)
+ mpp3242_1_prt_aa_4         | mpp3242     | t      |     1 | FOR VALUES FROM (4) TO (5)
+ mpp3242_1_prt_aa_5         | mpp3242     | t      |     1 | FOR VALUES FROM (5) TO (6)
+ mpp3242_1_prt_aa_6         | mpp3242     | t      |     1 | FOR VALUES FROM (6) TO (7)
+ mpp3242_1_prt_aa_7         | mpp3242     | t      |     1 | FOR VALUES FROM (7) TO (8)
+ mpp3242_1_prt_aa_8         | mpp3242     | t      |     1 | FOR VALUES FROM (8) TO (9)
+ mpp3242_1_prt_aa_9         | mpp3242     | t      |     1 | FOR VALUES FROM (9) TO (10)
+ mpp3242_1_prt_default_part | mpp3242     | t      |     1 | DEFAULT
+(11 rows)
 
 drop table mpp3242;
 CREATE TABLE mpp3523 (f1 time(2) with time zone)
@@ -2762,7 +2758,6 @@ partition by range (f1)
   start (time '09:00') end (time '17:00') EVERY (INTERVAL '1 hour'),
   default partition default_part
 );
-ERROR:  cannot create partition inherited from temporary relation
 -- MPP-26829
 -- negative test for when SUBPARTITION TEMPLATE shows up before any SUBPARTITION BY
 CREATE TABLE MPP_26829
@@ -2785,7 +2780,7 @@ create table parttab_x (a int4, b int4) distributed by (b);
 alter table parttab exchange partition for (1) with table parttab_x;
 ERROR:  distribution policy for "parttab_x" must be the same as that for "parttab"
 alter table parttab alter partition for (1) exchange partition for (1) with table parttab_x;
-ERROR:  distribution policy for "parttab_x" must be the same as that for "parttab"
+ERROR:  table "parttab_1_prt_1" is not partitioned
 -- add constraint using index is forbidden on root and interior partitioned tables
 create table root_part(a int, b int)
     partition by range(b)
