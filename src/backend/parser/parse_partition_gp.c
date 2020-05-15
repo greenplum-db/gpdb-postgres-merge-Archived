@@ -579,6 +579,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 {
 	CreateStmt *childstmt;
 	RangeVar   *parentrv;
+	RangeVar   *childrv;
 	char	   *schemaname;
 	const char *final_part_name;
 	char levelStr[NAMEDATALEN];
@@ -592,9 +593,13 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 
 	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);
 	parentrv = makeRangeVar(schemaname, pstrdup(RelationGetRelationName(parentrel)), -1);
+	parentrv->relpersistence = parentrel->rd_rel->relpersistence;
+
+	childrv = makeRangeVar(schemaname, (char *)final_part_name, -1);
+	childrv->relpersistence = parentrel->rd_rel->relpersistence;
 
 	childstmt = makeNode(CreateStmt);
-	childstmt->relation = makeRangeVar(schemaname, (char *)final_part_name, -1);
+	childstmt->relation = childrv;
 	childstmt->tableElts = NIL;
 	childstmt->inhRelations = list_make1(parentrv);
 	childstmt->partbound = boundspec;
