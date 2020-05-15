@@ -725,13 +725,8 @@ alter table rank truncate partition for ('F');
 
 drop table rank cascade;
 
-alter table hhh exchange partition cc with table nosuchtable with validation;
-
-alter table hhh exchange partition cc with table nosuchtable without validation;
-
-alter table hhh exchange partition aa with table nosuchtable with validation;
-
-alter table hhh exchange partition aa with table nosuchtable without validation;
+alter table hhh exchange partition cc with table nosuchtable;
+alter table hhh exchange partition aa with table nosuchtable;
 
 alter table hhh rename partition cc to aa;
 alter table hhh rename partition bb to aa;

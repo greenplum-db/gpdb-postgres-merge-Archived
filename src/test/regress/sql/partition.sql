@@ -248,13 +248,9 @@ create table bar_p(i int, j int) distributed by (i);
 
 insert into bar_p values(6, 6);
 alter table foo_p exchange partition for(6) with table bar_p;
--- Should fail.  Prior releases didn't convey constraints out via exchange
--- but we do now, so the following tries to insert a value that can't go
--- in part 6.
 insert into bar_p values(10, 10);
 drop table foo_p;
 select * from bar_p;
--- Should succeed.  Conveyed constraint matches.
 insert into bar_p values(6, 6);
 select * from bar_p;
 drop table bar_p;
@@ -367,12 +363,10 @@ alter table sto_ao_ao exchange partition for ('2008-01-01') with table exh_ao_ao
 
 -- XXX: not yet: VALIDATE parameter
 
--- Exchange a partition with an external table; ensure that we require to use
--- WITHOUT VALIDATION and that the new partition won't be included in TRUNCATE
+-- Exchange a partition with an external table;
 create table foo_p (i int, j int) distributed by (i) partition by range(j) (start(1) end(10) every(2));
 create readable external table bar_p(i int, j int) location ('gpfdist://host.invalid:8000/file') format 'text';
 alter table foo_p exchange partition for(3) with table bar_p;
-alter table foo_p exchange partition for(3) with table bar_p without validation;
 truncate foo_p;
 drop table foo_p;
 drop table bar_p;

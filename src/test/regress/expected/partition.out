@@ -364,13 +364,13 @@ alter table foo_p exchange partition for(6) with table bar_p;
 ERROR:  partition constraint is violated by some row  (seg2 127.0.1.1:7004 pid=9703)
 alter table foo_p exchange partition for(6) with table bar_p without
 validation;
+NOTICE:  specifying "WITHOUT VALIDATION" acts as no operation. If the new partition is a regular table, validation is performed to make sure all the rows obey partition constraint. If the new partition is external or foreign table, no validation is performed.
+ERROR:  partition constraint is violated by some row  (seg2 127.0.1.1:7004 pid=4691)
 analyze foo_p;
 select * from foo_p;
-  i  
------
-   6
- 100
-(2 rows)
+ i 
+---
+(0 rows)
 
 drop table foo_p, bar_p;
 -- basic test
@@ -425,25 +425,21 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_9" for table "foo_p"
 create table bar_p(i int, j int) distributed by (i);
 insert into bar_p values(6, 6);
 alter table foo_p exchange partition for(6) with table bar_p;
--- Should fail.  Prior releases didn't convey constraints out via exchange
--- but we do now, so the following tries to insert a value that can't go
--- in part 6.
 insert into bar_p values(10, 10);
-ERROR:  new row for relation "bar_p" violates check constraint "foo_p_1_prt_6_check"  (seg2 127.0.0.1:25434 pid=10977)
-DETAIL:  Failing row contains (10, 10).
 drop table foo_p;
 select * from bar_p;
- i | j 
----+---
-(0 rows)
+ i  | j  
+----+----
+ 10 | 10
+(1 row)
 
--- Should succeed.  Conveyed constraint matches.
 insert into bar_p values(6, 6);
 select * from bar_p;
- i | j 
----+---
- 6 | 6
-(1 row)
+ i  | j  
+----+----
+ 10 | 10
+  6 |  6
+(2 rows)
 
 drop table bar_p;
 -- AO exchange with heap
@@ -636,16 +632,12 @@ ERROR:  cannot specify a name, rank, or value for a DEFAULT partition in this co
 alter table sto_ao_ao exchange partition for ('2008-01-01') with table exh_ao_ao;
 ERROR:  cannot EXCHANGE PARTITION for relation "sto_ao_ao" -- partition has children
 -- XXX: not yet: VALIDATE parameter
--- Exchange a partition with an external table; ensure that we require to use
--- WITHOUT VALIDATION and that the new partition won't be included in TRUNCATE
+-- Exchange a partition with an external table;
 create table foo_p (i int, j int) distributed by (i) partition by range(j) (start(1) end(10) every(2));
 create readable external table bar_p(i int, j int) location ('gpfdist://host.invalid:8000/file') format 'text';
 alter table foo_p exchange partition for(3) with table bar_p;
-ERROR:  validation of external tables not supported
-HINT:  Use WITHOUT VALIDATION.
-alter table foo_p exchange partition for(rank(3)) with table bar_p without validation;
 truncate foo_p;
-ERROR:  cannot truncate table having external partition: "foo_p_1_prt_3"
+ERROR:  "foo_p_1_prt_2" is not a table
 drop table foo_p;
 drop table bar_p;
 -- Check for overflow of circular data types like time
@@ -1747,7 +1739,7 @@ create table f (n numeric(20, 2)) partition by range(n) (start(1::bigint)
 end('f'::bool));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'n' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  cannot coerce partition parameter to column type "numeric"
+ERROR:  specified value cannot be cast to type numeric for column "n"
 LINE 2: end('f'::bool));
             ^
 -- see that grant and revoke cascade to children
@@ -2908,7 +2900,8 @@ alter table bar_p alter partition for ('5') alter partition for ('5')
   drop partition for ('5');
 insert into bar_p values(1, 1);
 insert into bar_p values(5, 5);
-ERROR:  no partition for partitioning key  (seg0 slarimac:40000 pid=97899)
+ERROR:  no partition of relation "bar_p_1_prt_1_2_prt_5" found for row  (seg2 127.0.1.1:7004 pid=6172)
+DETAIL:  Partition key of the failing row contains (i) = (5).
 drop table bar_p;
 -- Drop should not leave anything lingering for bar_p or its
 -- subpartitions in pg_partition* catalog tables.
@@ -5692,8 +5685,8 @@ partition by range (b)
   end (2) exclusive 
   every (1) 
 );
-ERROR:  invalid use of boundary specification for DEFAULT partition "x"
-LINE 5:   default partition x 
+ERROR:  syntax error at or near "start"
+LINE 6:   start (0) inclusive 
           ^
 create table bhagp_list (a int, b int) 
 distributed by (a) 
@@ -5702,8 +5695,8 @@ partition by list (b)
   default partition x 
   values (1,2)
 );
-ERROR:  invalid use of boundary specification for DEFAULT partition "x"
-LINE 5:   default partition x 
+ERROR:  syntax error at or near "values"
+LINE 6:   values (1,2)
           ^
 -- more coverage tests
 -- bad partition by type
@@ -5713,7 +5706,9 @@ partition by (b)
 (
 start (1) end (10) every (1)
 );
-ERROR:  PARTITION BY must specify RANGE or LIST
+ERROR:  syntax error at or near "("
+LINE 3: partition by (b)
+                     ^
 -- bad partition by type
 create table cov1 (a int, b int)
 distributed by (a)
@@ -7127,8 +7122,8 @@ ERROR:  directly modifying intermediate part of a partitioned table is disallowe
 HINT:  Modify either the root or a leaf partition instead.
 -- Wrong sub-partition (inserting a female value in male partition)
 insert into deep_part_1_prt_male_2_prt_2_3_prt_2 values (1, 1, 1, 'F');
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: deep_part_1_prt_female_2_prt_1_3_prt_1, provided partition: deep_part_1_prt_male_2_prt_2_3_prt_2.
+ERROR:  new row for relation "deep_part_1_prt_male_2_prt_2_3_prt_2" violates partition constraint  (seg1 127.0.1.1:7003 pid=6171)
+DETAIL:  Failing row contains (1, 1, 1, F    ).
 select * from deep_part;
  i | j | k | s 
 ---+---+---+---
