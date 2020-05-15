@@ -548,7 +548,8 @@ appendonly_index_fetch_tuple(struct IndexFetchTableData *scan,
 
 
 /* ------------------------------------------------------------------------
- * Callbacks for non-modifying operations on individual tuples for heap AM
+ * Callbacks for non-modifying operations on individual tuples for
+ * appendonly AM
  * ------------------------------------------------------------------------
  */
 
@@ -628,7 +629,7 @@ appendonly_compute_xid_horizon_for_tuples(Relation rel,
 }
 
 /* ----------------------------------------------------------------------------
- *  Functions for manipulations of physical tuples for heap AM.
+ *  Functions for manipulations of physical tuples for appendonly AM.
  * ----------------------------------------------------------------------------
  */
 
@@ -799,7 +800,7 @@ heap_truncate_one_relid(Oid relid)
 }
 
 /* ------------------------------------------------------------------------
- * DDL related callbacks for heap AM.
+ * DDL related callbacks for appendonly AM.
  * ------------------------------------------------------------------------
  */
 static void
@@ -1546,7 +1547,7 @@ appendonly_index_validate_scan(Relation heapRelation,
 }
 
 /* ------------------------------------------------------------------------
- * Miscellaneous callbacks for the heap AM
+ * Miscellaneous callbacks for the appendonly AM
  * ------------------------------------------------------------------------
  */
 
@@ -1653,7 +1654,7 @@ appendonly_relation_needs_toast_table(Relation rel)
 
 
 /* ------------------------------------------------------------------------
- * Planner related callbacks for the heap AM
+ * Planner related callbacks for the appendonly AM
  * ------------------------------------------------------------------------
  */
 
@@ -1683,7 +1684,7 @@ appendonly_estimate_rel_size(Relation rel, int32 *attr_widths,
 
 
 /* ------------------------------------------------------------------------
- * Executor related callbacks for the heap AM
+ * Executor related callbacks for the appendonly AM
  * ------------------------------------------------------------------------
  */
 
