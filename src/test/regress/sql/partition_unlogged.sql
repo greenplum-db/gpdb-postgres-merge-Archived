@@ -10,8 +10,3 @@ SELECT relpersistence, relname FROM pg_class WHERE relname like 'unlogged_pt1%';
 CREATE TABLE perm_tab(a INT);
 -- When I exchange partition 2 from unlogged_pt1 with this permanent table, perm_tab
 ALTER TABLE unlogged_pt1 EXCHANGE PARTITION FOR (3) WITH TABLE perm_tab;
--- Then it ERRORs out
-
---start_ignore
-DROP TABLE IF EXISTS unlogged_pt1;
---end_ignore
