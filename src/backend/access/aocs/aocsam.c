@@ -501,13 +501,13 @@ aocs_beginscan_internal(Relation relation,
 	 * needed can incur a noticeable overhead in aocs_getnext. So convert it
 	 * into an array of the attribute numbers of the required columns.
 	 */
-	Assert(proj);
 	scan->proj_atts = palloc(scan->relationTupleDesc->natts * sizeof(int));
 
 	scan->num_proj_atts = 0;
 	for (i = 0; i < scan->relationTupleDesc->natts; i++)
 	{
-		if (proj[i])
+		/* if proj is NULL,fetch all column */
+		if (proj == NULL || proj[i])
 			scan->proj_atts[scan->num_proj_atts++] = i;
 	}
 

@@ -324,7 +324,6 @@ aoco_beginscan(Relation relation,
 {
 	Snapshot	aocsMetaDataSnapshot;
 	AOCSScanDesc aoscan;
-
 	aocsMetaDataSnapshot = snapshot;
 	if (aocsMetaDataSnapshot== SnapshotAny)
 	{
@@ -335,13 +334,11 @@ aoco_beginscan(Relation relation,
 		aocsMetaDataSnapshot = GetTransactionSnapshot();
 	}
 
-	bool *proj = (bool *)key;
-
 	aoscan = aocs_beginscan(relation,
 	                        snapshot,
 	                        aocsMetaDataSnapshot,
 	                        NULL,
-	                        proj);
+	                        (bool *)key);
 
 	aoscan->rs_base.rs_rd = relation;
 	aoscan->rs_base.rs_snapshot = snapshot;
@@ -478,7 +475,12 @@ static void
 aoco_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
                         CommandId cid, int options, BulkInsertState bistate)
 {
-	elog(ERROR, "not implemented yet");
+	/*
+	* GPDB_12_MERGE_FIXME: Poor man's implementation for now in order to make
+		* the tests pass. Implement properly.
+		*/
+	for (int i = 0; i < ntuples; i++)
+		aoco_tuple_insert(relation, slots[i], cid, options, bistate);
 }
 
 static TM_Result
@@ -884,7 +886,6 @@ GetNeededColumnsForScan(Node *expr, bool *mask, int n)
 void
 InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj)
 {
-	init_dml_local_state();
 	/* Initialize AOCS projection info */
 	int			ncol = currentRelation->rd_att->natts;
 	int			i;
@@ -892,10 +893,7 @@ InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **pro
 
 	Assert(currentRelation != NULL);
 
-
-	oldcxt = MemoryContextSwitchTo(aocoLocal.stateCxt);
 	*proj = palloc0(ncol * sizeof(bool));
-	MemoryContextSwitchTo(oldcxt);
 
 	ncol = currentRelation->rd_att->natts;
 	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->targetlist, *proj, ncol);
