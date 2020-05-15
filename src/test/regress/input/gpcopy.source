@@ -1206,7 +1206,7 @@ COPY sales (id, date, amt) FROM stdin;
 \! psql -c "COPY sales TO '/tmp/test_sales_<SEGID>' ON SEGMENT" regression
 \! psql -c "COPY sales FROM '/tmp/test_sales_<SEGID>' ON SEGMENT" regression
 CREATE EXTERNAL WEB TABLE ext_dec17(LIKE sales_1_prt_dec17) EXECUTE 'printf "12\t2017-12-01\t20.00\n"' ON MASTER FORMAT 'text';
-ALTER TABLE sales ALTER PARTITION dec17 EXCHANGE PARTITION dec17 WITH TABLE ext_dec17 WITHOUT VALIDATION;
+ALTER TABLE sales ALTER PARTITION dec17 EXCHANGE PARTITION dec17 WITH TABLE ext_dec17;
 DROP TABLE ext_dec17;
 COPY sales TO PROGRAM 'cat > /dev/null' IGNORE EXTERNAL PARTITIONS;
 COPY sales TO PROGRAM 'printf <SEGID> && cat > /dev/null' ON SEGMENT IGNORE EXTERNAL PARTITIONS;

@@ -3780,7 +3780,7 @@ alter table fff_main_1_prt_1 split partition def at ('2009');
 ERROR:  can't split parts of "fff_main_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 -- Unable to coalesce or merge, not supported
-alter table fff_main_1_prt_1 exchange partition aa  with table fff_main_1_prt_2 without validation;
+alter table fff_main_1_prt_1 exchange partition aa  with table fff_main_1_prt_2;
 ERROR:  can't exchange a part into "fff_main_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table fff_main add partition aa start ('2008') end ('2009');

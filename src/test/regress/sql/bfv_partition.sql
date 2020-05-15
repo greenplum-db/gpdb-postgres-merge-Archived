@@ -1444,7 +1444,7 @@ alter table fff_main add default partition def;
 alter table fff_main_1_prt_1 split partition def at ('2009');
 
 -- Unable to coalesce or merge, not supported
-alter table fff_main_1_prt_1 exchange partition aa  with table fff_main_1_prt_2 without validation;
+alter table fff_main_1_prt_1 exchange partition aa  with table fff_main_1_prt_2;
 
 alter table fff_main add partition aa start ('2008') end ('2009');
 alter table fff_main add partition bb start ('2009') end ('2010');

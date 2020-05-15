@@ -1144,7 +1144,7 @@ execute 'printf "2,2\n1,1\n"' on host
 format 'csv';
 alter table exchange_sub_partition
 alter partition for (integer '2')
-exchange partition for (integer '2') with table exchange_external_table without validation;
+exchange partition for (integer '2') with table exchange_external_table;
 select * from exchange_sub_partition;
  a | b 
 ---+---
