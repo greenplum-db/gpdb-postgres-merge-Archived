@@ -5850,8 +5850,8 @@ TabSubPartitionElem:
 						n->colencs   = $5;
 						$$ = (Node *)n;
 				}
-/* allow boundary spec for default partition in parser, but complain later */
-			| TabSubPartitionDefaultNameDecl OptTabPartitionBoundarySpec	
+
+			| TabSubPartitionDefaultNameDecl
 			  OptWith
 			  OptTableSpace
 			  OptTabPartitionColumnEncList
@@ -5859,14 +5859,14 @@ TabSubPartitionElem:
 				{
 						GpPartDefElem *n = makeNode(GpPartDefElem);
 						n->partName  = $1;
-						n->boundSpec = $2;
-						n->subSpec   = $6;
+						n->boundSpec = NULL;
+						n->subSpec   = $5;
 						n->location  = @1;
 						n->isDefault = true;
-						n->options = $3;
+						n->options = $2;
 						n->accessMethod = greenplumLegacyAOoptions(NULL, &n->options);
-						n->tablespacename = $4;
-						n->colencs   = $5;
+						n->tablespacename = $3;
+						n->colencs   = $4;
 						$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpec
