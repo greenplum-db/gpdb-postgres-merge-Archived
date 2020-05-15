@@ -396,10 +396,4 @@ extern int acquire_sample_rows_ao(Relation onerel, int elevel,
 								  HeapTuple *rows, int targrows,
 								  double *totalrows, double *totaldeadrows);
 
-extern void
-appendonly_relation_set_new_filenode(Relation rel,
-                                     const RelFileNode *newrnode,
-                                     char persistence,
-                                     TransactionId *freezeXid,
-                                     MultiXactId *minmulti);
 #endif   /* CDBAPPENDONLYAM_H */

@@ -600,6 +600,67 @@ aoco_compute_xid_horizon_for_tuples(Relation rel,
 	elog(ERROR, "not implemented yet");
 }
 
+/* ------------------------------------------------------------------------
+ * DDL related callbacks for aoco AM.
+ * ------------------------------------------------------------------------
+ */
+static void
+aoco_relation_set_new_filenode(Relation rel,
+							   const RelFileNode *newrnode,
+							   char persistence,
+							   TransactionId *freezeXid,
+							   MultiXactId *minmulti)
+{
+	SMgrRelation srel;
+
+	/*
+	 * Initialize to the minimum XID that could put tuples in the table. We
+	 * know that no xacts older than RecentXmin are still running, so that
+	 * will do.
+	 */
+	*freezeXid = RecentXmin;
+
+	/*
+	 * Similarly, initialize the minimum Multixact to the first value that
+	 * could possibly be stored in tuples in the table.  Running transactions
+	 * could reuse values from their local cache, so we are careful to
+	 * consider all currently running multis.
+	 *
+	 * XXX this could be refined further, but is it worth the hassle?
+	 */
+	*minmulti = GetOldestMultiXactId();
+
+	/*
+	 * No special treatment is needed for new AO/AOCO relation. Create the
+	 * underlying disk file storage for the relation.
+	 * No clean up is needed, RelationCreateStorage() is transactional.
+	 *
+	 * Segment files will be created when / if needed.
+	 */
+	srel = RelationCreateStorage(*newrnode, persistence);
+
+	/*
+	 * If required, set up an init fork for an unlogged table so that it can
+	 * be correctly reinitialized on restart.  An immediate sync is required
+	 * even if the page has been logged, because the write did not go through
+	 * shared_buffers and therefore a concurrent checkpoint may have moved the
+	 * redo pointer past our xlog record.  Recovery may as well remove it
+	 * while replaying, for example, XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE
+	 * record. Therefore, logging is necessary even if wal_level=minimal.
+	 */
+	if (persistence == RELPERSISTENCE_UNLOGGED)
+	{
+		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
+			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
+			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+		smgrcreate(srel, INIT_FORKNUM, false);
+		log_smgrcreate(newrnode, INIT_FORKNUM);
+		smgrimmedsync(srel, INIT_FORKNUM);
+	}
+
+	smgrclose(srel);
+}
+
 static void
 aoco_relation_nontransactional_truncate(Relation rel)
 {
@@ -767,6 +828,10 @@ aoco_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 }
 /* ------------------------------------------------------------------------
  * Definition of the AOCO table access method.
+ *
+ * NOTE: While there is a lot of functionality shared with the appendoptimized
+ * access method, is best for the hanlder methods to remain static in order to
+ * honour the contract of the access method interface.
  * ------------------------------------------------------------------------
  */
 static const TableAmRoutine aoco_methods = {
@@ -802,7 +867,7 @@ static const TableAmRoutine aoco_methods = {
 	.tuple_satisfies_snapshot = aoco_tuple_satisfies_snapshot,
 	.compute_xid_horizon_for_tuples = aoco_compute_xid_horizon_for_tuples,
 
-	.relation_set_new_filenode = appendonly_relation_set_new_filenode, /* shared with AO */
+	.relation_set_new_filenode = aoco_relation_set_new_filenode,
 	.relation_nontransactional_truncate = aoco_relation_nontransactional_truncate,
 	.relation_copy_data = aoco_relation_copy_data,
 	.relation_copy_for_cluster = aoco_relation_copy_for_cluster,
