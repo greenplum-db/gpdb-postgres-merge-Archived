@@ -315,7 +315,11 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 												  part_col_typmod,
 												  part_col_collation);
 		if (startConst->constisnull)
-			elog(ERROR, "NULL not allowed in START"); // GPDB_12_MERGE_FIXME: improve message
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot use NULL with range partition specification"),
+				 parser_errposition(pstate, location)));
+
 		startVal = startConst->constvalue;
 	}
 
@@ -330,7 +334,11 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 												part_col_typmod,
 												part_col_collation);
 		if (endConst->constisnull)
-			elog(ERROR, "NULL not allowed in END"); // GPDB_12_MERGE_FIXME: improve message
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot use NULL with range partition specification"),
+				 parser_errposition(pstate, location)));
+
 		endVal = endConst->constvalue;
 	}
 
@@ -625,7 +633,7 @@ generateRangePartitions(ParseState *pstate,
 	int					 i;
 
 	if (elem->boundSpec == NULL)
-		elog(ERROR, "missing boundary specification in partition%s of type RANGE",
+		elog(ERROR, "missing boundary specification in partition \"%s\" of type RANGE",
 			 elem->partName);
 
 	if (!IsA(elem->boundSpec, GpPartitionRangeSpec))
