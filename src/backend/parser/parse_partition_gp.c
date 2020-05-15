@@ -638,8 +638,11 @@ generateRangePartitions(ParseState *pstate,
 	int					 i;
 
 	if (elem->boundSpec == NULL)
-		elog(ERROR, "missing boundary specification in partition \"%s\" of type RANGE",
-			 elem->partName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("missing boundary specification in partition \"%s\" of type RANGE",
+						elem->partName),
+				 parser_errposition(pstate, elem->location)));
 
 	if (!IsA(elem->boundSpec, GpPartitionRangeSpec))
 		ereport(ERROR,
