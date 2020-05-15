@@ -826,7 +826,17 @@ static const TableAmRoutine aoco_methods = {
 Datum
 aoco_tableam_handler(PG_FUNCTION_ARGS)
 {
+#ifdef GPDB_12_MERGE_FIXME
+	/*
+	 * The aoco access method is currently under active development and
+	 * unstable. This causes many hangs and cores to be generated during tests.
+	 * While stabilizing the access method, keep it turned off so the rest of
+	 * the tests can run till completion.
+	 */
 	PG_RETURN_POINTER(&aoco_methods);
+#else
+	elog(ERROR, "aoco accesss method not implented yet");
+#endif
 }
 
 typedef struct neededColumnContext
