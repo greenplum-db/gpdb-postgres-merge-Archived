@@ -309,7 +309,6 @@ extern ExprState *ExecPrepareQual(List *qual, EState *estate);
 extern ExprState *ExecPrepareCheck(List *qual, EState *estate);
 extern List *ExecPrepareExprList(List *nodes, EState *estate);
 extern Datum ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull);
-extern void GetNeededColumnsForScan(Node *expr, bool *mask, int n);
 extern bool isJoinExprNull(List *joinExpr, ExprContext *econtext);
 
 /*

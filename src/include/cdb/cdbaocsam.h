@@ -32,6 +32,7 @@
 #include "cdb/cdbappendonlystorageread.h"
 #include "cdb/cdbappendonlystoragewrite.h"
 #include "utils/datumstream.h"
+#include "nodes/execnodes.h"
 
 /*
  * AOCSInsertDescData is used for inserting data into append-only columnar
@@ -82,6 +83,8 @@ typedef AOCSInsertDescData *AOCSInsertDesc;
  */
 typedef struct AOCSScanDescData
 {
+	TableScanDescData rs_base;	/* AM independent part of the descriptor */
+
 	/* scan parameters */
 	Relation	aos_rel;			/* target relation descriptor */
 	Snapshot	appendOnlyMetaDataSnapshot;
@@ -271,4 +274,7 @@ extern void aocs_addcol_setfirstrownum(AOCSAddColumnDesc desc,
 
 extern void aoco_dml_init(Relation relation, CmdType operation);
 extern void aoco_dml_finish(Relation relation, CmdType operation);
+
+extern void
+InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj);
 #endif   /* AOCSAM_H */

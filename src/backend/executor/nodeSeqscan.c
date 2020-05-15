@@ -34,64 +34,12 @@
 #include "utils/rel.h"
 #include "nodes/nodeFuncs.h"
 
+#include "cdb/cdbaocsam.h"
 static void InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation);
 static TupleTableSlot *SeqNext(SeqScanState *node);
 
 
 
-typedef struct neededColumnContext
-{
-	bool *mask;
-	int n;
-} neededColumnContext;
-
-static bool
-neededColumnContextWalker(Node *node, neededColumnContext *c)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Var))
-	{
-		Var *var = (Var *)node;
-
-		if (IS_SPECIAL_VARNO(var->varno))
-			return false;
-
-		if (var->varattno > 0 && var->varattno <= c->n)
-			c->mask[var->varattno - 1] = true;
-
-		/*
-		 * If all attributes are included,
-		 * set all entries in mask to true.
-		 */
-		else if (var->varattno == 0)
-		{
-			int i;
-
-			for (i=0; i < c->n; i++)
-				c->mask[i] = true;
-		}
-
-		return false;
-	}
-	return expression_tree_walker(node, neededColumnContextWalker, (void * )c);
-}
-
-/*
- * n specifies the number of allowed entries in mask: we use
- * it for bounds-checking in the walker above.
- */
-/* GPDB_12_MERGE_FIXME: this used to be in execQual.c Where does it belong now? */
-void GetNeededColumnsForScan(Node *expr, bool *mask, int n)
-{
-	neededColumnContext c;
-
-	c.mask = mask;
-	c.n = n;
-
-	neededColumnContextWalker(expr, &c);
-}
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -126,9 +74,19 @@ SeqNext(SeqScanState *node)
 		 * We reach here if the scan is not parallel, or if we're serially
 		 * executing a scan that was planned to be parallel.
 		 */
-		scandesc = table_beginscan(node->ss.ss_currentRelation,
-								   estate->es_snapshot,
-								   0, NULL);
+		if(RelationIsAoCols(node->ss.ss_currentRelation))
+		{
+			bool *proj;
+			InitAOCSScanOpaque(node, node->ss.ss_currentRelation, &proj);
+			scandesc = table_beginscan(node->ss.ss_currentRelation,
+			                           estate->es_snapshot,
+			                           0, (struct ScanKeyData *)proj);
+		}
+		else
+			scandesc = table_beginscan(node->ss.ss_currentRelation,
+			                           estate->es_snapshot,
+			                           0, NULL);
+
 		node->ss.ss_currentScanDesc = scandesc;
 	}
 

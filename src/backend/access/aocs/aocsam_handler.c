@@ -50,6 +50,7 @@
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
 #include "utils/rel.h"
+#include "nodes/nodeFuncs.h"
 
 typedef struct AOCODMLState
 {
@@ -316,20 +317,45 @@ aoco_slot_callbacks(Relation relation)
 
 static TableScanDesc
 aoco_beginscan(Relation relation,
-                     Snapshot snapshot,
-                     int nkeys, struct ScanKeyData *key,
-                     ParallelTableScanDesc pscan,
-                     uint32 flags)
+               Snapshot snapshot,
+               int nkeys, struct ScanKeyData *key,
+               ParallelTableScanDesc pscan,
+               uint32 flags)
 {
-	TableScanDesc scanDesc = palloc0(sizeof(TableScanDesc));
-	scanDesc->rs_rd = relation;
-	return scanDesc;
+	Snapshot	aocsMetaDataSnapshot;
+	AOCSScanDesc aoscan;
+
+	aocsMetaDataSnapshot = snapshot;
+	if (aocsMetaDataSnapshot== SnapshotAny)
+	{
+		/*
+		 * the append-only meta data should never be fetched with
+		 * SnapshotAny as bogus results are returned.
+		 */
+		aocsMetaDataSnapshot = GetTransactionSnapshot();
+	}
+
+	bool *proj = (bool *)key;
+
+	aoscan = aocs_beginscan(relation,
+	                        snapshot,
+	                        aocsMetaDataSnapshot,
+	                        NULL,
+	                        proj);
+
+	aoscan->rs_base.rs_rd = relation;
+	aoscan->rs_base.rs_snapshot = snapshot;
+	aoscan->rs_base.rs_nkeys = nkeys;
+	aoscan->rs_base.rs_flags = flags;
+	aoscan->rs_base.rs_parallel = pscan;
+
+	return (TableScanDesc) aoscan;
 }
 
 static void
 aoco_endscan(TableScanDesc scan)
 {
-	pfree(scan);
+	aocs_endscan((AOCSScanDesc) scan);
 }
 
 static void
@@ -344,7 +370,23 @@ aoco_rescan(TableScanDesc scan, ScanKey key,
 static bool
 aoco_getnextslot(TableScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSScanDesc  aoscan = (AOCSScanDesc) scan;
+
+	ExecClearTuple(slot);
+	if (aocs_getnext(aoscan,direction,slot))
+	{
+		ExecStoreVirtualTuple(slot);
+		pgstat_count_heap_getnext(aoscan->aos_rel);
+
+		return true;
+	}
+	else
+	{
+		if (slot)
+			ExecClearTuple(slot);
+
+		return false;
+	}
 
 }
 
@@ -783,4 +825,92 @@ Datum
 aoco_tableam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&aoco_methods);
+}
+
+typedef struct neededColumnContext
+{
+	bool *mask;
+	int n;
+} neededColumnContext;
+
+static bool
+neededColumnContextWalker(Node *node, neededColumnContext *c)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Var))
+	{
+		Var *var = (Var *)node;
+
+		if (IS_SPECIAL_VARNO(var->varno))
+			return false;
+
+		if (var->varattno > 0 && var->varattno <= c->n)
+			c->mask[var->varattno - 1] = true;
+
+			/*
+			 * If all attributes are included,
+			 * set all entries in mask to true.
+			 */
+		else if (var->varattno == 0)
+		{
+			int i;
+
+			for (i=0; i < c->n; i++)
+				c->mask[i] = true;
+		}
+
+		return false;
+	}
+	return expression_tree_walker(node, neededColumnContextWalker, (void * )c);
+}
+/*
+ * n specifies the number of allowed entries in mask: we use
+ * it for bounds-checking in the walker above.
+ */
+/* GPDB_12_MERGE_FIXME: this used to be in execQual.c Where does it belong now? */
+static void
+GetNeededColumnsForScan(Node *expr, bool *mask, int n)
+{
+	neededColumnContext c;
+
+	c.mask = mask;
+	c.n = n;
+
+	neededColumnContextWalker(expr, &c);
+}
+
+void
+InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj)
+{
+	init_dml_local_state();
+	/* Initialize AOCS projection info */
+	int			ncol = currentRelation->rd_att->natts;
+	int			i;
+	MemoryContext oldcxt;
+
+	Assert(currentRelation != NULL);
+
+
+	oldcxt = MemoryContextSwitchTo(aocoLocal.stateCxt);
+	*proj = palloc0(ncol * sizeof(bool));
+	MemoryContextSwitchTo(oldcxt);
+
+	ncol = currentRelation->rd_att->natts;
+	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->targetlist, *proj, ncol);
+	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->qual, *proj, ncol);
+
+	for (i = 0; i < ncol; i++)
+	{
+		if ((*proj)[i])
+			break;
+	}
+
+	/*
+	 * In some cases (for example, count(*)), no columns are specified.
+	 * We always scan the first column.
+	 */
+	if (i == ncol)
+		(*proj)[0] = true;
 }
