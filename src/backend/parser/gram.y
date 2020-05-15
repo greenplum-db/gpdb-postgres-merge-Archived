@@ -3614,8 +3614,24 @@ opt_table_partition_split_into:
 		;
 
 opt_table_partition_exchange_validate: 
-			WITH VALIDATION						{ $$ = +1; }
-			| WITHOUT VALIDATION				{ $$ = +0; }
+			WITH VALIDATION
+			{
+				$$ = +1;
+				ereport(NOTICE,
+						(errmsg("specifying \"WITH VALIDATION\" acts as no operation. "
+								"If the new partition is a regular table, validation is performed "
+								"to make sure all the rows obey partition constraint. "
+								"If the new partition is external or foreign table, no validation is performed.")));
+			}
+			| WITHOUT VALIDATION
+			{
+				$$ = +0;
+				ereport(NOTICE,
+						(errmsg("specifying \"WITHOUT VALIDATION\" acts as no operation. "
+								"If the new partition is a regular table, validation is performed "
+								"to make sure all the rows obey partition constraint. "
+								"If the new partition is external or foreign table, no validation is performed.")));
+			}
 			| /*EMPTY*/							{ $$ = +1; /* default */ }
 		;
 
