@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # GPDB_91_MERGE_FIXME: GPDB acquires ExclusiveLock for update and delete SQL
 # statements.  This invalidates most of the isolation tests from upstream below.
 # E.g. an UPDATE step executed by isolationtester never returns because another
