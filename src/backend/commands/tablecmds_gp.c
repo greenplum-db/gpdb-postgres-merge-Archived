@@ -421,6 +421,12 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 		Assert(OidIsValid(partrelid));
 		partrel = table_open(partrelid, AccessShareLock);
 
+		if (partrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot EXCHANGE PARTITION for relation \"%s\" -- partition has children",
+							RelationGetRelationName(rel))));
+
 		oldpartrv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
 								 pstrdup(RelationGetRelationName(partrel)),
 								 pc->location);
