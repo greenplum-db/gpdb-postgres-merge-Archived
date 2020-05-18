@@ -371,7 +371,8 @@ init_datumstream_info(
 	/*
 	 * Adjust maxsz for Append-Only Storage.
 	 */
-	Assert(maxsz <= MAX_APPENDONLY_BLOCK_SIZE);
+	if (maxsz <= 0 || maxsz > MAX_APPENDONLY_BLOCK_SIZE)
+		elog(ERROR, "invalid AO block size %d", maxsz);
 	*maxAoBlockSize = maxsz;
 
 	/*
