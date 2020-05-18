@@ -147,7 +147,8 @@ open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc, 
 		 * column of a column oriented table.  Note: checksum is a table level
 		 * attribute.
 		 */
-		Assert(opts[i]);
+		if (opts[i] == NULL || opts[i]->blocksize == 0)
+			elog(ERROR, "could not find blocksize option for AOCO column in pg_attribute_encoding");
 		ct = opts[i]->compresstype;
 		clvl = opts[i]->compresslevel;
 		blksz = opts[i]->blocksize;
@@ -198,8 +199,8 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 		 * column of a column oriented table.  Note: checksum is a table level
 		 * attribute.
 		 */
-		Assert(opts[attno]);
-
+		if (opts[attno] == NULL || opts[attno]->blocksize == 0)
+			elog(ERROR, "could not find blocksize option for AOCO column in pg_attribute_encoding");
 		ct = opts[attno]->compresstype;
 		clvl = opts[attno]->compresslevel;
 		blksz = opts[attno]->blocksize;
