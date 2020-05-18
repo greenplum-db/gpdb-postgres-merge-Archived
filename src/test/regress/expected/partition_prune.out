@@ -203,6 +203,8 @@ create table rlp_default_null partition of rlp_default for values in (null);
 create table rlp1 partition of rlp for values from (minvalue) to (1);
 create table rlp2 partition of rlp for values from (1) to (10);
 create table rlp3 (b varchar, a int) partition by list (b varchar_ops);
+-- GPDB: distribution policy must match the parent table.
+alter table rlp3 set distributed by (a);
 create table rlp3_default partition of rlp3 default;
 create table rlp3abcd partition of rlp3 for values in ('ab', 'cd');
 create table rlp3efgh partition of rlp3 for values in ('ef', 'gh');
@@ -414,7 +416,7 @@ explain (costs off) select * from rlp where a > 15 and b = 'ab';
 explain (costs off) select * from rlp where a = 16;
                 QUERY PLAN                
 ------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Append
          ->  Seq Scan on rlp3abcd
                Filter: (a = 16)
@@ -430,7 +432,7 @@ explain (costs off) select * from rlp where a = 16;
 explain (costs off) select * from rlp where a = 16 and b in ('not', 'in', 'here');
                                  QUERY PLAN                                 
 ----------------------------------------------------------------------------
- Gather Motion 2:1  (slice1; segments: 2)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Seq Scan on rlp3_default
          Filter: ((a = 16) AND ((b)::text = ANY ('{not,in,here}'::text[])))
  Optimizer: Postgres query optimizer
@@ -439,7 +441,7 @@ explain (costs off) select * from rlp where a = 16 and b in ('not', 'in', 'here'
 explain (costs off) select * from rlp where a = 16 and b < 'ab';
                        QUERY PLAN                        
 ---------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Seq Scan on rlp3_default
          Filter: (((b)::text < 'ab'::text) AND (a = 16))
  Optimizer: Postgres query optimizer
@@ -448,7 +450,7 @@ explain (costs off) select * from rlp where a = 16 and b < 'ab';
 explain (costs off) select * from rlp where a = 16 and b <= 'ab';
                            QUERY PLAN                           
 ----------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Append
          ->  Seq Scan on rlp3abcd
                Filter: (((b)::text <= 'ab'::text) AND (a = 16))
@@ -469,7 +471,7 @@ explain (costs off) select * from rlp where a = 16 and b is null;
 explain (costs off) select * from rlp where a = 16 and b is not null;
                       QUERY PLAN                      
 ------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Append
          ->  Seq Scan on rlp3abcd
                Filter: ((b IS NOT NULL) AND (a = 16))
@@ -720,7 +722,7 @@ explain (costs off) select * from rlp where a = 1 and a = 3;	/* empty */
 explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 15);
                                QUERY PLAN                                
 -------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Append
          ->  Seq Scan on rlp2
                Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
@@ -1526,7 +1528,7 @@ explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
 explain (costs off) select * from rlp where a = 15 and b <> 'ab' and b <> 'cd' and b <> 'xy' and b is not null;
                                                                    QUERY PLAN                                                                   
 ------------------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
+ Gather Motion 1:1  (slice1; segments: 1)
    ->  Append
          ->  Seq Scan on rlp3efgh
                Filter: ((b IS NOT NULL) AND ((b)::text <> 'ab'::text) AND ((b)::text <> 'cd'::text) AND ((b)::text <> 'xy'::text) AND (a = 15))
@@ -4021,7 +4023,7 @@ from (
 where s.a = 1 and s.b = 1 and s.c = (select 1);
                          QUERY PLAN                          
 -------------------------------------------------------------
- Gather Motion 2:1  (slice1; segments: 2)
+ Gather Motion 1:1  (slice1; segments: 1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result
    ->  Append

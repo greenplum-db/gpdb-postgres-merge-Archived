@@ -40,6 +40,8 @@ create table rlp1 partition of rlp for values from (minvalue) to (1);
 create table rlp2 partition of rlp for values from (1) to (10);
 
 create table rlp3 (b varchar, a int) partition by list (b varchar_ops);
+-- GPDB: distribution policy must match the parent table.
+alter table rlp3 set distributed by (a);
 create table rlp3_default partition of rlp3 default;
 create table rlp3abcd partition of rlp3 for values in ('ab', 'cd');
 create table rlp3efgh partition of rlp3 for values in ('ef', 'gh');
