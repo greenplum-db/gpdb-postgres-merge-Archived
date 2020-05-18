@@ -19524,14 +19524,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
 
-	if (attachrel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		!GpPolicyEqual(rel->rd_cdbpolicy, attachrel->rd_cdbpolicy))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("distribution policy for \"%s\" must be the same as that for \"%s\"",
-						RelationGetRelationName(attachrel),
-						RelationGetRelationName(rel))));
-
 	/* Check if there are any columns in attachrel that aren't in the parent */
 	tupleDesc = RelationGetDescr(attachrel);
 	natts = tupleDesc->natts;
@@ -19554,6 +19546,24 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 							RelationGetRelationName(attachrel), attributeName,
 							RelationGetRelationName(rel)),
 					 errdetail("The new partition may contain only the columns present in parent.")));
+	}
+
+	/*
+	 * Check that the distribution policy matches. The columns might be in
+	 * different order, so use GpPolicyEqualByName() rather than just
+	 * GpPolicyEqual() here.
+	 */
+	if (attachrel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		!GpPolicyEqualByName(RelationGetDescr(rel),
+							 rel->rd_cdbpolicy,
+							 RelationGetDescr(attachrel),
+							 attachrel->rd_cdbpolicy))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("distribution policy for \"%s\" must be the same as that for \"%s\"",
+						RelationGetRelationName(attachrel),
+						RelationGetRelationName(rel))));
 	}
 
 	/*
