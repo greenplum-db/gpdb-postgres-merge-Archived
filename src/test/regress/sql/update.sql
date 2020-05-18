@@ -142,6 +142,8 @@ CREATE TABLE range_parted (
 CREATE TABLE part_b_20_b_30 (e varchar, c numeric, a text, b bigint, d int);
 ALTER TABLE range_parted ATTACH PARTITION part_b_20_b_30 FOR VALUES FROM ('b', 20) TO ('b', 30);
 CREATE TABLE part_b_10_b_20 (e varchar, c numeric, a text, b bigint, d int) PARTITION BY RANGE (c);
+-- GPDB: distribution policy must match the parent table.
+alter table part_b_10_b_20 set distributed by (a);
 CREATE TABLE part_b_1_b_10 PARTITION OF range_parted FOR VALUES FROM ('b', 1) TO ('b', 10);
 ALTER TABLE range_parted ATTACH PARTITION part_b_10_b_20 FOR VALUES FROM ('b', 10) TO ('b', 20);
 CREATE TABLE part_a_10_a_20 PARTITION OF range_parted FOR VALUES FROM ('a', 10) TO ('a', 20);
@@ -155,6 +157,7 @@ UPDATE part_b_10_b_20 set b = b - 6;
 -- order, but let's make the situation a bit more complex by having the
 -- attribute numbers of the columns vary from their parent partition.
 CREATE TABLE part_c_100_200 (e varchar, c numeric, a text, b bigint, d int) PARTITION BY range (abs(d));
+
 ALTER TABLE part_c_100_200 DROP COLUMN e, DROP COLUMN c, DROP COLUMN a;
 ALTER TABLE part_c_100_200 ADD COLUMN c numeric, ADD COLUMN e varchar, ADD COLUMN a text;
 ALTER TABLE part_c_100_200 DROP COLUMN b;
@@ -162,6 +165,11 @@ ALTER TABLE part_c_100_200 ADD COLUMN b bigint;
 CREATE TABLE part_d_1_15 PARTITION OF part_c_100_200 FOR VALUES FROM (1) TO (15);
 CREATE TABLE part_d_15_20 PARTITION OF part_c_100_200 FOR VALUES FROM (15) TO (20);
 
+ALTER TABLE part_b_10_b_20 ATTACH PARTITION part_c_100_200 FOR VALUES FROM (100) TO (200);
+
+-- GPDB: distribution policy must match the parent table, so the previous command fails.
+-- Change the distribution key and try again.
+alter table part_c_100_200 set distributed by (a);
 ALTER TABLE part_b_10_b_20 ATTACH PARTITION part_c_100_200 FOR VALUES FROM (100) TO (200);
 
 CREATE TABLE part_c_1_100 (e varchar, d int, c numeric, b bigint, a text);
@@ -498,8 +506,10 @@ CREATE TABLE list_parted (a numeric, b int, c int8) PARTITION BY list (a);
 CREATE TABLE sub_parted PARTITION OF list_parted for VALUES in (1) PARTITION BY list (b);
 
 CREATE TABLE sub_part1(b int, c int8, a numeric);
+alter table sub_part1 set distributed by (a); -- GPDB: distribution policy must match the parent table.
 ALTER TABLE sub_parted ATTACH PARTITION sub_part1 for VALUES in (1);
 CREATE TABLE sub_part2(b int, c int8, a numeric);
+alter table sub_part2 set distributed by (a); -- GPDB: distribution policy must match the parent table.
 ALTER TABLE sub_parted ATTACH PARTITION sub_part2 for VALUES in (2);
 
 CREATE TABLE list_part1(a numeric, b int, c int8);
