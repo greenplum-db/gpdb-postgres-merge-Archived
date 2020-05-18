@@ -1288,6 +1288,10 @@ insert into wcowrtest_v values (1);
 alter table wcowrtest add b text;
 create table wcowrtest2 (b text, c int, a int);
 alter table wcowrtest2 drop c;
+
+-- GPDB: distribution policy must match the parent table.
+alter table wcowrtest2 set distributed by (a);
+
 alter table wcowrtest attach partition wcowrtest2 for values in (2);
 
 create table sometable (a int, b text);
