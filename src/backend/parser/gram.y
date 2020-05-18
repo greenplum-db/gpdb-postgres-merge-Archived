@@ -4252,7 +4252,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
-								 parser_errposition(@8)));
+								 parser_errposition(@7)));
 
 					if (!n->is_from && n->whereClause != NULL)
 						ereport(ERROR,
