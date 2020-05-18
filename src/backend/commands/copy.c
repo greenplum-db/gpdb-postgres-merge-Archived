@@ -4422,6 +4422,8 @@ CopyFrom(CopyState cstate)
 	 */
 	if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
 		appendonly_dml_init(resultRelInfo->ri_RelationDesc, CMD_INSERT);
+	else if (RelationIsAoCols(resultRelInfo->ri_RelationDesc))
+		aoco_dml_init(resultRelInfo->ri_RelationDesc, CMD_INSERT);
 
 	for (;;)
 	{

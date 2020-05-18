@@ -6006,6 +6006,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			Assert(RelationIsAoRows(oldrel));
 			appendonly_dml_init(newrel, CMD_INSERT);
 		}
+		else if (newrel && RelationIsAoCols(newrel))
+		{
+			Assert(RelationIsAoCols(oldrel));
+			aoco_dml_init(newrel, CMD_INSERT);
+		}
 
 		/*
 		 * Switch to per-tuple memory context and reset it for each tuple

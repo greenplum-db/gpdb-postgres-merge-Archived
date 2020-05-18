@@ -34,6 +34,7 @@
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
 
+#include "cdb/cdbaocsam.h"
 #include "cdb/cdbappendonlyam.h"
 
 /*-----------------------
@@ -873,6 +874,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 
 	if (RelationIsAoRows(leaf_part_rri->ri_RelationDesc))
 		appendonly_dml_init(leaf_part_rri->ri_RelationDesc, mtstate->operation);
+	else if (RelationIsAoCols(leaf_part_rri->ri_RelationDesc))
+		aoco_dml_init(leaf_part_rri->ri_RelationDesc, mtstate->operation);
 
 	MemoryContextSwitchTo(oldcxt);
 
