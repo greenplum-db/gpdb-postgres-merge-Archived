@@ -1280,7 +1280,8 @@ ProcessUtilitySlow(ParseState *pstate,
 																	false);
 								(void) heap_reloptions(RELKIND_TOASTVALUE,
 													   toast_options,
-													   true);
+													   true,
+													   InvalidOid);
 
 								/*
 								 * If the master relation is a non-leaf relation in
@@ -1310,7 +1311,8 @@ ProcessUtilitySlow(ParseState *pstate,
 																	false);
 								(void) heap_reloptions(RELKIND_TOASTVALUE,
 													   toast_options,
-													   true);
+													   true,
+													   InvalidOid);
 
 								NewRelationCreateToastTable(address.objectId,
 															toast_options);

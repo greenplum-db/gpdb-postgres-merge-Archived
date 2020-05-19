@@ -800,7 +800,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	} else if (relkind == RELKIND_VIEW)
 		(void) view_reloptions(reloptions, true);
 	else
-		(void) heap_reloptions(relkind, reloptions, true);
+		(void) heap_reloptions(relkind, reloptions, true, InvalidOid);
 
 	if (stmt->ofTypename)
 	{
@@ -13968,7 +13968,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 						 errmsg("altering reloptions for append only tables"
 								" is not permitted")));
 
-			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
+			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true, rel->rd_rel->relam);
 			break;
 		case RELKIND_VIEW:
 			(void) view_reloptions(newOptions, true);
@@ -14077,7 +14077,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 										 defList, "toast", validnsps, false,
 										 operation == AT_ResetRelOptions);
 
-		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true);
+		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true, InvalidOid);
 
 		memset(repl_val, 0, sizeof(repl_val));
 		memset(repl_null, false, sizeof(repl_null));

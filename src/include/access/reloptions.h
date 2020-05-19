@@ -297,7 +297,7 @@ extern void fillRelOptions(void *rdopts, Size basesize,
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
 								 relopt_kind kind);
-extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
+extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate, Oid amoid);
 extern bytea *view_reloptions(Datum reloptions, bool validate);
 extern bytea *index_reloptions(amoptions_function amoptions, Datum reloptions,
 							   bool validate);
