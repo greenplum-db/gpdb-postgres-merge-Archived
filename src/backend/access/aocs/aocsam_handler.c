@@ -286,6 +286,45 @@ get_insert_descriptor(const Relation relation, bool for_update)
 	return state->insertDesc;
 }
 
+
+/*
+ * Retrieve the deleteDescriptor for a relation. Initialize it if needed.
+ */
+static AOCSDeleteDesc
+get_delete_descriptor(const Relation relation, bool forUpdate)
+{
+	AOCODMLState *state;
+
+	state = find_dml_state(RelationGetRelid(relation));
+
+	if (state->deleteDesc == NULL)
+	{
+		/*
+		 * GPDB_12_MERGE_FIXME: Can we perform this check earlier on?
+		 * Example during init? Idealy should be called on master node first,
+		 * that way we will avoid the dispatch.
+		 */
+		MemoryContext oldcxt;
+		if (IsolationUsesXactSnapshot())
+		{
+			if (forUpdate)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("updates on append-only tables are not supported in serializable transactions")));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("deletes on append-only tables are not supported in serializable transactions")));
+		}
+
+		oldcxt = MemoryContextSwitchTo(aocoLocal.stateCxt);
+		state->deleteDesc = aocs_delete_init(relation);
+		MemoryContextSwitchTo(oldcxt);
+	}
+
+	return state->deleteDesc;
+}
+
 static Datum
 tts_aocovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
 {
@@ -439,7 +478,6 @@ aoco_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 {
 
 	AOCSInsertDesc          insertDesc;
-	bool					shouldFree = true;
 
 	insertDesc = get_insert_descriptor(relation, false);
 
@@ -485,10 +523,29 @@ aoco_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 
 static TM_Result
 aoco_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
-                        Snapshot snapshot, Snapshot crosscheck, bool wait,
-                        TM_FailureData *tmfd, bool changingPart)
+				  Snapshot snapshot, Snapshot crosscheck, bool wait,
+				  TM_FailureData *tmfd, bool changingPart)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSDeleteDesc deleteDesc;
+	TM_Result	result;
+
+	deleteDesc = get_delete_descriptor(relation, false);
+	result = aocs_delete(deleteDesc, (AOTupleId *) tid);
+	if (result == TM_Ok)
+		pgstat_count_heap_delete(relation);
+	else if (result == TM_SelfModified)
+	{
+		/*
+		 * The visibility map entry has been set and it was in this command.
+		 *
+		 * Our caller might want to investigate tmfd to decide on appropriate
+		 * action. Set it here to match expectations. The uglyness here is
+		 * preferrable to having to inspect the relation's am in the caller.
+		 */
+		tmfd->cmax = cid;
+	}
+
+	return result;
 }
 
 
@@ -954,7 +1011,6 @@ InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **pro
 	/* Initialize AOCS projection info */
 	int			ncol = currentRelation->rd_att->natts;
 	int			i;
-	MemoryContext oldcxt;
 
 	Assert(currentRelation != NULL);
 
