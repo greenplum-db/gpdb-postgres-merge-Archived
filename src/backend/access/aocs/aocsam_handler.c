@@ -266,7 +266,7 @@ aoco_dml_finish(Relation relation, CmdType operation)
  * Retrieve the insertDescriptor for a relation. Initialize it if needed.
  */
 static AOCSInsertDesc
-get_insert_descriptor(const Relation relation, bool for_update)
+get_insert_descriptor(const Relation relation)
 {
 	AOCODMLState *state;
 
@@ -278,8 +278,7 @@ get_insert_descriptor(const Relation relation, bool for_update)
 
 		oldcxt = MemoryContextSwitchTo(aocoLocal.stateCxt);
 		state->insertDesc = aocs_insert_init(relation,
-		                                     ChooseSegnoForWrite(relation),
-		                                     for_update);
+											 ChooseSegnoForWrite(relation));
 		MemoryContextSwitchTo(oldcxt);
 	}
 
@@ -479,7 +478,7 @@ aoco_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 
 	AOCSInsertDesc          insertDesc;
 
-	insertDesc = get_insert_descriptor(relation, false);
+	insertDesc = get_insert_descriptor(relation);
 
 	aocs_insert(insertDesc, slot);
 
@@ -551,11 +550,43 @@ aoco_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 
 static TM_Result
 aoco_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
-                        CommandId cid, Snapshot snapshot, Snapshot crosscheck,
-                        bool wait, TM_FailureData *tmfd,
-                        LockTupleMode *lockmode, bool *update_indexes)
+				  CommandId cid, Snapshot snapshot, Snapshot crosscheck,
+				  bool wait, TM_FailureData *tmfd,
+				  LockTupleMode *lockmode, bool *update_indexes)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSInsertDesc insertDesc;
+	AOCSDeleteDesc deleteDesc;
+	TM_Result	result;
+
+	insertDesc = get_insert_descriptor(relation);
+	deleteDesc = get_delete_descriptor(relation, true);
+
+	/* Update the tuple with table oid */
+	slot->tts_tableOid = RelationGetRelid(relation);
+
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet(
+								   "appendonly_update",
+								   DDLNotSpecified,
+								   "", //databaseName
+								   RelationGetRelationName(insertDesc->aoi_rel));
+	/* tableName */
+#endif
+
+	result = aocs_delete(deleteDesc, (AOTupleId *) otid);
+	if (result != TM_Ok)
+		return result;
+
+	aocs_insert(insertDesc, slot);
+
+	// GPDB_12_MERGE_FIXME
+	//(resultRelInfo->ri_aoprocessed)++;
+
+	pgstat_count_heap_update(relation, false);
+	/* No HOT updates with AO tables. */
+	*update_indexes = true;
+
+	return result;
 }
 
 static TM_Result

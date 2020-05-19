@@ -826,7 +826,7 @@ SetBlockFirstRowNums(DatumStreamWrite **datumStreams,
 
 
 AOCSInsertDesc
-aocs_insert_init(Relation rel, int segno, bool update_mode)
+aocs_insert_init(Relation rel, int segno)
 {
     NameData    nd;
 	AOCSInsertDesc desc;
@@ -846,7 +846,6 @@ aocs_insert_init(Relation rel, int segno, bool update_mode)
 
 	Assert(segno >= 0);
 	desc->cur_segno = segno;
-	desc->update_mode = update_mode;
 
     GetAppendOnlyEntryAttributes(rel->rd_id,
                                  &desc->blocksz,
@@ -1582,11 +1581,11 @@ typedef struct AOCSUpdateDescData
 AOCSUpdateDesc
 aocs_update_init(Relation rel, int segno)
 {
-    Oid visimaprelid;
-    Oid visimapidxid;
+	Oid			visimaprelid;
+	Oid			visimapidxid;
 	AOCSUpdateDesc desc = (AOCSUpdateDesc) palloc0(sizeof(AOCSUpdateDescData));
 
-	desc->insertDesc = aocs_insert_init(rel, segno, true);
+	desc->insertDesc = aocs_insert_init(rel, segno);
 
     GetAppendOnlyEntryAuxOids(rel->rd_id,
                               desc->insertDesc->appendOnlyMetaDataSnapshot,

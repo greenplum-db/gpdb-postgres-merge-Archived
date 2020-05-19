@@ -385,7 +385,7 @@ AOCSCompact(Relation aorel,
 
 		if (*insert_segno != -1)
 		{
-			insertDesc = aocs_insert_init(aorel, *insert_segno, false);
+			insertDesc = aocs_insert_init(aorel, *insert_segno);
 
 			AOCSSegmentFileFullCompaction(aorel,
 										  insertDesc,
