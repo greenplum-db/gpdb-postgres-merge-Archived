@@ -514,7 +514,7 @@ aoco_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 aoco_finish_bulk_insert(Relation relation, int options)
 {
-	elog(ERROR, "not implemented yet");
+	aoco_dml_finish(relation, CMD_INSERT);
 }
 
 
