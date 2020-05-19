@@ -2810,10 +2810,37 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				!contain_volatile_functions(parse->limitOffset) &&
 				!contain_volatile_functions(parse->limitCount))
 			{
-				path = (Path *) create_preliminary_limit_path(root, final_rel, path,
-															  parse->limitOffset,
-															  parse->limitCount,
-															  offset_est, count_est);
+
+				/*
+				 * There is a corner case we can not generate gpdb private
+				 * two phase limit path.
+				 * if a subpath is sorted under a subqueryscan path, but the
+				 * subqueryscan is not.
+				 *
+				 * e.g.
+				 * create table foo (a int, b int, c int);
+				 *
+				 * select *
+				 * from (select b, c from foo order by 1,2) as x
+				 * limit 3;
+				 *
+				 * If a gather motion is directly upon a subquery scan,
+				 * the motion node will push down under the subqueryscan to promise
+				 * data ordered.
+				 *
+				 * GPDB_12_MERGE_FIXME:
+				 * A better approach is that our motion have LIMIT node ability.
+				 * All two phases limit is translated to `limit->gather motion->subpath...`
+				 * In executor, upper slice's gather motion sort tuples, under
+				 * slice's gather motion directly limit the number of tuples send out.
+				 */
+				if (!(IsA(path, SubqueryScanPath)
+					&& !path->pathkeys
+					&& ((SubqueryScanPath *)path)->subpath->pathkeys))
+					path = (Path *) create_preliminary_limit_path(root, final_rel, path,
+					                                              parse->limitOffset,
+					                                              parse->limitCount,
+					                                              offset_est, count_est);
 			}
 
 			/*
