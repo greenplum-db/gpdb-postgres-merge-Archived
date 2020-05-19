@@ -3598,17 +3598,12 @@ opt_table_partition_split_into:
             alter_table_partition_id_spec_with_opt_default ','
             alter_table_partition_id_spec_with_opt_default ')'	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
                     /* re-use alterpartitioncmd struct here... */
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
                     pc->partid = (Node *)$3;
-                    pc->arg1 = (Node *)$5;
-                    pc->arg2 = NULL;
+                    pc->arg = (Node *)$5;
                     pc->location = @5;
 					$$ = (Node *)pc;
-#endif
                 }
 			| /*EMPTY*/						{ $$ = NULL; /* default */ }
 		;
@@ -4039,52 +4034,44 @@ alter_table_partition_cmd:
             TabPartitionBoundarySpecEnd
             opt_table_partition_split_into	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpSplitPartitionCmd *pc = makeNode(GpSplitPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					AlterPartitionId *pid = makeNode(AlterPartitionId);
+					GpAlterPartitionId *pid = makeNode(GpAlterPartitionId);
 
 					pid->idtype = AT_AP_IDDefault;
                     pid->partiddef = NULL;
                     pid->location  = @2;
 
-                    pc->partid = (Node *)pid;
-                    pc->arg1 = (Node *)list_make2($4, $5);
+                    pc->partid = pid;
+                    pc->arg1 = list_make2($4, $5);
                     pc->arg2 = (Node *)$6;
                     pc->location = @5;
 
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| SPLIT 
             alter_table_partition_id_spec_with_opt_default AT 
             '(' part_values_or_spec_list ')'	
             opt_table_partition_split_into	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpSplitPartitionCmd *pc = makeNode(GpSplitPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-                    pc->partid = (Node *)$2;
+                    pc->partid = (GpAlterPartitionId*) $2;
 
 					/* 
 					 * The first element of the list is only defined if
 					 * we're doing default splits for range partitioning.
 				 	 */
-                    pc->arg1 = (Node *)list_make2(NULL, $5);
+                    pc->arg1 = list_make2(NULL, $5);
                     pc->arg2 = (Node *)$7;
                     pc->location = @5;
 
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| TRUNCATE 
             alter_table_partition_id_spec_with_opt_default

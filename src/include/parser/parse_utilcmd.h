@@ -47,4 +47,17 @@ extern List *generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSp
 								const char *queryString, List *parentoptions,
 								const char *parentaccessmethod);
 
+typedef struct partname_comp
+{
+	const char *tablename;
+	int level;
+	int partnum;
+} partname_comp;
+
+extern CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
+										   PartitionBoundSpec *boundspec,
+										   PartitionSpec *subPart,
+										   GpPartDefElem *elem,
+										   partname_comp *partnamecomp);
+
 #endif							/* PARSE_UTILCMD_H */

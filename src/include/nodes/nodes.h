@@ -544,6 +544,7 @@ typedef enum NodeTag
 	T_GpPartitionListSpec,
 	T_GpAlterPartitionId,
 	T_GpDropPartitionCmd,
+	T_GpSplitPartitionCmd,
 	T_GpAlterPartitionCmd,
 
 	/*

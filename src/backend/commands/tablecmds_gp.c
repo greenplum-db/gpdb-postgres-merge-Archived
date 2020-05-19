@@ -35,6 +35,7 @@
 #include "partitioning/partdesc.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/partcache.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -706,6 +707,218 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		{
 			List *returnstmt = AtExecGPExchangePartition(rel, cmd);
 			stmts = list_concat(stmts, returnstmt);
+		}
+		break;
+
+		case AT_PartSplit:
+		{
+			GpSplitPartitionCmd *pc = castNode(GpSplitPartitionCmd, cmd->def);
+			RangeVar *oldpartrv;
+			RangeVar *tmprv;
+			PartitionBoundSpec *boundspec;
+
+			/* TODO later optimize to avoid detach for default partition */
+
+			/* detach current partition */
+			{
+				GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+				AlterTableStmt *atstmt = makeNode(AlterTableStmt);
+				AlterTableCmd *atcmd = makeNode(AlterTableCmd);
+				PartitionCmd *pcmd = makeNode(PartitionCmd);
+				char tmpname[NAMEDATALEN];
+				Oid partrelid;
+				Relation partrel;
+				HeapTuple tuple;
+
+				partrelid = GpFindTargetPartition(rel, pid, false);
+				Assert(OidIsValid(partrelid));
+				partrel = table_open(partrelid, AccessShareLock);
+
+				if (partrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot SPLIT PARTITION for relation \"%s\" -- partition has children",
+									RelationGetRelationName(rel))));
+
+				oldpartrv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+										 pstrdup(RelationGetRelationName(partrel)),
+										 pc->location);
+
+				snprintf(tmpname, sizeof(tmpname), "pg_temp_%u", partrelid);
+				tmprv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
+									 pstrdup(tmpname),
+									 pc->location);
+
+				/*
+				 * Get the part's boundspec. Fetch the tuple from the
+				 * catcache, for speed. Relcache doesn't store the part bound
+				 * hence need to fetch from catalog.
+				 */
+				tuple = SearchSysCache1(RELOID, partrelid);
+				if (HeapTupleIsValid(tuple))
+				{
+					Datum		datum;
+					bool		isnull;
+
+					datum = SysCacheGetAttr(RELOID, tuple,
+											Anum_pg_class_relpartbound,
+											&isnull);
+					if (!isnull)
+						boundspec = stringToNode(TextDatumGetCString(datum));
+					else
+						boundspec = NULL;
+					ReleaseSysCache(tuple);
+				}
+				else
+					elog(ERROR, "pg_class tuple not found for relation %s",
+						 RelationGetRelationName(partrel));
+
+				table_close(partrel, AccessShareLock);
+
+				pcmd->name = oldpartrv;
+				pcmd->bound = NULL;
+				atcmd->subtype = AT_DetachPartition;
+				atcmd->def = (Node *) pcmd;
+
+				atstmt->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+												pstrdup(RelationGetRelationName(rel)),
+												pc->location);
+				atstmt->relkind = OBJECT_TABLE;
+				atstmt->missing_ok = false;
+				atstmt->cmds = list_make1(atcmd);
+				atstmt->is_internal = true; /* set this to avoid transform */
+
+				stmts = lappend(stmts, (Node *) atstmt);
+			}
+
+			/* rename old part to temp */
+			stmts = lappend(stmts, (Node *) generateRenameStmt(oldpartrv, tmprv->relname));
+
+			/* create new partitions */
+			{
+				List *start = linitial(pc->arg1);
+				List *end   = lsecond(pc->arg1);
+				partname_comp partcomp = {.tablename=NULL, .level=0, .partnum=0};
+				List       *ancestors = get_partition_ancestors(RelationGetRelid(rel));
+				GpPartDefElem *elem;
+				PartitionBoundSpec *boundspec1;
+				PartitionBoundSpec *boundspec2 = boundspec;
+				PartitionKey partkey = RelationGetPartitionKey(rel);
+				ParseState *pstate = make_parsestate(NULL);
+				char *part_col_name;
+				Oid			part_col_typid;
+				int32		part_col_typmod;
+				Oid			part_col_collation;
+
+				Assert(partkey->partnatts == 1);
+
+				part_col_name = NameStr(TupleDescAttr(RelationGetDescr(rel), partkey->partattrs[0] - 1)->attname);
+				part_col_typid = get_partition_col_typid(partkey, 0);
+				part_col_typmod = get_partition_col_typmod(partkey, 0);
+				part_col_collation = get_partition_col_collation(partkey, 0);
+
+				boundspec1 = makeNode(PartitionBoundSpec);
+				boundspec1->strategy = PARTITION_STRATEGY_RANGE;
+				boundspec1->is_default = false;
+
+				Assert(end != NULL);
+				if (end)
+				{
+					Const	   *endConst;
+					if (list_length(end) != partkey->partnatts)
+						elog(ERROR, "invalid number of end values"); // GPDB_12_MERGE_FIXME: improve message
+
+					endConst = transformPartitionBoundValue(pstate,
+															linitial(end),
+															part_col_name,
+															part_col_typid,
+															part_col_typmod,
+															part_col_collation);
+					if (endConst->constisnull)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("cannot use NULL with range partition specification"),
+								 parser_errposition(pstate, pc->location)));
+
+					boundspec1->upperdatums = list_make1(makeConst(partkey->parttypid[0],
+																   partkey->parttypmod[0],
+																   partkey->parttypcoll[0],
+																   partkey->parttyplen[0],
+																   datumCopy(endConst->constvalue,
+																			 partkey->parttypbyval[0],
+																			 partkey->parttyplen[0]),
+																   false,
+																   partkey->parttypbyval[0]));
+				}
+
+				if (start)
+				{
+					Const	   *startConst;
+
+					if (list_length(start) != partkey->partnatts)
+						elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
+
+					startConst = transformPartitionBoundValue(pstate,
+															  linitial(start),
+															  part_col_name,
+															  part_col_typid,
+															  part_col_typmod,
+															  part_col_collation);
+					if (startConst->constisnull)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("cannot use NULL with range partition specification"),
+								 parser_errposition(pstate, pc->location)));
+
+					boundspec1->lowerdatums = list_make1(makeConst(partkey->parttypid[0],
+																   partkey->parttypmod[0],
+																   partkey->parttypcoll[0],
+																   partkey->parttyplen[0],
+																   datumCopy(startConst->constvalue,
+																			 partkey->parttypbyval[0],
+																			 partkey->parttyplen[0]),
+																   false,
+																   partkey->parttypbyval[0]));
+				}
+				else
+				{
+					/*
+					 * Start not-specified means splitting non-default
+					 * partition. Use existing partitions lowerdatum as start
+					 * for this partition.
+					 */
+					boundspec1->lowerdatums = boundspec2->lowerdatums;
+					boundspec2->lowerdatums = copyObject(boundspec1->upperdatums);
+				}
+
+				boundspec1->location = -1;
+
+				partcomp.level = list_length(ancestors) + 1;
+				elem = makeNode(GpPartDefElem);
+				//elem->tablespacename = NULL;
+				//elem->accessMethod = NULL;
+
+				/* create first partition stmt */
+				stmts = lappend(stmts, makePartitionCreateStmt(rel, NULL, boundspec1, NULL, elem, &partcomp));
+				/* create second partition stmt */
+				stmts = lappend(stmts, makePartitionCreateStmt(rel, NULL, boundspec2, NULL, elem, &partcomp));
+			}
+
+			/* insert parent into select * from tmp */
+			{
+			}
+
+			/* drop tmp table */
+			{
+				DropStmt *dropstmt = makeNode(DropStmt);
+				dropstmt->objects = list_make1(
+					list_make2(makeString(tmprv->schemaname),
+							   makeString(tmprv->relname)));
+				dropstmt->removeType = OBJECT_TABLE;
+				dropstmt->behavior = DROP_CASCADE;
+				dropstmt->missing_ok = false;
+				stmts = lappend(stmts, (Node *)dropstmt);
+			}
 		}
 		break;
 

@@ -56,21 +56,8 @@ typedef struct
 	int			every_location;
 } PartEveryIterator;
 
-typedef struct partname_comp
-{
-	const char *tablename;
-	int level;
-	int partnum;
-} partname_comp;
-
 static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
 								 const char *partname, int partnum);
-
-static CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
-										   PartitionBoundSpec *boundspec,
-										   PartitionSpec *subPart,
-										   GpPartDefElem *elem,
-										   partname_comp *partnamecomp);
 
 static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
@@ -574,7 +561,7 @@ ChoosePartitionName(Relation parentrel, const char *levelstr,
 							  false);
 }
 
-static CreateStmt *
+CreateStmt *
 makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *boundspec,
 						PartitionSpec *subPart, GpPartDefElem *elem,
 						partname_comp *partnamecomp)

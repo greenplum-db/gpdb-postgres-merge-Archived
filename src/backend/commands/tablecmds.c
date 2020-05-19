@@ -4004,6 +4004,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 				case AT_PartAdd:
 				case AT_PartDrop:
 				case AT_PartAlter:
+				case AT_PartSplit:
 				case AT_PartTruncate:
 				case AT_PartExchange:
 					break;
@@ -4344,6 +4345,7 @@ AlterTableGetLockLevel(List *cmds)
 
 			case AT_PartAdd:
 			case AT_PartDrop:
+			case AT_PartSplit:
 			case AT_PartExchange:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
@@ -4826,6 +4828,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_PartAdd:
 		case AT_PartDrop:
 		case AT_PartAlter:
+		case AT_PartSplit:
 		case AT_PartTruncate:
 		case AT_PartExchange:
 			ATSimplePermissions(rel, ATT_TABLE);
@@ -5194,6 +5197,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_PartAdd:
 		case AT_PartDrop:
 		case AT_PartAlter:
+		case AT_PartSplit:
 		case AT_PartTruncate:
 		case AT_PartExchange:
 			ATExecGPPartCmds(rel, cmd);

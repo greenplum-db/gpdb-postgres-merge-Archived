@@ -4219,17 +4219,17 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 				/* CDB: Partitioned Tables */
 
-			case AT_PartAlter:
 			case AT_PartAdd:
-			case AT_PartTruncate:
 			case AT_PartDrop:
+			case AT_PartAlter:
+			case AT_PartSplit:
+			case AT_PartTruncate:
 			case AT_PartExchange:
 				newcmds = lappend(newcmds, cmd);
 				break;
 
             case AT_PartRename:			/* Rename */
             case AT_PartSetTemplate:	/* Set Subpartition Template */
-            case AT_PartSplit:			/* Split */
 				/* GDPB_12_MERGE_FIXME: need to re-implement this */
 				elog(ERROR, "not implemented");
 #if 0
@@ -5172,6 +5172,14 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 				prd->kind = PARTITION_RANGE_DATUM_MAXVALUE;
 				prd->value = NULL;
 			}
+		}
+		else if (IsA(expr, PartitionRangeDatum))
+		{
+			/*
+			 * GPDB: in certain situations have datum in transformed fashion
+			 * like SPLIT PARTITION. Hence, directly use the same.
+			 */
+			prd = (PartitionRangeDatum *) expr;
 		}
 
 		if (prd == NULL)
