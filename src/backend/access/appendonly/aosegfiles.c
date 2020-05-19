@@ -139,7 +139,7 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 	if (!HeapTupleIsValid(pg_aoseg_tuple))
 		elog(ERROR, "failed to build AO file segment tuple");
 
-	frozen_heap_insert(pg_aoseg_rel, pg_aoseg_tuple);
+	CatalogTupleInsertFrozen(pg_aoseg_rel, pg_aoseg_tuple);
 
 	/*
 	 * Lock the tuple so that a concurrent insert transaction will not

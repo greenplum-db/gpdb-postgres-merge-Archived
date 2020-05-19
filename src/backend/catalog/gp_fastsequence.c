@@ -173,7 +173,7 @@ insert_or_update_fastsequence(Relation gp_fastsequence_rel,
 
 		newTuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
 
-		GPFastSequenceInsertFrozen(gp_fastsequence_rel, newTuple);
+		CatalogTupleInsertFrozen(gp_fastsequence_rel, newTuple);
 
 		heap_freetuple(newTuple);
 	}

@@ -274,19 +274,17 @@ CatalogTupleDelete(Relation heapRel, ItemPointer tid)
 
 /*
  * Greenplum: this interface is used to insert tuples into gp_fastsequence
- * relation during an appendoptimized (row as well as column) insert
- * transaction.
+ * and aoseg relations during an appendoptimized (row as well as column)
+ * insert transaction.
  */
 void
-GPFastSequenceInsertFrozen(Relation fastseqRel, HeapTuple tup)
+CatalogTupleInsertFrozen(Relation heapRel, HeapTuple tup)
 {
 	CatalogIndexState indstate;
 
-	Assert(RelationGetRelid(fastseqRel) == FastSequenceRelationId);
+	indstate = CatalogOpenIndexes(heapRel);
 
-	indstate = CatalogOpenIndexes(fastseqRel);
-
-	frozen_heap_insert(fastseqRel, tup);
+	frozen_heap_insert(heapRel, tup);
 
 	CatalogIndexInsert(indstate, tup);
 	CatalogCloseIndexes(indstate);

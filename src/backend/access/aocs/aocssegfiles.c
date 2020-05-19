@@ -103,8 +103,7 @@ InsertInitialAOCSFileSegInfo(Relation prel, int32 segno, int32 nvp, Oid segrelid
 
 	segtup = heap_form_tuple(RelationGetDescr(segrel), values, nulls);
 
-	frozen_heap_insert(segrel, segtup);
-	CatalogTupleUpdate(segrel, &segtup->t_self, segtup);
+	CatalogTupleInsertFrozen(segrel, segtup);
 
 	/*
 	 * Lock the tuple so that a concurrent insert transaction will not
