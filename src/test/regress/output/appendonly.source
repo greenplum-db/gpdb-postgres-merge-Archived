@@ -509,7 +509,7 @@ SELECT c.relname, a.blocksize, a.compresstype, a.compresslevel, a.checksum FROM 
 -------------------+-----------+--------------+---------------+----------
  tenk_ao1          |     32768 |              |             0 | t
  tenk_ao13         |     32768 |              |             0 | t
- tenk_ao14         |     32768 |              |             0 | t
+ tenk_ao14         |     65536 |              |             0 | t
  tenk_ao15_1_prt_1 |     32768 |              |             0 | t
  tenk_ao15_1_prt_2 |     32768 |              |             0 | t
  tenk_ao15_1_prt_3 |     32768 |              |             0 | t
