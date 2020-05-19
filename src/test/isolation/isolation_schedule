@@ -73,7 +73,7 @@ test: fk-partitioned-2
 #test: lock-update-traversal
 test: inherit-temp
 #test: insert-conflict-do-nothing
-test: insert-conflict-do-nothing-2
+#test: insert-conflict-do-nothing-2
 #test: insert-conflict-do-update
 #test: insert-conflict-do-update-2
 #test: insert-conflict-do-update-3
