@@ -4585,7 +4585,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 			appendPQExpBuffer(&buf, ", CASE c.relam");
 			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", HEAP_TABLE_AM_OID, gettext_noop("heap"));
 			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", APPENDOPTIMIZED_TABLE_AM_OID, gettext_noop("append only"));
-			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only"));
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only columnar"));
 			/* GPDB_12_MERGE_FIXME fill other storage types */
 			appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
 		}
