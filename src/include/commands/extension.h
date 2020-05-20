@@ -51,4 +51,6 @@ extern char *get_extension_name(Oid ext_oid);
 extern ObjectAddress AlterExtensionNamespace(const char *extensionName, const char *newschema,
 											 Oid *oldschema);
 
+extern void execute_sql_string(const char *sql);
+
 #endif							/* EXTENSION_H */

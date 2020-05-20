@@ -699,7 +699,7 @@ read_extension_script_file(const ExtensionControlFile *control,
  * on printing the whole string as errcontext in case of any error, and that
  * could be very long.
  */
-static void
+void
 execute_sql_string(const char *sql)
 {
 	List	   *raw_parsetree_list;
