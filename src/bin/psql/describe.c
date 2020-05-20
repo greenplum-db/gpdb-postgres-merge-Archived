@@ -1629,6 +1629,30 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 	return true;
 }
 
+static inline bool
+greenplum_is_appendoptimized(const char olddesc, const char *newdesc)
+{
+	if (olddesc == 'a')
+		return true;
+
+	if (newdesc && !strncmp(newdesc, "appendoptimized", strlen("appendoptimized")))
+		return true;
+
+	return false;
+}
+
+static inline bool
+greenplum_is_aoco(const char olddesc, const char *newdesc)
+{
+	if (olddesc == 'c')
+		return true;
+
+	if (newdesc && !strncmp(newdesc, "aoco", strlen("aoco")))
+		return true;
+
+	return false;
+}
+
 /*
  * describeOneTableDetails (for \d)
  *
@@ -2045,8 +2069,8 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;		/* not an error, just return early */
 	}
 
-	/* GPDB_12_MERGE_FIXME: Should this also check relam now? */
-	if (tableinfo.relstorage == 'a' || tableinfo.relstorage == 'c')
+	if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam)
+			|| greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam))
 	{
 		PGresult *result = NULL;
 		/* Get Append Only information
@@ -2163,8 +2187,7 @@ describeOneTableDetails(const char *schemaname,
 			attstattarget_col = cols++;
 		}
 
-		/* GPDB_12_MERGE_FIXME: also check relam? */
-		if (tableinfo.relstorage == 'c')
+		if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
 		{
 			if (isGE42 == true)
 			{
@@ -2295,7 +2318,7 @@ describeOneTableDetails(const char *schemaname,
 	if (attstattarget_col >= 0)
 		headers[cols++] = gettext_noop("Stats target");
 
-	if (tableinfo.relstorage == 'c')
+	if (verbose && greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
 	{
 		headers[cols++] = gettext_noop("Compression Type");
 		headers[cols++] = gettext_noop("Compression Level");
@@ -2381,7 +2404,8 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddCell(&cont, PQgetvalue(res, i, attstattarget_col),
 							  false, false);
 
-		if (tableinfo.relstorage == 'c' && attoptions_col >= 0)
+		if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam)
+				&& attoptions_col >= 0)
 		{
 			/* The compression type, compression level, and block size are all in the next column.
 			 * attributeOptions is a text array of key=value pairs retrieved as a string from the catalog.
@@ -2620,9 +2644,10 @@ describeOneTableDetails(const char *schemaname,
 			add_external_table_footer(&cont, oid);
 
 		/* print append only table information */
-		if (tableinfo.relstorage == 'a' || tableinfo.relstorage == 'c')
+		if (greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam) ||
+			greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
 		{
-		  if (tableinfo.relstorage == 'a')
+			if (greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam))
 			{
 				printfPQExpBuffer(&buf, _("Compression Type: %s"), tableinfo.compressionType);
 				printTableAddFooter(&cont, buf.data);
