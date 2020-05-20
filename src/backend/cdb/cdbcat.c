@@ -232,7 +232,7 @@ GpPolicyEqualByName(const TupleDesc ltd, const GpPolicy *lpol,
 	for (i = 0; i < lpol->nattrs; i++)
 	{
 		Form_pg_attribute latt = TupleDescAttr(ltd, lpol->attrs[i] - 1);
-		Form_pg_attribute ratt = TupleDescAttr(ltd, lpol->attrs[i] - 1);
+		Form_pg_attribute ratt = TupleDescAttr(ltd, rpol->attrs[i] - 1);
 
 		if (strcmp(NameStr(latt->attname), NameStr(ratt->attname)) != 0)
 			return false;
