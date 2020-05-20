@@ -870,10 +870,60 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 
 	scanstate->ss.ss_currentRelation = currentRelation;
 
-	scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
-														  estate->es_snapshot,
-														  0,
-														  NULL);
+	if (RelationIsAoCols(scanstate->ss.ss_currentRelation))
+	{
+		Assert(currentRelation->rd_att != NULL);
+		int colnum = currentRelation->rd_att->natts;
+
+		/*
+		 * the first `colnum` bools for simple bitmap scan
+		 * the reset bools for lossy model
+		 */
+		bool *proj = (bool *) palloc0(colnum * sizeof(bool) * 2);
+		bool *lossyproj = proj + colnum;
+		GetNeededColumnsForScan((Node *) node->scan.plan.targetlist, proj, colnum);
+		GetNeededColumnsForScan((Node *) node->scan.plan.qual, proj, colnum);
+
+		memcpy(lossyproj,proj, currentRelation->rd_att->natts * sizeof(bool));
+		GetNeededColumnsForScan((Node *) node->bitmapqualorig, lossyproj, colnum);
+
+		int colid;
+
+		/*
+		 * At least project one column. Since the tids stored in the index may not have
+		 * a correponding tuple any more (because of previous crashes, for example), we
+		 * need to read the tuple to make sure.
+		 */
+		for (colid = 0; colid < colnum; colid++)
+			if (proj[colid]) break;
+
+		if (colid == colnum)
+			proj[0] = true;
+
+		/* Same as proj */
+		for (colid = 0; colid < colnum; colid++)
+			if (lossyproj[colid]) break;
+
+		if (colid == colnum)
+			lossyproj[0] = true;
+
+		scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
+		                                                      estate->es_snapshot,
+		                                                      0,
+		                                                      (struct ScanKeyData *)proj);
+
+		((AOCSScanDesc)scanstate->ss.ss_currentScanDesc)->exprContext_ref =
+			scanstate->ss.ps.ps_ExprContext;
+		((AOCSScanDesc)scanstate->ss.ss_currentScanDesc)->bitmapqualorig_ref =
+			scanstate->bitmapqualorig;
+	}
+	else
+	{
+		scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
+		                                                      estate->es_snapshot,
+		                                                      0,
+		                                                      NULL);
+	}
 
 	/*
 	 * all done.

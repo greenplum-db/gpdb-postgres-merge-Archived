@@ -383,6 +383,7 @@ aoco_beginscan(Relation relation,
 	aoscan->rs_base.rs_nkeys = nkeys;
 	aoscan->rs_base.rs_flags = flags;
 	aoscan->rs_base.rs_parallel = pscan;
+	aoscan->proj = (bool *)key;
 
 	return (TableScanDesc) aoscan;
 }
@@ -390,6 +391,21 @@ aoco_beginscan(Relation relation,
 static void
 aoco_endscan(TableScanDesc scan)
 {
+	AOCSScanDesc aocoscan = (AOCSScanDesc) scan;
+
+	if (aocoscan->aocofetch)
+	{
+		aocs_fetch_finish(aocoscan->aocofetch);
+		pfree(aocoscan->aocofetch);
+		aocoscan->aocofetch = NULL;
+	}
+	if (aocoscan->aocolossyfetch)
+	{
+		aocs_fetch_finish(aocoscan->aocolossyfetch);
+		pfree(aocoscan->aocolossyfetch);
+		aocoscan->aocolossyfetch = NULL;
+	}
+
 	aocs_endscan((AOCSScanDesc) scan);
 }
 
@@ -446,19 +462,32 @@ aoco_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
 static IndexFetchTableData *
 aoco_index_fetch_begin(Relation rel)
 {
-	elog(ERROR, "not implemented yet");
+	IndexFetchAOCOData *aocoscan= palloc0(sizeof(IndexFetchAOCOData));
+
+	aocoscan->xs_base.rel = rel;
+
+	/* aocoscan other variables are initialized lazily on first fetch */
+
+	return &aocoscan->xs_base;
 }
 
 static void
 aoco_index_fetch_reset(IndexFetchTableData *scan)
 {
-	elog(ERROR, "not implemented yet");
+	// GPDB_12_MERGE_FIXME: Should we close the underlying AOCO fetch desc here?
 }
 
 static void
 aoco_index_fetch_end(IndexFetchTableData *scan)
 {
-	elog(ERROR, "not implemented yet");
+	IndexFetchAOCOData *aocoscan = (IndexFetchAOCOData *) scan;
+
+	if (aocoscan->aocofetch)
+	{
+		aocs_fetch_finish(aocoscan->aocofetch);
+		pfree(aocoscan->aocofetch);
+		aocoscan->aocofetch = NULL;
+	}
 }
 
 static bool
@@ -468,7 +497,55 @@ aoco_index_fetch_tuple(struct IndexFetchTableData *scan,
                              TupleTableSlot *slot,
                              bool *call_again, bool *all_dead)
 {
-	elog(ERROR, "not implemented yet");
+	IndexFetchAOCOData *aocoscan = (IndexFetchAOCOData *) scan;
+
+	if (!aocoscan->aocofetch)
+	{
+		Snapshot	appendOnlyMetaDataSnapshot;
+
+		appendOnlyMetaDataSnapshot = snapshot;
+		if (appendOnlyMetaDataSnapshot == SnapshotAny)
+		{
+			/*
+			 * the append-only meta data should never be fetched with
+			 * SnapshotAny as bogus results are returned.
+			 */
+			appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
+		}
+
+		if(aocoscan->proj == NULL)
+		{
+			int col_num = scan->rel->rd_att->natts;
+			aocoscan->proj = palloc0(sizeof(bool) * col_num);
+			MemSet(aocoscan->proj, true, sizeof(bool) * col_num);
+		}
+
+		aocoscan->aocofetch=
+			aocs_fetch_init(aocoscan->xs_base.rel,
+			                      snapshot,
+			                      appendOnlyMetaDataSnapshot,
+			                      aocoscan->proj);
+	}
+	else
+	{
+		/* GPDB_12_MERGE_FIXME: Is it possible for the 'snapshot' to change
+		 * between calls? Add a sanity check for that here. */
+	}
+
+	ExecClearTuple(slot);
+
+	if (aocs_fetch(aocoscan->aocofetch, (AOTupleId *) tid, slot))
+	{
+		ExecStoreVirtualTuple(slot);
+		return true;
+	}
+	else
+	{
+		if (slot)
+			ExecClearTuple(slot);
+
+		return false;
+	}
 }
 
 static void
@@ -1179,7 +1256,22 @@ static bool
 aoco_scan_bitmap_next_block(TableScanDesc scan,
                                   TBMIterateResult *tbmres)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSScanDesc aoscan = (AOCSScanDesc) scan;
+
+	/* If tbmres contains no tuples, continue. */
+	if (tbmres->ntuples == 0)
+		return false;
+
+	/* Make sure we never cross 15-bit offset number [MPP-24326] */
+	Assert(tbmres->ntuples <= INT16_MAX + 1);
+
+	/*
+	 * Start scanning from the beginning of the offsets array (or
+	 * at first "offset number" if it's a lossy page).
+	 */
+	aoscan->rs_cindex = 0;
+
+	return true;
 }
 
 static bool
@@ -1187,7 +1279,103 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
                                   TBMIterateResult *tbmres,
                                   TupleTableSlot *slot)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSScanDesc aocoscan = (AOCSScanDesc) scan;
+	OffsetNumber pseudoHeapOffset;
+	ItemPointerData pseudoHeapTid;
+	AOTupleId	aoTid;
+
+	if (aocoscan->aocofetch == NULL)
+	{
+		aocoscan->aocofetch =
+			aocs_fetch_init(aocoscan->rs_base.rs_rd,
+			                aocoscan->snapshot,
+			                aocoscan->appendOnlyMetaDataSnapshot,
+			                aocoscan->proj);
+	}
+
+	if (aocoscan->aocolossyfetch == NULL)
+	{
+		int numcol = aocoscan->rs_base.rs_rd->rd_att->natts;
+		aocoscan->lossy_proj = aocoscan->proj + numcol;
+
+		aocoscan->aocolossyfetch =
+			aocs_fetch_init(aocoscan->rs_base.rs_rd,
+			                aocoscan->snapshot,
+			                aocoscan->appendOnlyMetaDataSnapshot,
+			                aocoscan->lossy_proj);
+	}
+
+	for (;;)
+	{
+		/*
+		 * If it's a lossy pase, iterate through all possible "offset numbers".
+		 * Otherwise iterate through the array of "offset numbers".
+		 */
+		if (tbmres->ntuples == -1)
+		{
+			if (aocoscan->rs_cindex == INT16_MAX)
+				return false;
+
+			/*
+			 * +1 to convert index to offset, since TID offsets are not zero
+			 * based.
+			 */
+			pseudoHeapOffset = aocoscan->rs_cindex + 1;
+		}
+		else
+		{
+			if (aocoscan->rs_cindex == tbmres->ntuples)
+				return false;
+
+			pseudoHeapOffset = tbmres->offsets[aocoscan->rs_cindex];
+		}
+		aocoscan->rs_cindex++;
+
+		/*
+		 * Okay to fetch the tuple
+		 */
+		ItemPointerSet(&pseudoHeapTid, tbmres->blockno, pseudoHeapOffset);
+
+		tbm_convert_appendonly_tid_out(&pseudoHeapTid, &aoTid);
+
+		ExecClearTuple(slot);
+
+		if (tbmres->recheck)
+		{
+			if (aocs_fetch(aocoscan->aocolossyfetch, &aoTid, slot))
+				ExecStoreVirtualTuple(slot);
+			else
+			{
+				if (slot)
+					ExecClearTuple(slot);
+			}
+
+			aocoscan->exprContext_ref->ecxt_scantuple = slot;
+			ResetExprContext(aocoscan->exprContext_ref);
+
+			/* Fails recheck, so drop it and loop back for another */
+			if (!ExecQual(aocoscan->bitmapqualorig_ref,
+				aocoscan->exprContext_ref))
+				ExecClearTuple(slot);
+		}
+		else
+			if(aocs_fetch(aocoscan->aocofetch, &aoTid, slot))
+				ExecStoreVirtualTuple(slot);
+			else
+			{
+				if (slot)
+					ExecClearTuple(slot);
+			}
+
+		if (TupIsNull(slot))
+			continue;
+
+		pgstat_count_heap_fetch(aocoscan->aos_rel);
+
+		/* OK to return this tuple */
+		return true;
+	}
+
 }
 
 static bool
@@ -1315,7 +1503,7 @@ neededColumnContextWalker(Node *node, neededColumnContext *c)
  * it for bounds-checking in the walker above.
  */
 /* GPDB_12_MERGE_FIXME: this used to be in execQual.c Where does it belong now? */
-static void
+void
 GetNeededColumnsForScan(Node *expr, bool *mask, int n)
 {
 	neededColumnContext c;

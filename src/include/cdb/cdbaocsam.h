@@ -129,6 +129,20 @@ typedef struct AOCSScanDescData
 
 	AppendOnlyVisimap visibilityMap;
 
+	/* For Bitmap scan */
+	int			rs_cindex;		/* current tuple's index in tbmres->offsets */
+	struct AOCSFetchDescData   *aocofetch;
+	bool                       *proj;
+
+	struct AOCSFetchDescData   *aocolossyfetch;
+	bool                       *lossy_proj;
+
+	/*
+	 * We only keep the reference expr context and state, do not worry about
+	 * the lifecycle.
+	 */
+	ExprContext                *exprContext_ref;
+	ExprState                  *bitmapqualorig_ref;
 }	AOCSScanDescData;
 
 typedef AOCSScanDescData *AOCSScanDesc;
@@ -173,6 +187,18 @@ typedef AOCSFetchDescData *AOCSFetchDesc;
 
 typedef struct AOCSUpdateDescData *AOCSUpdateDesc;
 typedef struct AOCSDeleteDescData *AOCSDeleteDesc;
+
+/*
+ * Descriptor for fetches from table via an index.
+ */
+typedef struct IndexFetchAOCOData
+{
+	IndexFetchTableData xs_base;	/* AM independent part of the descriptor */
+
+	AOCSFetchDesc       aocofetch;
+
+	bool                *proj;
+} IndexFetchAOCOData;
 
 typedef struct AOCSHeaderScanDescData
 {
@@ -270,4 +296,6 @@ extern void aoco_dml_finish(Relation relation, CmdType operation);
 
 extern void
 InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj);
+extern void
+GetNeededColumnsForScan(Node *expr, bool *mask, int n);
 #endif   /* AOCSAM_H */
