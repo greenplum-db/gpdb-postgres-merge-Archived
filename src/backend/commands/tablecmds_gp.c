@@ -25,14 +25,18 @@
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_opclass.h"
 #include "cdb/cdbvars.h"
+#include "cdb/memquota.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "executor/execPartition.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/optimizer.h"
 #include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
+#include <postmaster/autostats.h>
+#include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -40,6 +44,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 /*
@@ -904,8 +909,153 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 				stmts = lappend(stmts, makePartitionCreateStmt(rel, NULL, boundspec2, NULL, elem, &partcomp));
 			}
 
-			/* insert parent into select * from tmp */
+			foreach (l, stmts)
 			{
+				/* No planning needed, just make a wrapper PlannedStmt */
+				Node *stmt = (Node *) lfirst(l);
+				pstmt = makeNode(PlannedStmt);
+				pstmt->commandType = CMD_UTILITY;
+				pstmt->canSetTag = false;
+				pstmt->utilityStmt = stmt;
+				pstmt->stmt_location = -1;
+				pstmt->stmt_len = 0;
+				ProcessUtility(pstmt,
+							   synthetic_sql,
+							   PROCESS_UTILITY_SUBCOMMAND,
+							   NULL,
+							   NULL,
+							   None_Receiver,
+							   NULL);
+			}
+
+			/* insert into parent select * from tmp */
+			{
+				InsertStmt *i = makeNode(InsertStmt);
+				SelectStmt *s = makeNode(SelectStmt);
+				RangeVar   *parentrv;
+				Query *q;
+				List *rewritten;
+				PlannedStmt *stmt;
+				DestReceiver *dest;
+				QueryDesc *queryDesc;
+				AutoStatsCmdType cmdType;
+				Oid relationOid;
+				TupleDesc	tupdesc;
+				Relation tmprel;
+
+				parentrv = makeRangeVar(get_namespace_name(rel->rd_rel->relnamespace),
+										pstrdup(RelationGetRelationName(rel)), -1);
+				parentrv->relpersistence = rel->rd_rel->relpersistence;
+				tmprel = table_openrv(tmprv, AccessShareLock);
+
+				s->fromClause = list_make1(tmprv);
+				i->relation = parentrv;
+				i->selectStmt = (Node *)s;
+
+				tupdesc = RelationGetDescr(tmprel);
+
+				for (int attno = 0; attno < tupdesc->natts; attno++)
+				{
+					Form_pg_attribute att = TupleDescAttr(tupdesc, attno);
+					ResTarget  *t;
+
+					t = makeNode(ResTarget);
+
+					if (!att->attisdropped)
+					{
+						ColumnRef 		   *c;
+
+						c = makeNode(ColumnRef);
+						c->location = -1;
+						c->fields = lappend(c->fields, makeString(pstrdup(get_namespace_name(RelationGetNamespace(tmprel)))));
+						c->fields = lappend(c->fields, makeString(pstrdup(RelationGetRelationName(tmprel))));
+						c->fields = lappend(c->fields, makeString(pstrdup(NameStr(att->attname))));
+						t->val = (Node *) c;
+					}
+					else
+					{
+						/* Use a dummy NULL::int4 column to stand in for any dropped columns. */
+						t->val = (Node *) makeConst(INT4OID, -1, InvalidOid, sizeof(int32), (Datum) 0, true, true);
+					}
+					t->location = -1;
+
+					s->targetList = lappend(s->targetList, t);
+				}
+				table_close(tmprel, AccessShareLock);
+
+				RawStmt *rawstmt = makeNode(RawStmt);
+				rawstmt->stmt = (Node *) i;
+				rawstmt->stmt_location = -1;
+				rawstmt->stmt_len = 0;
+
+				q = parse_analyze(rawstmt, synthetic_sql, NULL, 0, NULL);
+
+				AcquireRewriteLocks(q, true, false);
+
+				/* Rewrite through rule system */
+				rewritten = QueryRewrite(q);
+
+				/* We don't expect more or less than one result query */
+				Assert(list_length(rewritten) == 1);
+
+				q = (Query *) linitial(rewritten);
+				Assert(q->commandType == CMD_SELECT || q->commandType == CMD_INSERT);
+
+				/* plan the query */
+				stmt = planner(q, 0, NULL);
+				//stmt->intoClause = into;
+
+				/*
+				 * Update snapshot command ID to ensure this query sees results of any
+				 * previously executed queries.
+				 */
+				PushCopiedSnapshot(GetActiveSnapshot());
+				UpdateActiveSnapshotCommandId();
+
+				/* Create dest receiver for COPY OUT */
+				dest = CreateDestReceiver(DestIntoRel);
+
+				/* Create a QueryDesc requesting no output */
+				queryDesc = CreateQueryDesc(stmt, debug_query_string,
+											GetActiveSnapshot(), InvalidSnapshot,
+											dest, NULL, NULL, GP_INSTRUMENT_OPTS);
+				PopActiveSnapshot();
+
+				/*
+				 * We need to update our snapshot here to make sure we see all
+				 * committed work. We have an exclusive lock on the table so no one
+				 * will be able to access the table now.
+				 */
+				PushActiveSnapshot(GetLatestSnapshot());
+
+				/* Step (c) - run on all nodes */
+				queryDesc->ddesc = makeNode(QueryDispatchDesc);
+				queryDesc->ddesc->useChangedAOOpts = false;
+
+				queryDesc->plannedstmt->query_mem =
+					ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
+
+				elog(NOTICE, "Calling ExecutorStart()");
+				ExecutorStart(queryDesc, 0);
+				ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
+
+				autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
+
+				queryDesc->dest->rDestroy(queryDesc->dest);
+				ExecutorFinish(queryDesc);
+				ExecutorEnd(queryDesc);
+
+				auto_stats(cmdType,
+						   relationOid,
+						   queryDesc->es_processed,
+						   false);
+
+				FreeQueryDesc(queryDesc);
+
+				/* Restore the old snapshot */
+				PopActiveSnapshot();
+
+				CommandCounterIncrement(); /* see the effects of the command */
 			}
 
 			/* drop tmp table */
@@ -917,6 +1067,7 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 				dropstmt->removeType = OBJECT_TABLE;
 				dropstmt->behavior = DROP_CASCADE;
 				dropstmt->missing_ok = false;
+				stmts = NIL;
 				stmts = lappend(stmts, (Node *)dropstmt);
 			}
 		}
