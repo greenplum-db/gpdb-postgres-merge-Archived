@@ -2051,22 +2051,22 @@ typedef struct GpDropPartitionCmd
 	bool	   missing_ok;
 } GpDropPartitionCmd;
 
+typedef struct GpAlterPartitionCmd
+{
+	NodeTag		type;
+	GpAlterPartitionId 	   *partid;			/* partition id of the partition to add */
+	Node       *arg;            /* argument 1 */
+	int         location;   /* token location, or -1 if unknown */
+} GpAlterPartitionCmd;
+
 typedef struct GpSplitPartitionCmd
 {
 	NodeTag type;
 	GpAlterPartitionId *partid;
 	List *arg1;
-	Node *arg2;
+	GpAlterPartitionCmd *arg2;
 	int   location;
 } GpSplitPartitionCmd;
-
-typedef struct GpAlterPartitionCmd
-{
-	NodeTag		type;
-	Node	   *partid;			/* partition id of the partition to add */
-	Node       *arg;            /* argument 1 */
-	int         location;   /* token location, or -1 if unknown */
-} GpAlterPartitionCmd;
 
 /* ----------------------
  * Alter Collation

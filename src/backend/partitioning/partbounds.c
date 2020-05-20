@@ -1050,6 +1050,7 @@ check_new_partition_bound(char *relname, Relation parent,
 		case PARTITION_STRATEGY_LIST:
 			{
 				Assert(spec->strategy == PARTITION_STRATEGY_LIST);
+				Assert(spec->listdatums != NULL);
 
 				if (partdesc->nparts > 0)
 				{
