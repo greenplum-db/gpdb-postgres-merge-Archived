@@ -52,9 +52,7 @@ extern int validate_partition_spec(CreateStmtContext *cxt,
 							int					 partNumber);
 #endif
 
-List *transformStorageEncodingClause(List *options);
 List *TypeNameGetStorageDirective(TypeName *typname);
-extern List * form_default_storage_directive(List *enc);
 
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 											   Index exclRelIndex);

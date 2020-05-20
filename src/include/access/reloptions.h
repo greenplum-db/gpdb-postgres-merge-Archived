@@ -327,4 +327,11 @@ extern void validate_and_refill_options(StdRdOptions *result, relopt_value *opti
 extern void validate_and_adjust_options(StdRdOptions *result, relopt_value *options,
 										int num_options, relopt_kind kind, bool validate);
 
+/* attribute enconding specific functions */
+extern List *transformAttributeEncoding(List *aocoColumnEnconding,
+										List *tableElts, List *withOptions,
+										Oid accessMethodId);
+extern List *transformStorageEncodingClause(List *options);
+extern List *form_default_storage_directive(List *enc);
+
 #endif							/* RELOPTIONS_H */

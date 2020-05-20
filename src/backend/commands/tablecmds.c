@@ -783,12 +783,16 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 		/*
 		 * Extract and process any WITH options supplied, otherwise use defaults
+		 *
+		 * The generated options will be added during heap_create_with_catalog
+		 * for appendoptimized relations, so (view|heap)_reloptions should not
+		 * be called yet.
 		 */
 		StdRdOptions *stdRdOptions = (StdRdOptions *)default_reloptions(reloptions,
 																		true,
 																		RELOPT_KIND_APPENDOPTIMIZED);
 
-		/* Validate the StdRdOptions paresed or error out */
+		/* Validate the StdRdOptions parsed or error out */
 		validateAppendOnlyRelOptions(stdRdOptions->blocksize,
 									 gp_safefswritesize,
 									 stdRdOptions->compresslevel,
@@ -802,6 +806,21 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	else
 		(void) heap_reloptions(relkind, reloptions, true, InvalidOid);
 
+	/*
+	 * Greenplum: aoco specific encoding clause is tranformed here. Prior to
+	 * upstream v12 it belonged in the parser. With the introduction of the
+	 * tableam api, the accessMethodId needed was not yet available until this
+	 * point of processing.
+	 *
+	 * Ideally this could have happened even later confined in
+	 * AddRelationAttributeEncodings(). However, since this function can
+	 * legitimately error out, it is prefered to call it before updating the
+	 * catalog in heap_create_with_catalog().
+	 */
+	stmt->attr_encodings = transformAttributeEncoding(stmt->attr_encodings,
+													  stmt->tableElts,
+													  stmt->options,
+													  accessMethodId);
 	if (stmt->ofTypename)
 	{
 		AclResult	aclresult;

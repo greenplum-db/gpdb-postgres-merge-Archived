@@ -24,12 +24,15 @@
 #include "access/reloptions.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
+#include "commands/defrem.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "parser/analyze.h"
 
 /*
  * Helper macro used for validation
@@ -46,7 +49,7 @@ static relopt_bool boolRelOpts_gp[] =
 		{
 			SOPT_CHECKSUM,
 			"Append table checksum",
-			RELOPT_KIND_APPENDOPTIMIZED ,//| RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_CHECKSUM
@@ -71,7 +74,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_BLOCKSIZE,
 			"AO tables block size in bytes",
-			RELOPT_KIND_APPENDOPTIMIZED ,//| RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		AO_DEFAULT_BLOCKSIZE, MIN_APPENDONLY_BLOCK_SIZE, MAX_APPENDONLY_BLOCK_SIZE
@@ -80,7 +83,7 @@ static relopt_int intRelOpts_gp[] =
 		{
 			SOPT_COMPLEVEL,
 			"AO table compression level",
-			RELOPT_KIND_APPENDOPTIMIZED,//| RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			ShareUpdateExclusiveLock	/* since it applies only to later
 										 * inserts */
 		},
@@ -102,7 +105,7 @@ static relopt_string stringRelOpts_gp[] =
 		{
 			SOPT_COMPTYPE,
 			"AO tables compression type",
-			RELOPT_KIND_APPENDOPTIMIZED ,//| RELOPT_KIND_HEAP,
+			RELOPT_KIND_APPENDOPTIMIZED,
 			AccessExclusiveLock
 		},
 		0, true, NULL, ""
@@ -1078,4 +1081,499 @@ get_option_set(relopt_value *options, int num_options, const char *opt_name)
 			return &options[i];
 	}
 	return NULL;
+}
+
+/* ------------------------------------------------------------------------
+ * Attribute Encoding specific functions
+ * ------------------------------------------------------------------------
+ */
+
+/*
+ * Add any missing encoding attributes (compresstype = none,
+ * blocksize=...).  The column specific encoding attributes supported
+ * today are compresstype, compresslevel and blocksize.  Refer to
+ * pg_compression.c for more info.
+ *
+ */
+static List *
+fillin_encoding(List *aocoColumnEnconding)
+{
+	bool foundCompressType = false;
+	bool foundCompressTypeNone = false;
+	char *cmplevel = NULL;
+	bool foundBlockSize = false;
+	char *arg;
+	List *retList = list_copy(aocoColumnEnconding);
+	ListCell *lc;
+	DefElem *el;
+	const StdRdOptions *ao_opts = currentAOStorageOptions();
+
+	foreach(lc, aocoColumnEnconding)
+	{
+		el = lfirst(lc);
+
+		if (pg_strcasecmp("compresstype", el->defname) == 0)
+		{
+			foundCompressType = true;
+			arg = defGetString(el);
+			if (pg_strcasecmp("none", arg) == 0)
+				foundCompressTypeNone = true;
+		}
+		else if (pg_strcasecmp("compresslevel", el->defname) == 0)
+		{
+			cmplevel = defGetString(el);
+		}
+		else if (pg_strcasecmp("blocksize", el->defname) == 0)
+			foundBlockSize = true;
+	}
+
+	if (foundCompressType == false && cmplevel == NULL)
+	{
+		/* No compression option specified, use current defaults. */
+		arg = ao_opts->compresstype[0] ?
+				pstrdup(ao_opts->compresstype) : "none";
+		el = makeDefElem("compresstype", (Node *) makeString(arg), -1);
+		retList = lappend(retList, el);
+		el = makeDefElem("compresslevel",
+						 (Node *) makeInteger(ao_opts->compresslevel),
+						 -1);
+		retList = lappend(retList, el);
+	}
+	else if (foundCompressType == false && cmplevel)
+	{
+		if (strcmp(cmplevel, "0") == 0)
+		{
+			/*
+			 * User wants to disable compression by specifying
+			 * compresslevel=0.
+			 */
+			el = makeDefElem("compresstype", (Node *) makeString("none"), -1);
+			retList = lappend(retList, el);
+		}
+		else
+		{
+			/*
+			 * User wants to enable compression by specifying non-zero
+			 * compresslevel.  Therefore, choose default compresstype
+			 * if configured, otherwise use zlib.
+			 */
+			if (ao_opts->compresstype[0] &&
+				strcmp(ao_opts->compresstype, "none") != 0)
+			{
+				arg = pstrdup(ao_opts->compresstype);
+			}
+			else
+			{
+				arg = AO_DEFAULT_COMPRESSTYPE;
+			}
+			el = makeDefElem("compresstype", (Node *) makeString(arg), -1);
+			retList = lappend(retList, el);
+		}
+	}
+	else if (foundCompressType && cmplevel == NULL)
+	{
+		if (foundCompressTypeNone)
+		{
+			/*
+			 * User wants to disable compression by specifying
+			 * compresstype=none.
+			 */
+			el = makeDefElem("compresslevel", (Node *) makeInteger(0), -1);
+			retList = lappend(retList, el);
+		}
+		else
+		{
+			/*
+			 * Valid compresstype specified.  Use default
+			 * compresslevel if it's non-zero, otherwise use 1.
+			 */
+			el = makeDefElem("compresslevel",
+							 (Node *) makeInteger(ao_opts->compresslevel > 0 ?
+												  ao_opts->compresslevel : 1),
+							 -1);
+			retList = lappend(retList, el);
+		}
+	}
+	if (foundBlockSize == false)
+	{
+		el = makeDefElem("blocksize", (Node *) makeInteger(ao_opts->blocksize), -1);
+		retList = lappend(retList, el);
+	}
+	return retList;
+}
+
+/*
+ * See if two encodings attempt to set the same parameters.
+ */
+static bool
+encodings_overlap(List *a, List *b)
+{
+	ListCell *lca;
+	foreach(lca, a)
+	{
+		ListCell *lcb;
+		DefElem *ela = lfirst(lca);
+
+		foreach(lcb, b)
+		{
+			DefElem *elb = lfirst(lcb);
+			if (pg_strcasecmp(ela->defname, elb->defname) == 0)
+				return true;
+		}
+	}
+	return false;
+}
+
+/*
+ * Validate the sanity of column reference storage clauses.
+ *
+ * 1. Ensure that we only refer to columns that exist.
+ * 2. Ensure that each column is referenced either zero times or once.
+ * 3. Ensure that the column reference storage clauses do not clash with the
+ * 	  gp_default_storage_options
+ */
+static void
+validateColumnStorageEncodingClauses(List *aocoColumnEnconding,
+									 List *tableElts)
+{
+	ListCell *lc;
+	struct HTAB *ht = NULL;
+	struct colent {
+		char colname[NAMEDATALEN];
+		int count;
+	} *ce = NULL;
+
+	Assert(aocoColumnEnconding);
+
+	/* Generate a hash table for all the columns */
+	foreach(lc, tableElts)
+	{
+		Node *n = lfirst(lc);
+
+		if (IsA(n, ColumnDef))
+		{
+			ColumnDef *c = (ColumnDef *)n;
+			char *colname;
+			bool found = false;
+			size_t n = NAMEDATALEN - 1 < strlen(c->colname) ?
+							NAMEDATALEN - 1 : strlen(c->colname);
+
+			colname = palloc0(NAMEDATALEN);
+			MemSet(colname, 0, NAMEDATALEN);
+			memcpy(colname, c->colname, n);
+			colname[n] = '\0';
+
+			if (!ht)
+			{
+				HASHCTL  cacheInfo;
+				int      cacheFlags;
+
+				memset(&cacheInfo, 0, sizeof(cacheInfo));
+				cacheInfo.keysize = NAMEDATALEN;
+				cacheInfo.entrysize = sizeof(*ce);
+				cacheFlags = HASH_ELEM;
+
+				ht = hash_create("column info cache",
+								 list_length(tableElts),
+								 &cacheInfo, cacheFlags);
+			}
+
+			ce = hash_search(ht, colname, HASH_ENTER, &found);
+
+			/*
+			 * The user specified a duplicate column name. We check duplicate
+			 * column names VERY late (under MergeAttributes(), which is called
+			 * by DefineRelation(). For the specific case here, it is safe to
+			 * call out that this is a duplicate. We don't need to delay until
+			 * we look at inheritance.
+			 */
+			if (found)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column \"%s\" duplicated",
+								colname)));
+			}
+			ce->count = 0;
+		}
+	}
+
+	/*
+	 * If the table has no columns -- usually in the partitioning case -- then
+	 * we can short circuit.
+	 */
+	if (!ht)
+		return;
+
+	/*
+	 * All column reference storage directives without the DEFAULT
+	 * clause should refer to real columns.
+	 */
+	foreach(lc, aocoColumnEnconding)
+	{
+		ColumnReferenceStorageDirective *c = lfirst(lc);
+
+		Insist(IsA(c, ColumnReferenceStorageDirective));
+
+		if (c->deflt)
+			continue;
+		else
+		{
+			bool found = false;
+			char colname[NAMEDATALEN];
+			size_t collen = strlen(c->column);
+			size_t n = NAMEDATALEN - 1 < collen ? NAMEDATALEN - 1 : collen;
+			MemSet(colname, 0, NAMEDATALEN);
+			memcpy(colname, c->column, n);
+			colname[n] = '\0';
+
+			ce = hash_search(ht, colname, HASH_FIND, &found);
+
+			if (!found)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("column \"%s\" does not exist", colname)));
+
+			ce->count++;
+
+			if (ce->count > 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("column \"%s\" referenced in more than one COLUMN ENCODING clause",
+								colname)));
+		}
+	}
+
+	hash_destroy(ht);
+
+	foreach(lc, aocoColumnEnconding)
+	{
+		ColumnReferenceStorageDirective *crsd = lfirst(lc);
+
+		Datum d = transformRelOptions(PointerGetDatum(NULL),
+									  crsd->encoding,
+									  NULL, NULL,
+									  true, false);
+		StdRdOptions *stdRdOptions = (StdRdOptions *)default_reloptions(d,
+																	true,
+																	RELOPT_KIND_APPENDOPTIMIZED);
+
+		validateAppendOnlyRelOptions(stdRdOptions->blocksize,
+									 gp_safefswritesize,
+									 stdRdOptions->compresslevel,
+									 stdRdOptions->compresstype,
+									 stdRdOptions->checksum,
+									 true);
+	}
+}
+
+/*
+ * Make a default column storage directive from a WITH clause
+ * Ignore options in the WITH clause that don't appear in
+ * storage_directives for column-level compression.
+ */
+List *
+form_default_storage_directive(List *enc)
+{
+	List *out = NIL;
+	ListCell *lc;
+
+	foreach(lc, enc)
+	{
+		DefElem *el = lfirst(lc);
+
+		if (!el->defname)
+			out = lappend(out, copyObject(el));
+
+		if (pg_strcasecmp("oids", el->defname) == 0)
+			continue;
+		if (pg_strcasecmp("fillfactor", el->defname) == 0)
+			continue;
+		if (pg_strcasecmp("tablename", el->defname) == 0)
+			continue;
+		/* checksum is not a column specific attribute. */
+		if (pg_strcasecmp("checksum", el->defname) == 0)
+			continue;
+		out = lappend(out, copyObject(el));
+	}
+	return out;
+}
+
+/*
+ * Transform and validate the actual encoding clauses.
+ *
+ * We need tell the underlying system that these are AO/CO tables too,
+ * hence the concatenation of the extra elements.
+ */
+List *
+transformStorageEncodingClause(List *aocoColumnEnconding)
+{
+	ListCell *lc;
+	DefElem *dl;
+
+	foreach(lc, aocoColumnEnconding)
+	{
+		dl = (DefElem *) lfirst(lc);
+		if (pg_strncasecmp(dl->defname, SOPT_CHECKSUM, strlen(SOPT_CHECKSUM)) == 0)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" is not a column specific option",
+							SOPT_CHECKSUM)));
+		}
+	}
+
+	/* add defaults for missing values */
+	aocoColumnEnconding = fillin_encoding(aocoColumnEnconding);
+
+	return aocoColumnEnconding;
+}
+
+/*
+ * transform AOCO specific enconding clause options
+ */
+List *
+transformAttributeEncoding(List *aocoColumnEnconding,
+						   List *tableElts,
+						   List *withOptions,
+						   Oid accessMethodId)
+{
+	ListCell *lc;
+	bool found_enc = aocoColumnEnconding != NIL;
+	bool isAOCO = accessMethodId == AOCO_TABLE_AM_OID;
+	ColumnReferenceStorageDirective *deflt = NULL;
+	List *newenc = NIL;
+	List *tmpenc;
+	MemoryContext tmpCxt = NULL;
+	MemoryContext oldCxt = NULL;
+
+	/* We only support the attribute encoding clause on AOCO tables */
+	if (aocoColumnEnconding && !isAOCO)
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ENCODING clause only supported with column oriented tables")));
+
+	/* Use the temporary context to avoid leaving behind so much garbage. */
+	tmpCxt = AllocSetContextCreate(CurrentMemoryContext,
+								   "AOCO Transform Attribute Enconding tmp cxt",
+								   ALLOCSET_DEFAULT_SIZES);
+	oldCxt = MemoryContextSwitchTo(tmpCxt);
+
+	/* get the default clause, if there is one. */
+	foreach(lc, aocoColumnEnconding)
+	{
+		ColumnReferenceStorageDirective *c = lfirst(lc);
+		Insist(IsA(c, ColumnReferenceStorageDirective));
+
+		if (c->deflt)
+		{
+			/*
+			 * Some quick validation: there should only be one default
+			 * clause
+			 */
+			if (deflt)
+				elog(ERROR, "only one default column encoding may be specified");
+
+			deflt = copyObject(c);
+			deflt->encoding = transformStorageEncodingClause(deflt->encoding);
+
+			/*
+			 * The default encoding and the with clause better not
+			 * try and set the same options!
+			 */
+			if (encodings_overlap(withOptions, deflt->encoding))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("DEFAULT COLUMN ENCODING clause cannot override values set in WITH clause")));
+		}
+	}
+
+	/*
+	 * If no default has been specified, we might create one out of the
+	 * WITH clause.
+	 */
+	tmpenc = form_default_storage_directive(withOptions);
+	if (tmpenc)
+	{
+		deflt = makeNode(ColumnReferenceStorageDirective);
+		deflt->deflt = true;
+		deflt->encoding = transformStorageEncodingClause(tmpenc);
+	}
+
+	/*
+	 * Loop over all columns. If a column has a column reference storage clause
+	 * -- i.e., COLUMN name ENCODING () -- apply that. Otherwise, apply the
+	 * default.
+	 */
+	foreach(lc, tableElts)
+	{
+		Node *elem = (Node *)lfirst(lc);
+		ColumnDef *d;
+		ColumnReferenceStorageDirective *c;
+
+		if (!IsA(elem, ColumnDef))
+			continue;
+
+		d = (ColumnDef *)elem;
+
+		c = makeNode(ColumnReferenceStorageDirective);
+		c->column = pstrdup(d->colname);
+
+		/*
+		 * Find a storage encoding for this column, in this order:
+		 *
+		 * 1. An explicit encoding clause in the ColumnDef
+		 * 2. A column reference storage directive for this column
+		 * 3. A default column encoding in the statement
+		 * 4. A default for the type.
+		 */
+		if (d->encoding)
+		{
+			found_enc = true;
+			c->encoding = transformStorageEncodingClause(d->encoding);
+		}
+		else
+		{
+			if (deflt)
+				c->encoding = copyObject(deflt->encoding);
+			else
+			{
+				List	   *te;
+
+				if (d->typeName)
+					te = TypeNameGetStorageDirective(d->typeName);
+				else
+					te = NIL;
+
+				if (te)
+					c->encoding = copyObject(te);
+				else
+					c->encoding = default_column_encoding_clause();
+			}
+		}
+		newenc = lappend(newenc, c);
+	}
+
+	/* Check again in case we expanded a some column encoding clauses */
+	if (!isAOCO)
+	{
+		if (found_enc)
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ENCODING clause only supported with column oriented tables")));
+		else
+			newenc = NULL;
+	}
+
+	if (!newenc)
+		return NULL;
+
+	validateColumnStorageEncodingClauses(newenc, tableElts);
+
+	/* copy the result out of the temporary memory context */
+	MemoryContextSwitchTo(oldCxt);
+	newenc = copyObject(newenc);
+	MemoryContextDelete(tmpCxt);
+
+	return newenc;
 }
