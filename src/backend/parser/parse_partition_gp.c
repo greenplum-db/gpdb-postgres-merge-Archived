@@ -52,6 +52,7 @@ typedef struct
 
 	/* for context in error messages */
 	ParseState *pstate;
+	int			end_location;
 	int			every_location;
 } PartEveryIterator;
 
@@ -438,6 +439,7 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 	iter->endReached = false;
 
 	iter->pstate = pstate;
+	iter->end_location = exprLocation(end);
 	iter->every_location = exprLocation(every);
 
 	return iter;
@@ -527,7 +529,7 @@ nextPartBound(PartEveryIterator *iter)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							 errmsg("END parameter not reached before type overflows"),
-							 parser_errposition(iter->pstate, iter->every_location)));
+							 parser_errposition(iter->pstate, iter->end_location)));
 				}
 			}
 
