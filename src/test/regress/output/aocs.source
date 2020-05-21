@@ -465,7 +465,7 @@ SELECT count(*) FROM tenk_aocs4;
 -- LIKE
 -- Should not copy storage options if not specified
 CREATE TABLE tenk_like_nocopy_storage (LIKE tenk_aocs1);
-SELECT count(*) FROM pg_class WHERE relstorage = 'c' AND relname = 'tenk_like_nocopy_storage';
+SELECT count(*) FROM pg_class WHERE reloptions is not null AND relname = 'tenk_like_nocopy_storage';
  count 
 -------
      0
