@@ -353,6 +353,8 @@ AppendOnlyBlockDirectory_Init_addCol(
 	blockDirectory->blkdirIdx =
 		index_open(blkdiridxid, RowExclusiveLock);
 
+	blockDirectory->indinfo = CatalogOpenIndexes(blockDirectory->blkdirRel);
+
 	init_internal(blockDirectory);
 }
 
@@ -1362,6 +1364,7 @@ AppendOnlyBlockDirectory_End_addCol(
 	 */
 	index_close(blockDirectory->blkdirIdx, NoLock);
 	heap_close(blockDirectory->blkdirRel, NoLock);
+	CatalogCloseIndexes(blockDirectory->indinfo);
 
 	MemoryContextDelete(blockDirectory->memoryContext);
 }
