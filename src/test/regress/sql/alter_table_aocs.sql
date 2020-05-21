@@ -59,7 +59,7 @@ insert into addcol1 select i, 'abc', 22*i/7, -i from generate_series(1,10)i;
 
 -- add columns with compression (dense and bulk dense content varblocks)
 alter table addcol1
-   add column e float default 22/7::float encoding (compresstype=RLE_TYPE),
+   add column e float default to_char((22/7::float), '9.99999999999999')::float encoding (compresstype=RLE_TYPE),
    add column f int default 20 encoding (compresstype=zlib);
 select * from addcol1 where a < 2 and a > -4 order by a,c;
 select a,f from addcol1 where a > 20 and a < 25 order by a,c;

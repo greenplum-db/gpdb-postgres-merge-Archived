@@ -826,10 +826,38 @@ aoco_relation_set_new_filenode(Relation rel,
 	smgrclose(srel);
 }
 
+/* helper routine to call open a rel and call heap_truncate_one_rel() on it */
+static void
+heap_truncate_one_relid(Oid relid)
+{
+	if (OidIsValid(relid))
+	{
+		Relation rel = relation_open(relid, AccessExclusiveLock);
+		heap_truncate_one_rel(rel);
+		relation_close(rel, NoLock);
+	}
+}
+
 static void
 aoco_relation_nontransactional_truncate(Relation rel)
 {
-	elog(ERROR, "not implemented yet");
+	Oid ao_base_relid = RelationGetRelid(rel);
+
+	Oid			aoseg_relid = InvalidOid;
+	Oid			aoblkdir_relid = InvalidOid;
+	Oid			aovisimap_relid = InvalidOid;
+
+	ao_truncate_one_rel(rel);
+
+	/* Also truncate the aux tables */
+	GetAppendOnlyEntryAuxOids(ao_base_relid, NULL,
+	                          &aoseg_relid,
+	                          &aoblkdir_relid, NULL,
+	                          &aovisimap_relid, NULL);
+
+	heap_truncate_one_relid(aoseg_relid);
+	heap_truncate_one_relid(aoblkdir_relid);
+	heap_truncate_one_relid(aovisimap_relid);
 }
 
 static void

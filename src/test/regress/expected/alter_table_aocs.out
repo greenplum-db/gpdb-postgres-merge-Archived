@@ -94,7 +94,7 @@ select a,c,d from addcol1 where a > 9 and a < 15 order by a;
 insert into addcol1 select i, 'abc', 22*i/7, -i from generate_series(1,10)i;
 -- add columns with compression (dense and bulk dense content varblocks)
 alter table addcol1
-   add column e float default 22/7::float encoding (compresstype=RLE_TYPE),
+   add column e float default to_char((22/7::float), '9.99999999999999')::float encoding (compresstype=RLE_TYPE),
    add column f int default 20 encoding (compresstype=zlib);
 select * from addcol1 where a < 2 and a > -4 order by a,c;
  a  |                b                 |  c  | d  |        e         | f  
@@ -455,13 +455,13 @@ select * from addcol8 order by a;
 (10 rows)
 
 \d addcol8
-Append-Only Columnar Table "aocs_addcol.addcol8"
- Column |         Type          | Modifiers 
---------+-----------------------+-----------
- a      | integer               | 
- b      | character varying(20) | 
- d      | integer               | 
- e      | double precision      | default 1
+                   Table "aocs_addcol.addcol8"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ a      | integer               |           |          | 
+ b      | character varying(20) |           |          | 
+ d      | integer               |           |          | 
+ e      | double precision      |           |          | 1
 Checksum: t
 Distributed by: (a)
 
