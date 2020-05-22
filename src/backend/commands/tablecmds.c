@@ -7078,11 +7078,19 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * row-oriented tables. Eventually it would be nice to remove this
 		 * workaround; see GitHub issue
 		 *     https://github.com/greenplum-db/gpdb/issues/3756
+		 *
+		 * GPDB_12_MERGE_FIXME: we used to do this only if no default was given,
+		 * but starting with PostgreSQL v11, a table doesn't need to be rewritten
+		 * even if a non-NULL default is used. That caused an assertion failure in
+		 * the 'uao_ddl/alter_ao_table_constraint_column' test. To make that go
+		 * away, always force full rewrite on AO and AOCO tables. We should be
+		 * smarter..
 		 */
 
-		if (!defval && RelationIsAppendOptimized(rel))
+		if (RelationIsAppendOptimized(rel))
 		{
-			defval = (Expr *) makeNullConst(typeOid, -1, collOid);
+			if (!defval)
+				defval = (Expr *) makeNullConst(typeOid, -1, collOid);
 			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
 		}
 
