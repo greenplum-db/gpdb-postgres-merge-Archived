@@ -1488,6 +1488,7 @@ alter table parted_irreg_ancestor attach partition parted_irreg
   for values from ('aaaa') to ('zzzz');
 create table parted1_irreg (b text, fd int, a int);
 alter table parted1_irreg drop column fd;
+alter table parted1_irreg set distributed randomly;
 alter table parted_irreg attach partition parted1_irreg
   for values from ('aaaa') to ('bbbb');
 create trigger parted_trig after insert on parted_irreg
@@ -1541,9 +1542,11 @@ drop function bark(text);
 
 -- Test that the WHEN clause is set properly to partitions
 create table parted_trigger (a int, b text) partition by range (a);
+alter table parted_trigger set distributed by (b);
 create table parted_trigger_1 partition of parted_trigger for values from (0) to (1000);
 create table parted_trigger_2 (drp int, a int, b text);
 alter table parted_trigger_2 drop column drp;
+alter table parted_trigger_2 set distributed by (b);
 alter table parted_trigger attach partition parted_trigger_2 for values from (1000) to (2000);
 create trigger parted_trigger after update on parted_trigger
   for each row when (new.a % 2 = 1 and length(old.b) >= 2) execute procedure trigger_notice_ab();
@@ -1565,6 +1568,7 @@ create table parted_trigger (a int, b text) partition by range (a);
 create table parted_trigger_1 partition of parted_trigger for values from (0) to (1000);
 create table parted_trigger_2 (drp int, a int, b text);
 alter table parted_trigger_2 drop column drp;
+alter table parted_trigger_2 set distributed by (a);
 alter table parted_trigger attach partition parted_trigger_2 for values from (1000) to (2000);
 create constraint trigger parted_trigger after update on parted_trigger
   from parted_referenced
@@ -1573,6 +1577,7 @@ create constraint trigger parted_trigger after update on unparted_trigger
   from parted_referenced
   for each row execute procedure trigger_notice_ab();
 create table parted_trigger_3 (b text, a int) partition by range (length(b));
+alter table parted_trigger_3 set distributed by (a);
 create table parted_trigger_3_1 partition of parted_trigger_3 for values from (1) to (3);
 create table parted_trigger_3_2 partition of parted_trigger_3 for values from (3) to (5);
 alter table parted_trigger attach partition parted_trigger_3 for values from (2000) to (3000);
@@ -1585,6 +1590,7 @@ drop table parted_referenced, parted_trigger, unparted_trigger;
 
 -- verify that the "AFTER UPDATE OF columns" event is propagated correctly
 create table parted_trigger (a int, b text) partition by range (a);
+alter table parted_trigger set distributed randomly;
 create table parted_trigger_1 partition of parted_trigger for values from (0) to (1000);
 create table parted_trigger_2 (drp int, a int, b text);
 alter table parted_trigger_2 drop column drp;
@@ -1592,6 +1598,7 @@ alter table parted_trigger attach partition parted_trigger_2 for values from (10
 create trigger parted_trigger after update of b on parted_trigger
   for each row execute procedure trigger_notice_ab();
 create table parted_trigger_3 (b text, a int) partition by range (length(b));
+alter table parted_trigger_3 set distributed randomly;
 create table parted_trigger_3_1 partition of parted_trigger_3 for values from (1) to (4);
 create table parted_trigger_3_2 partition of parted_trigger_3 for values from (4) to (8);
 alter table parted_trigger attach partition parted_trigger_3 for values from (2000) to (3000);
@@ -1670,10 +1677,12 @@ create table child1 partition of parent for values in ('AAA');
 -- a child with a dropped column
 create table child2 (x int, a text, b int);
 alter table child2 drop column x;
+alter table child2 set distributed by (a);
 alter table parent attach partition child2 for values in ('BBB');
 
 -- a child with a different column order
 create table child3 (b int, a text);
+alter table child3 set distributed by (a);
 alter table parent attach partition child3 for values in ('CCC');
 
 create trigger parent_insert_trig

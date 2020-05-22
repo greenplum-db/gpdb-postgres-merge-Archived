@@ -16464,6 +16464,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				rel->rd_cdbpolicy = GpPolicyCopy(policy);
 				MemoryContextSwitchTo(oldcontext);
 
+				cmd->policy = policy;
+
 				/* only need to rebuild if have new storage options */
 				if (!(DatumGetPointer(newOptions) || force_reorg))
 				{
