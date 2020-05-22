@@ -2653,6 +2653,7 @@ DROP TABLE hash_parted;
 
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
+alter table p set distributed by (b);
 create table p1 (b int, a int not null) partition by range (b);
 create table p11 (like p1);
 alter table p11 drop a;
@@ -2699,6 +2700,7 @@ DROP USER regress_alter_table_user1;
 create table defpart_attach_test (a int) partition by list (a);
 create table defpart_attach_test1 partition of defpart_attach_test for values in (1);
 create table defpart_attach_test_d (b int, a int);
+alter table defpart_attach_test_d set distributed by (a);
 alter table defpart_attach_test_d drop b;
 insert into defpart_attach_test_d values (1), (2);
 
