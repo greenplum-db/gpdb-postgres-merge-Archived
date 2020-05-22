@@ -337,10 +337,8 @@ SELECT COUNT(*) FROM foo WHERE a = 4;
 -- Test case for issue reported in STO-258
 -- 
 DROP table IF EXISTS bar2;
-set gp_select_invisible = true;
 create table bar2 ( a int, b int);
 insert into bar2 select x , x from generate_series(1,10) as x;
-SET gp_select_invisible=false;
 
 set gp_select_invisible = true;
 -- The test framework assumes that the output of `select ... order by`
