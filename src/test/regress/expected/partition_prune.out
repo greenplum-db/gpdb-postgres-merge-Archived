@@ -2313,8 +2313,8 @@ select explain_parallel_append('execute ab_q5 (2, 3, 3)');
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
 select explain_parallel_append('execute ab_q5 (33, 44, 55)');
-                             explain_parallel_append                             
----------------------------------------------------------------------------------
+                            explain_parallel_append                            
+-------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
@@ -2322,16 +2322,13 @@ select explain_parallel_append('execute ab_q5 (33, 44, 55)');
                      Subplans Removed: 8
                      ->  Seq Scan on ab_a1_b1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-   (slice0)    Executor memory: 64K bytes.
-   (slice1)    Executor memory: 50K bytes avg x 3 workers, 50K bytes max (seg0).
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(11 rows)
+(8 rows)
 
 -- Test Parallel Append with PARAM_EXEC Params
 select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
-                             explain_parallel_append                             
----------------------------------------------------------------------------------
+                        explain_parallel_append                         
+------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
@@ -2346,13 +2343,8 @@ select explain_parallel_append('select count(*) from ab where (a = (select 1) or
                            Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
                      ->  Seq Scan on ab_a3_b2 (never executed)
                            Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
-   (slice0)    Executor memory: 70K bytes.
-   (slice1)    Executor memory: 66K bytes avg x 3 workers, 66K bytes max (seg0).
-   (slice2)    Executor memory: 49K bytes.
-   (slice3)    Executor memory: 50K bytes.
- Memory used:  128000kB
  Optimizer: Postgres query optimizer
-(20 rows)
+(15 rows)
 
 -- Test pruning during parallel nested loop query
 create table lprt_a (a int not null);
