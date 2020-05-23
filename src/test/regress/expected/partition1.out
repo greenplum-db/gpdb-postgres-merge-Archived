@@ -772,7 +772,7 @@ alter table hhh add partition aa;
 ERROR:  partition "aa" of relation "hhh" already exists
 -- no partition spec
 alter table hhh add partition cc;
-ERROR:  missing boundary specification
+ERROR:  missing boundary specification in partition "cc" of type RANGE
 -- overlaps
 alter table hhh add partition cc start ('2008-01-01') end ('2010-01-01');
 ERROR:  partition "hhh_1_prt_cc" would overlap partition "hhh_1_prt_bb"
@@ -785,10 +785,10 @@ DETAIL:  Specified lower bound ('01-01-2010') is greater than or equal to upper 
 -- works
 --alter table hhh add partition cc start ('2009-01-01') end ('2010-01-01');
 alter table hhh add partition cc end ('2010-01-01');
-NOTICE:  CREATE TABLE will create partition "hhh_1_prt_cc" for table "hhh"
+ERROR:  partition "hhh_1_prt_cc" would overlap partition "hhh_1_prt_aa"
 -- works - anonymous partition MPP-3350
 alter table hhh add partition end ('2010-02-01');
-NOTICE:  CREATE TABLE will create partition "hhh_1_prt_r270615893" for table "hhh"
+ERROR:  partition "hhh_1_prt_1" would overlap partition "hhh_1_prt_aa"
 -- MPP-3607 - ADD PARTITION with open intervals
 create table no_end1 (aa int, bb int) partition by range (bb)
 (partition foo start(3));
@@ -797,13 +797,13 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 NOTICE:  CREATE TABLE will create partition "no_end1_1_prt_foo" for table "no_end1"
 -- fail overlap
 alter table no_end1 add partition baz end (4);
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "no_end1_1_prt_baz" would overlap partition "no_end1_1_prt_foo"
 -- fail overlap (because prior partition has no end)
 alter table no_end1 add partition baz start (5);
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "no_end1_1_prt_baz" would overlap partition "no_end1_1_prt_foo"
 -- ok (terminates on foo start)
 alter table no_end1 add partition baz start (2);
-NOTICE:  CREATE TABLE will create partition "no_end1_1_prt_baz" for table "no_end1"
+ERROR:  partition "no_end1_1_prt_baz" would overlap partition "no_end1_1_prt_foo"
 -- ok (because ends before baz start)
 alter table no_end1 add partition baz2 end (1);
 NOTICE:  CREATE TABLE will create partition "no_end1_1_prt_baz2" for table "no_end1"
@@ -820,7 +820,7 @@ alter table no_start1 add partition baz end (1);
 ERROR:  partition "no_start1_1_prt_baz" would overlap partition "no_start1_1_prt_foo"
 -- ok (starts on foo end)
 alter table no_start1 add partition baz end (4);
-NOTICE:  CREATE TABLE will create partition "no_start1_1_prt_baz" for table "no_start1"
+ERROR:  partition "no_start1_1_prt_baz" would overlap partition "no_start1_1_prt_foo"
 -- ok (because starts after baz end)
 alter table no_start1 add partition baz2 start (5);
 NOTICE:  CREATE TABLE will create partition "no_start1_1_prt_baz2" for table "no_start1"
@@ -854,7 +854,7 @@ alter table jjj add default partition;
 ERROR:  syntax error at or near ";"
 LINE 1: alter table jjj add default partition;
                                              ^
-alter table jjj add default partition for (rank(1));
+alter table jjj add default partition for ('2008-01-01');
 ERROR:  can only ADD a partition by name
 -- cannot have boundary spec
 alter table jjj add default partition j3 end (date '2010-01-01');
@@ -879,8 +879,7 @@ alter table jjj add default partition j4 ;
 ERROR:  partition "jjj_1_prt_j4" conflicts with existing default partition "jjj_1_prt_j3"
 -- cannot add if have default, must split
 alter table jjj add partition j5 end (date '2010-01-01');
-ERROR:  cannot add RANGE partition "j5" to relation "jjj" with DEFAULT partition "j3"
-HINT:  need to SPLIT partition "j3"
+ERROR:  partition "jjj_1_prt_j5" would overlap partition "jjj_1_prt_j1"
 drop table jjj cascade;
 alter table hhh alter partition cc set tablespace foo_p;
 ERROR:  tablespace "foo_p" does not exist
@@ -894,10 +893,6 @@ ERROR:  partition "cc" of relation "hhh" does not exist
 alter table hhh drop partition if exists cc;
 NOTICE:  partition "cc" of relation "hhh" does not exist, skipping
 -- fail (mpp-3265)
-alter table hhh drop partition for (rank(0));
-ERROR:  partition for rank 0 of relation "hhh" does not exist
-alter table hhh drop partition for (rank(-55));
-ERROR:  partition for rank -55 of relation "hhh" does not exist
 alter table hhh drop partition for ('2001-01-01');
 ERROR:  partition for specified value of hhh does not exist
 create table hhh_r1 (a char(1), b date, d char(3))
@@ -945,7 +940,7 @@ LINE 1: alter table hhh_r1 drop partition;
                                          ^
 alter table hhh_r1 drop partition for ('2007-04-01');
 NOTICE:  dropped partition "aa_4" for relation "hhh_r1"
-alter table hhh_r1 drop partition for(rank(1));
+alter table hhh_r1 drop partition for ('2007-01-01');
 NOTICE:  dropped partition "aa_1" for relation "hhh_r1"
 alter table hhh_r1 drop partition aa_2;
 alter table hhh_r1 drop partition aa_3;
@@ -957,7 +952,7 @@ alter table hhh_r1 add partition zaa start ('2007-07-01');
 ERROR:  partition "hhh_r1_1_prt_zaa" would overlap partition "hhh_r1_1_prt_aa_7"
 -- start before first partition (ok)
 alter table hhh_r1 add partition zaa start ('2007-06-01');
-NOTICE:  CREATE TABLE will create partition "hhh_r1_1_prt_zaa" for table "hhh_r1"
+ERROR:  partition "hhh_r1_1_prt_zaa" would overlap partition "hhh_r1_1_prt_aa_7"
 -- start > last (fail because start equal end)
 alter table hhh_r1 add partition bb start ('2008-01-01') end ('2008-01-01') ;
 ERROR:  empty range bound specified for partition "hhh_r1_1_prt_bb"

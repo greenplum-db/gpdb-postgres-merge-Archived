@@ -138,7 +138,7 @@ create table foo_p (i int, j int) distributed by (i)
 partition by range(j)
 (start(1) end(6) every(3));
 reset role;
-alter table foo_p split partition for(rank(1)) at (2) into (partition prt_11, partition prt_12);
+alter table foo_p split partition for (1) at (2) into (partition prt_11, partition prt_12);
 \dt foo_*
 drop table foo_p;
 
@@ -1273,10 +1273,10 @@ create table k (i int) partition by range(i) (start(1) end(10) every(2),
 default partition mydef);
 insert into k select i from generate_series(1, 30) i;
 alter table k split default partition start(15) end(20) into
-(partition mydef, partition foo);
+(partition foo, default partition);
 select * from k_1_prt_foo;
 alter table k split default partition start(22) exclusive end(25) inclusive
-into (partition bar, partition mydef);
+into (partition bar, default partition);
 select * from k_1_prt_bar;
 alter table k split partition bar at (23) into (partition baz, partition foz);
 select partitiontablename,partitionposition,partitionrangestart,
@@ -1378,11 +1378,11 @@ create table a (i date) partition by range(i)
 	every(interval '2 years'));
 revoke all on a from public;
 grant insert on a to part_role;
-alter table a split partition for(rank(1)) at (date '2006-01-01')
+alter table a split partition for ('2005-01-01') at (date '2006-01-01')
   into (partition f, partition g);
 alter table a add default partition mydef;
 alter table a split default partition start(date '2010-01-01') end(date
-'2011-01-01') into(partition mydef, partition other);
+'2011-01-01') into(partition mydef, default partition);
 set session authorization part_role;
 select has_table_privilege('part_role', 'a'::regclass,'insert');
 select has_table_privilege('part_role', 'a_1_prt_f'::regclass,'insert');
@@ -1394,13 +1394,13 @@ insert into a values('2010-10-10');
 \c -
 drop table a;
 drop role part_role;
--- Check that when we split a default, the INTO clause must named the default
+-- Check that when we split a default, the INTO clause must specify "default partition"
 create table k (i date) partition by range(i) (start('2008-01-01')
 end('2009-01-01') every(interval '1 month'), default partition default_part);
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
 into (partition aa, partition nodate);
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
-into (partition aa, partition default_part);
+into (partition aa, default partition);
 -- check that it works without INTO
 alter table k split default partition start ('2009-02-01') end ('2009-03-01');
 drop table k;
@@ -1502,7 +1502,7 @@ insert into rank_exc values(1, 1, 2007, 'M', 1);
 insert into rank_exc values(2, 2, 2008, 'M', 3);
 select * from rank_exc;
 alter table rank_exc alter partition boys split default partition start ('2007')
-end ('2008') into (partition bfuture, partition year7);
+end ('2008') into (partition year7, default partition);
 select * from rank_exc_1_prt_boys_2_prt_bfuture;
 select * from rank_exc_1_prt_boys_2_prt_year7;
 select * from rank_exc;
@@ -1520,7 +1520,7 @@ select * from r;
 
 -- Split test
 alter table rank_exc alter partition girls split default partition start('2008')
-  end('2020') into (partition years, partition gfuture);
+  end('2020') into (partition years, default partition);
 insert into rank_exc values(4, 4, 2009, 'F', 100);
 drop table rank_exc;
 drop table r;
@@ -1731,7 +1731,7 @@ DEFAULT PARTITION st_default
 ALTER TABLE SG_CAL_EVENT_SILVERTAIL_HOUR SPLIT DEFAULT PARTITION
 START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
-PARTITION st_default );
+DEFAULT PARTITION );
 
 select pg_get_partition_def('sg_cal_event_silvertail_hour'::regclass, true);
 
@@ -1743,7 +1743,7 @@ with (appendonly = true, compresslevel = 5)
 partition by range(j) (start(1) end(10) every(1), default partition def);
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
-into (partition p10_20, partition def);
+into (partition p10_20, default partition);
 select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
 select count(distinct k) from foo_p;
 drop table foo_p;
@@ -1753,7 +1753,7 @@ partition by range(j) (start(1) end(10) every(1), default partition def
 with(appendonly = true));
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
-into (partition p10_20, partition def);
+into (partition p10_20, default partition);
 select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
 select reloptions from pg_class where relname = 'foo_p_1_prt_def';
 select count(distinct k) from foo_p;
@@ -2595,7 +2595,7 @@ subpartition by range (d)
 
 -- MPP-10421: allow re-use sp2 for non-DEFAULT partition
 alter table mpp10223b alter partition p1 
-split partition for (rank(1) ) at (25)
+split partition for (1) at (25)
 into (partition sp2, partition sp3);
 
 select partitiontablename,partitionposition,partitionrangestart,
@@ -2790,7 +2790,7 @@ where p.localoid = c.oid and relname like 'test_table%' order by p.localoid;
 alter table test_table split default partition
         start (3)
 	end (4)
-	into (partition p2, partition default_partition);
+	into (partition p2, default partition);
 
 
 select relname, distkey as distribution_attributes from
@@ -3818,14 +3818,14 @@ select array_agg(test_split_part_1_prt_other_log_ids) from test_split_part_1_prt
 -- partitions. Originally reported in MPP-7232
 create table mpp7232a (a int, b int) distributed by (a) partition by range (b) (start (1) end (3) every (1));
 select pg_get_partition_def('mpp7232a'::regclass, true);
-alter table mpp7232a rename partition for (rank(1)) to alpha;
-alter table mpp7232a rename partition for (rank(2)) to bravo;
+alter table mpp7232a rename partition for (1) to alpha;
+alter table mpp7232a rename partition for (2) to bravo;
 select partitionname, partitionrank from pg_partitions where tablename like 'mpp7232a' order by 2;
 select pg_get_partition_def('mpp7232a'::regclass, true);
 
 create table mpp7232b (a int, b int) distributed by (a) partition by range (b) (partition alpha start (1) end (3) every (1));
 select partitionname, partitionrank from pg_partitions where tablename like 'mpp7232b' order by 2;
-alter table mpp7232b rename partition for (rank(1)) to foo;
+alter table mpp7232b rename partition for (1) to foo;
 select pg_get_partition_def('mpp7232b'::regclass, true);
 
 -- Test .. WITH (tablename = <foo> ..) syntax.
