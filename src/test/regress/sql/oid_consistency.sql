@@ -64,7 +64,9 @@ select verify('co_t');
 -- Partitioned tables
 set client_min_messages='error';
 
-CREATE TABLE oid_check_pt1 (id int, date date, amt decimal(10,2) default 0.0) DISTRIBUTED BY (id)
+CREATE TABLE oid_check_pt1 (id int, date date, amt decimal(10,2) default 0.0)
+USING heap
+DISTRIBUTED BY (id)
 PARTITION BY RANGE (date)
       (PARTITION Jan08 START (date '2008-01-01') INCLUSIVE ,
       PARTITION Feb08 START (date '2008-02-01') INCLUSIVE ,
@@ -75,9 +77,9 @@ select verify('oid_check_pt1_1_prt_jan08');
 select verify('oid_check_pt1_1_prt_feb08');
 select verify('oid_check_pt1_1_prt_mar08');
 
-set gp_default_storage_options='appendonly=true';
-
-CREATE TABLE oid_check_ao_pt1 (id int, date date, amt decimal(10,2) default 0.0) DISTRIBUTED BY (id)
+CREATE TABLE oid_check_ao_pt1 (id int, date date, amt decimal(10,2) default 0.0)
+USING appendoptimized
+DISTRIBUTED BY (id)
 PARTITION BY RANGE (date)
       (PARTITION Jan08 START (date '2008-01-01') INCLUSIVE ,
       PARTITION Feb08 START (date '2008-02-01') INCLUSIVE ,
@@ -90,7 +92,7 @@ select verify('oid_check_ao_pt1_1_prt_mar08');
 
 CREATE TABLE oid_check_co_pt1 (id int, year int, month int CHECK (month > 0),
        day int CHECK (day > 0), region text default('abc'))
-WITH(ORIENTATION=COLUMN)
+USING aoco
 DISTRIBUTED BY (id)
 PARTITION BY RANGE (year)
       SUBPARTITION BY RANGE (month)
@@ -113,8 +115,6 @@ select verify('oid_check_co_pt1');
 alter table oid_check_ao_pt1 add default partition other_regions,
       	    	   alter column amt set not null;
 select verify('oid_check_ao_pt1');
-
-reset gp_default_storage_options;
 
 --
 -- pg_constraint
