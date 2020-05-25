@@ -630,9 +630,11 @@ explain (costs off)
                ->  Merge Join
                      Merge Cond: (tenk1.unique1 = tenk2.unique1)
                      ->  Index Only Scan using tenk1_unique1 on tenk1
-                     ->  Index Only Scan using tenk2_unique1 on tenk2
+                     ->  Sort
+                           Sort Key: tenk2.unique1
+                           ->  Seq Scan on tenk2
  Optimizer: Postgres query optimizer
-(8 rows)
+(10 rows)
 
 select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
  count 
