@@ -19634,11 +19634,19 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 		}
 		else if (strcmp(elem->defname, "orientation") == 0)
 		{
+			const char *value = defGetString(elem);
+
 			if (is_column_oriented_found)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
 						 errmsg("parameter \"orientation\" specified more than once")));
-			is_column_oriented = strcmp(defGetString(elem), "column") == 0;
+
+			if (strcmp(value, "column") && strcmp(value, "row"))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid parameter value for \"orientation\": \"%s\"", value)));
+	
+			is_column_oriented = strcmp(value, "column") == 0;
 			is_column_oriented_found = true;
 		}
 		else
@@ -19668,23 +19676,6 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	 *  }
 	 *
 	 */
-
-	 /* aoco grammar check */
-	 if (appendoptimized)
-	 {
-	    if (is_column_oriented_found && !is_column_oriented)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid parameter value for \"orientation\".")));
-	 }
-	 else
-	 {
-	    if (is_column_oriented_found)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("invalid option \"orientation\" for base relation"),
-					 errhint("Table orientation only valid for Append Only relations, create an AO relation to use table orientation.")));
-	 }
 
 	/* access_method takes precedence */
 	if (accessMethod)
