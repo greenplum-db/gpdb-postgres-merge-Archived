@@ -18,6 +18,7 @@ NOTICE:  CREATE TABLE will create partition "unlogged_pt1_1_prt_p2" for table "u
 SELECT relpersistence, relname FROM pg_class WHERE relname like 'unlogged_pt1%';
  relpersistence |        relname        
 ----------------+-----------------------
+ u              | unlogged_pt1
  u              | unlogged_pt1_1_prt_2
  u              | unlogged_pt1_1_prt_p1
  u              | unlogged_pt1_1_prt_p2
