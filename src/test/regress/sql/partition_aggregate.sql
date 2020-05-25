@@ -206,7 +206,9 @@ CREATE TABLE pagg_tab_ml_p2_s2 PARTITION OF pagg_tab_ml_p2 FOR VALUES IN ('0002'
 
 -- This level of partitioning has different column positions than the parent
 CREATE TABLE pagg_tab_ml_p3(b int, c text, a int) PARTITION BY RANGE (b);
+ALTER TABLE pagg_tab_ml_p3 SET DISTRIBUTED BY (a);
 CREATE TABLE pagg_tab_ml_p3_s1(c text, a int, b int);
+ALTER TABLE pagg_tab_ml_p3_s1 SET DISTRIBUTED BY (a);
 CREATE TABLE pagg_tab_ml_p3_s2 PARTITION OF pagg_tab_ml_p3 FOR VALUES FROM (5) TO (10);
 
 ALTER TABLE pagg_tab_ml_p3 ATTACH PARTITION pagg_tab_ml_p3_s1 FOR VALUES FROM (0) TO (5);
