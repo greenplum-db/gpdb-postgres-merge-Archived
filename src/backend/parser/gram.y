@@ -19645,7 +19645,7 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid parameter value for \"orientation\": \"%s\"", value)));
-	
+
 			is_column_oriented = strcmp(value, "column") == 0;
 			is_column_oriented_found = true;
 		}
@@ -19659,11 +19659,6 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	 * certain that any sanity checks on the options are also introduced if
 	 * needed. Such examples can be:
 	 *
-	 *	if (!appendoptimized && is_column_oriented)
-	 *		ereport(....
-	 *
-	 * OR
-	 *
 	 *  if (strcmp(elem->defname, "appendoptimized") == 0 ||
 	 *      strcmp(elem->defname, "appendonly") == 0)
 	 *  {
@@ -19676,6 +19671,12 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	 *  }
 	 *
 	 */
+
+	if (!appendoptimized && is_column_oriented_found)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid option \"orientation\" for base relation"),
+				 errhint("Table orientation only valid for Append Only relations, create an AO relation to use table orientation.")));
 
 	/* access_method takes precedence */
 	if (accessMethod)
