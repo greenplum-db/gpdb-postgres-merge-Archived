@@ -39,12 +39,12 @@ vacuum aocs_empty;
 create index ao_empty_a on ao_empty(a);
 create index aocs_empty_a on aocs_empty(a);
 \d ao_empty
-  Append-Only Table "public.ao_empty"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | integer           | 
- c      | character varying | 
+                   Table "public.ao_empty"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | integer           |           |          | 
+ c      | character varying |           |          | 
 Compression Type: None
 Compression Level: 0
 Block Size: 32768
@@ -54,12 +54,12 @@ Indexes:
 Distributed by: (a)
 
 \d aocs_empty
-Append-Only Columnar Table "public.aocs_empty"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | integer           | 
- c      | character varying | 
+                  Table "public.aocs_empty"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | integer           |           |          | 
+ c      | character varying |           |          | 
 Checksum: t
 Indexes:
     "aocs_empty_a" btree (a)
@@ -215,12 +215,12 @@ from pg_class where oid in (select reltoastrelid from pg_class
 
 -- Verify that index is displayed by \d after vacuum.
 \d ao_empty;
-  Append-Only Table "public.ao_empty"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | integer           | 
- c      | character varying | 
+                   Table "public.ao_empty"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | integer           |           |          | 
+ c      | character varying |           |          | 
 Compression Type: None
 Compression Level: 0
 Block Size: 32768
@@ -230,12 +230,12 @@ Indexes:
 Distributed by: (a)
 
 \d aocs_empty;
-Append-Only Columnar Table "public.aocs_empty"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | integer           | 
- c      | character varying | 
+                  Table "public.aocs_empty"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | integer           |           |          | 
+ c      | character varying |           |          | 
 Checksum: t
 Indexes:
     "aocs_empty_a" btree (a)
