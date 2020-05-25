@@ -424,8 +424,9 @@ aoco_rescan(TableScanDesc scan, ScanKey key,
                   bool set_params, bool allow_strat,
                   bool allow_sync, bool allow_pagemode)
 {
-	elog(ERROR, "not implemented yet");
+	AOCSScanDesc  aoscan = (AOCSScanDesc) scan;
 
+	aocs_rescan(aoscan);
 }
 
 static bool
