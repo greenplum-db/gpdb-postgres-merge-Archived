@@ -3082,6 +3082,10 @@ create table part_abc (a int not null, b int not null, c int not null) partition
 create table part_bac (b int not null, a int not null, c int not null) partition by list (b);
 create table part_cab (c int not null, a int not null, b int not null) partition by list (c);
 create table part_abc_p1 (a int not null, b int not null, c int not null);
+-- GPDB: the distribution keys must be the same in all parts of partition
+-- hierarchy.
+alter table part_bac set distributed by (a);
+alter table part_cab set distributed by (a);
 alter table part_abc attach partition part_bac for values in(1);
 alter table part_bac attach partition part_cab for values in(2);
 alter table part_cab attach partition part_abc_p1 for values in(3);
@@ -3495,7 +3499,6 @@ create table ma_test_p2 partition of ma_test for values from (10) to (20);
 create table ma_test_p3 partition of ma_test for values from (20) to (30);
 insert into ma_test select x,x from generate_series(0,29) t(x);
 create index on ma_test (b);
-ERROR:  relation "ma_test_p1_b_idx" already exists  (seg1 127.0.0.1:40001 pid=21978)
 analyze ma_test;
 prepare mt_q1 (int) as select a from ma_test where a >= $1 and a % 10 = 5 order by b;
 -- Execute query 5 times to allow choose_custom_plan

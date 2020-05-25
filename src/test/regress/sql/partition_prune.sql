@@ -682,6 +682,11 @@ create table part_bac (b int not null, a int not null, c int not null) partition
 create table part_cab (c int not null, a int not null, b int not null) partition by list (c);
 create table part_abc_p1 (a int not null, b int not null, c int not null);
 
+-- GPDB: the distribution keys must be the same in all parts of partition
+-- hierarchy.
+alter table part_bac set distributed by (a);
+alter table part_cab set distributed by (a);
+
 alter table part_abc attach partition part_bac for values in(1);
 alter table part_bac attach partition part_cab for values in(2);
 alter table part_cab attach partition part_abc_p1 for values in(3);
