@@ -19669,6 +19669,15 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	 *
 	 */
 
+	 /* aoco grammar check */
+	 if (appendoptimized)
+	 {
+	    if (is_column_oriented_found && !is_column_oriented)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid parameter value for \"orientation\".")));
+	 }
+
 	/* access_method takes precedence */
 	if (accessMethod)
 		return (char *)accessMethod;
