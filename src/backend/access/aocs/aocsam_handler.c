@@ -340,6 +340,14 @@ tts_aocovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
 	return result;
 }
 
+/* tuple deform callback, for aoco, it is always a virtual tuple
+ * just keep a dummy callback
+ */
+static void
+tts_aocovirtual_getsomeattrs(TupleTableSlot *slot, int natts)
+{
+}
+
 /*
  * AOCO access method uses virtual tuples with some minor modifications.
  */
@@ -350,6 +358,8 @@ aoco_slot_callbacks(Relation relation)
 
 	*aoSlotOps = TTSOpsVirtual;
 	aoSlotOps->getsysattr = tts_aocovirtual_getsysattr;
+	aoSlotOps->getsomeattrs = tts_aocovirtual_getsomeattrs;
+
 	return (const TupleTableSlotOps*) aoSlotOps;
 }
 
