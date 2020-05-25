@@ -100,7 +100,15 @@ qsort_stmt_cmp(const void *a, const void *b, void *arg)
 	List	   *b1upperdatums = b1->upperdatums;
 	List	   *b2upperdatums = b2->upperdatums;
 
-	if (b1lowerdatums != NULL && b2lowerdatums != NULL)
+	/* Sort DEFAULT partitions last */
+	if (b1->is_default != b2->is_default)
+	{
+		if (b2->is_default)
+			return 1;
+		else
+			return -1;
+	}
+	else if (b1lowerdatums != NULL && b2lowerdatums != NULL)
 	{
 		for (i = 0; i < partnatts; i++)
 		{
