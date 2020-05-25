@@ -19677,6 +19677,14 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid parameter value for \"orientation\".")));
 	 }
+	 else
+	 {
+	    if (is_column_oriented_found)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("invalid option \"orientation\" for base relation"),
+					 errhint("Table orientation only valid for Append Only relations, create an AO relation to use table orientation.")));
+	 }
 
 	/* access_method takes precedence */
 	if (accessMethod)
