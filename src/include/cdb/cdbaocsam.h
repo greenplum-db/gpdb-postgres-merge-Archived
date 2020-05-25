@@ -129,6 +129,12 @@ typedef struct AOCSScanDescData
 
 	AppendOnlyVisimap visibilityMap;
 
+	/*
+	 * Only used by `analyze`
+	 */
+	int64		nextTupleId;
+	int64		targetTupleId;
+
 	/* For Bitmap scan */
 	int			rs_cindex;		/* current tuple's index in tbmres->offsets */
 	struct AOCSFetchDescData   *aocofetch;

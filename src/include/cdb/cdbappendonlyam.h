@@ -226,12 +226,11 @@ typedef struct AppendOnlyScanDescData
 	 */ 
 	AppendOnlyVisimap visibilityMap;
 
-
 	/*
 	 * Only used by `analyze`
 	 */
-	int64 nextTupleId;
-	int64 targetTupleId;
+	int64		nextTupleId;
+	int64		targetTupleId;
 
 	/* For Bitmap scan */
 	int			rs_cindex;		/* current tuple's index in tbmres->offsets */
