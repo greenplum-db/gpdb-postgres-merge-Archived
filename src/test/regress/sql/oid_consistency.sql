@@ -235,7 +235,7 @@ INSERT INTO constraint_pt3 SELECT i, 2002, 4, i, 'asia' FROM generate_series(1,5
 INSERT INTO constraint_pt3 SELECT i, 2002, 4, i, 'europe' FROM generate_series(1,5)i;
 
 -- look at the constraints of the partition we plan to exchange
-SELECT conname,consrc from pg_constraint where conrelid =
+SELECT conname, pg_get_constraintdef(oid) from pg_constraint where conrelid =
        'constraint_pt3_1_prt_2_2_prt_3_3_prt_europe'::regclass;
 
 drop table if exists constraint_t3;

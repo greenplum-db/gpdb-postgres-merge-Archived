@@ -485,15 +485,15 @@ INSERT INTO constraint_pt3 SELECT i, 2002, 02, i, 'europe' FROM generate_series(
 INSERT INTO constraint_pt3 SELECT i, 2002, 4, i, 'asia' FROM generate_series(1,5)i;
 INSERT INTO constraint_pt3 SELECT i, 2002, 4, i, 'europe' FROM generate_series(1,5)i;
 -- look at the constraints of the partition we plan to exchange
-SELECT conname,consrc from pg_constraint where conrelid =
+SELECT conname, pg_get_constraintdef(oid) from pg_constraint where conrelid =
        'constraint_pt3_1_prt_2_2_prt_3_3_prt_europe'::regclass;
-                      conname                      |               consrc               
----------------------------------------------------+------------------------------------
- constraint_pt3_month_check                        | (month > 0)
- constraint_pt3_day_check                          | (day > 0)
- constraint_pt3_1_prt_2_check                      | ((year >= 2001) AND (year < 2002))
- constraint_pt3_1_prt_2_2_prt_3_check              | ((month >= 2) AND (month < 3))
- constraint_pt3_1_prt_2_2_prt_3_3_prt_europe_check | (region = 'europe'::text)
+                      conname                      |            pg_get_constraintdef            
+---------------------------------------------------+--------------------------------------------
+ constraint_pt3_1_prt_2_2_prt_3_3_prt_europe_check | CHECK ((region = 'europe'::text))
+ constraint_pt3_1_prt_2_2_prt_3_check              | CHECK (((month >= 2) AND (month < 3)))
+ constraint_pt3_1_prt_2_check                      | CHECK (((year >= 2001) AND (year < 2002)))
+ constraint_pt3_day_check                          | CHECK ((day > 0))
+ constraint_pt3_month_check                        | CHECK ((month > 0))
 (5 rows)
 
 drop table if exists constraint_t3;
@@ -557,14 +557,14 @@ SELECT * FROM constraint_t3 ORDER BY year, month, region, id;
 (5 rows)
 
 \d+ constraint_pt3_1_prt_2_2_prt_3_3_prt_europe
-Append-Only Table "public.constraint_pt3_1_prt_2_2_prt_3_3_prt_europe"
- Column |  Type   | Modifiers | Storage  | Stats target | Description 
---------+---------+-----------+----------+--------------+-------------
- id     | integer |           | plain    |              | 
- year   | integer |           | plain    |              | 
- month  | integer |           | plain    |              | 
- day    | integer |           | plain    |              | 
- region | text    |           | extended |              | 
+                Table "public.constraint_pt3_1_prt_2_2_prt_3_3_prt_europe"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ id     | integer |           |          |         | plain    |              | 
+ year   | integer |           |          |         | plain    |              | 
+ month  | integer |           |          |         | plain    |              | 
+ day    | integer |           |          |         | plain    |              | 
+ region | text    |           |          |         | extended |              | 
 Compression Type: None
 Compression Level: 0
 Block Size: 32768
