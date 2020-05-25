@@ -129,6 +129,7 @@ GetContentIdsFromPlanForSingleRelation(PlannerInfo *root, Plan *plan, int rangeT
 		 * understand why; we really should be holding a lock on all
 		 * tables being referenced by the plan, since we're still in the
 		 * planner. Investigate, fix, and revert this to NoLock.
+		 * Also change back the equivelant relation_close() call further down.
 		 */
 		relation = relation_open(rte->relid, AccessShareLock /* Was: NoLock */);
 		policy = relation->rd_cdbpolicy;
@@ -272,7 +273,10 @@ GetContentIdsFromPlanForSingleRelation(PlannerInfo *root, Plan *plan, int rangeT
 	}
 
 	if (rte->rtekind == RTE_RELATION)
-		relation_close(relation, NoLock);
+	{
+		/* GPDB_12_MERGE_FIXME: don't forget to change this also back to NoLock */
+		relation_close(relation, AccessShareLock);
+	}
 
 	result.haveProcessedAnyCalculations = true;
 	return result;
