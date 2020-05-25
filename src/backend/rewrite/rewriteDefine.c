@@ -138,9 +138,11 @@ InsertRule(const char *rulname,
 	}
 	else
 	{
-		rewriteObjectId = GetNewOidWithIndex(pg_rewrite_desc,
-											 RewriteOidIndexId,
-											 Anum_pg_rewrite_oid);
+		rewriteObjectId = GetNewOidForRewrite(pg_rewrite_desc,
+											  RewriteOidIndexId,
+											  Anum_pg_rewrite_oid,
+											  eventrel_oid,
+											  unconstify(char *, rulname));
 		values[Anum_pg_rewrite_oid - 1] = ObjectIdGetDatum(rewriteObjectId);
 
 		tup = heap_form_tuple(pg_rewrite_desc->rd_att, values, nulls);
