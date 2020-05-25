@@ -100,7 +100,7 @@ static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 					   bool recursing);
 static VacOptTernaryValue get_vacopt_ternary_value(DefElem *def);
 
-static void dispatchVacuum(VacuumParams *params, RangeVar *relation,
+static void dispatchVacuum(VacuumParams *params, Oid relid,
 						   VacuumStatsContext *ctx);
 static List *vacuum_params_to_options_list(VacuumParams *params);
 static void vacuum_combine_stats(VacuumStatsContext *stats_context,
@@ -2263,7 +2263,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		PushActiveSnapshot(GetTransactionSnapshot());
 
 		stats_context.updated_stats = NIL;
-		dispatchVacuum(params, this_rangevar, &stats_context);
+		dispatchVacuum(params, relid, &stats_context);
 		vac_update_relstats_from_list(stats_context.updated_stats);
 
 		/* Also update pg_stat_last_operation */
@@ -2426,8 +2426,7 @@ get_vacopt_ternary_value(DefElem *def)
  * Dispatch a Vacuum command.
  */
 static void
-dispatchVacuum(VacuumParams *params, RangeVar *relation,
-			   VacuumStatsContext *ctx)
+dispatchVacuum(VacuumParams *params, Oid relid, VacuumStatsContext *ctx)
 {
 	CdbPgResults cdb_pgresults;
 	VacuumStmt *vacstmt = makeNode(VacuumStmt);
@@ -2452,8 +2451,8 @@ dispatchVacuum(VacuumParams *params, RangeVar *relation,
 	}
 
 	rel = makeNode(VacuumRelation);
-	rel->relation = relation;
-	rel->oid = InvalidOid; /* GPDB_12_MERGE_FIXME: should the caller pass oid instead of RangeVar? */
+	rel->relation = NULL;
+	rel->oid = relid;
 	rel->va_cols = NIL;
 
 	vacstmt->rels = list_make1(rel);
