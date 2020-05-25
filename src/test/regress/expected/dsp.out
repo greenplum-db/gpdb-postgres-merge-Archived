@@ -13,7 +13,6 @@ alter database dsp2 set gp_default_storage_options = "checksum=true";
 -- Testing pg_authid.rolconfig is currently deferred in
 -- installcheck-good because it becomes contrived.  These tests will
 -- be covered in detail in Divya's test plan for default storage
-
 -- options.
 --
 -- drop role if exists dsprole1;
@@ -668,6 +667,7 @@ select count(b) from co8;
 -------
     10
 (1 row)
+
 select pg_catalog.set_config('gp_default_storage_options', 'compresstype=rle_type,compresslevel=1', false);
                              set_config                              
 ---------------------------------------------------------------------
