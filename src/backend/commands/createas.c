@@ -147,7 +147,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	create->partitionBy = NULL; /* CTAS does not not support partition. */
 
 	create->buildAoBlkdir = false;
-	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
+	create->attr_encodings = NULL; /* Handled by DefineRelation() */
 
 	/* Save them in CreateStmt for dispatching. */
 	create->relKind = relkind;
@@ -286,13 +286,6 @@ create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
 	/* Create the relation definition using the ColumnDef list */
 	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc, true);
 
-	/* Add column encoding entries based on the WITH clause */
-	if (into->options)
-	{
-		Relation rel = heap_open(intoRelationAddr.objectId, AccessExclusiveLock);
-		AddDefaultRelationAttributeOptions(rel, into->options);
-		heap_close(rel, NoLock);
-	}
 	return intoRelationAddr;
 }
 
@@ -652,19 +645,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * Finally we can open the target table
 	 */
 	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
-
-	/*
-	 * Add column encoding entries based on the WITH clause.
-	 *
-	 * NOTE:  we could also do this expansion during parse analysis, by
-	 * expanding the IntoClause options field into some attr_encodings field
-	 * (cf. CreateStmt and transformCreateStmt()). As it stands, there's no real
-	 * benefit for doing that from a code complexity POV. In fact, it would mean
-	 * more code. If, however, we supported column encoding syntax during CTAS,
-	 * it would be a good time to relocate this code.
-	 */
-	AddDefaultRelationAttributeOptions(intoRelationDesc,
-									   into->options);
 
 	/*
 	 * Check INSERT permission on the constructed table.

@@ -1258,14 +1258,6 @@ ProcessUtilitySlow(ParseState *pstate,
 							 */
 							CommandCounterIncrement();
 
-							/* Add column encoding entries based on the WITH clauses */
-							if (cstmt->isCtas && cstmt->options)
-							{
-								Relation rel = table_open(address.objectId, AccessExclusiveLock);
-								AddDefaultRelationAttributeOptions(rel, cstmt->options);
-								table_close(rel, NoLock);
-							}
-
 							if (relKind != RELKIND_COMPOSITE_TYPE)
 							{
 								/*
