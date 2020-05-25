@@ -281,7 +281,7 @@ deduceImplicitRangeBounds(ParseState *pstate, List *origstmts, PartitionKey key)
  */
 static PartEveryIterator *
 initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char *part_col_name,
-					  Node *start, Node *end, Node *every, int location)
+					  Node *start, Node *end, Node *every)
 {
 	PartEveryIterator *iter;
 	Datum		startVal = 0;
@@ -314,7 +314,7 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot use NULL with range partition specification"),
-				 parser_errposition(pstate, location)));
+				 parser_errposition(pstate, exprLocation(start))));
 
 		startVal = startConst->constvalue;
 	}
@@ -333,7 +333,7 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot use NULL with range partition specification"),
-				 parser_errposition(pstate, location)));
+				 parser_errposition(pstate, exprLocation(end))));
 
 		endVal = endConst->constvalue;
 	}
@@ -352,7 +352,7 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("EVERY clause requires START and END"),
-				 parser_errposition(pstate, location)));
+				 parser_errposition(pstate, exprLocation(every))));
 		}
 
 		/*
@@ -696,8 +696,7 @@ generateRangePartitions(ParseState *pstate,
 
 	partkey = RelationGetPartitionKey(parentrel);
 
-	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, every,
-									  boundspec->location);
+	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, every);
 
 	i = 0;
 	while (nextPartBound(boundIter))
