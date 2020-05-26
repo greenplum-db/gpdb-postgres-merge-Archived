@@ -486,7 +486,6 @@ typedef struct ResultRelInfo
 	AttrNumber	ri_action_attno;	/* is this an INSERT or DELETE ? */
 
 	struct AOCSInsertDescData *ri_aocsInsertDesc;
-	struct ExternalInsertDescData *ri_extInsertDesc;
 
 	/* GPDB_12_MERGE_FIXME: These need to go behind the table AM API */
 #if 0
@@ -521,15 +520,6 @@ typedef struct ResultRelInfo
 	/* For use by copy.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
 } ResultRelInfo;
-
-typedef struct ShareNodeEntry
-{
-	NodeTag		type;
-
-	Node	   *sharePlan;
-	Node	   *shareState;
-	int			refcount; /* reference count to guard from too-eager-free risk */
-} ShareNodeEntry;
 
 /*
  * PartOidEntry
@@ -719,7 +709,7 @@ typedef struct EState
 	List	   *es_cursorPositions;
 
 	/* Data structure for node sharing */
-	List	  **es_sharenode;
+	List	   *es_sharenode;
 
 	int			active_recv_id;
 	void	   *motionlayer_context;  /* Motion Layer state */
@@ -914,19 +904,6 @@ typedef struct MemoryManagerContainer
  * has to be shared with other parts of the execution state tree.
  * ----------------------------------------------------------------
  */
-
-/* ----------------
- *         Generic tuplestore structure
- *	 used to communicate between ShareInputScan nodes,
- *	 Materialize and Sort
- *
- * ----------------
- */
-typedef union GenericTupStore
-{
-	struct Tuplestorestate *matstore;     /* Used by Materialize */
-	void	   *sortstore;	/* Used by Sort */
-} GenericTupStore;
 
 /* ----------------
  *		AggrefExprState node
@@ -1157,8 +1134,8 @@ typedef struct SubPlanState
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 	ExprState  *cur_eq_comp;	/* equality comparator for LHS vs. table */
-	void	   *ts_pos;
-	GenericTupStore *ts_state;
+
+	Tuplestorestate *ts_state;
 } SubPlanState;
 
 /* ----------------
@@ -2081,8 +2058,7 @@ typedef struct FunctionScanState
 
 	/* tuplestore info when function scan run as initplan */
 	bool		resultInTupleStore; /* function result stored in tuplestore */
-	void       *ts_pos;				/* accessor to the tuplestore */
-	GenericTupStore *ts_state;		/* tuple store state */
+	struct Tuplestorestate *ts_state;	/* tuple store state */
 } FunctionScanState;
 
 extern void function_scan_create_bufname_prefix(char *p, int size);
@@ -2515,26 +2491,25 @@ typedef struct MaterialState
  *		State of each scanner of the ShareInput node
  * ----------------
  */
+struct shareinput_local_state;
+struct shareinput_Xslice_reference;
+struct NTupleStore;
+struct NTupleStoreAccessor;
+
 typedef struct ShareInputScanState
 {
 	ScanState	ss;
-	/*
-	 * Depends on share_type, we should have a tuplestore_state, tuplestore_pos
-	 * or tuplesort_state, tuplesort_pos
-	 */
-	GenericTupStore ts_state;
-	int			ts_pos;
-	int			ts_markpos;
 
-	void	   *share_lk_ctxt;
-	bool		freed; /* is this node already freed? */
+	Tuplestorestate *ts_state;
+	int			ts_pos;
+
+	struct shareinput_local_state *local_state;
+	struct shareinput_Xslice_reference *ref;
+
+	bool		isready;
 } ShareInputScanState;
 
 /* XXX Should move into buf file */
-extern void *shareinput_reader_waitready(int share_id, PlanGenerator planGen);
-extern void *shareinput_writer_notifyready(int share_id, int nsharer_xslice_notify_ready, PlanGenerator planGen);
-extern void shareinput_reader_notifydone(void *, int share_id);
-extern void shareinput_writer_waitdone(void *, int share_id, int nsharer_xslice_wait_done);
 extern void shareinput_create_bufname_prefix(char* p, int size, int share_id);
 
 /* ----------------
@@ -2560,7 +2535,7 @@ typedef struct SortState
 	bool		sort_Done;		/* sort completed yet? */
 	bool		bounded_Done;	/* value of bounded we did the sort with */
 	int64		bound_Done;		/* value of bound we did the sort with */
-	GenericTupStore *tuplesortstate; /* private state of tuplesort.c */
+	void	   *tuplesortstate; /* private state of tuplesort.c */
 	bool		am_worker;		/* are we a worker? */
 	SharedSortInfo *shared_info;	/* one entry per worker */
 
@@ -2569,8 +2544,6 @@ typedef struct SortState
 	bool		delayEagerFree;		/* is it safe to free memory used by this node,
 									 * when this node has outputted its last row? */
 	TuplesortInstrumentation sortstats; /* holds stats, if the Sort is eagerly free'd */
-
-	void	   *share_lk_ctxt;
 
 } SortState;
 

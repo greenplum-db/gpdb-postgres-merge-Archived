@@ -43,7 +43,6 @@ typedef enum NodeTag
 	T_CdbProcess,
 	T_SliceTable,
 	T_CursorPosInfo,
-	T_ShareNodeEntry,
 	T_PartitionState,
 	T_QueryDispatchDesc,
 	T_OidAssignment,

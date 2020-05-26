@@ -403,7 +403,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	/*
 	 * Transform DISTRIBUTED BY (or construct a default one, if not given
-	 * explicitly). Not for foreign tables, though.
+	 * explicitly).
 	 */
 	if (stmt->relKind == RELKIND_RELATION)
 	{
@@ -433,13 +433,20 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 							   likeDistributedBy, bQuiet);
 
 		/*
-		 * And forcely set it on children after transformDistributedBy().
+		 * And force set it on children after transformDistributedBy().
 		 */
 		/* GPDB_12_MERGE_FIXME */
 #if 0
 		if (stmt->is_part_child)
 			stmt->distributedBy->numsegments = numsegments;
 #endif
+	}
+
+	if (IsA(stmt, CreateForeignTableStmt))
+	{
+		DistributedBy *ft_distributedBy = ((CreateForeignTableStmt *)stmt)->distributedBy;
+		if (ft_distributedBy || likeDistributedBy)
+			stmt->distributedBy = transformDistributedBy(&cxt, ft_distributedBy, likeDistributedBy, bQuiet);
 	}
 
 	if (stmt->partitionBy != NULL &&
@@ -2166,7 +2173,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	 * For readable external tables, don't create a policy row at all.
 	 * Non-EXECUTE type external tables are implicitly randomly distributed.
 	 * EXECUTE type external tables encapsulate similar information in the
-	 * "ON <segment spec>" clause, which is stored in pg_exttable.location.
+	 * "ON <segment spec>" clause, which is stored in pg_foreign_table.ftoptions.
 	 */
 	if (iswritable)
 	{

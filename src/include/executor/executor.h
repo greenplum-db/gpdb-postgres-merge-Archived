@@ -60,8 +60,6 @@ struct ChunkTransportState;             /* #include "cdb/cdbinterconnect.h" */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
 #define EXEC_FLAG_SKIP_TRIGGERS 0x0010	/* skip AfterTrigger calls */
 #define EXEC_FLAG_WITH_NO_DATA	0x0020	/* rel scannability doesn't matter */
-/* CDB: explain flag to check if it is safe to eliminate alien node on master */
-#define EXEC_FLAG_EXPLAIN		0x0100
 
 #define RelinfoGetStorage(relinfo) ((relinfo)->ri_RelationDesc->rd_rel->relstorage)
 
@@ -242,7 +240,6 @@ extern Node *attrMapExpr(TupleConversionMap *map, Node *expr);
  * functions in execProcnode.c
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
-extern void ExecSliceDependencyNode(PlanState *node);
 extern void ExecSetExecProcNode(PlanState *node, ExecProcNodeMtd function);
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
@@ -642,9 +639,6 @@ extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 
 extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 									 const char *relname);
-
-/* Share input utilities defined in execUtils.c */
-extern ShareNodeEntry * ExecGetShareNodeEntry(EState *estate, int shareid, bool fCreate);
 
 extern void fake_outer_params(JoinState *node);
 extern void ExecPrefetchJoinQual(JoinState *node);

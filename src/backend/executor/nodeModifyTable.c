@@ -58,7 +58,6 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-#include "access/fileam.h"
 #include "access/transam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbappendonlyam.h"

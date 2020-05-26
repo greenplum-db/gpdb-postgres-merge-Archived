@@ -411,15 +411,8 @@ AC_PROG_CXX([$pgac_cxx_list])
 #
 # C++ compiler
 #
-#
-# AC_PROG_CXX will add "-g -O2" to CXXFLAGS, if CXXFLAGS was not already set.
-# We don't want that, because we derive CXXFLAGS from CFLAGS later on. Set
-# CXXFLAGS to an empty string explicitly before invoking AC_PROG_CXX, to
-# avoid that.
-ac_save_CXXFLAGS=$CXXFLAGS
-CXXFLAGS=""
+
 AC_PROG_CXX
-CXXFLAGS=$ac_save_CXXFLAGS
 
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
 # but has idiosyncrasies of its own.  We assume icc will define
@@ -487,7 +480,7 @@ elif test "${CXXFLAGS+set}" = set; then
 elif test "$enable_coverage" = yes; then
   : # no optimization by default
 elif test "$GCC" = yes; then
-  CXXFLAGS="-O2"
+  CXXFLAGS="-O3"
 else
   # if the user selected debug mode, don't use -O
   if test "$enable_debug" != yes; then
@@ -564,6 +557,7 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CXX_CFLAGS_OPT([-fwrapv])
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
+  PGAC_PROG_CXX_CXXFLAGS_OPT([-fexcess-precision=standard])
 
   # Silence compiler warnings about variables that are set, but otherwise
   # unused. All of these warnings have been fixed in PostgreSQL, but there is
@@ -598,6 +592,18 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wstringop-truncation])
   if test -n "$NOT_THE_CFLAGS"; then
     CFLAGS="$CFLAGS -Wno-stringop-truncation"
+  fi
+  # GPDB_12_MERGE_FIXME: there's a chance we can rearrange our #include's to
+  # avoid the specific headers that use "register" once we merge with Postgres
+  # 12
+
+  # Greenplum's ORCA translator includes a lot of C headers, and Clang will
+  # warn us about the use of the "register" keyword in Postgres' inline
+  # functions which we can do nothing about. Silence it.
+  NOT_THE_CXXFLAGS=""
+  PGAC_PROG_CXX_VAR_OPT(NOT_THE_CXXFLAGS, [-Wdeprecated-register])
+  if test -n "$NOT_THE_CXXFLAGS"; then
+    CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"
   fi
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
@@ -707,31 +713,6 @@ choke me
 @%:@endif])], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
 fi
 
-# Since PostgreSQL is written in pure C, all the tests in this file
-# add necessary flags to CFLAGS only. We have some C++ code in
-# src/backend/gpopt, so we must also configure CXXFLAGS in the same way.
-# However, some CFLAGS might not be applicable to C++, so we cannot just
-# use CFLAGS as is with the C++ compiler. Derive CXXFLAGS from CFLAGS,
-# by picking those CFLAGS that also work with the C++ compiler.
-#
-# This assumes that the C++ compiler is roughly compatible with the C
-# compiler, and accepts the same flags. While we test that each flag works
-# with the C++ compiler, we would miss any flags that we would need for
-# the C++ compiler, but not for the C compiler. For example, if you tried
-# to use CC=clang and CXX=g++, we would not know to apply flags that are
-# needed for g++, but not by clang. So don't mix and match compiler
-# families!
-
-# Loop over all options in CFLAGS, and check if they also work with CXX.
-# Add to CXXFLAGS those that do.
-
-# GPDB_12_MERGE_FIXME: PostgreSQL sets CXXFLAGS nowadays, too.
-# Do we still need this?
-
-#for cflag in $CFLAGS; do
-#  PGAC_PROG_CXX_CXXFLAGS_OPT($cflag)
-#done
-
 # Defend against clang being used on x86-32 without SSE2 enabled.  As current
 # versions of clang do not understand -fexcess-precision=standard, the use of
 # x87 floating point operations leads to problems like isinf possibly returning
@@ -803,6 +784,7 @@ if test "$PORTNAME" = darwin; then
 	    [Define to 1 to build ORCA for MacOS (GPOS_Darwin=1)])
 fi
 
+
 #
 # --enable-mapreduce enables GPMapreduce support
 #
@@ -821,9 +803,9 @@ PGAC_ARG_BOOL(enable, gpcloud, yes, [disable gpcloud support],
 AC_MSG_RESULT([checking whether to build with gpcloud... $enable_gpcloud])
 AC_SUBST(enable_gpcloud)
 
-AS_IF([test "$enable_gpcloud" = yes],
+AS_IF([test "$enable_orca" = yes || test "$enable_gpcloud" = yes],
 [ # then
-  AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
+  AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
 ]) # fi
 
 #
@@ -2762,13 +2744,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_CFLAGS_OPT([-Werror=implicit-function-declaration])
 fi
 
-# Begin output steps
-
-AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
-AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
-AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([using LIBS=$LIBS])
-
 [BLD_ARCH=`echo $BLD_ARCH`]
 AC_SUBST(BLD_ARCH)
 
@@ -2852,13 +2827,13 @@ AC_DEFINE_UNQUOTED(GP_VERSION_NUM, $GP_VERSION_NUM, [Greenplum version as a numb
 # Begin output steps
 
 AC_MSG_NOTICE([using compiler=$cc_string])
+AC_MSG_NOTICE([using CXX=$CXX])
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 # Currently only used when LLVM is used
 if test "$with_llvm" = yes ; then
-   AC_MSG_NOTICE([using CXX=$CXX])
-   AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
    AC_MSG_NOTICE([using CLANG=$CLANG])
    AC_MSG_NOTICE([using BITCODE_CFLAGS=$BITCODE_CFLAGS])
    AC_MSG_NOTICE([using BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS])

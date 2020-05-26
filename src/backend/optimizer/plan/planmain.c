@@ -334,6 +334,8 @@ PlannerConfig *DefaultPlannerConfig(void)
 
 	c1->force_singleQE = false;
 
+	c1->may_rescan = false;
+
 	return c1;
 }
 

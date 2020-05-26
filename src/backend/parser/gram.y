@@ -54,6 +54,7 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_trigger.h"
 #include "commands/defrem.h"
 #include "commands/trigger.h"
@@ -6233,7 +6234,7 @@ ExtTypedesc:
 			{
 				ExtTableTypeDesc *n = makeNode(ExtTableTypeDesc);
 				n->exttabletype = EXTTBL_TYPE_LOCATION;
-				n->location_list = $3; 
+				n->location_list = $3;
 				n->on_clause = $5;
 				n->command_string = NULL;
 				$$ = (Node *)n;
@@ -6243,7 +6244,7 @@ ExtTypedesc:
 			{
 				ExtTableTypeDesc *n = makeNode(ExtTableTypeDesc);
 				n->exttabletype = EXTTBL_TYPE_EXECUTE;
-				n->location_list = NIL; 
+				n->location_list = NIL;
 				n->command_string = $2;
 				n->on_clause = $3; /* default will get set later if needed */
 						
@@ -7465,7 +7466,7 @@ AlterForeignServerStmt: ALTER SERVER name foreign_server_version alter_generic_o
 CreateForeignTableStmt:
 		CREATE FOREIGN TABLE qualified_name
 			'(' OptTableElementList ')'
-			OptInherit SERVER name create_generic_options
+			OptInherit SERVER name create_generic_options OptDistributedBy
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
 					$4->relpersistence = RELPERSISTENCE_PERMANENT;
@@ -7481,6 +7482,13 @@ CreateForeignTableStmt:
 					/* FDW-specific data */
 					n->servername = $10;
 					n->options = $11;
+					n->distributedBy = (DistributedBy *) $12;
+					if (strcmp(n->servername, PG_EXTTABLE_SERVER_NAME) != 0 && n->distributedBy)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("DISTRIBUTED BY clause is only supported by FOREIGN SERVER \"%s\"", PG_EXTTABLE_SERVER_NAME)));
+					 }
 					$$ = (Node *) n;
 				}
 		| CREATE FOREIGN TABLE IF_P NOT EXISTS qualified_name
@@ -13508,7 +13516,7 @@ DeallocateStmt: DEALLOCATE name
 
 
 cdb_string_list:
-			cdb_string							{ $$ = list_make1($1); }  
+			cdb_string							{ $$ = list_make1($1); }
 			| cdb_string_list ',' cdb_string
 				{
 					if (list_member($1, $3))

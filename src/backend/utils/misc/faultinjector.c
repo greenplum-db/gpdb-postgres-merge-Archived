@@ -743,9 +743,12 @@ FaultInjector_MarkEntryAsResume(
 	}
 
 	if (entryLocal->faultInjectorType != FaultInjectorTypeSuspend)
+	{
+		FiLockRelease();
 		ereport(ERROR, 
 				(errcode(ERRCODE_FAULT_INJECT),
 				 errmsg("only suspend fault can be resumed")));	
+	}
 
 	entryLocal->faultInjectorType = FaultInjectorTypeResume;
 	

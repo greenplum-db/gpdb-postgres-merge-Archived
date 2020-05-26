@@ -874,6 +874,7 @@ _readCreateForeignTableStmt(void)
 
 	READ_STRING_FIELD(servername);
 	READ_NODE_FIELD(options);
+	READ_NODE_FIELD(distributedBy);
 
 	READ_DONE();
 }
@@ -1042,7 +1043,6 @@ _readExternalScanInfo(void)
 	READ_LOCALS(ExternalScanInfo);
 
 	READ_NODE_FIELD(uriList);
-	READ_STRING_FIELD(fmtOptString);
 	READ_CHAR_FIELD(fmtType);
 	READ_BOOL_FIELD(isMasterOnly);
 	READ_INT_FIELD(rejLimit);
@@ -1087,9 +1087,11 @@ _readShareInputScan(void)
 {
 	READ_LOCALS(ShareInputScan);
 
-	READ_ENUM_FIELD(share_type, ShareType);
+	READ_BOOL_FIELD(cross_slice);
 	READ_INT_FIELD(share_id);
-	READ_INT_FIELD(driver_slice);
+	READ_INT_FIELD(producer_slice_id);
+	READ_INT_FIELD(this_slice_id);
+	READ_INT_FIELD(nconsumers);
 
 	ReadCommonPlan(&local_node->scan.plan);
 
@@ -2184,6 +2186,9 @@ readNodeBinary(void)
 				break;
 			case T_PartitionBoundSpec:
 				return_value = _readPartitionBoundSpec();
+				break;
+			case T_RestrictInfo:
+				return_value = _readRestrictInfo();
 				break;
 			case T_ExtensibleNode:
 				return_value = _readExtensibleNode();

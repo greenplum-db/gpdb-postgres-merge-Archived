@@ -70,4 +70,5 @@ lib*.pc
 /Debug/
 /Release/
 /CMakeLists.txt
+/compile_commands.json
 /tmp_install/

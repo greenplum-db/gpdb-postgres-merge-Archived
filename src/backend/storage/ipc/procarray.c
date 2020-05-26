@@ -71,6 +71,7 @@
 #include "cdb/cdbvars.h"
 #include "utils/faultinjector.h"
 #include "utils/sharedsnapshot.h"
+#include "libpq/libpq-be.h"
 
 #define UINT32_ACCESS_ONCE(var)		 ((uint32)(*((volatile uint32 *)&(var))))
 
@@ -376,9 +377,13 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
+		/*
+		 * Remeber that the distributed xid is just a plain counter, so we just use the `<` for
+		 * the comparison of gxid
+		 */
 		DistributedTransactionId gxid = allTmGxact[proc->pgprocno].gxid;
 		if (InvalidDistributedTransactionId != gxid &&
-			TransactionIdPrecedes(ShmemVariableCache->latestCompletedDxid, gxid))
+			ShmemVariableCache->latestCompletedDxid < gxid)
 			ShmemVariableCache->latestCompletedDxid = gxid;
 	}
 
@@ -416,8 +421,12 @@ ProcArrayEndGxact(TMGXACT *gxact)
 	gxact->includeInCkpt = false;
 	gxact->sessionId = 0;
 
+	/*
+	 * Remeber that the distributed xid is just a plain counter, so we just use the `<` for
+	 * the comparison of gxid
+	 */
 	if (InvalidDistributedTransactionId != gxid &&
-		TransactionIdPrecedes(ShmemVariableCache->latestCompletedDxid, gxid))
+		ShmemVariableCache->latestCompletedDxid < gxid)
 		ShmemVariableCache->latestCompletedDxid = gxid;
 }
 
@@ -446,7 +455,12 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 	TMGXACT	   *gxact = &allTmGxact[proc->pgprocno];
 
-	SIMPLE_FAULT_INJECTOR("before_xact_end_procarray");
+#ifdef FAULT_INJECTOR
+	FaultInjector_InjectFaultIfSet("before_xact_end_procarray",
+			DDLNotSpecified,
+			MyProcPort ? MyProcPort->database_name : "",  // databaseName
+			""); // tableName
+#endif
 	if (TransactionIdIsValid(latestXid) || TransactionIdIsValid(gxact->gxid))
 	{
 		/*
@@ -4905,5 +4919,65 @@ KnownAssignedXidsReset(void)
 	pArray->tailKnownAssignedXids = 0;
 	pArray->headKnownAssignedXids = 0;
 
+	LWLockRelease(ProcArrayLock);
+}
+
+int
+GetSessionIdByPid(int pid)
+{
+	int sessionId = -1;
+	ProcArrayStruct *arrayP = procArray;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	for (int i = 0; i < arrayP->numProcs; i++)
+	{
+		volatile PGPROC *proc = &allProcs[arrayP->pgprocnos[i]];
+		if (proc->pid == pid)
+		{
+			sessionId = proc->mppSessionId;
+			break;
+		}
+	}
+	LWLockRelease(ProcArrayLock);
+	return sessionId;
+}
+
+/*
+ * Set the destination group slot or group id in PGPROC, and send a signal to the proc.
+ * slot is NULL on QE.
+ */
+void
+ResGroupSignalMoveQuery(int sessionId, void *slot, Oid groupId)
+{
+	pid_t pid;
+	BackendId backendId;
+	ProcArrayStruct *arrayP = procArray;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	for (int i = 0; i < arrayP->numProcs; i++)
+	{
+		volatile PGPROC *proc = &allProcs[arrayP->pgprocnos[i]];
+		if (proc->mppSessionId != sessionId)
+			continue;
+
+		pid = proc->pid;
+		backendId = proc->backendId;
+		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			Assert(proc->movetoResSlot == NULL);
+			Assert(slot != NULL);
+			proc->movetoResSlot = slot;
+			SendProcSignal(pid, PROCSIG_RESOURCE_GROUP_MOVE_QUERY, backendId);
+			break;
+		}
+		else if (Gp_role == GP_ROLE_EXECUTE)
+		{
+			Assert(groupId != InvalidOid);
+			Assert(proc->movetoGroupId == InvalidOid);
+			proc->movetoGroupId = groupId;
+			SendProcSignal(pid, PROCSIG_RESOURCE_GROUP_MOVE_QUERY, backendId);
+			/* don't break, need to signal all the procs of this session */
+		}
+	}
 	LWLockRelease(ProcArrayLock);
 }

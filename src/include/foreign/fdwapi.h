@@ -104,6 +104,12 @@ typedef void (*BeginForeignInsert_function) (ModifyTableState *mtstate,
 typedef void (*EndForeignInsert_function) (EState *estate,
 										   ResultRelInfo *rinfo);
 
+typedef void (*BeginForeignInsert_function) (ModifyTableState *mtstate,
+											 ResultRelInfo *rinfo);
+
+typedef void (*EndForeignInsert_function) (EState *estate,
+										   ResultRelInfo *rinfo);
+
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
 
 typedef bool (*PlanDirectModify_function) (PlannerInfo *root,

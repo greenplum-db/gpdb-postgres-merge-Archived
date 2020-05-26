@@ -373,7 +373,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Shared input info is needed when ROLE_EXECUTE or sequential plan
 	 */
-	estate->es_sharenode = (List **) palloc0(sizeof(List *));
+	estate->es_sharenode = NIL;
 
 	/*
 	 * Handling of the Slice table depends on context.
@@ -504,34 +504,13 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	else
 		shouldDispatch = false;
 
-	/* We don't eliminate aliens if we don't have an MPP plan */
-	estate->eliminateAliens = execute_pruned_plan && estate->es_sliceTable && estate->es_sliceTable->hasMotions;
-
-	if (estate->eliminateAliens && Gp_role == GP_ROLE_DISPATCH)
-	{
-		int subplanSliceId;
-		int i;
-
-		/* Explain or explain analyze needs ExecInitNode all the plan nodes on master */
-		if (eflags & (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_EXPLAIN))
-			estate->eliminateAliens = false;
-
-		/* For cursor case, should not eliminate alien node on master */
-		if (queryDesc->portal_name || queryDesc->dest != None_Receiver)
-			estate->eliminateAliens = false;
-
-		/* Skip eliminating alien node on master if there exists initplan */
-		for(i = 0; i < list_length(queryDesc->plannedstmt->subplans); i++)
-		{
-			subplanSliceId = queryDesc->plannedstmt->subplan_sliceIds[i];
-			if (queryDesc->plannedstmt->slices[subplanSliceId].parentIndex == -1)
-			{
-				/* subplan is initplan */
-				estate->eliminateAliens = false;
-				break;
-			}
-		}
-	}
+	/*
+	 * We don't eliminate aliens if we don't have an MPP plan
+	 * or we are executing on master.
+	 *
+	 * TODO: eliminate aliens even on master, if not EXPLAIN ANALYZE
+	 */
+	estate->eliminateAliens = execute_pruned_plan && estate->es_sliceTable && estate->es_sliceTable->hasMotions && !IS_QUERY_DISPATCHER();
 
 	/*
 	 * Set up an AFTER-trigger statement context, unless told not to, or
@@ -679,6 +658,16 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			exec_identity = getGpExecIdentity(queryDesc, ForwardScanDirection, estate);
 		else
 			exec_identity = GP_IGNORE;
+
+		/*
+		 * If we have no slice to execute in this process, mark currentSliceId as
+		 * invalid.
+		 */
+		if (exec_identity == GP_IGNORE)
+		{
+			estate->currentSliceId = -1;
+			currentSliceId = -1;
+		}
 
 #ifdef USE_ASSERT_CHECKING
 		/* non-root on QE */
@@ -1166,6 +1155,17 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 		RemoveMotionLayer(estate->motionlayer_context);
 
 		/*
+		 * GPDB specific
+		 * Clean the special resources created by INITPLAN.
+		 * The resources have long life cycle and are used by the main plan.
+		 * It's too early to clean them in preprocess_initplans.
+		 */
+		if (list_length(queryDesc->plannedstmt->paramExecTypes) > 0)
+		{
+			postprocess_initplans(queryDesc);
+		}
+
+		/*
 		 * Release EState and per-query memory context.
 		 */
 		FreeExecutorState(estate);
@@ -1173,6 +1173,17 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	/*
+	 * GPDB specific
+	 * Clean the special resources created by INITPLAN.
+	 * The resources have long life cycle and are used by the main plan.
+	 * It's too early to clean them in preprocess_initplans.
+	 */
+	if (list_length(queryDesc->plannedstmt->paramExecTypes) > 0)
+	{
+		postprocess_initplans(queryDesc);
+	}
 
     /*
      * If normal termination, let each operator clean itself up.
@@ -1505,6 +1516,14 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 			ExecutorMarkTransactionDoesWrites();
 		else
 			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
+	}
+
+	/*
+	 * Refresh matview will write xlog.
+	 */
+	if (plannedstmt->refreshClause != NULL)
+	{
+		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
 
     rti = 0;
@@ -2307,7 +2326,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_TrigNewSlot = NULL;
 
 	resultRelInfo->ri_aocsInsertDesc = NULL;
-	resultRelInfo->ri_extInsertDesc = NULL;
 
 	/*
 	 * Partition constraint, which also includes the partition constraint of
@@ -2651,11 +2669,6 @@ ExecutePlan(EState *estate,
 	 * Set the direction.
 	 */
 	estate->es_direction = direction;
-
-	/*
-	 * Make sure slice dependencies are met
-	 */
-	ExecSliceDependencyNode(planstate);
 
 	/*
 	 * If the plan might potentially be executed multiple times, we must force

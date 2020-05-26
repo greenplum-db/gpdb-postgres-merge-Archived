@@ -6,7 +6,7 @@ TARGETS= cdbdistributedsnapshot
 
 TARGETS += cdbappendonlyxlog
 
-include $(top_builddir)/src/backend/mock.mk
+include $(top_srcdir)/src/backend/mock.mk
 
 cdbdistributedsnapshot.t: $(MOCK_DIR)/backend/access/transam/distributedlog_mock.o \
 	$(MOCK_DIR)/backend/access/hash/hash_mock.o \

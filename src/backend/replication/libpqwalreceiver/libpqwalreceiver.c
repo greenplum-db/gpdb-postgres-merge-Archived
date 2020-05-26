@@ -20,6 +20,7 @@
 #include <sys/time.h>
 
 #include "libpq-fe.h"
+#include "libpq/pqcomm.h"
 #include "pqexpbuffer.h"
 #include "access/xlog.h"
 #include "catalog/pg_type.h"
@@ -129,8 +130,8 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 {
 	WalReceiverConn *conn;
 	PostgresPollingStatusType status;
-	const char *keys[5];
-	const char *vals[5];
+	const char *keys[5 + 1];
+	const char *vals[5 + 1];
 	int			i = 0;
 
 	/*
@@ -157,6 +158,8 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 		keys[++i] = "client_encoding";
 		vals[i] = GetDatabaseEncodingName();
 	}
+	keys[++i] = GPCONN_TYPE;
+	vals[i] = GPCONN_TYPE_INTERNAL;
 	keys[++i] = NULL;
 	vals[i] = NULL;
 

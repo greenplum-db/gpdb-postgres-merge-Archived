@@ -4660,29 +4660,44 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 			if ( !recursing ) /* MPP-5772, MPP-5784 */
 			{
+				DistributedBy *ldistro;
+				GpPolicy   *policy;
+
 				// GPDB_12_MERGE_FIXME: is this still needed?
 				//ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 
-				/* Reject interior branches of partitioned tables. */
-				if (rel->rd_rel->relispartition)
+				Assert(IsA(cmd->def, List));
+				/* The distributeby clause is the second element of cmd->def */
+				ldistro = (DistributedBy *) lsecond((List *)cmd->def);
+				if (ldistro != NULL)
 				{
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("can't set the distribution policy of \"%s\"",
-									RelationGetRelationName(rel)),
-							 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
-				}
+					ldistro->numsegments = rel->rd_cdbpolicy->numsegments;
 
-				if (!recurse)
-				{
-					/* Don't allow ALTER TABLE ONLY on a partitioned table */
-					if (RelationGetPartitionKey(rel))
+					policy =  getPolicyForDistributedBy(ldistro, rel->rd_att);
+					if (!GpPolicyEqual(policy, rel->rd_cdbpolicy))
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("can't set the distribution policy of ONLY \"%s\"",
-										RelationGetRelationName(rel)),
-								 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
+						/* Reject interior branches of partitioned tables. */
+						if (rel->rd_rel->relispartition)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+									 errmsg("can't set the distribution policy of \"%s\"",
+											RelationGetRelationName(rel)),
+									 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
+						}
+
+						if (!recurse)
+						{
+							/* Don't allow ALTER TABLE ONLY on a partitioned table */
+							if (RelationGetPartitionKey(rel))
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+										 errmsg("can't set the distribution policy of ONLY \"%s\"",
+												RelationGetRelationName(rel)),
+										 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
+							}
+						}
 					}
 				}
 			}

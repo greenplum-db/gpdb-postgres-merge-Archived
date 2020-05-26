@@ -2875,7 +2875,9 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 			else
 			{
 				if (policy->ptype != policyType)
-					elog(ERROR, "ModifyTable mixes distributed and entry-only tables");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("ModifyTable mixes distributed and entry-only tables")));
 			}
 
 			if (policyType != POLICYTYPE_ENTRY)
@@ -3026,25 +3028,20 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 		case CdbLocusType_SingleQE:
 			sendSlice->gangType = GANGTYPE_SINGLETON_READER;
 			sendSlice->numsegments = 1;
-			/*
-			 * XXX: for now, always execute the slice in segment 0. Ideally, we
-			 * would assign different SingleQEs to different segments to distribute
-			 * the load more evenly, but keep it simple for now.
-			 */
-			sendSlice->segindex = 0;
+			sendSlice->segindex = gp_session_id % subpath->locus.numsegments;
 			break;
 
 		case CdbLocusType_General:
 			/*  */
-			sendSlice->gangType = GANGTYPE_PRIMARY_READER;
+			sendSlice->gangType = GANGTYPE_SINGLETON_READER;
 			sendSlice->numsegments = 1;
-			sendSlice->segindex = 0;
+			sendSlice->segindex = gp_session_id % getgpsegmentCount();
 			break;
 
 		case CdbLocusType_SegmentGeneral:
 			sendSlice->gangType = GANGTYPE_SINGLETON_READER;
 			sendSlice->numsegments = subpath->locus.numsegments;
-			sendSlice->segindex = 0;
+			sendSlice->segindex = gp_session_id % subpath->locus.numsegments;
 			break;
 
 		case CdbLocusType_Replicated:
@@ -6616,12 +6613,6 @@ make_sort(Plan *lefttree, int numCols,
 
 	node->noduplicates = false; /* CDB */
 
-	node->share_type = SHARE_NOTSHARED;
-	node->share_id = SHARE_ID_NOT_SHARED;
-	node->driver_slice = -1;
-	node->nsharer = 0;
-	node->nsharer_xslice = 0;
-
 	return node;
 }
 
@@ -7183,11 +7174,6 @@ make_material(Plan *lefttree)
 	plan->righttree = NULL;
 
 	node->cdb_strict = false;
-	node->share_type = SHARE_NOTSHARED;
-	node->share_id = SHARE_ID_NOT_SHARED;
-	node->driver_slice = -1;
-	node->nsharer = 0;
-	node->nsharer_xslice = 0;
 
 	return node;
 }

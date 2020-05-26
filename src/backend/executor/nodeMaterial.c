@@ -25,12 +25,10 @@
 
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
-#include "executor/instrument.h"        /* Instrumentation */
-#include "utils/tuplestore.h"
-
 #include "miscadmin.h"
 
 #include "cdb/cdbvars.h"
+#include "executor/instrument.h"        /* Instrumentation */
 
 static void ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void ExecChildRescan(MaterialState *node);
@@ -51,7 +49,6 @@ static TupleTableSlot *			/* result tuple from subplan */
 ExecMaterial(PlanState *pstate)
 {
 	MaterialState *node = castNode(MaterialState, pstate);
-	Material   *ma = castNode(Material, node->ss.ps.plan);
 	EState	   *estate;
 	ScanDirection dir;
 	bool		forward;
@@ -72,11 +69,9 @@ ExecMaterial(PlanState *pstate)
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
-	if (tuplestorestate == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
+	if (tuplestorestate == NULL && node->eflags != 0)
 	{
-		if (ma->share_type != SHARE_NOTSHARED)
-			node->eflags |= EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
-		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
+		tuplestorestate = tuplestore_begin_heap(true, false, PlanStateOperatorMemKB(&node->ss.ps));
 		tuplestore_set_eflags(tuplestorestate, node->eflags);
 		if (node->eflags & EXEC_FLAG_MARK)
 		{
@@ -109,30 +104,22 @@ ExecMaterial(PlanState *pstate)
 		 * MPP TODO: Remove when a better solution is implemented.
 		 *
 		 * See motion_sanity_walker() for details on how a deadlock may occur.
-		 *
-		 * ShareInput: if the material node
-		 * is used to share input, we will need to fetch all rows and put
-		 * them in tuple store
 		 */
-		while (((Material *) node->ss.ps.plan)->cdb_strict
-				|| ma->share_type != SHARE_NOTSHARED)
+		if (((Material *) node->ss.ps.plan)->cdb_strict)
 		{
-			TupleTableSlot *outerslot = ExecProcNode(outerPlanState(node));
-
-			if (TupIsNull(outerslot))
+			for (;;)
 			{
-				node->eof_underlying = true;
-				tuplestore_rescan(node->tuplestorestate);
-				break;
-			}
+				TupleTableSlot *outerslot = ExecProcNode(outerPlanState(node));
 
-			if (tuplestorestate)
+				if (TupIsNull(outerslot))
+					break;
+
 				tuplestore_puttupleslot(tuplestorestate, outerslot);
+			}
+			node->eof_underlying = true;
+			tuplestore_rescan(tuplestorestate);
 		}
 	}
-
-	if(ma->share_type != SHARE_NOTSHARED)
-		return NULL;
 
 	/*
 	 * If we are not at the end of the tuplestore, or are going backwards, try
@@ -176,6 +163,9 @@ ExecMaterial(PlanState *pstate)
 	 * subplan calls.  It's not optional, unfortunately, because some plan
 	 * node types are not robust about being called again when they've already
 	 * returned NULL.
+	 *
+	 * GPDB: If reusing cached workfiles, there is no need to execute subplan
+	 * at all.
 	 */
 	if (eof_tuplestore && !node->eof_underlying)
 	{
@@ -339,16 +329,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
      */
 	ExecCreateScanSlotFromOuterPlan(estate, &matstate->ss, &TTSOpsMinimalTuple);
 
-	/*
-	 * If share input, need to register with range table entry
-	 */
-	if (node->share_type != SHARE_NOTSHARED)
-	{
-		ShareNodeEntry *snEntry = ExecGetShareNodeEntry(estate, node->share_id, true);
-		snEntry->sharePlan = (Node *) node;
-		snEntry->shareState = (Node *) matstate;
-	}
-
 	return matstate;
 }
 
@@ -374,8 +354,6 @@ ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 void
 ExecEndMaterial(MaterialState *node)
 {
-	ExecEagerFreeMaterial(node);
-
 	/*
 	 * clean out the tuple table
 	 */
@@ -408,12 +386,6 @@ ExecMaterialMarkPos(MaterialState *node)
 {
 	Assert(node->eflags & EXEC_FLAG_MARK);
 
-	{
-		/* share input should never call this */
-		Material *ma = (Material *) node->ss.ps.plan;
-		Assert(ma->share_type == SHARE_NOTSHARED);
-	}
-
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
@@ -441,12 +413,6 @@ void
 ExecMaterialRestrPos(MaterialState *node)
 {
 	Assert(node->eflags & EXEC_FLAG_MARK);
-
-	{
-		/* share input should never call this */
-		Material *ma = (Material *) node->ss.ps.plan;
-		Assert(ma->share_type == SHARE_NOTSHARED);
-	}
 
 	/*
 	 * if we haven't materialized yet, just return.
@@ -524,8 +490,8 @@ ExecReScanMaterial(MaterialState *node)
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
 			tuplestore_end(node->tuplestorestate);
-			node->ts_destroyed = true;
 			node->tuplestorestate = NULL;
+			node->ts_destroyed = true;
 			if (outerPlan->chgParam == NULL)
 				ExecReScan(outerPlan);
 			node->eof_underlying = false;
@@ -550,44 +516,11 @@ ExecReScanMaterial(MaterialState *node)
 static void
 ExecEagerFreeMaterial(MaterialState *node)
 {
-	Material   *ma = (Material *) node->ss.ps.plan;
-	EState	   *estate = node->ss.ps.state;
-
-	/*
-	 * If we still have potential readers assocated with this node,
-	 * we shouldn't free the tuplestore too early.  The eager-free message
-	 * doesn't know about upper ShareInputScan nodes, but those nodes
-	 * bumps up the reference count in their initializations and decrement
-	 * it in either EagerFree or ExecEnd.
-	 */
-	if (ma->share_type == SHARE_MATERIAL)
-	{
-		ShareNodeEntry	   *snEntry;
-
-		snEntry = ExecGetShareNodeEntry(estate, ma->share_id, false);
-
-		if (snEntry->refcount > 0)
-			return;
-	}
-
 	/*
 	 * Release tuplestore resources
 	 */
-	if (node->tuplestorestate != NULL)
+	if (node->tuplestorestate)
 	{
-		/* GPDB_12_MERGE_FIXME: cross-slice is broken */
-#if 0
-		if (ma->share_type == SHARE_MATERIAL_XSLICE && node->share_lk_ctxt)
-		{
-			/*
-			 * MPP-22682: If this is a producer shared XSLICE, don't free up
-			 * the tuple store here. For XSLICE producers, that will wait for
-			 * consumers that haven't completed yet, which can cause deadlocks.
-			 * Wait until ExecEndMaterial to free it, which is safer.
-			 */
-			return;
-		}
-#endif
 		tuplestore_end(node->tuplestorestate);
 		node->ts_destroyed = true;
 	}

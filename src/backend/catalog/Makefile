@@ -21,7 +21,7 @@ OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
 	   pg_db_role_setting.o pg_shdepend.o pg_subscription.o pg_type.o \
 	   storage.o toasting.o
 
-OBJS += pg_exttable.o pg_extprotocol.o \
+OBJS += pg_extprotocol.o \
        pg_proc_callback.o \
        aoseg.o aoblkdir.o gp_fastsequence.o gp_segment_config.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
@@ -57,7 +57,7 @@ CATALOG_HEADERS := \
 	pg_resgroup.h pg_resgroupcapability.h \
 	gp_configuration_history.h gp_id.h gp_distribution_policy.h gp_version_at_initdb.h \
 	gp_segment_configuration.h \
-	pg_exttable.h pg_appendonly.h \
+	pg_appendonly.h \
 	gp_fastsequence.h pg_extprotocol.h \
 	pg_attribute_encoding.h \
 	pg_auth_time_constraint.h \

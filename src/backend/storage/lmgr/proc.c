@@ -473,6 +473,8 @@ InitProcess(void)
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
 	MyProc->resSlot = NULL;
+	MyProc->movetoResSlot = NULL;
+	MyProc->movetoGroupId = InvalidOid;
 
     /* 
      * mppLocalProcessSerial uniquely identifies this backend process among
@@ -1030,6 +1032,9 @@ ProcKill(int code, Datum arg)
 	 * facility by releasing our PGPROC ...
 	 */
 	LWLockReleaseAll();
+
+	/* Cancel any pending condition variable sleep, too */
+	ConditionVariableCancelSleep();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
     MyProc->mppLocalProcessSerial = 0;

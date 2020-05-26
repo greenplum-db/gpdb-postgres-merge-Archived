@@ -467,7 +467,7 @@ vacuum(List *relations, VacuumParams *params,
 				}
 
 				analyze_rel(vrel->oid, vrel->relation, params,
-							vrel->va_cols, in_outer_xact, vac_strategy);
+							vrel->va_cols, in_outer_xact, vac_strategy, NULL);
 
 				if (use_own_xacts)
 				{
@@ -2067,12 +2067,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 			DDLNotSpecified,
 			"",	// databaseName
 			RelationGetRelationName(onerel)); // tableName
-
-		FaultInjector_InjectFaultIfSet(
-			"compaction_before_segmentfile_drop",
-			DDLNotSpecified,
-			"",	// databaseName
-			RelationGetRelationName(onerel)); // tableName
 	}
 #endif
 
@@ -2202,17 +2196,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	PopActiveSnapshot();
 	CommitTransactionCommand();
-
-#ifdef FAULT_INJECTOR
-	if (ao_vacuum_phase == VACOPT_AO_POST_CLEANUP_PHASE)
-	{
-		FaultInjector_InjectFaultIfSet(
-			"vacuum_post_cleanup_committed",
-			DDLNotSpecified,
-			"",	// databaseName
-			""); // tableName
-	}
-#endif
 
 	if (is_appendoptimized && ao_vacuum_phase == 0)
 	{

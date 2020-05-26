@@ -62,3 +62,4 @@ RelfilenodeGenLock					52
 WorkFileManagerLock					53
 DistributedLogTruncateLock			54
 TwophaseCommitLock				55
+ShareInputScanLock				56

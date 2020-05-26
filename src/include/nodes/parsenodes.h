@@ -2693,6 +2693,7 @@ typedef struct CreateForeignTableStmt
 	CreateStmt	base;
 	char	   *servername;
 	List	   *options;
+	DistributedBy *distributedBy;   /* what columns we distribute the data by */
 } CreateForeignTableStmt;
 
 /* ----------------------
