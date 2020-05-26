@@ -2282,6 +2282,7 @@ CREATE TABLE fail_part (
 	b char(3),
 	a int NOT NULL
 );
+alter table fail_part set distributed by (a);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ALTER TABLE fail_part ALTER b TYPE char (2) COLLATE "POSIX";
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
@@ -2292,6 +2293,7 @@ CREATE TABLE fail_part (
 	b char(2) COLLATE "C",
 	a int NOT NULL
 );
+alter table fail_part set distributed by (a);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 
 -- check that the constraint matches in definition with parent's constraint
@@ -2439,6 +2441,7 @@ CREATE TABLE part_6 (
 	LIKE list_parted2,
 	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 6)
 );
+alter table part_6 set distributed by (a);
 ALTER TABLE part_6 DROP c;
 ALTER TABLE list_parted2 ATTACH PARTITION part_6 FOR VALUES IN (6);
 
@@ -2457,6 +2460,7 @@ CREATE TABLE part_7_a_null (
 	CONSTRAINT check_b CHECK (b IS NULL OR b = 'a'),
 	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 7)
 );
+alter table part_7_a_null set distributed by (a);
 ALTER TABLE part_7_a_null DROP c, DROP d, DROP e;
 ALTER TABLE part_7 ATTACH PARTITION part_7_a_null FOR VALUES IN ('a', null);
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
