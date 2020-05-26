@@ -163,7 +163,7 @@ drop table if exists Tbl23383_partitioned;
 create table Tbl23383_partitioned(a int, b varchar(20), c varchar(20), d varchar(20))
 partition by range(a)
 (partition p1 start(1) end(500),
-partition p2 start(500) end(1000) inclusive);
+partition p2 start(500) end(1001));
 insert into Tbl23383_partitioned select g,g,g,g from generate_series(1,1000) g;
 create index idx23383_b on Tbl23383_partitioned(b);
 
