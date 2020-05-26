@@ -4711,7 +4711,11 @@ CopyFrom(CopyState cstate)
 		/* BEFORE ROW INSERT Triggers */
 		if (has_before_insert_row_trig)
 		{
-			if (!ExecBRInsertTriggers(estate, resultRelInfo, myslot))
+			/*
+			 * If the tuple was dispatched to segments, do not execute trigger
+			 * on master.
+			 */
+			if (!skip_tuple && !ExecBRInsertTriggers(estate, resultRelInfo, myslot))
 				skip_tuple = true;	/* "do nothing" */
 		}
 

@@ -926,7 +926,7 @@ select count(*) from temp_tenk_ao5;
 truncate table temp_tenk_ao5;
 vacuum analyze temp_tenk_ao5;
 \d temp_tenk_ao5
-           Table "pg_temp_274.temp_tenk_ao5"
+            Table "pg_temp_274.temp_tenk_ao5"
    Column    |  Type   | Collation | Nullable | Default 
 -------------+---------+-----------+----------+---------
  unique1     | integer |           |          | 
