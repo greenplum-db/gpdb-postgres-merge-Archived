@@ -272,11 +272,11 @@ WHERE relname='addcol6'));
    case    | objmod | last_sequence | gp_segment_id 
 -----------+--------+---------------+---------------
  NormalXid |      0 |             0 |             1
- NormalXid |      1 |           100 |             1
+ FrozenXid |      1 |           100 |             1
  NormalXid |      0 |             0 |             2
- NormalXid |      1 |           100 |             2
+ FrozenXid |      1 |           100 |             2
  NormalXid |      0 |             0 |             0
- NormalXid |      1 |           100 |             0
+ FrozenXid |      1 |           100 |             0
 (6 rows)
 
 abort;
@@ -288,11 +288,11 @@ WHERE relname='addcol6'));
    case    | objmod | last_sequence | gp_segment_id 
 -----------+--------+---------------+---------------
  NormalXid |      0 |             0 |             1
- NormalXid |      1 |           100 |             1
+ FrozenXid |      1 |           100 |             1
  NormalXid |      0 |             0 |             2
- NormalXid |      1 |           100 |             2
+ FrozenXid |      1 |           100 |             2
  NormalXid |      0 |             0 |             0
- NormalXid |      1 |           100 |             0
+ FrozenXid |      1 |           100 |             0
 (6 rows)
 
 insert into addcol6 select i,i/2 from generate_series(1,20)i;
@@ -319,11 +319,11 @@ WHERE relname='addcol6'));
    case    | objmod | last_sequence | gp_segment_id 
 -----------+--------+---------------+---------------
  NormalXid |      0 |             0 |             0
- NormalXid |      1 |           200 |             0
+ FrozenXid |      1 |           200 |             0
  NormalXid |      0 |             0 |             1
- NormalXid |      1 |           200 |             1
+ FrozenXid |      1 |           200 |             1
  NormalXid |      0 |             0 |             2
- NormalXid |      1 |           200 |             2
+ FrozenXid |      1 |           200 |             2
 (6 rows)
 
 -- add column with default value as sequence
