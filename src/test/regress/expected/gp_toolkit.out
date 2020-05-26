@@ -41,8 +41,8 @@ where c.relname like 'toolkit_%'
 group by iaotype;
  count | iaotype 
 -------+---------
-     7 | t
-     4 | f
+     5 | t
+     6 | f
 (2 rows)
 
 drop table toolkit_aopart;
