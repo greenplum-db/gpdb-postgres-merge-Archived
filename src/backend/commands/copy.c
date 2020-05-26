@@ -1671,10 +1671,13 @@ ProcessCopyOptions(ParseState *pstate,
 		cstate->escape = "\\";			/* default escape for text mode */
 
 	/* Only single-byte delimiter strings are supported. */
+	/* GPDB: This is checked later */
+#if 0
 	if (strlen(cstate->delim) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must be a single one-byte character")));
+#endif
 
 	/* Disallow end-of-line characters */
 	if (strchr(cstate->delim, '\r') != NULL ||
