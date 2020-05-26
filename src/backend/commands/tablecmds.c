@@ -4658,53 +4658,34 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_SetDistributedBy:	/* SET DISTRIBUTED BY */
 			ATSimplePermissions(rel, ATT_TABLE);
 
-			// GPDB_12_MERGE_FIXME: Where to put these checks now? Or do we need them?
-			// I think we could easily support heterogenous DISTRIBUTED BY in partitions.
-#if 0
 			if ( !recursing ) /* MPP-5772, MPP-5784 */
 			{
-				Oid relid = RelationGetRelid(rel);
-				PartStatus ps = rel_part_status(relid);
+				// GPDB_12_MERGE_FIXME: is this still needed?
+				//ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 
-				ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-
-				if ( recurse ) /* Normal ALTER TABLE */
+				/* Reject interior branches of partitioned tables. */
+				if (rel->rd_rel->relispartition)
 				{
-					switch (ps)
-					{
-						case PART_STATUS_NONE:
-						case PART_STATUS_ROOT:
-							break;
-						case PART_STATUS_LEAF:
-						case PART_STATUS_INTERIOR:
-							/*Reject interior branches of partitioned tables.*/
-							ereport(ERROR,
-									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-									 errmsg("can't set the distribution policy of \"%s\"",
-											RelationGetRelationName(rel)),
-									 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
-							break; /* tidy */
-					}
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("can't set the distribution policy of \"%s\"",
+									RelationGetRelationName(rel)),
+							 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
 				}
-				else /* ALTER TABLE ONLY */
+
+				if (!recurse)
 				{
-					switch (ps)
+					/* Don't allow ALTER TABLE ONLY on a partitioned table */
+					if (RelationGetPartitionKey(rel))
 					{
-						case PART_STATUS_NONE:
-							break;
-						case PART_STATUS_LEAF:
-						case PART_STATUS_ROOT:
-						case PART_STATUS_INTERIOR:
-							ereport(ERROR,
-									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-									 errmsg("can't set the distribution policy of ONLY \"%s\"",
-											RelationGetRelationName(rel)),
-									 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
-							break; /* tidy */
+						ereport(ERROR,
+								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+								 errmsg("can't set the distribution policy of ONLY \"%s\"",
+										RelationGetRelationName(rel)),
+								 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
 					}
 				}
 			}
-#endif
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			pass = AT_PASS_MISC;
 			break;
