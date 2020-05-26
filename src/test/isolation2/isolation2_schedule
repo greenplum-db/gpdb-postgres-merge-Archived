@@ -83,7 +83,9 @@ test: ao_upgrade
 test: external_table
 
 # This test validates that for AO we delay fsync to checkpointer on mirror.
-test: fsync_ao
+# Disable the test temporarily to avoid affecting all the downstream
+# tests.  See the fixme added in af05ebb26 for more details.
+# test: fsync_ao
 
 # Tests on Append-Optimized tables (row-oriented).
 test: concurrent_index_creation_should_not_deadlock
