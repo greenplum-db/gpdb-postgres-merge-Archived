@@ -926,25 +926,25 @@ select count(*) from temp_tenk_ao5;
 truncate table temp_tenk_ao5;
 vacuum analyze temp_tenk_ao5;
 \d temp_tenk_ao5
-Append-Only Columnar Table "pg_temp_274.temp_tenk_ao5"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
+           Table "pg_temp_274.temp_tenk_ao5"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
 Checksum: t
 Indexes:
     "temp_even_index" btree (even)
@@ -1172,11 +1172,11 @@ SELECT pg_total_relation_size('aosizetest_1') < pg_total_relation_size('aosizete
 DROP TABLE aosizetest_1;
 DROP TABLE aosizetest_2;
 -- Check that pg_total_relation_size() returns a sane value for an AO table.
--- (As of this writing, 1468872 bytes, but leave some slack for minor changes
+-- (As of this writing, 1305032 bytes, but leave some slack for minor changes
 -- to indexes etc.)
 CREATE TABLE aosizetest_3(a text) WITH (appendonly=true);
 insert into aosizetest_3 select repeat('x', 100) from generate_series(1, 10000);
-SELECT pg_total_relation_size('aosizetest_3') between 1400000 and 1500000;
+SELECT pg_total_relation_size('aosizetest_3') between 1300000 and 1400000;
  ?column? 
 ----------
  t
