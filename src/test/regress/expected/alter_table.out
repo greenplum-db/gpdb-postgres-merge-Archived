@@ -978,6 +978,11 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
+-- GPDB: this fails because the distribution key doesn't include 'id'
+alter table atacc1 add constraint atacc_oid1 primary key(id);
+DETAIL:  Distribution key column "test" is not included in the constraint.
+ERROR:  PRIMARY KEY definition must contain all columns in the table's distribution key
+alter table atacc1 set distributed by (id);
 alter table atacc1 add constraint atacc_oid1 primary key(id);
 drop table atacc1;
 -- let's do one where the primary key constraint fails when added

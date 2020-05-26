@@ -720,6 +720,9 @@ alter table atacc1 add constraint atacc_oid1 primary key(id);
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
+-- GPDB: this fails because the distribution key doesn't include 'id'
+alter table atacc1 add constraint atacc_oid1 primary key(id);
+alter table atacc1 set distributed by (id);
 alter table atacc1 add constraint atacc_oid1 primary key(id);
 drop table atacc1;
 
