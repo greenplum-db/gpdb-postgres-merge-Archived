@@ -1333,7 +1333,7 @@ drop table anothertab;
 
 -- Test index handling in alter table column type (cf. bugs #15835, #15865)
 create table anothertab(f1 int primary key, f2 int unique,
-                        f3 int, f4 int, f5 int);
+                        f3 int, f4 int, f5 int) distributed replicated;
 alter table anothertab
   add exclude using btree (f3 with =);
 alter table anothertab
@@ -1382,6 +1382,7 @@ create table at_partitioned (a int, b text) partition by range (a);
 create table at_part_1 partition of at_partitioned for values from (0) to (1000);
 insert into at_partitioned values (512, '0.123');
 create table at_part_2 (b text, a int);
+alter table at_part_2 set distributed by (a);
 insert into at_part_2 values ('1.234', 1024);
 create index on at_partitioned (b);
 create index on at_partitioned (a);
