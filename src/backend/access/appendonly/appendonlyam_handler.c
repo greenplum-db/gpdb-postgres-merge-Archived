@@ -1737,7 +1737,7 @@ appendonly_scan_bitmap_next_tuple(TableScanDesc scan,
 		 */
 		if (tbmres->ntuples == -1)
 		{
-			if (aoscan->rs_cindex == INT16_MAX)
+			if (aoscan->rs_cindex == INT16_MAX + 1)
 				return false;
 
 			/*
