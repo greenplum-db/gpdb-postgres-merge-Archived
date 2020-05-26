@@ -4132,7 +4132,7 @@ alter_table_partition_cmd:
 						if (part2->idtype != AT_AP_IDName)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("INTO can only have second partition by name or by \"DEFAULT PARTITION\""),
+									 errmsg("INTO can only have second partition by name"),
 									 parser_errposition(@7)));
 					}
 					$$ = (Node *)n;

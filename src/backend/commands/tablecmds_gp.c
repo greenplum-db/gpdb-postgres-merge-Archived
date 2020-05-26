@@ -578,7 +578,7 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		Assert(OidIsValid(partrelid));
 		partrel = table_open(partrelid, AccessShareLock);
 
-		if (pid->idtype == AT_AP_IDDefault)
+		if (partrelid == get_default_oid_from_partdesc(RelationGetPartitionDesc(rel)))
 			defaultpartname = pstrdup(RelationGetRelationName(partrel));
 		else
 			defaultpartname = NULL;
@@ -587,7 +587,8 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot SPLIT PARTITION for relation \"%s\" -- partition has children",
-							RelationGetRelationName(rel))));
+							RelationGetRelationName(rel)),
+					 errhint("Try splitting the child partitions.")));
 
 		oldpartrv = makeRangeVar(get_namespace_name(RelationGetNamespace(partrel)),
 								 pstrdup(RelationGetRelationName(partrel)),
@@ -645,8 +646,6 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 
 	/* create new partitions */
 	{
-		List                *start      = linitial(pc->arg1);
-		List                *end        = lsecond(pc->arg1);
 		partname_comp       partcomp    = {.tablename=NULL, .level=0, .partnum=0};
 		List                *ancestors  = get_partition_ancestors(RelationGetRelid(rel));
 		GpPartDefElem       *elem;
@@ -660,16 +659,10 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		Oid                 part_col_collation;
 		GpAlterPartitionCmd *into       = (GpAlterPartitionCmd *) pc->arg2;
 		GpAlterPartitionId  *partid1;
-		GpAlterPartitionId  *partid2;
 		char *partname;
 
 		Assert(partkey->partnatts == 1);
-
-		if (start && boundspec->strategy == PARTITION_STRATEGY_LIST)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot SPLIT LIST PARTITION with START"),
-					 errhint("Use SPLIT with the AT clause instead.")));
+		partcomp.level = list_length(ancestors) + 1;
 
 		part_col_name      =
 			NameStr(TupleDescAttr(RelationGetDescr(rel),
@@ -682,12 +675,16 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		boundspec1->strategy   = boundspec->strategy;
 		boundspec1->is_default = false;
 
-		Assert(end != NULL);
-		if (end)
+
+		switch (boundspec->strategy)
 		{
-			switch (boundspec->strategy)
+			case PARTITION_STRATEGY_RANGE:
 			{
-				case PARTITION_STRATEGY_RANGE:
+				List                *start      = linitial(pc->arg1);
+				List                *end        = lsecond(pc->arg1);
+
+				Assert(end != NULL);
+				if (end)
 				{
 					Const *endConst;
 					if (list_length(end) != partkey->partnatts)
@@ -716,119 +713,131 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 											 false,
 											 partkey->parttypbyval[0]));
 				}
-				break;
 
-				case PARTITION_STRATEGY_LIST:
+				if (start)
 				{
-					ListCell *cell;
-					PartitionBoundSpec *boundspec_newvals = boundspec1;
-					PartitionBoundSpec *boundspec_remainingvals = boundspec2;
+					Const *startConst;
 
-					foreach(cell, end)
+					if (list_length(start) != partkey->partnatts)
+						elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
+
+					startConst = transformPartitionBoundValue(pstate,
+															  linitial(start),
+															  part_col_name,
+															  part_col_typid,
+															  part_col_typmod,
+															  part_col_collation);
+					if (startConst->constisnull)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("cannot use NULL with range partition specification"),
+								 parser_errposition(pstate, pc->location)));
+
+					boundspec1->lowerdatums =
+						list_make1(makeConst(partkey->parttypid[0],
+											 partkey->parttypmod[0],
+											 partkey->parttypcoll[0],
+											 partkey->parttyplen[0],
+											 datumCopy(startConst->constvalue,
+													   partkey->parttypbyval[0],
+													   partkey->parttyplen[0]),
+											 false,
+											 partkey->parttypbyval[0]));
+				}
+				else
+				{
+					if (defaultpartname)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("AT clause cannot be used when splitting a default RANGE partition")));
+
+					/*
+					 * Start not-specified means splitting non-default
+					 * partition. Use existing partitions lowerdatum as start
+					 * for this partition.
+					 */
+					boundspec1->lowerdatums = boundspec2->lowerdatums;
+					boundspec2->lowerdatums =
+						copyObject(boundspec1->upperdatums);
+				}
+			}
+			break;
+
+			case PARTITION_STRATEGY_LIST:
+			{
+				ListCell *cell;
+				List	 *at = lsecond(pc->arg1);
+				PartitionBoundSpec *boundspec_newvals = boundspec1;
+				PartitionBoundSpec *boundspec_remainingvals = boundspec2;
+
+				if (linitial(pc->arg1))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot SPLIT LIST PARTITION with START"),
+							 errhint("Use SPLIT with the AT clause instead.")));
+
+				if (partcomp.level != 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("SPLIT PARTITION is not currently supported when leaf partition is list partitioned in multi level partition table")));
+
+				Assert(at != NULL);
+				foreach(cell, at)
+				{
+					Node  *expr = lfirst(cell);
+					Const *value;
+
+					value = transformPartitionBoundValue(pstate,
+														 expr,
+														 part_col_name,
+														 part_col_typid,
+														 part_col_typmod,
+														 part_col_collation);
+
+					/* Skip if the value is already moved to the new list */
+					if (list_member(boundspec_newvals->listdatums, value))
+						continue;
+
+					if (!boundspec_remainingvals->is_default)
 					{
-						Node  *expr = lfirst(cell);
-						Const *value;
+						if (!list_member(boundspec_remainingvals->listdatums, value))
+							ereport(ERROR,
+									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+									 errmsg("AT clause parameter is not a member of the target partition specification")));
 
-						value = transformPartitionBoundValue(pstate,
-															 expr,
-															 part_col_name,
-															 part_col_typid,
-															 part_col_typmod,
-															 part_col_collation);
+						boundspec_remainingvals->listdatums =
+							list_delete(boundspec_remainingvals->listdatums, value);
 
-						/* Skip if the value is already moved to the new list */
-						if (list_member(boundspec_newvals->listdatums, value))
-							continue;
-
-						if (!boundspec_remainingvals->is_default)
-						{
-							if (!list_member(boundspec_remainingvals->listdatums,
-											 value))
-								ereport(ERROR,
-										(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-										 errmsg("AT clause parameter is not a member of the target partition specification")));
-							boundspec_remainingvals->listdatums =
-								list_delete(boundspec_remainingvals->listdatums,
-											value);
-							if (list_length(boundspec_remainingvals->listdatums) == 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_SYNTAX_ERROR),
-										 errmsg("AT clause cannot contain all values in the partition to be split")));
-						}
-
-						boundspec_newvals->listdatums =
-							lappend(boundspec_newvals->listdatums, value);
+						if (list_length(boundspec_remainingvals->listdatums) == 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("AT clause cannot contain all values in the partition to be split")));
 					}
 
+					boundspec_newvals->listdatums =
+						lappend(boundspec_newvals->listdatums, value);
+				}
+
+				/* if splitting default partition, new partition is created first and default later */
+				if (!defaultpartname)
+				{
 					boundspec1 = boundspec_remainingvals;
 					boundspec2 = boundspec_newvals;
 				}
-				break;
-
-				case PARTITION_STRATEGY_HASH:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("SPLIT PARTITION syntax does not support HASH partitions"),
-							 parser_errposition(pstate, pc->location)));
-					break;
-
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("invalid partition strategy: %c",
-									boundspec->strategy),
-							 parser_errposition(pstate,	pc->location)));
-					break;
 			}
-		}
+			break;
 
-		if (start)
-		{
-			Const *startConst;
-
-			/* TODO: add assertions for range partition strategy */
-
-			if (list_length(start) != partkey->partnatts)
-				elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
-
-			startConst = transformPartitionBoundValue(pstate,
-													  linitial(start),
-													  part_col_name,
-													  part_col_typid,
-													  part_col_typmod,
-													  part_col_collation);
-			if (startConst->constisnull)
+			default:
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("cannot use NULL with range partition specification"),
-						 parser_errposition(pstate, pc->location)));
-
-			boundspec1->lowerdatums =
-				list_make1(makeConst(partkey->parttypid[0],
-									 partkey->parttypmod[0],
-									 partkey->parttypcoll[0],
-									 partkey->parttyplen[0],
-									 datumCopy(startConst->constvalue,
-											   partkey->parttypbyval[0],
-											   partkey->parttyplen[0]),
-									 false,
-									 partkey->parttypbyval[0]));
-		}
-		else if (boundspec->strategy == PARTITION_STRATEGY_RANGE)
-		{
-			/*
-			 * Start not-specified means splitting non-default
-			 * partition. Use existing partitions lowerdatum as start
-			 * for this partition.
-			 */
-			boundspec1->lowerdatums = boundspec2->lowerdatums;
-			boundspec2->lowerdatums =
-				copyObject(boundspec1->upperdatums);
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("partition strategy: %c not supported by SPLIT partition",
+								boundspec->strategy),
+						 parser_errposition(pstate,	pc->location)));
+				break;
 		}
 
 		boundspec1->location = -1;
 
-		partcomp.level = list_length(ancestors) + 1;
 		elem = makeNode(GpPartDefElem);
 		//elem->tablespacename = NULL;
 		//elem->accessMethod = NULL;
@@ -846,13 +855,36 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		/* create second partition stmt */
 		partname = NULL;
 		if (defaultpartname)
+		{
 			partcomp.tablename = defaultpartname;
+		}
 		else if (into)
 		{
-			partid2 = (GpAlterPartitionId *) into->arg;
+			GpAlterPartitionId  *partid2 = (GpAlterPartitionId *) into->arg;
 			Assert(partid2->idtype == AT_AP_IDName);
 			partname = strVal(partid2->partiddef);
 		}
+
+		/*
+		 * perform check if splitting default list partition by name, new
+		 * name matches old default partition name.
+		 */
+		if (defaultpartname &&
+			boundspec->strategy == PARTITION_STRATEGY_LIST &&
+			into)
+		{
+			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+			GpAlterPartitionId *partid2  = (GpAlterPartitionId *) into->arg;
+			if (partid2->idtype == AT_AP_IDName)
+			{
+				Assert(pid->idtype == AT_AP_IDName);
+				if (strcmp(strVal(partid2->partiddef), strVal(pid->partiddef)) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("default partition name missing from INTO clause")));
+			}
+		}
+
 		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname, boundspec2, NULL, elem, &partcomp));
 	}
 
