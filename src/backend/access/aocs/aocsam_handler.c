@@ -1376,7 +1376,7 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 		 */
 		if (tbmres->ntuples == -1)
 		{
-			if (aocoscan->rs_cindex == INT16_MAX)
+			if (aocoscan->rs_cindex == INT16_MAX + 1)
 				return false;
 
 			/*
@@ -1422,6 +1422,7 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 				ExecClearTuple(slot);
 		}
 		else
+		{
 			if(aocs_fetch(aocoscan->aocofetch, &aoTid, slot))
 				ExecStoreVirtualTuple(slot);
 			else
@@ -1429,6 +1430,7 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 				if (slot)
 					ExecClearTuple(slot);
 			}
+		}
 
 		if (TupIsNull(slot))
 			continue;
@@ -1455,6 +1457,7 @@ aoco_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 	// GPDB_12_MERGE_FIXME: re-implement this
 	elog(ERROR, "sample scan on AOCO table not yet implemented");
 }
+
 /* ------------------------------------------------------------------------
  * Definition of the AOCO table access method.
  *
