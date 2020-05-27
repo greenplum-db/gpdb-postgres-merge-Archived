@@ -976,6 +976,7 @@ shareinput_writer_waitdone(shareinput_Xslice_reference *ref, int nconsumers)
 	if (!state->ready)
 		elog(ERROR, "shareinput_writer_waitdone() called without creating the tuplestore");
 
+	ConditionVariablePrepareToSleep(&state->ready_done_cv);
 	for (;;)
 	{
 		int			ndone;
@@ -984,7 +985,6 @@ shareinput_writer_waitdone(shareinput_Xslice_reference *ref, int nconsumers)
 		ndone = state->ndone;
 		LWLockRelease(ShareInputScanLock);
 
-		ConditionVariablePrepareToSleep(&state->ready_done_cv);
 		if (ndone < nconsumers)
 		{
 			elog(DEBUG1, "SISC WRITER (shareid=%d, slice=%d): waiting for DONE message from %d / %d readers",
