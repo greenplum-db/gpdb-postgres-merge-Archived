@@ -4099,7 +4099,7 @@ alter_table_partition_cmd:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("For SPLIT default partition, INTO clause can only have second argument as \"DEFAULT PARTITION\""),
-									 parser_errposition(@7)));
+									 parser_errposition(@8)));
 					}
 					$$ = (Node *)n;
 				}
@@ -4133,7 +4133,7 @@ alter_table_partition_cmd:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("INTO can only have second partition by name"),
-									 parser_errposition(@7)));
+									 parser_errposition(@8)));
 					}
 					$$ = (Node *)n;
 				}
