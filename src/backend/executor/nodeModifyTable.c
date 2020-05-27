@@ -1686,6 +1686,17 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 		resultRelInfo->ri_PartitionCheck &&
 		!ExecPartitionCheck(resultRelInfo, slot, estate, false);
 
+	if (!partition_constraint_failed &&
+		resultRelInfo->ri_WithCheckOptions != NIL)
+	{
+		/*
+		 * ExecWithCheckOptions() will skip any WCOs which are not of the
+		 * kind we are looking for at this point.
+		 */
+		ExecWithCheckOptions(WCO_RLS_UPDATE_CHECK,
+							 resultRelInfo, slot, estate);
+	}
+
 	/*
 	 * Updates set the transition capture map only when a new subplan
 	 * is chosen.  But for inserts, it is set for each row. So after
@@ -1698,6 +1709,14 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 
 	if (partition_constraint_failed)
 	{
+		/*
+		 * When an UPDATE is run on a leaf partition, we will not have
+		 * partition tuple routing set up. In that case, fail with
+		 * partition constraint violation error.
+		 */
+		if (proute == NULL)
+			ExecPartitionCheckEmitError(resultRelInfo, slot, estate);
+
 		/*
 		 * resultRelInfo is one of the per-subplan resultRelInfos.  So we
 		 * should convert the tuple into root's tuple descriptor, since
