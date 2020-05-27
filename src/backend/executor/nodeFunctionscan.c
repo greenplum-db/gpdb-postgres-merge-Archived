@@ -35,6 +35,7 @@
 
 #include "cdb/cdbvars.h"
 #include "cdb/memquota.h"
+#include "executor/nodeShareInputScan.h"
 #include "executor/spi.h"
 
 
@@ -105,8 +106,8 @@ FunctionNext_guts(FunctionScanState *node)
 			char rwfile_prefix[100];
 			function_scan_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix));
 
-			node->ts_state = tuplestore_open_shared(rwfile_prefix,
-													false /* interXact */);
+			node->ts_state = tuplestore_open_shared(get_shareinput_fileset(),
+													rwfile_prefix);
 		}
 
 		gotOK = tuplestore_gettupleslot(node->ts_state, forward, false,

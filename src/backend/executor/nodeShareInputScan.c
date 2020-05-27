@@ -118,6 +118,24 @@ typedef struct shareinput_Xslice_state
 static HTAB *shareinput_Xslice_hash = NULL;
 
 /*
+ * The tuplestore files for all share input scans are held in one SharedFileSet.
+ * The SharedFileSet is attached to a single DSM segment that persists until
+ * postmaster shutdown. When the reference count of the SharedFileSet reaches
+ * zero, the SharedFileSet is automatically destroyed, but it is re-initialized
+ * the next time it's needed.
+ *
+ * The SharedFileSet deletes any remaining files when the reference count
+ * reaches zero, but we don't rely on that mechanism. All the files are
+ * held in the same SharedFileSet, so it cannot be recycled until all
+ * ShareInputScans in the system have finished, which might never happen if
+ * new queries are started continuously. The shareinput_Xslice_state entries
+ * are reference counted separately, and we clean up the files backing each
+ * individual ShareInputScan whenever its reference count reaches zero.
+ */
+static dsm_handle *shareinput_Xslice_dsm_handle_ptr;
+static SharedFileSet *shareinput_Xslice_fileset;
+
+/*
  * 'shareinput_reference' represents a reference or "lease" to an entry
  * in the shared memory hash table. It is used for garbage collection of
  * the entries, on transaction abort.
@@ -218,7 +236,9 @@ init_tuplestore_state(ShareInputScanState *node)
 										   10); /* maxKBytes FIXME */
 
 				shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), sisc->share_id);
-				tuplestore_make_shared(ts, rwfile_prefix);
+				tuplestore_make_shared(ts,
+									   get_shareinput_fileset(),
+									   rwfile_prefix);
 			}
 			else
 			{
@@ -278,7 +298,7 @@ init_tuplestore_state(ShareInputScanState *node)
 			shareinput_reader_waitready(node->ref);
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), sisc->share_id);
-			ts = tuplestore_open_shared(rwfile_prefix, false /* interXact */);
+			ts = tuplestore_open_shared(get_shareinput_fileset(), rwfile_prefix);
 		}
 		local_state->ts_state = ts;
 		local_state->ready = true;
@@ -649,16 +669,73 @@ ShareInputShmemSize(void)
 void
 ShareInputShmemInit(void)
 {
-	HASHCTL		info;
+	bool		found;
 
-	info.keysize = sizeof(shareinput_tag);
-	info.entrysize = sizeof(shareinput_Xslice_state);
+	shareinput_Xslice_dsm_handle_ptr =
+		ShmemInitStruct("ShareInputScan DSM handle", sizeof(dsm_handle), &found);
+	if (!found)
+	{
+		HASHCTL		info;
 
-	shareinput_Xslice_hash = ShmemInitHash("ShareInputScan notifications",
-										   N_SHAREINPUT_SLOTS(),
-										   N_SHAREINPUT_SLOTS(),
-										   &info,
-										   HASH_ELEM | HASH_BLOBS);
+		// GPDB_12_MERGE_FIXME: would be nicer to store this hash in the DSM segment
+		info.keysize = sizeof(shareinput_tag);
+		info.entrysize = sizeof(shareinput_Xslice_state);
+
+		shareinput_Xslice_hash = ShmemInitHash("ShareInputScan notifications",
+											   N_SHAREINPUT_SLOTS(),
+											   N_SHAREINPUT_SLOTS(),
+											   &info,
+											   HASH_ELEM | HASH_BLOBS);
+	}
+}
+
+/*
+ * Get reference to the SharedFileSet used to hold all the tuplestore files.
+ *
+ * This is exported so that it can also be used by the INITPLAN function
+ * tuplestores.
+ */
+SharedFileSet *
+get_shareinput_fileset(void)
+{
+	dsm_handle		handle;
+
+	if (shareinput_Xslice_fileset == NULL)
+	{
+		dsm_segment *seg;
+
+		LWLockAcquire(ShareInputScanLock, LW_EXCLUSIVE);
+
+		handle = *shareinput_Xslice_dsm_handle_ptr;
+
+		if (handle)
+		{
+			seg = dsm_attach(handle);
+			if (seg == NULL)
+				elog(ERROR, "could not attach to ShareInputScan DSM segment");
+			dsm_pin_mapping(seg);
+
+			shareinput_Xslice_fileset = dsm_segment_address(seg);
+		}
+		else
+		{
+			seg = dsm_create(sizeof(SharedFileSet), 0);
+			dsm_pin_segment(seg);
+			*shareinput_Xslice_dsm_handle_ptr = dsm_segment_handle(seg);
+			dsm_pin_mapping(seg);
+
+			shareinput_Xslice_fileset = dsm_segment_address(seg);
+		}
+
+		if (shareinput_Xslice_fileset->refcnt == 0)
+			SharedFileSetInit(shareinput_Xslice_fileset, seg);
+		else
+			SharedFileSetAttach(shareinput_Xslice_fileset, seg);
+
+		LWLockRelease(ShareInputScanLock);
+	}
+
+	return shareinput_Xslice_fileset;
 }
 
 /*
@@ -907,6 +984,7 @@ shareinput_writer_waitdone(shareinput_Xslice_reference *ref, int nconsumers)
 		ndone = state->ndone;
 		LWLockRelease(ShareInputScanLock);
 
+		ConditionVariablePrepareToSleep(&state->ready_done_cv);
 		if (ndone < nconsumers)
 		{
 			elog(DEBUG1, "SISC WRITER (shareid=%d, slice=%d): waiting for DONE message from %d / %d readers",
@@ -917,6 +995,7 @@ shareinput_writer_waitdone(shareinput_Xslice_reference *ref, int nconsumers)
 
 			continue;
 		}
+		ConditionVariableCancelSleep();
 		if (ndone > nconsumers)
 			elog(WARNING, "%d sharers of ShareInputScan reported to be done, but only %d were expected",
 				 ndone, nconsumers);

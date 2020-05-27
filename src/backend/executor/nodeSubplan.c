@@ -47,6 +47,7 @@
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/ml_ipc.h"
+#include "executor/nodeShareInputScan.h"
 
 
 static Datum ExecHashSubPlan(SubPlanState *node,
@@ -1210,7 +1211,9 @@ PG_TRY();
 		node->ts_state = tuplestore_begin_heap(true, /* randomAccess */
 											  true, /* interXact */
 											  PlanStateOperatorMemKB((PlanState *)(node->planstate)));
-		tuplestore_make_shared(node->ts_state, rwfile_prefix);
+		tuplestore_make_shared(node->ts_state,
+							   get_shareinput_fileset(),
+							   rwfile_prefix);
 	}
 
 	/*

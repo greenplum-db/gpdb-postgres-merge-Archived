@@ -124,6 +124,13 @@ typedef struct
 	off_t		offset;			/* byte offset in file */
 } TSReadPointer;
 
+typedef enum
+{
+	TSHARE_NOT_SHARED,
+	TSHARE_WRITER,
+	TSHARE_READER
+} TSSharedStatus;
+
 /*
  * Private state of a Tuplestore operation.
  */
@@ -141,8 +148,10 @@ struct Tuplestorestate
 	MemoryContext context;		/* memory context for holding tuples */
 	ResourceOwner resowner;		/* resowner for holding temp files */
 
+	TSSharedStatus share_status;
 	bool		frozen;
-	bool		shared;
+	SharedFileSet *fileset;
+	char	   *shared_filename;
 	workfile_set *work_set; /* workfile set to use when using workfile manager */
 
 	/*
@@ -524,8 +533,12 @@ tuplestore_end(Tuplestorestate *state)
 
 	if (state->myfile)
 		BufFileClose(state->myfile);
+	if (state->share_status == TSHARE_WRITER)
+		BufFileDeleteShared(state->fileset, state->shared_filename);
 	if (state->work_set)
 		workfile_mgr_close_set(state->work_set);
+	if (state->shared_filename)
+		pfree(state->shared_filename);
 	if (state->memtuples)
 	{
 		for (i = state->memtupdeleted; i < state->memtupcount; i++)
@@ -1677,13 +1690,19 @@ tuplestore_set_instrument(Tuplestorestate *state,
  * immediately after tuplestore_begin_heap().
  */
 void
-tuplestore_make_shared(Tuplestorestate *state, const char *filename)
+tuplestore_make_shared(Tuplestorestate *state, SharedFileSet *fileset, const char *filename)
 {
 	ResourceOwner oldowner;
 
+	// GPDB_12_MERGE_FIXME: how should SharedFileSets and workfile sets interact?
 	state->work_set = workfile_mgr_create_set("SharedTupleStore", filename);
 
-	state->shared = true;
+	Assert(state->status == TSS_INMEM);
+	Assert(state->tuples == 0);
+	Assert(state->share_status == TSHARE_NOT_SHARED);
+	state->share_status = TSHARE_WRITER;
+	state->fileset = fileset;
+	state->shared_filename = pstrdup(filename);
 
 	/*
 	 * Switch to tape-based operation, like in tuplestore_puttuple_common().
@@ -1697,13 +1716,7 @@ tuplestore_make_shared(Tuplestorestate *state, const char *filename)
 	oldowner = CurrentResourceOwner;
 	CurrentResourceOwner = state->resowner;
 
-	// GPDB_12_MERGE_FIXME: need to use SharedFileSets or something for this
-	elog(ERROR, "tuplestore_make_shared not implemented yet");
-#if 0
-	state->myfile = BufFileCreateNamedTemp(filename,
-										   state->interXact,
-										   state->work_set);
-#endif
+	state->myfile = BufFileCreateShared(fileset, filename);
 	CurrentResourceOwner = oldowner;
 
 	/*
@@ -1731,7 +1744,8 @@ writetup_forbidden(Tuplestorestate *state, void *tup)
 void
 tuplestore_freeze(Tuplestorestate *state)
 {
-	Assert(state->shared);
+	Assert(state->share_status == TSHARE_WRITER);
+	Assert(!state->frozen);
 	dumptuples(state);
 	BufFileExportShared(state->myfile);
 	state->frozen = true;
@@ -1744,14 +1758,15 @@ tuplestore_freeze(Tuplestorestate *state)
  * for reading.
  */
 Tuplestorestate *
-tuplestore_open_shared(const char *filename, bool interXact)
+tuplestore_open_shared(SharedFileSet *fileset, const char *filename)
 {
 	Tuplestorestate *state;
 	int			eflags;
 
 	eflags = EXEC_FLAG_BACKWARD | EXEC_FLAG_REWIND;
 
-	state = tuplestore_begin_common(eflags, interXact,
+	state = tuplestore_begin_common(eflags,
+									false /* interXact, ignored because we open existing files */,
 									10 /* no need for memory buffers */);
 
 	state->backward = true;
@@ -1760,14 +1775,15 @@ tuplestore_open_shared(const char *filename, bool interXact)
 	state->writetup = writetup_forbidden;
 	state->readtup = readtup_heap;
 
-	// GPDB_12_MERGE_FIXME: need to use SharedFileSets or something for this
-	elog(ERROR, "tuplestore_open_shared not implemented yet");
-#if 0
-	state->myfile = BufFileOpenNamedTemp(filename, interXact);
-#endif
+	state->myfile = BufFileOpenShared(fileset, filename);
 	state->readptrs[0].file = 0;
 	state->readptrs[0].offset = 0L;
 	state->status = TSS_READFILE;
+
+	state->share_status = TSHARE_READER;
+	state->frozen = false;
+	state->fileset = fileset;
+	state->shared_filename = pstrdup(filename);
 
 	return state;
 }

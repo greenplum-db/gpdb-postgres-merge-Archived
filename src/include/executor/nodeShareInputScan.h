@@ -17,6 +17,7 @@
 #define NODESHAREINPUTSCAN_H
 
 #include "nodes/execnodes.h"
+#include "storage/sharedfileset.h"
 
 extern ShareInputScanState *ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags);
 extern void ExecEndShareInputScan(ShareInputScanState *node);
@@ -25,5 +26,7 @@ extern void ExecSquelchShareInputScan(ShareInputScanState *node);
 
 extern Size ShareInputShmemSize(void);
 extern void ShareInputShmemInit(void);
+
+extern SharedFileSet *get_shareinput_fileset(void);
 
 #endif   /* NODESHAREINPUTSCAN_H */
