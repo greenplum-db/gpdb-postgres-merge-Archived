@@ -1646,6 +1646,105 @@ lreplace:;
 }
 
 /*
+ * Insert the new tuple version of a Split Update
+ *
+ * We have to check if this UPDATE also moves the row to
+ * a different partition, much like ExecUpdate() does.
+ */
+static TupleTableSlot *
+ExecSplitUpdate_Insert(ModifyTableState *mtstate,
+					   TupleTableSlot *slot,
+					   TupleTableSlot *planSlot,
+					   EState *estate,
+					   bool canSetTag)
+{
+	ResultRelInfo *resultRelInfo;
+	Relation	resultRelationDesc;
+	bool		partition_constraint_failed;
+	TupleConversionMap *saved_tcs_map = NULL;
+	PartitionTupleRouting *proute = mtstate->mt_partition_tuple_routing;
+	int			map_index;
+	TupleConversionMap *tupconv_map;
+
+	/*
+	 * get information on the (current) result relation
+	 */
+	resultRelInfo = estate->es_result_relation_info;
+	resultRelationDesc = resultRelInfo->ri_RelationDesc;
+
+	/* ensure slot is independent, consider e.g. EPQ */
+	ExecMaterializeSlot(slot);
+
+	/*
+	 * If partition constraint fails, this row might get moved to another
+	 * partition, in which case we should check the RLS CHECK policy just
+	 * before inserting into the new partition, rather than doing it here.
+	 * This is because a trigger on that partition might again change the
+	 * row.  So skip the WCO checks if the partition constraint fails.
+	 */
+	partition_constraint_failed =
+		resultRelInfo->ri_PartitionCheck &&
+		!ExecPartitionCheck(resultRelInfo, slot, estate, false);
+
+	/*
+	 * Updates set the transition capture map only when a new subplan
+	 * is chosen.  But for inserts, it is set for each row. So after
+	 * INSERT, we need to revert back to the map created for UPDATE;
+	 * otherwise the next UPDATE will incorrectly use the one created
+	 * for INSERT.  So first save the one created for UPDATE.
+	 */
+	if (mtstate->mt_transition_capture)
+		saved_tcs_map = mtstate->mt_transition_capture->tcs_map;
+
+	if (partition_constraint_failed)
+	{
+		/*
+		 * resultRelInfo is one of the per-subplan resultRelInfos.  So we
+		 * should convert the tuple into root's tuple descriptor, since
+		 * ExecInsert() starts the search from root.  The tuple conversion
+		 * map list is in the order of mtstate->resultRelInfo[], so to
+		 * retrieve the one for this resultRel, we need to know the
+		 * position of the resultRel in mtstate->resultRelInfo[].
+		 */
+		map_index = resultRelInfo - mtstate->resultRelInfo;
+		Assert(map_index >= 0 && map_index < mtstate->mt_nplans);
+		tupconv_map = tupconv_map_for_subplan(mtstate, map_index);
+		if (tupconv_map != NULL)
+			slot = execute_attr_map_slot(tupconv_map->attrMap,
+										 slot,
+										 mtstate->mt_root_tuple_slot);
+
+		/*
+		 * Prepare for tuple routing, making it look like we're inserting
+		 * into the root.
+		 */
+		Assert(mtstate->rootResultRelInfo != NULL);
+		slot = ExecPrepareTupleRouting(mtstate, estate, proute,
+									   mtstate->rootResultRelInfo, slot);
+
+		slot = ExecInsert(mtstate, slot, planSlot,
+						  estate, mtstate->canSetTag,
+						  true /* isUpdate */);
+
+		/* Revert ExecPrepareTupleRouting's node change. */
+		estate->es_result_relation_info = resultRelInfo;
+		if (mtstate->mt_transition_capture)
+		{
+			mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
+			mtstate->mt_transition_capture->tcs_map = saved_tcs_map;
+		}
+	}
+	else
+	{
+		slot = ExecInsert(mtstate, slot, planSlot,
+						  estate, mtstate->canSetTag,
+						  true /* isUpdate */);
+	}
+
+	return slot;
+}
+
+/*
  * ExecOnConflictUpdate --- execute UPDATE of INSERT ON CONFLICT DO UPDATE
  *
  * Try to lock tuple for update as part of speculative insertion.  If
@@ -2435,9 +2534,8 @@ ExecModifyTable(PlanState *pstate)
 				}
 				else if (DML_INSERT == action)
 				{
-					slot = ExecInsert(node, slot, planSlot,
-									  estate, node->canSetTag,
-									  true /* isUpdate */);
+					slot = ExecSplitUpdate_Insert(node, slot, planSlot,
+												  estate, node->canSetTag);
 				}
 				else /* DML_DELETE */
 				{
