@@ -41,6 +41,7 @@ language plpythonu;
 create table mpp3061 (i int) partition by range(i) (start(1) end(5) every(1));
 insert into mpp3061 values(1);
 update mpp3061 set i = 2 where i = 1;
+select tableoid::regclass, * from mpp3061 where i = 2;
 drop table mpp3061;
 
 --

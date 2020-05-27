@@ -1173,9 +1173,12 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL UNION SELECT NULL)::numeric;
-ERROR:  moving tuple from partition "dml_union_s_1_prt_2" to partition "dml_union_s_1_prt_def" not supported
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s; 
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+     0
+(1 row)
+
 rollback;
 -- @description union_update_test13: Update partition key to NULL values when default partition present
 begin;
@@ -1186,9 +1189,12 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL INTERSECT SELECT NULL)::numeric;
-ERROR:  moving tuple from partition "dml_union_s_1_prt_2" to partition "dml_union_s_1_prt_def" not supported
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s; 
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+     0
+(1 row)
+
 rollback;
 -- @description union_update_test14: Update partition key to NULL values when default partition present
 begin;
@@ -1199,9 +1205,12 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL INTERSECT ALL SELECT NULL)::numeric;
-ERROR:  moving tuple from partition "dml_union_s_1_prt_2" to partition "dml_union_s_1_prt_def" not supported
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s; 
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+     0
+(1 row)
+
 rollback;
 -- @description union_update_test15: Update partition key to NULL values when default partition present
 begin;
@@ -1212,9 +1221,12 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL EXCEPT SELECT NULL)::numeric;
-ERROR:  moving tuple from partition "dml_union_s_1_prt_2" to partition "dml_union_s_1_prt_def" not supported
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s; 
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+     0
+(1 row)
+
 rollback;
 -- @description union_update_test16: Update partition key to NULL values when default partition present
 begin;
@@ -1225,9 +1237,12 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL EXCEPT ALL SELECT NULL)::numeric;
-ERROR:  moving tuple from partition "dml_union_s_1_prt_2" to partition "dml_union_s_1_prt_def" not supported
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s; 
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+     0
+(1 row)
+
 rollback;
 -- @description union_update_test17: Update partition key to constant value with UNION/INTERSECT/EXCEPT within dml_union_sub-query
 begin;
@@ -1304,9 +1319,12 @@ SELECT COUNT(DISTINCT(a)) FROM dml_union_r;
 (1 row)
 
 UPDATE dml_union_r SET a = dml_union_s.a FROM dml_union_s WHERE dml_union_r.b in (SELECT b FROM dml_union_r UNION SELECT b FROM dml_union_s);
-ERROR:  multiple updates to a row by the same query is not allowed  (seg2 10.152.10.75:25434 pid=18097)
 SELECT COUNT(DISTINCT(a)) FROM dml_union_r;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ count 
+-------
+   100
+(1 row)
+
 rollback;
 -- @description union_update_test21:  UNION/INTERSECT/EXCEPT within dml_union_sub-query
 begin;

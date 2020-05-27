@@ -106,6 +106,7 @@ Alter table sto_alt_ao_part alter partition p1 split partition
 -- partition ... to partition ... is not supported".  Enable the
 -- update statement after this bug is fixed.
 -- Update sto_alt_ao_part set d = 0 where b = 10;
+-- GPDB_12_MERGE_FIXME: does this bug still exist?
 select * from sto_alt_ao_part;
 
 -- Alter table split default partition

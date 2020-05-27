@@ -295,11 +295,8 @@ insert into r select generate_series(1, 10000), generate_series(1, 10000) * 3;
 insert into s select generate_series(1, 100), generate_series(1, 100) * 4;
 update s set b = b + 1 where exists (select 1 from r where s.a = r.b);
 delete from s where exists (select 1 from r where s.a = r.b);
--- ----------------------------------------------------------------------
--- Test: unsupported_cases1.sql
--- ----------------------------------------------------------------------
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -331,14 +328,19 @@ delete from s where b = (select min(a) from r where b = s.b);
 --	Update partition key (requires moving tuples from one partition to another)
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg0 rhel62-vm1:25432 pid=19026)
 update p set c = c + 1 where b in (select b from s) and c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg2 rhel62-vm1:25434 pid=19030)
--- ----------------------------------------------------------------------
--- Test: unsupported_cases2.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_1     | 1 |  3333
+ p_1_prt_2     | 2 |  1667
+ p_1_prt_3     | 3 |  1667
+ p_1_prt_4     | 4 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -370,14 +372,19 @@ delete from s where b = (select min(a) from r where b = s.b);
 --	Update partition key (requires moving tuples from one partition to another)
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg2 rhel62-vm1:25434 pid=19030)
 update p set c = c + 1 where b in (select b from s where b = 36);
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg2 rhel62-vm1:25434 pid=19030)
--- ----------------------------------------------------------------------
--- Test: unsupported_cases3.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_1     | 1 |  3332
+ p_1_prt_2     | 2 |  1668
+ p_1_prt_3     | 3 |  1667
+ p_1_prt_4     | 4 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -409,14 +416,19 @@ delete from s where b = (select min(a) from r where b = s.b);
 --	Update partition key (requires moving tuples from one partition to another)
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg0 rhel62-vm1:25432 pid=19026)
 update p set c = c + 1 where b in (select b from s) and c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg1 rhel62-vm1:25433 pid=19028)
--- ----------------------------------------------------------------------
--- Test: unsupported_cases4.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_1     | 1 |  3333
+ p_1_prt_2     | 2 |  1667
+ p_1_prt_3     | 3 |  1667
+ p_1_prt_4     | 4 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -448,14 +460,19 @@ delete from s where b = (select min(a) from r where b = s.b);
 --	Update partition key (requires moving tuples from one partition to another)
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg0 rhel62-vm1:25432 pid=19026)
 update p set c = c + 1 where b in (select b from s) and c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg0 rhel62-vm1:25432 pid=19026)
--- ----------------------------------------------------------------------
--- Test: unsupported_cases5.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_1     | 1 |  3333
+ p_1_prt_2     | 2 |  1667
+ p_1_prt_3     | 3 |  1667
+ p_1_prt_4     | 4 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -487,9 +504,17 @@ delete from s where b = (select min(a) from r where b = s.b);
 --	Update partition key (requires moving tuples from one partition to another)
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg1 rhel62-vm1:25433 pid=19028)
 update p set c = c + 1 where b in (select b from s) and c = 0;
-ERROR:  moving tuple from partition "p_1_prt_extra" to partition "p_1_prt_2" not supported  (seg1 rhel62-vm1:25433 pid=19028)
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_1     | 1 |  3333
+ p_1_prt_2     | 2 |  1667
+ p_1_prt_3     | 3 |  1667
+ p_1_prt_4     | 4 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 -- ----------------------------------------------------------------------
 -- Test: partition_motion1.sql
 -- ----------------------------------------------------------------------
@@ -1236,10 +1261,7 @@ select sales_par.* from sales_par where id in (select s.b from s, r where s.a = 
  18 | 2006 |     7 |  19 | usa
 (2 rows)
 
--- start_ignore
 update sales_par set region = 'new_region' where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
-ERROR:  moving tuple from partition "sales_par_1_prt_usa" to partition "sales_par_1_prt_other_regions" not supported  (seg1 rhel62-vm1:25433 pid=19028)
--- end_ignore
 select sales_par.* from sales_par where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
  id | year | month | day | region 
 ----+------+-------+-----+--------

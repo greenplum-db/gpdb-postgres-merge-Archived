@@ -2397,21 +2397,6 @@ NOTICE:  CREATE TABLE will create partition "myint2_tbl_1_prt_1" for table "myin
 NOTICE:  CREATE TABLE will create partition "myint2_tbl_1_prt_2" for table "myint2_tbl"
 insert into myint2_tbl values(1), (2);
 drop table myint2_tbl;
--- check that we don't allow updates of tuples such that they would move
--- between partitions
-create table v (i int, j int) partition by range(j) (start(1) end(5)
- every(2));
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "v_1_prt_1" for table "v"
-NOTICE:  CREATE TABLE will create partition "v_1_prt_2" for table "v"
-insert into v values(1, 1) ;
--- should work
-update v set j = 2;
--- should fail
-update v set j = 3;
-ERROR:  moving tuple from partition "v_1_prt_1" to partition "v_1_prt_2" not supported  (seg0 slarimac:40000 pid=97875)
-drop table v;
 -- try SREH on a partitioned table.
 create table ao_p (i int) with (appendonly = true)
  partition by range(i)
