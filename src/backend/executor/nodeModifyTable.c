@@ -2443,7 +2443,8 @@ ExecModifyTable(PlanState *pstate)
 				{
 					slot = ExecDelete(node, tupleid, segid, oldtuple, planSlot,
 									  &node->mt_epqstate, estate,
-									  false, node->canSetTag,
+									  false,
+									  false /* canSetTag */,
 									  true /* changingPart */ , NULL, NULL);
 				}
 				break;
