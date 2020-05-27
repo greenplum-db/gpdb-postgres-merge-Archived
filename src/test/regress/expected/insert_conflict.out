@@ -865,6 +865,7 @@ drop table parted_conflict;
 -- test whole-row Vars in ON CONFLICT expressions
 create table parted_conflict (a int, b text, c int) partition by range (a);
 create table parted_conflict_1 (drp text, c int, a int, b text);
+alter table parted_conflict_1 set distributed by (a);
 alter table parted_conflict_1 drop column drp;
 create unique index on parted_conflict (a, b);
 alter table parted_conflict attach partition parted_conflict_1 for values from (0) to (1000);
