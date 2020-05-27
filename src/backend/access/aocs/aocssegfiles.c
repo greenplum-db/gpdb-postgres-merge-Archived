@@ -1474,23 +1474,26 @@ gp_aocsseg_history(PG_FUNCTION_ARGS)
 
 		context->aocsRelOid = aocsRelOid;
 
-		aocsRel = heap_open(aocsRelOid, NoLock);
+		aocsRel = heap_open(aocsRelOid, AccessShareLock);
 		if (!RelationIsAoCols(aocsRel))
+		{
+			heap_close(aocsRel, AccessShareLock);
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("'%s' is not an append-only columnar relation",
-							RelationGetRelationName(aocsRel))));
+			        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				        errmsg("'%s' is not an append-only columnar relation",
+				               RelationGetRelationName(aocsRel))));
+		}
 
 		/* Remember the number of columns. */
 		context->relnatts = aocsRel->rd_rel->relnatts;
 
         Oid         segrelid;
         GetAppendOnlyEntryAuxOids(aocsRel->rd_id,
-                                  SnapshotAny,
+                                  NULL,
                                   &segrelid, NULL, NULL,
                                   NULL, NULL);
 
-		pg_aocsseg_rel = heap_open(segrelid, NoLock);
+		pg_aocsseg_rel = heap_open(segrelid, AccessShareLock);
 
 		context->aocsSegfileArray = GetAllAOCSFileSegInfo_pg_aocsseg_rel(
 																		 RelationGetNumberOfAttributes(aocsRel),
@@ -1499,8 +1502,8 @@ gp_aocsseg_history(PG_FUNCTION_ARGS)
 																		 SnapshotAny, //Get ALL tuples from pg_aocsseg_ % including aborted and in - progress ones.
 																		 & context->totalAocsSegFiles);
 
-		heap_close(pg_aocsseg_rel, NoLock);
-		heap_close(aocsRel, NoLock);
+		heap_close(pg_aocsseg_rel, AccessShareLock);
+		heap_close(aocsRel, AccessShareLock);
 
 		/* Iteration positions. */
 		context->segfileArrayIndex = 0;
