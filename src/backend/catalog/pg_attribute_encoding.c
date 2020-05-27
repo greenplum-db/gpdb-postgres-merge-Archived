@@ -202,9 +202,9 @@ RelationGetAttributeOptions(Relation rel)
 	{
 		if (DatumGetPointer(dats[i]) != NULL)
 		{
-			opts[i] = (StdRdOptions *) heap_reloptions(
-				RELKIND_RELATION, dats[i], false,
-				rel->rd_rel->relam);
+			opts[i] = (StdRdOptions *) default_reloptions(
+					dats[i], false,
+					RELOPT_KIND_APPENDOPTIMIZED);
 			pfree(DatumGetPointer(dats[i]));
 		}
 	}

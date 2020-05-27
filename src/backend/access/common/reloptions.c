@@ -1059,7 +1059,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
 		case RELKIND_PARTITIONED_TABLE:
-			options = heap_reloptions(classForm->relkind, datum, false, classForm->relam);
+			options = heap_reloptions(classForm->relkind, datum, false);
 			break;
 		case RELKIND_VIEW:
 			options = view_reloptions(datum, false);
@@ -1503,13 +1503,9 @@ view_reloptions(Datum reloptions, bool validate)
 
 /*
  * Parse options for heaps, views and toast tables.
- *
- * GPDB: This function can be used on AO tables, too; the extra 'amoid' argument
- * is used to distinguish AO tables and heap tables. It is ignored, and you
- * can pass InvalidOid, if the relation is not a table or a materialized view.
  */
 bytea *
-heap_reloptions(char relkind, Datum reloptions, bool validate, Oid amoid)
+heap_reloptions(char relkind, Datum reloptions, bool validate)
 {
 	StdRdOptions *rdopts;
 
@@ -1528,22 +1524,8 @@ heap_reloptions(char relkind, Datum reloptions, bool validate, Oid amoid)
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 		case RELKIND_MATVIEW:
-			/*
-			 * AO tables accept all options supported by heap tables for
-			 * compatibility, although most of them have no effect on an AO
-			 * table.
-			 */
-			if (amoid == APPENDOPTIMIZED_TABLE_AM_OID ||
-				amoid == AOCO_TABLE_AM_OID)
-			{
-				return default_reloptions(reloptions, validate,
-										  RELOPT_KIND_HEAP | RELOPT_KIND_APPENDOPTIMIZED);
-			}
-			else
-			{
 				return default_reloptions(reloptions, validate,
 										  RELOPT_KIND_HEAP);
-			}
 		case RELKIND_PARTITIONED_TABLE:
 			/*
 			 * GPDB_12_MERGE_FIXME: should we accept AO-related options for

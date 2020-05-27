@@ -804,7 +804,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	} else if (relkind == RELKIND_VIEW)
 		(void) view_reloptions(reloptions, true);
 	else
-		(void) heap_reloptions(relkind, reloptions, true, InvalidOid);
+		(void) heap_reloptions(relkind, reloptions, true);
 
 	/*
 	 * Greenplum: aoco specific encoding clause is tranformed here. Prior to
@@ -14008,7 +14008,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 						 errmsg("altering reloptions for append only tables"
 								" is not permitted")));
 
-			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true, rel->rd_rel->relam);
+			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 			break;
 		case RELKIND_VIEW:
 			(void) view_reloptions(newOptions, true);
@@ -14117,7 +14117,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 										 defList, "toast", validnsps, false,
 										 operation == AT_ResetRelOptions);
 
-		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true, InvalidOid);
+		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true);
 
 		memset(repl_val, 0, sizeof(repl_val));
 		memset(repl_null, false, sizeof(repl_null));
