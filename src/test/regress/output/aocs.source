@@ -423,9 +423,10 @@ SELECT count(*) FROM tenk_aocs4;
 (1 row)
 
 -- INHERITS
--- This is not supported in aocs and should error out
+-- This was not supported in aocs and should error out before
+-- Since now we are using access method, enable and see how it goes
 CREATE TABLE tenk_inherits_tenk_aocs1() INHERITS (tenk_aocs1);
-ERROR:  cannot inherit relation "tenk_aocs1" as it is column oriented
+DROP TABLE tenk_inherits_tenk_aocs1;
 -- NYI
 -- test get_ao_compression_ratio. use uncompressed table, so result is always 1.
 -- SELECT get_ao_compression_ratio('tenk_aocs2');
@@ -670,7 +671,7 @@ analyze co;
 select tablename, attname, avg_width, n_distinct from pg_stats where tablename = 'co' order by attname, tablename;
  tablename | attname | avg_width | n_distinct 
 -----------+---------+-----------+------------
- co        | i       |         4 |  -0.666667
+ co        | i       |         4 | -0.6666667
  co        | k       |         5 |       -0.5
 (2 rows)
 
@@ -795,25 +796,25 @@ select count(*) from temp_tenk_aocs5;
 truncate table temp_tenk_aocs5;
 vacuum analyze temp_tenk_aocs5;
 \d temp_tenk_aocs5
-Append-Only Columnar Table "pg_temp_274.temp_tenk_aocs5"
-   Column    |  Type   | Modifiers 
--------------+---------+-----------
- unique1     | integer | 
- unique2     | integer | 
- two         | integer | 
- four        | integer | 
- ten         | integer | 
- twenty      | integer | 
- hundred     | integer | 
- thousand    | integer | 
- twothousand | integer | 
- fivethous   | integer | 
- tenthous    | integer | 
- odd         | integer | 
- even        | integer | 
- stringu1    | name    | 
- stringu2    | name    | 
- string4     | name    | 
+          Table "pg_temp_273.temp_tenk_aocs5"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ unique1     | integer |           |          | 
+ unique2     | integer |           |          | 
+ two         | integer |           |          | 
+ four        | integer |           |          | 
+ ten         | integer |           |          | 
+ twenty      | integer |           |          | 
+ hundred     | integer |           |          | 
+ thousand    | integer |           |          | 
+ twothousand | integer |           |          | 
+ fivethous   | integer |           |          | 
+ tenthous    | integer |           |          | 
+ odd         | integer |           |          | 
+ even        | integer |           |          | 
+ stringu1    | name    |           |          | 
+ stringu2    | name    |           |          | 
+ string4     | name    |           |          | 
 Checksum: t
 Indexes:
     "temp_even_index" btree (even)

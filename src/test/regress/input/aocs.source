@@ -225,8 +225,10 @@ SELECT count(*) FROM tenk_aocs3;
 SELECT count(*) FROM tenk_aocs4;
 
 -- INHERITS
--- This is not supported in aocs and should error out
+-- This was not supported in aocs and should error out before
+-- Since now we are using access method, enable and see how it goes
 CREATE TABLE tenk_inherits_tenk_aocs1() INHERITS (tenk_aocs1);
+DROP TABLE tenk_inherits_tenk_aocs1;
 
 -- NYI
 -- test get_ao_compression_ratio. use uncompressed table, so result is always 1.
