@@ -2003,12 +2003,16 @@ CTranslatorDXLToScalar::TranslateDXLScalarArrayToScalar
 	return (Expr *) gpdb::EvalConstExpressions((Node *) expr);
 }
 
+// GPDB_12_MERGE_FIXME: ArrayRef was renamed in commit 558d77f20e4e9.
+// I've fixed the renamed type and fields but the wording "ArrayRef" is
+// still everywhere. Do we plan to rename them?
+
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToScalar::TranslateDXLScalarArrayRefToScalar
 //
 //	@doc:
-//		Translates a DXL scalar arrayref into a GPDB ArrayRef node
+//		Translates a DXL scalar arrayref into a GPDB SubscriptingRef node
 //
 //---------------------------------------------------------------------------
 Expr *
@@ -2021,8 +2025,8 @@ CTranslatorDXLToScalar::TranslateDXLScalarArrayRefToScalar
 	GPOS_ASSERT(NULL != scalar_array_ref_node);
 	CDXLScalarArrayRef *dxlop = CDXLScalarArrayRef::Cast(scalar_array_ref_node->GetOperator());
 
-	ArrayRef *array_ref = MakeNode(ArrayRef);
-	array_ref->refarraytype = CMDIdGPDB::CastMdid(dxlop->ArrayTypeMDid())->Oid();
+	SubscriptingRef *array_ref = MakeNode(SubscriptingRef);
+	array_ref->refcontainertype = CMDIdGPDB::CastMdid(dxlop->ArrayTypeMDid())->Oid();
 	array_ref->refelemtype = CMDIdGPDB::CastMdid(dxlop->ElementTypeMDid())->Oid();
 	// GPDB_91_MERGE_FIXME: collation
 	array_ref->refcollid = gpdb::TypeCollation(array_ref->refelemtype);

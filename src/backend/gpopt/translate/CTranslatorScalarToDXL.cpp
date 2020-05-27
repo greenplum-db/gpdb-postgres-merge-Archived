@@ -1951,15 +1951,15 @@ CTranslatorScalarToDXL::TranslateArrayRefToDXL
 	const CMappingVarColId* var_colid_mapping
 	)
 {
-	GPOS_ASSERT(IsA(expr, ArrayRef));
+	GPOS_ASSERT(IsA(expr, SubscriptingRef));
 
-	const ArrayRef *parrayref = (ArrayRef *) expr;
+	const SubscriptingRef *parrayref = (SubscriptingRef *) expr;
 	Oid restype;
 
 	INT type_modifier = parrayref->reftypmod;
 	/* slice and/or store operations yield the array type */
 	if (parrayref->reflowerindexpr || parrayref->refassgnexpr)
-		restype = parrayref->refarraytype;
+		restype = parrayref->refcontainertype;
 	else
 		restype = parrayref->refelemtype;
 
@@ -1969,7 +1969,7 @@ CTranslatorScalarToDXL::TranslateArrayRefToDXL
 						m_mp,
 						GPOS_NEW(m_mp) CMDIdGPDB(parrayref->refelemtype),
 						type_modifier,
-						GPOS_NEW(m_mp) CMDIdGPDB(parrayref->refarraytype),
+						GPOS_NEW(m_mp) CMDIdGPDB(parrayref->refcontainertype),
 						GPOS_NEW(m_mp) CMDIdGPDB(restype)
 						);
 
