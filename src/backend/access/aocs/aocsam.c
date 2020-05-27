@@ -736,6 +736,13 @@ ReadNext:
 
 		if (!isSnapshotAny && !AppendOnlyVisimap_IsVisible(&scan->visibilityMap, &aoTupleId))
 		{
+			/*
+			 * The tuple is invisible.
+			 * In `analyze`, we can simply return false
+			 */
+			if ((scan->rs_base.rs_flags & SO_TYPE_ANALYZE) != 0)
+				return false;
+
 			rowNum = INT64CONST(-1);
 			goto ReadNext;
 		}
