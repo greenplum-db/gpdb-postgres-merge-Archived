@@ -1260,8 +1260,15 @@ insert into covidxpart values (4, 1);
 ERROR:  duplicate key value violates unique constraint "covidxpart4_a_b_idx"
 DETAIL:  Key (a)=(4) already exists.
 create unique index on covidxpart (b) include (a); -- should fail
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "a" is not included in the constraint.
+-- In GPDB, the previous command fails because the distribution key is not
+-- included in the index. That's OK, but it's a different error condition than
+-- in upstream. Run another test to exercise the same check as in upstream.
+create table covidxpart_x (a int, b int) partition by list (a) distributed by (b);
+create unique index on covidxpart_x (b) include (a); -- should fail
 ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "covidxpart" lacks column "a" which is part of the partition key.
+DETAIL:  UNIQUE constraint on table "covidxpart_x" lacks column "a" which is part of the partition key.
 -- check that detaching a partition also detaches the primary key constraint
 create table parted_pk_detach_test (a int primary key) partition by list (a);
 create table parted_pk_detach_test1 partition of parted_pk_detach_test for values in (1);

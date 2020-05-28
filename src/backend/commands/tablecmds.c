@@ -16045,7 +16045,7 @@ checkPolicyCompatibleWithIndexes(Relation rel, GpPolicy *pol)
 												 indkey->values,
 												 indclass->values,
 												 exclops,
-												 indexStruct->indnatts,
+												 indexStruct->indnkeyatts,
 												 true, /* report_error */
 												 &ctx);
 			if (exclops)

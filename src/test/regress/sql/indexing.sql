@@ -706,6 +706,12 @@ insert into covidxpart values (4, 1);
 insert into covidxpart values (4, 1);
 create unique index on covidxpart (b) include (a); -- should fail
 
+-- In GPDB, the previous command fails because the distribution key is not
+-- included in the index. That's OK, but it's a different error condition than
+-- in upstream. Run another test to exercise the same check as in upstream.
+create table covidxpart_x (a int, b int) partition by list (a) distributed by (b);
+create unique index on covidxpart_x (b) include (a); -- should fail
+
 -- check that detaching a partition also detaches the primary key constraint
 create table parted_pk_detach_test (a int primary key) partition by list (a);
 create table parted_pk_detach_test1 partition of parted_pk_detach_test for values in (1);
