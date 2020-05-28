@@ -1252,6 +1252,7 @@ ERROR:  duplicate key value violates unique constraint "covidxpart3_a_b_idx"
 DETAIL:  Key (a)=(3) already exists.
 create table covidxpart4 (b int, a int);
 create unique index on covidxpart4 (a) include (b);
+NOTICE:  updating distribution policy to match new UNIQUE index
 create unique index on covidxpart4 (a);
 alter table covidxpart attach partition covidxpart4 for values in (4);
 insert into covidxpart values (4, 1);
