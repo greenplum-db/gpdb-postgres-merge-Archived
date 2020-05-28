@@ -1025,7 +1025,7 @@ DefineIndex(Oid relationId,
 		bool		compatible;
 
 		/* Don't allow indexes on system attributes. */
-		for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		for (int i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
 			if (indexInfo->ii_IndexAttrNumbers[i] < 0)
 				ereport(ERROR,
@@ -1039,7 +1039,7 @@ DefineIndex(Oid relationId,
 										  indexInfo->ii_IndexAttrNumbers,
 										  classObjectId,
 										  indexInfo->ii_ExclusionOps,
-										  indexInfo->ii_NumIndexAttrs,
+										  indexInfo->ii_NumIndexKeyAttrs,
 										  false, /* report_error */
 										  NULL);
 
@@ -1062,7 +1062,7 @@ DefineIndex(Oid relationId,
 											 indexInfo->ii_IndexAttrNumbers,
 											 classObjectId,
 											 indexInfo->ii_ExclusionOps,
-											 indexInfo->ii_NumIndexAttrs);
+											 indexInfo->ii_NumIndexKeyAttrs);
 			if (compatible && Gp_role == GP_ROLE_DISPATCH)
 			{
 				if (stmt->primary)
@@ -1102,7 +1102,7 @@ DefineIndex(Oid relationId,
 												 indexInfo->ii_IndexAttrNumbers,
 												 classObjectId,
 												 indexInfo->ii_ExclusionOps,
-												 indexInfo->ii_NumIndexAttrs,
+												 indexInfo->ii_NumIndexKeyAttrs,
 												 true, /* report_error */
 												 &ctx);
 			/*
