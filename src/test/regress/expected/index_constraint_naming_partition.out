@@ -338,10 +338,6 @@ SELECT * FROM partition_tables_show_all();
 (5 rows)
 
 ALTER TABLE r SPLIT PARTITION r2 AT (6) INTO (PARTITION r2_split_l, PARTITION r2_split_r);
-NOTICE:  exchanged partition "r2" of relation "r" with relation "pg_temp_54786"
-NOTICE:  dropped partition "r2" for relation "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_split_l" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_split_r" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------

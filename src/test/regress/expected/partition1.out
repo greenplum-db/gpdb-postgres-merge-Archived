@@ -2663,10 +2663,6 @@ select count(*) from mpp7863;
 (1 row)
 
 alter table mpp7863 split default partition start (201001) inclusive end (201002) exclusive into (partition jan10,default partition);
-NOTICE:  exchanged partition "extra" of relation "mpp7863" with relation "pg_temp_293486"
-NOTICE:  dropped partition "extra" for relation "mpp7863"
-NOTICE:  CREATE TABLE will create partition "mpp7863_1_prt_jan10" for table "mpp7863"
-NOTICE:  CREATE TABLE will create partition "mpp7863_1_prt_extra" for table "mpp7863"
 select count(*) from mpp7863_1_prt_extra where dat is null;
  count 
 -------
@@ -2765,10 +2761,6 @@ INSERT INTO users_test VALUES(3, 'C', 'C@abc.com', '1990-01-01', '2021-01-01 12:
 -- New partition arrives late
 ALTER TABLE users_test SPLIT DEFAULT PARTITION START ('2020-01-01'::TIMESTAMP) END ('2021-01-01'::TIMESTAMP)
  INTO (PARTITION p2020, DEFAULT PARTITION);
-NOTICE:  exchanged partition "extra" of relation "users_test" with relation "pg_temp_114588"
-NOTICE:  dropped partition "extra" for relation "users_test"
-NOTICE:  CREATE TABLE will create partition "users_test_1_prt_p2020" for table "users_test"
-NOTICE:  CREATE TABLE will create partition "users_test_1_prt_extra" for table "users_test"
 -- Expect A
 SELECT user_name FROM users_test_1_prt_p2019;
  user_name 

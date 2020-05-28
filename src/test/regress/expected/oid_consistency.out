@@ -356,10 +356,6 @@ INSERT INTO constraint_t2 SELECT i, '2008-02-02', i FROM generate_series(11,15)i
 ALTER TABLE constraint_pt2 EXCHANGE PARTITION Feb08 WITH TABLE constraint_t2,
       SPLIT PARTITION FOR ('2008-01-01') AT ('2008-01-16') INTO
        (PARTITION jan08_15, PARTITION jan08_31);
-NOTICE:  exchanged partition "jan08" of relation "constraint_pt2" with relation "pg_temp_311301"
-NOTICE:  dropped partition "jan08" for relation "constraint_pt2"
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_jan08_15" for table "constraint_pt2"
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_jan08_31" for table "constraint_pt2"
 ANALYZE constraint_pt2;
 select verify('constraint_pt2_1_prt_feb08');
  verify 

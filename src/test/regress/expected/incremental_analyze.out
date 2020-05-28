@@ -1712,10 +1712,6 @@ NOTICE:  CREATE TABLE will create partition "foo_1_prt_3" for table "foo"
 INSERT INTO foo SELECT i%13, i, 'something'||i::text, i%121 FROM generate_series(1,1000)i;
 ALTER TABLE foo DROP COLUMN b;
 ALTER TABLE foo SPLIT DEFAULT PARTITION START (8) END (12) INTO (PARTITION new_part, default PARTITION);
-NOTICE:  exchanged partition "def_part" of relation "foo" with relation "pg_temp_106969"
-NOTICE:  dropped partition "def_part" for relation "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_new_part" for table "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_def_part" for table "foo"
 set client_min_messages to 'log';
 ANALYZE foo_1_prt_2;
 ANALYZE foo_1_prt_3;
@@ -1757,10 +1753,6 @@ NOTICE:  CREATE TABLE will create partition "foo_1_prt_3" for table "foo"
 INSERT INTO foo SELECT i%13, i, 'something'||i::text, i%121 FROM generate_series(1,1000)i;
 ALTER TABLE foo DROP COLUMN b;
 ALTER TABLE foo SPLIT DEFAULT PARTITION START (8) END (12) INTO (PARTITION new_part, default PARTITION);
-NOTICE:  exchanged partition "def_part" of relation "foo" with relation "pg_temp_107148"
-NOTICE:  dropped partition "def_part" for relation "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_new_part" for table "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_def_part" for table "foo"
 set client_min_messages to 'log';
 ANALYZE foo_1_prt_2(a);
 ANALYZE foo_1_prt_3(a);
@@ -1792,10 +1784,6 @@ NOTICE:  CREATE TABLE will create partition "foo_1_prt_3" for table "foo"
 INSERT INTO foo SELECT i%13, i, 'something'||i::text, i%121 FROM generate_series(1,1000)i;
 ALTER TABLE foo DROP COLUMN b;
 ALTER TABLE foo SPLIT DEFAULT PARTITION START (8) END (12) INTO (PARTITION new_part, default PARTITION);
-NOTICE:  exchanged partition "def_part" of relation "foo" with relation "pg_temp_107327"
-NOTICE:  dropped partition "def_part" for relation "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_new_part" for table "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_def_part" for table "foo"
 set client_min_messages to 'log';
 ANALYZE foo_1_prt_2(d);
 ANALYZE foo_1_prt_3(d);

@@ -852,10 +852,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_char ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_char SPLIT DEFAULT PARTITION at ('d') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_char" with relation "pg_temp_205734"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_char_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_char"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_char SELECT 'a', 'a','e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -940,10 +936,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_decimal ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_decimal SPLIT DEFAULT PARTITION at (5.00) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_decimal" with relation "pg_temp_205886"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_decim_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_decimal_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_decimal SELECT 1.00, 1.00,'e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -1028,10 +1020,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int4 ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_int4 SPLIT DEFAULT PARTITION at (50000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_int4" with relation "pg_temp_206069"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int4_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int4"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_int4 SELECT 10000000, 10000000,'e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1116,10 +1104,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int8 ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_int8 SPLIT DEFAULT PARTITION at (500000000000000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_int8" with relation "pg_temp_206221"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int8_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int8"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_int8 SELECT 100000000000000000, 100000000000000000,'e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
@@ -1204,10 +1188,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_interval ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_interval SPLIT DEFAULT PARTITION at ('30 secs') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_interval" with relation "pg_temp_206373"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_inter_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_interval_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_interval"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_interval SELECT '1 sec', '1 sec','e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1292,10 +1272,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_numeric ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitdefpt_dml_numeric SPLIT DEFAULT PARTITION at (5.000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_addcol_splitdefpt_dml_numeric" with relation "pg_temp_206525"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_addcol_splitdefpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_numer_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitdefpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_numeric_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_numeric SELECT 1.000000, 1.000000,'e', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1379,10 +1355,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_char SPLIT PARTITION partone at ('d') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_char" with relation "pg_temp_206708"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_char"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_char SELECT 'a', 'a','d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -1467,10 +1439,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_decimal ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_decimal SPLIT PARTITION partone at (5.00) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_decimal" with relation "pg_temp_206952"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_decimal_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_decimal_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_decimal SELECT 1.00, 1.00,'d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -1554,10 +1522,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int4 ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_int4 SPLIT PARTITION partone at (50000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_int4" with relation "pg_temp_207232"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int4_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_int4"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_int4 SELECT 10000000, 10000000,'d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1641,10 +1605,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_int8 SPLIT PARTITION partone at (500000000000000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_int8" with relation "pg_temp_207476"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_int8"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_int8 SELECT 100000000000000000, 100000000000000000,'d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
@@ -1729,10 +1689,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_interval SPLIT PARTITION partone at ('30 secs') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_interval" with relation "pg_temp_207720"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_interval"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_interval SELECT '1 sec', '1 sec','d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1817,10 +1773,6 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_numeric ORDER BY 1,2,3,4;
 (3 rows)
 
 ALTER TABLE mpp21090_dropcol_addcol_splitpt_dml_numeric SPLIT PARTITION partone at (5.000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_addcol_splitpt_dml_numeric" with relation "pg_temp_207964"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_addcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_numeric_1_prt_partsplitone" for table "mpp21090_dropcol_addcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_numeric_1_prt_partsplitwo" for table "mpp21090_dropcol_addcol_splitpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_numeric SELECT 1.000000, 1.000000,'d', 1;
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -1895,10 +1847,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_char ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_char SPLIT DEFAULT PARTITION at ('d') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_char" with relation "pg_temp_208541"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_char_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_char"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_char SELECT 'a', 'a','e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 
@@ -1983,10 +1931,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_decimal ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_decimal SPLIT DEFAULT PARTITION at (5.00) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_decimal" with relation "pg_temp_208705"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_decim_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_decimal_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_decimal SELECT 1.00, 1.00,'e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 
@@ -2071,10 +2015,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int4 ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_int4 SPLIT DEFAULT PARTITION at (50000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_int4" with relation "pg_temp_208903"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int4_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int4"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_int4 SELECT 10000000, 10000000,'e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 
@@ -2159,10 +2099,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int8 ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_int8 SPLIT DEFAULT PARTITION at (500000000000000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_int8" with relation "pg_temp_209067"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int8_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int8"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_int8 SELECT 100000000000000000, 100000000000000000,'e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 
@@ -2247,10 +2183,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_interval ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_interval SPLIT DEFAULT PARTITION at ('30 secs') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_interval" with relation "pg_temp_209231"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_inter_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_interval_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_interval"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_interval SELECT '1 sec', '1 sec','e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 
@@ -2335,10 +2267,6 @@ SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_numeric ORDER BY 1,2,3;
 (2 rows)
 
 ALTER TABLE mpp21090_dropcol_splitdefpt_addcol_dml_numeric SPLIT DEFAULT PARTITION at (5.000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdefpt_addcol_dml_numeric" with relation "pg_temp_209395"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdefpt_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_numer_1_prt_partsplitone" for table "mpp21090_dropcol_splitdefpt_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_numeric_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_numeric SELECT 1.000000, 1.000000,'e';
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 
@@ -2416,10 +2344,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_char ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_char DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_char SPLIT DEFAULT PARTITION at ('d') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_char" with relation "pg_temp_209593"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_char_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_char"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_char SELECT 'a', 'a','b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -2479,10 +2403,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_decimal ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_decimal DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_decimal SPLIT DEFAULT PARTITION at (5.00) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_decimal" with relation "pg_temp_209712"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_decimal_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_decimal_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_decimal SELECT 1.00, 1.00,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -2542,10 +2462,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int4 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_int4 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_int4 SPLIT DEFAULT PARTITION at (50000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_int4" with relation "pg_temp_209854"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int4_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_int4"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_int4 SELECT 10000000, 10000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -2605,10 +2521,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int8 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_int8 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_int8 SPLIT DEFAULT PARTITION at (500000000000000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_int8" with relation "pg_temp_209973"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int8_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_int8"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_int8 SELECT 100000000000000000, 100000000000000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
@@ -2668,10 +2580,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_interval ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_interval DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_interval SPLIT DEFAULT PARTITION at ('30 secs') into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_interval" with relation "pg_temp_210092"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_interval_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_interval_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_interval"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_interval SELECT '1 sec', '1 sec','b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -2731,10 +2639,6 @@ SELECT * FROM mpp21090_dropcol_splitdfpt_dml_numeric ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_numeric DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitdfpt_dml_numeric SPLIT DEFAULT PARTITION at (5.000000) into (partition partsplitone,partition def);
-NOTICE:  exchanged partition "def" of relation "mpp21090_dropcol_splitdfpt_dml_numeric" with relation "pg_temp_210211"
-NOTICE:  dropped partition "def" for relation "mpp21090_dropcol_splitdfpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_numeric_1_prt_partsplitone" for table "mpp21090_dropcol_splitdfpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_numeric_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_numeric SELECT 1.000000, 1.000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -2793,10 +2697,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_char ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_char DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_char SPLIT PARTITION partone at ('d') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_char" with relation "pg_temp_210353"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_char"
 INSERT INTO mpp21090_dropcol_splitpt_dml_char SELECT 'a', 'a','b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -2856,10 +2756,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_decimal ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_decimal DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_decimal SPLIT PARTITION partone at (5.00) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_decimal" with relation "pg_temp_210531"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_decimal_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_decimal_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitpt_dml_decimal SELECT 1.00, 1.00,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -2918,10 +2814,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_int4 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_int4 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_int4 SPLIT PARTITION partone at (50000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_int4" with relation "pg_temp_210734"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int4_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_int4"
 INSERT INTO mpp21090_dropcol_splitpt_dml_int4 SELECT 10000000, 10000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -2980,10 +2872,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_int8 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_int8 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_int8 SPLIT PARTITION partone at (500000000000000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_int8" with relation "pg_temp_210912"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_int8"
 INSERT INTO mpp21090_dropcol_splitpt_dml_int8 SELECT 100000000000000000, 100000000000000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
@@ -3043,10 +2931,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_interval ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_interval DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_interval SPLIT PARTITION partone at ('30 secs') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_interval" with relation "pg_temp_211090"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_interval"
 INSERT INTO mpp21090_dropcol_splitpt_dml_interval SELECT '1 sec', '1 sec','b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -3106,10 +2990,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_numeric ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_dml_numeric DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_dml_numeric SPLIT PARTITION partone at (5.000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_dml_numeric" with relation "pg_temp_211268"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_numeric_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_numeric_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitpt_dml_numeric SELECT 1.000000, 1.000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -3174,10 +3054,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_char ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_char DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_char SPLIT PARTITION partone at ('d') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_char" with relation "pg_temp_211471"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_char"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_char SELECT 'a', 'a','b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -3242,10 +3118,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_decimal ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_decimal DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_decimal SPLIT PARTITION partone at (5.00) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_decimal" with relation "pg_temp_211757"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_decimal SELECT 1.00, 1.00,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -3310,10 +3182,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int4 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_int4 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_int4 SPLIT PARTITION partone at (50000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_int4" with relation "pg_temp_212068"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_int4"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_int4 SELECT 10000000, 10000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -3378,10 +3246,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int8 ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_int8 DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_int8 SPLIT PARTITION partone at (500000000000000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_int8" with relation "pg_temp_212354"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_int8"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_int8 SELECT 100000000000000000, 100000000000000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int8 ORDER BY 1,2,3;
         col1        |        col2        | col3 | col5 
@@ -3446,10 +3310,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_interval ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_interval DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_interval SPLIT PARTITION partone at ('30 secs') into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_interval" with relation "pg_temp_212640"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_interval"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_interval SELECT '1 sec', '1 sec','b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -3514,10 +3374,6 @@ SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_numeric ORDER BY 1,2,3,4;
 
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_numeric DROP COLUMN col4;
 ALTER TABLE mpp21090_dropcol_splitpt_idx_dml_numeric SPLIT PARTITION partone at (5.000000) into (partition partsplitone,partition partsplitwo);
-NOTICE:  exchanged partition "partone" of relation "mpp21090_dropcol_splitpt_idx_dml_numeric" with relation "pg_temp_212926"
-NOTICE:  dropped partition "partone" for relation "mpp21090_dropcol_splitpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partsplitone" for table "mpp21090_dropcol_splitpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partsplitwo" for table "mpp21090_dropcol_splitpt_idx_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_numeric SELECT 1.000000, 1.000000,'b', 1;
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 

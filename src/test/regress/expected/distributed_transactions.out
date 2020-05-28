@@ -10,9 +10,6 @@
 -- m/(ERROR|WARNING|CONTEXT|NOTICE):.*The previous session was reset because its gang was disconnected/
 -- s/session id \=\s*\d+/session id \= DUMMY/gm
 --
--- m/NOTICE:  exchanged partition .*/
--- s/pg_temp_\d+/pg_temp_DUMMY/gm
---
 -- m/^DETAIL:.*gid=.*/
 -- s/gid=\d+-\d+/gid DUMMY/
 --
@@ -459,10 +456,6 @@ select count(*) > 1 as passed from subt_alter_part_tab_ao1
 
 Alter table subt_alter_part_tab_ao1 split partition p4 at (13) into
  (partition splita,partition splitb);
-NOTICE:  exchanged partition "p4" of relation "subt_alter_part_tab_ao1" with relation "pg_temp_DUMMY"
-NOTICE:  dropped partition "p4" for relation "subt_alter_part_tab_ao1"
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_splita" for table "subt_alter_part_tab_ao1"
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_splitb" for table "subt_alter_part_tab_ao1"
 select count(*) from subt_alter_part_tab_ao1;
  count 
 -------

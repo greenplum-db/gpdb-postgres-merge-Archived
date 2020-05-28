@@ -936,10 +936,6 @@ NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_b" for table "mpp3671
 NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_default_part" for table "mpp3671"
 insert into mpp3671 select i from generate_series(1, 10) i;
 alter table mpp3671 split partition for(1) at (1,2) into (partition f1a, partition f1b);
-NOTICE:  exchanged partition "a" of relation "mpp3671" with relation "pg_temp_1284964"
-NOTICE:  dropped partition "a" for relation "mpp3671"
-NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_f1a" for table "mpp3671"
-NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_f1b" for table "mpp3671"
 drop table mpp3671;
 create table mpp3639 (i int) partition by range(i) (start(0) exclusive end(100) inclusive every(10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
@@ -1271,10 +1267,6 @@ NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_a" for table "mpp3588
 NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_b" for table "mpp3588"
 insert into mpp3588 select i from generate_series(1, 8) i;
 alter table mpp3588 split partition for(1) at (1,2) into (partition fa, partition fb);
-NOTICE:  exchanged partition "a" of relation "mpp3588" with relation "pg_temp_1285270"
-NOTICE:  dropped partition "a" for relation "mpp3588"
-NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_fa" for table "mpp3588"
-NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_fb" for table "mpp3588"
 alter table mpp3588 split partition for(1) at (1,2) into (partition f1a, partition f1b); -- This has partition rules that overlaps
 ERROR:  AT clause cannot contain all values in partition "fb"
 alter table mpp3588 split partition for(1) at (1,2) into (partition f2a, partition f2b); -- 5,6 are not within the boundary of first partition
@@ -1298,10 +1290,6 @@ NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_3" for table "mpp3681
 alter table mpp3681 add default partition def;
 NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_def" for table "mpp3681"
 alter table mpp3681 split default partition start('2008-04-01') inclusive end('2008-05-01') exclusive into (partition apr08, default partition);
-NOTICE:  exchanged partition "def" of relation "mpp3681" with relation "pg_temp_1285647"
-NOTICE:  dropped partition "def" for relation "mpp3681"
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_apr08" for table "mpp3681"
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_def" for table "mpp3681"
 drop table mpp3681;
 -- MPP-3593
 create table mpp3593 (i int) partition by range(i) (start(1) end(100) every(10));
@@ -1356,10 +1344,6 @@ NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_5" for table "mpp3742
 NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_6" for table "mpp3742"
 NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_7" for table "mpp3742"
 alter table mpp3742 split default partition start ('2009-01-01') end ('2009-02-01') into (partition a3, default partition);
-NOTICE:  exchanged partition "default_part" of relation "mpp3742" with relation "pg_temp_1286524"
-NOTICE:  dropped partition "default_part" for relation "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_a3" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_default_part" for table "mpp3742"
 drop table mpp3742;
 create table mpp3597 (i int) partition by list(i) (partition a values(1, 2, 3, 4),
 partition b values(5, 6, 7, 8), default partition default_part);
@@ -1371,10 +1355,6 @@ NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_default_part" for tab
 insert into mpp3597 select i from generate_series(1, 100) i;
 insert into mpp3597 values (NULL);
 alter table mpp3597 split default partition at (NULL);
-NOTICE:  exchanged partition "default_part" of relation "mpp3597" with relation "pg_temp_1287048"
-NOTICE:  dropped partition "default_part" for relation "mpp3597"
-NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_r477125784" for table "mpp3597"
-NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_default_part" for table "mpp3597"
 insert into mpp3597 values (NULL);
 select * from mpp3597_1_prt_default_part where i=NULL; -- No NULL values
  i 
@@ -2078,10 +2058,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p1" for table "mpp4604"
 NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p2" for table "mpp4604"
 ALTER TABLE rgs.mpp4604 SPLIT PARTITION p2 AT( '2008-10-20' ) INTO( PARTITION p2_tmp, PARTITION p3 );
-NOTICE:  exchanged partition "p2" of relation "mpp4604" with relation "pg_temp_1299191"
-NOTICE:  dropped partition "p2" for relation "mpp4604"
-NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p2_tmp" for table "mpp4604"
-NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p3" for table "mpp4604"
 alter table rgs.mpp4604 drop partition p3;
 drop schema rgs cascade;
 NOTICE:  drop cascades to table rgs.mpp4604

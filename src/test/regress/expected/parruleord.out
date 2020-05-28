@@ -441,10 +441,6 @@ insert into pt_range values (9, 9), (10, 10), (11, 11), (25, 25),
    (26, 26), (27, 27), (29, 29), (30, 30);
 alter table pt_range split partition foo6 at (26) into
    (partition foo6_1, partition foo6_2);
-NOTICE:  exchanged partition "foo6" of relation "pt_range" with relation "pg_temp_3679779"
-NOTICE:  dropped partition "foo6" for relation "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6_1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6_2" for table "pt_range"
 select * from pt_range_1_prt_foo6_1 order by aa;
  aa | bb 
 ----+----
@@ -506,10 +502,6 @@ select count(*) from pt_range_1_prt_def;
 alter table pt_range split default partition
    start(38) inclusive end(45) exclusive into
    (partition def, partition foo12);
-NOTICE:  exchanged partition "def" of relation "pt_range" with relation "pg_temp_3679779"
-NOTICE:  dropped partition "def" for relation "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo12" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_def" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -556,10 +548,6 @@ alter table pt_range drop partition foo12;
 alter table pt_range split default partition
    start(-10) inclusive end(0) exclusive into
    (partition def, partition foo1);
-NOTICE:  exchanged partition "def" of relation "pt_range" with relation "pg_temp_3679779"
-NOTICE:  dropped partition "def" for relation "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_def" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass

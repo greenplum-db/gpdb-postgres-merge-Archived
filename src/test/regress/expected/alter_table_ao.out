@@ -700,8 +700,4 @@ NOTICE:  CREATE TABLE will create partition "split_tupdesc_leak_1_prt_p_split_tu
 INSERT INTO split_tupdesc_leak VALUES ('201412','0001EC1TPEvT5SaJKIR5yYXlFQ7tS','{0}');
 ALTER TABLE split_tupdesc_leak SPLIT DEFAULT PARTITION AT ('201412')
 	INTO (PARTITION p_split_tupdesc_leak_ym, PARTITION p_split_tupdesc_leak_ym_201412);
-NOTICE:  exchanged partition "p_split_tupdesc_leak_ym" of relation "split_tupdesc_leak" with relation "pg_temp_323542"
-NOTICE:  dropped partition "p_split_tupdesc_leak_ym" for relation "split_tupdesc_leak"
-NOTICE:  CREATE TABLE will create partition "split_tupdesc_leak_1_prt_p_split_tupdesc_leak_ym_201412" for table "split_tupdesc_leak"
-NOTICE:  CREATE TABLE will create partition "split_tupdesc_leak_1_prt_p_split_tupdesc_leak_ym" for table "split_tupdesc_leak"
 DROP TABLE split_tupdesc_leak;

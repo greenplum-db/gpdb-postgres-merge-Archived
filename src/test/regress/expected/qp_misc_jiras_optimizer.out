@@ -3620,10 +3620,6 @@ insert into qp_misc_jiras.tbl7740_rank values(1,'M','1');
 insert into qp_misc_jiras.tbl7740_rank values(1,'M','0');
 -- start_ignore 
 alter table qp_misc_jiras.tbl7740_rank split default partition at (values(('F', '0'))) into (partition mother, partition other);
-NOTICE:  exchanged partition "other" of relation "tbl7740_rank" with relation "pg_temp_56545"
-NOTICE:  dropped partition "other" for relation "tbl7740_rank"
-NOTICE:  CREATE TABLE will create partition "tbl7740_rank_1_prt_mother" for table "tbl7740_rank"
-NOTICE:  CREATE TABLE will create partition "tbl7740_rank_1_prt_other" for table "tbl7740_rank"
 -- end_ignore
 select * from qp_misc_jiras.tbl7740_rank_1_prt_girls;
  id | gender | count 
@@ -4935,10 +4931,6 @@ alter table qp_misc_jiras.tbl1_tbl_11257 split default partition
 start (date '2010-09-27' )
 end (date '2010-09-28')
 into (partition d_2010_09_27, partition default_partition);
-NOTICE:  exchanged partition "default_partition" of relation "tbl1_tbl_11257" with relation "pg_temp_60060"
-NOTICE:  dropped partition "default_partition" for relation "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_d_2010_09_27" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_default_partition" for table "tbl1_tbl_11257"
 -- end_ignore
 select relname, distkey as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl1_tbl_11257%';
                 relname                 | distribution_attributes 
@@ -4990,10 +4982,6 @@ alter table qp_misc_jiras.tbl2_tbl_11257 split default partition
 start (3)
 end (4)
 into (partition p2, partition default_partition);
-NOTICE:  exchanged partition "default_partition" of relation "tbl2_tbl_11257" with relation "pg_temp_60423"
-NOTICE:  dropped partition "default_partition" for relation "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_p2" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_default_partition" for table "tbl2_tbl_11257"
 -- end_ignore
 select relname, distkey as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl2_tbl_11257%';
                 relname                 | distribution_attributes 

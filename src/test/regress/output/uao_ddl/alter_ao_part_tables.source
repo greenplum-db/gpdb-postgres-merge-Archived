@@ -226,10 +226,6 @@ select * from sto_alt_ao_part;
 -- Alter table split partition
 Alter table sto_altap2 split partition p1 at(3) into
  (partition splitc, partition splitd);
-NOTICE:  exchanged partition "p1" of relation "sto_altap2" with relation "pg_temp_126658"
-NOTICE:  dropped partition "p1" for relation "sto_altap2"
-NOTICE:  CREATE TABLE will create partition "sto_altap2_1_prt_splitc" for table "sto_altap2"
-NOTICE:  CREATE TABLE will create partition "sto_altap2_1_prt_splitd" for table "sto_altap2"
 Update sto_altap2 set b = 5 where a = 1 or a = 4;
 select * from sto_altap2 order by a;
  a  | b  | c 
@@ -277,10 +273,6 @@ select * from sto_alt_ao_part;
 -- Alter table split default partition
 Alter table sto_altap2 split default partition
  start(15) end(17) into (partition p1, partition others);
-NOTICE:  exchanged partition "others" of relation "sto_altap2" with relation "pg_temp_126658"
-NOTICE:  dropped partition "others" for relation "sto_altap2"
-NOTICE:  CREATE TABLE will create partition "sto_altap2_1_prt_p1" for table "sto_altap2"
-NOTICE:  CREATE TABLE will create partition "sto_altap2_1_prt_others" for table "sto_altap2"
 Update sto_altap2 set b = 4 where a = 15 or a = 16;
 select * from sto_altap2 order by a;
  a  | b  | c 

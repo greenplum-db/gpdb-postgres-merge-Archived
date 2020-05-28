@@ -2510,9 +2510,6 @@ NOTICE:  CREATE TABLE will create partition "j_1_prt_b" for table "j"
 insert into j select i from generate_series(1, 8) i;
 alter table j split partition for(1) at (2, 3) into (partition fa, partition
 fb);
-NOTICE:  exchanged partition "a" of relation "j" with relation "pg_temp_4022167"
-NOTICE:  dropped partition "a" for relation "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_fa" for table "j"
 NOTICE:  CREATE TABLE will create partition "j_1_prt_fb" for table "j"
 select * from j_1_prt_fa;
  i 
@@ -2529,10 +2526,6 @@ select * from j_1_prt_fb;
 (2 rows)
 
 alter table j split partition for(5) at (6);
-NOTICE:  exchanged partition "b" of relation "j" with relation "pg_temp_4022167"
-NOTICE:  dropped partition "b" for relation "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_r1937461509" for table "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_r90281515" for table "j"
 select * from j;
  i 
 ---
@@ -2580,10 +2573,6 @@ NOTICE:  CREATE TABLE will create partition "k_1_prt_6" for table "k"
 insert into k select i from generate_series(1, 30) i;
 alter table k split default partition start(15) end(20) into
 (partition mydef, partition foo);
-NOTICE:  exchanged partition "mydef" of relation "k" with relation "pg_temp_4022885"
-NOTICE:  dropped partition "mydef" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_foo" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_mydef" for table "k"
 select * from k_1_prt_foo;
  i  
 ----
@@ -2596,10 +2585,6 @@ select * from k_1_prt_foo;
 
 alter table k split default partition start(22) exclusive end(25) inclusive
 into (partition bar, partition mydef);
-NOTICE:  exchanged partition "mydef" of relation "k" with relation "pg_temp_4022885"
-NOTICE:  dropped partition "mydef" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_bar" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_mydef" for table "k"
 select * from k_1_prt_bar;
  i  
 ----
@@ -2609,10 +2594,6 @@ select * from k_1_prt_bar;
 (3 rows)
 
 alter table k split partition bar at (23) into (partition baz, partition foz);
-NOTICE:  exchanged partition "bar" of relation "k" with relation "pg_temp_4022885"
-NOTICE:  dropped partition "bar" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_baz" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_foz" for table "k"
 select partitiontablename,partitionposition,partitionrangestart,
        partitionrangeend from pg_partitions where tablename = 'k'
 	   order by partitionposition;
@@ -2815,18 +2796,10 @@ NOTICE:  no privileges could be revoked
 grant insert on a to part_role;
 alter table a split partition for(rank(1)) at (date '2006-01-01')
   into (partition f, partition g);
-NOTICE:  exchanged partition "f_1" of relation "a" with relation "pg_temp_4025077"
-NOTICE:  dropped partition "f_1" for relation "a"
-NOTICE:  CREATE TABLE will create partition "a_1_prt_f" for table "a"
-NOTICE:  CREATE TABLE will create partition "a_1_prt_g" for table "a"
 alter table a add default partition mydef;
 NOTICE:  CREATE TABLE will create partition "a_1_prt_mydef" for table "a"
 alter table a split default partition start(date '2010-01-01') end(date
 '2011-01-01') into(partition mydef, partition other);
-NOTICE:  exchanged partition "mydef" of relation "a" with relation "pg_temp_4025077"
-NOTICE:  dropped partition "mydef" for relation "a"
-NOTICE:  CREATE TABLE will create partition "a_1_prt_other" for table "a"
-NOTICE:  CREATE TABLE will create partition "a_1_prt_mydef" for table "a"
 set session authorization part_role;
 select has_table_privilege('part_role', 'a'::regclass,'insert');
  has_table_privilege 
@@ -2881,16 +2854,8 @@ into (partition aa, partition nodate);
 ERROR:  default partition name missing from INTO clause
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
 into (partition aa, partition default_part);
-NOTICE:  exchanged partition "default_part" of relation "k" with relation "pg_temp_4025549"
-NOTICE:  dropped partition "default_part" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_aa" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_default_part" for table "k"
 -- check that it works without INTO
 alter table k split default partition start ('2009-02-01') end ('2009-03-01');
-NOTICE:  exchanged partition "default_part" of relation "k" with relation "pg_temp_4025549"
-NOTICE:  dropped partition "default_part" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_r900425354" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_default_part" for table "k"
 drop table k;
 -- List too
 create table k (i int) partition by list(i) (partition a values(1, 2),
@@ -2903,15 +2868,7 @@ NOTICE:  CREATE TABLE will create partition "k_1_prt_mydef" for table "k"
 alter table k split partition mydef at (5) into (partition foo, partition bar);
 ERROR:  default partition name missing from INTO clause
 alter table k split partition mydef at (5) into (partition foo, partition mydef);
-NOTICE:  exchanged partition "mydef" of relation "k" with relation "pg_temp_4026409"
-NOTICE:  dropped partition "mydef" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_foo" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_mydef" for table "k"
 alter table k split partition mydef at (10);
-NOTICE:  exchanged partition "mydef" of relation "k" with relation "pg_temp_4026409"
-NOTICE:  dropped partition "mydef" for relation "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_r1752840607" for table "k"
-NOTICE:  CREATE TABLE will create partition "k_1_prt_mydef" for table "k"
 drop table k;
 -- For LIST, make sure that we reject AT() clauses which match all parameters
 create table j (i int) partition by list(i) (partition a values(1, 2, 3, 4),
@@ -2921,10 +2878,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 NOTICE:  CREATE TABLE will create partition "j_1_prt_a" for table "j"
 NOTICE:  CREATE TABLE will create partition "j_1_prt_b" for table "j"
 alter table j split partition for(1) at (1,2) into (partition fa, partition fb);
-NOTICE:  exchanged partition "a" of relation "j" with relation "pg_temp_4026879"
-NOTICE:  dropped partition "a" for relation "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_fa" for table "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_fb" for table "j"
 alter table j split partition for(1) at (1,2) 
 into (partition f1a, partition f1b); -- This has partition rules that overlaps
 ERROR:  AT clause cannot contain all values in partition "fb"
@@ -2939,10 +2892,6 @@ NOTICE:  CREATE TABLE will create partition "j_1_prt_b" for table "j"
 NOTICE:  CREATE TABLE will create partition "j_1_prt_default_part" for table "j"
 alter table j split partition for(1) at (1,2) into (partition f1a, partition
 f1b);
-NOTICE:  exchanged partition "a" of relation "j" with relation "pg_temp_4027155"
-NOTICE:  dropped partition "a" for relation "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_f1a" for table "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_f1b" for table "j"
 drop table j;
 -- Make sure range can too
 create table j (i int) partition by range(i) (partition a start(1) end(10),
@@ -2952,10 +2901,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 NOTICE:  CREATE TABLE will create partition "j_1_prt_default_part" for table "j"
 NOTICE:  CREATE TABLE will create partition "j_1_prt_a" for table "j"
 alter table j split partition for(1) at (5) into (partition f1a, partition f1b);
-NOTICE:  exchanged partition "a" of relation "j" with relation "pg_temp_4027458"
-NOTICE:  dropped partition "a" for relation "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_f1a" for table "j"
-NOTICE:  CREATE TABLE will create partition "j_1_prt_f1b" for table "j"
 drop table j;
 -- MPP-3667 ADD PARTITION overlaps
 create table mpp3621 (aa date, bb date) partition by range (bb)
@@ -3000,10 +2945,6 @@ insert into list_test values ('bar', 'blah');
 insert into list_test values ('baz', 'blah');
 alter table list_test split default partition at ('baz')
   into (partition bing, default partition);
-NOTICE:  exchanged partition "baz" of relation "list_test" with relation "pg_temp_4028238"
-NOTICE:  dropped partition "baz" for relation "list_test"
-NOTICE:  CREATE TABLE will create partition "list_test_1_prt_bing" for table "list_test"
-NOTICE:  CREATE TABLE will create partition "list_test_1_prt_baz" for table "list_test"
 drop table list_test;
 -- MPP-3816: cannot drop column  which is the subject of partition config
 create table list_test(a int, b int, c int) distributed by (a)
@@ -3067,10 +3008,6 @@ select * from rank_exc;
 
 alter table rank_exc alter partition boys split default partition start ('2007')
 end ('2008') into (partition bfuture, partition year7);
-NOTICE:  exchanged partition "bfuture" of partition "boys" of relation "rank_exc" with relation "pg_temp_4028684"
-NOTICE:  dropped partition "bfuture" for partition "boys" of relation "rank_exc"
-NOTICE:  CREATE TABLE will create partition "rank_exc_1_prt_boys_2_prt_year7" for table "rank_exc_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "rank_exc_1_prt_boys_2_prt_bfuture" for table "rank_exc_1_prt_boys"
 select * from rank_exc_1_prt_boys_2_prt_bfuture;
  id | rank | year | gender | count 
 ----+------+------+--------+-------
@@ -3126,10 +3063,6 @@ select * from r;
 -- Split test
 alter table rank_exc alter partition girls split default partition start('2008')
   end('2020') into (partition years, partition gfuture);
-NOTICE:  exchanged partition "gfuture" of partition "girls" of relation "rank_exc" with relation "pg_temp_4028684"
-NOTICE:  dropped partition "gfuture" for partition "girls" of relation "rank_exc"
-NOTICE:  CREATE TABLE will create partition "rank_exc_1_prt_girls_2_prt_years" for table "rank_exc_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "rank_exc_1_prt_girls_2_prt_gfuture" for table "rank_exc_1_prt_girls"
 insert into rank_exc values(4, 4, 2009, 'F', 100);
 drop table rank_exc;
 drop table r;
@@ -3477,10 +3410,6 @@ ALTER TABLE SG_CAL_EVENT_SILVERTAIL_HOUR SPLIT DEFAULT PARTITION
 START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
 PARTITION st_default );
-NOTICE:  exchanged partition "st_default" of relation "sg_cal_event_silvertail_hour" with relation "pg_temp_4034830"
-NOTICE:  dropped partition "st_default" for relation "sg_cal_event_silvertail_hour"
-NOTICE:  CREATE TABLE will create partition "sg_cal_event_silvertail_hour_1_prt_p2009042907" for table "sg_cal_event_silvertail_hour"
-NOTICE:  CREATE TABLE will create partition "sg_cal_event_silvertail_hour_1_prt_st_default" for table "sg_cal_event_silvertail_hour"
 select pg_get_partition_def('sg_cal_event_silvertail_hour'::regclass, true);
                                                                                                 pg_get_partition_def                                                                                                 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3513,10 +3442,6 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_10" for table "foo_p"
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, partition def);
-NOTICE:  exchanged partition "def" of relation "foo_p" with relation "pg_temp_4035155"
-NOTICE:  dropped partition "def" for relation "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_p10_20" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_def" for table "foo_p"
 select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
             reloptions             
 -----------------------------------
@@ -3548,10 +3473,6 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_10" for table "foo_p"
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, partition def);
-NOTICE:  exchanged partition "def" of relation "foo_p" with relation "pg_temp_4035809"
-NOTICE:  dropped partition "def" for relation "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_p10_20" for table "foo_p"
-NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_def" for table "foo_p"
 select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
     reloptions     
 -------------------
@@ -3874,8 +3795,6 @@ NOTICE:  CREATE TABLE will create partition "partsupp_1_prt_p2" for table "parts
 alter table partsupp split partition p2 at (NULL);
 ERROR:  AT clause parameter is not a member of the target partition specification
 alter table partsupp split default partition start(null) end(200);
-NOTICE:  exchanged partition "def" of relation "partsupp" with relation "pg_temp_4038708"
-NOTICE:  dropped partition "def" for relation "partsupp"
 ERROR:  cannot use NULL with range partition specification
 drop table partsupp;
 CREATE TABLE partsupp ( ps_partkey integer,
@@ -4056,10 +3975,6 @@ drop index ti_1_prt_p3_j_idx;
 ERROR:  cannot drop index ti_1_prt_p3_j_idx because index ti_j_idx requires it
 HINT:  You can drop index ti_j_idx instead.
 alter table ti split partition p3 at (7) into (partition pnew1, partition pnew2);
-NOTICE:  exchanged partition "p3" of relation "ti" with relation "pg_temp_4039681"
-NOTICE:  dropped partition "p3" for relation "ti"
-NOTICE:  CREATE TABLE will create partition "ti_1_prt_pnew1" for table "ti"
-NOTICE:  CREATE TABLE will create partition "ti_1_prt_pnew2" for table "ti"
 select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname |   tablename    |       indexname        | tablespace |                                        indexdef                                        
 ------------+----------------+------------------------+------------+----------------------------------------------------------------------------------------
@@ -4637,10 +4552,6 @@ select pg_get_partition_def('mpp6589a'::regclass,true);
 ALTER TABLE mpp6589a 
 SPLIT PARTITION p20090312 AT( '20090310' ) 
 INTO( PARTITION p20090309, PARTITION p20090312_tmp);
-NOTICE:  exchanged partition "p20090312" of relation "mpp6589a" with relation "pg_temp_4043580"
-NOTICE:  dropped partition "p20090312" for relation "mpp6589a"
-NOTICE:  CREATE TABLE will create partition "mpp6589a_1_prt_p20090309" for table "mpp6589a"
-NOTICE:  CREATE TABLE will create partition "mpp6589a_1_prt_p20090312_tmp" for table "mpp6589a"
 select pg_get_partition_def('mpp6589a'::regclass,true);
                                  pg_get_partition_def                                  
 ---------------------------------------------------------------------------------------
@@ -4709,10 +4620,6 @@ select pg_get_partition_def('mpp6589b'::regclass,true);
 ALTER TABLE mpp6589b 
 SPLIT PARTITION p20090312 AT( '20090310' ) 
 INTO( PARTITION p20090309, PARTITION p20090312_tmp);
-NOTICE:  exchanged partition "p20090312" of relation "mpp6589b" with relation "pg_temp_4043944"
-NOTICE:  dropped partition "p20090312" for relation "mpp6589b"
-NOTICE:  CREATE TABLE will create partition "mpp6589b_1_prt_p20090309" for table "mpp6589b"
-NOTICE:  CREATE TABLE will create partition "mpp6589b_1_prt_p20090312_tmp" for table "mpp6589b"
 select pg_get_partition_def('mpp6589b'::regclass,true);
                                 pg_get_partition_def                                 
 -------------------------------------------------------------------------------------
@@ -5616,10 +5523,6 @@ ALTER TABLE MPP10223pk
  ALTER PARTITION min15part 
 SPLIT PARTITION  P_FUTURE AT ('2010-06-25') 
 INTO (PARTITION P20010101, PARTITION P_FUTURE);
-NOTICE:  exchanged partition "p_future" of partition "min15part" of relation "mpp10223pk" with relation "pg_temp_4049276"
-NOTICE:  dropped partition "p_future" for partition "min15part" of relation "mpp10223pk"
-NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_min15part_2_prt_p20010101" for table "mpp10223pk_1_prt_min15part"
-NOTICE:  CREATE TABLE will create partition "mpp10223pk_1_prt_min15part_2_prt_p_future" for table "mpp10223pk_1_prt_min15part"
 drop table mpp10223pk;
 -- rebuild the table without a primary key
 CREATE TABLE MPP10223
@@ -5695,10 +5598,6 @@ ALTER TABLE MPP10223
  ALTER PARTITION min15part 
 SPLIT PARTITION  P_FUTURE AT ('2010-06-25') 
 INTO (PARTITION P20010101, PARTITION P_FUTURE2);
-NOTICE:  exchanged partition "p_future" of partition "min15part" of relation "mpp10223" with relation "pg_temp_4050688"
-NOTICE:  dropped partition "p_future" for partition "min15part" of relation "mpp10223"
-NOTICE:  CREATE TABLE will create partition "mpp10223_1_prt_min15part_2_prt_p20010101" for table "mpp10223_1_prt_min15part"
-NOTICE:  CREATE TABLE will create partition "mpp10223_1_prt_min15part_2_prt_p_future2" for table "mpp10223_1_prt_min15part"
 select pg_get_partition_def('mpp10223'::regclass,true);
                                                                             pg_get_partition_def                                                                            
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5748,10 +5647,6 @@ NOTICE:  CREATE TABLE will create partition "mpp10223b_1_prt_p1_2_prt_sp2" for t
 alter table mpp10223b alter partition p1 
 split partition for (rank(1) ) at (25)
 into (partition sp2, partition sp3);
-NOTICE:  exchanged partition "sp2" of partition "p1" of relation "mpp10223b" with relation "pg_temp_4051659"
-NOTICE:  dropped partition "sp2" for partition "p1" of relation "mpp10223b"
-NOTICE:  CREATE TABLE will create partition "mpp10223b_1_prt_p1_2_prt_sp2" for table "mpp10223b_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "mpp10223b_1_prt_p1_2_prt_sp3" for table "mpp10223b_1_prt_p1"
 select partitiontablename,partitionposition,partitionrangestart,
        partitionrangeend from pg_partitions where tablename = 'mpp10223b'
            order by partitionposition;
@@ -5947,10 +5842,6 @@ ALTER TABLE mpp10321a
 ALTER PARTITION min15part
 SPLIT PARTITION  P_FUTURE AT ('2010-06-25')
 INTO (PARTITION P20010101, PARTITION P_FUTURE);
-NOTICE:  exchanged partition "p_future" of partition "min15part" of relation "mpp10321a" with relation "pg_temp_4055957"
-NOTICE:  dropped partition "p_future" for partition "min15part" of relation "mpp10321a"
-NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_min15part_2_prt_p20010101" for table "mpp10321a_1_prt_min15part"
-NOTICE:  CREATE TABLE will create partition "mpp10321a_1_prt_min15part_2_prt_p_future" for table "mpp10321a_1_prt_min15part"
 DROP TABLE mpp10321a;
 -- test for default partition with boundary spec
 create table bhagp_range (a int, b int) 
@@ -6058,10 +5949,6 @@ ERROR:  AT clause parameter is not a member of the target partition specificatio
 -- good split
 alter table cov1 split partition p1 at (5,6,7) 
 into (partition p1, partition p2);
-NOTICE:  exchanged partition "p1" of relation "cov1" with relation "pg_temp_4057081"
-NOTICE:  dropped partition "p1" for relation "cov1"
-NOTICE:  CREATE TABLE will create partition "cov1_1_prt_p1" for table "cov1"
-NOTICE:  CREATE TABLE will create partition "cov1_1_prt_p2" for table "cov1"
 select partitionboundary from pg_partitions where tablename = 'cov1';
          partitionboundary          
 ------------------------------------
@@ -6119,10 +6006,6 @@ alter table test_table split default partition
         start (3)
 	end (4)
 	into (partition p2, partition default_partition);
-NOTICE:  exchanged partition "default_partition" of relation "test_table" with relation "pg_temp_4057318"
-NOTICE:  dropped partition "default_partition" for relation "test_table"
-NOTICE:  CREATE TABLE will create partition "test_table_1_prt_p2" for table "test_table"
-NOTICE:  CREATE TABLE will create partition "test_table_1_prt_default_partition" for table "test_table"
 select relname, distkey as distribution_attributes from
 gp_distribution_policy p, pg_class c where p.localoid = c.oid and 
 relname like 'test_table%' order by p.localoid;
@@ -6346,10 +6229,6 @@ alter table s add partition s_test
 NOTICE:  CREATE TABLE will create partition "s_1_prt_s_test" for table "s"
 alter table s split partition for (date '2008-01-03') at (date '2008-01-04')
   into (partition s_test, partition s_test2);
-NOTICE:  exchanged partition "s_test" of relation "s" with relation "pg_temp_4058400"
-NOTICE:  dropped partition "s_test" for relation "s"
-NOTICE:  CREATE TABLE will create partition "s_1_prt_s_test" for table "s"
-NOTICE:  CREATE TABLE will create partition "s_1_prt_s_test2" for table "s"
 select 
     relname, 
     (select count(distinct content) - 1 
@@ -6609,10 +6488,6 @@ create index s_heap_index on s_heap (i2);
 NOTICE:  building index for child partition "s_heap_1_prt_def"
 alter table s_heap split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
-NOTICE:  exchanged partition "def" of relation "s_heap" with relation "pg_temp_4060677"
-NOTICE:  dropped partition "def" for relation "s_heap"
-NOTICE:  CREATE TABLE will create partition "s_heap_1_prt_def5" for table "s_heap"
-NOTICE:  CREATE TABLE will create partition "s_heap_1_prt_def0" for table "s_heap"
 select * from s_heap_1_prt_def0;
  i1 |  t1  | i2 | n1  | b1 
 ----+------+----+-----+----
@@ -6642,10 +6517,6 @@ create index s_heap_ao_index on s_heap_ao (i2);
 NOTICE:  building index for child partition "s_heap_ao_1_prt_def"
 alter table s_heap_ao split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
-NOTICE:  exchanged partition "def" of relation "s_heap_ao" with relation "pg_temp_4061000"
-NOTICE:  dropped partition "def" for relation "s_heap_ao"
-NOTICE:  CREATE TABLE will create partition "s_heap_ao_1_prt_def5" for table "s_heap_ao"
-NOTICE:  CREATE TABLE will create partition "s_heap_ao_1_prt_def0" for table "s_heap_ao"
 select * from s_heap_ao_1_prt_def0;
  i1 |  t1  | i2 | n1  | b1 
 ----+------+----+-----+----
@@ -6672,10 +6543,6 @@ create index s_heap_co_index on s_heap_co (i2);
 NOTICE:  building index for child partition "s_heap_co_1_prt_def"
 alter table s_heap_co split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
-NOTICE:  exchanged partition "def" of relation "s_heap_co" with relation "pg_temp_4061341"
-NOTICE:  dropped partition "def" for relation "s_heap_co"
-NOTICE:  CREATE TABLE will create partition "s_heap_co_1_prt_def5" for table "s_heap_co"
-NOTICE:  CREATE TABLE will create partition "s_heap_co_1_prt_def0" for table "s_heap_co"
 select * from s_heap_co_1_prt_def0;
  i1 |  t1  | i2 | n1  | b1 
 ----+------+----+-----+----
@@ -7147,10 +7014,6 @@ NOTICE:  CREATE TABLE will create partition "parttest_t_1_prt_p2" for table "par
 alter table parttest_t drop column d;
 -- Alter table split partition
 alter table parttest_t split partition for(1) at (2) into (partition p11, partition p22);
-NOTICE:  exchanged partition "p1" of relation "parttest_t" with relation "pg_temp_4062621"
-NOTICE:  dropped partition "p1" for relation "parttest_t"
-NOTICE:  CREATE TABLE will create partition "parttest_t_1_prt_p11" for table "parttest_t"
-NOTICE:  CREATE TABLE will create partition "parttest_t_1_prt_p22" for table "parttest_t"
 insert into  parttest_t values(1,2,'a');
 select * from parttest_t;
  a | b | c 
@@ -7992,10 +7855,6 @@ NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_21" for table
 NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_Old" for table "test_split_part"
 insert into test_split_part (log_id , f_array) select id, '{10}' from generate_series(1,1000) id;
 ALTER TABLE test_split_part SPLIT DEFAULT PARTITION START (201) INCLUSIVE END (301) EXCLUSIVE INTO (PARTITION "New", DEFAULT PARTITION);
-NOTICE:  exchanged partition "other_log_ids" of relation "test_split_part" with relation "pg_temp_325194"
-NOTICE:  dropped partition "other_log_ids" for relation "test_split_part"
-NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_New" for table "test_split_part"
-NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_other_log_ids" for table "test_split_part"
 -- Only the root partition should have automatically created an array type
 select typname, typtype, typcategory from pg_type where typname like '%test_split_part%' and typcategory = 'A';
      typname      | typtype | typcategory 

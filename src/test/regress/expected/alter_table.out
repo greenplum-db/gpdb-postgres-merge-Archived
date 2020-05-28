@@ -3469,10 +3469,6 @@ ALTER TABLE test_part DROP COLUMN field1;
 ALTER TABLE test_part   SPLIT DEFAULT PARTITION
 START('2018-01-01'::date)
        END( '2018-02-01'::date);
-NOTICE:  exchanged partition "p_overflow" of relation "test_part" with relation "pg_temp_32601"
-NOTICE:  dropped partition "p_overflow" for relation "test_part"
-NOTICE:  CREATE TABLE will create partition "test_part_1_prt_r28232684" for table "test_part"
-NOTICE:  CREATE TABLE will create partition "test_part_1_prt_p_overflow" for table "test_part"
 ANALYZE test_part;
 ANALYZE test_ref;
 SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1 LIMIT 10;
