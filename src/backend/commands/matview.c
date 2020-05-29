@@ -349,8 +349,11 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
 	/* Generate the data, if wanted. */
-	if (!stmt->skipData)
-		processed = refresh_matview_datafill(dest, dataQuery, queryString, refreshClause);
+	/*
+	 * In GPDB, we call refresh_matview_datafill() even when WITH NO DATA was
+	 * specified, because it will dispatch the operation to the segments.
+	 */
+	processed = refresh_matview_datafill(dest, dataQuery, queryString, refreshClause);
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
