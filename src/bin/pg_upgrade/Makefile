@@ -44,7 +44,7 @@ clean distclean maintainer-clean:
 		   hostfile regression.diffs aomd_filehandler.c
 
 greenplum/aomd_filehandler.c: $(top_srcdir)/src/backend/access/appendonly/aomd_filehandler.c
-	rm -f $@ && $(LN_S) ../$< $@
+	rm -f $@ && cd greenplum && $(LN_S) ../$< aomd_filehandler.c
 
 # GPDB_95_MERGE_FIXME:
 # GPDB want to run installcheck of pg_upgrade in the end of installcheck-world
