@@ -967,10 +967,10 @@ drop table f;
 create table f (n numeric(20, 2)) partition by range(n) (start(1::bigint)
 end(10000::bigint));
 drop table f;
+--should fail, there's no assignment cast from text to numeric
 create table f (n numeric(20, 2)) partition by range(n) (start(1::bigint)
 end(10000::text));
-drop table f;
---should fail. bool -> numeric makes no sense
+--should fail. there's no assignment cast from bool to numeric
 create table f (n numeric(20, 2)) partition by range(n) (start(1::bigint)
 end('f'::bool));
 
