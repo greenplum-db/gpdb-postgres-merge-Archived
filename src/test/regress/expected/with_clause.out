@@ -2268,9 +2268,9 @@ UNION ALL
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  HashAggregate
-               Group Key: ('a'::text), cte.j
+               Group Key: 'a'::text, cte.j
                ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                     Hash Key: ('a'::text), cte.j
+                     Hash Key: 'a'::text, cte.j
                      ->  Subquery Scan on cte
                            ->  Shared Scan (share slice:id 2:0)
                                  ->  Seq Scan on foo
