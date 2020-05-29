@@ -93,7 +93,7 @@ s/overlaps existing partition "r\d+"/partition "r##########"/
 
 # Mask out some numbers (part of temp table schema) that vary from run to run.
 m/Table "pg_temp_\d+.temp/
-s/Table "pg_temp_\d+.temp/Table "pg_temp_#####/
+s/\s*Table "pg_temp_\d+.temp\s*/Table "pg_temp_#####/
 
 # Mask out some numbers (part of temp table schema) that vary from run to run.
 m/Hash Cond: \(pg_temp_\d+/
