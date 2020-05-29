@@ -2834,7 +2834,9 @@ getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc)
 					}
 				}
 				if (!found)
-					elog(ERROR, "could not find DISTRIBUTED BY column \"%s\"", colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("column \"%s\" does not exist", colname)));
 			}
 
 			return createHashPartitionedPolicy(policykeys,
