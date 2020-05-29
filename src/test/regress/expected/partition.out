@@ -3870,6 +3870,8 @@ distributed by (i) partition by list (i) (
   partition c values (3)
 );
 ERROR:  exclusion constraints are not supported on partitioned tables
+LINE 4:   CONSTRAINT part_excl EXCLUDE (i WITH =) )
+          ^
 create table parttab_with_excl_constraint (
   i int,
   j int)
@@ -3879,7 +3881,9 @@ distributed by (i) partition by list (i) (
   partition c values (3)
 );
 alter table parttab_with_excl_constraint ADD CONSTRAINT part_excl EXCLUDE (i WITH =);
-ERROR:  cannot create exclusion constraint on partitioned table "parttab_with_excl_constraint"
+ERROR:  exclusion constraints are not supported on partitioned tables
+LINE 1: alter table parttab_with_excl_constraint ADD CONSTRAINT part...
+                                                     ^
 drop table parttab_with_excl_constraint;
 -- MPP-6297: test special WITH(tablename=...) syntax for dump/restore
 -- original table was:
