@@ -3678,13 +3678,9 @@ alter_table_partition_id_spec:
  			 */
            | FOR '(' func_name '(' func_arg_list opt_sort_clause ')' ')'
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement or remove this. */
-					elog(ERROR, "not implemented");
-#if 0
 					Node		   *arg;
 					Value		   *val;
 					Node		   *fname;
-					AlterPartitionId *n;
 
                     /* allow RANK only */
 					if (list_length($3) != 1)
@@ -3707,6 +3703,11 @@ alter_table_partition_id_spec:
 					/* we don't want a sort clause */
 					if ($6)
 						parser_yyerror("syntax error");
+
+					/* GDPB_12_MERGE_FIXME: need to re-implement or remove this. */
+					elog(ERROR, "addressing partition by RANK not implemented");
+#if 0
+					AlterPartitionId *n;
 
 					n = makeNode(AlterPartitionId);
 					n->idtype = AT_AP_IDRank;
