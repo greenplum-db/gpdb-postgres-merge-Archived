@@ -678,7 +678,7 @@ set search_path=public;
 drop schema if exists mpp17582 cascade;
 NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table mpp17582.testbug_char5
-drop cascades to append only table mpp17582.ao_multi_level_part_table
+drop cascades to table mpp17582.ao_multi_level_part_table
 drop cascades to table mpp17582.dim
 drop cascades to table mpp17582.load
 -- Test for tuple descriptor leak during row splitting

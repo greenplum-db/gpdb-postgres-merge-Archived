@@ -11136,12 +11136,12 @@ NOTICE:  drop cascades to table emp
 NOTICE:  drop cascades to table bar
 NOTICE:  drop cascades to table foo
 NOTICE:  drop cascades to table tbl87
-NOTICE:  drop cascades to append only columnar table countrylanguage_co
-NOTICE:  drop cascades to append only columnar table country_co
-NOTICE:  drop cascades to append only columnar table city_co
-NOTICE:  drop cascades to append only table countrylanguage_ao
-NOTICE:  drop cascades to append only table country_ao
-NOTICE:  drop cascades to append only table city_ao
+NOTICE:  drop cascades to table countrylanguage_co
+NOTICE:  drop cascades to table country_co
+NOTICE:  drop cascades to table city_co
+NOTICE:  drop cascades to table countrylanguage_ao
+NOTICE:  drop cascades to table country_ao
+NOTICE:  drop cascades to table city_ao
 NOTICE:  drop cascades to table countrylanguage
 NOTICE:  drop cascades to table country
 NOTICE:  drop cascades to table city

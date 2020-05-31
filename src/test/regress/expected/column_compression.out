@@ -517,8 +517,8 @@ execute ccddlcheck;
 
 drop table ccddlparent cascade;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to append only columnar table ccddlchild
-drop cascades to append only columnar table ccddlchild2
+DETAIL:  drop cascades to table ccddlchild
+drop cascades to table ccddlchild2
 -- Multiple inheritance. Not particularly interesting because the
 -- encoding options are not copied from any parent, but let's test
 -- it anyway.
@@ -550,7 +550,7 @@ execute ccddlcheck;
 (7 rows)
 
 drop table ccddlparent1 cascade;
-NOTICE:  drop cascades to append only columnar table ccddlchild
+NOTICE:  drop cascades to table ccddlchild
 drop table ccddlparent2 cascade;
 -- Conflict between default and with, in the LIKE case
 create table ccddl (i int);

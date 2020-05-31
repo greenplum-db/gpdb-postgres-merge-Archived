@@ -1767,8 +1767,8 @@ drop cascades to table p
 drop cascades to table sales
 drop cascades to table sales_par
 drop cascades to table sales_par2
-drop cascades to append only columnar table sales_par_co
+drop cascades to table sales_par_co
 drop cascades to function insertintosales(character varying,integer,character varying)
 drop cascades to function insertmanyintosales(integer,character varying)
-drop cascades to append only table s_ao
+drop cascades to table s_ao
 -- end_ignore

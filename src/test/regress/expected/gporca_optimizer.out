@@ -10406,8 +10406,8 @@ where het_bm.i between 2 and 5;
 drop schema bm cascade;
 NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to table bm.hom_bm_heap
-drop cascades to append only table bm.hom_bm_ao
-drop cascades to append only columnar table bm.hom_bm_aoco
+drop cascades to table bm.hom_bm_ao
+drop cascades to table bm.hom_bm_aoco
 drop cascades to table bm.het_bm
 drop cascades to table bm.outer_tab
 reset optimizer_enable_hashjoin;

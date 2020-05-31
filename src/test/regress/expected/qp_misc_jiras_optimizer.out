@@ -5847,11 +5847,11 @@ explain select b from epsilon_test where b in (11,30) limit 30;
 drop schema qp_misc_jiras cascade;
 NOTICE:  drop cascades to table qp_misc_jiras._tbl10050_test
 NOTICE:  drop cascades to table qp_misc_jiras.tbl13409_test
-NOTICE:  drop cascades to append only columnar table qp_misc_jiras.test_co
-NOTICE:  drop cascades to append only table qp_misc_jiras.test_ao
+NOTICE:  drop cascades to table qp_misc_jiras.test_co
+NOTICE:  drop cascades to table qp_misc_jiras.test_ao
 NOTICE:  drop cascades to table qp_misc_jiras.test_heap
-NOTICE:  drop cascades to append only columnar table qp_misc_jiras.tbl9706aoc
-NOTICE:  drop cascades to append only table qp_misc_jiras.tbl9706ao
+NOTICE:  drop cascades to table qp_misc_jiras.tbl9706aoc
+NOTICE:  drop cascades to table qp_misc_jiras.tbl9706ao
 NOTICE:  drop cascades to table qp_misc_jiras.tablecc
 NOTICE:  drop cascades to table qp_misc_jiras.tablebb
 NOTICE:  drop cascades to table qp_misc_jiras.tableaa
