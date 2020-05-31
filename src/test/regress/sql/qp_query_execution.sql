@@ -252,7 +252,7 @@ analyze b;
 select qx_count_operator('select abbp.k, abbp.t from abbp left outer join b on abbp.k = b.k where abbp.t is not null and abbp.p = 6;', 'Hash Right Join', 'Hash Left Join');
 select abbp.k, abbp.t from abbp left outer join b on abbp.k = b.k where abbp.t is not null and abbp.p = 6 order by 1, 2 desc limit 10;
 
-select qx_count_operator('select abbp.b, abbp.t from abbp left outer join b on abbp.a = b.k where abbp.t is not null and abbp.a = 6;', 'Hash Left Join', 'Hash Left Join');
+select qx_count_operator('select abbp.b, abbp.t from abbp left outer join b on abbp.a = b.k where abbp.t is not null and abbp.a = 6;', 'Hash Right Join', 'Hash Left Join');
 select abbp.b, abbp.t from abbp left outer join b on abbp.a = b.k where abbp.t is not null and abbp.a = 6 order by 1, 2 asc limit 10;
 
 -- Partitioned tables with decimal type distribution keys
