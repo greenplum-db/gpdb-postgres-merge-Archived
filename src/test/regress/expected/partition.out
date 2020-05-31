@@ -2345,7 +2345,6 @@ drop table k;
 create table k (i int) with (appendonly = true, orientation = column) distributed by (i) partition by range(i) (start(1) end(10) every(5));
 alter table k add partition co start(11) end (17) with (appendonly = true, orientation = column);
 alter table k split partition co at (14) into (partition co1, partition co2);
-NOTICE:  dropped partition "co" for relation "k"
 drop table k;
 create table k (a int, b int) with (appendonly = true) distributed by (a) partition by list(b)
 (
@@ -2353,7 +2352,6 @@ create table k (a int, b int) with (appendonly = true) distributed by (a) partit
 	partition b values (5, 6, 7 ,8) with (appendonly = true, orientation = column)
 );
 alter table k split partition for(2) at(2) into (partition one, partition two);
-NOTICE:  dropped partition "a" for relation "k"
 drop table k;
 -- Test errors for default handling
 create table k (i int) partition by range(i) (start(1) end(2), 
@@ -7719,7 +7717,6 @@ create table newpart(like sales);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 alter table newpart add constraint newpart_pkey primary key(pkid, option3);
 alter table sales split partition for(1) at (50) into (partition aa1, partition aa2);
-NOTICE:  dropped partition "aa" for relation "sales"
 select table_schema, table_name, constraint_name, constraint_type
 	from information_schema.table_constraints
 	where table_name in ('sales', 'newpart')
