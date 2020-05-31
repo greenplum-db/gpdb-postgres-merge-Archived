@@ -1165,6 +1165,8 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 		 */
 		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
 			appendonly_dml_finish(resultRelInfo->ri_RelationDesc, mtstate->operation);
+		if (RelationIsAoCols(resultRelInfo->ri_RelationDesc))
+			aoco_dml_finish(resultRelInfo->ri_RelationDesc, mtstate->operation);
 
 		ExecCloseIndices(resultRelInfo);
 		table_close(resultRelInfo->ri_RelationDesc, NoLock);
