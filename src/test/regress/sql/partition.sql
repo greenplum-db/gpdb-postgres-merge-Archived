@@ -2820,9 +2820,11 @@ from pg_partitions
 where tablename like ('mpp6979%');
 
 -- note that we have heap partitions in public, and ao table in mpp6979dummy
-select nspname, relname, relstorage from pg_class pc, pg_namespace ns 
-where
-pc.relnamespace=ns.oid and relname like ('mpp6979%');
+select nspname, relname, amname
+from pg_class pc
+inner join pg_namespace ns on pc.relnamespace=ns.oid
+left join pg_am am on am.oid = pc.relam
+where relname like ('mpp6979%');
 
 -- exchange the partition with the ao table.  
 -- Now we have an ao partition and mpp6979tab is heap!
@@ -2836,9 +2838,11 @@ where tablename like ('mpp6979%');
 
 -- the rank 1 partition is ao, but still in public, and 
 -- table mpp6979tab is now heap, but still in mpp6979dummy
-select nspname, relname, relstorage from pg_class pc, pg_namespace ns 
-where
-pc.relnamespace=ns.oid and relname like ('mpp6979%');
+select nspname, relname, amname
+from pg_class pc
+inner join pg_namespace ns on pc.relnamespace=ns.oid
+left join pg_am am on am.oid = pc.relam
+where relname like ('mpp6979%');
 
 drop table mpp6979part;
 drop table mpp6979dummy.mpp6979tab;
@@ -3926,8 +3930,8 @@ select gp_segment_id, attrelid::regclass, attnum, attoptions from gp_dist_random
 select gp_segment_id, attrelid::regclass, attnum, attoptions from pg_attribute_encoding where attrelid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
 select gp_segment_id, attrelid::regclass, attnum, attoptions from gp_dist_random('pg_attribute_encoding') where attrelid = 'pt_tab_encode_1_prt_s_xyz'::regclass order by 1,3 limit 5;
 
-select oid::regclass, relkind, relstorage, reloptions from pg_class where oid = 'pt_tab_encode_1_prt_s_abc'::regclass;
-select oid::regclass, relkind, relstorage, reloptions from pg_class where oid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_abc'::regclass;
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
 
 -- Ensure that only the correct type of partitions can be added
 create table at_range (a int) partition by range (a) (start(1) end(5));

@@ -5797,22 +5797,24 @@ where tablename like ('mpp6979%');
 (9 rows)
 
 -- note that we have heap partitions in public, and ao table in mpp6979dummy
-select nspname, relname, relstorage from pg_class pc, pg_namespace ns 
-where
-pc.relnamespace=ns.oid and relname like ('mpp6979%');
-   nspname    |       relname       | relstorage 
---------------+---------------------+------------
- public       | mpp6979part_1_prt_1 | h
- public       | mpp6979part_1_prt_2 | h
- public       | mpp6979part_1_prt_3 | h
- public       | mpp6979part_1_prt_4 | h
- public       | mpp6979part_1_prt_5 | h
- public       | mpp6979part_1_prt_6 | h
- public       | mpp6979part_1_prt_7 | h
- public       | mpp6979part_1_prt_8 | h
- public       | mpp6979part_1_prt_9 | h
- public       | mpp6979part         | h
- mpp6979dummy | mpp6979tab          | a
+select nspname, relname, amname
+from pg_class pc
+inner join pg_namespace ns on pc.relnamespace=ns.oid
+left join pg_am am on am.oid = pc.relam
+where relname like ('mpp6979%');
+   nspname    |       relname       |     amname      
+--------------+---------------------+-----------------
+ public       | mpp6979part         | 
+ public       | mpp6979part_1_prt_1 | heap
+ public       | mpp6979part_1_prt_2 | heap
+ public       | mpp6979part_1_prt_3 | heap
+ public       | mpp6979part_1_prt_4 | heap
+ public       | mpp6979part_1_prt_5 | heap
+ public       | mpp6979part_1_prt_6 | heap
+ public       | mpp6979part_1_prt_7 | heap
+ public       | mpp6979part_1_prt_8 | heap
+ public       | mpp6979part_1_prt_9 | heap
+ mpp6979dummy | mpp6979tab          | appendoptimized
 (11 rows)
 
 -- exchange the partition with the ao table.  
@@ -5838,22 +5840,24 @@ where tablename like ('mpp6979%');
 
 -- the rank 1 partition is ao, but still in public, and 
 -- table mpp6979tab is now heap, but still in mpp6979dummy
-select nspname, relname, relstorage from pg_class pc, pg_namespace ns 
-where
-pc.relnamespace=ns.oid and relname like ('mpp6979%');
-   nspname    |       relname       | relstorage 
---------------+---------------------+------------
- public       | mpp6979part_1_prt_2 | h
- public       | mpp6979part_1_prt_3 | h
- public       | mpp6979part_1_prt_4 | h
- public       | mpp6979part_1_prt_5 | h
- public       | mpp6979part_1_prt_6 | h
- public       | mpp6979part_1_prt_7 | h
- public       | mpp6979part_1_prt_8 | h
- public       | mpp6979part_1_prt_9 | h
- public       | mpp6979part         | h
- public       | mpp6979part_1_prt_1 | a
- mpp6979dummy | mpp6979tab          | h
+select nspname, relname, amname
+from pg_class pc
+inner join pg_namespace ns on pc.relnamespace=ns.oid
+left join pg_am am on am.oid = pc.relam
+where relname like ('mpp6979%');
+   nspname    |       relname       |     amname      
+--------------+---------------------+-----------------
+ public       | mpp6979part         | 
+ public       | mpp6979part_1_prt_1 | appendoptimized
+ public       | mpp6979part_1_prt_2 | heap
+ public       | mpp6979part_1_prt_3 | heap
+ public       | mpp6979part_1_prt_4 | heap
+ public       | mpp6979part_1_prt_5 | heap
+ public       | mpp6979part_1_prt_6 | heap
+ public       | mpp6979part_1_prt_7 | heap
+ public       | mpp6979part_1_prt_8 | heap
+ public       | mpp6979part_1_prt_9 | heap
+ mpp6979dummy | mpp6979tab          | heap
 (11 rows)
 
 drop table mpp6979part;
@@ -7845,16 +7849,16 @@ select gp_segment_id, attrelid::regclass, attnum, attoptions from gp_dist_random
              2 | pt_tab_encode_1_prt_s_xyz |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
 (5 rows)
 
-select oid::regclass, relkind, relstorage, reloptions from pg_class where oid = 'pt_tab_encode_1_prt_s_abc'::regclass;
-            oid            | relkind | relstorage |                               reloptions                               
----------------------------+---------+------------+------------------------------------------------------------------------
- pt_tab_encode_1_prt_s_abc | r       | c          | {appendonly=true,orientation=column,compresstype=zlib,compresslevel=1}
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_abc'::regclass;
+            oid            | relkind | amname |             reloptions              
+---------------------------+---------+--------+-------------------------------------
+ pt_tab_encode_1_prt_s_abc | r       | aoco   | {compresstype=zlib,compresslevel=1}
 (1 row)
 
-select oid::regclass, relkind, relstorage, reloptions from pg_class where oid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
-            oid            | relkind | relstorage |                               reloptions                               
----------------------------+---------+------------+------------------------------------------------------------------------
- pt_tab_encode_1_prt_s_xyz | r       | c          | {appendonly=true,orientation=column,compresstype=zlib,compresslevel=1}
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
+            oid            | relkind | amname |             reloptions              
+---------------------------+---------+--------+-------------------------------------
+ pt_tab_encode_1_prt_s_xyz | r       | aoco   | {compresstype=zlib,compresslevel=1}
 (1 row)
 
 -- Ensure that only the correct type of partitions can be added
