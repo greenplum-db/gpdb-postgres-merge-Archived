@@ -330,7 +330,7 @@ extern void validate_and_adjust_options(StdRdOptions *result, relopt_value *opti
 /* attribute enconding specific functions */
 extern List *transformAttributeEncoding(List *aocoColumnEnconding,
 										List *tableElts, List *withOptions,
-										Oid accessMethodId);
+										bool *found_enc);
 extern List *transformStorageEncodingClause(List *options);
 extern List *form_default_storage_directive(List *enc);
 

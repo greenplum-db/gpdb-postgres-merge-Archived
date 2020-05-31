@@ -1096,19 +1096,19 @@ get_option_set(relopt_value *options, int num_options, const char *opt_name)
  *
  */
 static List *
-fillin_encoding(List *aocoColumnEnconding)
+fillin_encoding(List *aocoColumnEncoding)
 {
 	bool foundCompressType = false;
 	bool foundCompressTypeNone = false;
 	char *cmplevel = NULL;
 	bool foundBlockSize = false;
 	char *arg;
-	List *retList = list_copy(aocoColumnEnconding);
+	List *retList = list_copy(aocoColumnEncoding);
 	ListCell *lc;
 	DefElem *el;
 	const StdRdOptions *ao_opts = currentAOStorageOptions();
 
-	foreach(lc, aocoColumnEnconding)
+	foreach(lc, aocoColumnEncoding)
 	{
 		el = lfirst(lc);
 
@@ -1233,7 +1233,7 @@ encodings_overlap(List *a, List *b)
  * 	  gp_default_storage_options
  */
 static void
-validateColumnStorageEncodingClauses(List *aocoColumnEnconding,
+validateColumnStorageEncodingClauses(List *aocoColumnEncoding,
 									 List *tableElts)
 {
 	ListCell *lc;
@@ -1242,8 +1242,6 @@ validateColumnStorageEncodingClauses(List *aocoColumnEnconding,
 		char colname[NAMEDATALEN];
 		int count;
 	} *ce = NULL;
-
-	Assert(aocoColumnEnconding);
 
 	/* Generate a hash table for all the columns */
 	foreach(lc, tableElts)
@@ -1309,7 +1307,7 @@ validateColumnStorageEncodingClauses(List *aocoColumnEnconding,
 	 * All column reference storage directives without the DEFAULT
 	 * clause should refer to real columns.
 	 */
-	foreach(lc, aocoColumnEnconding)
+	foreach(lc, aocoColumnEncoding)
 	{
 		ColumnReferenceStorageDirective *c = lfirst(lc);
 
@@ -1346,7 +1344,7 @@ validateColumnStorageEncodingClauses(List *aocoColumnEnconding,
 
 	hash_destroy(ht);
 
-	foreach(lc, aocoColumnEnconding)
+	foreach(lc, aocoColumnEncoding)
 	{
 		ColumnReferenceStorageDirective *crsd = lfirst(lc);
 
@@ -1406,12 +1404,12 @@ form_default_storage_directive(List *enc)
  * hence the concatenation of the extra elements.
  */
 List *
-transformStorageEncodingClause(List *aocoColumnEnconding)
+transformStorageEncodingClause(List *aocoColumnEncoding)
 {
 	ListCell *lc;
 	DefElem *dl;
 
-	foreach(lc, aocoColumnEnconding)
+	foreach(lc, aocoColumnEncoding)
 	{
 		dl = (DefElem *) lfirst(lc);
 		if (pg_strncasecmp(dl->defname, SOPT_CHECKSUM, strlen(SOPT_CHECKSUM)) == 0)
@@ -1424,43 +1422,54 @@ transformStorageEncodingClause(List *aocoColumnEnconding)
 	}
 
 	/* add defaults for missing values */
-	aocoColumnEnconding = fillin_encoding(aocoColumnEnconding);
+	aocoColumnEncoding = fillin_encoding(aocoColumnEncoding);
 
-	return aocoColumnEnconding;
+	return aocoColumnEncoding;
 }
 
 /*
- * transform AOCO specific enconding clause options
+ * Parse and validate COLUMN <col> ENCODING ... directives.
+ *
+ * The 'columns', 'stenc' and 'taboptions' arguments are parts of the
+ * CREATE TABLE command:
+ *
+ * 'columns' - list of ColumnDefs
+ * 'stenc' - list of ColumnReferenceStorageDirectives
+ * 'withOptions' - list of WITH options
+ *
+ * ENCODING options can be attached to column definitions, like
+ * "mycolumn integer ENCODING ..."; these go into ColumnDefs. They
+ * can also be specified with the "COLUMN mycolumn ENCODING ..." syntax;
+ * they go into the ColumnReferenceStorageDirectives. And table-wide
+ * defaults can be given in the WITH clause.
+ *
+ * If any ENCODING clauses were given, *found_enc is set to true.
+ * That's a separate output argument, because the returned list will
+ * include defaults from the GUCs etc. even if no ENCODING clause was
+ * given in this CREATE TABLE command.
+ *
+ * NOTE: This is *not* performed during the parse analysis phase, like
+ * most transformation, but only later in DefineRelation(). This needs
+ * access to possible inherited columns, so it can only be done after
+ * expanding them.
  */
 List *
-transformAttributeEncoding(List *aocoColumnEnconding,
-						   List *tableElts,
+transformAttributeEncoding(List *columns,
+						   List *stenc,
 						   List *withOptions,
-						   Oid accessMethodId)
+						   bool *found_enc)
 {
-	ListCell *lc;
-	bool found_enc = aocoColumnEnconding != NIL;
-	bool isAOCO = accessMethodId == AOCO_TABLE_AM_OID;
+	ListCell   *lc;
 	ColumnReferenceStorageDirective *deflt = NULL;
-	List *newenc = NIL;
-	List *tmpenc;
-	MemoryContext tmpCxt = NULL;
-	MemoryContext oldCxt = NULL;
+	List	   *newenc = NIL;
+	List	   *tmpenc;
 
-	/* We only support the attribute encoding clause on AOCO tables */
-	if (aocoColumnEnconding && !isAOCO)
-		ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ENCODING clause only supported with column oriented tables")));
+	*found_enc = false;
 
-	/* Use the temporary context to avoid leaving behind so much garbage. */
-	tmpCxt = AllocSetContextCreate(CurrentMemoryContext,
-								   "AOCO Transform Attribute Enconding tmp cxt",
-								   ALLOCSET_DEFAULT_SIZES);
-	oldCxt = MemoryContextSwitchTo(tmpCxt);
+	validateColumnStorageEncodingClauses(stenc, columns);
 
 	/* get the default clause, if there is one. */
-	foreach(lc, aocoColumnEnconding)
+	foreach(lc, stenc)
 	{
 		ColumnReferenceStorageDirective *c = lfirst(lc);
 		Insist(IsA(c, ColumnReferenceStorageDirective));
@@ -1486,6 +1495,8 @@ transformAttributeEncoding(List *aocoColumnEnconding,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("DEFAULT COLUMN ENCODING clause cannot override values set in WITH clause")));
 		}
+
+		*found_enc = true;
 	}
 
 	/*
@@ -1505,16 +1516,17 @@ transformAttributeEncoding(List *aocoColumnEnconding,
 	 * -- i.e., COLUMN name ENCODING () -- apply that. Otherwise, apply the
 	 * default.
 	 */
-	foreach(lc, tableElts)
+	foreach(lc, columns)
 	{
-		Node *elem = (Node *)lfirst(lc);
+		Node	   *elem = (Node *) lfirst(lc);
 		ColumnDef *d;
 		ColumnReferenceStorageDirective *c;
 
+		/* GPDB_12_MERGE_FIXME: can we have anything else here? This used to be an Insist */
 		if (!IsA(elem, ColumnDef))
 			continue;
 
-		d = (ColumnDef *)elem;
+		d = (ColumnDef *) elem;
 
 		c = makeNode(ColumnReferenceStorageDirective);
 		c->column = pstrdup(d->colname);
@@ -1529,8 +1541,8 @@ transformAttributeEncoding(List *aocoColumnEnconding,
 		 */
 		if (d->encoding)
 		{
-			found_enc = true;
 			c->encoding = transformStorageEncodingClause(d->encoding);
+			*found_enc = true;
 		}
 		else
 		{
@@ -1553,27 +1565,6 @@ transformAttributeEncoding(List *aocoColumnEnconding,
 		}
 		newenc = lappend(newenc, c);
 	}
-
-	/* Check again in case we expanded a some column encoding clauses */
-	if (!isAOCO)
-	{
-		if (found_enc)
-			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ENCODING clause only supported with column oriented tables")));
-		else
-			newenc = NULL;
-	}
-
-	if (!newenc)
-		return NULL;
-
-	validateColumnStorageEncodingClauses(newenc, tableElts);
-
-	/* copy the result out of the temporary memory context */
-	MemoryContextSwitchTo(oldCxt);
-	newenc = copyObject(newenc);
-	MemoryContextDelete(tmpCxt);
 
 	return newenc;
 }

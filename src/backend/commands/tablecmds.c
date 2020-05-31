@@ -577,11 +577,13 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		Node	   *node = lfirst(listptr);
 
 		if (IsA(node, CookedConstraint))
+		{
+			Assert(Gp_role == GP_ROLE_EXECUTE);
 			cooked_constraints = lappend(cooked_constraints, node);
+		}
 		else
 			schema = lappend(schema, node);
 	}
-	Assert(cooked_constraints == NIL || Gp_role == GP_ROLE_EXECUTE);
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -600,7 +602,12 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	if (stmt->partspec != NULL)
 	{
-		if (relkind != RELKIND_RELATION)
+		/*
+		 * In QD, the caller calls us with RELKIND_RELATION, and we turn it int
+		 * REKIND_PARTITIONED_TABLE here. In QE, we received the modified
+		 * CreateStmt from QD where relkind has already been set to RELKIND_PARTITIONED_TABLE
+		 */
+		if (relkind != (Gp_role == GP_ROLE_EXECUTE ? RELKIND_PARTITIONED_TABLE : RELKIND_RELATION))
 			elog(ERROR, "unexpected relkind: %d", (int) relkind);
 
 		relkind = RELKIND_PARTITIONED_TABLE;
@@ -698,8 +705,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		/* 
 		 * MPP-8238 : inconsistent tablespaces between segments and master 
 		 */
-		if (shouldDispatch)
-			stmt->tablespacename = get_tablespace_name(tablespaceId);
+		stmt->tablespacename = get_tablespace_name(tablespaceId);
 	}
 	else
 		tablespaceId = InvalidOid;
@@ -759,12 +765,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	if (accessMethod != NULL)
 		accessMethodId = get_table_am_oid(accessMethod, false);
 
-	/* Greenplum: error out early for this case */
-	if (stmt->inhRelations && accessMethodId == AOCO_TABLE_AM_OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("INHERITS clause cannot be used with column oriented tables")));
-
 	/*
 	 * Parse and validate reloptions, if any.
 	 */
@@ -806,21 +806,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	else
 		(void) heap_reloptions(relkind, reloptions, true);
 
-	/*
-	 * Greenplum: aoco specific encoding clause is tranformed here. Prior to
-	 * upstream v12 it belonged in the parser. With the introduction of the
-	 * tableam api, the accessMethodId needed was not yet available until this
-	 * point of processing.
-	 *
-	 * Ideally this could have happened even later confined in
-	 * AddRelationAttributeEncodings(). However, since this function can
-	 * legitimately error out, it is prefered to call it before updating the
-	 * catalog in heap_create_with_catalog().
-	 */
-	stmt->attr_encodings = transformAttributeEncoding(stmt->attr_encodings,
-													  stmt->tableElts,
-													  stmt->options,
-													  accessMethodId);
 	if (stmt->ofTypename)
 	{
 		AclResult	aclresult;
@@ -939,6 +924,50 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	/*
+	 * Analyze AOCS attribute encoding clauses.
+	 *
+	 * Ideally this could have happened even later confined in
+	 * AddRelationAttributeEncodings(). However, since this function can
+	 * legitimately error out, it is prefered to call it before updating the
+	 * catalog in heap_create_with_catalog().
+	 *
+	 * This is done in dispatcher (and in utility mode). In QE, we receive
+	 * the already-processed options from the QD.
+	 */
+	if ((relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW) &&
+		Gp_role != GP_ROLE_EXECUTE)
+	{
+		bool		found_enc;
+
+		stmt->attr_encodings = transformAttributeEncoding(schema,
+														  stmt->attr_encodings,
+														  stmt->options,
+														  &found_enc);
+		if ((accessMethodId != APPENDOPTIMIZED_TABLE_AM_OID &&
+			 accessMethodId != AOCO_TABLE_AM_OID))
+		{
+			/*
+			 * ENCODING options were specified, but the table is not
+			 * column-oriented.
+			 *
+			 * That's normally an error. But if we're creating a partition as
+			 * part of a CREATE TABLE ... PARTITION BY ... command, ignore the
+			 * ENCODING options instead. The parent table might be AOCS, while
+			 * some of the partitions are not, or vice versa, so options can
+			 * make sense for some parts of the partition hierarchy, even if
+			 * it doesn't for this partition.
+			 */
+			if (found_enc && !stmt->partbound && !stmt->partspec)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("ENCODING clause only supported with column oriented tables")));
+			}
+			stmt->attr_encodings = NIL;
+		}
+	}
+
+	/*
 	 * In executor mode, we received all the defaults and constraints
 	 * in pre-cooked form from the QD, so forget about the lists we
 	 * constructed just above, and use the old_constraints we received
@@ -947,7 +976,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	if (Gp_role != GP_ROLE_EXECUTE)
 		cooked_constraints = list_concat(cookedDefaults, old_constraints);
 
-	if (shouldDispatch)
+	/*
+	 * Store the deduced options back in the CreateStmt, for later dispatch.
+	 *
+	 * NOTE: We do this even if !shouldDispatch, because it means that the
+	 * caller will dispatch the statement later, not that we won't need to
+	 * dispatch at all.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		Relation		pg_class_desc;
 		Relation		pg_type_desc;
@@ -961,8 +997,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
 		LockRelationOid(DependRelationId, RowExclusiveLock);
-
-		cdb_sync_oid_to_segments();
 
 		heap_close(pg_class_desc, NoLock);  /* gonna update, so don't unlock */
 
@@ -981,11 +1015,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	{
 		Assert(stmt->ownerid != InvalidOid);
 	}
-	else
-	{
-		if (!OidIsValid(stmt->ownerid))
-			stmt->ownerid = ownerId;
-	}
+
+	if (shouldDispatch)
+		cdb_sync_oid_to_segments();
 
 	bool valid_opts = !useChangedOpts;
 
@@ -2575,16 +2607,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							: "cannot create a permanent relation as partition of temporary relation \"%s\"",
 							RelationGetRelationName(relation))));
 
-		/* Reject if parent is CO for non-partitioned table */
-		/* GPDB_12_MERGE_FIXME: Why? */
-#if 0
-		if (RelationIsAoCols(relation) && !is_partition)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot inherit relation \"%s\" as it is column oriented",
-							parent->relname)));
-#endif
-		
 		/* If existing rel is temp, it must belong to this session */
 		if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
 			!relation->rd_islocaltemp)

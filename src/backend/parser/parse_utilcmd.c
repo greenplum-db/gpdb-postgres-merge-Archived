@@ -95,6 +95,7 @@ typedef struct
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
 	List	   *ixconstraints;	/* index-creating constraints */
+	List	   *attr_encodings; /* List of ColumnReferenceStorageDirectives */
 	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
 	List	   *extstats;		/* cloned extended statistics */
 	List	   *blist;			/* "before list" of things to do before
@@ -130,7 +131,7 @@ static void transformTableConstraint(CreateStmtContext *cxt,
 									 Constraint *constraint);
 static void transformTableLikeClause(CreateStmtContext *cxt,
 									 TableLikeClause *table_like_clause,
-									 bool forceBareCol, CreateStmt *stmt, List **stenc);
+									 bool forceBareCol, CreateStmt *stmt);
 static void transformOfType(CreateStmtContext *cxt,
 							TypeName *ofTypename);
 static CreateStatsStmt *generateClonedExtStatsStmt(RangeVar *heapRel,
@@ -191,8 +192,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	DistributedBy *likeDistributedBy = NULL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
-	List	   *stenc = NIL;		/* untransformed column reference storage
-									 * encoding clauses AOCO access method specific*/
 
  	/*
 	 * We don't normally care much about the memory consumption of parsing,
@@ -280,6 +279,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.ixconstraints = NIL;
 	cxt.inh_indexes = NIL;
 	cxt.extstats = NIL;
+	cxt.attr_encodings = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
@@ -322,7 +322,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 			{
 				bool            isBeginning = (cxt.columns == NIL);
 
-				transformTableLikeClause(&cxt, (TableLikeClause *) element, false, stmt, &stenc);
+				transformTableLikeClause(&cxt, (TableLikeClause *) element, false, stmt);
 
 				if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
 					stmt->distributedBy == NULL &&
@@ -334,8 +334,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 			}
 
 			case T_ColumnReferenceStorageDirective:
-				/* processed below in transformAttributeEncoding() */
-				stenc = lappend(stenc, element);
+				/* processed later, in DefineRelation() */
+				cxt.attr_encodings = lappend(cxt.attr_encodings, element);
 				break;
 
 			default:
@@ -366,40 +366,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * But don't cascade FK constraints to parts, yet.
 	 */
 	transformFKConstraints(&cxt, true, false);
-
-	/*-----------
-	 * Analyze attribute encoding clauses.
-	 *
-	 * Partitioning configurations may have things like:
-	 *
-	 * CREATE TABLE ...
-	 *  ( a int ENCODING (...))
-	 * WITH (appendonly=true, orientation=column)
-	 * PARTITION BY ...
-	 * (PARTITION ... WITH (appendonly=false));
-	 *
-	 * We don't want to throw an error when we try to apply the ENCODING clause
-	 * to the partition which the user wants to be non-AO. Just ignore it
-	 * instead.
-	 *-----------
-	 */
-	/* GPDB_12_MERGE_FIXME */
-#if 0
-	if (!is_aocs(stmt->options) && stmt->is_part_child)
-	{
-		if (co_explicitly_disabled(stmt->options) || !stenc)
-			stmt->attr_encodings = NIL;
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ENCODING clause only supported with column oriented partitioned tables")));
-		}
-	}
-	else
-#endif
-	/* attr_encodings is a list of untransformed ColumnReferenceStorageDirective */
-	stmt->attr_encodings = stenc;
 
 	/*
 	 * Transform DISTRIBUTED BY (or construct a default one, if not given
@@ -492,6 +458,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
+	stmt->attr_encodings = cxt.attr_encodings;
 
 	result = lappend(cxt.blist, stmt);
 	result = list_concat(result, cxt.alist);
@@ -1080,7 +1047,7 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  */
 static void
 transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause,
-						 bool forceBareCol, CreateStmt *stmt, List **stenc)
+						 bool forceBareCol, CreateStmt *stmt)
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -1434,7 +1401,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		/*
 		 * Set the attribute encodings.
 		 */
-		*stenc = list_union(*stenc, rel_get_column_encodings(relation));
+		cxt->attr_encodings = list_union(cxt->attr_encodings, rel_get_column_encodings(relation));
 		MemoryContextSwitchTo(oldcontext);
 #endif
 	}
@@ -2087,6 +2054,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
+	cxt.attr_encodings = NIL;
 	cxt.pkey = NULL;
 	cxt.rel = NULL;
 
@@ -2120,7 +2088,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 					/* LIKE */
 					bool	isBeginning = (cxt.columns == NIL);
 
-					transformTableLikeClause(&cxt, (TableLikeClause *) element, true, NULL, NULL);
+					transformTableLikeClause(&cxt, (TableLikeClause *) element, true, NULL);
 
 					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
 						stmt->distributedBy == NULL &&
@@ -4133,6 +4101,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
 	cxt.inh_indexes = NIL;
+	cxt.attr_encodings = NIL;
 	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
