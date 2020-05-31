@@ -32,11 +32,11 @@ inner join pg_namespace n ON c.relnamespace = n.oid and c.relname like
 'ao_part%' and n.nspname = 'alter_ao_part_exch_@amname@');
 
 \t
-select relkind, case when relstorage = 'c' then 'column' when
-relstorage='a' then 'row' end from pg_class c inner join
-pg_namespace n on c.relnamespace = n.oid and relname like
-'ao_part_1_prt_5_2_prt_subothers%' and n.nspname =
-'alter_ao_part_exch_@amname@';
+select relkind, amname
+from pg_class c inner join
+     pg_namespace n on c.relnamespace = n.oid and relname like 'ao_part_1_prt_5_2_prt_subothers%'
+                       and n.nspname = 'alter_ao_part_exch_@amname@'
+left join pg_am on pg_am.oid = relam;
 \t
 
 --- Exchange partitions
@@ -69,11 +69,11 @@ update ao_part set col4 = -col1 where col4 is null;
 select count(*) from ao_part where col4 is not null;
 
 \t
-select relkind, case when relstorage = 'c' then 'column' when
-relstorage='a' then 'row' end from pg_class c inner join
-pg_namespace n on c.relnamespace = n.oid and relname like
-'ao_part_1_prt_5_2_prt_subothers%' and n.nspname =
-'alter_ao_part_exch_@amname@';
+select relkind, amname
+from pg_class c inner join
+     pg_namespace n on c.relnamespace = n.oid and relname like 'ao_part_1_prt_5_2_prt_subothers%'
+                       and n.nspname = 'alter_ao_part_exch_@amname@'
+left join pg_am on pg_am.oid = relam;
 \t
 
 select count(*) from exh_ao_ao;
