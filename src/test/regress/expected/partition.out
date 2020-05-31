@@ -7587,12 +7587,37 @@ NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_21" for table
 NOTICE:  CREATE TABLE will create partition "test_split_part_1_prt_Old" for table "test_split_part"
 insert into test_split_part (log_id , f_array) select id, '{10}' from generate_series(1,1000) id;
 ALTER TABLE test_split_part SPLIT DEFAULT PARTITION START (201) INCLUSIVE END (301) EXCLUSIVE INTO (PARTITION "New", DEFAULT PARTITION);
--- Only the root partition should have automatically created an array type
+-- In GPDB 6 and below, an automatic array type was only created for the root
+-- partition. Nowadays we rely on upstream partitioning code, which creates
+-- an array type for all partition.
 select typname, typtype, typcategory from pg_type where typname like '%test_split_part%' and typcategory = 'A';
-     typname      | typtype | typcategory 
-------------------+---------+-------------
- _test_split_part | b       | A
-(1 row)
+               typname                | typtype | typcategory 
+--------------------------------------+---------+-------------
+ _test_split_part                     | b       | A
+ _test_split_part_1_prt_1             | b       | A
+ _test_split_part_1_prt_10            | b       | A
+ _test_split_part_1_prt_11            | b       | A
+ _test_split_part_1_prt_12            | b       | A
+ _test_split_part_1_prt_13            | b       | A
+ _test_split_part_1_prt_14            | b       | A
+ _test_split_part_1_prt_15            | b       | A
+ _test_split_part_1_prt_16            | b       | A
+ _test_split_part_1_prt_17            | b       | A
+ _test_split_part_1_prt_18            | b       | A
+ _test_split_part_1_prt_19            | b       | A
+ _test_split_part_1_prt_2             | b       | A
+ _test_split_part_1_prt_20            | b       | A
+ _test_split_part_1_prt_3             | b       | A
+ _test_split_part_1_prt_4             | b       | A
+ _test_split_part_1_prt_5             | b       | A
+ _test_split_part_1_prt_6             | b       | A
+ _test_split_part_1_prt_7             | b       | A
+ _test_split_part_1_prt_8             | b       | A
+ _test_split_part_1_prt_9             | b       | A
+ _test_split_part_1_prt_New           | b       | A
+ _test_split_part_1_prt_Old           | b       | A
+ _test_split_part_1_prt_other_log_ids | b       | A
+(24 rows)
 
 select array_agg(test_split_part) from test_split_part where log_id = 500;
    array_agg    
@@ -7601,7 +7626,11 @@ select array_agg(test_split_part) from test_split_part where log_id = 500;
 (1 row)
 
 select array_agg(test_split_part_1_prt_other_log_ids) from test_split_part_1_prt_other_log_ids where log_id = 500;
-ERROR:  could not find array type for data type test_split_part_1_prt_other_log_ids
+   array_agg    
+----------------
+ {"(500,{10})"}
+(1 row)
+
 -- Test that pg_get_partition_def() correctly dumps the renamed names for
 -- partitions. Originally reported in MPP-7232
 create table mpp7232a (a int, b int) distributed by (a) partition by range (b) (start (1) end (3) every (1));
