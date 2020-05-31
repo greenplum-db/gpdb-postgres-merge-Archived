@@ -1326,7 +1326,7 @@ select  count(*) from pg_class where relname like 'stat_part_co_t7';
 
 -- Alter table alter type
 Alter table stat_part_co_t7 alter column i type numeric;
-ERROR:  cannot alter type of a column used in a partitioning key
+ERROR:  cannot alter type of column named in partition key
 select  count(*) from pg_class where relname like 'stat_part_co_t7';
  count 
 -------
