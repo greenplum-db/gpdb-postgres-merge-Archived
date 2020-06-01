@@ -2123,14 +2123,13 @@ NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200803" for table "ds_4
 -- Known_opt_diff: MPP-21316
 -- end_ignore
 explain select * from ds_4 where month_id = '200800';
-                                             QUERY PLAN                                             
-----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000280.00 rows=15 width=196)
-   ->  Append  (cost=10000000000.00..10000000280.00 rows=5 width=196)
-         ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000280.00 rows=5 width=196)
-               Filter: month_id::text = '200800'::text
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000280.29 rows=15 width=196)
+   ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000280.00 rows=5 width=196)
+         Filter: ((month_id)::text = '200800'::text)
  Optimizer: Postgres query optimizer
-(5 rows)
+(4 rows)
 
 -- now we can evaluate this function at planning/prune time
 -- start_ignore
