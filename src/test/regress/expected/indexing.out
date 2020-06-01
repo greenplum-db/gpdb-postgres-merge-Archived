@@ -860,6 +860,7 @@ Number of partitions: 0
 
 -- multiple primary key on child should fail
 create table failpart partition of idxpart (b primary key) for values from (0) to (100);
+NOTICE:  updating distribution policy to match new PRIMARY KEY
 ERROR:  multiple primary keys for table "failpart" are not allowed
 drop table idxpart;
 -- primary key on child is okay if there's no PK in the parent, though

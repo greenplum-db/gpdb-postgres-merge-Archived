@@ -335,7 +335,8 @@ Boot_DeclareIndexStmt:
 								false,
 								false,
 								true, /* skip_build */
-								false);
+								false,
+								false /* is_new_table */);
 					do_end();
 				}
 		;
@@ -385,7 +386,8 @@ Boot_DeclareUniqueIndexStmt:
 								false,
 								false,
 								true, /* skip_build */
-								false);
+								false,
+								false /* is_new_table */);
 					do_end();
 				}
 		;

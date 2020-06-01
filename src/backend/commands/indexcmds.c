@@ -529,6 +529,9 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
  * 'skip_build': make the catalog entries but don't create the index files
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
  *
+ * GPDB:
+ * 'is_new_table': is the parent relation new, guaranteed to still be empty?
+ *
  * Returns the object address of the created index.
  */
 ObjectAddress
@@ -541,7 +544,8 @@ DefineIndex(Oid relationId,
 			bool check_rights,
 			bool check_not_in_use,
 			bool skip_build,
-			bool quiet)
+			bool quiet,
+			bool is_new_table)
 {
 	char	   *indexRelationName;
 	char	   *accessMethodName;
@@ -1052,7 +1056,7 @@ DefineIndex(Oid relationId,
 		 */
 		if (!compatible &&
 			!GpPolicyIsRandomPartitioned(rel->rd_cdbpolicy) &&
-			(Gp_role == GP_ROLE_EXECUTE || cdbRelMaxSegSize(rel) == 0) &&
+			(Gp_role == GP_ROLE_EXECUTE || is_new_table || cdbRelMaxSegSize(rel) == 0) &&
 			!relationHasPrimaryKey(rel) &&
 			!relationHasUniqueIndex(rel) &&
 			list_length(indexInfo->ii_Expressions) == 0)
@@ -1598,7 +1602,7 @@ DefineIndex(Oid relationId,
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
-								skip_build, quiet);
+								skip_build, quiet, is_new_table);
 				}
 
 				pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_DONE,

@@ -1319,7 +1319,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 						InvalidOid,
 						RelationGetRelid(idxRel),
 						constraintOid,
-						false, false, false, false, false);
+						false, false, false, false, false,
+						true /* is_new_table */ );
 
 			if (Gp_role == GP_ROLE_DISPATCH)
 			{
@@ -8713,7 +8714,8 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 						  check_rights,
 						  false,	/* check_not_in_use - we did it already */
 						  skip_build,
-						  quiet);
+						  quiet,
+						  false /* not a new table */);
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
@@ -19954,7 +19956,8 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 			DefineIndex(RelationGetRelid(attachrel), stmt, InvalidOid,
 						RelationGetRelid(idxRel),
 						constraintOid,
-						true, false, false, false, false);
+						true, false, false, false, false,
+						false /* not a new table */);
 		}
 
 		index_close(idxRel, AccessShareLock);
