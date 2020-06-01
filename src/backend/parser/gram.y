@@ -4043,7 +4043,6 @@ alter_table_partition_cmd:
 					GpSplitPartitionCmd *pc = makeNode(GpSplitPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					GpAlterPartitionId *pid = makeNode(GpAlterPartitionId);
-					GpAlterPartitionCmd *into;
 
 					pid->idtype = AT_AP_IDDefault;
 					pid->partiddef = NULL;
@@ -4057,16 +4056,6 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 
-					into = (GpAlterPartitionCmd *)pc->arg2;
-					if (into)
-					{
-						GpAlterPartitionId *part2 = (GpAlterPartitionId *) into->arg;
-						if (part2->idtype != AT_AP_IDDefault)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("For SPLIT default partition, INTO clause can only have second argument as \"DEFAULT PARTITION\""),
-									 parser_errposition(@6)));
-					}
 					$$ = (Node *)n;
 				}
 			| SPLIT
@@ -4077,7 +4066,6 @@ alter_table_partition_cmd:
 					GpSplitPartitionCmd *pc = makeNode(GpSplitPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					GpAlterPartitionId *pid = makeNode(GpAlterPartitionId);
-					GpAlterPartitionCmd *into;
 
 					pid->idtype = AT_AP_IDDefault;
 					pid->partiddef = NULL;
@@ -4091,16 +4079,6 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 
-					into = (GpAlterPartitionCmd *)pc->arg2;
-					if (into)
-					{
-						GpAlterPartitionId *part2 = (GpAlterPartitionId *) into->arg;
-						if (part2->idtype != AT_AP_IDDefault)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("For SPLIT default partition, INTO clause can only have second argument as \"DEFAULT PARTITION\""),
-									 parser_errposition(@8)));
-					}
 					$$ = (Node *)n;
 				}
 			| SPLIT 

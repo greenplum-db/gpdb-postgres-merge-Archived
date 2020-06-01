@@ -562,6 +562,7 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 	const char *defaultpartname;
 	List *stmts = NIL;
 	ListCell *l;
+	Oid			partrelid;
 
 	/* detach current partition */
 	{
@@ -570,7 +571,6 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		AlterTableCmd *atcmd = makeNode(AlterTableCmd);
 		PartitionCmd *pcmd = makeNode(PartitionCmd);
 		char tmpname[NAMEDATALEN];
-		Oid partrelid;
 		Relation partrel;
 		HeapTuple tuple;
 
@@ -657,9 +657,69 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		Oid                 part_col_typid;
 		int32               part_col_typmod;
 		Oid                 part_col_collation;
-		GpAlterPartitionCmd *into       = (GpAlterPartitionCmd *) pc->arg2;
-		GpAlterPartitionId  *partid1;
-		char *partname;
+		GpAlterPartitionCmd *into = (GpAlterPartitionCmd *) pc->arg2;
+		char			*partname1 = NULL;
+		char			*partname2 = NULL;
+
+		/* Extract the two partition names from the INTO (<part1>, <part2>) clause */
+		if (into)
+		{
+			GpAlterPartitionId *partid1 = into->partid;
+			GpAlterPartitionId *partid2 = (GpAlterPartitionId *) into->arg;
+
+			Oid			intorel1 = GpFindTargetPartition(rel, partid1, true);
+			Oid			intorel2 = GpFindTargetPartition(rel, partid2, true);
+
+			if (intorel1 != InvalidOid && intorel2 != InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("both INTO partitions already exist")));
+
+			/*
+			 * If we're splitting the default partition, the INTO clause must
+			 * include the default partition. Either as DEFAULT PARTITION, or by name.
+			 */
+			if (defaultpartname)
+			{
+				if (intorel1 == partrelid)
+				{
+					if (partid2->idtype != AT_AP_IDName)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("new partition in INTO clause must be given by name"),
+								 parser_errposition(pstate, partid2->location)));
+					partname1 = strVal(partid2->partiddef);
+				}
+				else if (intorel2 == partrelid)
+				{
+					if (partid1->idtype != AT_AP_IDName)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("new partition in INTO clause must be given by name"),
+								 parser_errposition(pstate, partid1->location)));
+					partname1 = strVal(partid1->partiddef);
+				}
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("default partition name missing from INTO clause")));
+			}
+			else
+			{
+				if (partid1->idtype != AT_AP_IDName)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("INTO can only have first partition by name"),
+							 parser_errposition(pstate, partid1->location)));
+				if (partid2->idtype != AT_AP_IDName)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("INTO can only have first partition by name"),
+							 parser_errposition(pstate, partid1->location)));
+				partname1 = strVal(partid1->partiddef);
+				partname2 = strVal(partid2->partiddef);
+			}
+		}
 
 		Assert(partkey->partnatts == 1);
 		partcomp.level = list_length(ancestors) + 1;
@@ -843,49 +903,15 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		//elem->accessMethod = NULL;
 
 		/* create first partition stmt */
-		partname = NULL;
-		if (into)
-		{
-			partid1 = into->partid;
-			Assert(partid1->idtype == AT_AP_IDName);
-			partname = strVal(partid1->partiddef);
-		}
-		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname, boundspec1, NULL, elem, &partcomp));
+		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname1, boundspec1, NULL, elem, &partcomp));
 
 		/* create second partition stmt */
-		partname = NULL;
 		if (defaultpartname)
 		{
 			partcomp.tablename = defaultpartname;
+			partname2 = NULL;
 		}
-		else if (into)
-		{
-			GpAlterPartitionId  *partid2 = (GpAlterPartitionId *) into->arg;
-			Assert(partid2->idtype == AT_AP_IDName);
-			partname = strVal(partid2->partiddef);
-		}
-
-		/*
-		 * perform check if splitting default list partition by name, new
-		 * name matches old default partition name.
-		 */
-		if (defaultpartname &&
-			boundspec->strategy == PARTITION_STRATEGY_LIST &&
-			into)
-		{
-			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
-			GpAlterPartitionId *partid2  = (GpAlterPartitionId *) into->arg;
-			if (partid2->idtype == AT_AP_IDName)
-			{
-				Assert(pid->idtype == AT_AP_IDName);
-				if (strcmp(strVal(partid2->partiddef), strVal(pid->partiddef)) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("default partition name missing from INTO clause")));
-			}
-		}
-
-		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname, boundspec2, NULL, elem, &partcomp));
+		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname2, boundspec2, NULL, elem, &partcomp));
 	}
 
 	foreach (l, stmts)
