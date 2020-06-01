@@ -54,7 +54,7 @@ inner join pg_namespace n ON c.relnamespace = n.oid and c.relname like
 'ao_part%' and n.nspname = 'alter_ao_part_exch_@amname@');
  count 
 -------
-    21
+    15
 (1 row)
 
 \t
