@@ -509,6 +509,9 @@ static bool prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *
 								char *amname, List *opts,
 								bool isTmpTableAo, bool useExistingColumnAttributes);
 
+static void prepare_AlterTableStmt_for_dispatch(AlterTableStmt *stmt);
+static List *strip_gpdb_part_commands(List *cmds);
+
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -4012,40 +4015,76 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/* do we need to copy the stmt? */
-		AlterTableStmt *dispatchstmt = stmt;
-		ListCell *o_lc;
-		List *newcmds = NIL;
+		prepare_AlterTableStmt_for_dispatch(stmt);
 
-		foreach (o_lc, dispatchstmt->cmds)
-		{
-			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(o_lc);
-
-			switch (cmd->subtype)
-			{
-				case AT_PartAdd:
-				case AT_PartDrop:
-				case AT_PartAlter:
-				case AT_PartSplit:
-				case AT_PartTruncate:
-				case AT_PartExchange:
-					break;
-				default:
-					newcmds = lappend(newcmds, cmd);
-					break;
-			}
-		}
-
-		dispatchstmt->cmds = newcmds;
-
-		if (dispatchstmt->cmds)
-			CdbDispatchUtilityStatement((Node *) dispatchstmt,
+		if (stmt->cmds)
+			CdbDispatchUtilityStatement((Node *) stmt,
 										DF_CANCEL_ON_ERROR |
 										DF_WITH_SNAPSHOT |
 										DF_NEED_TWO_PHASE,
 										GetAssignedOidsForDispatch(),
 										NULL);
 	}
+}
+
+/*
+ * Prepare an AlterTableStmt for dispatch.
+ *
+ * The GPDB partitioning subcommands are expanded and
+ * immediately executed in ATExecCmd() phase. They are not included in the
+ * working queues. By the time we dispatch the command, we have already
+ * executed and dispatched those subcommands, so remove them from command
+ * we'll dispatch now.
+ *
+ * GPDB_12_MERGE_FIXME: This is a bit bogus, because if you have multiple
+ * ALTER TABLE subcommands in one command, the commands might be executed
+ * in different order in the QEs than in the QD. I think it would be better
+ * to expand the commands in the ATPrepCmd() phase, and included them in
+ * the working queues for dispatching, instead of dispatching them
+ * separately in the ATExecCmd() phase.
+ */
+static void
+prepare_AlterTableStmt_for_dispatch(AlterTableStmt *stmt)
+{
+	ListCell   *lc;
+
+	stmt->cmds = strip_gpdb_part_commands(stmt->cmds);
+
+	foreach (lc, stmt->wqueue)
+	{
+		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(lc);
+
+		for (int i = 0; i < AT_NUM_PASSES; i++)
+			tab->subcmds[i] = strip_gpdb_part_commands(tab->subcmds[i]);
+	}
+}
+
+static List *
+strip_gpdb_part_commands(List *cmds)
+{
+	List	   *newcmds = NIL;
+	ListCell   *lc;
+
+	foreach (lc, cmds)
+	{
+		AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lc);
+
+		switch (cmd->subtype)
+		{
+			case AT_PartAdd:
+			case AT_PartDrop:
+			case AT_PartAlter:
+			case AT_PartSplit:
+			case AT_PartTruncate:
+			case AT_PartExchange:
+				break;
+			default:
+				newcmds = lappend(newcmds, cmd);
+				break;
+		}
+	}
+
+	return newcmds;
 }
 
 /*
