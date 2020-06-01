@@ -7896,9 +7896,9 @@ NOTICE:  CREATE TABLE will create partition "at_range_1_prt_1" for table "at_ran
 create table at_list (i int) partition by list(i) (partition p1 values(1));
 NOTICE:  CREATE TABLE will create partition "at_list_1_prt_p1" for table "at_list"
 alter table at_list add partition foo2 start(6) end (10);
-ERROR:  cannot add range partition to list partitioned table
+ERROR:  invalid boundary specification for LIST partition
 alter table at_range add partition test values(5);
-ERROR:  cannot add list partition to range partitioned table
+ERROR:  invalid boundary specification for RANGE partition
 -- Ensure array type for the non-partition table is there after partition exchange.
 CREATE TABLE pt_xchg(a int) PARTITION BY RANGE(a) (START(1) END(4) EVERY (2));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
