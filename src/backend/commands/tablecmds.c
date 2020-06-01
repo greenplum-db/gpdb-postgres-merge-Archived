@@ -16188,7 +16188,14 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 	tab = linitial(*wqueue);
 	rootCmd = (AlterTableCmd *)linitial(tab->subcmds[AT_PASS_MISC]);
 
-	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		/*
+		 * Nothing to do on a partitioned table. But we better recurse to the
+		 * child partitions.
+		 */
+	}
+	else if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		if (rel_is_external_table(relid))
 		{
