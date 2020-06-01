@@ -417,7 +417,6 @@ select count(*) = 0 as passed from subt_alter_part_tab_ao1
 
 Savepoint sp3; -- child of sp2
 Alter table subt_alter_part_tab_ao1 drop default partition;
-NOTICE:  dropped partition "def_part" for relation "subt_alter_part_tab_ao1"
 release savepoint sp3; -- commit sp3
 Select count(*) from subt_alter_part_tab_ao1;
  count 

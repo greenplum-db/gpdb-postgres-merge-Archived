@@ -626,7 +626,6 @@ alter table mpp3263 add column AAA int;
 alter table mpp3263 add column BBB int;
 alter table mpp3263 drop column BBB;
 alter table mpp3263 drop partition for (0);
-NOTICE:  dropped partition "aa_1" for relation "mpp3263"
 alter table mpp3263 add column CCC int;
 insert into mpp3263 (unique1) values (1111);
 drop table mpp3263;

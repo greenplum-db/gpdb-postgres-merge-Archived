@@ -487,7 +487,6 @@ select count(*) from pg_appendonly where relid='ao_multi_level_part_table_1_prt_
 (1 row)
 
 alter table ao_multi_level_part_table drop partition yearYYYY;
-NOTICE:  dropped partition "yearyyyy" for relation "ao_multi_level_part_table" and its children
 alter table ao_multi_level_part_table add default partition yearYYYY with (appendonly=true) (default subpartition def);
 select count(*) from pg_appendonly where relid='ao_multi_level_part_table_1_prt_yearyyyy'::regclass;
  count 
