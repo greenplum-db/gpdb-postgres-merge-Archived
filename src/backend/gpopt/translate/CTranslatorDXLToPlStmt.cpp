@@ -19,7 +19,7 @@
 #include "nodes/nodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_exttable.h"
 #include "cdb/cdbutil.h"
