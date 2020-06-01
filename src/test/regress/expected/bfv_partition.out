@@ -1267,19 +1267,19 @@ NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_b" for table "mpp3588
 insert into mpp3588 select i from generate_series(1, 8) i;
 alter table mpp3588 split partition for(1) at (1,2) into (partition fa, partition fb);
 alter table mpp3588 split partition for(1) at (1,2) into (partition f1a, partition f1b); -- This has partition rules that overlaps
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f2a, partition f2b); -- 5,6 are not within the boundary of first partition
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f3a, partition f3b); 
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f4a, partition f4b);
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f5a, partition f5b); -- Out of the original boundary specification
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f6a, partition f6b); -- I can keep going and going and going....
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 alter table mpp3588 split partition for(1) at (1,2) into (partition f7a, partition f7b);
-ERROR:  AT clause cannot contain all values in partition "fb"
+ERROR:  AT clause cannot contain all values in the partition to be split
 drop table mpp3588;
 -- MPP-3691, MPP-3681
 create table mpp3681 (id int, date date, amt decimal(10,2)) distributed by (id) partition by range(date) (start (date '2008-01-01') inclusive end ('2008-04-01') exclusive every (interval '1 month')); 
@@ -1572,14 +1572,14 @@ ERROR:  value too long for type character(1)
 ALTER table mpp4582 drop partition for ('--');
 ERROR:  value too long for type character(1)
 alter table mpp4582 drop partition for (';');
-ERROR:  FOR expression matches DEFAULT partition "neuter" of relation "mpp4582"
+ERROR:  FOR expression matches DEFAULT partition for specified value of relation "mpp4582"
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table mpp4582 drop partition for ();
 ERROR:  syntax error at or near ")"
 LINE 1: alter table mpp4582 drop partition for ();
                                                 ^
 alter table mpp4582 drop partition for (NULL);
-ERROR:  FOR expression matches DEFAULT partition "neuter" of relation "mpp4582"
+ERROR:  FOR expression matches DEFAULT partition for specified value of relation "mpp4582"
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table mpp4582 drop partition for ('NULL');
 ERROR:  value too long for type character(1)
