@@ -971,21 +971,18 @@ SELECT * FROM pt_lt_tab_df WHERE col2 = 25 ORDER BY col2,col3 LIMIT 5;
 (1 row)
 
 EXPLAIN SELECT * FROM pt_lt_tab_df WHERE col2 = 25 ORDER BY col2,col3 LIMIT 5;
-                                                                       QUERY PLAN                                                                        
----------------------------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=2000.32..2000.36 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=2000.32..2000.36 rows=2 width=12)
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=44.17..44.19 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=44.17..44.19 rows=1 width=12)
          Merge Key: pt_lt_tab_df_1_prt_part3.col3
-         ->  Limit  (cost=2000.32..2000.32 rows=1 width=12)
-               ->  Sort  (cost=2000.32..2000.32 rows=1 width=12)
+         ->  Limit  (cost=44.17..44.17 rows=1 width=12)
+               ->  Sort  (cost=44.16..44.17 rows=1 width=12)
                      Sort Key: pt_lt_tab_df_1_prt_part3.col3
-                     ->  Append  (cost=0.14..2000.31 rows=1 width=12)
-                           ->  Index Scan using pt_lt_tab_df_1_prt_part3_col2_col1_key on pt_lt_tab_df_1_prt_part3  (cost=0.14..1100.15 rows=1 width=12)
-                                 Index Cond: col2 = 25::numeric
-                           ->  Index Scan using pt_lt_tab_df_1_prt_def_col2_col1_key on pt_lt_tab_df_1_prt_def  (cost=0.14..900.15 rows=1 width=12)
-                                 Index Cond: col2 = 25::numeric
+                     ->  Index Scan using pt_lt_tab_df_1_prt_part3_col2_col1_key on pt_lt_tab_df_1_prt_part3  (cost=0.14..44.15 rows=1 width=12)
+                           Index Cond: (col2 = '25'::numeric)
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 SELECT * FROM pt_lt_tab_df WHERE col2 <> 10 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
@@ -1478,21 +1475,18 @@ SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
 (1 row)
 
 EXPLAIN SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=2000.32..2000.36 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=2000.32..2000.36 rows=2 width=12)
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Limit  (cost=44.17..44.19 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=44.17..44.19 rows=1 width=12)
          Merge Key: pt_lt_tab_df_1_prt_part5.col3
-         ->  Limit  (cost=2000.32..2000.32 rows=1 width=12)
-               ->  Sort  (cost=2000.32..2000.32 rows=1 width=12)
+         ->  Limit  (cost=44.17..44.17 rows=1 width=12)
+               ->  Sort  (cost=44.16..44.17 rows=1 width=12)
                      Sort Key: pt_lt_tab_df_1_prt_part5.col3
-                     ->  Append  (cost=0.14..2000.31 rows=1 width=12)
-                           ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..1100.15 rows=1 width=12)
-                                 Index Cond: col2 = 50::numeric
-                           ->  Index Scan using idx6 on pt_lt_tab_df_1_prt_def  (cost=0.14..900.15 rows=1 width=12)
-                                 Index Cond: col2 = 50::numeric
+                     ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..44.15 rows=1 width=12)
+                           Index Cond: (col2 = '50'::numeric)
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 SELECT * FROM pt_lt_tab_df WHERE col2 <> 10 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
@@ -1670,21 +1664,18 @@ SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
 (1 row)
 
 EXPLAIN SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
-                                                       QUERY PLAN                                                        
--------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=10000001103.33..10000001103.37 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=10000001103.33..10000001103.37 rows=2 width=12)
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Limit  (cost=44.17..44.19 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=44.17..44.19 rows=1 width=12)
          Merge Key: pt_lt_tab_df_1_prt_part5.col3
-         ->  Limit  (cost=10000001103.33..10000001103.33 rows=1 width=12)
-               ->  Sort  (cost=10000001103.33..10000001103.33 rows=1 width=12)
+         ->  Limit  (cost=44.17..44.17 rows=1 width=12)
+               ->  Sort  (cost=44.16..44.17 rows=1 width=12)
                      Sort Key: pt_lt_tab_df_1_prt_part5.col3
-                     ->  Append  (cost=0.14..10000001103.32 rows=1 width=12)
-                           ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..1100.15 rows=1 width=12)
-                                 Index Cond: col2 = 50::numeric
-                           ->  Seq Scan on pt_lt_tab_df_1_prt_def  (cost=10000000000.00..10000000003.16 rows=1 width=12)
-                                 Filter: col2 = 50::numeric
+                     ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..44.15 rows=1 width=12)
+                           Index Cond: (col2 = '50'::numeric)
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 DROP INDEX idx1;
 DROP INDEX idx2;
@@ -1718,21 +1709,18 @@ SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
 (1 row)
 
 EXPLAIN SELECT * FROM pt_lt_tab_df WHERE col2 = 50 ORDER BY col2,col3 LIMIT 5;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=2000.32..2000.36 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=2000.32..2000.36 rows=2 width=12)
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Limit  (cost=44.17..44.19 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=44.17..44.19 rows=1 width=12)
          Merge Key: pt_lt_tab_df_1_prt_part5.col3
-         ->  Limit  (cost=2000.32..2000.32 rows=1 width=12)
-               ->  Sort  (cost=2000.32..2000.32 rows=1 width=12)
+         ->  Limit  (cost=44.17..44.17 rows=1 width=12)
+               ->  Sort  (cost=44.16..44.17 rows=1 width=12)
                      Sort Key: pt_lt_tab_df_1_prt_part5.col3
-                     ->  Append  (cost=0.14..2000.31 rows=1 width=12)
-                           ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..1100.15 rows=1 width=12)
-                                 Index Cond: col2 = 50::numeric
-                           ->  Index Scan using idx6 on pt_lt_tab_df_1_prt_def  (cost=0.14..900.15 rows=1 width=12)
-                                 Index Cond: col2 = 50::numeric
+                     ->  Index Scan using idx5 on pt_lt_tab_df_1_prt_part5  (cost=0.14..44.15 rows=1 width=12)
+                           Index Cond: (col2 = '50'::numeric)
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 SELECT * FROM pt_lt_tab_df WHERE col2 > 10 AND col1 between 1 AND 100 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
