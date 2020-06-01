@@ -123,6 +123,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		freeze = false;
 	bool		full = false;
 	bool		disable_page_skipping = false;
+	bool		rootonly = false;
+	bool		fullscan = false;
 	int			ao_phase = 0;
 	ListCell   *lc;
 
@@ -140,6 +142,10 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 			verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "skip_locked") == 0)
 			skip_locked = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "rootpartition") == 0)
+			rootonly = get_vacopt_ternary_value(opt);
+		else if (strcmp(opt->defname, "fullscan") == 0)
+			fullscan = get_vacopt_ternary_value(opt);
 		else if (!vacstmt->is_vacuumcmd)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -181,6 +187,10 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		(full ? VACOPT_FULL : 0) |
 		(disable_page_skipping ? VACOPT_DISABLE_PAGE_SKIPPING : 0);
 
+	if (rootonly)
+		params.options |= VACOPT_ROOTONLY;
+	if (fullscan)
+		params.options |= VACOPT_FULLSCAN;
 	params.options |= ao_phase;
 
 	/* sanity checks on options */

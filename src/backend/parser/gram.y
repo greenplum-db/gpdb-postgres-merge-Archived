@@ -496,7 +496,6 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
 %type <boolean> opt_freeze opt_analyze opt_default opt_recheck
-%type <boolean> opt_rootonly_all
 %type <boolean> opt_dxl
 %type <defelt>	opt_binary copy_delimiter
 
@@ -13182,6 +13181,59 @@ AnalyzeStmt: analyze_keyword opt_verbose opt_vacuum_relation_list
 					n->is_vacuumcmd = false;
 					$$ = (Node *) n;
 				}
+			/*
+			 * GPDB-specific ROOTPARTITION / FULLSCAN options.
+			 * These cannot be rolled into the above rules without making
+			 * ROOTPARTITION and FULLSCAN keywords reserved, because it is
+			 * ambiguous whether "ANALYZE ROOTPARTITION" means "all relations
+			 * with ROOTPARTITION option", or "one relation called
+			 * ROOTPARTITION". So with these options, you must specify a
+			 * relation name/list. For database-wide operation, you can do
+			 * ANALYZE ROOTPARTITION ALL, which is special cased here. There is
+			 * not ANALYZE FULLSCAN ALL, though.
+			 *
+			 * The modern syntax with parens doesn't have these problems, so
+			 * you can do "ANALYZE (FULLSCAN)".
+			 */
+			| analyze_keyword opt_verbose ROOTPARTITION vacuum_relation_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = NIL;
+					if ($2)
+						n->options = lappend(n->options,
+											 makeDefElem("verbose", NULL, @2));
+					n->options = lappend(n->options,
+										 makeDefElem("rootpartition", NULL, @3));
+					n->rels = $4;
+					n->is_vacuumcmd = false;
+					$$ = (Node *)n;
+				}
+			| analyze_keyword opt_verbose ROOTPARTITION ALL
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = NIL;
+					if ($2)
+						n->options = lappend(n->options,
+											 makeDefElem("verbose", NULL, @2));
+					n->options = lappend(n->options,
+										 makeDefElem("rootpartition", NULL, @3));
+					n->rels = NIL;
+					n->is_vacuumcmd = false;
+					$$ = (Node *)n;
+				}
+			| analyze_keyword opt_verbose FULLSCAN vacuum_relation_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = NIL;
+					if ($2)
+						n->options = lappend(n->options,
+											 makeDefElem("verbose", NULL, @2));
+					n->options = lappend(n->options,
+										 makeDefElem("fullscan", NULL, @3));
+					n->rels = $4;
+					n->is_vacuumcmd = false;
+					$$ = (Node *)n;
+				}
 		;
 
 vac_analyze_option_list:
@@ -13193,34 +13245,6 @@ vac_analyze_option_list:
 				{
 					$$ = lappend($1, $3);
 				}
-
-/* GPDB_12_MERGE_FIXME: GPDB ROOTPARTITION options */
-/*
-| analyze_keyword opt_verbose opt_rootonly_all FULLSCAN qualified_name opt_name_list
-				{
-					VacuumStmt *n = makeNode(VacuumStmt);
-					n->options = VACOPT_ANALYZE;
-					if ($2)
-						n->options |= VACOPT_VERBOSE;
-					if ($3)
-						n->options |= VACOPT_ROOTONLY;
-					n->options |= VACOPT_FULLSCAN;
-					n->relation = $5;
-					n->va_cols = $6;
-					$$ = (Node *)n;
-				}
-			| analyze_keyword opt_verbose ROOTPARTITION qualified_name opt_name_list
-				{
-					VacuumStmt *n = makeNode(VacuumStmt);
-					n->options = VACOPT_ANALYZE;
-					if ($2)
-						n->options |= VACOPT_VERBOSE;
-					n->options |= VACOPT_ROOTONLY;
-					n->relation = $4;
-					n->va_cols = $5;
-					$$ = (Node *)n;
-				}
-*/
 		;
 
 analyze_keyword:
@@ -13253,11 +13277,6 @@ opt_analyze:
 
 opt_verbose:
 			VERBOSE									{ $$ = true; }
-			| /*EMPTY*/								{ $$ = false; }
-		;
-
-opt_rootonly_all:
-			ROOTPARTITION ALL						{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
 		;
 			
