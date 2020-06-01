@@ -82,7 +82,7 @@ visimapidxid is not NULL AND relid in (SELECT c.oid FROM pg_class c
  n.nspname = 'alter_ao_part_tables_splitpartition_@amname@');
  count 
 -------
-     6
+     5
 (1 row)
 
 update sto_alt_uao_part_splitpartition set amt = amt - 5;
