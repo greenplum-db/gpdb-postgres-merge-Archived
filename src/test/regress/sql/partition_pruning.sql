@@ -652,7 +652,7 @@ language plpythonu;
 
 drop table if exists partprune_foo;
 create table partprune_foo(a int, b int, c int) partition by range (b) (start (1) end (101) every (10));
-insert into partprune_foo select generate_series(1,5), generate_series(1,100), generate_series(1,10);
+insert into partprune_foo select g % 5 + 1, g + 1, g % 10 + 1 from generate_series(0, 99) g;
 analyze partprune_foo;
 
 select get_selected_parts('explain select * from partprune_foo;');

@@ -2479,7 +2479,7 @@ NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_7" for table "p
 NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_8" for table "partprune_foo"
 NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_9" for table "partprune_foo"
 NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_10" for table "partprune_foo"
-insert into partprune_foo select generate_series(1,5), generate_series(1,100), generate_series(1,10);
+insert into partprune_foo select g % 5 + 1, g + 1, g % 10 + 1 from generate_series(0, 99) g;
 analyze partprune_foo;
 select get_selected_parts('explain select * from partprune_foo;');
  get_selected_parts 
