@@ -1813,21 +1813,18 @@ SELECT * FROM pt_lt_tab_df WHERE col2 = 35 ORDER BY col2,col3 LIMIT 5;
 (1 row)
 
 EXPLAIN SELECT * FROM pt_lt_tab_df WHERE col2 = 35 ORDER BY col2,col3 LIMIT 5;
-                                                        QUERY PLAN                                                         
----------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=20000000006.30..20000000006.34 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=20000000006.30..20000000006.34 rows=2 width=12)
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=10000000003.14..10000000003.16 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000003.14..10000000003.16 rows=1 width=12)
          Merge Key: pt_lt_tab_df_1_prt_part4.col3
-         ->  Limit  (cost=20000000006.30..20000000006.30 rows=1 width=12)
-               ->  Sort  (cost=20000000006.30..20000000006.30 rows=1 width=12)
+         ->  Limit  (cost=10000000003.14..10000000003.14 rows=1 width=12)
+               ->  Sort  (cost=10000000003.14..10000000003.14 rows=1 width=12)
                      Sort Key: pt_lt_tab_df_1_prt_part4.col3
-                     ->  Append  (cost=10000000000.00..20000000006.29 rows=1 width=12)
-                           ->  Seq Scan on pt_lt_tab_df_1_prt_part4  (cost=10000000000.00..10000000003.12 rows=1 width=12)
-                                 Filter: col2 = 35::numeric
-                           ->  Seq Scan on pt_lt_tab_df_1_prt_def  (cost=10000000000.00..10000000003.16 rows=1 width=12)
-                                 Filter: col2 = 35::numeric
+                     ->  Seq Scan on pt_lt_tab_df_1_prt_part4  (cost=10000000000.00..10000000003.12 rows=1 width=12)
+                           Filter: (col2 = '35'::numeric)
  Optimizer: Postgres query optimizer
-(12 rows)
+(9 rows)
 
 DROP INDEX idx1;
 DROP INDEX idx2;
