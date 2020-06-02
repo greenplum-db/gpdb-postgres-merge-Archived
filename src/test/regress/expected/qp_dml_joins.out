@@ -1,9 +1,3 @@
--- start_matchsubs
--- m/ERROR:  moving tuple from partition .* to partition .* not supported/
--- s/ERROR:  moving tuple from partition .* to partition .* not supported/ERROR:  cross-partition or multi-update to a row/
--- m/ERROR:  multiple updates to a row by the same query is not allowed/
--- s/ERROR:  multiple updates to a row by the same query is not allowed/ERROR:  cross-partition or multi-update to a row/
--- end_matchsubs
 -- First create a bunch of test tables
 -- start_matchsubs
 -- m/DETAIL:  Failing row contains \(.*\)/
@@ -2103,14 +2097,16 @@ SELECT SUM(d) FROM dml_heap_check_s;
 rollback;
 --Negative test: Update data that does not satisfy the check constraints
 UPDATE dml_heap_check_s SET a = 100 + dml_heap_check_s.a FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.a AND dml_heap_check_s.a = 99;
-ERROR:  cross-partition or multi-update to a row  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  new row for relation "dml_heap_check_s_1_prt_def" violates check constraint "dml_heap_check_s_a_check"  (seg2 127.0.0.1:40002 pid=10698)
+DETAIL:  Failing row contains (199, 297, s, 16).
 --Negative test - Update violates check constraint(not NULL constraint)
 UPDATE dml_heap_check_s SET b = NULL FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.b and dml_heap_check_s.b = 99;
 ERROR:  new row for relation "dml_heap_check_s_1_prt_5" violates check constraint "scheck_b"  (seg1 10.152.10.75:25433 pid=28939)
 DETAIL:  Failing row contains (33, null, s, 5).
 --Negative test - Update moving tuple across partition .also violates the check constraint
 UPDATE dml_heap_check_s SET a = 110 + dml_heap_check_s.a FROM dml_heap_check_r WHERE dml_heap_check_r.a = dml_heap_check_s.a;
-ERROR:  cross-partition or multi-update to a row  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  new row for relation "dml_heap_check_s_1_prt_def" violates check constraint "dml_heap_check_s_a_check"  (seg2 127.0.0.1:40002 pid=10698)
+DETAIL:  Failing row contains (115, 5, sn, null).
 --Delete with generate_series
 begin;
 SELECT COUNT(*) FROM dml_heap_s;
@@ -3430,9 +3426,12 @@ SELECT SUM(a) FROM dml_heap_pt_s;
 (1 row)
 
 UPDATE dml_heap_pt_s SET a = dml_heap_pt_r.a + 30000 FROM dml_heap_pt_r WHERE dml_heap_pt_r.b = dml_heap_pt_s.b;
-ERROR:  cross-partition or multi-update to a row  (seg0 127.0.0.1:40000 pid=18972)
 SELECT SUM(a) FROM dml_heap_pt_s;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+   sum   
+---------
+ 2015106
+(1 row)
+
 rollback;
 --Negative test update partition key (no default partition)
 SELECT SUM(b) FROM dml_heap_pt_r;

@@ -1,13 +1,3 @@
--- start_matchsubs
-
--- m/ERROR:  moving tuple from partition .* to partition .* not supported/
--- s/ERROR:  moving tuple from partition .* to partition .* not supported/ERROR:  cross-partition or multi-update to a row/
-
--- m/ERROR:  multiple updates to a row by the same query is not allowed/
--- s/ERROR:  multiple updates to a row by the same query is not allowed/ERROR:  cross-partition or multi-update to a row/
-
--- end_matchsubs
-
 -- First create a bunch of test tables
 
 -- start_matchsubs
@@ -1438,9 +1428,11 @@ rollback;
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
 SELECT dml_heap_pt_s.a ,dml_heap_pt_s.b,'z' FROM dml_heap_pt_r,dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b ORDER BY 1,2 LIMIT 1;
 ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
+begin;
 UPDATE dml_heap_pt_r SET (a,b,c) = (dml_heap_pt_s.a ,dml_heap_pt_s.b,'z') FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 1= dml_heap_pt_s.b;
 SELECT * FROM dml_heap_pt_r WHERE c='z' ORDER BY 1 LIMIT 1;
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
+rollback;
 ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
 
 --Update with prepare plans

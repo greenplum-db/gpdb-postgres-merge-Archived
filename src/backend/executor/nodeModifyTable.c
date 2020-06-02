@@ -698,8 +698,7 @@ ExecInsert(ModifyTableState *mtstate,
  *		EvalPlanQual() is passed back using output parameter epqslot.
  *
  *		In GPDB, DELETE can be part of an update operation when
- *		there is a preceding SplitUpdate node. 'changingPart' is set to
- *		true in that case, too.
+ *		there is a preceding SplitUpdate node.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
@@ -715,6 +714,7 @@ ExecDelete(ModifyTableState *mtstate,
 		   bool processReturning,
 		   bool canSetTag,
 		   bool changingPart,
+		   bool splitUpdate,
 		   bool *tupleDeleted,
 		   TupleTableSlot **epqreturnslot)
 {
@@ -848,7 +848,7 @@ ldelete:;
 									estate->es_crosscheck_snapshot,
 									true /* wait for commit */ ,
 									&tmfd,
-									changingPart);
+									changingPart || splitUpdate);
 
 		switch (result)
 		{
@@ -899,26 +899,20 @@ ldelete:;
 				 *  will have an non-deterministic output. The tuple in R
 				 * can be updated to (2,1) or (7,1).
 				 * Since the introduction of SplitUpdate, these queries will
-				 * send multiple requests to delete the same tuple. Therefore,
-				 * in order to avoid a non-deterministic output,
-				 * an error is reported in such scenario.
-				 *
-				 * ORCA requires this check as it does not support multiple
-				 * updates to a row by the same query
-				 *
-				 * GPDB_12_MERGE_FIXME: we no longer pass 'isUpdate' argument
-				 * here. Could we use changingPart instead? Do we want this
-				 * check when moving a tuple to another partition, too?
+				 * send multiple requests to delete the same tuple. One of them
+				 * will pass, but others will not. But there will also be
+				 * multiple requests to insert a new version of the tuple, and
+				 * we cannot cancel out those if the Delete cannot be
+				 * performed. An error is reported in such scenario; otherwise
+				 * you end up with multiple copies of the same row.
 				 *-------
 				 */
-#if 0
-				if (isUpdate)
+				if (splitUpdate)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION ),
 							 errmsg("multiple updates to a row by the same query is not allowed")));
 				}
-#endif
 				return NULL;
 
 			case TM_Ok:
@@ -1361,7 +1355,9 @@ lreplace:;
 			 */
 			ExecDelete(mtstate, tupleid, segid, oldtuple, planSlot, epqstate,
 					   estate, false, false /* canSetTag */ ,
-					   true /* changingPart */ , &tuple_deleted, &epqslot);
+					   true /* changingPart */ ,
+					   false /* splitUpdate */ ,
+					   &tuple_deleted, &epqslot);
 
 			/*
 			 * For some reason if DELETE didn't happen (e.g. trigger prevented
@@ -2564,14 +2560,18 @@ ExecModifyTable(PlanState *pstate)
 									  &node->mt_epqstate, estate,
 									  false,
 									  false /* canSetTag */,
-									  true /* changingPart */ , NULL, NULL);
+									  true /* changingPart */ ,
+									  true /* splitUpdate */ ,
+									  NULL, NULL);
 				}
 				break;
 			case CMD_DELETE:
 				slot = ExecDelete(node, tupleid, segid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
 								  true, node->canSetTag,
-								  false /* changingPart */ , NULL, NULL);
+								  false /* changingPart */ ,
+								  false /* splitUpdate */ ,
+								  NULL, NULL);
 				break;
 			default:
 				elog(ERROR, "unknown operation");
