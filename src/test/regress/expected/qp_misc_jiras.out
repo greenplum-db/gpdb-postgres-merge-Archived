@@ -1055,13 +1055,6 @@ show gp_interconnect_setup_timeout;
 set gp_interconnect_setup_timeout=10000;
 ERROR:  10000 s is outside the valid range for parameter "gp_interconnect_setup_timeout" (0 .. 7200)
 set gp_interconnect_setup_timeout=4000;
-create schema tbl5352_test;
-select tablename from pg_tables where schemaname='tbl5352_test' and tablename not in( select partitiontablename from pg_partitions where partitionschemaname = 'tbl5352_test' );
- tablename 
------------
-(0 rows)
-
-drop schema tbl5352_test;
 CREATE TABLE qp_misc_jiras.tbl5223_sales_fact(
 	   time     timestamp,
 	   product  int, 
