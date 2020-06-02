@@ -574,6 +574,13 @@ static WaitPMResult
 wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 {
 	int			i;
+	bool gpdb_master_distributed_mode;
+
+	/* check if starting GPDB master in distributed mode */
+	if (strstr(post_opts, "-E"))
+		gpdb_master_distributed_mode = true;
+	else
+		gpdb_master_distributed_mode = false;
 
 	for (i = 0; i < wait_seconds * WAITS_PER_SEC; i++)
 	{
@@ -615,7 +622,7 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 				 */
 				char	   *pmstatus = optlines[LOCK_FILE_LINE_PM_STATUS - 1];
 
-				if (strcmp(pmstatus, PM_STATUS_READY) == 0 ||
+				if (strcmp(pmstatus, gpdb_master_distributed_mode?PM_STATUS_DTM_RECOVERED:PM_STATUS_READY) == 0 ||
 					strcmp(pmstatus, PM_STATUS_STANDBY) == 0)
 				{
 					/* postmaster is done starting up */

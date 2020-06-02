@@ -3679,6 +3679,14 @@ CleanupBackgroundWorker(int pid,
 			/* Zero exit status means terminate */
 			rw->rw_crashed_at = 0;
 			rw->rw_terminate = true;
+
+			/* dtx recovery completed successfully */
+			if (rw->rw_worker.bgw_start_rule == DtxRecoveryStartRule)
+			{
+				Assert(strcmp(rw->rw_worker.bgw_name, "dtx recovery process") == 0);
+				Assert(*shmDtmStarted);
+				AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_DTM_RECOVERED);
+			}
 		}
 
 		/*
