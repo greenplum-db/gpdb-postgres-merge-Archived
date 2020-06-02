@@ -2746,40 +2746,6 @@ select j, sum(k), row_number() over (partition by j order by sum(k)) from qp_mis
  9 | 307 |          1
 (10 rows)
 
-CREATE TABLE qp_misc_jiras.tbl6419_test(
-lstg_id numeric(38,0),
-icedt date,
-icehr smallint,
-cre_time timestamp without time zone,
-lstg_desc_txt text
-)
-WITH (appendonly=true, compresslevel=5) distributed by (lstg_id) PARTITION BY RANGE(cre_time)
-(
-START ('2009-05-26 00:00:00'::timestamp without time zone) 
-END ('2009-06-05 00:00:00'::timestamp without time zone) EVERY ('1 day'::interval) WITH (appendonly=true, compresslevel=5)
-);
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_1" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_2" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_3" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_4" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_5" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_6" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_7" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_8" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_9" for table "tbl6419_test"
-NOTICE:  CREATE TABLE will create partition "tbl6419_test_1_prt_10" for table "tbl6419_test"
-insert into qp_misc_jiras.tbl6419_test values( 123, '2009-06-01', 12, '2009-06-01 01:01:01', 'aaaaaa');
-select * from qp_misc_jiras.tbl6419_test where icedt::text = (select partitionrangestart FROM pg_partitions where tablename='test1' and schemaname='public' and partitionrank=1);
- lstg_id | icedt | icehr | cre_time | lstg_desc_txt 
----------+-------+-------+----------+---------------
-(0 rows)
-
-select * from qp_misc_jiras.tbl6419_test where '2009-12-12'::date::text = (select 'test'::text);
- lstg_id | icedt | icehr | cre_time | lstg_desc_txt 
----------+-------+-------+----------+---------------
-(0 rows)
-
-drop table qp_misc_jiras.tbl6419_test;
 CREATE TABLE qp_misc_jiras.m_ccr_mthy_cr_nds_t00
 (
 cls_yymm date,

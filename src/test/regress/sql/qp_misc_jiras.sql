@@ -791,23 +791,6 @@ select x.b from ( ( select 'a'::text as a ) xx join (select 'a'::text as b) yy o
 create table qp_misc_jiras.tbl6027_test (i int, j bigint, k int, l int, m int);
 insert into qp_misc_jiras.tbl6027_test select i, i%100, i%123, i%234, i%345 from generate_series(1, 500) i;
 select j, sum(k), row_number() over (partition by j order by sum(k)) from qp_misc_jiras.tbl6027_test group by j order by j limit 10; -- order 1
-CREATE TABLE qp_misc_jiras.tbl6419_test(
-lstg_id numeric(38,0),
-icedt date,
-icehr smallint,
-cre_time timestamp without time zone,
-lstg_desc_txt text
-)
-WITH (appendonly=true, compresslevel=5) distributed by (lstg_id) PARTITION BY RANGE(cre_time)
-(
-START ('2009-05-26 00:00:00'::timestamp without time zone) 
-END ('2009-06-05 00:00:00'::timestamp without time zone) EVERY ('1 day'::interval) WITH (appendonly=true, compresslevel=5)
-);
-
-insert into qp_misc_jiras.tbl6419_test values( 123, '2009-06-01', 12, '2009-06-01 01:01:01', 'aaaaaa');
-select * from qp_misc_jiras.tbl6419_test where icedt::text = (select partitionrangestart FROM pg_partitions where tablename='test1' and schemaname='public' and partitionrank=1);
-select * from qp_misc_jiras.tbl6419_test where '2009-12-12'::date::text = (select 'test'::text);
-drop table qp_misc_jiras.tbl6419_test;
 
 CREATE TABLE qp_misc_jiras.m_ccr_mthy_cr_nds_t00
 (
