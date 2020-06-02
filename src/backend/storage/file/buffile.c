@@ -59,6 +59,8 @@
 #include "storage/buf_internals.h"
 #include "utils/resowner.h"
 
+#include "utils/workfile_mgr.h"
+
 /*
  * We break BufFiles into gigabyte-sized segments, regardless of RELSEG_SIZE.
  * The reason is that we'd like large BufFiles to be spread across multiple
@@ -86,6 +88,8 @@ struct BufFile
 
 	SharedFileSet *fileset;		/* space for segment files if shared */
 	const char *name;			/* name of this BufFile if shared */
+
+	workfile_set *work_set;
 
 	/*
 	 * resowner is the ResourceOwner to use for underlying temp files.  (We
@@ -179,6 +183,19 @@ extendBufFile(BufFile *file)
 									(file->numFiles + 1) * sizeof(File));
 	file->files[file->numFiles] = pfile;
 	file->numFiles++;
+
+	/*
+	 * Register the file as a "work file", so that the Greenplum workfile
+	 * limits apply to it.
+	 *
+	 * GPDB_12_MERGE_FIXME: In previous Greenplum versions, we had disabled
+	 * the Postgres 1 GB segmentation of BufFiles. It was resurrected with
+	 * The v12 merge. Now each 1 GB segment file counts as one work file.
+	 * That makes the limit on the number of work files work differently.
+	 * Is that OK? Documentation changes needed, at least.
+	 */
+	FileSetIsWorkfile(pfile);
+	RegisterFileWithSet(pfile, file->work_set);
 }
 
 /*
@@ -215,6 +232,14 @@ BufFileCreateTemp(char *operation_name, bool interXact)
 
 	file = makeBufFile(pfile, operation_name);
 	file->isInterXact = interXact;
+
+	/*
+	 * Register the file as a "work file", so that the Greenplum workfile
+	 * limits apply to it.
+	 */
+	file->work_set = workfile_mgr_create_set(operation_name, NULL);
+	FileSetIsWorkfile(pfile);
+	RegisterFileWithSet(pfile, file->work_set);
 
 	return file;
 }
@@ -410,6 +435,9 @@ BufFileClose(BufFile *file)
 	/* close and delete the underlying file(s) */
 	for (i = 0; i < file->numFiles; i++)
 		FileClose(file->files[i]);
+
+	workfile_mgr_close_set(file->work_set);
+
 	/* release the buffer space */
 	pfree(file->files);
 	pfree(file);
