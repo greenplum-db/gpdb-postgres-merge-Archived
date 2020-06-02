@@ -1378,14 +1378,13 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_addcol_splitpt_dml_char SET col2 ='x'  WHERE col2 = 'a' AND col1 = 'z';
-ERROR:  moving tuple from partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partsplitone" to partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partthree" not supported  (seg1 10.152.10.75:25433 pid=7636)
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
 ------+------+------+------
  x    | x    | a    |   10
  x    | x    | b    |    0
  x    | x    | c    |    1
- z    | a    | d    |    1
+ z    | x    | d    |    1
 (4 rows)
 
 DELETE FROM mpp21090_dropcol_addcol_splitpt_dml_char WHERE col3='b';
@@ -1394,7 +1393,7 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3;
 ------+------+------+------
  x    | x    | a    |   10
  x    | x    | c    |    1
- z    | a    | d    |    1
+ z    | x    | d    |    1
 (3 rows)
 
 -- TEST
@@ -1628,14 +1627,13 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_addcol_splitpt_dml_int8 SET col2 =2000000000000000000  WHERE col2 = 100000000000000000 AND col1 = 3500000000000000000;
-ERROR:  moving tuple from partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_partsplitone" to partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_parttwo" not supported  (seg1 10.152.10.75:25433 pid=7636)
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
 ---------------------+---------------------+------+------
  2000000000000000000 | 2000000000000000000 | a    |   10
  2000000000000000000 | 2000000000000000000 | b    |    0
  2000000000000000000 | 2000000000000000000 | c    |    1
- 3500000000000000000 |  100000000000000000 | d    |    1
+ 3500000000000000000 | 2000000000000000000 | d    |    1
 (4 rows)
 
 DELETE FROM mpp21090_dropcol_addcol_splitpt_dml_int8 WHERE col3='b';
@@ -1644,7 +1642,7 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3;
 ---------------------+---------------------+------+------
  2000000000000000000 | 2000000000000000000 | a    |   10
  2000000000000000000 | 2000000000000000000 | c    |    1
- 3500000000000000000 |  100000000000000000 | d    |    1
+ 3500000000000000000 | 2000000000000000000 | d    |    1
 (3 rows)
 
 -- TEST
@@ -1712,14 +1710,13 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_addcol_splitpt_dml_interval SET col2 ='1 hour'  WHERE col2 = '1 sec' AND col1 = '14 hours';
-ERROR:  moving tuple from partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partsplitone" to partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partthree" not supported  (seg0 10.152.10.75:25432 pid=7634)
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
 ----------+----------+------+------
  01:00:00 | 01:00:00 | a    |   10
  01:00:00 | 01:00:00 | b    |    0
  01:00:00 | 01:00:00 | c    |    1
- 14:00:00 | 00:00:01 | d    |    1
+ 14:00:00 | 01:00:00 | d    |    1
 (4 rows)
 
 DELETE FROM mpp21090_dropcol_addcol_splitpt_dml_interval WHERE col3='b';
@@ -1728,7 +1725,7 @@ SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3;
 ----------+----------+------+------
  01:00:00 | 01:00:00 | a    |   10
  01:00:00 | 01:00:00 | c    |    1
- 14:00:00 | 00:00:01 | d    |    1
+ 14:00:00 | 01:00:00 | d    |    1
 (3 rows)
 
 -- TEST
@@ -2716,12 +2713,11 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_char ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_splitpt_dml_char SET col2 ='x'  WHERE col2 = 'a' AND col1 = 'z';
-ERROR:  moving tuple from partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partsplitone" to partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partthree" not supported  (seg1 10.152.10.75:25433 pid=7636)
 SELECT * FROM mpp21090_dropcol_splitpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
 ------+------+------+------
  x    | x    | a    |    0
- z    | a    | b    |    1
+ z    | x    | b    |    1
 (2 rows)
 
 DELETE FROM mpp21090_dropcol_splitpt_dml_char WHERE col3='b';
@@ -2891,12 +2887,11 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_splitpt_dml_int8 SET col2 =2000000000000000000  WHERE col2 = 100000000000000000 AND col1 = 3500000000000000000;
-ERROR:  moving tuple from partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_partsplitone" to partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_parttwo" not supported  (seg1 10.152.10.75:25433 pid=7636)
 SELECT * FROM mpp21090_dropcol_splitpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
 ---------------------+---------------------+------+------
  2000000000000000000 | 2000000000000000000 | a    |    0
- 3500000000000000000 |  100000000000000000 | b    |    1
+ 3500000000000000000 | 2000000000000000000 | b    |    1
 (2 rows)
 
 DELETE FROM mpp21090_dropcol_splitpt_dml_int8 WHERE col3='b';
@@ -2950,12 +2945,11 @@ SELECT * FROM mpp21090_dropcol_splitpt_dml_interval ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_dropcol_splitpt_dml_interval SET col2 ='1 hour'  WHERE col2 = '1 sec' AND col1 = '14 hours';
-ERROR:  moving tuple from partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partsplitone" to partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partthree" not supported  (seg0 10.152.10.75:25432 pid=7634)
 SELECT * FROM mpp21090_dropcol_splitpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
 ----------+----------+------+------
  01:00:00 | 01:00:00 | a    |    0
- 14:00:00 | 00:00:01 | b    |    1
+ 14:00:00 | 01:00:00 | b    |    1
 (2 rows)
 
 DELETE FROM mpp21090_dropcol_splitpt_dml_interval WHERE col3='b';
@@ -9053,22 +9047,21 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addcol_addpt_dropcol_decimal SET col2 = 1.00 WHERE col2 = 35.00 and col3='c';
-ERROR:  moving tuple from partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_partfour" to partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_partone" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 | col5  
 -------+------+------+-------
+  1.00 | c    |    1 |  1.00
   2.00 | a    |    0 |  2.00
  35.00 | b    |    1 | 35.00
- 35.00 | c    |    1 |  1.00
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addcol_addpt_dropcol_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 | col5  
 -------+------+------+-------
+  1.00 | c    |    1 |  1.00
   2.00 | a    |    0 |  2.00
  35.00 | b    |    1 | 35.00
- 35.00 | c    |    1 |  1.00
 (3 rows)
 
 -- TEST
@@ -9193,13 +9186,12 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addcol_addpt_dropcol_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 and col3='c';
-ERROR:  moving tuple from partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_partfour" to partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_int8 ORDER BY 1,2,3;
         col2         | col3 | col4 |        col5         
 ---------------------+------+------+---------------------
+ 1000000000000000000 | c    |    1 | 1000000000000000000
  2000000000000000000 | a    |    0 | 2000000000000000000
  3500000000000000000 | b    |    1 | 3500000000000000000
- 3500000000000000000 | c    |    1 | 1000000000000000000
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addcol_addpt_dropcol_int8 WHERE col2 = 1000000000000000000;
@@ -9208,8 +9200,7 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_int8 ORDER BY 1,2,3;
 ---------------------+------+------+---------------------
  2000000000000000000 | a    |    0 | 2000000000000000000
  3500000000000000000 | b    |    1 | 3500000000000000000
- 3500000000000000000 | c    |    1 | 1000000000000000000
-(3 rows)
+(2 rows)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addcol_addpt_dropcol_interval;
@@ -9333,13 +9324,12 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addcol_addpt_dropcol_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 and col3='c';
-ERROR:  moving tuple from partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_partfour" to partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_numeric ORDER BY 1,2,3;
    col2    | col3 | col4 |   col5    
 -----------+------+------+-----------
+  1.000000 | c    |    1 |  1.000000
   2.000000 | a    |    0 |  2.000000
  35.000000 | b    |    1 | 35.000000
- 35.000000 | c    |    1 |  1.000000
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addcol_addpt_dropcol_numeric WHERE col2 = 1.000000;
@@ -9348,8 +9338,7 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_numeric ORDER BY 1,2,3;
 -----------+------+------+-----------
   2.000000 | a    |    0 |  2.000000
  35.000000 | b    |    1 | 35.000000
- 35.000000 | c    |    1 |  1.000000
-(3 rows)
+(2 rows)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addcol_addpt_dropcol_text;
@@ -9404,13 +9393,12 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addcol_addpt_dropcol_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz' and col3='c';
-ERROR:  moving tuple from partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_partfour" to partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_parttwo" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_text ORDER BY 1,2,3;
        col2       | col3 | col4 |       col5       
 ------------------+------+------+------------------
  abcdefghijklmnop | a    |    0 | abcdefghijklmnop
+ qrstuvwxyz       | c    |    1 | qrstuvwxyz
  xyz              | b    |    1 | xyz
- xyz              | c    |    1 | qrstuvwxyz
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addcol_addpt_dropcol_text WHERE col2 = 'qrstuvwxyz';
@@ -9419,8 +9407,7 @@ SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_text ORDER BY 1,2,3;
 ------------------+------+------+------------------
  abcdefghijklmnop | a    |    0 | abcdefghijklmnop
  xyz              | b    |    1 | xyz
- xyz              | c    |    1 | qrstuvwxyz
-(3 rows)
+(2 rows)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_addcol_dml_char;
@@ -9566,14 +9553,13 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 | col5  
 -------+------+------+-------
+  1.00 | d    |   10 | 35.00
   2.00 | a    |    0 |  2.00
  35.00 | b    |   10 |  2.00
  35.00 | c    |   10 |  2.00
- 35.00 | d    |   10 | 35.00
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal WHERE col2 = 1.00;
@@ -9583,8 +9569,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
   2.00 | a    |    0 |  2.00
  35.00 | b    |   10 |  2.00
  35.00 | c    |   10 |  2.00
- 35.00 | d    |   10 | 35.00
-(4 rows)
+(3 rows)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_addcol_dml_int4;
@@ -9730,14 +9715,13 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int8 ORDER BY 1,2,3;
         col2         | col3 | col4 |        col5         
 ---------------------+------+------+---------------------
+ 1000000000000000000 | b    |   10 | 2000000000000000000
+ 1000000000000000000 | c    |   10 | 2000000000000000000
+ 1000000000000000000 | d    |   10 | 3500000000000000000
  2000000000000000000 | a    |    0 | 2000000000000000000
- 3500000000000000000 | b    |   10 | 2000000000000000000
- 3500000000000000000 | c    |   10 | 2000000000000000000
- 3500000000000000000 | d    |   10 | 3500000000000000000
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int8 WHERE col2 = 1000000000000000000;
@@ -9745,10 +9729,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int8 ORDER BY 1,2,3;
         col2         | col3 | col4 |        col5         
 ---------------------+------+------+---------------------
  2000000000000000000 | a    |    0 | 2000000000000000000
- 3500000000000000000 | b    |   10 | 2000000000000000000
- 3500000000000000000 | c    |   10 | 2000000000000000000
- 3500000000000000000 | d    |   10 | 3500000000000000000
-(4 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_addcol_dml_interval;
@@ -9894,14 +9875,13 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_numeric SET col2 = 1.000000 WHERE col2 = 35.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
    col2    | col3 | col4 |   col5    
 -----------+------+------+-----------
+  1.000000 | b    |   10 |  2.000000
+  1.000000 | c    |   10 |  2.000000
+  1.000000 | d    |   10 | 35.000000
   2.000000 | a    |    0 |  2.000000
- 35.000000 | b    |   10 |  2.000000
- 35.000000 | c    |   10 |  2.000000
- 35.000000 | d    |   10 | 35.000000
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric WHERE col2 = 1.000000;
@@ -9909,10 +9889,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
    col2    | col3 | col4 |   col5    
 -----------+------+------+-----------
   2.000000 | a    |    0 |  2.000000
- 35.000000 | b    |   10 |  2.000000
- 35.000000 | c    |   10 |  2.000000
- 35.000000 | d    |   10 | 35.000000
-(4 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_addcol_dml_text;
@@ -9978,14 +9955,13 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz';
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_parttwo" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_text ORDER BY 1,2,3;
        col2       | col3 | col4 |       col5       
 ------------------+------+------+------------------
  abcdefghijklmnop | a    |    0 | abcdefghijklmnop
- xyz              | b    |   10 | abcdefghijklmnop
- xyz              | c    |   10 | abcdefghijklmnop
- xyz              | d    |   10 | xyz
+ qrstuvwxyz       | b    |   10 | abcdefghijklmnop
+ qrstuvwxyz       | c    |   10 | abcdefghijklmnop
+ qrstuvwxyz       | d    |   10 | xyz
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_text WHERE col2 = 'qrstuvwxyz';
@@ -9993,10 +9969,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_text ORDER BY 1,2,3;
        col2       | col3 | col4 |       col5       
 ------------------+------+------+------------------
  abcdefghijklmnop | a    |    0 | abcdefghijklmnop
- xyz              | b    |   10 | abcdefghijklmnop
- xyz              | c    |   10 | abcdefghijklmnop
- xyz              | d    |   10 | xyz
-(4 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_dml_char;
@@ -10117,13 +10090,12 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 
 -------+------+------
+  1.00 | b    |   10
+  1.00 | b    |   10
   2.00 | a    |    0
- 35.00 | b    |   10
- 35.00 | b    |   10
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_dml_decimal WHERE col2 = 1.00;
@@ -10131,9 +10103,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 
 -------+------+------
   2.00 | a    |    0
- 35.00 | b    |   10
- 35.00 | b    |   10
-(3 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_dml_int4;
@@ -10254,13 +10224,12 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_dml_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_int8 ORDER BY 1,2,3;
         col2         | col3 | col4 
 ---------------------+------+------
+ 1000000000000000000 | b    |   10
+ 1000000000000000000 | b    |   10
  2000000000000000000 | a    |    0
- 3500000000000000000 | b    |   10
- 3500000000000000000 | b    |   10
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_dml_int8 WHERE col2 = 1000000000000000000;
@@ -10268,9 +10237,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_int8 ORDER BY 1,2,3;
         col2         | col3 | col4 
 ---------------------+------+------
  2000000000000000000 | a    |    0
- 3500000000000000000 | b    |   10
- 3500000000000000000 | b    |   10
-(3 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_dml_interval;
@@ -10391,23 +10358,20 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_dml_numeric SET col2 = 1.000000 WHERE col2 = 35.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_numeric ORDER BY 1,2,3;
-   col2    | col3 | col4 
------------+------+------
-  2.000000 | a    |    0
- 35.000000 | b    |   10
- 35.000000 | b    |   10
+   col2   | col3 | col4 
+----------+------+------
+ 1.000000 | b    |   10
+ 1.000000 | b    |   10
+ 2.000000 | a    |    0
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_dml_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_numeric ORDER BY 1,2,3;
-   col2    | col3 | col4 
------------+------+------
-  2.000000 | a    |    0
- 35.000000 | b    |   10
- 35.000000 | b    |   10
-(3 rows)
+   col2   | col3 | col4 
+----------+------+------
+ 2.000000 | a    |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_dml_text;
@@ -10461,13 +10425,12 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_dml_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz';
-ERROR:  moving tuple from partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_partfour" to partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_parttwo" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_text ORDER BY 1,2,3;
        col2       | col3 | col4 
 ------------------+------+------
  abcdefghijklmnop | a    |    0
- xyz              | b    |   10
- xyz              | b    |   10
+ qrstuvwxyz       | b    |   10
+ qrstuvwxyz       | b    |   10
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_dml_text WHERE col2 = 'qrstuvwxyz';
@@ -10475,9 +10438,7 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_text ORDER BY 1,2,3;
        col2       | col3 | col4 
 ------------------+------+------
  abcdefghijklmnop | a    |    0
- xyz              | b    |   10
- xyz              | b    |   10
-(3 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_dml_char;
@@ -10617,11 +10578,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ORDER BY 1,2,3;
- col1  | col2  | col3 | col5 
--------+-------+------+------
- 35.00 | 35.00 | d    | 1.00
+ col1  | col2 | col3 | col5 
+-------+------+------+------
+ 35.00 | 1.00 | d    | 1.00
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_dml_decimal WHERE col5 = 1.00;
@@ -10768,11 +10728,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_dml_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 |        col5         
 ---------------------+---------------------+------+---------------------
- 3500000000000000000 | 3500000000000000000 | d    | 1000000000000000000
+ 3500000000000000000 | 1000000000000000000 | d    | 1000000000000000000
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int8 WHERE col5 = 1000000000000000000;
@@ -10919,11 +10878,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_dml_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ORDER BY 1,2,3;
-   col1    |   col2    | col3 |   col5   
------------+-----------+------+----------
- 35.000000 | 35.000000 | d    | 1.000000
+   col1    |   col2   | col3 |   col5   
+-----------+----------+------+----------
+ 35.000000 | 1.000000 | d    | 1.000000
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_dml_numeric WHERE col5 = 1.000000;
@@ -10995,11 +10953,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_dml_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz' AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_parttwo" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_text ORDER BY 1,2,3;
- col1 | col2 | col3 |    col5    
-------+------+------+------------
- xyz  | xyz  | d    | qrstuvwxyz
+ col1 |    col2    | col3 |    col5    
+------+------------+------+------------
+ xyz  | qrstuvwxyz | d    | qrstuvwxyz
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_dml_text WHERE col5 = 'qrstuvwxyz';
@@ -11077,11 +11034,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char SET col2 = 'a' WHERE col2 = 'z' AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
 ------+------+------+------
- z    | z    | d    | a
+ z    | a    | d    | a
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char WHERE col5 = 'a';
@@ -11159,11 +11115,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_deci_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decim_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3;
- col1  | col2  | col3 | col5 
--------+-------+------+------
- 35.00 | 35.00 | d    | 1.00
+ col1  | col2 | col3 | col5 
+-------+------+------+------
+ 35.00 | 1.00 | d    | 1.00
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal WHERE col5 = 1.00;
@@ -11241,11 +11196,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SET col2 = 10000000 WHERE col2 = 350000000 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_partone" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
-   col1    |   col2    | col3 |   col5   
------------+-----------+------+----------
- 350000000 | 350000000 | d    | 10000000
+   col1    |   col2   | col3 |   col5   
+-----------+----------+------+----------
+ 350000000 | 10000000 | d    | 10000000
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 WHERE col5 = 10000000;
@@ -11323,11 +11277,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 |        col5         
 ---------------------+---------------------+------+---------------------
- 3500000000000000000 | 3500000000000000000 | d    | 1000000000000000000
+ 3500000000000000000 | 1000000000000000000 | d    | 1000000000000000000
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 WHERE col5 = 1000000000000000000;
@@ -11405,11 +11358,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ORDER BY 1,2,
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval SET col2 = '11 hours' WHERE col2 = '14 hours' AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inte_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_in_1_prt_partthree2" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
 ----------+----------+------+----------
- 14:00:00 | 14:00:00 | d    | 11:00:00
+ 14:00:00 | 11:00:00 | d    | 11:00:00
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval WHERE col5 = '11 hours';
@@ -11487,11 +11439,10 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ORDER BY 1,2,3
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col3 ='d';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_nume_1_prt_partfour" to partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numer_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ORDER BY 1,2,3;
-   col1    |   col2    | col3 |   col5   
------------+-----------+------+----------
- 35.000000 | 35.000000 | d    | 1.000000
+   col1    |   col2   | col3 |   col5   
+-----------+----------+------+----------
+ 35.000000 | 1.000000 | d    | 1.000000
 (1 row)
 
 DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric WHERE col5 = 1.000000;
@@ -11598,12 +11549,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col4 = 1.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_partone" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 | col5 
--------+------+------+------
-  2.00 | a    | 2.00 |    0
- 35.00 | b    | 1.00 |    1
+ col2 | col3 | col4 | col5 
+------+------+------+------
+ 1.00 | b    | 1.00 |    1
+ 2.00 | a    | 2.00 |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_decimal WHERE col2 = 1.00;
@@ -11611,8 +11561,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 | col5 
 -------+------+------+------
   2.00 | a    | 2.00 |    0
- 35.00 | b    | 1.00 |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_char;
@@ -11662,12 +11611,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_char ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_char SET col2 = 'a' WHERE col2 = 'z' AND col4 = 'a';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
+ a    | b    | a    |    1
  g    | a    | g    |    0
- z    | b    | a    |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_char WHERE col2 = 'a';
@@ -11675,8 +11623,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
  g    | a    | g    |    0
- z    | b    | a    |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_decimal;
@@ -11726,21 +11673,19 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col4 = 1.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partone" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 | col5 
--------+------+------+------
-  2.00 | a    | 2.00 |    0
- 35.00 | b    | 1.00 |    1
+ col2 | col3 | col4 | col5 
+------+------+------+------
+ 1.00 | b    | 1.00 |    1
+ 2.00 | a    | 2.00 |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 | col5 
--------+------+------+------
-  2.00 | a    | 2.00 |    0
- 35.00 | b    | 1.00 |    1
-(2 rows)
+ col2 | col3 | col4 | col5 
+------+------+------+------
+ 2.00 | a    | 2.00 |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_int4;
@@ -11790,21 +11735,19 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int4 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_int4 SET col2 = 10000000 WHERE col2 = 350000000 AND col4 = 10000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int4 ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  20000000 | a    | 20000000 |    0
- 350000000 | b    | 10000000 |    1
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 10000000 | b    | 10000000 |    1
+ 20000000 | a    | 20000000 |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_int4 WHERE col2 = 10000000;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int4 ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  20000000 | a    | 20000000 |    0
- 350000000 | b    | 10000000 |    1
-(2 rows)
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 20000000 | a    | 20000000 |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_int8;
@@ -11854,21 +11797,19 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col4 = 1000000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partone" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int8 ORDER BY 1,2,3;
         col2         | col3 |        col4         | col5 
 ---------------------+------+---------------------+------
   200000000000000000 | a    |  200000000000000000 |    0
- 3500000000000000000 | b    | 1000000000000000000 |    1
+ 1000000000000000000 | b    | 1000000000000000000 |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_int8 WHERE col2 = 1000000000000000000;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int8 ORDER BY 1,2,3;
-        col2         | col3 |        col4         | col5 
----------------------+------+---------------------+------
-  200000000000000000 | a    |  200000000000000000 |    0
- 3500000000000000000 | b    | 1000000000000000000 |    1
-(2 rows)
+        col2        | col3 |        col4        | col5 
+--------------------+------+--------------------+------
+ 200000000000000000 | a    | 200000000000000000 |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_interval;
@@ -11918,12 +11859,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_interval ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_interval SET col2 = '11 hours' WHERE col2 = '14 hours' AND col4 = '11 hours';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_interva_1_prt_partthree" not supported  (seg0 127.0.0.1:40000 pid=9829)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_interval ORDER BY 1,2,3;
    col2   | col3 |   col4   | col5 
 ----------+------+----------+------
  00:00:10 | a    | 00:00:10 |    0
- 14:00:00 | b    | 11:00:00 |    1
+ 11:00:00 | b    | 11:00:00 |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_interval WHERE col2 = '11 hours';
@@ -11931,8 +11871,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_interval ORDER BY 1,2,3;
    col2   | col3 |   col4   | col5 
 ----------+------+----------+------
  00:00:10 | a    | 00:00:10 |    0
- 14:00:00 | b    | 11:00:00 |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_numeric;
@@ -11982,12 +11921,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_index_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col4 = 1.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  2.000000 | a    | 2.000000 |    0
- 35.000000 | b    | 1.000000 |    1
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 1.000000 | b    | 1.000000 |    1
+ 2.000000 | a    | 2.000000 |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric WHERE col2 = 1.000000;
@@ -11995,8 +11933,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
    col2    | col3 |   col4   | col5 
 -----------+------+----------+------
   2.000000 | a    | 2.000000 |    0
- 35.000000 | b    | 1.000000 |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_int4;
@@ -12096,12 +12033,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col4 = 1000000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_partone" not supported  (seg1 127.0.0.1:40001 pid=9830)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_int8 ORDER BY 1,2,3;
         col2         | col3 |        col4         | col5 
 ---------------------+------+---------------------+------
+ 1000000000000000000 | b    | 1000000000000000000 |    1
  2000000000000000000 | a    | 2000000000000000000 |    0
- 3500000000000000000 | b    | 1000000000000000000 |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_int8 WHERE col2 = 1000000000000000000;
@@ -12109,8 +12045,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_int8 ORDER BY 1,2,3;
         col2         | col3 |        col4         | col5 
 ---------------------+------+---------------------+------
  2000000000000000000 | a    | 2000000000000000000 |    0
- 3500000000000000000 | b    | 1000000000000000000 |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_interval;
@@ -12210,21 +12145,19 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col4 = 1.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_partone" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_numeric ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  2.000000 | a    | 2.000000 |    0
- 35.000000 | b    | 1.000000 |    1
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 1.000000 | b    | 1.000000 |    1
+ 2.000000 | a    | 2.000000 |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_numeric ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  2.000000 | a    | 2.000000 |    0
- 35.000000 | b    | 1.000000 |    1
-(2 rows)
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 2.000000 | a    | 2.000000 |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropfirstcol_addpt_text;
@@ -12268,12 +12201,11 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropfirstcol_addpt_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz' AND col4 = 'qrstuvwxyz';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_partfour" to partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_parttwo" not supported  (seg2 127.0.0.1:40002 pid=9831)
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_text ORDER BY 1,2,3;
        col2       | col3 |       col4       | col5 
 ------------------+------+------------------+------
  abcdefghijklmnop | a    | abcdefghijklmnop |    0
- xyz              | b    | qrstuvwxyz       |    1
+ qrstuvwxyz       | b    | qrstuvwxyz       |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_text WHERE col2 = 'qrstuvwxyz';
@@ -12281,8 +12213,7 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_text ORDER BY 1,2,3;
        col2       | col3 |       col4       | col5 
 ------------------+------+------------------+------
  abcdefghijklmnop | a    | abcdefghijklmnop |    0
- xyz              | b    | qrstuvwxyz       |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_droplastcol_addpt_char;
@@ -12378,21 +12309,19 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_droplastcol_addpt_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col1 = 1.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_partfour" to partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
- col1 | col2  | col3 | col4 
-------+-------+------+------
- 1.00 | 35.00 | b    |    1
- 2.00 |  2.00 | a    |    0
+ col1 | col2 | col3 | col4 
+------+------+------+------
+ 1.00 | 1.00 | b    |    1
+ 2.00 | 2.00 | a    |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_droplastcol_addpt_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
  col1 | col2  | col3 | col4 
 ------+-------+------+------
- 1.00 | 35.00 | b    |    1
  2.00 |  2.00 | a    |    0
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_droplastcol_addpt_int4;
@@ -12488,11 +12417,10 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_droplastcol_addpt_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col1 = 1000000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_partfour" to partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 
 ---------------------+---------------------+------+------
- 1000000000000000000 | 3500000000000000000 | b    |    1
+ 1000000000000000000 | 1000000000000000000 | b    |    1
  2000000000000000000 | 2000000000000000000 | a    |    0
 (2 rows)
 
@@ -12500,9 +12428,8 @@ DELETE FROM mpp21090_pttab_droplastcol_addpt_int8 WHERE col2 = 10000000000000000
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 
 ---------------------+---------------------+------+------
- 1000000000000000000 | 3500000000000000000 | b    |    1
  2000000000000000000 | 2000000000000000000 | a    |    0
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_droplastcol_addpt_interval;
@@ -12598,21 +12525,19 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_droplastcol_addpt_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col1 = 1.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_partfour" to partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
-   col1   |   col2    | col3 | col4 
-----------+-----------+------+------
- 1.000000 | 35.000000 | b    |    1
- 2.000000 |  2.000000 | a    |    0
+   col1   |   col2   | col3 | col4 
+----------+----------+------+------
+ 1.000000 | 1.000000 | b    |    1
+ 2.000000 | 2.000000 | a    |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_droplastcol_addpt_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
    col1   |   col2    | col3 | col4 
 ----------+-----------+------+------
- 1.000000 | 35.000000 | b    |    1
  2.000000 |  2.000000 | a    |    0
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_droplastcol_addpt_text;
@@ -12654,12 +12579,11 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_droplastcol_addpt_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz' AND col1 = 'qrstuvwxyz';
-ERROR:  moving tuple from partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_partfour" to partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_parttwo" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 
 ------------------+------------------+------+------
  abcdefghijklmnop | abcdefghijklmnop | a    |    0
- qrstuvwxyz       | xyz              | b    |    1
+ qrstuvwxyz       | qrstuvwxyz       | b    |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_droplastcol_addpt_text WHERE col2 = 'qrstuvwxyz';
@@ -12667,8 +12591,7 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 
 ------------------+------------------+------+------
  abcdefghijklmnop | abcdefghijklmnop | a    |    0
- qrstuvwxyz       | xyz              | b    |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropmidcol_addpt_char;
@@ -12762,21 +12685,19 @@ SELECT * FROM mpp21090_pttab_dropmidcol_addpt_decimal ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropmidcol_addpt_decimal SET col2 = 1.00 WHERE col2 = 35.00 AND col1 = 1.00;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_partfour" to partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_decimal ORDER BY 1,2,3;
- col1 | col2  | col3 | col5 
-------+-------+------+------
- 1.00 | 35.00 | b    |    1
- 2.00 |  2.00 | a    |    0
+ col1 | col2 | col3 | col5 
+------+------+------+------
+ 1.00 | 1.00 | b    |    1
+ 2.00 | 2.00 | a    |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropmidcol_addpt_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_decimal ORDER BY 1,2,3;
- col1 | col2  | col3 | col5 
-------+-------+------+------
- 1.00 | 35.00 | b    |    1
- 2.00 |  2.00 | a    |    0
-(2 rows)
+ col1 | col2 | col3 | col5 
+------+------+------+------
+ 2.00 | 2.00 | a    |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropmidcol_addpt_int4;
@@ -12870,11 +12791,10 @@ SELECT * FROM mpp21090_pttab_dropmidcol_addpt_int8 ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropmidcol_addpt_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col1 = 1000000000000000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_partfour" to partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
 ---------------------+---------------------+------+------
- 1000000000000000000 | 3500000000000000000 | b    |    1
+ 1000000000000000000 | 1000000000000000000 | b    |    1
  2000000000000000000 | 2000000000000000000 | a    |    0
 (2 rows)
 
@@ -12882,9 +12802,8 @@ DELETE FROM mpp21090_pttab_dropmidcol_addpt_int8 WHERE col2 = 100000000000000000
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
 ---------------------+---------------------+------+------
- 1000000000000000000 | 3500000000000000000 | b    |    1
  2000000000000000000 | 2000000000000000000 | a    |    0
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropmidcol_addpt_interval;
@@ -12978,21 +12897,19 @@ SELECT * FROM mpp21090_pttab_dropmidcol_addpt_numeric ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropmidcol_addpt_numeric SET col2 = 1.000000 WHERE col2 = 35.000000 AND col1 = 1.000000;
-ERROR:  moving tuple from partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_partfour" to partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_partone" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_numeric ORDER BY 1,2,3;
-   col1   |   col2    | col3 | col5 
-----------+-----------+------+------
- 1.000000 | 35.000000 | b    |    1
- 2.000000 |  2.000000 | a    |    0
+   col1   |   col2   | col3 | col5 
+----------+----------+------+------
+ 1.000000 | 1.000000 | b    |    1
+ 2.000000 | 2.000000 | a    |    0
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropmidcol_addpt_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_numeric ORDER BY 1,2,3;
-   col1   |   col2    | col3 | col5 
-----------+-----------+------+------
- 1.000000 | 35.000000 | b    |    1
- 2.000000 |  2.000000 | a    |    0
-(2 rows)
+   col1   |   col2   | col3 | col5 
+----------+----------+------+------
+ 2.000000 | 2.000000 | a    |    0
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_dropmidcol_addpt_text;
@@ -13033,12 +12950,11 @@ SELECT * FROM mpp21090_pttab_dropmidcol_addpt_text ORDER BY 1,2,3;
 
 -- Update partition key
 UPDATE mpp21090_pttab_dropmidcol_addpt_text SET col2 = 'qrstuvwxyz' WHERE col2 = 'xyz' AND col1 = 'qrstuvwxyz';
-ERROR:  moving tuple from partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_partfour" to partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_parttwo" not supported  (seg0 10.152.10.75:25432 pid=5459)
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col5 
 ------------------+------------------+------+------
  abcdefghijklmnop | abcdefghijklmnop | a    |    0
- qrstuvwxyz       | xyz              | b    |    1
+ qrstuvwxyz       | qrstuvwxyz       | b    |    1
 (2 rows)
 
 DELETE FROM mpp21090_pttab_dropmidcol_addpt_text WHERE col2 = 'qrstuvwxyz';
@@ -13046,8 +12962,7 @@ SELECT * FROM mpp21090_pttab_dropmidcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col5 
 ------------------+------------------+------+------
  abcdefghijklmnop | abcdefghijklmnop | a    |    0
- qrstuvwxyz       | xyz              | b    |    1
-(2 rows)
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_reordered_col_dml_char;
