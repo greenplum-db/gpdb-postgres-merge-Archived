@@ -374,9 +374,9 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 #ifdef OID_DISPATCH_DEBUG
 		elog(NOTICE, "adding OID assignment: catalog \"%s\", namespace: %u, name: \"%s\": %u",
 			 RelationGetRelationName(relation),
-			 assignment->namespaceOid,
-			 assignment->objname ? assignment->objname : "",
-			 assignment->oid);
+			 searchkey->namespaceOid,
+			 searchkey->objname ? searchkey->objname : "",
+			 searchkey->oid);
 #endif
 	}
 	else

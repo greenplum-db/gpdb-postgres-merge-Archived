@@ -99,12 +99,12 @@ from pg_class
 where relname like '__star' order by relname;
  relname | relpages | reltuples 
 ---------+----------+-----------
- a_star  |        1 |         3
- b_star  |        1 |         4
- c_star  |        1 |         4
- d_star  |        1 |        16
- e_star  |        1 |         7
- f_star  |        1 |        16
+ a_star  |        1 |         1
+ b_star  |        1 |         1
+ c_star  |        1 |         1
+ d_star  |        1 |         1
+ e_star  |        1 |         1
+ f_star  |        1 |         1
 (6 rows)
 
 select relname, vacuum_count, analyze_count, autovacuum_count, autoanalyze_count
@@ -112,12 +112,12 @@ from pg_stat_all_tables
 where relname like '__star' order by relname;
  relname | vacuum_count | analyze_count | autovacuum_count | autoanalyze_count 
 ---------+--------------+---------------+------------------+-------------------
- a_star  |            1 |             0 |                0 |                 0
- b_star  |            1 |             0 |                0 |                 0
- c_star  |            1 |             0 |                0 |                 0
- d_star  |            1 |             0 |                0 |                 0
- e_star  |            1 |             0 |                0 |                 0
- f_star  |            1 |             0 |                0 |                 0
+ a_star  |            0 |             1 |                0 |                 0
+ b_star  |            0 |             1 |                0 |                 0
+ c_star  |            0 |             1 |                0 |                 0
+ d_star  |            0 |             1 |                0 |                 0
+ e_star  |            0 |             1 |                0 |                 0
+ f_star  |            0 |             1 |                0 |                 0
 (6 rows)
 
 -- Disable Parallel Append
@@ -1026,58 +1026,65 @@ reset role;
 explain (costs off, verbose)
   select count(*) from tenk1 a where (unique1, two) in
     (select unique1, row_number() over() from tenk1 b);
-                                          QUERY PLAN                                          
-----------------------------------------------------------------------------------------------
- Aggregate
+                                                                                               QUERY PLAN                                                                                                
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate
    Output: count(*)
-   ->  Hash Semi Join
-         Hash Cond: ((a.unique1 = b.unique1) AND (a.two = (row_number() OVER (?))))
-         ->  Gather
-               Output: a.unique1, a.two
-               Workers Planned: 4
-               ->  Parallel Seq Scan on public.tenk1 a
-                     Output: a.unique1, a.two
-         ->  Hash
-               Output: b.unique1, (row_number() OVER (?))
-               ->  WindowAgg
-                     Output: b.unique1, row_number() OVER (?)
-                     ->  Gather
-                           Output: b.unique1
-                           Workers Planned: 4
-                           ->  Parallel Index Only Scan using tenk1_unique1 on public.tenk1 b
-                                 Output: b.unique1
-(18 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Output: (PARTIAL count(*))
+         ->  Partial Aggregate
+               Output: PARTIAL count(*)
+               ->  Hash Semi Join
+                     Hash Cond: ((a.unique1 = b.unique1) AND (a.two = (row_number() OVER (?))))
+                     ->  Seq Scan on public.tenk1 a
+                           Output: a.unique1, a.unique2, a.two, a.four, a.ten, a.twenty, a.hundred, a.thousand, a.twothousand, a.fivethous, a.tenthous, a.odd, a.even, a.stringu1, a.stringu2, a.string4
+                     ->  Hash
+                           Output: b.unique1, (row_number() OVER (?))
+                           ->  Redistribute Motion 1:3  (slice2; segments: 1)
+                                 Output: b.unique1, (row_number() OVER (?))
+                                 Hash Key: b.unique1
+                                 ->  WindowAgg
+                                       Output: b.unique1, row_number() OVER (?)
+                                       ->  Gather Motion 3:1  (slice3; segments: 3)
+                                             Output: b.unique1
+                                             ->  Seq Scan on public.tenk1 b
+                                                   Output: b.unique1
+ Optimizer: Postgres query optimizer
+ Settings: min_parallel_table_scan_size=0, parallel_setup_cost=0, parallel_tuple_cost=0
+(23 rows)
 
 -- LIMIT/OFFSET within sub-selects can't be pushed to workers.
 explain (costs off)
   select * from tenk1 a where two in
     (select two from tenk1 b where stringu1 like '%AAAA' limit 3);
-                          QUERY PLAN                           
----------------------------------------------------------------
- Hash Semi Join
-   Hash Cond: (a.two = b.two)
-   ->  Gather
-         Workers Planned: 4
-         ->  Parallel Seq Scan on tenk1 a
-   ->  Hash
-         ->  Limit
-               ->  Gather
-                     Workers Planned: 4
-                     ->  Parallel Seq Scan on tenk1 b
-                           Filter: (stringu1 ~~ '%AAAA'::text)
-(11 rows)
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Join
+         Hash Cond: (a.two = b.two)
+         ->  Seq Scan on tenk1 a
+         ->  Hash
+               ->  Broadcast Motion 1:3  (slice2; segments: 1)
+                     ->  HashAggregate
+                           Group Key: b.two
+                           ->  Limit
+                                 ->  Gather Motion 3:1  (slice3; segments: 3)
+                                       ->  Limit
+                                             ->  Seq Scan on tenk1 b
+                                                   Filter: (stringu1 ~~ '%AAAA'::text)
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 -- to increase the parallel query test coverage
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;
 EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
-                         QUERY PLAN                          
--------------------------------------------------------------
- Gather (actual rows=10000 loops=1)
-   Workers Planned: 4
-   Workers Launched: 4
-   ->  Parallel Seq Scan on tenk1 (actual rows=2000 loops=5)
-(4 rows)
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3) (actual rows=10000 loops=1)
+   ->  Seq Scan on tenk1 (actual rows=3386 loops=1)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 ROLLBACK TO SAVEPOINT settings;
 -- provoke error in worker
