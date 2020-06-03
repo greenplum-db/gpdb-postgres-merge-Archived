@@ -309,7 +309,7 @@ set gp_default_storage_options='';
 create table ao4 (a int, b int) with (appendonly=true)
     distributed by (a);
 \d ao4
-select reloptions from pg_class where relname = 'ao4';
+select amname, reloptions from pg_class left join pg_am on pg_am.oid = relam where relname = 'ao4';
 select compresstype from pg_appendonly where relid = 'ao4'::regclass;
 set default_table_access_method = "appendoptimized";
 set gp_default_storage_options = "compresstype=NONE";
