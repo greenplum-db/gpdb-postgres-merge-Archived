@@ -612,6 +612,7 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	childstmt->partitionBy = NULL;
 	childstmt->relKind = 0;
 	childstmt->ownerid = parentrel->rd_rel->relowner;
+	childstmt->attr_encodings = copyObject(elem->colencs);
 
 	return childstmt;
 }

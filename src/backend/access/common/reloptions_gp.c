@@ -1428,6 +1428,27 @@ transformStorageEncodingClause(List *aocoColumnEncoding)
 }
 
 /*
+ * Find the column reference storage encoding clause for `column'.
+ *
+ * This is called by transformAttributeEncoding() in a loop but stenc should be
+ * quite small in practice.
+ */
+static ColumnReferenceStorageDirective *
+find_crsd(char *column, List *stenc)
+{
+	ListCell *lc;
+
+	foreach(lc, stenc)
+	{
+		ColumnReferenceStorageDirective *c = lfirst(lc);
+
+		if (c->deflt == false && strcmp(column, c->column) == 0)
+			return c;
+	}
+	return NULL;
+}
+
+/*
  * Parse and validate COLUMN <col> ENCODING ... directives.
  *
  * The 'columns', 'stenc' and 'taboptions' arguments are parts of the
@@ -1546,21 +1567,28 @@ transformAttributeEncoding(List *columns,
 		}
 		else
 		{
-			if (deflt)
-				c->encoding = copyObject(deflt->encoding);
+			ColumnReferenceStorageDirective *s = find_crsd(c->column, stenc);
+
+			if (s)
+				c->encoding = transformStorageEncodingClause(s->encoding);
 			else
 			{
-				List	   *te;
-
-				if (d->typeName)
-					te = TypeNameGetStorageDirective(d->typeName);
+				if (deflt)
+					c->encoding = copyObject(deflt->encoding);
 				else
-					te = NIL;
+				{
+					List	   *te;
 
-				if (te)
-					c->encoding = copyObject(te);
-				else
-					c->encoding = default_column_encoding_clause();
+					if (d->typeName)
+						te = TypeNameGetStorageDirective(d->typeName);
+					else
+						te = NIL;
+
+					if (te)
+						c->encoding = copyObject(te);
+					else
+						c->encoding = default_column_encoding_clause();
+				}
 			}
 		}
 		newenc = lappend(newenc, c);
