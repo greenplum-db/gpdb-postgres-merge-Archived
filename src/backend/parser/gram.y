@@ -254,6 +254,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 	PartitionSpec		*partspec;
 	PartitionBoundSpec	*partboundspec;
 	RoleSpec			*rolespec;
+	DistributionKeyElem *dkelem;
 }
 
 %type <node>	stmt schema_stmt
@@ -667,7 +668,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 %type <str>		opt_existing_window_name
 
 %type <list>	distributed_by_list
-%type <ielem>	distributed_by_elem
+%type <dkelem>	distributed_by_elem
 
 %type <boolean> opt_if_not_exists
 %type <ival>	generated_when override_kind
@@ -5245,12 +5246,12 @@ distributed_by_list:
 			distributed_by_elem						{ $$ = list_make1($1); }
 			| distributed_by_list ',' distributed_by_elem
 				{
-					IndexElem *newelem = $3;
+					DistributionKeyElem *newelem = $3;
 					ListCell *lc;
 
 					foreach(lc, $1)
 					{
-						IndexElem  *oldelem = (IndexElem *) lfirst(lc);
+						DistributionKeyElem  *oldelem = (DistributionKeyElem *) lfirst(lc);
 
 						if (strcmp(oldelem->name, newelem->name) == 0)
 							ereport(ERROR,
@@ -5265,12 +5266,10 @@ distributed_by_list:
 
 distributed_by_elem: ColId opt_class
 				{
-					/*
-					 * only these fields are used, leave others as 0/NULL
-					 */
-					$$ = makeNode(IndexElem);
+					$$ = makeNode(DistributionKeyElem);
 					$$->name = $1;
 					$$->opclass = $2;
+					$$->location = @1;
 				}
 			;
 

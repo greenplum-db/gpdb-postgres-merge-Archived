@@ -594,6 +594,7 @@ typedef enum NodeTag
 	T_OnConflictClause,
 	T_CommonTableExpr,
 	T_ColumnReferenceStorageDirective,
+	T_DistributionKeyElem,
 	T_RoleSpec,
 	T_TriggerTransition,
 	T_PartitionElem,

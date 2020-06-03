@@ -879,6 +879,7 @@ _copyFunctionScan(const FunctionScan *from)
 	COPY_SCALAR_FIELD(funcordinality);
 	COPY_NODE_FIELD(param);
 	COPY_SCALAR_FIELD(resultInTupleStore);
+	COPY_SCALAR_FIELD(initplanId);
 
 	return newnode;
 }
@@ -1597,6 +1598,7 @@ _copyMotion(const Motion *from)
 	COPY_POINTER_FIELD(nullsFirst, from->numSortCols * sizeof(bool));
 
 	COPY_SCALAR_FIELD(segidColIdx);
+	COPY_SCALAR_FIELD(numHashSegments);
 
 	if (from->senderSliceInfo)
 	{
@@ -3448,6 +3450,18 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(fdwoptions);
 	COPY_NODE_FIELD(encoding);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static DistributionKeyElem *
+_copyDistributionKeyElem(const DistributionKeyElem *from)
+{
+	DistributionKeyElem  *newnode = makeNode(DistributionKeyElem);
+
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(opclass);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -6743,6 +6757,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_ColumnDef:
 			retval = _copyColumnDef(from);
+			break;
+		case T_DistributionKeyElem:
+			retval = _copyDistributionKeyElem(from);
 			break;
 		case T_ColumnReferenceStorageDirective:
 			retval = _copyColumnReferenceStorageDirective(from);

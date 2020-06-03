@@ -889,6 +889,7 @@ _outFunctionScan(StringInfo str, const FunctionScan *node)
 	WRITE_BOOL_FIELD(funcordinality);
 	WRITE_NODE_FIELD(param);
 	WRITE_BOOL_FIELD(resultInTupleStore);
+	WRITE_INT_FIELD(initplanId);
 }
 
 static void
@@ -1319,6 +1320,8 @@ _outMotion(StringInfo str, const Motion *node)
 	WRITE_INT_ARRAY(collations, node->numSortCols);
 	WRITE_BOOL_ARRAY(nullsFirst, node->numSortCols);
 	WRITE_INT_FIELD(segidColIdx);
+
+	WRITE_INT_FIELD(numHashSegments);
 
 	/* senderSliceInfo is intentionally omitted. It's only used during planning */
 
@@ -3185,6 +3188,16 @@ _outCreateForeignTableStmt(StringInfo str, const CreateForeignTableStmt *node)
 	WRITE_STRING_FIELD(servername);
 	WRITE_NODE_FIELD(options);
 	WRITE_NODE_FIELD(distributedBy);
+}
+
+static void
+_outDistributionKeyElem(StringInfo str, const DistributionKeyElem *node)
+{
+	WRITE_NODE_TYPE("DISTRIBUTIONKEYELEM");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(opclass);
+	WRITE_LOCATION_FIELD(location);
 }
 
 static void
@@ -5927,6 +5940,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_CreateForeignTableStmt:
 				_outCreateForeignTableStmt(str, obj);
+				break;
+			case T_DistributionKeyElem:
+				_outDistributionKeyElem(str, obj);
 				break;
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);

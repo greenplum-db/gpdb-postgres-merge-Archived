@@ -1127,6 +1127,7 @@ _readMotion(void)
 	READ_BOOL_ARRAY(nullsFirst, local_node->numSortCols);
 
 	READ_INT_FIELD(segidColIdx);
+	READ_INT_FIELD(numHashSegments);
 
 	ReadCommonPlan(&local_node->plan);
 
@@ -2174,6 +2175,10 @@ readNodeBinary(void)
 				break;
 			case T_PartitionCmd:
 				return_value = _readPartitionCmd();
+				break;
+			case T_DistributionKeyElem:
+				return_value = _readDistributionKeyElem();
+				break;
 				break;
 			case T_GpAlterPartitionId:
 				return_value = _readGpAlterPartitionId();

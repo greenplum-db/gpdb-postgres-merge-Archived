@@ -157,10 +157,11 @@ static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
 static void validateInfiniteBounds(ParseState *pstate, List *blist);
 
 static DistributedBy *getLikeDistributionPolicy(TableLikeClause *e);
-static DistributedBy *transformDistributedBy(CreateStmtContext *cxt,
-					   DistributedBy *distributedBy,
-					   DistributedBy *likeDistributedBy,
-					   bool bQuiet);
+static DistributedBy *transformDistributedBy(ParseState *pstate,
+											 CreateStmtContext *cxt,
+											 DistributedBy *distributedBy,
+											 DistributedBy *likeDistributedBy,
+											 bool bQuiet);
 
 /*
  * transformCreateStmt -
@@ -395,8 +396,9 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 			numsegments = stmt->distributedBy->numsegments;
 #endif
 
-		stmt->distributedBy = transformDistributedBy(&cxt, stmt->distributedBy,
-							   likeDistributedBy, bQuiet);
+		stmt->distributedBy = transformDistributedBy(pstate, &cxt,
+													 stmt->distributedBy,
+													 likeDistributedBy, bQuiet);
 
 		/*
 		 * And force set it on children after transformDistributedBy().
@@ -412,7 +414,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	{
 		DistributedBy *ft_distributedBy = ((CreateForeignTableStmt *)stmt)->distributedBy;
 		if (ft_distributedBy || likeDistributedBy)
-			stmt->distributedBy = transformDistributedBy(&cxt, ft_distributedBy, likeDistributedBy, bQuiet);
+			stmt->distributedBy = transformDistributedBy(pstate, &cxt, ft_distributedBy,
+														 likeDistributedBy, bQuiet);
 	}
 
 	if (stmt->partitionBy != NULL &&
@@ -2159,8 +2162,9 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 		else
 		{
 			/* regular DISTRIBUTED BY transformation */
-			stmt->distributedBy = transformDistributedBy(&cxt, stmt->distributedBy,
-								   (DistributedBy *)likeDistributedBy, bQuiet);
+			stmt->distributedBy = transformDistributedBy(pstate, &cxt, stmt->distributedBy,
+														 (DistributedBy *) likeDistributedBy,
+														 bQuiet);
 			if (stmt->distributedBy->ptype == POLICYTYPE_REPLICATED)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -2201,7 +2205,8 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
  * CreateStmt.
  */
 static DistributedBy *
-transformDistributedBy(CreateStmtContext *cxt,
+transformDistributedBy(ParseState *pstate,
+					   CreateStmtContext *cxt,
 					   DistributedBy *distributedBy,
 					   DistributedBy *likeDistributedBy,
 					   bool bQuiet)
@@ -2310,7 +2315,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 
 					foreach(dkcell, distrkeys)
 					{
-						IndexElem  *dk = (IndexElem *) lfirst(dkcell);
+						DistributionKeyElem  *dk = (DistributionKeyElem *) lfirst(dkcell);
 
 						if (strcmp(dk->name, strVal(v)) == 0)
 						{
@@ -2336,10 +2341,11 @@ transformDistributedBy(CreateStmtContext *cxt,
 				foreach(ip, constraint->keys)
 				{
 					Value	   *v = lfirst(ip);
-					IndexElem  *dk = makeNode(IndexElem);
+					DistributionKeyElem  *dk = makeNode(DistributionKeyElem);
 
 					dk->name = strVal(v);
 					dk->opclass = NULL;
+					dk->location = -1;
 
 					new_distrkeys = lappend(new_distrkeys, dk);
 				}
@@ -2509,13 +2515,14 @@ transformDistributedBy(CreateStmtContext *cxt,
 					if (cdb_default_distribution_opclass_for_type(typeOid) != InvalidOid)
 					{
 						char	   *inhname = NameStr(inhattr->attname);
-						IndexElem  *ielem;
+						DistributionKeyElem  *dkelem;
 
-						ielem = makeNode(IndexElem);
-						ielem->name = inhname;
-						ielem->opclass = NULL;
+						dkelem = makeNode(DistributionKeyElem);
+						dkelem->name = inhname;
+						dkelem->opclass = NULL;
+						dkelem->location = -1;
 
-						distrkeys = list_make1(ielem);
+						distrkeys = list_make1(dkelem);
 						if (!bQuiet)
 							ereport(NOTICE,
 								(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
@@ -2551,12 +2558,13 @@ transformDistributedBy(CreateStmtContext *cxt,
 				 */
 				if (cdb_default_distribution_opclass_for_type(typeOid))
 				{
-					IndexElem  *ielem = makeNode(IndexElem);
+					DistributionKeyElem *dkelem = makeNode(DistributionKeyElem);
 
-					ielem->name = column->colname;
-					ielem->opclass = NULL;		/* or should we explicitly set the opclass we just looked up? */
+					dkelem->name = column->colname;
+					dkelem->opclass = NULL;		/* or should we explicitly set the opclass we just looked up? */
+					dkelem->location = -1;
 
-					distrkeys = list_make1(ielem);
+					distrkeys = list_make1(dkelem);
 					if (!bQuiet)
 						ereport(NOTICE,
 							(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
@@ -2596,8 +2604,8 @@ transformDistributedBy(CreateStmtContext *cxt,
 		 */
 		foreach(keys, distrkeys)
 		{
-			IndexElem  *ielem = (IndexElem *) lfirst(keys);
-			char	   *colname = ielem->name;
+			DistributionKeyElem *dkelem = (DistributionKeyElem *) lfirst(keys);
+			char	   *colname = dkelem->name;
 			bool		found = false;
 			ListCell   *columns;
 
@@ -2669,8 +2677,8 @@ transformDistributedBy(CreateStmtContext *cxt,
 			if (!found && !cxt->isalter)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in 'DISTRIBUTED BY' clause does not exist",
-								colname)));
+						 errmsg("column \"%s\" named in DISTRIBUTED BY clause does not exist", colname),
+						 parser_errposition(pstate, dkelem->location)));
 		}
 	}
 
@@ -2787,8 +2795,8 @@ getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc)
 			policyopclasses = NIL;
 			foreach(lc, distributedBy->keyCols)
 			{
-				IndexElem  *ielem = (IndexElem *) lfirst(lc);
-				char	   *colname = ielem->name;
+				DistributionKeyElem *dkelem = (DistributionKeyElem *) lfirst(lc);
+				char	   *colname = dkelem->name;
 				int			i;
 				bool		found = false;
 
@@ -2800,7 +2808,7 @@ getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc)
 					{
 						Oid			opclass;
 
-						opclass = cdb_get_opclass_for_column_def(ielem->opclass, attr->atttypid);
+						opclass = cdb_get_opclass_for_column_def(dkelem->opclass, attr->atttypid);
 
 						policykeys = lappend_int(policykeys, attr->attnum);
 						policyopclasses = lappend_oid(policyopclasses, opclass);
