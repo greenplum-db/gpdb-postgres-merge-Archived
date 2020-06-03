@@ -464,7 +464,7 @@ drop table selfconflict;
 
 -- check ON CONFLICT handling with partitioned tables
 create table parted_conflict_test (a int unique, b char) partition by list (a);
-create table parted_conflict_test_1 partition of parted_conflict_test (b unique) for values in (1, 2);
+create table parted_conflict_test_1 partition of parted_conflict_test for values in (1, 2);
 
 -- no indexes required here
 insert into parted_conflict_test values (1, 'a') on conflict do nothing;
@@ -477,6 +477,8 @@ insert into parted_conflict_test values (1, 'a') on conflict (a) do update set b
 insert into parted_conflict_test_1 values (1, 'a') on conflict (a) do nothing;
 insert into parted_conflict_test_1 values (1, 'b') on conflict (a) do update set b = excluded.b;
 
+-- start_ignore
+-- Greenplum could not update the distribution column on conflict
 -- index on b required, which doesn't exist in parent
 insert into parted_conflict_test values (2, 'b') on conflict (b) do update set a = excluded.a;
 
@@ -485,6 +487,7 @@ insert into parted_conflict_test_1 values (2, 'b') on conflict (b) do update set
 
 -- should see (2, 'b')
 select * from parted_conflict_test order by a;
+-- end_ignore
 
 -- now check that DO UPDATE works correctly for target partition with
 -- different attribute numbers
@@ -559,6 +562,8 @@ create unique index on parted_conflict (a, b);
 alter table parted_conflict attach partition parted_conflict_1 for values from (0) to (1000);
 truncate parted_conflict;
 insert into parted_conflict values (50, 'cincuenta', 1);
+-- start_ignore
+-- Greenplum could not update the distribution column on conflict
 insert into parted_conflict values (50, 'cincuenta', 2)
   on conflict (a, b) do update set (a, b, c) = row(excluded.*)
   where parted_conflict = (50, text 'cincuenta', 1) and
@@ -566,6 +571,7 @@ insert into parted_conflict values (50, 'cincuenta', 2)
 
 -- should see (50, 'cincuenta', 2)
 select * from parted_conflict order by a;
+-- end_ignore
 
 -- test with statement level triggers
 create or replace function parted_conflict_update_func() returns trigger as $$
