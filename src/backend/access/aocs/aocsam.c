@@ -177,8 +177,36 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 			 int *proj_atts, int num_proj_atts, bool checksum)
 {
 	int			nvp = relationTupleDesc->natts;
-	StdRdOptions **opts = RelationGetAttributeOptions(rel);
 	int			i;
+
+	/*
+	 *  RelationGetAttributeOptions does not always success return opts. e.g.
+	 *  `ALTER TABLE ADD COLUMN` with an illegal option.
+	 *
+	 *  In this situation, the transaction will abort, and the Relation will be
+	 *  free. Upstream have sanity check to promise we must have a worked TupleDesc
+	 *  attached the Relation during memory recycle. Otherwise, the query will crash.
+	 *
+	 *  For some reason, we can not put the option validation check into "perp"
+	 *  phase for AOCO table ALTER command.
+	 *  (commit: e707c19c885fadffe50095cc699e52af1ee64f4b)
+	 *
+	 *  So, a fake TupleDesc temporary replace into Relation.
+	 */
+	TupleDesc orig_att = rel->rd_att;
+	if (orig_att->tdrefcount == -1)
+	{
+		rel->rd_att = CreateTemplateTupleDesc(relationTupleDesc->natts);
+		rel->rd_att->tdrefcount = 1;
+	}
+
+	StdRdOptions **opts = RelationGetAttributeOptions(rel);
+
+	if (orig_att->tdrefcount == -1)
+	{
+		pfree(rel->rd_att);
+		rel->rd_att = orig_att;
+	}
 
 	/* Clear all the entries to NULL first. */
 	for (i = 0; i < nvp; ++i)
