@@ -360,6 +360,10 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
  * there are dropped columns in the parent, but not the partition,
  * for example.)
  *
+ * In GPDB, the INSERT can be part of an update operation when
+ * there is a preceding SplitUpdate node. 'splitUpdate' is true in
+ * that case.
+ *
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -368,7 +372,7 @@ ExecInsert(ModifyTableState *mtstate,
 		   TupleTableSlot *planSlot,
 		   EState *estate,
 		   bool canSetTag,
-		   bool isUpdate)
+		   bool splitUpdate)
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
@@ -395,9 +399,14 @@ ExecInsert(ModifyTableState *mtstate,
 	 * values to insert.  Also, they can run arbitrary user-defined code with
 	 * side-effects that we can't cancel by just not inserting the tuple.
 	 */
+	/*
+	 * GPDB_12_MERGE_FIXME: PostgreSQL *does* fire INSERT and DELETE
+	 * triggers on an UPDATE that moves tuples from one partition to another.
+	 * Should we follow that example with cross-segment UPDATEs too?
+	 */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_insert_before_row &&
-		!isUpdate)
+		!splitUpdate)
 	{
 		if (!ExecBRInsertTriggers(estate, resultRelInfo, slot))
 			return NULL;		/* "do nothing" */
@@ -651,7 +660,15 @@ ExecInsert(ModifyTableState *mtstate,
 	slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 	/* AFTER ROW INSERT Triggers */
-	ExecARInsertTriggers(estate, resultRelInfo, slot, recheckIndexes,
+	/*
+	 * GPDB: Don't fire DELETE triggers on a split UPDATE.
+	 *
+	 * GPDB_12_MERGE_FIXME: PostgreSQL *does* fire INSERT and DELETE
+	 * triggers on an UPDATE that moves tuples from one partition to another.
+	 * Should we follow that example with cross-segment UPDATEs too?
+	 */
+	if (!splitUpdate)
+		ExecARInsertTriggers(estate, resultRelInfo, slot, recheckIndexes,
 						 ar_insert_trig_tcs);
 
 	list_free(recheckIndexes);
@@ -773,14 +790,15 @@ ExecDelete(ModifyTableState *mtstate,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW DELETE Triggers */
-
-	/* GPDB_12_MERGE_FIXME: In PostgreSQL, if this is an UPDATE that
-	 * moves a tuple to another partition, do we fire the trigger?
-	 * In GPDB, should we? What if it's a split update?
+	/*
+	 * GPDB_12_MERGE_FIXME: PostgreSQL *does* fire INSERT and DELETE
+	 * triggers on an UPDATE that moves tuples from one partition to another.
+	 * Should we follow that example with cross-segment UPDATEs too?
 	 */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_delete_before_row &&
-		planGen == PLANGEN_PLANNER)
+		planGen == PLANGEN_PLANNER &&
+		!splitUpdate)
 	{
 		bool		dodelete;
 
@@ -939,19 +957,13 @@ ldelete:;
 					 * found the tuple is updated concurrently by another
 					 * transaction, but it is difficult to skip the inserting
 					 * tuple, so it will leads to more tuples after updating.
-					 *
-					 * GPDB_12_MERGE_FIXME: we no longer pass 'isUpdate' argument
-					 * here. Could we use changingPart instead? Do we want this
-					 * check when moving a tuple to another partition, too?
 					 */
-#if 0
-					if (gp_enable_global_deadlock_detector && isUpdate)
+					if (gp_enable_global_deadlock_detector && splitUpdate)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE ),
 								 errmsg("concurrent updates distribution keys on the same row is not allowed")));
 					}
-#endif
 
 					/*
 					 * Already know that we're going to need to do EPQ, so
@@ -1094,11 +1106,12 @@ ldelete:;
 	}
 
 	/* AFTER ROW DELETE Triggers */
-	/* GPDB_12_MERGE_FIXME: In PostgreSQL, if this is an UPDATE that
-	 * moves a tuple to another partition, do we fire the trigger?
-	 * In GPDB, should we? What if it's a split update?
+	/*
+	 * GPDB_12_MERGE_FIXME: PostgreSQL *does* fire INSERT and DELETE
+	 * triggers on an UPDATE that moves tuples from one partition to another.
+	 * Should we follow that example with cross-segment UPDATEs too?
 	 */
-	if (!RelationIsAppendOptimized(resultRelationDesc) /* && !isUpdate */)
+	if (!RelationIsAppendOptimized(resultRelationDesc) && !splitUpdate)
 	{
 		ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
 							 ar_delete_trig_tcs);
@@ -1432,7 +1445,7 @@ lreplace:;
 										   mtstate->rootResultRelInfo, slot);
 
 			ret_slot = ExecInsert(mtstate, slot, planSlot,
-								  estate, canSetTag, false /* isUpdate */);
+								  estate, canSetTag, false /* splitUpdate */);
 
 			/* Revert ExecPrepareTupleRouting's node change. */
 			estate->es_result_relation_info = resultRelInfo;
@@ -1741,7 +1754,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 
 		slot = ExecInsert(mtstate, slot, planSlot,
 						  estate, mtstate->canSetTag,
-						  true /* isUpdate */);
+						  true /* splitUpdate */);
 
 		/* Revert ExecPrepareTupleRouting's node change. */
 		estate->es_result_relation_info = resultRelInfo;
@@ -1755,7 +1768,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 	{
 		slot = ExecInsert(mtstate, slot, planSlot,
 						  estate, mtstate->canSetTag,
-						  true /* isUpdate */);
+						  true /* splitUpdate */);
 	}
 
 	return slot;
@@ -2536,7 +2549,7 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
-								  estate, node->canSetTag, false /* isUpdate */);
+								  estate, node->canSetTag, false /* splitUpdate */);
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
 					estate->es_result_relation_info = resultRelInfo;
