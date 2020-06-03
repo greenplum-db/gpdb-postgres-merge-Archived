@@ -7276,7 +7276,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * for CO or not. Leaving fixme here as CO code is not working currently,
 	 * hence hard to validate if works correctly or not.
 	 */
-	if (!recursing && tab->relkind == RELKIND_RELATION)
+	if (!recursing && tab->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		bool	aocs_write_new_columns_only;
 		/*

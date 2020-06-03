@@ -504,7 +504,7 @@ WITH RECURSIVE w AS (
 SELECT * FROM w;
 $fn$;
 
--- Scenario 1: Parent is AOCO, 1 child is AO, 1 child is heap. Heap and AO children require full table rewrite
+-- Scenario 1: Parent is AOCO, 1 child is AO, 1 child is heap. AO children require full table rewrite
 CREATE TABLE rewrite_optimization_aoco_parent(a int, b int, c int)
 WITH (APPENDONLY = true, ORIENTATION = column)
 DISTRIBUTED BY (a)
@@ -527,7 +527,7 @@ SELECT t.segno,
        t.amname,
        CASE
            WHEN table_relfilenode.segno IS NULL THEN 'full table rewritten'
-           ELSE 'ADD COLUMN optimized for columnar table' END AS aoco_add_col_optimized
+           ELSE 'ADD COLUMN optimized for table' END AS aoco_add_col_optimized
 FROM (:qry) t
          LEFT JOIN table_relfilenode USING (segno, rel, relfilenode)
 WHERE t.segno IN (-1, 0)
@@ -604,7 +604,7 @@ SELECT * FROM subpartition_aoco_leaf;
 
 REFRESH MATERIALIZED VIEW table_relfilenode;
 
--- Scenario 2: mixing ADD COLUMN with ALTER COLUMN TYPE should trigger full
+-- Scenario 2: mixing ADD COLUMN with ALTER COLUMN TYPE should trigger full on aoco
 -- table rewrite for every level
 ALTER TABLE subpartition_aoco_leaf ADD COLUMN new_col2 int DEFAULT 1, ALTER COLUMN new_col TYPE bigint;
 

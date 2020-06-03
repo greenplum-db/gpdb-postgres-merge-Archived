@@ -785,7 +785,7 @@ WITH RECURSIVE w AS (
 )
 SELECT * FROM w;
 $fn$;
--- Scenario 1: Parent is AOCO, 1 child is AO, 1 child is heap. Heap and AO children require full table rewrite
+-- Scenario 1: Parent is AOCO, 1 child is AO, 1 child is heap. AO children require full table rewrite
 CREATE TABLE rewrite_optimization_aoco_parent(a int, b int, c int)
 WITH (APPENDONLY = true, ORIENTATION = column)
 DISTRIBUTED BY (a)
@@ -795,21 +795,21 @@ DISTRIBUTED BY (a)
 NOTICE:  CREATE TABLE will create partition "rewrite_optimization_aoco_parent_1_prt_1" for table "rewrite_optimization_aoco_parent"
 NOTICE:  CREATE TABLE will create partition "rewrite_optimization_aoco_parent_1_prt_2" for table "rewrite_optimization_aoco_parent"
 SELECT $$
-SELECT -1 AS segno, oid::regclass AS rel, relfilenode, relstorage
-FROM pg_class
-WHERE oid IN (SELECT descendant FROM descendants_of(:'ROOT_PARTITION_UNDER_TEST'))
+SELECT -1 AS segno, oid::regclass AS rel, relfilenode, (select amname from pg_am where pg_am.oid = relam)
+FROM pg_class c
+WHERE c.oid IN (SELECT descendant FROM descendants_of(:'ROOT_PARTITION_UNDER_TEST'))
 UNION ALL
-SELECT gp_segment_id, oid::regclass, relfilenode, relstorage
-FROM gp_dist_random('pg_class')
-WHERE oid IN (SELECT descendant FROM descendants_of(:'ROOT_PARTITION_UNDER_TEST'))
+SELECT gp_segment_id, oid::regclass, relfilenode, (select amname from pg_am where pg_am.oid = relam)
+FROM gp_dist_random('pg_class') c
+WHERE c.oid IN (SELECT descendant FROM descendants_of(:'ROOT_PARTITION_UNDER_TEST'))
 $$ AS qry \gset
 SELECT $$
 SELECT t.segno,
        t.rel,
-       t.relstorage,
+       t.amname,
        CASE
            WHEN table_relfilenode.segno IS NULL THEN 'full table rewritten'
-           ELSE 'ADD COLUMN optimized for columnar table' END AS aoco_add_col_optimized
+           ELSE 'ADD COLUMN optimized for table' END AS aoco_add_col_optimized
 FROM (:qry) t
          LEFT JOIN table_relfilenode USING (segno, rel, relfilenode)
 WHERE t.segno IN (-1, 0)
@@ -840,14 +840,14 @@ SELECT * FROM rewrite_optimization_aoco_parent;
 (10 rows)
 
 :chk_co_opt_qry;
- segno |                   rel                    | relstorage |         aoco_add_col_optimized          
--------+------------------------------------------+------------+-----------------------------------------
-    -1 | rewrite_optimization_aoco_parent         | c          | ADD COLUMN optimized for columnar table
-    -1 | rewrite_optimization_aoco_parent_1_prt_1 | a          | full table rewritten
-    -1 | rewrite_optimization_aoco_parent_1_prt_2 | h          | full table rewritten
-     0 | rewrite_optimization_aoco_parent         | c          | ADD COLUMN optimized for columnar table
-     0 | rewrite_optimization_aoco_parent_1_prt_1 | a          | full table rewritten
-     0 | rewrite_optimization_aoco_parent_1_prt_2 | h          | full table rewritten
+ segno |                   rel                    |     amname      |     aoco_add_col_optimized     
+-------+------------------------------------------+-----------------+--------------------------------
+    -1 | rewrite_optimization_aoco_parent         |                 | ADD COLUMN optimized for table
+    -1 | rewrite_optimization_aoco_parent_1_prt_1 | appendoptimized | full table rewritten
+    -1 | rewrite_optimization_aoco_parent_1_prt_2 | heap            | ADD COLUMN optimized for table
+     0 | rewrite_optimization_aoco_parent         |                 | ADD COLUMN optimized for table
+     0 | rewrite_optimization_aoco_parent_1_prt_1 | appendoptimized | full table rewritten
+     0 | rewrite_optimization_aoco_parent_1_prt_2 | heap            | ADD COLUMN optimized for table
 (6 rows)
 
 -- ADD COLUMN for AOCO partition children should not trigger full table rewrite
@@ -884,14 +884,14 @@ SELECT * FROM rewrite_optimization_heap_parent;
 (10 rows)
 
 :chk_co_opt_qry;
- segno |                   rel                    | relstorage |         aoco_add_col_optimized          
--------+------------------------------------------+------------+-----------------------------------------
-    -1 | rewrite_optimization_heap_parent         | h          | full table rewritten
-    -1 | rewrite_optimization_heap_parent_1_prt_1 | a          | full table rewritten
-    -1 | rewrite_optimization_heap_parent_1_prt_2 | c          | ADD COLUMN optimized for columnar table
-     0 | rewrite_optimization_heap_parent         | h          | full table rewritten
-     0 | rewrite_optimization_heap_parent_1_prt_1 | a          | full table rewritten
-     0 | rewrite_optimization_heap_parent_1_prt_2 | c          | ADD COLUMN optimized for columnar table
+ segno |                   rel                    |     amname      |     aoco_add_col_optimized     
+-------+------------------------------------------+-----------------+--------------------------------
+    -1 | rewrite_optimization_heap_parent         |                 | ADD COLUMN optimized for table
+    -1 | rewrite_optimization_heap_parent_1_prt_1 | appendoptimized | full table rewritten
+    -1 | rewrite_optimization_heap_parent_1_prt_2 | aoco            | ADD COLUMN optimized for table
+     0 | rewrite_optimization_heap_parent         |                 | ADD COLUMN optimized for table
+     0 | rewrite_optimization_heap_parent_1_prt_1 | appendoptimized | full table rewritten
+     0 | rewrite_optimization_heap_parent_1_prt_2 | aoco            | ADD COLUMN optimized for table
 (6 rows)
 
 REFRESH MATERIALIZED VIEW table_relfilenode;
@@ -912,14 +912,14 @@ SELECT * FROM rewrite_optimization_heap_parent;
 (10 rows)
 
 :chk_co_opt_qry;
- segno |                   rel                    | relstorage | aoco_add_col_optimized 
--------+------------------------------------------+------------+------------------------
-    -1 | rewrite_optimization_heap_parent         | h          | full table rewritten
-    -1 | rewrite_optimization_heap_parent_1_prt_1 | a          | full table rewritten
-    -1 | rewrite_optimization_heap_parent_1_prt_2 | c          | full table rewritten
-     0 | rewrite_optimization_heap_parent         | h          | full table rewritten
-     0 | rewrite_optimization_heap_parent_1_prt_1 | a          | full table rewritten
-     0 | rewrite_optimization_heap_parent_1_prt_2 | c          | full table rewritten
+ segno |                   rel                    |     amname      |     aoco_add_col_optimized     
+-------+------------------------------------------+-----------------+--------------------------------
+    -1 | rewrite_optimization_heap_parent         |                 | ADD COLUMN optimized for table
+    -1 | rewrite_optimization_heap_parent_1_prt_1 | appendoptimized | full table rewritten
+    -1 | rewrite_optimization_heap_parent_1_prt_2 | aoco            | full table rewritten
+     0 | rewrite_optimization_heap_parent         |                 | ADD COLUMN optimized for table
+     0 | rewrite_optimization_heap_parent_1_prt_1 | appendoptimized | full table rewritten
+     0 | rewrite_optimization_heap_parent_1_prt_2 | aoco            | full table rewritten
 (6 rows)
 
 -- Parent is heap, child is heap, grandchild is AOCO.
@@ -959,18 +959,18 @@ SELECT * FROM subpartition_aoco_leaf;
 (10 rows)
 
 :chk_co_opt_qry;
- segno |                         rel                          | relstorage |         aoco_add_col_optimized          
--------+------------------------------------------------------+------------+-----------------------------------------
-    -1 | subpartition_aoco_leaf                               | h          | full table rewritten
-    -1 | subpartition_aoco_leaf_1_prt_intermediate            | h          | full table rewritten
-    -1 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | c          | ADD COLUMN optimized for columnar table
-     0 | subpartition_aoco_leaf                               | h          | full table rewritten
-     0 | subpartition_aoco_leaf_1_prt_intermediate            | h          | full table rewritten
-     0 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | c          | ADD COLUMN optimized for columnar table
+ segno |                         rel                          | amname |     aoco_add_col_optimized     
+-------+------------------------------------------------------+--------+--------------------------------
+    -1 | subpartition_aoco_leaf                               |        | ADD COLUMN optimized for table
+    -1 | subpartition_aoco_leaf_1_prt_intermediate            |        | ADD COLUMN optimized for table
+    -1 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | aoco   | ADD COLUMN optimized for table
+     0 | subpartition_aoco_leaf                               |        | ADD COLUMN optimized for table
+     0 | subpartition_aoco_leaf_1_prt_intermediate            |        | ADD COLUMN optimized for table
+     0 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | aoco   | ADD COLUMN optimized for table
 (6 rows)
 
 REFRESH MATERIALIZED VIEW table_relfilenode;
--- Scenario 2: mixing ADD COLUMN with ALTER COLUMN TYPE should trigger full
+-- Scenario 2: mixing ADD COLUMN with ALTER COLUMN TYPE should trigger full on aoco
 -- table rewrite for every level
 ALTER TABLE subpartition_aoco_leaf ADD COLUMN new_col2 int DEFAULT 1, ALTER COLUMN new_col TYPE bigint;
 SELECT * FROM subpartition_aoco_leaf;
@@ -989,13 +989,13 @@ SELECT * FROM subpartition_aoco_leaf;
 (10 rows)
 
 :chk_co_opt_qry;
- segno |                         rel                          | relstorage | aoco_add_col_optimized 
--------+------------------------------------------------------+------------+------------------------
-    -1 | subpartition_aoco_leaf                               | h          | full table rewritten
-    -1 | subpartition_aoco_leaf_1_prt_intermediate            | h          | full table rewritten
-    -1 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | c          | full table rewritten
-     0 | subpartition_aoco_leaf                               | h          | full table rewritten
-     0 | subpartition_aoco_leaf_1_prt_intermediate            | h          | full table rewritten
-     0 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | c          | full table rewritten
+ segno |                         rel                          | amname |     aoco_add_col_optimized     
+-------+------------------------------------------------------+--------+--------------------------------
+    -1 | subpartition_aoco_leaf                               |        | ADD COLUMN optimized for table
+    -1 | subpartition_aoco_leaf_1_prt_intermediate            |        | ADD COLUMN optimized for table
+    -1 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | aoco   | full table rewritten
+     0 | subpartition_aoco_leaf                               |        | ADD COLUMN optimized for table
+     0 | subpartition_aoco_leaf_1_prt_intermediate            |        | ADD COLUMN optimized for table
+     0 | subpartition_aoco_leaf_1_prt_intermediate_2_prt_leaf | aoco   | full table rewritten
 (6 rows)
 
