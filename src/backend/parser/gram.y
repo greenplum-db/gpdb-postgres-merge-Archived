@@ -10915,6 +10915,12 @@ ReindexStmt:
 					n->relation = $4;
 					n->name = NULL;
 					n->options = 0;
+
+					if (n->concurrent)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("REINDEX CONCURRENTLY is not supported")));
+
 					$$ = (Node *)n;
 				}
 			| REINDEX reindex_target_multitable opt_concurrently name
@@ -10925,6 +10931,12 @@ ReindexStmt:
 					n->name = $4;
 					n->relation = NULL;
 					n->options = 0;
+
+					if (n->concurrent)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("REINDEX CONCURRENTLY is not supported")));
+
 					$$ = (Node *)n;
 				}
 			| REINDEX '(' reindex_option_list ')' reindex_target_type opt_concurrently qualified_name
@@ -10935,6 +10947,12 @@ ReindexStmt:
 					n->relation = $7;
 					n->name = NULL;
 					n->options = $3;
+
+					if (n->concurrent)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("REINDEX CONCURRENTLY is not supported")));
+
 					$$ = (Node *)n;
 				}
 			| REINDEX '(' reindex_option_list ')' reindex_target_multitable opt_concurrently name
@@ -10945,6 +10963,12 @@ ReindexStmt:
 					n->name = $7;
 					n->relation = NULL;
 					n->options = $3;
+
+					if (n->concurrent)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("REINDEX CONCURRENTLY is not supported")));
+
 					$$ = (Node *)n;
 				}
 		;

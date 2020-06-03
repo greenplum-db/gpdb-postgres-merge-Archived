@@ -1392,31 +1392,37 @@ create index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
 CREATE TABLE concur_heap (f1 text, f2 text, dk text) distributed by (dk);
 -- empty table
 CREATE INDEX CONCURRENTLY concur_index1 ON concur_heap(f2,f1);
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 CREATE INDEX CONCURRENTLY IF NOT EXISTS concur_index1 ON concur_heap(f2,f1);
-NOTICE:  relation "concur_index1" already exists, skipping
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 INSERT INTO concur_heap VALUES  ('a','b', '1');
 INSERT INTO concur_heap VALUES  ('b','b', '1');
 INSERT INTO concur_heap VALUES  ('c','c', '2');
 INSERT INTO concur_heap VALUES  ('d','d', '3');
 -- unique index
 CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(dk, f1);
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS concur_index2 ON concur_heap(dk, f1);
-NOTICE:  relation "concur_index2" already exists, skipping
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- check if constraint is set up properly to be enforced
 INSERT INTO concur_heap VALUES ('b','x', '1');
 ERROR:  duplicate key value violates unique constraint "concur_index2"
 DETAIL:  Key (dk, f1)=(1, b) already exists.
 -- check if constraint is enforced properly at build time
 CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(dk, f2);
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- here we also check that you can default the index name
 CREATE INDEX CONCURRENTLY on concur_heap((f2||f1));
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- You can't do a concurrent index build in a transaction
 BEGIN;
 CREATE INDEX CONCURRENTLY concur_index7 ON concur_heap(f1);
-ERROR:  CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 COMMIT;
 -- But you can do a regular index build in a transaction
 BEGIN;
@@ -1464,45 +1470,30 @@ Indexes:
 
 --
 -- Try some concurrent index drops
+-- Greenplum: The functionality of these tests is replicated in gp_index
 --
 DROP INDEX CONCURRENTLY "concur_index2";				-- works
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index2";
-                   ^
+ERROR:  index "concur_index2" does not exist
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
 NOTICE:  index "concur_index2" does not exist, skipping
 -- failures
 DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
-                   ^
+ERROR:  DROP INDEX CONCURRENTLY does not support dropping multiple objects
 BEGIN;
 DROP INDEX CONCURRENTLY "concur_index5";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index5";
-                   ^
+ERROR:  DROP INDEX CONCURRENTLY cannot run inside a transaction block
 ROLLBACK;
 -- successes
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
-                   ^
+NOTICE:  index "concur_index3" does not exist, skipping
 DROP INDEX CONCURRENTLY "concur_index4";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index4";
-                   ^
+ERROR:  index "concur_index4" does not exist
 DROP INDEX CONCURRENTLY "concur_index5";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index5";
-                   ^
+ERROR:  index "concur_index5" does not exist
 DROP INDEX CONCURRENTLY "concur_index1";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_index1";
-                   ^
+ERROR:  index "concur_index1" does not exist
 DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
-                   ^
+ERROR:  index "concur_heap_expr_idx" does not exist
 \d concur_heap
 Table "public.concur_heap"
  Column | Type | Modifiers 
@@ -2068,7 +2059,7 @@ CREATE TABLE concur_reindex_tab (c1 int);
 REINDEX TABLE concur_reindex_tab; -- notice
 NOTICE:  table "concur_reindex_tab" has no indexes to reindex
 REINDEX TABLE CONCURRENTLY concur_reindex_tab; -- notice
-NOTICE:  table "concur_reindex_tab" has no indexes that can be reindexed concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
@@ -2098,17 +2089,20 @@ CREATE TABLE concur_reindex_tab3 (c1 int, c2 int4range,
 DISTRIBUTED BY (distkey);
 INSERT INTO concur_reindex_tab3 VALUES  (3, '[1,2]');
 REINDEX INDEX CONCURRENTLY  concur_reindex_tab3_c2_excl;  -- error
-ERROR:  concurrent index creation for exclusion constraints is not supported
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX TABLE CONCURRENTLY concur_reindex_tab3;  -- succeeds with warning
-WARNING:  cannot reindex exclusion constraint index "public.concur_reindex_tab3_c2_excl" concurrently, skipping
+ERROR:  REINDEX CONCURRENTLY is not supported
 INSERT INTO concur_reindex_tab3 VALUES  (4, '[2,4]');
 ERROR:  conflicting key value violates exclusion constraint "concur_reindex_tab3_c2_distkey_excl"  (seg1 127.0.0.1:40001 pid=28895)
 DETAIL:  Key (c2, distkey)=([2,5), empty) conflicts with existing key (c2, distkey)=([1,3), empty).
 -- Check materialized views
 CREATE MATERIALIZED VIEW concur_reindex_matview AS SELECT * FROM concur_reindex_tab;
 REINDEX INDEX CONCURRENTLY concur_reindex_ind1;
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX TABLE CONCURRENTLY concur_reindex_matview;
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- Check that comments are preserved
 CREATE TABLE testcomment (i int);
 CREATE INDEX testcomment_idx1 ON testcomment (i);
@@ -2127,6 +2121,7 @@ SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
 (1 row)
 
 REINDEX TABLE CONCURRENTLY testcomment ;
+ERROR:  REINDEX CONCURRENTLY is not supported
 SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
  obj_description 
 -----------------
@@ -2172,14 +2167,13 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 REINDEX INDEX concur_reindex_part_index_10;
 ERROR:  REINDEX is not yet implemented for partitioned indexes
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_10;
-ERROR:  REINDEX is not yet implemented for partitioned indexes
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- REINDEX is a no-op for partitioned tables
 REINDEX TABLE concur_reindex_part_10;
 WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "concur_reindex_part_10"
 NOTICE:  table "concur_reindex_part_10" has no indexes to reindex
 REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
-WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "concur_reindex_part_10"
-NOTICE:  table "concur_reindex_part_10" has no indexes that can be reindexed concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
              relid             |         parentrelid         | level 
@@ -2193,7 +2187,9 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 
 -- REINDEX should preserve dependencies of partition tree.
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_1;
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_2;
+ERROR:  REINDEX CONCURRENTLY is not supported
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
              relid             |         parentrelid         | level 
@@ -2206,7 +2202,9 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 (5 rows)
 
 REINDEX TABLE CONCURRENTLY concur_reindex_part_0_1;
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX TABLE CONCURRENTLY concur_reindex_part_0_2;
+ERROR:  REINDEX CONCURRENTLY is not supported
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
              relid             |         parentrelid         | level 
@@ -2223,22 +2221,22 @@ DROP TABLE concur_reindex_part;
 -- Cannot run inside a transaction block
 BEGIN;
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
-ERROR:  REINDEX CONCURRENTLY cannot run inside a transaction block
+ERROR:  REINDEX CONCURRENTLY is not supported
 COMMIT;
 REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
-ERROR:  cannot reindex system catalogs concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
-ERROR:  cannot reindex system catalogs concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- These are the toast table and index of pg_authid.
 REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
-ERROR:  cannot reindex system catalogs concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
-ERROR:  cannot reindex system catalogs concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
-ERROR:  cannot reindex system catalogs concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
-WARNING:  cannot reindex system catalogs concurrently, skipping all
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab
          Table "public.concur_reindex_tab"
@@ -2261,13 +2259,11 @@ CREATE TABLE concur_reindex_tab4 (c1 int);
 INSERT INTO concur_reindex_tab4 VALUES (1), (1), (2);
 -- This trick creates an invalid index.
 CREATE UNIQUE INDEX CONCURRENTLY concur_reindex_ind5 ON concur_reindex_tab4 (c1);
-ERROR:  could not create unique index "concur_reindex_ind5"
-DETAIL:  Key (c1)=(1) is duplicated.
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- Reindexing concurrently this index fails with the same failure.
 -- The extra index created is itself invalid, and can be dropped.
 REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
-ERROR:  could not create unique index "concur_reindex_ind5_ccnew"
-DETAIL:  Key (c1)=(1) is duplicated.
+ERROR:  REINDEX CONCURRENTLY is not supported
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"
  Column |  Type   | Collation | Nullable | Default 
@@ -2282,8 +2278,7 @@ DROP INDEX concur_reindex_ind5_ccnew;
 DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
 -- The invalid index is not processed when running REINDEX TABLE.
 REINDEX TABLE CONCURRENTLY concur_reindex_tab4;
-WARNING:  cannot reindex invalid index "public.concur_reindex_ind5" concurrently, skipping
-NOTICE:  table "concur_reindex_tab4" has no indexes that can be reindexed concurrently
+ERROR:  REINDEX CONCURRENTLY is not supported
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"
  Column |  Type   | Collation | Nullable | Default 
@@ -2294,6 +2289,7 @@ Indexes:
 
 -- But it is fixed with REINDEX INDEX.
 REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
+ERROR:  REINDEX CONCURRENTLY is not supported
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"
  Column |  Type   | Collation | Nullable | Default 
@@ -2364,6 +2360,7 @@ ERROR:  REINDEX SCHEMA cannot run inside a transaction block
 END;
 -- concurrently
 REINDEX SCHEMA CONCURRENTLY schema_to_reindex;
+ERROR:  REINDEX CONCURRENTLY is not supported
 -- Failure for unauthorized user
 CREATE ROLE regress_reindexuser NOLOGIN;
 SET SESSION ROLE regress_reindexuser;
