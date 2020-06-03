@@ -546,11 +546,12 @@ aocs_beginscan_internal(Relation relation,
 
 	scan->blockDirectory = NULL;
 
-	AppendOnlyVisimap_Init(&scan->visibilityMap,
-						   visimaprelid,
-						   visimapidxid,
-						   AccessShareLock,
-						   appendOnlyMetaDataSnapshot);
+	if (scan->total_seg != 0)
+		AppendOnlyVisimap_Init(&scan->visibilityMap,
+							   visimaprelid,
+							   visimapidxid,
+							   AccessShareLock,
+							   appendOnlyMetaDataSnapshot);
 
 	return scan;
 }
@@ -587,7 +588,8 @@ aocs_endscan(AOCSScanDesc scan)
 	if (scan->seginfo)
 		pfree(scan->seginfo);
 
-	AppendOnlyVisimap_Finish(&scan->visibilityMap, AccessShareLock);
+	if (scan->total_seg != 0)
+		AppendOnlyVisimap_Finish(&scan->visibilityMap, AccessShareLock);
 
 	pfree(scan);
 }

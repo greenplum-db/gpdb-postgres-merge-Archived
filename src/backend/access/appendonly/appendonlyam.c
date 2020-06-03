@@ -1690,19 +1690,20 @@ appendonly_beginrangescan_internal(Relation relation,
 
 	scan->blockDirectory = NULL;
 
+	if (segfile_count > 0)
+	{
+		Oid			visimaprelid;
+		Oid			visimapidxid;
 
-	Oid visimaprelid;
-	Oid visimapidxid;
+		GetAppendOnlyEntryAuxOids(relation->rd_id, NULL,
+								  NULL, NULL, NULL, &visimaprelid, &visimapidxid);
 
-	GetAppendOnlyEntryAuxOids(relation->rd_id, NULL,
-		NULL, NULL, NULL, &visimaprelid, &visimapidxid);
-
-	AppendOnlyVisimap_Init(&scan->visibilityMap,
-						   visimaprelid,
-						   visimapidxid,
-						   AccessShareLock,
-						   appendOnlyMetaDataSnapshot);
-
+		AppendOnlyVisimap_Init(&scan->visibilityMap,
+							   visimaprelid,
+							   visimapidxid,
+							   AccessShareLock,
+							   appendOnlyMetaDataSnapshot);
+	}
 	return scan;
 }
 
@@ -1852,7 +1853,8 @@ appendonly_endscan(TableScanDesc scan)
 
 	AppendOnlyExecutorReadBlock_Finish(&aoscan->executorReadBlock);
 
-	AppendOnlyVisimap_Finish(&aoscan->visibilityMap, AccessShareLock);
+	if (aoscan->aos_total_segfiles > 0)
+		AppendOnlyVisimap_Finish(&aoscan->visibilityMap, AccessShareLock);
 
 	if (aoscan->aofetch)
 	{
