@@ -346,7 +346,7 @@ Datum pg_exttable(PG_FUNCTION_ARGS)
 }
 
 /* FDW validator for external tables */
-void
+Datum
 gp_exttable_permission_check(PG_FUNCTION_ARGS)
 {
 	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
@@ -496,7 +496,7 @@ gp_exttable_permission_check(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return;
+	PG_RETURN_VOID();
 }
 
 static void

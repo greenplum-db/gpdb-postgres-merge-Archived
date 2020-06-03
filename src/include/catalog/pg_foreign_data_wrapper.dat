@@ -13,7 +13,7 @@
 [
 
 { oid => '5104', descr => 'special FDW to mark external tables',
-  fdwname => 'pg_exttable_fdw', fdwowner => 'PGUID', fdwhandler => '5107',
-  fdwvalidator => '0', fdwacl => '_null_', fdwoptions => '_null_' },
+  fdwname => 'pg_exttable_fdw', fdwhandler => 'gp_exttable_fdw_handler',
+  fdwvalidator => 'gp_exttable_permission_check', fdwacl => '_null_', fdwoptions => '_null_' },
 
 ]

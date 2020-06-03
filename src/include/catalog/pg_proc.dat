@@ -11452,6 +11452,9 @@
 { oid => 5107, descr => 'handler for internal external table FDW',
    proname => 'gp_exttable_fdw_handler', prorettype => 'internal', proargtypes => 'internal', prosrc => 'exttable_fdw_handler' },
 
+{ oid => 7070, descr => 'handler for internal external table FDW',
+   proname => 'gp_exttable_permission_check', prorettype => 'void', proargtypes => 'internal', prosrc => 'gp_exttable_permission_check' },
+
 
 { oid => 7057, descr => 'compare two complex numbers',
    proname => 'complex_cmp', prorettype => 'int4', proargtypes => 'complex complex', prosrc => 'complex_cmp' },
