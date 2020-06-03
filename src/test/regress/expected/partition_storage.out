@@ -27,7 +27,6 @@ NOTICE:  building index for child partition "pt_heap_tab_1_prt_ghi"
 NOTICE:  building index for child partition "pt_heap_tab_1_prt_dft"
 --Drop partition
  alter table pt_heap_tab drop default partition;
-NOTICE:  dropped partition "dft" for relation "pt_heap_tab"
 --Add partition
  alter table pt_heap_tab add partition xyz values ('xyz','xyz1','xyz2') WITH (appendonly=true, orientation=column, compresslevel=5); -- CO
 NOTICE:  CREATE TABLE will create partition "pt_heap_tab_1_prt_xyz" for table "pt_heap_tab"
@@ -203,7 +202,6 @@ NOTICE:  building index for child partition "pt_ao_tab_1_prt_ghi"
 NOTICE:  building index for child partition "pt_ao_tab_1_prt_dft"
 --Drop partition
  alter table pt_ao_tab drop default partition;
-NOTICE:  dropped partition "dft" for relation "pt_ao_tab"
 --Add partition
  alter table pt_ao_tab add partition xyz values ('xyz','xyz1','xyz2') WITH (appendonly=true,orientation=column,compresslevel=5); --CO
 NOTICE:  CREATE TABLE will create partition "pt_ao_tab_1_prt_xyz" for table "pt_ao_tab"
@@ -396,7 +394,6 @@ NOTICE:  building index for child partition "pt_co_tab_1_prt_ghi"
 NOTICE:  building index for child partition "pt_co_tab_1_prt_dft"
 --Drop partition
  alter table pt_co_tab drop default partition;
-NOTICE:  dropped partition "dft" for relation "pt_co_tab"
 --Add partition
  alter table pt_co_tab add partition xyz values ('xyz','xyz1','xyz2') WITH (appendonly=true,orientation=column,compresslevel=5); --CO
 NOTICE:  CREATE TABLE will create partition "pt_co_tab_1_prt_xyz" for table "pt_co_tab"
@@ -584,7 +581,6 @@ NOTICE:  building index for child partition "pt_heap_tab_rng_1_prt_4"
 NOTICE:  building index for child partition "pt_heap_tab_rng_1_prt_5"
 -- Drop partition
  Alter table pt_heap_tab_rng drop default partition; 
-NOTICE:  dropped partition "dft" for relation "pt_heap_tab_rng"
 -- ADD partitions
  alter table pt_heap_tab_rng add partition heap start(21) end(25) with (appendonly=false);
 NOTICE:  CREATE TABLE will create partition "pt_heap_tab_rng_1_prt_heap" for table "pt_heap_tab_rng"
@@ -760,7 +756,6 @@ NOTICE:  building index for child partition "pt_ao_tab_rng_1_prt_4"
 NOTICE:  building index for child partition "pt_ao_tab_rng_1_prt_5"
 --Drop partition
  Alter table pt_ao_tab_rng drop default partition; 
-NOTICE:  dropped partition "dft" for relation "pt_ao_tab_rng"
 --ADD partitions
  alter table pt_ao_tab_rng add partition heap start(21) end(25) with (appendonly=false);
 NOTICE:  CREATE TABLE will create partition "pt_ao_tab_rng_1_prt_heap" for table "pt_ao_tab_rng"
@@ -936,7 +931,6 @@ NOTICE:  building index for child partition "pt_co_tab_rng_1_prt_4"
 NOTICE:  building index for child partition "pt_co_tab_rng_1_prt_5"
 --Drop partition
  Alter table pt_co_tab_rng drop default partition; 
-NOTICE:  dropped partition "dft" for relation "pt_co_tab_rng"
 --ADD partitions
  alter table pt_co_tab_rng add partition heap start(21) end(25) with (appendonly=false);
 NOTICE:  CREATE TABLE will create partition "pt_co_tab_rng_1_prt_heap" for table "pt_co_tab_rng"
