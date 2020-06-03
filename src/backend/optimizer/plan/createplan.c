@@ -1816,6 +1816,39 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 	/* Copy cost data from Path to Plan */
 	copy_generic_path_info(plan, &best_path->path);
 
+	/*
+	 * If we changed the target list, and CP_EXACT_TLIST was requested,
+	 * insert a Result node to change the target list back.
+	 *
+	 * GPDB_12_MERGE_FIXME: As far as I can see, PostgreSQL has this
+	 * same problem, but doesn't check for this. In GPDB, this led to
+	 * an assertion failure with this test (from 'join_gp' regression
+	 * test):
+
+create table foo(a int) distributed by (a);
+create table bar(b int) distributed by (b);
+insert into foo select i from generate_series(1,10)i;
+insert into bar select i from generate_series(1,1000)i;
+analyze foo;
+analyze bar;
+set enable_hashagg to off;
+explain (costs off)
+select * from foo where exists (select 1 from bar where foo.a = bar.b);
+FATAL:  Unexpected internal error (tlist.c:393)
+DETAIL:  FailedAssertion("!(list_length(dest_tlist) == list_length(src_tlist))", File: "tlist.c", Line: 393)
+
+	 * PostgreSQL doesn't create the kind of RowIdExpr Unique paths that
+	 * we do. But maybe this could be reproduced upstream with some other
+	 * query?
+	 */
+	if (newitems || best_path->umethod == UNIQUE_PATH_SORT)
+	{
+		List	   *oldtlist = build_path_tlist(root, &best_path->path);
+
+		plan = change_plan_targetlist(plan, oldtlist,
+									  best_path->path.parallel_safe);
+	}
+
 	return plan;
 }
 
