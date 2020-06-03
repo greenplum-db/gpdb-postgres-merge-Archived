@@ -293,8 +293,7 @@ drop table foo_p, bar_d;
 -- permissions
 create role part_role;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
-create table foo_p (i int) partition by range(i)
-(start(1) end(10) every(1));
+create table foo_p (i int) partition by range(i) (start(1) end(10) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_1" for table "foo_p"
@@ -312,10 +311,21 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 grant select on foo_p to part_role;
 revoke all on bar_p from part_role;
 NOTICE:  no privileges could be revoked
-select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
+-- Granting on the partitioned table doesn't give you privileges to the individual
+-- partitions. You can select from the partitioned table, but not directly from
+-- a partition. (This changed in GPDB 7. Before that, with the old GPDB partitioning
+-- implementation, GRANT or REVOKE on the "root partition" recursed to all
+-- partitions.)
+select has_table_privilege('part_role', 'foo_p'::regclass, 'select');
  has_table_privilege 
 ---------------------
  t
+(1 row)
+
+select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
+ has_table_privilege 
+---------------------
+ f
 (1 row)
 
 select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
@@ -324,17 +334,21 @@ select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
  f
 (1 row)
 
+grant select on foo_p_1_prt_6 to part_role;
+-- When a partition is exchanged, the privileges follow the table contents.
+-- In this case, the partition had SELECT privilege, and after the exchange,
+-- the now-standalone table has it.
 alter table foo_p exchange partition for(6) with table bar_p;
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
  has_table_privilege 
 ---------------------
- t
+ f
 (1 row)
 
 select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
  has_table_privilege 
 ---------------------
- f
+ t
 (1 row)
 
 drop table foo_p;
@@ -1744,7 +1758,11 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 ERROR:  specified value cannot be cast to type numeric for column "n"
 LINE 2: end('f'::bool));
             ^
--- see that grant and revoke cascade to children
+-- Granting on the partitioned table doesn't give you privileges to the individual
+-- partitions. You can select from the partitioned table, but not directly from
+-- a partition. (This changed in GPDB 7. Before that, with the old GPDB partitioning
+-- implementation, GRANT and REVOKE on the "root partition" recursed to all
+-- partitions.)
 create role part_role;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 create table granttest (i int, j int) partition by range(i) 
@@ -1780,13 +1798,13 @@ select relname, has_table_privilege('part_role', oid,'select') as tabpriv,
 from pg_class where relname like 'granttest%';
           relname          | tabpriv | i_priv | j_priv 
 ---------------------------+---------+--------+--------
- granttest_1_prt_2         | f       | t      | f
- granttest_1_prt_2_2_prt_1 | f       | t      | f
- granttest_1_prt_3         | f       | t      | f
- granttest_1_prt_3_2_prt_1 | f       | t      | f
  granttest                 | f       | t      | f
- granttest_1_prt_1         | f       | t      | f
- granttest_1_prt_1_2_prt_1 | f       | t      | f
+ granttest_1_prt_1         | f       | f      | f
+ granttest_1_prt_1_2_prt_1 | f       | f      | f
+ granttest_1_prt_2         | f       | f      | f
+ granttest_1_prt_2_2_prt_1 | f       | f      | f
+ granttest_1_prt_3         | f       | f      | f
+ granttest_1_prt_3_2_prt_1 | f       | f      | f
 (7 rows)
 
 grant select on granttest to part_role;
@@ -1796,13 +1814,13 @@ select relname, has_table_privilege('part_role', oid,'select') as tabpriv,
 from pg_class where relname like 'granttest%';
           relname          | tabpriv | i_priv | j_priv 
 ---------------------------+---------+--------+--------
- granttest_1_prt_1         | t       | t      | t
- granttest_1_prt_1_2_prt_1 | t       | t      | t
- granttest_1_prt_2         | t       | t      | t
- granttest_1_prt_2_2_prt_1 | t       | t      | t
- granttest_1_prt_3         | t       | t      | t
- granttest_1_prt_3_2_prt_1 | t       | t      | t
  granttest                 | t       | t      | t
+ granttest_1_prt_1         | f       | f      | f
+ granttest_1_prt_1_2_prt_1 | f       | f      | f
+ granttest_1_prt_2         | f       | f      | f
+ granttest_1_prt_2_2_prt_1 | f       | f      | f
+ granttest_1_prt_3         | f       | f      | f
+ granttest_1_prt_3_2_prt_1 | f       | f      | f
 (7 rows)
 
 grant insert on granttest to part_role;
@@ -1812,13 +1830,13 @@ select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
 from pg_class where relname like 'granttest%';
           relname          | tabpriv | i_priv | j_priv 
 ---------------------------+---------+--------+--------
- granttest_1_prt_1         | t       | t      | t
- granttest_1_prt_1_2_prt_1 | t       | t      | t
- granttest_1_prt_2         | t       | t      | t
- granttest_1_prt_2_2_prt_1 | t       | t      | t
- granttest_1_prt_3         | t       | t      | t
- granttest_1_prt_3_2_prt_1 | t       | t      | t
  granttest                 | t       | t      | t
+ granttest_1_prt_1         | f       | f      | f
+ granttest_1_prt_1_2_prt_1 | f       | f      | f
+ granttest_1_prt_2         | f       | f      | f
+ granttest_1_prt_2_2_prt_1 | f       | f      | f
+ granttest_1_prt_3         | f       | f      | f
+ granttest_1_prt_3_2_prt_1 | f       | f      | f
 (7 rows)
 
 revoke insert on granttest from part_role;
@@ -1829,61 +1847,29 @@ select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
 from pg_class where relname like 'granttest%';
           relname          | tabpriv | i_priv | j_priv 
 ---------------------------+---------+--------+--------
- granttest_1_prt_1         | f       | f      | t
- granttest_1_prt_1_2_prt_1 | f       | f      | t
- granttest_1_prt_2         | f       | f      | t
- granttest_1_prt_2_2_prt_1 | f       | f      | t
- granttest_1_prt_3         | f       | f      | t
- granttest_1_prt_3_2_prt_1 | f       | f      | t
  granttest                 | f       | f      | t
+ granttest_1_prt_1         | f       | f      | f
+ granttest_1_prt_1_2_prt_1 | f       | f      | f
+ granttest_1_prt_2         | f       | f      | f
+ granttest_1_prt_2_2_prt_1 | f       | f      | f
+ granttest_1_prt_3         | f       | f      | f
+ granttest_1_prt_3_2_prt_1 | f       | f      | f
 (7 rows)
 
--- Check that when a new partition is created, it inherits the permissions
--- from the parent.
+-- Before GPDB 7, when a new partition was created, it also inherits the permissions
+-- from the parent. Not anymore.
 alter table granttest add partition newpart start(100) end (101);
 NOTICE:  CREATE TABLE will create partition "granttest_1_prt_newpart" for table "granttest"
 NOTICE:  CREATE TABLE will create partition "granttest_1_prt_newpart_2_prt_1" for table "granttest_1_prt_newpart"
+-- same with the new upstream syntax.
+create table granttest_newpartsyntax partition of granttest for values from (110) to (120);
 select relname, has_table_privilege('part_role', oid, 'select') as tabpriv,
        has_column_privilege('part_role', oid, 'i', 'select') as i_priv,
        has_column_privilege('part_role', oid, 'j', 'select') as j_priv
 from pg_class where relname like 'granttest%';
              relname             | tabpriv | i_priv | j_priv 
 ---------------------------------+---------+--------+--------
- granttest_1_prt_1               | t       | t      | t
- granttest_1_prt_1_2_prt_1       | t       | t      | t
- granttest_1_prt_2               | t       | t      | t
- granttest_1_prt_2_2_prt_1       | t       | t      | t
- granttest_1_prt_3               | t       | t      | t
- granttest_1_prt_3_2_prt_1       | t       | t      | t
  granttest                       | t       | t      | t
- granttest_1_prt_newpart         | t       | t      | t
- granttest_1_prt_newpart_2_prt_1 | t       | t      | t
-(9 rows)
-
-select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
-       has_column_privilege('part_role', oid, 'i', 'insert') as i_priv,
-       has_column_privilege('part_role', oid, 'j', 'insert') as j_priv
-from pg_class where relname like 'granttest%';
-             relname             | tabpriv | i_priv | j_priv 
----------------------------------+---------+--------+--------
- granttest_1_prt_1               | f       | f      | t
- granttest_1_prt_1_2_prt_1       | f       | f      | t
- granttest_1_prt_2               | f       | f      | t
- granttest_1_prt_2_2_prt_1       | f       | f      | t
- granttest_1_prt_3               | f       | f      | t
- granttest_1_prt_3_2_prt_1       | f       | f      | t
- granttest                       | f       | f      | t
- granttest_1_prt_newpart         | f       | f      | t
- granttest_1_prt_newpart_2_prt_1 | f       | f      | t
-(9 rows)
-
-revoke all on granttest from part_role;
-select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
-       has_column_privilege('part_role', oid, 'i', 'insert') as i_priv,
-       has_column_privilege('part_role', oid, 'j', 'insert') as j_priv
-from pg_class where relname like 'granttest%';
-             relname             | tabpriv | i_priv | j_priv 
----------------------------------+---------+--------+--------
  granttest_1_prt_1               | f       | f      | f
  granttest_1_prt_1_2_prt_1       | f       | f      | f
  granttest_1_prt_2               | f       | f      | f
@@ -1892,8 +1878,45 @@ from pg_class where relname like 'granttest%';
  granttest_1_prt_3_2_prt_1       | f       | f      | f
  granttest_1_prt_newpart         | f       | f      | f
  granttest_1_prt_newpart_2_prt_1 | f       | f      | f
+ granttest_newpartsyntax         | f       | f      | f
+(10 rows)
+
+select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
+       has_column_privilege('part_role', oid, 'i', 'insert') as i_priv,
+       has_column_privilege('part_role', oid, 'j', 'insert') as j_priv
+from pg_class where relname like 'granttest%';
+             relname             | tabpriv | i_priv | j_priv 
+---------------------------------+---------+--------+--------
+ granttest                       | f       | f      | t
+ granttest_1_prt_1               | f       | f      | f
+ granttest_1_prt_1_2_prt_1       | f       | f      | f
+ granttest_1_prt_2               | f       | f      | f
+ granttest_1_prt_2_2_prt_1       | f       | f      | f
+ granttest_1_prt_3               | f       | f      | f
+ granttest_1_prt_3_2_prt_1       | f       | f      | f
+ granttest_1_prt_newpart         | f       | f      | f
+ granttest_1_prt_newpart_2_prt_1 | f       | f      | f
+ granttest_newpartsyntax         | f       | f      | f
+(10 rows)
+
+revoke all on granttest from part_role;
+select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
+       has_column_privilege('part_role', oid, 'i', 'insert') as i_priv,
+       has_column_privilege('part_role', oid, 'j', 'insert') as j_priv
+from pg_class where relname like 'granttest%';
+             relname             | tabpriv | i_priv | j_priv 
+---------------------------------+---------+--------+--------
  granttest                       | f       | f      | f
-(9 rows)
+ granttest_1_prt_1               | f       | f      | f
+ granttest_1_prt_1_2_prt_1       | f       | f      | f
+ granttest_1_prt_2               | f       | f      | f
+ granttest_1_prt_2_2_prt_1       | f       | f      | f
+ granttest_1_prt_3               | f       | f      | f
+ granttest_1_prt_3_2_prt_1       | f       | f      | f
+ granttest_1_prt_newpart         | f       | f      | f
+ granttest_1_prt_newpart_2_prt_1 | f       | f      | f
+ granttest_newpartsyntax         | f       | f      | f
+(10 rows)
 
 drop table granttest;
 drop role part_role;
