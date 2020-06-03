@@ -4240,40 +4240,6 @@ _readPartitionCmd(void)
 	READ_DONE();
 }
 
-static GpAlterPartitionId *
-_readGpAlterPartitionId(void)
-{
-	READ_LOCALS(GpAlterPartitionId);
-
-	READ_ENUM_FIELD(idtype, GpAlterPartitionIdType);
-	READ_NODE_FIELD(partiddef);
-
-	READ_DONE();
-}
-
-static GpDropPartitionCmd *
-_readGpDropPartitionCmd(void)
-{
-	READ_LOCALS(GpDropPartitionCmd);
-
-	READ_NODE_FIELD(partid);
-	READ_ENUM_FIELD(behavior,DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-
-static GpAlterPartitionCmd *
-_readGpAlterPartitionCmd(void)
-{
-	READ_LOCALS(GpAlterPartitionCmd);
-
-	READ_NODE_FIELD(partid);
-	READ_NODE_FIELD(arg);
-
-	READ_DONE();
-}
-
 #ifndef COMPILING_BINARY_FUNCS
 /*
  * parseNodeString
@@ -4566,10 +4532,6 @@ parseNodeString(void)
         return_value = _readPartitionRangeDatum();
 	else if (MATCHX("PARTITIONCMD"))
 		return_value = _readPartitionCmd();
-	else if (MATCHX("GPALTERPARTITIONID"))
-		return_value = _readGpAlterPartitionId();
-	else if (MATCHX("GPDROPPARTITIONCMD"))
-		return_value = _readGpDropPartitionCmd();
 
 	/* GPDB additions */
 	else if (MATCHX("A_ARRAYEXPR"))
