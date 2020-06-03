@@ -947,8 +947,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 														  stmt->attr_encodings,
 														  stmt->options,
 														  &found_enc);
-		if ((accessMethodId != APPENDOPTIMIZED_TABLE_AM_OID &&
-			 accessMethodId != AOCO_TABLE_AM_OID))
+		if (accessMethodId != AOCO_TABLE_AM_OID)
 		{
 			/*
 			 * ENCODING options were specified, but the table is not
