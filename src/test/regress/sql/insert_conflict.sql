@@ -595,6 +595,8 @@ truncate parted_conflict;
 
 insert into parted_conflict values (0, 'cero', 1);
 
+-- Greenplum: this won't trigger, because the INSERT/UPDATE happens on the QEs,
+-- but FOR STATEMENT triggers could not be triggered on a QE
 insert into parted_conflict values(0, 'cero', 1)
   on conflict (a,b) do update set c = parted_conflict.c + 1;
 
