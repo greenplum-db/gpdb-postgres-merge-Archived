@@ -932,16 +932,13 @@ LINE 1: alter table hhh_l1 drop partition;
                                          ^
 alter table hhh_l1 drop partition aa;
 alter table hhh_l1 drop partition for ('2008-01-01');
-NOTICE:  dropped partition "bb" for relation "hhh_l1"
 -- same with range partitioning
 alter table hhh_r1 drop partition;
 ERROR:  syntax error at or near ";"
 LINE 1: alter table hhh_r1 drop partition;
                                          ^
 alter table hhh_r1 drop partition for ('2007-04-01');
-NOTICE:  dropped partition "aa_4" for relation "hhh_r1"
 alter table hhh_r1 drop partition for ('2007-01-01');
-NOTICE:  dropped partition "aa_1" for relation "hhh_r1"
 alter table hhh_r1 drop partition aa_2;
 alter table hhh_r1 drop partition aa_3;
 alter table hhh_r1 drop partition aa_5;
@@ -1263,7 +1260,7 @@ partition j2 end (date '2009-01-01'),
 default partition j3 end (date '2010-01-01'));
 ERROR:  syntax error at or near "end"
 LINE 5: default partition j3 end (date '2010-01-01'));
-        ^
+                             ^
 -- more than one default partition
 create table jjj (aa int, bb date)
 partition by range(bb)
@@ -2218,7 +2215,6 @@ NOTICE:  building index for child partition "dcl_messaging_test_1_prt_13"
 NOTICE:  building index for child partition "dcl_messaging_test_1_prt_14"
 NOTICE:  building index for child partition "dcl_messaging_test_1_prt_15"
 alter table dcl_messaging_test drop default partition;
-NOTICE:  dropped partition "outlying_dates" for relation "dcl_messaging_test"
 -- ADD case
 alter table dcl_messaging_test add partition start (timestamp '2011-09-10') inclusive end (timestamp '2011-09-11') exclusive;
 NOTICE:  CREATE TABLE will create partition "dcl_messaging_test_1_prt_r1571743545" for table "dcl_messaging_test"
@@ -2594,7 +2590,7 @@ NOTICE:  building index for child partition "mpp7635_aoi_table2_1_prt_2"
 select * from pg_indexes where tablename like 'mpp7635%';
  schemaname |         tablename          |             indexname             | tablespace |                                               indexdef                                                
 ------------+----------------------------+-----------------------------------+------------+-------------------------------------------------------------------------------------------------------
- public     | mpp7635_aoi_table2         | mpp7635_ix3                       |            | CREATE INDEX mpp7635_ix3 ON public.mpp7635_aoi_table2 USING bitmap (id)
+ public     | mpp7635_aoi_table2         | mpp7635_ix3                       |            | CREATE INDEX mpp7635_ix3 ON ONLY public.mpp7635_aoi_table2 USING bitmap (id)
  public     | mpp7635_aoi_table2_1_prt_1 | mpp7635_aoi_table2_1_prt_1_id_idx |            | CREATE INDEX mpp7635_aoi_table2_1_prt_1_id_idx ON public.mpp7635_aoi_table2_1_prt_1 USING bitmap (id)
  public     | mpp7635_aoi_table2_1_prt_2 | mpp7635_aoi_table2_1_prt_2_id_idx |            | CREATE INDEX mpp7635_aoi_table2_1_prt_2_id_idx ON public.mpp7635_aoi_table2_1_prt_2 USING bitmap (id)
 (3 rows)
@@ -2613,7 +2609,7 @@ NOTICE:  building index for child partition "mpp7635_aoi_table2_1_prt_2"
 select * from pg_indexes where tablename like 'mpp7635%';
  schemaname |         tablename          |             indexname             | tablespace |                                               indexdef                                               
 ------------+----------------------------+-----------------------------------+------------+------------------------------------------------------------------------------------------------------
- public     | mpp7635_aoi_table2         | mpp7635_ix3                       |            | CREATE INDEX mpp7635_ix3 ON public.mpp7635_aoi_table2 USING btree (id)
+ public     | mpp7635_aoi_table2         | mpp7635_ix3                       |            | CREATE INDEX mpp7635_ix3 ON ONLY public.mpp7635_aoi_table2 USING btree (id)
  public     | mpp7635_aoi_table2_1_prt_1 | mpp7635_aoi_table2_1_prt_1_id_idx |            | CREATE INDEX mpp7635_aoi_table2_1_prt_1_id_idx ON public.mpp7635_aoi_table2_1_prt_1 USING btree (id)
  public     | mpp7635_aoi_table2_1_prt_2 | mpp7635_aoi_table2_1_prt_2_id_idx |            | CREATE INDEX mpp7635_aoi_table2_1_prt_2_id_idx ON public.mpp7635_aoi_table2_1_prt_2 USING btree (id)
 (3 rows)
