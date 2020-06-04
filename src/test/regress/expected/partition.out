@@ -3668,7 +3668,7 @@ select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname | tablename  |     indexname      | tablespace |                                    indexdef                                    
 ------------+------------+--------------------+------------+--------------------------------------------------------------------------------
  public     | ti_1_prt_1 | ti_1_prt_1_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_1_i_j_idx ON public.ti_1_prt_1 USING btree (i, j)
- public     | ti         | ti_pkey            |            | CREATE UNIQUE INDEX ti_pkey ON public.ti USING btree (i, j)
+ public     | ti         | ti_pkey            |            | CREATE UNIQUE INDEX ti_pkey ON ONLY public.ti USING btree (i, j)
  public     | ti_1_prt_2 | ti_1_prt_2_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_2_i_j_idx ON public.ti_1_prt_2 USING btree (i, j)
 (3 rows)
 
@@ -3679,10 +3679,10 @@ select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname | tablename  |     indexname      | tablespace |                                    indexdef                                    
 ------------+------------+--------------------+------------+--------------------------------------------------------------------------------
  public     | ti_1_prt_1 | ti_1_prt_1_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_1_i_j_idx ON public.ti_1_prt_1 USING btree (i, j)
- public     | ti         | ti_pkey            |            | CREATE UNIQUE INDEX ti_pkey ON public.ti USING btree (i, j)
+ public     | ti         | ti_pkey            |            | CREATE UNIQUE INDEX ti_pkey ON ONLY public.ti USING btree (i, j)
  public     | ti_1_prt_2 | ti_1_prt_2_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_2_i_j_idx ON public.ti_1_prt_2 USING btree (i, j)
  public     | ti_1_prt_1 | ti_1_prt_1_j_idx   |            | CREATE INDEX ti_1_prt_1_j_idx ON public.ti_1_prt_1 USING bitmap (j)
- public     | ti         | ti_j_idx           |            | CREATE INDEX ti_j_idx ON public.ti USING bitmap (j)
+ public     | ti         | ti_j_idx           |            | CREATE INDEX ti_j_idx ON ONLY public.ti USING bitmap (j)
  public     | ti_1_prt_2 | ti_1_prt_2_j_idx   |            | CREATE INDEX ti_1_prt_2_j_idx ON public.ti_1_prt_2 USING bitmap (j)
 (6 rows)
 
@@ -3692,10 +3692,10 @@ select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname |  tablename  |      indexname      | tablespace |                                     indexdef                                     
 ------------+-------------+---------------------+------------+----------------------------------------------------------------------------------
  public     | ti_1_prt_1  | ti_1_prt_1_i_j_idx  |            | CREATE UNIQUE INDEX ti_1_prt_1_i_j_idx ON public.ti_1_prt_1 USING btree (i, j)
- public     | ti          | ti_pkey             |            | CREATE UNIQUE INDEX ti_pkey ON public.ti USING btree (i, j)
+ public     | ti          | ti_pkey             |            | CREATE UNIQUE INDEX ti_pkey ON ONLY public.ti USING btree (i, j)
  public     | ti_1_prt_2  | ti_1_prt_2_i_j_idx  |            | CREATE UNIQUE INDEX ti_1_prt_2_i_j_idx ON public.ti_1_prt_2 USING btree (i, j)
  public     | ti_1_prt_1  | ti_1_prt_1_j_idx    |            | CREATE INDEX ti_1_prt_1_j_idx ON public.ti_1_prt_1 USING bitmap (j)
- public     | ti          | ti_j_idx            |            | CREATE INDEX ti_j_idx ON public.ti USING bitmap (j)
+ public     | ti          | ti_j_idx            |            | CREATE INDEX ti_j_idx ON ONLY public.ti USING bitmap (j)
  public     | ti_1_prt_2  | ti_1_prt_2_j_idx    |            | CREATE INDEX ti_1_prt_2_j_idx ON public.ti_1_prt_2 USING bitmap (j)
  public     | ti_1_prt_p3 | ti_1_prt_p3_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_p3_i_j_idx ON public.ti_1_prt_p3 USING btree (i, j)
  public     | ti_1_prt_p3 | ti_1_prt_p3_j_idx   |            | CREATE INDEX ti_1_prt_p3_j_idx ON public.ti_1_prt_p3 USING bitmap (j)
@@ -3713,10 +3713,10 @@ select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname |   tablename    |       indexname        | tablespace |                                        indexdef                                        
 ------------+----------------+------------------------+------------+----------------------------------------------------------------------------------------
  public     | ti_1_prt_1     | ti_1_prt_1_i_j_idx     |            | CREATE UNIQUE INDEX ti_1_prt_1_i_j_idx ON public.ti_1_prt_1 USING btree (i, j)
- public     | ti             | ti_pkey                |            | CREATE UNIQUE INDEX ti_pkey ON public.ti USING btree (i, j)
+ public     | ti             | ti_pkey                |            | CREATE UNIQUE INDEX ti_pkey ON ONLY public.ti USING btree (i, j)
  public     | ti_1_prt_2     | ti_1_prt_2_i_j_idx     |            | CREATE UNIQUE INDEX ti_1_prt_2_i_j_idx ON public.ti_1_prt_2 USING btree (i, j)
  public     | ti_1_prt_1     | ti_1_prt_1_j_idx       |            | CREATE INDEX ti_1_prt_1_j_idx ON public.ti_1_prt_1 USING bitmap (j)
- public     | ti             | ti_j_idx               |            | CREATE INDEX ti_j_idx ON public.ti USING bitmap (j)
+ public     | ti             | ti_j_idx               |            | CREATE INDEX ti_j_idx ON ONLY public.ti USING bitmap (j)
  public     | ti_1_prt_2     | ti_1_prt_2_j_idx       |            | CREATE INDEX ti_1_prt_2_j_idx ON public.ti_1_prt_2 USING bitmap (j)
  public     | ti_1_prt_pnew1 | ti_1_prt_pnew1_i_j_idx |            | CREATE UNIQUE INDEX ti_1_prt_pnew1_i_j_idx ON public.ti_1_prt_pnew1 USING btree (i, j)
  public     | ti_1_prt_pnew1 | ti_1_prt_pnew1_j_idx   |            | CREATE INDEX ti_1_prt_pnew1_j_idx ON public.ti_1_prt_pnew1 USING bitmap (j)
