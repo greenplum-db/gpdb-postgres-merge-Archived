@@ -1406,8 +1406,9 @@ form_default_storage_directive(List *enc)
 List *
 transformStorageEncodingClause(List *aocoColumnEncoding)
 {
-	ListCell *lc;
-	DefElem *dl;
+	Datum		d;
+	ListCell   *lc;
+	DefElem	   *dl;
 
 	foreach(lc, aocoColumnEncoding)
 	{
@@ -1423,6 +1424,16 @@ transformStorageEncodingClause(List *aocoColumnEncoding)
 
 	/* add defaults for missing values */
 	aocoColumnEncoding = fillin_encoding(aocoColumnEncoding);
+
+	/*
+	 * The following two statements validate that the encoding clause is well
+	 * formed.
+	 */
+	d = transformRelOptions(PointerGetDatum(NULL),
+							aocoColumnEncoding,
+							NULL, NULL,
+							true, false);
+	(void) default_reloptions(d, true, RELOPT_KIND_APPENDOPTIMIZED);
 
 	return aocoColumnEncoding;
 }
