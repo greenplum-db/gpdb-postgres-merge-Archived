@@ -340,20 +340,40 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 	}
 
 	/*
-	 * We don't support cluster on an AO table. We print out a warning/error to
-	 * the user, and simply return.
+	 * We don't support cluster on an AO table that cannot be sorted.
+	 * We print out a warning/error to the user, and simply return.
+	 *
+	 * GPDB_12_MERGE_FIXME: CLUSTER works through the table AM API now.
+	 * Do we need anything here anymore?
 	 */
+#if 0		
 	if (OldHeap->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
 		OldHeap->rd_rel->relam == AOCO_TABLE_AM_OID)
 	{
 		ereport((printError ? ERROR : WARNING),
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot cluster append-only table \"%s\": not supported",
-						RelationGetRelationName(OldHeap))));
+				 errmsg("cannot cluster append-optimized table \"%s\"", RelationGetRelationName(OldHeap))));
+		bool		isBtree = false;
+		Relation	oldIndex;
 
-		relation_close(OldHeap, AccessExclusiveLock);
-		return false;
+		Assert(indexOid != InvalidOid);
+
+		oldIndex = index_open(indexOid, AccessExclusiveLock);
+		isBtree = IS_BTREE(oldIndex);
+		index_close(oldIndex, NoLock);
+
+		if (!isBtree)
+		{
+			ereport((printError ? ERROR : WARNING),
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot cluster append-optimized table \"%s\"", RelationGetRelationName(OldHeap)),
+					errdetail("Append-optimized tables can only be clustered against a B-tree index")));
+
+			relation_close(OldHeap, AccessExclusiveLock);
+			return false;
+		}
 	}
+#endif
 
 	/*
 	 * Since we may open a new transaction for each relation, we have to check
@@ -1355,6 +1375,18 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 			if (relform1->reltoastrelid && relform2->reltoastrelid)
 			{
 				/* Recursively swap the contents of the toast tables */
+#ifdef USE_ASSERT_CHECKING
+				/*
+				 * CLUSTER operation on append-optimized tables does not
+				 * compute freeze limit (frozenXid) because AO tables do not
+				 * have relfrozenxid.  The toast tables need to keep existing
+				 * relfrozenxid value unchanged in this case.
+				 *
+				 * GPDB_12_MERGE_FIXME: Is this still right?
+				 */
+				if (!TransactionIdIsNormal(frozenXid))
+					Assert(isAO1 && isAO2);
+#endif
 				swap_relation_files(relform1->reltoastrelid,
 									relform2->reltoastrelid,
 									target_is_pg_class,
