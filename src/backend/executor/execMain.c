@@ -414,6 +414,16 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			/* QD-only query, no dispatching required */
 			shouldDispatch = false;
 		}
+
+		/*
+		 * If this is CREATE TABLE AS ... WITH NO DATA, there's no need
+		 * need to actually execute the plan.
+		 */
+		if (queryDesc->plannedstmt->intoClause &&
+			queryDesc->plannedstmt->intoClause->skipData)
+		{
+			shouldDispatch = false;
+		}
 	}
 	else if (Gp_role == GP_ROLE_EXECUTE)
 	{

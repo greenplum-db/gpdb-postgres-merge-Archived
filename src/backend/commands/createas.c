@@ -637,8 +637,14 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Actually create the target table
+	 *
+	 * We also get here with CREATE TABLE AS EXECUTE ... WITH NO DATA. In that
+	 * case, dispatch the creation of the table immediately. Normally, the table
+	 * is created in the initialization of the plan in QEs, but with NO DATA, we
+	 * don't need to dispatch the plan.
 	 */
-	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc, false);
+	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc,
+											into->skipData ? true : false);
 
 	/*
 	 * Finally we can open the target table
