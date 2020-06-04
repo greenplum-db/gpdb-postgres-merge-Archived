@@ -288,7 +288,7 @@ insert into hp values (1, 'xxx');
 insert into hp values (null, 'xxx');
 insert into hp values (2, 'xxx');
 insert into hp values (1, 'abcde');
-select tableoid::regclass, * from hp order by 1;
+select tableoid::regclass, * from hp;
 
 -- partial keys won't prune, nor would non-equality conditions
 explain (costs off) select * from hp where a = 1;
