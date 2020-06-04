@@ -1818,8 +1818,7 @@ CONTEXT:  SQL function "recreate_two_level_table" statement 2
 DROP TABLE IF EXISTS e;
 CREATE TABLE e (LIKE r INCLUDING CONSTRAINTS INCLUDING INDEXES);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
-SET sql_inheritance TO off;
-ALTER TABLE r ADD UNIQUE(r_key); -- add dangling constraint to new table
+ALTER TABLE ONLY r ADD UNIQUE(r_key); -- add dangling constraint to new table
 SELECT * FROM dependencies_show_for_cons_idx();
        depname       | classtype |       refname       | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 ---------------------+-----------+---------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -1831,7 +1830,6 @@ SELECT * FROM dependencies_show_for_cons_idx();
  r_r_key_key         | u         | r                   | r            | pg_constraint |        0 | pg_class      |           1 | a
 (6 rows)
 
-SET sql_inheritance TO on;
 SELECT * FROM partition_tables_show_all();
  partition_name | parent_name | root_name | constraint_name | index_name  | constraint_type 
 ----------------+-------------+-----------+-----------------+-------------+-----------------

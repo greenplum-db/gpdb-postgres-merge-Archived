@@ -453,10 +453,8 @@ SELECT * FROM partition_tables_show_all();
 SELECT recreate_two_level_table();
 DROP TABLE IF EXISTS e;
 CREATE TABLE e (LIKE r INCLUDING CONSTRAINTS INCLUDING INDEXES);
-SET sql_inheritance TO off;
-ALTER TABLE r ADD UNIQUE(r_key); -- add dangling constraint to new table
+ALTER TABLE ONLY r ADD UNIQUE(r_key); -- add dangling constraint to new table
 SELECT * FROM dependencies_show_for_cons_idx();
-SET sql_inheritance TO on;
 SELECT * FROM partition_tables_show_all();
 ALTER TABLE r EXCHANGE PARTITION r2 WITH TABLE e; -- should fail
 SELECT * FROM partition_tables_show_all();
