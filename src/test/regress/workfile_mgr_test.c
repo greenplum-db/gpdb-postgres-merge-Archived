@@ -823,10 +823,9 @@ workfile_create_and_set_cleanup(void)
 	BufFile **ewfiles = (BufFile **) palloc(TEST_MAX_NUM_WORKFILES * sizeof(BufFile *));
 
 	elog(ERROR, "GPDB_12_MERGE_FIXME: BufFileCreateTempInSet was lost");
-#if 0
 	for (int i=0; i < TEST_MAX_NUM_WORKFILES; i++)
 	{
-		ewfiles[i] = BufFileCreateTempInSet(work_set, false /* interXact */);
+		ewfiles[i] = BufFileCreateTempInSet("workfile_test", false /* interXact */, work_set);
 
 		if (ewfiles[i] == NULL)
 		{
@@ -839,7 +838,6 @@ workfile_create_and_set_cleanup(void)
 			elog(LOG, "Created %d workfiles so far", i);
 		}
 	}
-#endif
 	unit_test_result(success);
 
 	elog(LOG, "Running sub-test: Closing Workset");
@@ -871,16 +869,12 @@ workfile_made_in_temp_tablespace(void)
 	 * which parses the temp_tablespaces value and BufFileCreateTempInSet
 	 * uses that value as the location for workfile created
 	 */
-	elog(ERROR, "GPDB_12_MERGE_FIXME: BufFileCreateTempInSet and BufFileGetFilename were lost");
-#if 0
-	bufFile = BufFileCreateTempInSet(work_set, false);
+	bufFile = BufFileCreateTempInSet("workfile_test", false, work_set);
 
 	if (bufFile == NULL)
 		success = false;
 
-	 bufFilePath = BufFileGetFilename(bufFile);
-#endif
-	 bufFilePath = NULL;
+	bufFilePath = BufFileGetFilename(bufFile);
 
 	char *expectedPathPrefix = "pg_tblspc/";
 
@@ -921,11 +915,9 @@ workfile_create_and_individual_cleanup(void)
 
 	BufFile **ewfiles = (BufFile **) palloc(TEST_MAX_NUM_WORKFILES * sizeof(BufFile *));
 
-	elog(ERROR, "GPDB_12_MERGE_FIXME: BufFileCreateTempInSet was lost");
-#if 0
 	for (int i=0; i < TEST_MAX_NUM_WORKFILES; i++)
 	{
-		ewfiles[i] = BufFileCreateTempInSet(work_set, false /* interXact */);
+		ewfiles[i] = BufFileCreateTempInSet("workfile_test", false /* interXact */, work_set);
 
 		if (ewfiles[i] == NULL)
 		{
@@ -938,7 +930,6 @@ workfile_create_and_individual_cleanup(void)
 			elog(LOG, "Created %d workfiles so far", i);
 		}
 	}
-#endif
 	unit_test_result(success);
 
 	elog(LOG, "Running sub-test: Closing %d workfiles", TEST_MAX_NUM_WORKFILES);

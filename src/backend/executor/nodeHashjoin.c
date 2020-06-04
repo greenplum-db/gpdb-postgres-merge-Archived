@@ -1515,12 +1515,9 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 		oldcxt = MemoryContextSwitchTo(bfCxt);
 
 		/* First write to this batch file, so create it */
-		/* GPDB_12_MERGE_FIXME */
-		file = BufFileCreateTemp("HashJoin", false /* interXact */);
-#if 0
 		Assert(hashtable->work_set != NULL);
-		file = BufFileCreateTempInSet(hashtable->work_set, false /* interXact */);
-#endif
+		file = BufFileCreateTempInSet("HashJoin", false /* interXact */,
+									  hashtable->work_set);
 		BufFilePledgeSequential(file);	/* allow compression */
 		*fileptr = file;
 

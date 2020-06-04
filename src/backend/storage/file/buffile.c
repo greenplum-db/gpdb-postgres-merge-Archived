@@ -211,7 +211,7 @@ extendBufFile(BufFile *file)
  * transaction boundaries.
  */
 BufFile *
-BufFileCreateTemp(char *operation_name, bool interXact)
+BufFileCreateTempInSet(char *operation_name, bool interXact, workfile_set *work_set)
 {
 	BufFile    *file;
 	File		pfile;
@@ -237,11 +237,21 @@ BufFileCreateTemp(char *operation_name, bool interXact)
 	 * Register the file as a "work file", so that the Greenplum workfile
 	 * limits apply to it.
 	 */
-	file->work_set = workfile_mgr_create_set(operation_name, NULL);
+	file->work_set = work_set;
 	FileSetIsWorkfile(pfile);
-	RegisterFileWithSet(pfile, file->work_set);
+	RegisterFileWithSet(pfile, work_set);
 
 	return file;
+}
+
+BufFile *
+BufFileCreateTemp(char *operation_name, bool interXact)
+{
+	workfile_set *work_set;
+
+	work_set = workfile_mgr_create_set(operation_name, NULL);
+
+	return BufFileCreateTempInSet(operation_name, interXact, work_set);
 }
 
 /*
@@ -436,6 +446,10 @@ BufFileClose(BufFile *file)
 	for (i = 0; i < file->numFiles; i++)
 		FileClose(file->files[i]);
 
+	/* FIXME: workfile_mgr_close_set() is a no-op, so no need to call it.
+	 * But if it was needed, we probably shouldn't call it, if the work set
+	 * was provided by the caller in BufFileCreateTempInSet()
+	 */
 	workfile_mgr_close_set(file->work_set);
 
 	/* release the buffer space */
@@ -920,4 +934,16 @@ bool gp_workfile_compression;		/* GUC */
 void
 BufFilePledgeSequential(BufFile *buffile)
 {
+}
+
+/*
+ * Return filename of the underlying file.
+ *
+ * For debugging purposes only. Returns the filename of the
+ * first file, if it's segmented.
+ */
+const char *
+BufFileGetFilename(BufFile *buffile)
+{
+	return FileGetFilename(buffile->files[0]);
 }
