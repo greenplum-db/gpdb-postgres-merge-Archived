@@ -43,19 +43,25 @@
 typedef struct CdbExplain_StatInst
 {
 	NodeTag		pstype;			/* PlanState node type */
+
+	/* fields from Instrumentation struct */
 	instr_time	starttime;		/* Start time of current iteration of node */
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
 	double		startup;		/* Total startup time (in seconds) */
 	double		total;			/* Total total time (in seconds) */
 	double		ntuples;		/* Total tuples produced */
+	double		ntuples2;
 	double		nloops;			/* # of run cycles for this node */
+	double		nfiltered1;
+	double		nfiltered2;
 	double		execmemused;	/* executor memory used (bytes) */
 	double		workmemused;	/* work_mem actually used (bytes) */
 	double		workmemwanted;	/* work_mem to avoid workfile i/o (bytes) */
 	bool		workfileCreated;	/* workfile created in this node */
 	instr_time	firststart;		/* Start time of first iteration of node */
 	int			numPartScanned; /* Number of part tables scanned */
+
 	TuplesortInstrumentation sortstats; /* Sort stats, if this is a Sort node */
 	HashInstrumentation hashstats; /* Hash stats, if this is a Hash node */
 	int			bnotes;			/* Offset to beginning of node's extra text */
@@ -821,7 +827,10 @@ cdbexplain_collectStatsFromNode(PlanState *planstate, CdbExplain_SendStatCtx *ct
 	si->startup = instr->startup;
 	si->total = instr->total;
 	si->ntuples = instr->ntuples;
+	si->ntuples2 = instr->ntuples2;
 	si->nloops = instr->nloops;
+	si->nfiltered1 = instr->nfiltered1;
+	si->nfiltered2 = instr->nfiltered2;
 	si->workmemused = instr->workmemused;
 	si->workmemwanted = instr->workmemwanted;
 	si->workfileCreated = instr->workfileCreated;
@@ -1079,6 +1088,32 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 	INSTR_TIME_ASSIGN(instr->firststart, ntuples.firststart_of_max_total);
 
 	/* Put winner's stats into qDisp PlanState's Instrument node. */
+	/*
+	 * GPDB_12_MERGE_FIXME: does it make sense to also print 'nfiltered1'
+	 * 'nfiltered2' from the "winner", i.e. the QE that returned most rows?
+	 * There's this test case in the upstream 'partition_prune' test:
+	 *
+	 * explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
+	 *                       QUERY PLAN                      
+	 * ------------------------------------------------------
+	 *  Append (actual rows=0 loops=1)
+	 *    ->  Seq Scan on list_part1 (actual rows=0 loops=1)
+	 *          Filter: (a = (list_part_fn(1) + a))
+	 *          Rows Removed by Filter: 1
+	 *    ->  Seq Scan on list_part2 (actual rows=0 loops=1)
+	 *          Filter: (a = (list_part_fn(1) + a))
+	 *          Rows Removed by Filter: 1
+	 *    ->  Seq Scan on list_part3 (actual rows=0 loops=1)
+	 *          Filter: (a = (list_part_fn(1) + a))
+	 *          Rows Removed by Filter: 1
+	 *    ->  Seq Scan on list_part4 (actual rows=0 loops=1)
+	 *          Filter: (a = (list_part_fn(1) + a))
+	 *          Rows Removed by Filter: 1
+	 * (13 rows)
+	 *
+	 * We don't print those "Rows Removed by Filter" rows in GPDB, because
+	 * they don't come from the "winner" QE.
+	 */
 	if (ntuples.agg.vcnt > 0)
 	{
 		instr->starttime = ntuples.nsimax->starttime;
@@ -1087,7 +1122,10 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 		instr->startup = ntuples.nsimax->startup;
 		instr->total = ntuples.nsimax->total;
 		instr->ntuples = ntuples.nsimax->ntuples;
+		instr->ntuples2 = ntuples.nsimax->ntuples2;
 		instr->nloops = ntuples.nsimax->nloops;
+		instr->nfiltered1 = ntuples.nsimax->nfiltered1;
+		instr->nfiltered2 = ntuples.nsimax->nfiltered2;
 		instr->execmemused = ntuples.nsimax->execmemused;
 		instr->workmemused = ntuples.nsimax->workmemused;
 		instr->workmemwanted = ntuples.nsimax->workmemwanted;

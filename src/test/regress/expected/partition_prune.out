@@ -1388,6 +1388,7 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
 
 -- pruning should work fine, because values for a prefix of keys (a, b) are
 -- available
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.c = t1.b and abs(t2.b) = 1 and t2.a = 1) s where t1.a = 1;
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Nested Loop
@@ -2134,22 +2135,20 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
 
 -- Ensure pruning does not take place when the expression contains a Var.
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
-                      QUERY PLAN                      
-------------------------------------------------------
- Append (actual rows=0 loops=1)
-   ->  Seq Scan on list_part1 (actual rows=0 loops=1)
-         Filter: (a = (list_part_fn(1) + a))
-         Rows Removed by Filter: 1
-   ->  Seq Scan on list_part2 (actual rows=0 loops=1)
-         Filter: (a = (list_part_fn(1) + a))
-         Rows Removed by Filter: 1
-   ->  Seq Scan on list_part3 (actual rows=0 loops=1)
-         Filter: (a = (list_part_fn(1) + a))
-         Rows Removed by Filter: 1
-   ->  Seq Scan on list_part4 (actual rows=0 loops=1)
-         Filter: (a = (list_part_fn(1) + a))
-         Rows Removed by Filter: 1
-(13 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
+   ->  Append (never executed)
+         ->  Seq Scan on list_part1 (never executed)
+               Filter: (a = (list_part_fn(1) + a))
+         ->  Seq Scan on list_part2 (never executed)
+               Filter: (a = (list_part_fn(1) + a))
+         ->  Seq Scan on list_part3 (never executed)
+               Filter: (a = (list_part_fn(1) + a))
+         ->  Seq Scan on list_part4 (never executed)
+               Filter: (a = (list_part_fn(1) + a))
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 rollback;
 drop table list_part;
@@ -3609,13 +3608,14 @@ select * from boolp where a = (select value from boolvalues where value);
      ->  Gather Motion 3:1  (slice3; segments: 3) (actual rows=1 loops=1)
            ->  Seq Scan on boolvalues (actual rows=1 loops=1)
                  Filter: value
+                 Rows Removed by Filter: 1
    ->  Append (never executed)
          ->  Seq Scan on boolp_f (never executed)
                Filter: (a = $0)
          ->  Seq Scan on boolp_t (never executed)
                Filter: (a = $0)
  Optimizer: Postgres query optimizer
-(11 rows)
+(12 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from boolp where a = (select value from boolvalues where not value);
@@ -3626,13 +3626,14 @@ select * from boolp where a = (select value from boolvalues where not value);
      ->  Gather Motion 3:1  (slice3; segments: 3) (actual rows=1 loops=1)
            ->  Seq Scan on boolvalues (actual rows=1 loops=1)
                  Filter: (NOT value)
+                 Rows Removed by Filter: 1
    ->  Append (never executed)
          ->  Seq Scan on boolp_f (never executed)
                Filter: (a = $0)
          ->  Seq Scan on boolp_t (never executed)
                Filter: (a = $0)
  Optimizer: Postgres query optimizer
-(11 rows)
+(12 rows)
 
 drop table boolp;
 --
@@ -3700,10 +3701,12 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
          Subplans Removed: 1
          ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1 loops=1)
                Filter: ((a >= $1) AND ((a % 10) = 5))
+               Rows Removed by Filter: 1
          ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
                Filter: ((a >= $1) AND ((a % 10) = 5))
+               Rows Removed by Filter: 2
  Optimizer: Postgres query optimizer
-(10 rows)
+(12 rows)
 
 execute mt_q1(15);
  a  
@@ -3722,8 +3725,9 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
          Subplans Removed: 2
          ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
                Filter: ((a >= $1) AND ((a % 10) = 5))
+               Rows Removed by Filter: 2
  Optimizer: Postgres query optimizer
-(8 rows)
+(9 rows)
 
 execute mt_q1(25);
  a  
