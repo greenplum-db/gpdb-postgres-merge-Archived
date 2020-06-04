@@ -1755,7 +1755,7 @@ partition by range(j) (start(1) end(10) every(1), default partition def);
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
-select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'foo_p_1_prt_p10_20'::regclass;
 select count(distinct k) from foo_p;
 drop table foo_p;
 
@@ -1765,8 +1765,7 @@ with(appendonly = true));
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
-select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
-select reloptions from pg_class where relname = 'foo_p_1_prt_def';
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid in ('foo_p_1_prt_p10_20'::regclass, 'foo_p_1_prt_def'::regclass);
 select count(distinct k) from foo_p;
 drop table foo_p;
 
