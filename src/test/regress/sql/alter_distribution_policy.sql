@@ -439,11 +439,17 @@ subpartition template
 	partition p1 start (5) end (10));
 insert into reorg_leaf select i, i, i from generate_series(0, 9) i;
 select *, gp_segment_id from reorg_leaf_1_prt_p0;
+
+-- fail: cannot change the distribution key of one partition
 alter table reorg_leaf_1_prt_p0 set with (reorganize=true) distributed by(b);
+-- distribution key is already 'c', so this is allowed
 alter table reorg_leaf_1_prt_p0 set with (reorganize=true) distributed by(c);
 alter table reorg_leaf_1_prt_p0 set with (reorganize=true);
+
+-- same with a leaf partition
 alter table reorg_leaf_1_prt_p0_2_prt_1 set with (reorganize=true) distributed by(b);
 alter table reorg_leaf_1_prt_p0_2_prt_1 set with (reorganize=true) distributed by(c);
+
 select *, gp_segment_id from reorg_leaf_1_prt_p0;
 alter table reorg_leaf_1_prt_p0_2_prt_1 set with (reorganize=true);
 select *, gp_segment_id from reorg_leaf_1_prt_p0;
