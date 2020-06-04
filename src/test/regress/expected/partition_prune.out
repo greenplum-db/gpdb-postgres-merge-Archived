@@ -2268,43 +2268,41 @@ select explain_parallel_append('execute ab_q5 (1, 1, 1)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
-         Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=N)
+   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Append (never executed)
                      Subplans Removed: 6
-                     ->  Parallel Seq Scan on ab_a1_b1 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a1_b1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a1_b2 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a1_b2 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a1_b3 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a1_b3 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-(13 rows)
+ Optimizer: Postgres query optimizer
+(12 rows)
 
 select explain_parallel_append('execute ab_q5 (2, 3, 3)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
-         Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=N)
+   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Append (never executed)
                      Subplans Removed: 3
-                     ->  Parallel Seq Scan on ab_a2_b1 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a2_b2 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b2 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a2_b3 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a2_b3 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b1 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a3_b1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b2 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a3_b2 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b3 (actual rows=0 loops=N)
+                     ->  Seq Scan on ab_a3_b3 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-(19 rows)
+ Optimizer: Postgres query optimizer
+(18 rows)
 
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
