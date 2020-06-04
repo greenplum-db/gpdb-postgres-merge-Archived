@@ -49,4 +49,5 @@ extern int	mdsyncfiletag(const FileTag *ftag, char *path);
 extern int	mdunlinkfiletag(const FileTag *ftag, char *path);
 extern bool mdfiletagmatches(const FileTag *ftag, const FileTag *candidate);
 
+extern int	aosyncfiletag(const FileTag *ftag, char *path);
 #endif							/* MD_H */

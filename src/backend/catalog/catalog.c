@@ -111,6 +111,8 @@ reldir_and_filename(RelFileNode node, BackendId backend, ForkNumber forknum,
  * Like relpathbackend(), but more convenient when dealing with
  * AO relations. The filename pattern is the same as for heap
  * tables, but this variant takes also 'segno' as argument.
+ *
+ * XXX This is very similar to _mdfd_segpath(), let's use that one
  */
 char *
 aorelpathbackend(RelFileNode node, BackendId backend, int32 segno)

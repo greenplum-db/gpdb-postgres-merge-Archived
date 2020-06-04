@@ -21,6 +21,12 @@
 #include "storage/relfilenode.h"
 #include "storage/dbdirnode.h"
 
+typedef enum SMgrImplementation
+{
+	SMGR_MD = 0,
+	SMGR_AO = 1
+} SMgrImpl;
+
 /*
  * smgr.c maintains a table of SMgrRelation objects, which are essentially
  * cached file handles.  An SMgrRelation is created (if not already present)
@@ -64,7 +70,7 @@ typedef struct SMgrRelationData
 	 * Fields below here are intended to be private to smgr.c and its
 	 * submodules.  Do not touch them from elsewhere.
 	 */
-	int			smgr_which;		/* storage manager selector */
+	SMgrImpl	smgr_which;		/* storage manager selector */
 
 	/*
 	 * for md.c; per-fork arrays of the number of open segments
@@ -83,7 +89,8 @@ typedef SMgrRelationData *SMgrRelation;
 	RelFileNodeBackendIsTemp((smgr)->smgr_rnode)
 
 extern void smgrinit(void);
-extern SMgrRelation smgropen(RelFileNode rnode, BackendId backend);
+extern SMgrRelation smgropen(RelFileNode rnode, BackendId backend,
+							 SMgrImpl smgr_which);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclearowner(SMgrRelation *owner, SMgrRelation reln);

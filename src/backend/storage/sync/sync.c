@@ -98,6 +98,12 @@ static const SyncOps syncsw[] = {
 		.sync_syncfiletag = mdsyncfiletag,
 		.sync_unlinkfiletag = mdunlinkfiletag,
 		.sync_filetagmatches = mdfiletagmatches
+	},
+	/* append-optimized storage */
+	{
+		.sync_syncfiletag = aosyncfiletag,
+		.sync_unlinkfiletag = mdunlinkfiletag,
+		.sync_filetagmatches = mdfiletagmatches
 	}
 };
 
@@ -318,14 +324,10 @@ ProcessSyncRequests(void)
 		int			failures;
 
 #ifdef FAULT_INJECTOR
-		if (entry->cycle_ctr != sync_cycle_ctr &&
-			SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip
-/* GPDB_12_MERGE_FIXME: is 'ao_fsync_counter' fault still used? */
-#if 0
-			|| (entry->tag.is_ao_segnos &&
-			 SIMPLE_FAULT_INJECTOR("ao_fsync_counter") == FaultInjectorTypeSkip)
-#endif
-			)
+		if (entry->cycle_ctr != sync_cycle_ctr && !entry->canceled &&
+			(SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip
+			 || (entry->tag.handler == 1 &&
+				 SIMPLE_FAULT_INJECTOR("ao_fsync_counter") == FaultInjectorTypeSkip)))
 		{
 			if (MyAuxProcType == CheckpointerProcess)
 			{

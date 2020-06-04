@@ -77,7 +77,7 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
  * transaction aborts later on, the storage will be destroyed.
  */
 SMgrRelation
-RelationCreateStorage(RelFileNode rnode, char relpersistence)
+RelationCreateStorage(RelFileNode rnode, char relpersistence, SMgrImpl smgr_which)
 {
 	PendingRelDelete *pending;
 	SMgrRelation srel;
@@ -103,7 +103,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 			return NULL;		/* placate compiler */
 	}
 
-	srel = smgropen(rnode, backend);
+	srel = smgropen(rnode, backend, smgr_which);
 	smgrcreate(srel, MAIN_FORKNUM, false);
 
 	if (needs_wal)
@@ -116,6 +116,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	pending->relnode.isTempRelation = backend == TempRelBackendId;
 	pending->atCommit = false;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
+	pending->relnode.smgr_which = smgr_which;
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
 
@@ -157,6 +158,8 @@ RelationDropStorage(Relation rel)
 	pending->relnode.isTempRelation = rel->rd_backend == TempRelBackendId;
 	pending->atCommit = true;	/* delete if commit */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
+	pending->relnode.smgr_which =
+		RelationIsAppendOptimized(rel) ? SMGR_AO : SMGR_MD;
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
 
@@ -432,8 +435,9 @@ smgrDoPendingDeletes(bool isCommit)
 				 * InvalidBackendId for a given relfile since we don't tie temp
 				 * relations to their backends. */
 				srel = smgropen(pending->relnode.node,
-					pending->relnode.isTempRelation ?
-					TempRelBackendId : InvalidBackendId);
+								pending->relnode.isTempRelation ?
+								TempRelBackendId : InvalidBackendId,
+								pending->relnode.smgr_which);
 
 				/* allocate the initial array, or extend it, if needed */
 				if (maxrels == 0)
@@ -599,7 +603,14 @@ smgr_redo(XLogReaderState *record)
 		xl_smgr_create *xlrec = (xl_smgr_create *) XLogRecGetData(record);
 		SMgrRelation reln;
 
-		reln = smgropen(xlrec->rnode, InvalidBackendId);
+		/*
+		 * Creating initial file on disk for AO is same as that for heap
+		 * tables.  Therefore, using AO-specific SMGR implementation is not
+		 * required.  If AO-specific SMGR implementation must be used, the
+		 * SMGR WAL record type needs to be changed to remember the
+		 * implemetation identifier.
+		 */
+		reln = smgropen(xlrec->rnode, InvalidBackendId, SMGR_MD);
 		smgrcreate(reln, xlrec->forkNum, true);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
@@ -608,7 +619,12 @@ smgr_redo(XLogReaderState *record)
 		SMgrRelation reln;
 		Relation	rel;
 
-		reln = smgropen(xlrec->rnode, InvalidBackendId);
+		/*
+		 * AO-specific implementation of SMGR is not needed because truncate
+		 * for AO takes a different code path, it does not involve emitting
+		 * SMGR_TRUNCATE WAL record.
+		 */
+		reln = smgropen(xlrec->rnode, InvalidBackendId, SMGR_MD);
 
 		/*
 		 * Forcibly create relation if it doesn't exist (which suggests that

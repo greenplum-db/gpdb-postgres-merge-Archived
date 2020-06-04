@@ -766,7 +766,11 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
 {
 	bool		hit;
 
-	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
+	/*
+	 * Use default SMGR implementation when opening a relation backed by
+	 * shared buffers
+	 */
+	SMgrRelation smgr = smgropen(rnode, InvalidBackendId, 0);
 
 	Assert(InRecovery);
 
@@ -2834,7 +2838,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 		bool		istemp = (buf_state_unlocked & BM_TEMP) != 0;
 
 		reln = smgropen(buf->tag.rnode,
-						istemp ? TempRelBackendId : InvalidBackendId);
+						istemp ? TempRelBackendId : InvalidBackendId, 0);
 	}
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
@@ -3347,6 +3351,9 @@ FlushRelationBuffers(Relation rel)
 
 	/* Open rel at the smgr level if not already done */
 	RelationOpenSmgr(rel);
+
+	if (!RelationUsesBufferManager(rel))
+		return;
 
 	if (RelationUsesLocalBuffers(rel))
 	{
@@ -4544,7 +4551,7 @@ IssuePendingWritebacks(WritebackContext *context)
 		i += ahead;
 
 		/* and finally tell the kernel to write the data to storage */
-		reln = smgropen(tag.rnode, InvalidBackendId);
+		reln = smgropen(tag.rnode, InvalidBackendId, 0);
 		smgrwriteback(reln, tag.forkNum, tag.blockNum, nblocks);
 	}
 

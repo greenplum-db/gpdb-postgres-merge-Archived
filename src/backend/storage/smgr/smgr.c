@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include "access/aomd.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
@@ -79,6 +80,29 @@ static const f_smgr smgrsw[] = {
 		.smgr_create = mdcreate,
 		.smgr_exists = mdexists,
 		.smgr_unlink = mdunlink,
+		.smgr_extend = mdextend,
+		.smgr_prefetch = mdprefetch,
+		.smgr_read = mdread,
+		.smgr_write = mdwrite,
+		.smgr_writeback = mdwriteback,
+		.smgr_nblocks = mdnblocks,
+		.smgr_truncate = mdtruncate,
+		.smgr_immedsync = mdimmedsync,
+	},
+	/*
+	 * Relation files that are different from heap, characterised by:
+	 *     1. variable blocksize
+	 *     2. block numbers are not consecutive
+	 *     3. shared buffers are not used
+	 * Append-optimized relation files currently fall in this category.
+	 */
+	{
+		.smgr_init = mdinit,
+		.smgr_shutdown = NULL,
+		.smgr_close = mdclose,
+		.smgr_create = mdcreate,
+		.smgr_exists = mdexists,
+		.smgr_unlink = mdunlink_ao,
 		.smgr_extend = mdextend,
 		.smgr_prefetch = mdprefetch,
 		.smgr_read = mdread,
@@ -148,7 +172,7 @@ smgrshutdown(int code, Datum arg)
  *		This does not attempt to actually open the underlying file.
  */
 SMgrRelation
-smgropen(RelFileNode rnode, BackendId backend)
+smgropen(RelFileNode rnode, BackendId backend, SMgrImpl which)
 {
 	RelFileNodeBackend brnode;
 	SMgrRelation reln;
@@ -187,7 +211,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 		reln->smgr_targblock = InvalidBlockNumber;
 		reln->smgr_fsm_nblocks = InvalidBlockNumber;
 		reln->smgr_vm_nblocks = InvalidBlockNumber;
-		reln->smgr_which = 0;	/* we only have md.c at present */
+		reln->smgr_which = which;
 
 		/* mark it not open */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
@@ -195,6 +219,20 @@ smgropen(RelFileNode rnode, BackendId backend)
 
 		/* it has no owner yet */
 		dlist_push_tail(&unowned_relns, &reln->node);
+	}
+	else if (reln->smgr_which != which)
+	{
+		/*
+		 * GPDB_12_MERGE_FIXME: SMGR WAL record does not have a way to
+		 * identify a specific SMGR implementation.  If the SMGR
+		 * implementation that the caller expects does not match the
+		 * implementation we already have in the hash table, it is most likely
+		 * due to calling smgropen when replaying a SMGR WAL record.  Fix the
+		 * expectation as a workaround for now.  A proper fix should include
+		 * the implementation identifier (smgr_which) in the SMGR WAL record.
+		 */
+		Assert(reln->smgr_which == 0);
+		reln->smgr_which = which;
 	}
 
 	return reln;

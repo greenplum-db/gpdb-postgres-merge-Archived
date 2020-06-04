@@ -487,7 +487,7 @@ heap_create(const char *relname,
 
 			case RELKIND_INDEX:
 			case RELKIND_SEQUENCE:
-				RelationCreateStorage(rel->rd_node, relpersistence);
+				RelationCreateStorage(rel->rd_node, relpersistence, SMGR_MD);
 				break;
 
 			case RELKIND_RELATION:

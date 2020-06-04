@@ -525,7 +525,10 @@ typedef struct ViewOptions
 #define RelationOpenSmgr(relation) \
 	do { \
 		if ((relation)->rd_smgr == NULL) \
-			smgrsetowner(&((relation)->rd_smgr), smgropen((relation)->rd_node, (relation)->rd_backend)); \
+			smgrsetowner(&((relation)->rd_smgr), \
+						 smgropen((relation)->rd_node, \
+								  (relation)->rd_backend, \
+								  RelationIsAppendOptimized(relation)?SMGR_AO:SMGR_MD)); \
 	} while (0)
 
 /*
@@ -579,6 +582,14 @@ typedef struct ViewOptions
  * local buffers.
  */
 #define RelationUsesLocalBuffers(relation) false
+
+/*
+ * Greenplum: a separate implementation of the SMGR API is used for
+ * append-optimized relations.  This implementation is intended for relations
+ * that do not use shared/local buffers.
+ */
+#define RelationUsesBufferManager(relation) \
+	((relation)->rd_smgr->smgr_which == SMGR_MD)
 
 /*
  * RelationUsesTempNamespace

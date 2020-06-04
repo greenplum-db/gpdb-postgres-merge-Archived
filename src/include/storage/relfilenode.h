@@ -73,16 +73,6 @@ typedef struct RelFileNodeBackend
 {
 	RelFileNode node;
 	BackendId	backend;
-	/*
-	 * GPDB_12_MERGE_FIXME: Where should this live? Do we even need it?
-	 *
-	 * It is currently here because md/smgr layer has logic based on whether
-	 * RelFileNode belongs to a heap or AO/AOCO. For AO/AOCO case we optimize
-	 * to delay fsync requests and skip heap specific operations like
-	 * ForgetRelationFsyncRequests() and DropRelFileNodeBuffers(). See commits
-	 * 6bd76f70450, 85fee7365d2, and 8838ac983c6 for more details.
-	*/
-	bool is_ao_rel;
 } RelFileNodeBackend;
 
 #define RelFileNodeBackendIsTemp(rnode) \
@@ -115,17 +105,18 @@ inline static bool RelFileNode_IsEmpty(
 }
 
 /*
- * Augmenting a relfilenode with a storage type provides a way to make optimal
- * decisions in smgr and md layer. This is purposefully kept out of RelFileNode
- * for performance concerns where RelFileNode used in a hotpath for BufferTag
- * hashing. The isTempRelation flag is necessary to support file-system removal 
- * of temporary relations on a two-phase commit/abort.
+ * Augmenting a relfilenode with a SMGR implementation identifier provides a
+ * way to make optimal decisions in smgr and md layer. This is purposefully
+ * kept out of RelFileNode for performance concerns where RelFileNode used in
+ * a hotpath for BufferTag hashing. The isTempRelation flag is necessary to
+ * support file-system removal of temporary relations on a two-phase
+ * commit/abort.
  */
 typedef struct RelFileNodePendingDelete
 {
 	RelFileNode node;
+	int smgr_which; /* which SMGR implementation to use */
 	bool isTempRelation;
-	char relstorage;
 } RelFileNodePendingDelete;
 
 #endif							/* RELFILENODE_H */

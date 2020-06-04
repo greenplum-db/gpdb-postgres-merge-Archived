@@ -985,7 +985,7 @@ register_dirty_segment_ao(RelFileNode rnode, int segno, File vfd)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode, MAIN_FORKNUM, segno);
+	INIT_FILETAG(tag, rnode, MAIN_FORKNUM, segno, SYNC_HANDLER_AO);
 
 	if (!RegisterSyncRequest(&tag, SYNC_REQUEST, false /* retryOnError */ ))
 	{
@@ -1047,6 +1047,15 @@ ForgetDatabaseSyncRequests(Oid dbid)
 	INIT_MD_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber);
 
 	RegisterSyncRequest(&tag, SYNC_FILTER_REQUEST, true /* retryOnError */ );
+
+	/*
+	 * Need to register filter requests for all the handlers because handler
+	 * is part of the key that is used to determine equivalence among two
+	 * pending entries.
+	 */
+	INIT_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber, SYNC_HANDLER_AO);
+
+	RegisterSyncRequest(&tag, SYNC_FILTER_REQUEST, true /* retryOnError */ );
 }
 
 /*
@@ -1064,7 +1073,9 @@ DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 		/* GPDB: backend can only be TempRelBackendId or InvalidBackendId for a
 		 * given relfile since we don't tie temp relations to their backends. */
 		SMgrRelation srel = smgropen(delrels[i].node,
-			delrels[i].isTempRelation ? TempRelBackendId : InvalidBackendId);
+									 delrels[i].isTempRelation ?
+									 TempRelBackendId : InvalidBackendId,
+									 delrels[i].smgr_which);
 
 		if (isRedo)
 		{
@@ -1345,7 +1356,7 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 int
 mdsyncfiletag(const FileTag *ftag, char *path)
 {
-	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
+	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId, 0);
 	MdfdVec    *v;
 	char	   *p;
 
@@ -1365,6 +1376,26 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 
 	/* Try to fsync the file. */
 	return FileSync(v->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC);
+}
+
+
+int
+aosyncfiletag(const FileTag *ftag, char *path)
+{
+	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId, 1);
+	char	   *p;
+
+	/* Provide the path for informational messages. */
+	p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
+	strlcpy(path, p, MAXPGPATH);
+	pfree(p);
+
+	File fd = PathNameOpenFile(path, O_RDWR);
+	if (fd <= 0)
+		elog(ERROR, "could not open file %s: %m", path);
+
+	/* Try to fsync the file. */
+	return FileSync(fd, WAIT_EVENT_DATA_FILE_SYNC);
 }
 
 /*

@@ -36,6 +36,7 @@
 #include "cdb/cdbappendonlyxlog.h"
 #include "common/relpath.h"
 #include "pgstat.h"
+#include "storage/sync.h"
 #include "utils/guc.h"
 
 #define SEGNO_SUFFIX_LENGTH 12
@@ -216,8 +217,10 @@ TruncateAOSegmentFile(File fd, Relation rel, int32 segFileNum, int64 offset)
 
 struct mdunlink_ao_callback_ctx
 {
+	RelFileNode rnode; /* used to register forget request */
 	char *segPath;
 	char *segpathSuffixPosition;
+	bool isRedo;
 };
 
 struct truncate_ao_callback_ctx
@@ -228,31 +231,45 @@ struct truncate_ao_callback_ctx
 };
 
 void
-mdunlink_ao(const char *path, ForkNumber forkNumber)
+mdunlink_ao(RelFileNodeBackend rnode, ForkNumber forkNumber, bool isRedo)
 {
+	const char *path = relpath(rnode, forkNumber);
+
 	/*
-	 * Unlogged AO tables have INIT_FORK, in addition to MAIN_FORK.  This
-	 * function is called for each fork type.  For INIT_FORK, the "_init"
-	 * file is unlinked generically by mdunlinkfork.
+	 * Unlogged AO tables have INIT_FORK, in addition to MAIN_FORK.  It is
+	 * created once, regardless of the number of segment files (or the number
+	 * of columns for column-oriented tables).  Sync requests for INIT_FORKs
+	 * are not remembered, so they need not be forgotten.
 	 */
 	if (forkNumber == INIT_FORKNUM)
-		return;
+	{
+		path = relpath(rnode, forkNumber);
+		if (unlink(path) < 0 && errno != ENOENT)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m", path)));
+	}
+	/* This storage manager is not concerend with forks other than MAIN_FORK */
+	else if (forkNumber == MAIN_FORKNUM)
+	{
+		int pathSize = strlen(path);
+		char *segPath = (char *) palloc(pathSize + SEGNO_SUFFIX_LENGTH);
+		char *segPathSuffixPosition = segPath + pathSize;
+		struct mdunlink_ao_callback_ctx unlinkFiles = { 0 };
+		unlinkFiles.isRedo = isRedo;
+		if (isRedo)
+			unlinkFiles.rnode = rnode.node;
 
-	Assert(forkNumber == MAIN_FORKNUM);
+		strncpy(segPath, path, pathSize);
 
-	int pathSize = strlen(path);
-	char *segPath = (char *) palloc(pathSize + SEGNO_SUFFIX_LENGTH);
-	char *segPathSuffixPosition = segPath + pathSize;
-	struct mdunlink_ao_callback_ctx unlinkFiles = { 0 };
+		unlinkFiles.segPath = segPath;
+		unlinkFiles.segpathSuffixPosition = segPathSuffixPosition;
 
-	strncpy(segPath, path, pathSize);
+		ao_foreach_extent_file(mdunlink_ao_perFile, &unlinkFiles);
+		pfree(segPath);
+	}
 
-	unlinkFiles.segPath = segPath;
-	unlinkFiles.segpathSuffixPosition = segPathSuffixPosition;
-
-    ao_foreach_extent_file(mdunlink_ao_perFile, &unlinkFiles);
-
-	pfree(segPath);
+	pfree((void *) path);
 }
 
 static bool
@@ -264,6 +281,15 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	char *segPathSuffixPosition = unlinkFiles->segpathSuffixPosition;
 
 	sprintf(segPathSuffixPosition, ".%u", segno);
+
+	if (unlinkFiles->isRedo)
+	{
+		FileTag tag;
+		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
+					 SYNC_HANDLER_AO);
+		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+	}
+
 	if (unlink(segPath) != 0)
 	{
 		/* ENOENT is expected after the end of the extensions */

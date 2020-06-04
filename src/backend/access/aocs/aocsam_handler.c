@@ -813,7 +813,7 @@ aoco_relation_set_new_filenode(Relation rel,
 	 *
 	 * Segment files will be created when / if needed.
 	 */
-	srel = RelationCreateStorage(*newrnode, persistence);
+	srel = RelationCreateStorage(*newrnode, persistence, SMGR_AO);
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can

@@ -34,7 +34,8 @@ typedef enum SyncRequestType
  */
 typedef enum SyncRequestHandler
 {
-	SYNC_HANDLER_MD = 0			/* md smgr */
+	SYNC_HANDLER_MD = 0,			/* md smgr */
+	SYNC_HANDLER_AO = 1
 } SyncRequestHandler;
 
 /*
@@ -67,6 +68,15 @@ typedef struct FileTag
 	 */
 	/*bool		is_ao_segno;*/
 } FileTag;
+
+#define INIT_FILETAG(a,xx_rnode,xx_forknum,xx_segno,xx_handler)	\
+( \
+	memset(&(a), 0, sizeof(FileTag)), \
+	(a).handler = (xx_handler),	\
+	(a).rnode = (xx_rnode), \
+	(a).forknum = (xx_forknum), \
+	(a).segno = (xx_segno) \
+)
 
 extern void InitSync(void);
 extern void SyncPreCheckpoint(void);
