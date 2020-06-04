@@ -852,8 +852,7 @@ heap_truncate_one_relid(Oid relid)
 static void
 aoco_relation_nontransactional_truncate(Relation rel)
 {
-	Oid ao_base_relid = RelationGetRelid(rel);
-
+	Oid			ao_base_relid = RelationGetRelid(rel);
 	Oid			aoseg_relid = InvalidOid;
 	Oid			aoblkdir_relid = InvalidOid;
 	Oid			aovisimap_relid = InvalidOid;
