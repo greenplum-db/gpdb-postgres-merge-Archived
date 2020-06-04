@@ -4236,11 +4236,9 @@ and datname = current_database();
 ----------+------------------------+------------+----------------
  pg_class | part_acl_test          | pg_authid  | part_acl_owner
  pg_class | part_acl_test_1_prt_p1 | pg_authid  | part_acl_owner
- pg_class | part_acl_test_1_prt_p1 | pg_authid  | part_acl_u1
  pg_class | part_acl_test          | pg_authid  | part_acl_u1
  pg_class | part_acl_test_1_prt_p2 | pg_authid  | part_acl_owner
- pg_class | part_acl_test_1_prt_p2 | pg_authid  | part_acl_u1
-(6 rows)
+(4 rows)
 
 -- Validate, using GrantStmt from cached plan in function works
 -- fine. Using partition table is added spice to this validation as
