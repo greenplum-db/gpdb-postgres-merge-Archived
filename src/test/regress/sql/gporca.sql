@@ -2515,13 +2515,13 @@ CREATE TABLE TP AS
 WITH META AS (SELECT '2020-01-01' AS VALID_DT, '99' AS LOAD_ID)
 SELECT DISTINCT L1.c, L1.lid
 FROM t55 L1 CROSS JOIN META
-WHERE L1.lid = int4in(unknownout(meta.load_id));
+WHERE L1.lid = int4in(textout(meta.load_id));
 
 CREATE TABLE TP AS
 WITH META AS (SELECT '2020-01-01' AS VALID_DT, '99' AS LOAD_ID)
 SELECT DISTINCT L1.c, L1.lid
 FROM t55 L1 CROSS JOIN META
-WHERE L1.lid = int4in(unknownout(meta.load_id));
+WHERE L1.lid = int4in(textout(meta.load_id));
 
 reset optimizer_join_order;
 SELECT * from tp;
