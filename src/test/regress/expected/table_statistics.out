@@ -1399,6 +1399,7 @@ NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3_2_prt_sub
 NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3_2_prt_sub2"
 -- Cluster on index
 Cluster stat_part_idx_heap_t8 on stat_part_heap_t8;
+ERROR:  cannot cluster a partitioned table
 select  count(*) from pg_class where relname like 'stat_part_heap_t8';
  count 
 -------
@@ -1480,6 +1481,7 @@ NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3_2_prt_sub
 NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3_2_prt_sub2"
 -- Cluster on index
 Cluster stat_part_idx_heap_t9 on stat_part_heap_t9;
+ERROR:  cannot cluster a partitioned table
 select  count(*) from pg_class where relname like 'stat_part_heap_t9';
  count 
 -------
@@ -1489,6 +1491,7 @@ select  count(*) from pg_class where relname like 'stat_part_heap_t9';
 Insert into stat_part_heap_t9 values(generate_series(1,10),generate_series(1,5),'table statistics should be kept after alter','s', 'regular table','12-11-2012',3,'2012-10-09 10:23:54', '2011-08-19 10:23:54+02');
 -- Cluster again
 Cluster stat_part_heap_t9;
+ERROR:  cannot cluster a partitioned table
 select  count(*) from pg_class where relname like 'stat_part_heap_t9';
  count 
 -------
