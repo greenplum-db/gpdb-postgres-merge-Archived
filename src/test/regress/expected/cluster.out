@@ -472,7 +472,6 @@ where row(hundred, thousand, tenthous) <= row(lhundred, lthousand, ltenthous);
 
 reset enable_indexscan;
 reset maintenance_work_mem;
-reset replacement_sort_tuples;
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
