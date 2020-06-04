@@ -1402,11 +1402,14 @@ form_default_storage_directive(List *enc)
  *
  * We need tell the underlying system that these are AO/CO tables too,
  * hence the concatenation of the extra elements.
+ *
+ * If 'validate' is true, we validate that the optionsa are valid WITH options
+ * for an AO table. Otherwise, any unrecognized options are passed through as
+ * is.
  */
 List *
-transformStorageEncodingClause(List *aocoColumnEncoding)
+transformStorageEncodingClause(List *aocoColumnEncoding, bool validate)
 {
-	Datum		d;
 	ListCell   *lc;
 	DefElem	   *dl;
 
@@ -1429,11 +1432,16 @@ transformStorageEncodingClause(List *aocoColumnEncoding)
 	 * The following two statements validate that the encoding clause is well
 	 * formed.
 	 */
-	d = transformRelOptions(PointerGetDatum(NULL),
-							aocoColumnEncoding,
-							NULL, NULL,
-							true, false);
-	(void) default_reloptions(d, true, RELOPT_KIND_APPENDOPTIMIZED);
+	if (validate)
+	{
+		Datum		d;
+
+		d = transformRelOptions(PointerGetDatum(NULL),
+								aocoColumnEncoding,
+								NULL, NULL,
+								true, false);
+		(void) default_reloptions(d, true, RELOPT_KIND_APPENDOPTIMIZED);
+	}
 
 	return aocoColumnEncoding;
 }
@@ -1516,7 +1524,7 @@ transformAttributeEncoding(List *columns,
 				elog(ERROR, "only one default column encoding may be specified");
 
 			deflt = copyObject(c);
-			deflt->encoding = transformStorageEncodingClause(deflt->encoding);
+			deflt->encoding = transformStorageEncodingClause(deflt->encoding, true);
 
 			/*
 			 * The default encoding and the with clause better not
@@ -1540,7 +1548,7 @@ transformAttributeEncoding(List *columns,
 	{
 		deflt = makeNode(ColumnReferenceStorageDirective);
 		deflt->deflt = true;
-		deflt->encoding = transformStorageEncodingClause(tmpenc);
+		deflt->encoding = transformStorageEncodingClause(tmpenc, false);
 	}
 
 	/*
@@ -1573,7 +1581,7 @@ transformAttributeEncoding(List *columns,
 		 */
 		if (d->encoding)
 		{
-			c->encoding = transformStorageEncodingClause(d->encoding);
+			c->encoding = transformStorageEncodingClause(d->encoding, true);
 			*found_enc = true;
 		}
 		else
@@ -1581,7 +1589,7 @@ transformAttributeEncoding(List *columns,
 			ColumnReferenceStorageDirective *s = find_crsd(c->column, stenc);
 
 			if (s)
-				c->encoding = transformStorageEncodingClause(s->encoding);
+				c->encoding = transformStorageEncodingClause(s->encoding, true);
 			else
 			{
 				if (deflt)

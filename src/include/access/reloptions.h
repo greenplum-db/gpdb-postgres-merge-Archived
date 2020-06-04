@@ -331,7 +331,7 @@ extern void validate_and_adjust_options(StdRdOptions *result, relopt_value *opti
 extern List *transformAttributeEncoding(List *aocoColumnEnconding,
 										List *tableElts, List *withOptions,
 										bool *found_enc);
-extern List *transformStorageEncodingClause(List *options);
+extern List *transformStorageEncodingClause(List *options, bool validate);
 extern List *form_default_storage_directive(List *enc);
 
 #endif							/* RELOPTIONS_H */

@@ -459,7 +459,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 
 	if (encoding)
 	{
-		encoding = transformStorageEncodingClause(encoding);
+		encoding = transformStorageEncodingClause(encoding, true);
 		typoptions = transformRelOptions((Datum) 0, encoding, NULL, NULL, true, false);
 	}
 
@@ -3855,7 +3855,7 @@ AlterType(AlterTypeStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TYPE,
 					   format_type_be(typid));
 
-	encoding = transformStorageEncodingClause(stmt->encoding);
+	encoding = transformStorageEncodingClause(stmt->encoding, true);
 
 	typoptions = transformRelOptions(PointerGetDatum(NULL),
 									 encoding, NULL, NULL,

@@ -6799,7 +6799,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				 errmsg("ENCODING clause not supported on non column orientated table")));
 
 	if (def->encoding)
-		def->encoding = transformStorageEncodingClause(def->encoding);
+		def->encoding = transformStorageEncodingClause(def->encoding, true);
 
 	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
