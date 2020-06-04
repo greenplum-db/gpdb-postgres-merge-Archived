@@ -868,6 +868,108 @@ extract_tablename_from_options(List **options)
 	return tablename;
 }
 
+static void
+split_encoding_clauses(List *encs, List **non_def,
+					   ColumnReferenceStorageDirective **def)
+{
+	ListCell   *lc;
+
+	foreach(lc, encs)
+	{
+		ColumnReferenceStorageDirective *c = lfirst(lc);
+
+		Insist(IsA(c, ColumnReferenceStorageDirective));
+
+		if (c->deflt)
+		{
+			if (*def)
+				elog(ERROR,
+					 "DEFAULT COLUMN ENCODING clause specified more than "
+					 "once for partition");
+			*def = c;
+		}
+		else
+			*non_def = lappend(*non_def, c);
+	}
+}
+
+static void
+merge_partition_encoding(ParseState *pstate, GpPartDefElem *elem, List *penc)
+{
+	List	   *elem_nondefs = NIL;
+	List	   *part_nondefs = NIL;
+	ColumnReferenceStorageDirective *elem_def = NULL;
+	ColumnReferenceStorageDirective *part_def = NULL;
+	ListCell   *lc;
+
+	/*
+	 * Is there way for us to check if this is AOCO?
+	 */
+
+
+	/*
+	 * If the specific partition has no specific column encoding, just set it
+	 * to the partition level default and we're done.
+	 */
+	if (!elem->colencs)
+	{
+		elem->colencs = penc;
+		return;
+	}
+
+	/*
+	 * Fixup the actual column encoding clauses for this specific partition
+	 * element.
+	 *
+	 * Rules:
+	 *
+	 * 1. If an element level clause mentions a specific column, do not
+	 * override it.
+	 *
+	 * 2. Clauses at the partition configuration level which mention a column
+	 * not already mentioned at the element level, are applied to the element.
+	 *
+	 * 3. If an element level default clause exists, we're done.
+	 *
+	 * 4. If a partition configuration level default clause exists, apply it
+	 * to the element level.
+	 *
+	 * 5. We're done.
+	 */
+
+	/* Split specific clauses and default clauses from both our lists */
+	split_encoding_clauses(elem->colencs, &elem_nondefs, &elem_def);
+	split_encoding_clauses(penc, &part_nondefs, &part_def);
+
+	/* Add clauses from part_nondefs if the columns are not already mentioned */
+	foreach(lc, part_nondefs)
+	{
+		ListCell   *lc2;
+		ColumnReferenceStorageDirective *pd = lfirst(lc);
+		bool		found = false;
+
+		foreach(lc2, elem_nondefs)
+		{
+			ColumnReferenceStorageDirective *ed = lfirst(lc2);
+
+			if (strcmp(pd->column, ed->column) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			elem->colencs = lappend(elem->colencs, pd);
+	}
+
+	if (elem_def)
+		return;
+
+	if (part_def)
+		elem->colencs = lappend(elem->colencs, part_def);
+}
+
 /*
  * Create a list of CreateStmts, to create partitions based on 'gpPartDef'
  * specification.
@@ -884,6 +986,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	List	   *ancestors = get_partition_ancestors(parentrelid);
 	partname_comp partcomp = {.tablename=NULL, .level=0, .partnum=0};
 	bool isSubTemplate;
+	List       *penc_cls = NIL;
 
 	partcomp.level = list_length(ancestors) + 1;
 
@@ -904,6 +1007,18 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 		}
 		else
 			isSubTemplate = false;
+	}
+
+	/*
+	 * GPDB_12_MERGE_FIXME: can we optimize grammar to create separate lists
+	 * for elems and encoding.
+	 */
+	foreach(lc, gpPartSpec->partDefElems)
+	{
+		Node	   *n = lfirst(lc);
+
+		if (IsA(n, ColumnReferenceStorageDirective))
+			penc_cls = lappend(penc_cls, lfirst(lc));
 	}
 
 	foreach(lc, gpPartSpec->partDefElems)
@@ -940,6 +1055,14 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			if (elem->accessMethod == NULL)
 				elem->accessMethod = parentaccessmethod ? pstrdup(parentaccessmethod) : NULL;
 
+			/*
+			 * this must be performed after determining accessMethod for this
+			 * elem
+			 */
+			if (penc_cls && elem->accessMethod &&
+				(strcmp(elem->accessMethod, "aoco") == 0))
+				merge_partition_encoding(pstate, elem, penc_cls);
+
 			if (elem->isDefault)
 				new_parts = generateDefaultPartition(pstate, parentrel, elem, tmpSubPartSpec, &partcomp);
 			else
@@ -961,11 +1084,6 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			}
 
 			result = list_concat(result, new_parts);
-		}
-		else if (IsA(n, ColumnReferenceStorageDirective))
-		{
-			/* GPDB_12_MERGE_FIXME */
-			elog(ERROR, "column storage directives not implemented yet");
 		}
 	}
 
