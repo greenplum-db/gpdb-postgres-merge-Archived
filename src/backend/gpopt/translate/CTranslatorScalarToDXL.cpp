@@ -1475,11 +1475,11 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 	EdxlFrameBoundary leading_boundary;
 	if ((frame_options & FRAMEOPTION_END_UNBOUNDED_PRECEDING) != 0)
 		leading_boundary = EdxlfbUnboundedPreceding;
-	else if ((frame_options & FRAMEOPTION_END_VALUE_PRECEDING) != 0)
+	else if ((frame_options & FRAMEOPTION_END_OFFSET_PRECEDING) != 0)
 		leading_boundary = EdxlfbBoundedPreceding;
 	else if ((frame_options & FRAMEOPTION_END_CURRENT_ROW) != 0)
 		leading_boundary = EdxlfbCurrentRow;
-	else if ((frame_options & FRAMEOPTION_END_VALUE_FOLLOWING) != 0)
+	else if ((frame_options & FRAMEOPTION_END_OFFSET_FOLLOWING) != 0)
 		leading_boundary = EdxlfbBoundedFollowing;
 	else if ((frame_options & FRAMEOPTION_END_UNBOUNDED_FOLLOWING) != 0)
 		leading_boundary = EdxlfbUnboundedFollowing;
@@ -1490,11 +1490,11 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 	EdxlFrameBoundary trailing_boundary;
 	if ((frame_options & FRAMEOPTION_START_UNBOUNDED_PRECEDING) != 0)
 		trailing_boundary = EdxlfbUnboundedPreceding;
-	else if ((frame_options & FRAMEOPTION_START_VALUE_PRECEDING) != 0)
+	else if ((frame_options & FRAMEOPTION_START_OFFSET_PRECEDING) != 0)
 		trailing_boundary = EdxlfbBoundedPreceding;
 	else if ((frame_options & FRAMEOPTION_START_CURRENT_ROW) != 0)
 		trailing_boundary = EdxlfbCurrentRow;
-	else if ((frame_options & FRAMEOPTION_START_VALUE_FOLLOWING) != 0)
+	else if ((frame_options & FRAMEOPTION_START_OFFSET_FOLLOWING) != 0)
 		trailing_boundary = EdxlfbBoundedFollowing;
 	else if ((frame_options & FRAMEOPTION_START_UNBOUNDED_FOLLOWING) != 0)
 		trailing_boundary = EdxlfbUnboundedFollowing;
