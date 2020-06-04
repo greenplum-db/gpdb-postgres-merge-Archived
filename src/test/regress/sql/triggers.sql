@@ -304,6 +304,10 @@ create trigger oid_unchanged_trig after update on table_with_oids
 	for each row
 	when (new.tableoid = old.tableoid AND new.tableoid <> 0)
 	execute procedure trigger_func('after_upd_oid_unchanged');
+-- fails on GPDB because 'a' is the distribution key
+update table_with_oids set a = a + 1;
+-- try again
+alter table table_with_oids set distributed randomly;
 update table_with_oids set a = a + 1;
 drop table table_with_oids;
 
