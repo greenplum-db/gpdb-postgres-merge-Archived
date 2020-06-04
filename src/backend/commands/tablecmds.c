@@ -7275,7 +7275,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * for CO or not. Leaving fixme here as CO code is not working currently,
 	 * hence hard to validate if works correctly or not.
 	 */
-	if (!recursing && tab->relkind == RELKIND_PARTITIONED_TABLE)
+	if (!recursing && (tab->relkind == RELKIND_PARTITIONED_TABLE || tab->relkind == RELKIND_RELATION))
 	{
 		bool	aocs_write_new_columns_only;
 		/*
@@ -14048,7 +14048,8 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 			DefElem    *def = lfirst(cell);
 			int			kw_len = strlen(def->defname);
 
-			if (pg_strncasecmp(SOPT_BLOCKSIZE, def->defname, kw_len) == 0 ||
+			if (pg_strncasecmp(SOPT_APPENDONLY, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_BLOCKSIZE, def->defname, kw_len) == 0 ||
 				pg_strncasecmp(SOPT_COMPTYPE, def->defname, kw_len) == 0 ||
 				pg_strncasecmp(SOPT_COMPLEVEL, def->defname, kw_len) == 0 ||
 				pg_strncasecmp(SOPT_CHECKSUM, def->defname, kw_len) == 0)
