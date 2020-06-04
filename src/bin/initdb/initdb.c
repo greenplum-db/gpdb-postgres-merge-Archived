@@ -1681,6 +1681,19 @@ setup_depend(FILE *cmdfd)
 		" FROM pg_collation;\n\n",
 		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
 		" FROM pg_authid;\n\n",
+
+		/* GPDB additions */
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_foreign_data_wrapper;\n\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_foreign_server;\n\n",
+		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
+		" FROM pg_resgroup;\n\n",
+		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
+		" FROM pg_resourcetype;\n\n",
+		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
+		" FROM pg_resqueue;\n\n",
+
 		NULL
 	};
 
