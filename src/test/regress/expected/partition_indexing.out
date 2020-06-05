@@ -1108,7 +1108,7 @@ DETAIL:  Key (a, b)=(2, 01-02-2009) already exists.
 drop table mpp6379;
 -- Creating an index on a partitioned table makes the partitions
 -- automatically get the index
-create table idxpart (a int, b int, c text)
+create table gpidxpart (a int, b int, c text)
 partition by range (a)
 subpartition by range(b)
 subpartition template
@@ -1116,25 +1116,25 @@ subpartition template
 (start (1) end (3));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "idxpart_1_prt_1" for table "idxpart"
-NOTICE:  CREATE TABLE will create partition "idxpart_1_prt_1_2_prt_1" for table "idxpart_1_prt_1"
+NOTICE:  CREATE TABLE will create partition "gpidxpart_1_prt_1" for table "gpidxpart"
+NOTICE:  CREATE TABLE will create partition "gpidxpart_1_prt_1_2_prt_1" for table "gpidxpart_1_prt_1"
 -- relhassubclass of a partitioned index is false before creating any partition.
 -- It will be set after the first partition is created.
-create index idxpart_idx on idxpart (a);
-select relhassubclass from pg_class where relname = 'idxpart_idx';
+create index gpidxpart_idx on gpidxpart (a);
+select relhassubclass from pg_class where relname = 'gpidxpart_idx';
  relhassubclass 
 ----------------
  t
 (1 row)
 
-drop index idxpart_idx;
+drop index gpidxpart_idx;
 -- Even with partitions, relhassubclass should not be set if a partitioned
 -- index is created only on the parent.
-create index idxpart_idx on only idxpart(a);
-select relhassubclass from pg_class where relname = 'idxpart_idx';
+create index gpidxpart_idx on only gpidxpart(a);
+select relhassubclass from pg_class where relname = 'gpidxpart_idx';
  relhassubclass 
 ----------------
  f
 (1 row)
 
-drop index idxpart_idx;
+drop index gpidxpart_idx;
