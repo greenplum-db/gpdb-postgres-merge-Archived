@@ -37,10 +37,6 @@
  * to be created as a member of a SharedFileSet that all participants are
  * attached to.
  *
- * GPDB_12_MERGE_FIXME: This used to be connected to the workfile manager,
- * so that the sizes were tracked there. That was lost in the merge. Put
- * it back.
- *
  * GPDB_12_MERGE_FIXME: We also used to do compression here. That was also
  * lost in the merge. It was a difficult to reconcile with the upstream
  * way of "appending" files with BufFileAppend. Re-implement.
@@ -59,6 +55,7 @@
 #include "storage/buf_internals.h"
 #include "utils/resowner.h"
 
+#include "utils/faultinjector.h"
 #include "utils/workfile_mgr.h"
 
 /*
@@ -645,6 +642,8 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 	size_t		nthistime;
 
 	Assert(!file->readOnly);
+
+	SIMPLE_FAULT_INJECTOR("workfile_write_failure");
 
 	while (size > 0)
 	{
