@@ -1124,7 +1124,7 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 
 			List *cstmts = generatePartitions(RelationGetRelid(rel),
 											  gpPartDef, subpart, NULL,
-											  NIL, NULL);
+											  NIL, NULL, NULL);
 			foreach(l, cstmts)
 			{
 				Node *stmt = (Node *) lfirst(l);

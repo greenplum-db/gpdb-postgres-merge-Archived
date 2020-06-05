@@ -45,7 +45,8 @@ extern Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 extern List *generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 								PartitionSpec *subPartSpec,
 								const char *queryString, List *parentoptions,
-								const char *parentaccessmethod);
+								const char *parentaccessmethod,
+								List *parentattenc);
 extern void canonicalizeRangeEnd(ParseState *pstate, Const *endConst, bool endIncl,
 						   const char *part_col_name, Oid part_col_typid,
 						   int32 part_col_typmod, Oid part_col_collation);

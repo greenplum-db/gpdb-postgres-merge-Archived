@@ -922,8 +922,8 @@ split_encoding_clauses(List *encs, List **non_def,
 	}
 }
 
-static void
-merge_partition_encoding(ParseState *pstate, GpPartDefElem *elem, List *penc)
+static List *
+merge_partition_encoding(ParseState *pstate, List *elem_colencs, List *penc)
 {
 	List	   *elem_nondefs = NIL;
 	List	   *part_nondefs = NIL;
@@ -931,20 +931,15 @@ merge_partition_encoding(ParseState *pstate, GpPartDefElem *elem, List *penc)
 	ColumnReferenceStorageDirective *part_def = NULL;
 	ListCell   *lc;
 
-	/*
-	 * Is there way for us to check if this is AOCO?
-	 */
-
+	if (penc == NULL)
+		return elem_colencs;
 
 	/*
 	 * If the specific partition has no specific column encoding, just set it
 	 * to the partition level default and we're done.
 	 */
-	if (!elem->colencs)
-	{
-		elem->colencs = penc;
-		return;
-	}
+	if (elem_colencs == NULL)
+		return penc;
 
 	/*
 	 * Fixup the actual column encoding clauses for this specific partition
@@ -967,7 +962,7 @@ merge_partition_encoding(ParseState *pstate, GpPartDefElem *elem, List *penc)
 	 */
 
 	/* Split specific clauses and default clauses from both our lists */
-	split_encoding_clauses(elem->colencs, &elem_nondefs, &elem_def);
+	split_encoding_clauses(elem_colencs, &elem_nondefs, &elem_def);
 	split_encoding_clauses(penc, &part_nondefs, &part_def);
 
 	/* Add clauses from part_nondefs if the columns are not already mentioned */
@@ -989,14 +984,16 @@ merge_partition_encoding(ParseState *pstate, GpPartDefElem *elem, List *penc)
 		}
 
 		if (!found)
-			elem->colencs = lappend(elem->colencs, pd);
+			elem_colencs = lappend(elem_colencs, pd);
 	}
 
 	if (elem_def)
-		return;
+		return elem_colencs;
 
 	if (part_def)
-		elem->colencs = lappend(elem->colencs, part_def);
+		elem_colencs = lappend(elem_colencs, part_def);
+
+	return elem_colencs;
 }
 
 /*
@@ -1055,7 +1052,8 @@ canonicalizeRangeEnd(ParseState *pstate, Const *endConst, bool endIncl,
 List *
 generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 				   PartitionSpec *subPartSpec, const char *queryString,
-				   List *parentoptions, const char *parentaccessmethod)
+				   List *parentoptions, const char *parentaccessmethod,
+				   List *parentattenc)
 {
 	Relation	parentrel;
 	List	   *result = NIL;
@@ -1065,6 +1063,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	partname_comp partcomp = {.tablename=NULL, .level=0, .partnum=0};
 	bool isSubTemplate;
 	List       *penc_cls = NIL;
+	List       *parent_tblenc = NIL;
 
 	partcomp.level = list_length(ancestors) + 1;
 
@@ -1087,6 +1086,13 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			isSubTemplate = false;
 	}
 
+	foreach(lc, parentattenc)
+	{
+		Node       *n = lfirst(lc);
+		if (IsA(n, ColumnReferenceStorageDirective))
+			parent_tblenc = lappend(parent_tblenc, lfirst(lc));
+	}
+
 	/*
 	 * GPDB_12_MERGE_FIXME: can we optimize grammar to create separate lists
 	 * for elems and encoding.
@@ -1098,6 +1104,22 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 		if (IsA(n, ColumnReferenceStorageDirective))
 			penc_cls = lappend(penc_cls, lfirst(lc));
 	}
+
+	/*
+	 * Merge encoding specified for parent table level and partition
+	 * configuration level. (Each partition element level encoding will be
+	 * merged later to this). For example:
+	 *
+	 * create table example (i int, j int, DEFAULT COLUMN ENCODING (compresstype=zlib))
+	 * with (appendonly = true, orientation=column) distributed by (i)
+	 * partition by range(j)
+	 * (partition p1 start(1) end(10), partition p2 start(10) end (20),
+	 *  COLUMN j ENCODING (compresstype=rle_type));
+	 *
+	 * merged result will be column i having zlib and column j having
+	 * rle_type.
+	 */
+	penc_cls = merge_partition_encoding(pstate, penc_cls, parent_tblenc);
 
 	foreach(lc, gpPartSpec->partDefElems)
 	{
@@ -1133,13 +1155,8 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			if (elem->accessMethod == NULL)
 				elem->accessMethod = parentaccessmethod ? pstrdup(parentaccessmethod) : NULL;
 
-			/*
-			 * this must be performed after determining accessMethod for this
-			 * elem
-			 */
-			if (penc_cls && elem->accessMethod &&
-				(strcmp(elem->accessMethod, "aoco") == 0))
-				merge_partition_encoding(pstate, elem, penc_cls);
+			if (elem->accessMethod && strcmp(elem->accessMethod, "aoco") == 0)
+				elem->colencs = merge_partition_encoding(pstate, elem->colencs, penc_cls);
 
 			if (elem->isDefault)
 				new_parts = generateDefaultPartition(pstate, parentrel, elem, tmpSubPartSpec, &partcomp);

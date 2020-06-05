@@ -1453,7 +1453,7 @@ transformStorageEncodingClause(List *aocoColumnEncoding, bool validate)
  * quite small in practice.
  */
 static ColumnReferenceStorageDirective *
-find_crsd(char *column, List *stenc)
+find_crsd(const char *column, List *stenc)
 {
 	ListCell *lc;
 
@@ -1488,6 +1488,17 @@ find_crsd(char *column, List *stenc)
  * include defaults from the GUCs etc. even if no ENCODING clause was
  * given in this CREATE TABLE command.
  *
+ * This function is called for RELKIND_PARTITIONED_TABLE as well even if we
+ * don't store entries in pg_attribute_encoding for rootpartition. The reason
+ * is to transformAttributeEncoding for parent as need to use them later while
+ * creating partitions in GPDB legacy partitioning syntax. Hence, if
+ * rootpartition add to the list, only encoding elements specified in command,
+ * defaults based on GUCs and such are skipped. Each child partition would
+ * independently later run through this logic and that time add those GUC
+ * specific defaults if required. Reason to avoid adding defaults for
+ * rootpartition is need to first merge partition level user specified options
+ * and then need to add defaults only for remaining columns.
+ *
  * NOTE: This is *not* performed during the parse analysis phase, like
  * most transformation, but only later in DefineRelation(). This needs
  * access to possible inherited columns, so it can only be done after
@@ -1497,6 +1508,7 @@ List *
 transformAttributeEncoding(List *columns,
 						   List *stenc,
 						   List *withOptions,
+						   bool rootpartition,
 						   bool *found_enc)
 {
 	ListCell   *lc;
@@ -1561,15 +1573,13 @@ transformAttributeEncoding(List *columns,
 		Node	   *elem = (Node *) lfirst(lc);
 		ColumnDef *d;
 		ColumnReferenceStorageDirective *c;
+		List *encoding = NIL;
 
 		/* GPDB_12_MERGE_FIXME: can we have anything else here? This used to be an Insist */
 		if (!IsA(elem, ColumnDef))
 			continue;
 
 		d = (ColumnDef *) elem;
-
-		c = makeNode(ColumnReferenceStorageDirective);
-		c->column = pstrdup(d->colname);
 
 		/*
 		 * Find a storage encoding for this column, in this order:
@@ -1581,20 +1591,20 @@ transformAttributeEncoding(List *columns,
 		 */
 		if (d->encoding)
 		{
-			c->encoding = transformStorageEncodingClause(d->encoding, true);
+			encoding = transformStorageEncodingClause(d->encoding, true);
 			*found_enc = true;
 		}
 		else
 		{
-			ColumnReferenceStorageDirective *s = find_crsd(c->column, stenc);
+			ColumnReferenceStorageDirective *s = find_crsd(d->colname, stenc);
 
 			if (s)
-				c->encoding = transformStorageEncodingClause(s->encoding, true);
+				encoding = transformStorageEncodingClause(s->encoding, true);
 			else
 			{
 				if (deflt)
-					c->encoding = copyObject(deflt->encoding);
-				else
+					encoding = copyObject(deflt->encoding);
+				else if (!rootpartition)
 				{
 					List	   *te;
 
@@ -1604,14 +1614,23 @@ transformAttributeEncoding(List *columns,
 						te = NIL;
 
 					if (te)
-						c->encoding = copyObject(te);
+						encoding = copyObject(te);
 					else
-						c->encoding = default_column_encoding_clause();
+						encoding = default_column_encoding_clause();
 				}
 			}
 		}
-		newenc = lappend(newenc, c);
+
+		if (encoding)
+		{
+			c = makeNode(ColumnReferenceStorageDirective);
+			c->column = pstrdup(d->colname);
+			c->encoding = encoding;
+
+			newenc = lappend(newenc, c);
+		}
 	}
 
+	Assert(rootpartition?true:list_length(newenc) == list_length(columns));
 	return newenc;
 }

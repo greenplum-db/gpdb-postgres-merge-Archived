@@ -935,10 +935,17 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * legitimately error out, it is prefered to call it before updating the
 	 * catalog in heap_create_with_catalog().
 	 *
+	 * For RELKIND_PARTITIONED_TABLE, let the transformation of attribute
+	 * encoding happen. We don't store it for parent partition in
+	 * pg_attribute_encoding table. Transformed encoding will be used to
+	 * create child partition create stmts, hence avoid marking it NIL as
+	 * well.
+	 *
 	 * This is done in dispatcher (and in utility mode). In QE, we receive
 	 * the already-processed options from the QD.
 	 */
-	if ((relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW) &&
+	if ((relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
+		 relkind == RELKIND_PARTITIONED_TABLE) &&
 		Gp_role != GP_ROLE_EXECUTE)
 	{
 		bool		found_enc;
@@ -946,6 +953,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		stmt->attr_encodings = transformAttributeEncoding(schema,
 														  stmt->attr_encodings,
 														  stmt->options,
+														  relkind == RELKIND_PARTITIONED_TABLE,
 														  &found_enc);
 		if (accessMethodId != AOCO_TABLE_AM_OID)
 		{
@@ -966,7 +974,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("ENCODING clause only supported with column oriented tables")));
 			}
-			stmt->attr_encodings = NIL;
+
+			if (relkind != RELKIND_PARTITIONED_TABLE)
+				stmt->attr_encodings = NIL;
 		}
 	}
 
@@ -1091,7 +1101,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		cooked_constraints = list_concat(cooked_constraints, newCookedDefaults);
 	}
 
-	if (stmt->attr_encodings)
+	if (stmt->attr_encodings && (relkind != RELKIND_PARTITIONED_TABLE))
 		AddRelationAttributeEncodings(rel, stmt->attr_encodings);
 
 	/*
