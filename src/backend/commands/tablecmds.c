@@ -4770,15 +4770,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* External tables can be expanded */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
-			// GPDB_12_MERGE_FIXME: Where to put these checks now? Or do we need them?
-			// I think we could easily support heterogenous partitions.
-#if 0
+			/* GPDB_12_MERGE_FIXME: do we have these checks on ATTACH? */
 			if (!recursing)
 			{
-				Oid relid = RelationGetRelid(rel);
-				PartStatus ps = rel_part_status(relid);
+				Oid			relid = RelationGetRelid(rel);
 
-				ATExternalPartitionCheck(cmd->subtype, rel, recursing);
+				// GPDB_12_MERGE_FIXME
+				//ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 
 				if (Gp_role == GP_ROLE_DISPATCH &&
 					rel->rd_cdbpolicy->numsegments == getgpsegmentCount())
@@ -4788,25 +4786,17 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 									RelationGetRelationName(rel)),
 							 errdetail("table has already been expanded")));
 
-				switch (ps)
+				if (rel->rd_rel->relispartition)
 				{
-					case PART_STATUS_NONE:
-					case PART_STATUS_ROOT:
-						break;
-
-					case PART_STATUS_INTERIOR:
-					case PART_STATUS_LEAF:
-						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("cannot expand leaf or interior partition \"%s\"",
-										RelationGetRelationName(rel)),
-								 errdetail("root/leaf/interior partitions need to have same numsegments"),
-								 errhint("use \"ALTER TABLE %s EXPAND TABLE\" instead",
-										 get_rel_name(rel_partition_get_master(relid)))));
-						break;
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot expand leaf or interior partition \"%s\"",
+									RelationGetRelationName(rel)),
+							 errdetail("Root/leaf/interior partitions need to have same numsegments"),
+							 errhint("Call ALTER TABLE EXPAND TABLE on the root table instead")));
 				}
 			}
-#endif
+
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			pass = AT_PASS_MISC;
 			break;
