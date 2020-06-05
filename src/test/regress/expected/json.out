@@ -2119,7 +2119,7 @@ FROM foo;
  {"turbines" : { "847001" : {"name" : "t15", "type" : "GE1043"}, "847002" : {"name" : "t16", "type" : "GE1043"}, "847003" : {"name" : "sub-alpha", "type" : "GESS90"} }}
 (1 row)
 
-SELECT json_object_agg(name, type order by type) FROM foo;
+SELECT json_object_agg(name, type order by type, name) FROM foo;
                         json_object_agg                         
 ----------------------------------------------------------------
  { "t15" : "GE1043", "t16" : "GE1043", "sub-alpha" : "GESS90" }

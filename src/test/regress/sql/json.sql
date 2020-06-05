@@ -659,7 +659,7 @@ INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
 SELECT json_build_object('turbines',json_object_agg(serial_num,json_build_object('name',name,'type',type) order by serial_num))
 FROM foo;
 
-SELECT json_object_agg(name, type order by type) FROM foo;
+SELECT json_object_agg(name, type order by type, name) FROM foo;
 
 INSERT INTO foo VALUES (999999, NULL, 'bar');
 SELECT json_object_agg(name, type) FROM foo;
