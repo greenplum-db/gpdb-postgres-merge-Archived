@@ -5803,21 +5803,22 @@ NOTICE:  CREATE TABLE will create partition "mpp6979part_1_prt_9" for table "mpp
 create table mpp6979dummy.mpp6979tab(like mpp6979part) with (appendonly=true);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 -- check that table and all parts in public schema
-select schemaname, tablename, partitionschemaname, partitiontablename
-from pg_partitions 
-where tablename like ('mpp6979%');
- schemaname |  tablename  | partitionschemaname | partitiontablename  
-------------+-------------+---------------------+---------------------
- public     | mpp6979part | public              | mpp6979part_1_prt_1
- public     | mpp6979part | public              | mpp6979part_1_prt_2
- public     | mpp6979part | public              | mpp6979part_1_prt_3
- public     | mpp6979part | public              | mpp6979part_1_prt_4
- public     | mpp6979part | public              | mpp6979part_1_prt_5
- public     | mpp6979part | public              | mpp6979part_1_prt_6
- public     | mpp6979part | public              | mpp6979part_1_prt_7
- public     | mpp6979part | public              | mpp6979part_1_prt_8
- public     | mpp6979part | public              | mpp6979part_1_prt_9
-(9 rows)
+select relname, nspname, relispartition from pg_class c, pg_namespace n
+where c.relnamespace = n.oid and relname like ('mpp6979%');
+       relname       |   nspname    | relispartition 
+---------------------+--------------+----------------
+ mpp6979part         | public       | f
+ mpp6979part_1_prt_1 | public       | t
+ mpp6979part_1_prt_2 | public       | t
+ mpp6979part_1_prt_3 | public       | t
+ mpp6979part_1_prt_4 | public       | t
+ mpp6979part_1_prt_5 | public       | t
+ mpp6979part_1_prt_6 | public       | t
+ mpp6979part_1_prt_7 | public       | t
+ mpp6979part_1_prt_8 | public       | t
+ mpp6979part_1_prt_9 | public       | t
+ mpp6979tab          | mpp6979dummy | f
+(11 rows)
 
 -- note that we have heap partitions in public, and ao table in mpp6979dummy
 select nspname, relname, amname
@@ -5845,42 +5846,42 @@ where relname like ('mpp6979%');
 alter table mpp6979part exchange partition for (1) 
 with table mpp6979dummy.mpp6979tab;
 -- after the exchange, all partitions are still in public
-select schemaname, tablename, partitionschemaname, partitiontablename
-from pg_partitions 
-where tablename like ('mpp6979%');
- schemaname |  tablename  | partitionschemaname | partitiontablename  
-------------+-------------+---------------------+---------------------
- public     | mpp6979part | public              | mpp6979part_1_prt_1
- public     | mpp6979part | public              | mpp6979part_1_prt_2
- public     | mpp6979part | public              | mpp6979part_1_prt_3
- public     | mpp6979part | public              | mpp6979part_1_prt_4
- public     | mpp6979part | public              | mpp6979part_1_prt_5
- public     | mpp6979part | public              | mpp6979part_1_prt_6
- public     | mpp6979part | public              | mpp6979part_1_prt_7
- public     | mpp6979part | public              | mpp6979part_1_prt_8
- public     | mpp6979part | public              | mpp6979part_1_prt_9
-(9 rows)
+select relname, nspname, relispartition from pg_class c, pg_namespace n
+where c.relnamespace = n.oid and relname like ('mpp6979%');
+       relname       |   nspname    | relispartition 
+---------------------+--------------+----------------
+ mpp6979part         | public       | f
+ mpp6979part_1_prt_1 | public       | t
+ mpp6979part_1_prt_2 | public       | t
+ mpp6979part_1_prt_3 | public       | t
+ mpp6979part_1_prt_4 | public       | t
+ mpp6979part_1_prt_5 | public       | t
+ mpp6979part_1_prt_6 | public       | t
+ mpp6979part_1_prt_7 | public       | t
+ mpp6979part_1_prt_8 | public       | t
+ mpp6979part_1_prt_9 | public       | t
+ mpp6979tab          | mpp6979dummy | f
+(11 rows)
 
 -- the rank 1 partition is ao, but still in public, and 
 -- table mpp6979tab is now heap, but still in mpp6979dummy
-select nspname, relname, amname
-from pg_class pc
-inner join pg_namespace ns on pc.relnamespace=ns.oid
-left join pg_am am on am.oid = pc.relam
+select relname, nspname, relispartition, amname
+from pg_class c inner join pg_namespace n on c.relnamespace = n.oid
+left join pg_am am on am.oid = c.relam
 where relname like ('mpp6979%');
-   nspname    |       relname       |     amname      
---------------+---------------------+-----------------
- public       | mpp6979part         | 
- public       | mpp6979part_1_prt_1 | appendoptimized
- public       | mpp6979part_1_prt_2 | heap
- public       | mpp6979part_1_prt_3 | heap
- public       | mpp6979part_1_prt_4 | heap
- public       | mpp6979part_1_prt_5 | heap
- public       | mpp6979part_1_prt_6 | heap
- public       | mpp6979part_1_prt_7 | heap
- public       | mpp6979part_1_prt_8 | heap
- public       | mpp6979part_1_prt_9 | heap
- mpp6979dummy | mpp6979tab          | heap
+       relname       |   nspname    | relispartition |     amname      
+---------------------+--------------+----------------+-----------------
+ mpp6979part         | public       | f              | 
+ mpp6979part_1_prt_1 | public       | t              | appendoptimized
+ mpp6979part_1_prt_2 | public       | t              | heap
+ mpp6979part_1_prt_3 | public       | t              | heap
+ mpp6979part_1_prt_4 | public       | t              | heap
+ mpp6979part_1_prt_5 | public       | t              | heap
+ mpp6979part_1_prt_6 | public       | t              | heap
+ mpp6979part_1_prt_7 | public       | t              | heap
+ mpp6979part_1_prt_8 | public       | t              | heap
+ mpp6979part_1_prt_9 | public       | t              | heap
+ mpp6979tab          | mpp6979dummy | f              | heap
 (11 rows)
 
 drop table mpp6979part;

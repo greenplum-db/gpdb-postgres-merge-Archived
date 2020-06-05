@@ -2836,9 +2836,8 @@ start (1) end (10) every (1)
 create table mpp6979dummy.mpp6979tab(like mpp6979part) with (appendonly=true);
 
 -- check that table and all parts in public schema
-select schemaname, tablename, partitionschemaname, partitiontablename
-from pg_partitions 
-where tablename like ('mpp6979%');
+select relname, nspname, relispartition from pg_class c, pg_namespace n
+where c.relnamespace = n.oid and relname like ('mpp6979%');
 
 -- note that we have heap partitions in public, and ao table in mpp6979dummy
 select nspname, relname, amname
@@ -2853,16 +2852,14 @@ alter table mpp6979part exchange partition for (1)
 with table mpp6979dummy.mpp6979tab;
 
 -- after the exchange, all partitions are still in public
-select schemaname, tablename, partitionschemaname, partitiontablename
-from pg_partitions 
-where tablename like ('mpp6979%');
+select relname, nspname, relispartition from pg_class c, pg_namespace n
+where c.relnamespace = n.oid and relname like ('mpp6979%');
 
 -- the rank 1 partition is ao, but still in public, and 
 -- table mpp6979tab is now heap, but still in mpp6979dummy
-select nspname, relname, amname
-from pg_class pc
-inner join pg_namespace ns on pc.relnamespace=ns.oid
-left join pg_am am on am.oid = pc.relam
+select relname, nspname, relispartition, amname
+from pg_class c inner join pg_namespace n on c.relnamespace = n.oid
+left join pg_am am on am.oid = c.relam
 where relname like ('mpp6979%');
 
 drop table mpp6979part;
