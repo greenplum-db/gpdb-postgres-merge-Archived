@@ -3176,10 +3176,10 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_10" for table "foo_p"
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
-select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
-            reloptions             
------------------------------------
- {appendonly=true,compresslevel=5}
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'foo_p_1_prt_p10_20'::regclass;
+        oid         | relkind |     amname      |    reloptions     
+--------------------+---------+-----------------+-------------------
+ foo_p_1_prt_p10_20 | r       | appendoptimized | {compresslevel=5}
 (1 row)
 
 select count(distinct k) from foo_p;
@@ -3207,17 +3207,12 @@ NOTICE:  CREATE TABLE will create partition "foo_p_1_prt_10" for table "foo_p"
 insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 100) i;
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
-select reloptions from pg_class where relname = 'foo_p_1_prt_p10_20';
-    reloptions     
--------------------
- {appendonly=true}
-(1 row)
-
-select reloptions from pg_class where relname = 'foo_p_1_prt_def';
-    reloptions     
--------------------
- {appendonly=true}
-(1 row)
+select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid in ('foo_p_1_prt_p10_20'::regclass, 'foo_p_1_prt_def'::regclass);
+        oid         | relkind |     amname      | reloptions 
+--------------------+---------+-----------------+------------
+ foo_p_1_prt_def    | r       | appendoptimized | 
+ foo_p_1_prt_p10_20 | r       | appendoptimized | 
+(2 rows)
 
 select count(distinct k) from foo_p;
  count 
