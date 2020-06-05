@@ -16,6 +16,7 @@
  */
 #include "postgres.h"
 
+#include "access/reloptions.h"
 #include "access/table.h"
 #include "access/xact.h"
 #include "catalog/partition.h"
@@ -29,6 +30,7 @@
 #include "commands/extension.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "executor/execPartition.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
@@ -559,6 +561,10 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 	RangeVar *oldpartrv;
 	RangeVar *tmprv;
 	PartitionBoundSpec *boundspec;
+	char *p_tablespacename;
+	char *p_accessMethod;
+	List *p_colencs;
+	List *p_reloptions;
 	const char *defaultpartname;
 	List *stmts = NIL;
 	ListCell *l;
@@ -617,11 +623,24 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 				boundspec = stringToNode(TextDatumGetCString(datum));
 			else
 				boundspec = NULL;
+
+			datum = SysCacheGetAttr(RELOID, tuple,
+									Anum_pg_class_reloptions,
+									&isnull);
+			if (isnull)
+				p_reloptions = NIL;
+			else
+				p_reloptions = untransformRelOptions(datum);
+
 			ReleaseSysCache(tuple);
 		}
 		else
 			elog(ERROR, "pg_class tuple not found for relation %s",
 				 RelationGetRelationName(partrel));
+
+		p_tablespacename = get_tablespace_name(partrel->rd_rel->reltablespace);
+		p_accessMethod = get_am_name(partrel->rd_rel->relam);
+		p_colencs = rel_get_column_encodings(partrel);
 
 		table_close(partrel, AccessShareLock);
 
@@ -734,7 +753,6 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		boundspec1 = makeNode(PartitionBoundSpec);
 		boundspec1->strategy   = boundspec->strategy;
 		boundspec1->is_default = false;
-
 
 		switch (boundspec->strategy)
 		{
@@ -899,8 +917,10 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		boundspec1->location = -1;
 
 		elem = makeNode(GpPartDefElem);
-		//elem->tablespacename = NULL;
-		//elem->accessMethod = NULL;
+		elem->tablespacename = p_tablespacename;
+		elem->accessMethod = p_accessMethod;
+		elem->colencs = p_colencs;
+		elem->options = p_reloptions;
 
 		/* create first partition stmt */
 		stmts = lappend(stmts, makePartitionCreateStmt(rel, partname1, boundspec1, NULL, elem, &partcomp));

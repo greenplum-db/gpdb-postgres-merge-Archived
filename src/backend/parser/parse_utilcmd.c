@@ -280,7 +280,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.ixconstraints = NIL;
 	cxt.inh_indexes = NIL;
 	cxt.extstats = NIL;
-	cxt.attr_encodings = NIL;
+	cxt.attr_encodings = stmt->attr_encodings;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
@@ -333,7 +333,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				}
 				break;
 			}
-
 			case T_ColumnReferenceStorageDirective:
 				/* processed later, in DefineRelation() */
 				cxt.attr_encodings = lappend(cxt.attr_encodings, element);
