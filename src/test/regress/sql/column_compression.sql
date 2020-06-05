@@ -45,7 +45,7 @@ create table ccddl (
 	i int,
 	j int,
 	default column encoding (compresstype=zlib)
-) with (appendonly=true, orientation=column, fillfactor=11);
+) with (appendonly=true, orientation=column);
 
 execute ccddlcheck;
 
