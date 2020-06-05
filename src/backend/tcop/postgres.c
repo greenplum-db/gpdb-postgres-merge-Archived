@@ -1854,7 +1854,7 @@ exec_simple_query(const char *query_string)
 		PortalDefineQuery(portal,
 						  NULL,
 						  query_string,
-						  nodeTag(parsetree),
+						  nodeTag(parsetree->stmt),
 						  commandTag,
 						  plantree_list,
 						  NULL);
