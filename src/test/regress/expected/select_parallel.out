@@ -568,12 +568,14 @@ explain (analyze, timing off, summary off, costs off)
                ->  Nested Loop (actual rows=33200 loops=1)
                      ->  Seq Scan on tenk1 (actual rows=3320 loops=1)
                            Filter: (hundred > 1)
+                           Rows Removed by Filter: 66
                      ->  Materialize (actual rows=10 loops=3320)
                            ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=10 loops=1)
                                  ->  Seq Scan on tenk2 (actual rows=5 loops=1)
                                        Filter: (thousand = 0)
+                                       Rows Removed by Filter: 3363
  Optimizer: Postgres query optimizer
-(11 rows)
+(13 rows)
 
 alter table tenk2 reset (parallel_workers);
 reset work_mem;
