@@ -417,8 +417,6 @@ INSERT INTO co_cr_sub_partzlib8192_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,
 \d+ co_cr_sub_partzlib8192_1_1_prt_1_2_prt_sp2
 
 
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'co_cr_sub_partzlib8192_1' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -483,7 +481,7 @@ CREATE INDEX ON co_cr_sub_partzlib8192_1_exch USING bitmap (a1);
 
 CREATE INDEX ON co_cr_sub_partzlib8192_1_exch (a9);
 
-Alter table co_cr_sub_partzlib8192_1 alter partition FOR (RANK(1)) exchange partition sp1 with table co_cr_sub_partzlib8192_1_exch;
+Alter table co_cr_sub_partzlib8192_1 alter partition FOR (1) exchange partition sp1 with table co_cr_sub_partzlib8192_1_exch;
 \d+ co_cr_sub_partzlib8192_1_1_prt_1_2_prt_sp1
 
 
@@ -568,8 +566,6 @@ INSERT INTO co_cr_sub_partzlib8192_1_2_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a1
 \d+ co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_2 
 
 
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'co_cr_sub_partzlib8192_1_2' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -634,12 +630,11 @@ CREATE INDEX ON co_cr_sub_partzlib8192_1_2_exch USING bitmap (a1);
 
 CREATE INDEX ON co_cr_sub_partzlib8192_1_2_exch(a9);
 
-Alter table co_cr_sub_partzlib8192_1_2 alter partition p2 exchange partition FOR (RANK(1)) with table co_cr_sub_partzlib8192_1_2_exch;
+Alter table co_cr_sub_partzlib8192_1_2 alter partition p2 exchange partition FOR (1) with table co_cr_sub_partzlib8192_1_2_exch;
 \d+ co_cr_sub_partzlib8192_1_2_1_prt_p2_2_prt_2
 
-
 --Alter table Split Partition 
- Alter table co_cr_sub_partzlib8192_1_2 alter partition p1 split partition FOR (RANK(4)) at(4000) into (partition splita,partition splitb) ;
+ Alter table co_cr_sub_partzlib8192_1_2 alter partition p1 split partition FOR (3001) at(4000) into (partition splita,partition splitb) ;
 \d+ co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_splita 
 
 
@@ -723,9 +718,6 @@ INSERT INTO co_wt_sub_partrle_type8192_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,
 --
 \d+ co_wt_sub_partrle_type8192_1_1_prt_1_2_prt_sp2
 
-
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'co_wt_sub_partrle_type8192_1' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -790,7 +782,7 @@ CREATE INDEX ON co_wt_sub_partrle_type8192_1_exch USING bitmap (a1);
 
 CREATE INDEX ON co_wt_sub_partrle_type8192_1_exch(a9);
 
-Alter table co_wt_sub_partrle_type8192_1 alter partition FOR (RANK(1)) exchange partition sp1 with table co_wt_sub_partrle_type8192_1_exch;
+Alter table co_wt_sub_partrle_type8192_1 alter partition FOR (1) exchange partition sp1 with table co_wt_sub_partrle_type8192_1_exch;
 \d+ co_wt_sub_partrle_type8192_1_1_prt_1_2_prt_sp1
 
 
@@ -873,9 +865,6 @@ INSERT INTO co_wt_sub_partrle_type8192_1_2_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a1
 --
 \d+ co_wt_sub_partrle_type8192_1_2_1_prt_p1_2_prt_2 
 
-
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'co_wt_sub_partrle_type8192_1_2' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -940,12 +929,12 @@ CREATE INDEX ON co_wt_sub_partrle_type8192_1_2_exch USING bitmap (a1);
 
 CREATE INDEX ON co_wt_sub_partrle_type8192_1_2_exch (a9);
 
-Alter table co_wt_sub_partrle_type8192_1_2 alter partition p1 exchange partition FOR (RANK(1)) with table co_wt_sub_partrle_type8192_1_2_exch;
+Alter table co_wt_sub_partrle_type8192_1_2 alter partition p1 exchange partition FOR (1) with table co_wt_sub_partrle_type8192_1_2_exch;
 \d+ co_wt_sub_partrle_type8192_1_2_1_prt_p1_2_prt_2
 
 
 --Alter table Split Partition 
- Alter table co_wt_sub_partrle_type8192_1_2 alter partition p2 split partition FOR (RANK(4)) at(4000) into (partition splita,partition splitb) ;
+ Alter table co_wt_sub_partrle_type8192_1_2 alter partition p2 split partition FOR (3001) at(4000) into (partition splita,partition splitb) ;
 \d+ co_wt_sub_partrle_type8192_1_2_1_prt_p2_2_prt_splita 
 
 
@@ -1028,9 +1017,6 @@ INSERT INTO ao_wt_sub_partzlib8192_5_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,
 --
 \d+ ao_wt_sub_partzlib8192_5_1_prt_1_2_prt_sp2
 
-
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'ao_wt_sub_partzlib8192_5' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -1095,7 +1081,7 @@ CREATE INDEX ON ao_wt_sub_partzlib8192_5_exch USING bitmap (a1);
 
 CREATE INDEX ON ao_wt_sub_partzlib8192_5_exch (a9);
 
-Alter table ao_wt_sub_partzlib8192_5 alter partition FOR (RANK(1)) exchange partition sp1 with table ao_wt_sub_partzlib8192_5_exch;
+Alter table ao_wt_sub_partzlib8192_5 alter partition FOR (1) exchange partition sp1 with table ao_wt_sub_partzlib8192_5_exch;
 \d+ ao_wt_sub_partzlib8192_5_1_prt_1_2_prt_sp1
 
 
@@ -1178,9 +1164,6 @@ INSERT INTO ao_wt_sub_partzlib8192_5_2_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a1
 --
 \d+ ao_wt_sub_partzlib8192_5_2_1_prt_p1_2_prt_2 
 
-
---Select from pg_attribute_encoding to see the table entry 
-select parencattnum, parencattoptions from pg_partition_encoding e, pg_partition p, pg_class c  where c.relname = 'ao_wt_sub_partzlib8192_5_2' and c.oid = p.parrelid and p.oid = e.parencoid order by parencattnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
@@ -1245,12 +1228,12 @@ CREATE INDEX ON ao_wt_sub_partzlib8192_5_2_exch USING bitmap (a1);
 
 CREATE INDEX ON ao_wt_sub_partzlib8192_5_2_exch (a9);
 
-Alter table ao_wt_sub_partzlib8192_5_2 alter partition p1 exchange partition FOR (RANK(1)) with table ao_wt_sub_partzlib8192_5_2_exch;
+Alter table ao_wt_sub_partzlib8192_5_2 alter partition p1 exchange partition FOR (1) with table ao_wt_sub_partzlib8192_5_2_exch;
 \d+ ao_wt_sub_partzlib8192_5_2_1_prt_p1_2_prt_2
 
 
 --Alter table Split Partition 
- Alter table ao_wt_sub_partzlib8192_5_2 alter partition p2 split partition FOR (RANK(4)) at(4000) into (partition splita,partition splitb) ;
+ Alter table ao_wt_sub_partzlib8192_5_2 alter partition p2 split partition FOR (3001) at(4000) into (partition splita,partition splitb) ;
 \d+ ao_wt_sub_partzlib8192_5_2_1_prt_p2_2_prt_splita 
 
 
@@ -1331,9 +1314,6 @@ INSERT INTO ao_crtb_with_row_zlib_8192_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,
 --
 \d+ ao_crtb_with_row_zlib_8192_1
 
-
---Select from pg_attribute_encoding to see the table entry 
-select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_attribute_encoding e  where c.relname = 'ao_crtb_with_row_zlib_8192_1' and c.oid=e.attrelid  order by relname, attnum limit 3; 
 --
 -- Compare data with uncompressed table
 --
