@@ -238,6 +238,8 @@ BufFileCreateTempInSet(char *operation_name, bool interXact, workfile_set *work_
 	FileSetIsWorkfile(pfile);
 	RegisterFileWithSet(pfile, work_set);
 
+	SIMPLE_FAULT_INJECTOR("workfile_creation_failure");
+
 	return file;
 }
 
