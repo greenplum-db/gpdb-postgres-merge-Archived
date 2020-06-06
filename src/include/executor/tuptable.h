@@ -344,6 +344,17 @@ extern void slot_set_ctid_from_fake(TupleTableSlot *slot, ItemPointerData *fake_
 
 #ifndef FRONTEND
 
+
+static inline Datum *slot_get_values(TupleTableSlot *slot)
+{
+	return slot->tts_values;
+}
+
+static inline bool *slot_get_isnull(TupleTableSlot *slot)
+{
+	return slot->tts_isnull;
+}
+
 /*
  * This function forces the entries of the slot's Datum/isnull arrays to be
  * valid at least up through the attnum'th entry.
