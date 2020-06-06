@@ -38,6 +38,7 @@
 #include "catalog/storage_xlog.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
+#include "cdb/cdbaocsam.h"
 #include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -52,7 +53,11 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
+#include "utils/lsyscache.h"
+#include "utils/pg_rusage.h"
 #include "utils/rel.h"
+
+#define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
@@ -965,13 +970,249 @@ appendonly_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 								 double *tups_vacuumed,
 								 double *tups_recently_dead)
 {
- 	/*
-	 * GPDB_12_MERGE_FIXME: not sure what to do here. We used to not
-	 * support CLUSTER on AO tables, and there's a check for that in
-	 * cluster.c. It would be nicer to check it here. Then again, why not
-	 * support it? VACUUM FULL is implemented as CLUSTER, too.
+	TupleDesc	oldTupDesc;
+	TupleDesc	newTupDesc;
+	int			natts;
+	Datum	   *values;
+	bool	   *isnull;
+	TransactionId FreezeXid;
+	MultiXactId MultiXactCutoff;
+	Tuplesortstate *tuplesort;
+	PGRUsage	ru0;
+
+	bool					is_ao_rows = true;
+	bool					is_ao_cols = false;
+	AOTupleId				aoTupleId;
+	AppendOnlyInsertDesc	aoInsertDesc = NULL;
+	MemTupleBinding*		mt_bind = NULL;
+	AOCSInsertDesc			idesc = NULL;
+	bool				   *proj = NULL;
+	int						write_seg_no;
+	MemTuple				mtuple = NULL;
+
+	pg_rusage_init(&ru0);
+	Assert(is_ao_cols || is_ao_rows);
+
+	/*
+	 * Curently AO storage lacks cost model for IndexScan, thus IndexScan
+	 * is not functional. In future, probably, this will be fixed and CLUSTER
+	 * command will support this. Though, random IO over AO on TID stream
+	 * can be impractical anyway.
+	 * Here we are sorting data on on the lines of heap tables, build a tuple
+	 * sort state and sort the entire AO table using the index key, rewrite
+	 * the table, one tuple at a time, in order as returned by tuple sort state.
 	 */
-	elog(ERROR, "CLUSTER not supported on AO tables");
+	if (OldIndex == NULL || !IS_BTREE(OldIndex))
+		ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot cluster append-optimized table \"%s\"", RelationGetRelationName(OldHeap)),
+					errdetail("Append-optimized tables can only be clustered against a B-tree index")));
+
+	/*
+	 * Their tuple descriptors should be exactly alike, but here we only need
+	 * assume that they have the same number of columns.
+	 */
+	oldTupDesc = RelationGetDescr(OldHeap);
+	newTupDesc = RelationGetDescr(NewHeap);
+	Assert(newTupDesc->natts == oldTupDesc->natts);
+
+	/* Preallocate values/isnull arrays to deform heap tuples after sort */
+	natts = newTupDesc->natts;
+	values = (Datum *) palloc(natts * sizeof(Datum));
+	isnull = (bool *) palloc(natts * sizeof(bool));
+
+	/*
+	 * If the OldHeap has a toast table, get lock on the toast table to keep
+	 * it from being vacuumed.  This is needed because autovacuum processes
+	 * toast tables independently of their main tables, with no lock on the
+	 * latter.  If an autovacuum were to start on the toast table after we
+	 * compute our OldestXmin below, it would use a later OldestXmin, and then
+	 * possibly remove as DEAD toast tuples belonging to main tuples we think
+	 * are only RECENTLY_DEAD.  Then we'd fail while trying to copy those
+	 * tuples.
+	 *
+	 * We don't need to open the toast relation here, just lock it.  The lock
+	 * will be held till end of transaction.
+	 */
+	if (OldHeap->rd_rel->reltoastrelid)
+		LockRelationOid(OldHeap->rd_rel->reltoastrelid, AccessExclusiveLock);
+
+	/* use_wal off requires smgr_targblock be initially invalid */
+	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);
+
+	/*
+	 * Compute sane values for FreezeXid and CutoffMulti with regular
+	 * VACUUM machinery to avoidconfising existing CLUSTER code.
+	 */
+	vacuum_set_xid_limits(OldHeap, 0, 0, 0, 0,
+						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff,
+						  NULL);
+
+	/*
+	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
+	 * backwards, so take the max.
+	 */
+	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
+		FreezeXid = OldHeap->rd_rel->relfrozenxid;
+
+	/*
+	 * MultiXactCutoff, similarly, shouldn't go backwards either.
+	 */
+	if (MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
+		MultiXactCutoff = OldHeap->rd_rel->relminmxid;
+
+	/* return selected values to caller */
+	*xid_cutoff = FreezeXid;
+	*multi_cutoff = MultiXactCutoff;
+
+	tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex,
+											maintenance_work_mem, NULL, false);
+
+
+	/* Log what we're doing */
+	ereport(INFO,
+			(errmsg("clustering \"%s.%s\" using sequential scan and sort",
+					get_namespace_name(RelationGetNamespace(OldHeap)),
+					RelationGetRelationName(OldHeap))));
+
+	/* Scan through old table to convert data into heap tuples for sorting */
+	if (is_ao_rows)
+	{
+		TupleTableSlot	*slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
+		TableScanDesc aoscandesc = appendonly_beginscan(OldHeap, GetActiveSnapshot(), 0, NULL,		
+											NULL, 0);
+		mt_bind = create_memtuple_binding(oldTupDesc);
+
+		while (appendonly_getnextslot(aoscandesc, ForwardScanDirection, slot))
+		{
+			Datum	   *slot_values;
+			bool	   *slot_isnull;
+			HeapTuple   tuple;
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Extract all the values of the tuple */
+			slot_getallattrs(slot);
+			slot_values = slot_get_values(slot);
+			slot_isnull = slot_get_isnull(slot);
+			tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
+
+			*num_tuples += 1;
+			tuplesort_putheaptuple(tuplesort, tuple);
+			heap_freetuple(tuple);
+		}
+
+		ExecDropSingleTupleTableSlot(slot);
+
+		appendonly_endscan(aoscandesc);
+	}
+	else
+	{
+		AOCSScanDesc scan = NULL;
+		TupleTableSlot *slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
+
+		proj = palloc(sizeof(bool) * natts);
+		memset(proj, true, natts);
+
+		scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
+								GetActiveSnapshot(),
+								NULL /* relationTupleDesc */, proj);
+
+		while (aocs_getnext(scan, ForwardScanDirection, slot))
+		{
+			Datum	   *slot_values;
+			bool	   *slot_isnull;
+			HeapTuple   tuple;
+			CHECK_FOR_INTERRUPTS();
+
+			slot_getallattrs(slot);
+			slot_values = slot_get_values(slot);
+			slot_isnull = slot_get_isnull(slot);
+
+			tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
+
+			*num_tuples += 1;
+			tuplesort_putheaptuple(tuplesort, tuple);
+			heap_freetuple(tuple);
+		}
+
+		ExecDropSingleTupleTableSlot(slot);
+		aocs_endscan(scan);
+	}
+
+
+	/*
+	 * Сomplete the sort, then read out all tuples
+	 * from the tuplestore and write them to the new relation.
+	 */
+
+	tuplesort_performsort(tuplesort);
+	
+	write_seg_no = ChooseSegnoForWrite(NewHeap);
+
+	if (is_ao_rows)
+	{
+		aoInsertDesc = appendonly_insert_init(NewHeap, write_seg_no);
+	}
+	else
+	{
+		memset(proj, true, natts);
+		idesc = aocs_insert_init(NewHeap, write_seg_no);
+	}
+
+	/* Insert sorted heap tuples into new storage */
+	for (;;)
+	{
+		HeapTuple	tuple;
+		uint32		prev_memtuple_len = 0;
+
+		CHECK_FOR_INTERRUPTS();
+
+		tuple = tuplesort_getheaptuple(tuplesort, true);
+		if (tuple == NULL)
+			break;
+
+		if (is_ao_rows)
+		{
+			uint32		len;
+			uint32		null_save_len;
+			bool		has_nulls;
+			heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+
+			len = compute_memtuple_size(mt_bind, values, isnull, &null_save_len, &has_nulls);
+			if (len > prev_memtuple_len)
+			{
+				/* Here we are trying to avoid reallocation of temp mtuple */
+				if (mtuple != NULL)
+					pfree(mtuple);
+				mtuple = palloc(len);
+				prev_memtuple_len = len;
+			}
+
+			memtuple_form_to(mt_bind, values, isnull, len, null_save_len, has_nulls,
+					 mtuple);
+
+			appendonly_insert(aoInsertDesc, mtuple, &aoTupleId);
+		}
+		else
+		{
+			heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+			aocs_insert_values(idesc, values, isnull, &aoTupleId);
+		}
+	}
+
+	tuplesort_end(tuplesort);
+
+	/* Finish and deallocate insertion */
+	if (is_ao_rows)
+	{
+		appendonly_insert_finish(aoInsertDesc);
+	}
+	else if (is_ao_cols)
+	{
+		aocs_insert_finish(idesc);
+		pfree(proj);
+	}
 }
 
 static bool

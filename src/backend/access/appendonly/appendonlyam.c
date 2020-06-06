@@ -17,7 +17,7 @@
  *		appendonly_beginscan		- begin relation scan
  *		appendonly_rescan			- restart a relation scan
  *		appendonly_endscan			- end relation scan
- *		appendonly_getnext			- retrieve next tuple in scan
+ *		appendonly_getnextslot		- retrieve next tuple in scan
  *		appendonly_insert_init		- initialize an insert operation
  *		appendonly_insert			- insert tuple into a relation
  *		appendonly_insert_finish	- finish an insert operation

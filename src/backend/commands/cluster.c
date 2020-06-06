@@ -676,6 +676,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
 	MultiXactId cutoffMulti;
+	bool		is_ao = RelationIsAppendOptimized(OldHeap);
 
 	/* Mark the correct index as clustered */
 	if (OidIsValid(indexOid))
@@ -705,7 +706,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
 					 swap_toast_by_content,
-					 true /* swap_stats */,
+					 !is_ao /* swap_stats */,
 					 false, true,
 					 frozenXid, cutoffMulti,
 					 relpersistence);
