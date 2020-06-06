@@ -2070,13 +2070,34 @@ typedef struct GpAlterPartitionCmd
 	int         location;   /* token location, or -1 if unknown */
 } GpAlterPartitionCmd;
 
+/* GPDB_12_MERGE_FIXME: In PostgreSQL, the lower boundary is always inclusive
+ * and the upper boundary is exclusive. The legacy syntax was more flexible.
+ */
+typedef enum GpPartitionEdgeBounding
+{
+	PART_EDGE_UNSPECIFIED,
+	PART_EDGE_INCLUSIVE,
+	PART_EDGE_EXCLUSIVE
+} GpPartitionEdgeBounding;
+
+/* the "values" of a START or END spec in a RANGE partition */
+typedef struct GpPartitionRangeItem
+{
+	NodeTag					type;
+	List					*val;		/*  value */
+	GpPartitionEdgeBounding edge;		/* inclusive/exclusive ? */
+	int						location;	/* token location, or -1 if unknown */
+} GpPartitionRangeItem;
+
 typedef struct GpSplitPartitionCmd
 {
-	NodeTag type;
-	GpAlterPartitionId *partid;
-	List *arg1;
-	GpAlterPartitionCmd *arg2;
-	int   location;
+	NodeTag				 type;
+	GpAlterPartitionId	 *partid;
+	GpPartitionRangeItem *start;
+	GpPartitionRangeItem *end;
+	List				 *at;
+	GpAlterPartitionCmd  *arg2;
+	int					 location;
 } GpSplitPartitionCmd;
 
 /* ----------------------
@@ -2523,23 +2544,13 @@ typedef struct GpPartDefElem
 	int					location;	/* token location, or -1 if unknown */
 } GpPartDefElem;
 
-/* GPDB_12_MERGE_FIXME: In PostgreSQL, the lower boundary is always inclusive
- * and the upper boundary is exclusive. The legacy syntax was more flexible.
- */
-typedef enum GpPartitionEdgeBounding
-{
-	PART_EDGE_UNSPECIFIED,
-	PART_EDGE_INCLUSIVE,
-	PART_EDGE_EXCLUSIVE
-} GpPartitionEdgeBounding;
-
 /* partition boundary specification */
 typedef struct GpPartitionRangeSpec
 {
 	NodeTag				type;
 
-	List			   *partStart;		/* start of range */
-	List			   *partEnd;		/* end */
+	GpPartitionRangeItem	*partStart;		/* start of range */
+	GpPartitionRangeItem	*partEnd;		/* end */
 	List 			   *partEvery;		/* every specification */
 	/* MPP-6297: check for WITH (tablename=name) clause */
 	char			   *pWithTnameStr;	/* and disable EVERY if tname set */

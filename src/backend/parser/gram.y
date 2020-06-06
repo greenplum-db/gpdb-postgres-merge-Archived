@@ -627,8 +627,8 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 %type <node>    TabAddPartitionBoundarySpec OptTabAddPartitionBoundarySpec  /* AddPartitionBoundSpec */
 %type <list> 	TabPartitionBoundarySpecValList
 				part_values_or_spec_list
-%type <list> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
-				OptTabPartitionBoundarySpecEnd
+%type <node> 	TabPartitionBoundarySpecStart TabPartitionBoundarySpecEnd
+				OptTabPartitionBoundarySpecEnd  /* GpPartitionRangeItem */
 %type <list>	OptTabPartitionBoundarySpecEvery
 %type <str> 	TabPartitionNameDecl TabSubPartitionNameDecl
 				TabPartitionDefaultNameDecl TabSubPartitionDefaultNameDecl 
@@ -4050,7 +4050,9 @@ alter_table_partition_cmd:
 					pid->location  = @2;
 
 					pc->partid = pid;
-					pc->arg1 = list_make2($4, $5);
+					pc->start = $4;
+					pc->end = $5;
+					pc->at = NULL;
 					pc->arg2 = (GpAlterPartitionCmd *)$6;
 					pc->location = @5;
 
@@ -4073,7 +4075,9 @@ alter_table_partition_cmd:
 					pid->location  = @2;
 
 					pc->partid = pid;
-					pc->arg1 = list_make2(NULL, $6);
+					pc->start = NULL;
+					pc->end = NULL;
+					pc->at = $6;
 					pc->arg2 = (GpAlterPartitionCmd *)$8;
 					pc->location = @6;
 
@@ -4092,12 +4096,9 @@ alter_table_partition_cmd:
 					GpAlterPartitionCmd *into;
 
 					pc->partid = (GpAlterPartitionId*) $3;
-
-					/* 
-					 * The first element of the list is only defined if
-					 * we're doing default splits for range partitioning.
-					 */
-					pc->arg1 = list_make2(NULL, $6);
+					pc->start = NULL;
+					pc->end = NULL;
+					pc->at = $6;
 					pc->arg2 = (GpAlterPartitionCmd *)$8;
 					pc->location = @6;
 
@@ -5638,31 +5639,37 @@ OptTabPartitionRangeInclusive:
 
 TabPartitionBoundarySpecStart:
 			START 
-            '(' expr_list ')'
+			'(' expr_list ')'
 			OptTabPartitionRangeInclusive
 				{
-						/* GPDB_12_MERGE_FIXME */
+					GpPartitionRangeItem *n = makeNode(GpPartitionRangeItem);
+					n->val = $3;
+					/* GPDB_12_MERGE_FIXME */
 					if (($5) && ($5) != PART_EDGE_INCLUSIVE)
 						ereport(ERROR,
 								(errmsg("exclusive START partition boundary is no longer supported"),
 								 parser_errposition(@5)));
-					$$ = $3;
+					else
+						n->edge = PART_EDGE_INCLUSIVE;
+					n->location = @1;
+					$$ = (Node *)n;
 				}
-            ;
+			;
 
 TabPartitionBoundarySpecEnd:
 			END_P 
-            '(' expr_list ')'
+			'(' expr_list ')'
 			OptTabPartitionRangeInclusive
 				{
-					/* GPDB_12_MERGE_FIXME */
-					if (($5) && ($5) != PART_EDGE_EXCLUSIVE)
-						ereport(ERROR,
-								(errmsg("inclusive END partition boundary is no longer supported"),
-								 parser_errposition(@5)));
-					$$ = $3;
+					GpPartitionRangeItem *n = makeNode(GpPartitionRangeItem);
+					n->val = $3;
+					if (($5))
+						n->edge = $5;
+					else
+						n->edge = PART_EDGE_EXCLUSIVE;
+					$$ = (Node *)n;
 				}
-            ;
+			;
 
 OptTabPartitionBoundarySpecEvery:
 			EVERY '(' expr_list ')'					{ $$ = $3; }
@@ -5670,8 +5677,8 @@ OptTabPartitionBoundarySpecEvery:
             ;
 
 OptTabPartitionBoundarySpecEnd:
-            TabPartitionBoundarySpecEnd 			{ $$ = $1; }
-			| /*EMPTY*/								{ $$ = NULL; }
+			TabPartitionBoundarySpecEnd             { $$ = $1; }
+			| /*EMPTY*/                             { $$ = NULL; }
 		;
 
 /* VALUES for LIST, start..end for RANGE. */
@@ -5685,23 +5692,23 @@ TabPartitionBoundarySpec:
 					$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpecStart
-              OptTabPartitionBoundarySpecEnd
-              OptTabPartitionBoundarySpecEvery  
+			  OptTabPartitionBoundarySpecEnd
+			  OptTabPartitionBoundarySpecEvery
 				{
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
-					n->partStart = $1;
-					n->partEnd   = $2;
+					n->partStart = (GpPartitionRangeItem *)$1;
+					n->partEnd   = (GpPartitionRangeItem *)$2;
 					n->partEvery = $3;
 					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpecEnd
-              OptTabPartitionBoundarySpecEvery	
+			  OptTabPartitionBoundarySpecEvery
 				{
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = NULL;
-					n->partEnd   = $1;
+					n->partEnd   = (GpPartitionRangeItem *)$1;
 					n->partEvery = $2;
 					n->pWithTnameStr = NULL;
 					n->location  = @1;
@@ -5726,11 +5733,11 @@ TabAddPartitionBoundarySpec:
 					$$ = (Node *)n;
 				}
 			| TabPartitionBoundarySpecStart
-              OptTabPartitionBoundarySpecEnd
+			  OptTabPartitionBoundarySpecEnd
 				{
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
-					n->partStart = $1;
-					n->partEnd   = $2;
+					n->partStart = (GpPartitionRangeItem *)$1;
+					n->partEnd   = (GpPartitionRangeItem *)$2;
 					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
@@ -5739,7 +5746,7 @@ TabAddPartitionBoundarySpec:
 				{
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = NULL;
-					n->partEnd   = $1;
+					n->partEnd   = (GpPartitionRangeItem *)$1;
 					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;

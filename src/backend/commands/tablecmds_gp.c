@@ -758,13 +758,24 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 		{
 			case PARTITION_STRATEGY_RANGE:
 			{
-				List                *start      = linitial(pc->arg1);
-				List                *end        = lsecond(pc->arg1);
+				GpPartitionRangeItem *startItem = pc->start;
+				GpPartitionRangeItem *endItem 	= pc->end;
+				List 				 *at = pc->at;
+				List 				 *start;
+				List 				 *end;
+				bool				 endIncl;
 
-				Assert(end != NULL);
+				Assert((startItem == NULL && endItem == NULL && at != NULL) ||
+					   (startItem != NULL && endItem != NULL && at == NULL));
+
+				start = startItem ? startItem->val : NULL;
+				end = endItem ? endItem->val : at;
+				endIncl = (endItem && endItem->edge == PART_EDGE_INCLUSIVE) ? true : false;
+
 				if (end)
 				{
 					Const *endConst;
+
 					if (list_length(end) != partkey->partnatts)
 						elog(ERROR, "invalid number of end values"); // GPDB_12_MERGE_FIXME: improve message
 
@@ -779,6 +790,14 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 								 errmsg("cannot use NULL with range partition specification"),
 								 parser_errposition(pstate,	pc->location)));
+
+					canonicalizeRangeEnd(pstate,
+										  endConst,
+										  endIncl,
+										  part_col_name,
+										  part_col_typid,
+										  part_col_typmod,
+										  part_col_collation);
 
 					boundspec1->upperdatums =
 						list_make1(makeConst(partkey->parttypid[0],
@@ -844,11 +863,11 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 			case PARTITION_STRATEGY_LIST:
 			{
 				ListCell *cell;
-				List	 *at = lsecond(pc->arg1);
+				List	 *at = pc->at;
 				PartitionBoundSpec *boundspec_newvals = boundspec1;
 				PartitionBoundSpec *boundspec_remainingvals = boundspec2;
 
-				if (linitial(pc->arg1))
+				if (pc->start || pc->end)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("cannot SPLIT LIST PARTITION with START"),
