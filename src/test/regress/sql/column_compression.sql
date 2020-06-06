@@ -288,10 +288,6 @@ partition by range(j)
 
 execute ccddlcheck;
 
-select parencattnum, parencattoptions from
-pg_partition_encoding e, pg_partition p, pg_class c
-where c.relname = 'ccddl' and c.oid = p.parrelid and p.oid = e.parencoid;
-
 insert into ccddl select 1, (i % 19) + 1, ((i+3) % 5) + 1, i+3 from generate_series(1, 100) i;
 
 select * from ccddl;
@@ -300,10 +296,6 @@ select * from ccddl;
 alter table ccddl drop column l;
 
 insert into ccddl select 1, (i % 19) + 1, ((i+3) % 5) + 1 from generate_series(1, 100) i;
-
-select parencattnum, parencattoptions from
-pg_partition_encoding e, pg_partition p, pg_class c
-where c.relname = 'ccddl' and c.oid = p.parrelid and p.oid = e.parencoid;
 
 select * from ccddl;
 
@@ -352,9 +344,6 @@ alter table ccddl add partition p3 start(20) end(30);
 execute ccddlcheck;
 
 drop table ccddl;
-
--- Should be nothing in pg_partition_encoding now
-select * from pg_partition_encoding;
 
 -- Split support. We must preserve the column encodings of the split partition
 create table ccddl (i int encoding (compresstype=zlib))

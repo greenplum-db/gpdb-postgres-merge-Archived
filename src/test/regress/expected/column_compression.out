@@ -607,8 +607,6 @@ partition by range(j)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p2" for table "ccddl"
 execute ccddlcheck;
     relname     | attnum |                       attoptions                        
 ----------------+--------+---------------------------------------------------------
@@ -755,17 +753,6 @@ execute ccddlcheck;
  ccddl_1_prt_p2_2_prt_sp1 |      4 | {compresstype=zlib,compresslevel=1,blocksize=32768}
 (8 rows)
 
-select parencattnum, parencattoptions from
-pg_partition_encoding e, pg_partition p, pg_class c
-where c.relname = 'ccddl' and c.oid = p.parrelid and p.oid = e.parencoid;
- parencattnum |                    parencattoptions                     
---------------+---------------------------------------------------------
-            4 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-            3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-            2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
-            1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(4 rows)
-
 insert into ccddl select 1, (i % 19) + 1, ((i+3) % 5) + 1, i+3 from generate_series(1, 100) i;
 select * from ccddl;
  i | j  | k |  l  
@@ -875,16 +862,6 @@ select * from ccddl;
 -- Verify dependency handling
 alter table ccddl drop column l;
 insert into ccddl select 1, (i % 19) + 1, ((i+3) % 5) + 1 from generate_series(1, 100) i;
-select parencattnum, parencattoptions from
-pg_partition_encoding e, pg_partition p, pg_class c
-where c.relname = 'ccddl' and c.oid = p.parrelid and p.oid = e.parencoid;
- parencattnum |                    parencattoptions                     
---------------+---------------------------------------------------------
-            3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-            2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
-            1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(3 rows)
-
 select * from ccddl;
  i | j  | k 
 ---+----+---
@@ -1127,35 +1104,15 @@ NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3_2_prt_sp1" for table
 execute ccddlcheck;
          relname          | attnum |                       attoptions                        
 --------------------------+--------+---------------------------------------------------------
- ccddl                    |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                    |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                    |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                    |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p1           |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p1           |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p1           |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p1           |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_p1_2_prt_sp1 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p1_2_prt_sp1 |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p1_2_prt_sp1 |      3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p1_2_prt_sp1 |      4 | {compresstype=zlib,compresslevel=1,blocksize=32768}
- ccddl_1_prt_p2           |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p2           |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p2           |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p2           |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_p2_2_prt_sp1 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2_2_prt_sp1 |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2_2_prt_sp1 |      3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2_2_prt_sp1 |      4 | {compresstype=zlib,compresslevel=1,blocksize=32768}
- ccddl_1_prt_p3           |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p3           |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p3           |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p3           |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_p3_2_prt_sp1 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
- ccddl_1_prt_p3_2_prt_sp1 |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
- ccddl_1_prt_p3_2_prt_sp1 |      3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
- ccddl_1_prt_p3_2_prt_sp1 |      4 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(28 rows)
+(8 rows)
 
 drop table ccddl;
 -- Make sure the AO/CO case didn't screw up the non CO case
@@ -1185,12 +1142,6 @@ execute ccddlcheck;
 (0 rows)
 
 drop table ccddl;
--- Should be nothing in pg_partition_encoding now
-select * from pg_partition_encoding;
- parencoid | parencattnum | parencattoptions 
------------+--------------+------------------
-(0 rows)
-
 -- Split support. We must preserve the column encodings of the split partition
 create table ccddl (i int encoding (compresstype=zlib))
 with (appendonly = true, orientation=column)
@@ -1198,22 +1149,19 @@ partition by range(i)
 (partition p1 start(1) end(10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1" for table "ccddl"
 execute ccddlcheck;
     relname     | attnum |                     attoptions                      
 ----------------+--------+-----------------------------------------------------
- ccddl          |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p1 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(2 rows)
+(1 row)
 
 alter table ccddl split partition p1 at (5) into (partition p2, partition p3);
 execute ccddlcheck;
     relname     | attnum |                     attoptions                      
 ----------------+--------+-----------------------------------------------------
- ccddl          |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p3 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(3 rows)
+(2 rows)
 
 drop table ccddl;
 -- With subpartitioning
@@ -1280,27 +1228,12 @@ CREATE TABLE ccddl (id int, year int, month int, day int, region text)
 execute ccddlcheck;
              relname             | attnum |                       attoptions                        
 ---------------------------------+--------+---------------------------------------------------------
- ccddl                           |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                           |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                           |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                           |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl                           |      5 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1                   |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1                   |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1                   |      3 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1                   |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1                   |      5 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1_2_prt_1           |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1_2_prt_1           |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1_2_prt_1           |      3 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
- ccddl_1_prt_1_2_prt_1           |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl_1_prt_1_2_prt_1           |      5 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_1_2_prt_1_3_prt_usa |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_1_2_prt_1_3_prt_usa |      2 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_1_2_prt_1_3_prt_usa |      3 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_1_2_prt_1_3_prt_usa |      4 | {compresstype=none,blocksize=32768,compresslevel=0}
  ccddl_1_prt_1_2_prt_1_3_prt_usa |      5 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
-(20 rows)
+(5 rows)
 
 -- Ensure we can read and write
 insert into ccddl select 1, 2008, 1, 2, 'usa' from generate_series(1, 100);
@@ -1496,17 +1429,13 @@ WITH (appendonly=true, orientation=column)
 	);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_1" for table "ccddl"
 execute ccddlcheck;
     relname    | attnum |                       attoptions                        
 ---------------+--------+---------------------------------------------------------
- ccddl         |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
- ccddl         |      2 | {compresstype=rle_type,blocksize=65536,compresslevel=1}
- ccddl         |      3 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_1 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_1 |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_1 |      3 | {compresstype=zlib,compresslevel=1,blocksize=32768}
-(6 rows)
+(3 rows)
 
 drop table ccddl;
 -- Should be able to turn have a partition ignore a column encoding clause
@@ -1523,16 +1452,12 @@ create table ccddl
 	);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p2" for table "ccddl"
 execute ccddlcheck;
     relname     | attnum |                       attoptions                        
 ----------------+--------+---------------------------------------------------------
- ccddl          |      1 | {compresstype=none,blocksize=32768,compresslevel=0}
- ccddl          |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2 |      1 | {compresstype=zlib,compresslevel=1,blocksize=32768}
  ccddl_1_prt_p2 |      2 | {compresstype=rle_type,compresslevel=1,blocksize=32768}
-(4 rows)
+(2 rows)
 
 drop table ccddl;
 -- MPP-16875: ensure that WITH () is honoured
@@ -1545,11 +1470,9 @@ partition by list(b)
 		  compresslevel=1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_s_abc" for table "ccddl"
 alter table ccddl add partition "s_xyz" values ('xyz')
 	WITH (appendonly=true, orientation=column,
 		  compresstype=zlib, compresslevel=1);
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_s_xyz" for table "ccddl"
 execute ccddlcheck;
       relname      | attnum |                     attoptions                      
 -------------------+--------+-----------------------------------------------------
@@ -1655,8 +1578,6 @@ partition by range(a1)
 	);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_1" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_2" for table "ccddl"
 execute ccddlcheck;
  relname | attnum | attoptions 
 ---------+--------+------------
@@ -1899,11 +1820,6 @@ CREATE TABLE ccddl (
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'p_partkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p2" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p4" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p5" for table "ccddl"
 INSERT INTO ccddl values ( generate_series(1,25000), 3, 'JUMBO CASE', 1001.00, 'ronic dependencies d' );
 INSERT INTO ccddl values ( generate_series(1,25000), 23, 'JUMBO CASE', 1001.00, 'ronic dependencies d' );
 INSERT INTO ccddl values ( generate_series(1,25000), 29, 'JUMBO CASE', 1001.00, 'ronic dependencies d' );
@@ -1957,9 +1873,6 @@ partition by range(i) subpartition by range(j)
 	(partition p1 start(1) end (2));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1_2_prt_sp1" for table "ccddl_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p1_2_prt_sp2" for table "ccddl_1_prt_p1"
 select pg_get_partition_def('ccddl'::regclass, true);
                                          pg_get_partition_def                                          
 -------------------------------------------------------------------------------------------------------
