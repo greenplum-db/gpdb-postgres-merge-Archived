@@ -303,22 +303,17 @@ select relid::regclass, blocksize, compresstype,
 Create table alter_part_tab1 (id SERIAL,a1 int ,a2 char(5) ,a3 text )
 WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib)
 partition by list(a2) subpartition by range(a1)
-subpartition template
+(partition p1 values('val1')
   (default subpartition subothers,
    subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
+   subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none)),
+ partition p2 values('val2')
+   (default subpartition subothers,
+   subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
    subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none))
-(partition p1 values('val1'),
- partition p2 values('val2'));
+);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p1" for table "alter_part_tab1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p1_2_prt_subothers" for table "alter_part_tab1_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p1_2_prt_sp1" for table "alter_part_tab1_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p1_2_prt_sp2" for table "alter_part_tab1_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p2" for table "alter_part_tab1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p2_2_prt_subothers" for table "alter_part_tab1_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p2_2_prt_sp1" for table "alter_part_tab1_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p2_2_prt_sp2" for table "alter_part_tab1_1_prt_p2"
 Insert into alter_part_tab1(a1,a2,a3)
   select g, 'val1', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' from generate_series(1,10) g;
 Insert into alter_part_tab1(a1,a2,a3)
@@ -332,28 +327,23 @@ select count(*) from alter_part_tab1;
 -- Make sure that adding a column doesn't affect checksums.
 alter table alter_part_tab1 add column a4 numeric default 5.5;
 -- Check that it works for ADD PARTITION, too.
-ALTER TABLE alter_part_tab1 ADD partition p31 values(1) WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib);
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p31" for table "alter_part_tab1"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p31_2_prt_subothers" for table "alter_part_tab1_1_prt_p31"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p31_2_prt_sp1" for table "alter_part_tab1_1_prt_p31"
-NOTICE:  CREATE TABLE will create partition "alter_part_tab1_1_prt_p31_2_prt_sp2" for table "alter_part_tab1_1_prt_p31"
+ALTER TABLE alter_part_tab1 ADD partition p31 values(1) WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib)
+(default subpartition subothers,
+   subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
+   subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none));
 SELECT relname, checksum from pg_appendonly ao, pg_class c where ao.relid = c.oid and relname like 'alter_part_tab1%';
                   relname                  | checksum 
 -------------------------------------------+----------
  alter_part_tab1_1_prt_p1_2_prt_sp1        | t
  alter_part_tab1_1_prt_p1_2_prt_sp2        | t
- alter_part_tab1_1_prt_p1                  | t
- alter_part_tab1_1_prt_p31_2_prt_sp1       | t
- alter_part_tab1_1_prt_p2_2_prt_subothers  | t
+ alter_part_tab1_1_prt_p1_2_prt_subothers  | t
  alter_part_tab1_1_prt_p2_2_prt_sp1        | t
  alter_part_tab1_1_prt_p2_2_prt_sp2        | t
- alter_part_tab1_1_prt_p2                  | t
- alter_part_tab1                           | t
- alter_part_tab1_1_prt_p1_2_prt_subothers  | t
- alter_part_tab1_1_prt_p31                 | t
- alter_part_tab1_1_prt_p31_2_prt_subothers | t
+ alter_part_tab1_1_prt_p2_2_prt_subothers  | t
+ alter_part_tab1_1_prt_p31_2_prt_sp1       | t
  alter_part_tab1_1_prt_p31_2_prt_sp2       | t
-(13 rows)
+ alter_part_tab1_1_prt_p31_2_prt_subothers | t
+(9 rows)
 
 drop table alter_part_tab1;
 -- attribute encoding tests for column oriented tables
@@ -1058,26 +1048,26 @@ RESET gp_vmem_idle_resource_timeout;
 -- to gp_default_storage_options GUC
 set default_table_access_method = "appendoptimized";
 set gp_default_storage_options = "blocksize=32768";
-create table alter_table_reorg_heap (a int, b text);
+create table alter_table_reorg_ao (a int, b text);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
-    where c.relname = 'alter_table_reorg_heap';
-        relname         |     amname      | relkind | reloptions 
-------------------------+-----------------+---------+------------
- alter_table_reorg_heap | heap | r       | 
+    where c.relname = 'alter_table_reorg_ao';
+       relname        |     amname      | relkind | reloptions 
+----------------------+-----------------+---------+------------
+ alter_table_reorg_ao | appendoptimized | r       | 
 (1 row)
 
 set default_table_access_method = "aoco";
 set gp_default_storage_options = "blocksize=32768";
-alter table alter_table_reorg_heap set with (reorganize=true);
+alter table alter_table_reorg_ao set with (reorganize=true);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
-    where c.relname = 'alter_table_reorg_heap';
-        relname         |     amname      | relkind | reloptions 
-------------------------+-----------------+---------+------------
- alter_table_reorg_heap | heap | r       | 
+    where c.relname = 'alter_table_reorg_ao';
+       relname        |     amname      | relkind | reloptions 
+----------------------+-----------------+---------+------------
+ alter_table_reorg_ao | appendoptimized | r       | 
 (1 row)
 
 set default_table_access_method = "aoco";
@@ -1150,8 +1140,6 @@ RESET gp_default_storage_options;
 create table dsp_partition1(i int, j int, k int) with(appendonly=true) partition by range(i) (start(1) end(10) every(5));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_1" for table "dsp_partition1"
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_2" for table "dsp_partition1"
 Insert into dsp_partition1 select i, i+1, i+2 from generate_series(1,9) i;
 select count(*) from dsp_partition1;
  count 
@@ -1181,9 +1169,7 @@ set default_table_access_method = "aoco";
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 -- Add partition
 alter table dsp_partition1 add partition p3 start(11) end(15);
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_p3" for table "dsp_partition1"
 alter table dsp_partition1 add partition p4 start(16) end(18) with(appendonly=false);
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_p4" for table "dsp_partition1"
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
     where c.relname like 'dsp_partition1%' order by relname;
@@ -1197,9 +1183,7 @@ select c.relname, am.amname, c.relkind, c.reloptions
 (5 rows)
 
 -- Split partition
-alter table dsp_partition1 split partition for (rank(2)) at (7) into (partition split_p1, partition split_p2);
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_split_p1" for table "dsp_partition1"
-NOTICE:  CREATE TABLE will create partition "dsp_partition1_1_prt_split_p2" for table "dsp_partition1"
+alter table dsp_partition1 split partition for (6) at (7) into (partition split_p1, partition split_p2);
 select relname, relkind, relstorage, reloptions from pg_class where relname like 'dsp_partition1%' order by relname;
             relname            | relkind | relstorage |              reloptions              
 -------------------------------+---------+------------+--------------------------------------
@@ -1228,4 +1212,4 @@ gp_default_storage_options value cannot be different on master and segments
 Values on all segments are consistent
 GUC          : gp_default_storage_options
 Master  value: appendonly=false,blocksize=32768,compresstype=none,checksum=true,orientation=row
-Segment value: appendonly=false,blocksize=32768,compresstype=none,checksum=true,orientation=row
+Segment value: appendonly=false,blocksize=32766,compresstype=none,checksum=true,orientation=row

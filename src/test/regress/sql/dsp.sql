@@ -121,12 +121,15 @@ select relid::regclass, blocksize, compresstype,
 Create table alter_part_tab1 (id SERIAL,a1 int ,a2 char(5) ,a3 text )
 WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib)
 partition by list(a2) subpartition by range(a1)
-subpartition template
+(partition p1 values('val1')
   (default subpartition subothers,
    subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
+   subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none)),
+ partition p2 values('val2')
+   (default subpartition subothers,
+   subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
    subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none))
-(partition p1 values('val1'),
- partition p2 values('val2'));
+);
 
 Insert into alter_part_tab1(a1,a2,a3)
   select g, 'val1', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' from generate_series(1,10) g;
@@ -138,7 +141,10 @@ select count(*) from alter_part_tab1;
 alter table alter_part_tab1 add column a4 numeric default 5.5;
 
 -- Check that it works for ADD PARTITION, too.
-ALTER TABLE alter_part_tab1 ADD partition p31 values(1) WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib);
+ALTER TABLE alter_part_tab1 ADD partition p31 values(1) WITH (appendonly=true, orientation=column, checksum=true,compresstype=zlib)
+(default subpartition subothers,
+   subpartition sp1 start(1) end(9) with (appendonly=true,orientation=column,checksum=true,compresstype=rle_type),
+   subpartition sp2 start(11) end(20) with(appendonly=true,orientation=column,checksum=true,compresstype=none));
 
 SELECT relname, checksum from pg_appendonly ao, pg_class c where ao.relid = c.oid and relname like 'alter_part_tab1%';
 
@@ -407,16 +413,16 @@ RESET gp_vmem_idle_resource_timeout;
 -- to gp_default_storage_options GUC
 set default_table_access_method = "appendoptimized";
 set gp_default_storage_options = "blocksize=32768";
-create table alter_table_reorg_heap (a int, b text);
+create table alter_table_reorg_ao (a int, b text);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
-    where c.relname = 'alter_table_reorg_heap';
+    where c.relname = 'alter_table_reorg_ao';
 set default_table_access_method = "aoco";
 set gp_default_storage_options = "blocksize=32768";
-alter table alter_table_reorg_heap set with (reorganize=true);
+alter table alter_table_reorg_ao set with (reorganize=true);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
-    where c.relname = 'alter_table_reorg_heap';
+    where c.relname = 'alter_table_reorg_ao';
 
 set default_table_access_method = "aoco";
 set gp_default_storage_options = "blocksize=32768";
@@ -466,7 +472,7 @@ select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
     where c.relname like 'dsp_partition1%' order by relname;
 -- Split partition
-alter table dsp_partition1 split partition for (rank(2)) at (7) into (partition split_p1, partition split_p2);
+alter table dsp_partition1 split partition for (6) at (7) into (partition split_p1, partition split_p2);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
     where c.relname like 'dsp_partition1%' order by relname;
