@@ -1118,17 +1118,17 @@ explain select * from (t_joinsize_1 join t_joinsize_2 on t_joinsize_1.c2 = t_joi
 -----------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=52.75..861.00 rows=20001 width=20)
    ->  Hash Join  (cost=52.75..461.00 rows=6667 width=20)
-         Hash Cond: (t_joinsize_1_1_prt_1.c2 = t_joinsize_2.c2)
+         Hash Cond: (t_joinsize_1_1_prt_2.c2 = t_joinsize_2.c2)
          ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=7.25..64.00 rows=200 width=12)
-               Hash Key: t_joinsize_1_1_prt_1.c2
+               Hash Key: t_joinsize_1_1_prt_2.c2
                ->  Hash Join  (cost=7.25..52.00 rows=200 width=12)
-                     Hash Cond: (t_joinsize_1_1_prt_1.c1 = t_joinsize_3.c)
+                     Hash Cond: (t_joinsize_1_1_prt_2.c1 = t_joinsize_3.c)
                      ->  Append  (cost=0.00..35.00 rows=400 width=8)
-                           ->  Seq Scan on t_joinsize_1_1_prt_1  (cost=0.00..3.40 rows=14 width=8)
                            ->  Seq Scan on t_joinsize_1_1_prt_2  (cost=0.00..3.40 rows=14 width=8)
                            ->  Seq Scan on t_joinsize_1_1_prt_3  (cost=0.00..3.40 rows=14 width=8)
                            ->  Seq Scan on t_joinsize_1_1_prt_4  (cost=0.00..3.40 rows=14 width=8)
                            ->  Seq Scan on t_joinsize_1_1_prt_5  (cost=0.00..3.40 rows=14 width=8)
+                           ->  Seq Scan on t_joinsize_1_1_prt_6  (cost=0.00..3.40 rows=14 width=8)
                            ->  Seq Scan on t_joinsize_1_1_prt_extra  (cost=0.00..12.00 rows=334 width=8)
                      ->  Hash  (cost=6.00..6.00 rows=34 width=4)
                            ->  Redistribute Motion 3:3  (slice3; segments: 3)  (cost=0.00..6.00 rows=34 width=4)

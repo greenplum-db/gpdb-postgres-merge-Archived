@@ -1121,7 +1121,48 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	 */
 	penc_cls = merge_partition_encoding(pstate, penc_cls, parent_tblenc);
 
+	/*
+	 * If there is a DEFAULT PARTITION, move it to the front of the list.
+	 *
+	 * This is to keep the partition naming consistent with historic behavior.
+	 * In GPDB 6 and below, the default partition is always numbered 1,
+	 * regardless of where in the command it is listed. In other words, it is
+	 * always given number 1 in the "partcomp" struct . The default partition
+	 * itself always has a name, so the partition number isn't used for it,
+	 * but it affects the numbering of all the other partitions.
+	 *
+	 * The main reason we work so hard to keep the naming the same as in
+	 * GPDB 6 is to keep the regression tests that refer to partitions by
+	 * name after creating them with the legacy partitioning syntax unchanged.
+	 * And conceivably there might be users relying on it on real systems,
+	 * too.
+	 */
+	List	   *partDefElems = NIL;
+	GpPartDefElem *defaultPartDefElem = NULL;
 	foreach(lc, gpPartSpec->partDefElems)
+	{
+		Node	   *n = lfirst(lc);
+
+		if (IsA(n, GpPartDefElem))
+		{
+			GpPartDefElem *elem           = (GpPartDefElem *) n;
+
+			if (elem->isDefault)
+			{
+				if (defaultPartDefElem)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("multiple default partitions are not allowed"),
+							 parser_errposition(pstate, elem->location)));
+				defaultPartDefElem = elem;
+				partDefElems = lcons(elem, partDefElems);
+			}
+			else
+				partDefElems = lappend(partDefElems, elem);
+		}
+	}
+
+	foreach(lc, partDefElems)
 	{
 		Node	   *n = lfirst(lc);
 
