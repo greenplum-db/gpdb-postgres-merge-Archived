@@ -249,6 +249,7 @@ plan_tree_walker(Node *node,
 		case T_BitmapHeapScan:
 		case T_DynamicBitmapHeapScan:
 		case T_WorkTableScan:
+		case T_NamedTuplestoreScan:
 			if (walk_scan_node_fields((Scan *) node, walker, context))
 				return true;
 			break;

@@ -447,6 +447,7 @@ DirectDispatchUpdateContentIdsFromPlan(PlannerInfo *root, Plan *plan)
 			}
 			break;
 		case T_SubqueryScan:
+		case T_NamedTuplestoreScan:
 			/* no change to dispatchInfo */
 			break;
 		case T_TidScan:

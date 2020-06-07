@@ -548,6 +548,17 @@ plan_tree_mutator(Node *node,
 				return (Node *) newwts;
 			}
 
+		case T_NamedTuplestoreScan:
+			{
+				NamedTuplestoreScan *ntscan = (NamedTuplestoreScan *) node;
+				NamedTuplestoreScan *newntscan;
+
+				FLATCOPY(newntscan, ntscan, NamedTuplestoreScan);
+				SCANMUTATE(newntscan, ntscan);
+				return (Node *) newntscan;
+			}
+			break;
+
 		case T_Join:
 			/* Abstract: Should see only subclasses. */
 			elog(ERROR, "abstract node type not allowed: T_Join");

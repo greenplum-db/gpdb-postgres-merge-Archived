@@ -3285,6 +3285,14 @@ create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
 
 	cost_namedtuplestorescan(pathnode, root, rel, pathnode->param_info);
 
+	/*
+	 * When this is used in triggers that run on QEs, the locus is ignored
+	 * and the scan is executed locally on the QE anyway. On QD, it's not
+	 * clear if named tuplestores are populated correctly in triggers, but if
+	 * it does work t all, Entry seems most appropriate.
+	 */
+	CdbPathLocus_MakeEntry(&pathnode->locus);
+
 	return pathnode;
 }
 

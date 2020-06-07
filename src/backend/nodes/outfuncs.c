@@ -5157,6 +5157,7 @@ _outCreateTrigStmt(StringInfo str, const CreateTrigStmt *node)
 	WRITE_NODE_FIELD(columns);
 	WRITE_NODE_FIELD(whenClause);
 	WRITE_BOOL_FIELD(isconstraint);
+	WRITE_NODE_FIELD(transitionRels);
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_NODE_FIELD(constrrel);

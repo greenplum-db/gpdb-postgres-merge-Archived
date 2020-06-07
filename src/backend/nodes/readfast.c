@@ -1239,13 +1239,25 @@ _readCreateTrigStmt(void)
 	READ_NODE_FIELD(columns);
 	READ_NODE_FIELD(whenClause);
 	READ_BOOL_FIELD(isconstraint);
+	READ_NODE_FIELD(transitionRels);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
 	READ_NODE_FIELD(constrrel);
 	READ_OID_FIELD(trigOid);
 
 	READ_DONE();
+}
 
+static TriggerTransition *
+_readTriggerTransition()
+{
+	READ_LOCALS(TriggerTransition);
+
+	READ_STRING_FIELD(name);
+	READ_BOOL_FIELD(isNew);
+	READ_BOOL_FIELD(isTable);
+
+	READ_DONE();
 }
 
 static CreateTableSpaceStmt *
@@ -2517,6 +2529,9 @@ readNodeBinary(void)
 				break;
 			case T_CreateTrigStmt:
 				return_value = _readCreateTrigStmt();
+				break;
+			case T_TriggerTransition:
+				return_value = _readTriggerTransition();
 				break;
 
 			case T_CreateTableSpaceStmt:
