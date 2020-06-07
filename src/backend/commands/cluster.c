@@ -676,6 +676,11 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
 	MultiXactId cutoffMulti;
+	/*
+	 * GPDB_12_MERGE_FIXME: We use specific bool in abstract code. This should
+	 * be somehow hidden by table am api or necessity of this switch should be
+	 * revisited.
+	 */
 	bool		is_ao = RelationIsAppendOptimized(OldHeap);
 
 	/* Mark the correct index as clustered */
