@@ -908,18 +908,14 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	Tuplesortstate *tuplesort;
 	PGRUsage	ru0;
 
-	bool					is_ao_rows = false;
-	bool					is_ao_cols = true;
 	AOTupleId				aoTupleId;
-	AppendOnlyInsertDesc	aoInsertDesc = NULL;
-	MemTupleBinding*		mt_bind = NULL;
 	AOCSInsertDesc			idesc = NULL;
 	bool				   *proj = NULL;
 	int						write_seg_no;
-	MemTuple				mtuple = NULL;
+	AOCSScanDesc			scan = NULL;
+	TupleTableSlot		   *slot;
 
 	pg_rusage_init(&ru0);
-	Assert(is_ao_cols || is_ao_rows);
 
 	/*
 	 * Curently AO storage lacks cost model for IndexScan, thus IndexScan
@@ -998,75 +994,41 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 
 	/* Log what we're doing */
-	ereport(INFO,
+	ereport(DEBUG2,
 			(errmsg("clustering \"%s.%s\" using sequential scan and sort",
 					get_namespace_name(RelationGetNamespace(OldHeap)),
 					RelationGetRelationName(OldHeap))));
 
 	/* Scan through old table to convert data into heap tuples for sorting */
-	if (is_ao_rows)
+	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
+
+	proj = palloc(sizeof(bool) * natts);
+	memset(proj, true, natts);
+
+	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
+							GetActiveSnapshot(),
+							NULL /* relationTupleDesc */, proj);
+
+	while (aocs_getnext(scan, ForwardScanDirection, slot))
 	{
-		TupleTableSlot	*slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
-		TableScanDesc aoscandesc = appendonly_beginscan(OldHeap, GetActiveSnapshot(), 0, NULL,		
-											NULL, 0);
-		mt_bind = create_memtuple_binding(oldTupDesc);
+		Datum	   *slot_values;
+		bool	   *slot_isnull;
+		HeapTuple   tuple;
+		CHECK_FOR_INTERRUPTS();
 
-		while (appendonly_getnextslot(aoscandesc, ForwardScanDirection, slot))
-		{
-			Datum	   *slot_values;
-			bool	   *slot_isnull;
-			HeapTuple   tuple;
+		slot_getallattrs(slot);
+		slot_values = slot_get_values(slot);
+		slot_isnull = slot_get_isnull(slot);
 
-			CHECK_FOR_INTERRUPTS();
+		tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
 
-			/* Extract all the values of the tuple */
-			slot_getallattrs(slot);
-			slot_values = slot_get_values(slot);
-			slot_isnull = slot_get_isnull(slot);
-			tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
-
-			*num_tuples += 1;
-			tuplesort_putheaptuple(tuplesort, tuple);
-			heap_freetuple(tuple);
-		}
-
-		ExecDropSingleTupleTableSlot(slot);
-
-		appendonly_endscan(aoscandesc);
+		*num_tuples += 1;
+		tuplesort_putheaptuple(tuplesort, tuple);
+		heap_freetuple(tuple);
 	}
-	else
-	{
-		AOCSScanDesc scan = NULL;
-		TupleTableSlot *slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
 
-		proj = palloc(sizeof(bool) * natts);
-		memset(proj, true, natts);
-
-		scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
-								GetActiveSnapshot(),
-								NULL /* relationTupleDesc */, proj);
-
-		while (aocs_getnext(scan, ForwardScanDirection, slot))
-		{
-			Datum	   *slot_values;
-			bool	   *slot_isnull;
-			HeapTuple   tuple;
-			CHECK_FOR_INTERRUPTS();
-
-			slot_getallattrs(slot);
-			slot_values = slot_get_values(slot);
-			slot_isnull = slot_get_isnull(slot);
-
-			tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
-
-			*num_tuples += 1;
-			tuplesort_putheaptuple(tuplesort, tuple);
-			heap_freetuple(tuple);
-		}
-
-		ExecDropSingleTupleTableSlot(slot);
-		aocs_endscan(scan);
-	}
+	ExecDropSingleTupleTableSlot(slot);
+	aocs_endscan(scan);
 
 
 	/*
@@ -1078,21 +1040,13 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	
 	write_seg_no = ChooseSegnoForWrite(NewHeap);
 
-	if (is_ao_rows)
-	{
-		aoInsertDesc = appendonly_insert_init(NewHeap, write_seg_no);
-	}
-	else
-	{
-		memset(proj, true, natts);
-		idesc = aocs_insert_init(NewHeap, write_seg_no);
-	}
+	memset(proj, true, natts);
+	idesc = aocs_insert_init(NewHeap, write_seg_no);
 
 	/* Insert sorted heap tuples into new storage */
 	for (;;)
 	{
 		HeapTuple	tuple;
-		uint32		prev_memtuple_len = 0;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1100,47 +1054,15 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 		if (tuple == NULL)
 			break;
 
-		if (is_ao_rows)
-		{
-			uint32		len;
-			uint32		null_save_len;
-			bool		has_nulls;
-			heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-
-			len = compute_memtuple_size(mt_bind, values, isnull, &null_save_len, &has_nulls);
-			if (len > prev_memtuple_len)
-			{
-				/* Here we are trying to avoid reallocation of temp mtuple */
-				if (mtuple != NULL)
-					pfree(mtuple);
-				mtuple = palloc(len);
-				prev_memtuple_len = len;
-			}
-
-			memtuple_form_to(mt_bind, values, isnull, len, null_save_len, has_nulls,
-					 mtuple);
-
-			appendonly_insert(aoInsertDesc, mtuple, &aoTupleId);
-		}
-		else
-		{
-			heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-			aocs_insert_values(idesc, values, isnull, &aoTupleId);
-		}
+		heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+		aocs_insert_values(idesc, values, isnull, &aoTupleId);
 	}
 
 	tuplesort_end(tuplesort);
 
 	/* Finish and deallocate insertion */
-	if (is_ao_rows)
-	{
-		appendonly_insert_finish(aoInsertDesc);
-	}
-	else if (is_ao_cols)
-	{
-		aocs_insert_finish(idesc);
-		pfree(proj);
-	}
+	aocs_insert_finish(idesc);
+	pfree(proj);
 }
 
 static bool
