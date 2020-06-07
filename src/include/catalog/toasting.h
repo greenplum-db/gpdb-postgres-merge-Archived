@@ -104,21 +104,15 @@ DECLARE_TOAST(pg_tablespace, 4185, 4186);
 #define PgTablespaceToastTable 4185
 #define PgTablespaceToastIndex 4186
 
-/* relation id: 5036 - gp_segment_configuration 20101122 */
+/* GPDB additional normal catalogs */
+DECLARE_TOAST(pg_attribute_encoding, 6233, 6234);
+DECLARE_TOAST(pg_type_encoding, 6222, 6223);
+DECLARE_TOAST(pg_partition_encoding, 9905, 9906);
+DECLARE_TOAST(pg_extprotocol, 7173, 7174);
+
+/* GPDB additional shared catalogs */
 DECLARE_TOAST(gp_segment_configuration, 6092, 6093);
 #define GpSegmentConfigToastTable	6092
 #define GpSegmentConfigToastIndex	6093
-/* relation id: 6231 - pg_attribute_encoding 20110727 */
-DECLARE_TOAST(pg_attribute_encoding, 6233, 6234);
-#define PgAttributeEncodingToastTable	6233
-#define PgAttributeEncodingToastIndex	6234
-/* relation id: 6220 - pg_type_encoding 20110727 */
-DECLARE_TOAST(pg_type_encoding, 6222, 6223);
-#define PgTypeEncodingToastTable	6222
-#define PgTypeEncodingToastIndex	6223
-/* relation id: 9903 - pg_partition_encoding 20110814 */
-DECLARE_TOAST(pg_partition_encoding, 9905, 9906);
-#define PgPartitionEncodingToastTable	9905
-#define PgPartitionEncodingToastIndex	9906
 
 #endif							/* TOASTING_H */
