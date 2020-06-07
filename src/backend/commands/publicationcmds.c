@@ -452,6 +452,19 @@ AlterPublication(AlterPublicationStmt *stmt)
 	else
 		AlterPublicationTables(stmt, rel, tup);
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackUpdObject(PublicationRelationId, pubform->oid, GetUserId(), "ALTER", "PUBLICATION");
+	}
+
 	/* Cleanup. */
 	heap_freetuple(tup);
 	table_close(rel, RowExclusiveLock);

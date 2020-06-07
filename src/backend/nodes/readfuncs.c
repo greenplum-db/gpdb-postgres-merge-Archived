@@ -4034,6 +4034,20 @@ _readCreatePublicationStmt()
 	READ_DONE();
 }
 
+static AlterPublicationStmt *
+_readAlterPublicationStmt()
+{
+	READ_LOCALS(AlterPublicationStmt);
+
+	READ_STRING_FIELD(pubname);
+	READ_NODE_FIELD(options);
+	READ_NODE_FIELD(tables);
+	READ_BOOL_FIELD(for_all_tables);
+	READ_ENUM_FIELD(tableAction, DefElemAction);
+
+	READ_DONE();
+}
+
 static CreatePolicyStmt *
 _readCreatePolicyStmt()
 {
@@ -4610,6 +4624,8 @@ parseNodeString(void)
 		return_value = _readCreatePLangStmt();
 	else if (MATCHX("CREATEPUBLICATIONSTMT"))
 		return_value = _readCreatePublicationStmt();
+	else if (MATCHX("ALTERPUBLICATIONSTMT"))
+		return_value = _readAlterPublicationStmt();
 	else if (MATCHX("CREATEPOLICYSTMT"))
 		return_value = _readCreatePolicyStmt();
 	else if (MATCHX("CREATEROLESTMT"))

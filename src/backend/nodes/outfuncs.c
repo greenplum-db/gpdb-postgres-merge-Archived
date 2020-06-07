@@ -5326,6 +5326,18 @@ _outCreatePublicationStmt(StringInfo str, const CreatePublicationStmt *node)
 	WRITE_BOOL_FIELD(for_all_tables);
 }
 
+static void
+_outAlterPublicationStmt(StringInfo str, const AlterPublicationStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERPUBLICATIONSTMT");
+
+	WRITE_STRING_FIELD(pubname);
+	WRITE_NODE_FIELD(options);
+	WRITE_NODE_FIELD(tables);
+	WRITE_BOOL_FIELD(for_all_tables);
+	WRITE_ENUM_FIELD(tableAction, DefElemAction);
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outTupleDescNode(StringInfo str, const TupleDescNode *node)
@@ -6381,6 +6393,9 @@ outNode(StringInfo str, const void *obj)
 
 			case T_CreatePublicationStmt:
 				_outCreatePublicationStmt(str, obj);
+				break;
+			case T_AlterPublicationStmt:
+				_outAlterPublicationStmt(str, obj);
 				break;
 
 			case T_CreatePolicyStmt:

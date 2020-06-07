@@ -1785,6 +1785,9 @@ _outNode(StringInfo str, void *obj)
 			case T_CreatePublicationStmt:
 				_outCreatePublicationStmt(str, obj);
 				break;
+			case T_AlterPublicationStmt:
+				_outAlterPublicationStmt(str, obj);
+				break;
 
 			case T_CreatePolicyStmt:
 				_outCreatePolicyStmt(str, obj);

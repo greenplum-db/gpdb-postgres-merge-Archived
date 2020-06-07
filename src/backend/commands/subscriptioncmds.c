@@ -52,6 +52,8 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
 
 /*
@@ -405,8 +407,9 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	subid = GetNewOidWithIndex(rel, SubscriptionObjectIndexId,
-							   Anum_pg_subscription_oid);
+	subid = GetNewOidForSubscription(rel, SubscriptionObjectIndexId,
+									 Anum_pg_subscription_oid,
+									 MyDatabaseId, stmt->subname);
 	values[Anum_pg_subscription_oid - 1] = ObjectIdGetDatum(subid);
 	values[Anum_pg_subscription_subdbid - 1] = ObjectIdGetDatum(MyDatabaseId);
 	values[Anum_pg_subscription_subname - 1] =

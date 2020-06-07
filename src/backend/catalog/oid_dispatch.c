@@ -106,6 +106,7 @@
 #include "catalog/pg_resgroup.h"
 #include "catalog/pg_resgroupcapability.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
@@ -868,6 +869,23 @@ GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	key.type = T_OidAssignment;
 	key.keyOid1 = ev_class;
 	key.objname = rulename;
+	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
+}
+
+Oid
+GetNewOidForSubscription(Relation relation, Oid indexId, AttrNumber oidcolumn,
+						 Oid subdbid, char *subname)
+{
+	OidAssignment key;
+
+	Assert(RelationGetRelid(relation) == SubscriptionRelationId);
+	Assert(indexId == SubscriptionObjectIndexId);
+	Assert(oidcolumn == Anum_pg_subscription_oid);
+
+	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
+	key.keyOid1 = subdbid;
+	key.objname = subname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
