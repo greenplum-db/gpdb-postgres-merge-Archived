@@ -1088,8 +1088,8 @@ appendonly_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 		/* Extract all the values of the tuple */
 		slot_getallattrs(slot);
-		slot_values = slot_get_values(slot);
-		slot_isnull = slot_get_isnull(slot);
+		slot_values = slot->tts_values;
+		slot_isnull = slot->tts_isnull;
 		tuple = heap_form_tuple(oldTupDesc, slot_values, slot_isnull);
 
 		*num_tuples += 1;
