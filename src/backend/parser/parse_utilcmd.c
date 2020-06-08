@@ -80,6 +80,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "catalog/pg_appendonly_fn.h"
 
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
@@ -1372,9 +1373,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 */
 	if (stmt && table_like_clause->options & CREATE_TABLE_LIKE_STORAGE)
 	{
-		/* GDPB_12_MERGE_FIXME: need to re-implement this */
-		elog(ERROR, "not implemented");
-#if 0
 		MemoryContext oldcontext;
 		/*
 		 * As we are modifying the utility statement we must make sure these
@@ -1382,22 +1380,38 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 */
 		oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
-		if (relation->rd_appendonly)
+		if (RelationIsAppendOptimized(relation))
 		{
-			Form_pg_appendonly ao = relation->rd_appendonly;
+			elog(ERROR, "not implemented");
+#if 0
+			int32 blocksize;
+			int32 safefswritersize;
+			int16 compresslevel;
+			bool  checksum;
+			NameData compresstype;
+
+			GetAppendOnlyEntryAttributes(relation->rd_id, &blocksize,
+			                             &safefswritersize,&compresslevel,
+			                             &checksum,&compresstype);
 
 			stmt->options = lappend(stmt->options,
-									makeDefElem("appendonly", (Node *) makeString(pstrdup("true")), -1));
-			if (ao->columnstore)
+			                        makeDefElem("appendonly", (Node *) makeString(pstrdup("true")), -1));
+
+			if (RelationIsAoCols(relation))
 				stmt->options = lappend(stmt->options,
-										makeDefElem("orientation", (Node *) makeString(pstrdup("column")), -1));
+				                        makeDefElem("orientation", (Node *) makeString(pstrdup("column")), -1));
+
+
 			stmt->options = lappend(stmt->options,
-									makeDefElem("checksum", (Node *) makeInteger(ao->checksum), -1));
+			                        makeDefElem("blocksize", (Node *) makeInteger(blocksize), -1));
 			stmt->options = lappend(stmt->options,
-									makeDefElem("compresslevel", (Node *) makeInteger(ao->compresslevel), -1));
-			if (strlen(NameStr(ao->compresstype)) > 0)
+			                        makeDefElem("checksum", (Node *) makeInteger(checksum), -1));
+			stmt->options = lappend(stmt->options,
+			                        makeDefElem("compresslevel", (Node *) makeInteger(compresslevel), -1));
+			if (strlen(NameStr(compresstype)) > 0)
 				stmt->options = lappend(stmt->options,
-										makeDefElem("compresstype", (Node *) makeString(pstrdup(NameStr(ao->compresstype))), -1));
+				                        makeDefElem("compresstype", (Node *) makeString(pstrdup(NameStr(compresstype))), -1));
+#endif
 		}
 
 		/*
@@ -1405,7 +1419,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 */
 		cxt->attr_encodings = list_union(cxt->attr_encodings, rel_get_column_encodings(relation));
 		MemoryContextSwitchTo(oldcontext);
-#endif
 	}
 
 	/*
