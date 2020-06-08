@@ -1139,24 +1139,6 @@ CTranslatorQueryToDXL::GetCtidAndSegmentId
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CTranslatorQueryToDXL::GetTupleOidColId
-//
-//	@doc:
-//		Obtains the id of the tuple oid column for the target table of a DML
-//		update
-//
-//---------------------------------------------------------------------------
-ULONG
-CTranslatorQueryToDXL::GetTupleOidColId()
-{
-	IMDId *mdid = CTranslatorUtils::GetSystemColType(m_mp, ObjectIdAttributeNumber);
-	ULONG tuple_oid_colid = CTranslatorUtils::GetColId(m_query_level, m_query->resultRelation, ObjectIdAttributeNumber, mdid, m_var_to_colid_map);
-	mdid->Release();
-	return tuple_oid_colid;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
 //		CTranslatorQueryToDXL::TranslateDeleteQueryToDXL
 //
 //	@doc:
@@ -1248,11 +1230,8 @@ CTranslatorQueryToDXL::TranslateUpdateQueryToDXL()
 	ULONG tuple_oid_colid = 0;
 	
 
-	BOOL has_oids = md_rel->HasOids();
-	if (has_oids)
-	{
-		tuple_oid_colid = GetTupleOidColId();
-	}
+	// GPDB_12_MERGE_FIXME: Dead code, this needs to be removed from Orca too
+	BOOL has_oids = false;
 
 	// get (resno -> colId) mapping of columns to be updated
 	IntToUlongMap *update_column_map = UpdatedColumnMapping();
