@@ -8,8 +8,8 @@ CREATE TABLE t_ao_c (LIKE t_ao); -- Should create a heap table
 
 CREATE TABLE t_ao_enc_a (LIKE t_ao_enc INCLUDING STORAGE);
 
--- Verify gp_default_storage_options GUC doesn't get used
-SET gp_default_storage_options = "appendonly=true, orientation=row";
+-- Verify default_table_access_method GUC doesn't get used
+SET default_table_access_method="appendoptimized";
 CREATE TABLE t_ao_d (LIKE t_ao INCLUDING ALL);
 RESET gp_default_storage_options;
 

@@ -13,8 +13,8 @@ CREATE TABLE t_ao_c (LIKE t_ao); -- Should create a heap table
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 CREATE TABLE t_ao_enc_a (LIKE t_ao_enc INCLUDING STORAGE);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
--- Verify gp_default_storage_options GUC doesn't get used
-SET gp_default_storage_options = "appendonly=true, orientation=row";
+-- Verify default_table_access_method GUC doesn't get used
+SET default_table_access_method="appendoptimized";
 CREATE TABLE t_ao_d (LIKE t_ao INCLUDING ALL);
 RESET gp_default_storage_options;
 -- Verify created tables and attributes
@@ -32,13 +32,13 @@ WHERE
 	c.relname LIKE 't_ao%';
   relname   | amname | columnstore | compresstype | compresslevel 
 ------------+--------+-------------+--------------+---------------
- t_ao       | aoco       | t           |              |             0
- t_ao_enc   | aoco       | t           |              |             0
- t_ao_a     | aoco       | t           |              |             0
- t_ao_b     | aoco       | t           |              |             0
- t_ao_c     | heap       |             |              |              
- t_ao_d     | aoco       | t           |              |             0
- t_ao_enc_a | aoco       | t           |              |             0
+ t_ao       | aoco   | t           |              |             0
+ t_ao_enc   | aoco   | t           |              |             0
+ t_ao_a     | aoco   | t           |              |             0
+ t_ao_b     | aoco   | t           |              |             0
+ t_ao_c     | heap   |             |              |              
+ t_ao_enc_a | aoco   | t           |              |             0
+ t_ao_d     | aoco   | t           |              |             0
 (7 rows)
 
 SELECT

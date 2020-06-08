@@ -1382,8 +1382,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 		if (RelationIsAppendOptimized(relation))
 		{
-			elog(ERROR, "not implemented");
-#if 0
 			int32 blocksize;
 			int32 safefswritersize;
 			int16 compresslevel;
@@ -1393,14 +1391,10 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			GetAppendOnlyEntryAttributes(relation->rd_id, &blocksize,
 			                             &safefswritersize,&compresslevel,
 			                             &checksum,&compresstype);
-
-			stmt->options = lappend(stmt->options,
-			                        makeDefElem("appendonly", (Node *) makeString(pstrdup("true")), -1));
-
-			if (RelationIsAoCols(relation))
-				stmt->options = lappend(stmt->options,
-				                        makeDefElem("orientation", (Node *) makeString(pstrdup("column")), -1));
-
+			if (RelationIsAoRows(relation))
+				stmt->accessMethod = pstrdup("appendoptimized");
+			else if (RelationIsAoCols(relation))
+				stmt->accessMethod = pstrdup("aoco");
 
 			stmt->options = lappend(stmt->options,
 			                        makeDefElem("blocksize", (Node *) makeInteger(blocksize), -1));
@@ -1411,7 +1405,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			if (strlen(NameStr(compresstype)) > 0)
 				stmt->options = lappend(stmt->options,
 				                        makeDefElem("compresstype", (Node *) makeString(pstrdup(NameStr(compresstype))), -1));
-#endif
 		}
 
 		/*
