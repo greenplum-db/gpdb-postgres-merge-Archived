@@ -1091,6 +1091,10 @@ create temp table temp_part partition of temp_parted default; -- ok
 drop table perm_parted cascade;
 drop table temp_parted cascade;
 -- check that adding partitions to a table while it is being used is prevented
+-- This test doesn't work as intended in GPDB, because statement-triggers don't
+-- work. I was not able to formulate a test that would exercise the same
+-- codepath as this does in upstream. So this test produces a different error,
+-- and isn't very interesting in GDPB.
 create table tab_part_create (a int) partition by list (a);
 create or replace function func_part_create() returns trigger
   language plpgsql as $$
@@ -1101,9 +1105,8 @@ create or replace function func_part_create() returns trigger
 create trigger trig_part_create before insert on tab_part_create
   for each statement execute procedure func_part_create();
 insert into tab_part_create values (1);
-ERROR:  cannot CREATE TABLE .. PARTITION OF "tab_part_create" because it is being used by active queries in this session
-CONTEXT:  SQL statement "create table tab_part_create_1 partition of tab_part_create for values in (1)"
-PL/pgSQL function func_part_create() line 3 at EXECUTE
+DETAIL:  Partition key of the failing row contains (a) = (1).
+ERROR:  no partition of relation "tab_part_create" found for row
 drop table tab_part_create;
 drop function func_part_create();
 -- test using a volatile expression as partition bound

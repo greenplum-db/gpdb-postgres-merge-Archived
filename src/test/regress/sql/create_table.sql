@@ -835,6 +835,10 @@ drop table perm_parted cascade;
 drop table temp_parted cascade;
 
 -- check that adding partitions to a table while it is being used is prevented
+-- This test doesn't work as intended in GPDB, because statement-triggers don't
+-- work. I was not able to formulate a test that would exercise the same
+-- codepath as this does in upstream. So this test produces a different error,
+-- and isn't very interesting in GDPB.
 create table tab_part_create (a int) partition by list (a);
 create or replace function func_part_create() returns trigger
   language plpgsql as $$
