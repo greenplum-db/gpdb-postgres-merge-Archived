@@ -1061,7 +1061,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	ListCell	*lc;
 	List	   *ancestors = get_partition_ancestors(parentrelid);
 	partname_comp partcomp = {.tablename=NULL, .level=0, .partnum=0};
-	bool isSubTemplate;
+	bool isSubTemplate = false;
 	List       *penc_cls = NIL;
 	List       *parent_tblenc = NIL;
 
@@ -1075,15 +1075,10 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	/* Remove "tablename" cell from parentOptions, if exists */
 	extract_tablename_from_options(&parentoptions);
 
-	if (subPartSpec)
+	if (subPartSpec && subPartSpec->gpPartDef)
 	{
-		if (subPartSpec->gpPartDef)
-		{
-			Assert(subPartSpec->gpPartDef->istemplate);
-			isSubTemplate = subPartSpec->gpPartDef->istemplate;
-		}
-		else
-			isSubTemplate = false;
+		Assert(subPartSpec->gpPartDef->istemplate);
+		isSubTemplate = subPartSpec->gpPartDef->istemplate;
 	}
 
 	foreach(lc, parentattenc)
