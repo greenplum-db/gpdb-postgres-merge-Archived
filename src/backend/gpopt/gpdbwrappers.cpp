@@ -2334,7 +2334,7 @@ gpdb::RelPartIsNone
 {
 	GP_WRAP_START;
 	{
-		return PART_STATUS_NONE == rel_part_status(relid);
+		return !relation_is_partitioned(relid);
 	}
 	GP_WRAP_END;
 	return false;

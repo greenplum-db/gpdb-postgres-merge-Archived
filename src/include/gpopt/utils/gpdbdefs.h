@@ -38,7 +38,9 @@ extern "C" {
 
 #include "catalog/namespace.h"
 #include "catalog/pg_exttable.h"
+#if 0
 #include "cdb/partitionselection.h"
+#endif
 #include "cdb/cdbhash.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbmutate.h"

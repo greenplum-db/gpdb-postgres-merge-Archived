@@ -217,6 +217,7 @@ extern char *get_namespace_name_or_temp(Oid nspid);
 extern Oid	get_range_subtype(Oid rangeOid);
 extern Oid	get_index_column_opclass(Oid index_oid, int attno);
 
+extern bool relation_is_partitioned(Oid oid);
 extern bool relation_exists(Oid oid);
 extern bool index_exists(Oid oid);
 extern bool type_exists(Oid oid);

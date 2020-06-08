@@ -4475,3 +4475,18 @@ get_index_column_opclass(Oid index_oid, int attno)
 
 	return opclass;
 }
+
+bool
+relation_is_partitioned(Oid relid)
+{
+	HeapTuple   tuple;
+	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(relid));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		ReleaseSysCache(tuple);
+		return true;
+	}
+	else
+		return false;
+}

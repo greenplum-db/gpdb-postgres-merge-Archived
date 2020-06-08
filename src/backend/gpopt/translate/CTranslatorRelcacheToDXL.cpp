@@ -29,7 +29,9 @@
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_proc.h"
 
+#if 0
 #include "cdb/cdbpartition.h"
+#endif
 #include "catalog/namespace.h"
 #include "catalog/pg_statistic.h"
 
@@ -254,6 +256,9 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfo
 	{
 		return RetrieveRelIndexInfoForNonPartTable(mp, rel);
 	}
+
+	return NULL;
+#if 0
 	else if (gpdb::RelPartIsRoot(rel->rd_id))
 	{
 		return RetrieveRelIndexInfoForPartTable(mp, rel);
@@ -264,6 +269,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfo
 		CMDIndexInfoArray *md_index_info_array = GPOS_NEW(mp) CMDIndexInfoArray(mp);
 		return md_index_info_array;
 	}
+#endif
 }
 
 // return index info list of indexes defined on a partitioned table
@@ -459,10 +465,16 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 	OID rel_oid
 	)
 {
+	if (gpdb::RelPartIsNone(rel_oid))
+	{
+		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Query on partitioned tables"));
+	}
+#if 0
 	if (gpdb::RelPartIsInterior(rel_oid))
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Query on intermediate partition"));
 	}
+#endif
 
 	List *part_keys = gpdb::GetPartitionAttrs(rel_oid);
 	ULONG num_of_levels = gpdb::ListLength(part_keys);
