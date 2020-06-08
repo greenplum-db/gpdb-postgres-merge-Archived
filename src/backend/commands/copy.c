@@ -281,7 +281,7 @@ static void InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *dist
 static GpDistributionData *GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
 															 ResultRelInfo *resultRelInfo,
 															 MemoryContext context);
-static unsigned int GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
+static unsigned int GetTargetSeg(GpDistributionData *distData, TupleTableSlot *slot);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
 static void close_program_pipes(CopyState cstate, bool ifThrow);
 CopyIntoClause*
@@ -1116,8 +1116,23 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 *
 		 * If RLS is not enabled for this, then just fall through to the
 		 * normal non-filtering relation handling.
+		 *
+		 * GPDB: Also do this for partitioned tables. In PostgreSQL, you get
+		 * an error:
+		 *
+		 * ERROR:  cannot copy from partitioned table "foo"
+		 * HINT:  Try the COPY (SELECT ...) TO variant.
+		 *
+		 * In GPDB 6 and before, support for COPYing partitioned table was
+		 * implemented deenop in the COPY processing code. In GPDB 7,
+		 * partitiong was replaced with upstream impementation, but for
+		 * backwards-compatibility, we do the translation to "COPY (SELECT
+		 * ...)" variant automatically, just like PostgreSQL does for RLS.
+		 * GPDB_12_MERGE_FIXME: Verify that the performance is acceptable.
+		 * The executor surely adds some overhead.
 		 */
-		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED)
+		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED ||
+			(!is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
 		{
 			SelectStmt *select;
 			ColumnRef  *cr;
@@ -2641,6 +2656,10 @@ BeginCopyTo(ParseState *pstate,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot copy from sequence \"%s\"",
 							RelationGetRelationName(rel))));
+		/*
+		 * GPDB: This is not reached in GPDB, because we transform the command
+		 * to the COPY (SELECT ...) TO variant automatically earlier already.
+		 */
 		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -4708,7 +4727,7 @@ CopyFrom(CopyState cstate)
 															  resultRelInfo,
 															  cstate->copycontext);
 
-			target_seg = GetTargetSeg(part_distData, myslot->tts_values, myslot->tts_isnull);
+			target_seg = GetTargetSeg(part_distData, myslot);
 		}
 		else if (is_check_distkey)
 		{
@@ -4722,7 +4741,7 @@ CopyFrom(CopyState cstate)
 
 			if (part_distData->policy->nattrs != 0)
 			{
-				target_seg = GetTargetSeg(part_distData, myslot->tts_values, myslot->tts_isnull);
+				target_seg = GetTargetSeg(part_distData, myslot);
 
 				if (GpIdentity.segindex != target_seg)
 				{
@@ -8097,7 +8116,7 @@ GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
 }
 
 static unsigned int
-GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls)
+GetTargetSeg(GpDistributionData *distData, TupleTableSlot *slot)
 {
 	unsigned int target_seg;
 	CdbHash	   *cdbHash = distData->cdbHash;
@@ -8131,11 +8150,13 @@ GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls)
 		for (int i = 0; i < p_nattrs; i++)
 		{
 			/* current attno from the policy */
-			AttrNumber h_attnum = policy->attrs[i];
+			AttrNumber	h_attnum = policy->attrs[i];
+			Datum		d;
+			bool		isnull;
 
-			cdbhash(cdbHash, i + 1,
-					baseValues[h_attnum - 1],
-					baseNulls[h_attnum - 1]);
+			d = slot_getattr(slot, h_attnum, &isnull);
+
+			cdbhash(cdbHash, i + 1, d, isnull);
 		}
 
 		target_seg = cdbhashreduce(cdbHash); /* hash result segment */
