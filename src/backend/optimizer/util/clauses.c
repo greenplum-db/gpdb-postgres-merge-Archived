@@ -3372,7 +3372,8 @@ eval_const_expressions_mutator(Node *node,
 				 * expr in planner. It is hard to dispatch these TupleDesc to QE
 				 * since it affect typecache more complex.
 				 */
-				if (ece_all_arguments_const(node) && nodeTag(node) != T_RowExpr)
+				if (ece_all_arguments_const(node) &&
+					(!IsA(node, RowExpr) || ((RowExpr *) node)->row_typeid != RECORDOID))
 					return ece_evaluate_expr(node);
 				return node;
 			}
