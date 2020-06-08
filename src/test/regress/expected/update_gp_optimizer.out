@@ -459,10 +459,10 @@ drop table if exists s;
 NOTICE:  table "s" does not exist, skipping
 drop table if exists update_dist;
 NOTICE:  table "update_dist" does not exist, skipping
-drop table if exists ao_table;
-NOTICE:  table "ao_table" does not exist, skipping
-drop table if exists aoco_table;
-NOTICE:  table "aoco_table" does not exist, skipping
+drop table if exists update_ao_table;
+NOTICE:  table "update_ao_table" does not exist, skipping
+drop table if exists update_aoco_table;
+NOTICE:  table "update_aoco_table" does not exist, skipping
 -- end_ignore
 -- Update normal table distribution key
 create table update_dist(a int) distributed by (a);
@@ -605,9 +605,9 @@ select * from s;
 (5 rows)
 
 -- Update ao table distribution key
-create table ao_table (a int, b int) WITH (appendonly=true) distributed by (a);
-insert into ao_table select g, g from generate_series(1, 5) g;
-select * from ao_table;
+create table update_ao_table (a int, b int) WITH (appendonly=true) distributed by (a);
+insert into update_ao_table select g, g from generate_series(1, 5) g;
+select * from update_ao_table;
  a | b 
 ---+---
  1 | 1
@@ -617,8 +617,8 @@ select * from ao_table;
  5 | 5
 (5 rows)
 
-update ao_table set a = a + 1 where b = 3;
-select * from ao_table;
+update update_ao_table set a = a + 1 where b = 3;
+select * from update_ao_table;
  a | b 
 ---+---
  1 | 1
@@ -629,9 +629,9 @@ select * from ao_table;
 (5 rows)
 
 -- Update aoco table distribution key
-create table aoco_table (a int, b int) WITH (appendonly=true, orientation=column) distributed by (a);
-insert into aoco_table select g,g from generate_series(1, 5) g;
-select * from aoco_table;
+create table update_aoco_table (a int, b int) WITH (appendonly=true, orientation=column) distributed by (a);
+insert into update_aoco_table select g,g from generate_series(1, 5) g;
+select * from update_aoco_table;
  a | b 
 ---+---
  1 | 1
@@ -641,8 +641,8 @@ select * from aoco_table;
  5 | 5
 (5 rows)
 
-update aoco_table set a = a + 1 where b = 3;
-select * from aoco_table;
+update update_aoco_table set a = a + 1 where b = 3;
+select * from update_aoco_table;
  a | b 
 ---+---
  1 | 1
@@ -782,8 +782,8 @@ insert into t_insert_on_conflict_update_distkey values (1, 1) on conflict(a, b) 
 drop table r;
 drop table s;
 drop table update_dist;
-drop table ao_table;
-drop table aoco_table;
+drop table update_ao_table;
+drop table update_aoco_table;
 drop table nosplitupdate;
 drop table tsplit_entry;
 -- end_ignore

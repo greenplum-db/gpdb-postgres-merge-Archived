@@ -207,8 +207,8 @@ drop table tab5;
 drop table if exists r;
 drop table if exists s;
 drop table if exists update_dist;
-drop table if exists ao_table;
-drop table if exists aoco_table;
+drop table if exists update_ao_table;
+drop table if exists update_aoco_table;
 -- end_ignore
 
 -- Update normal table distribution key
@@ -253,18 +253,18 @@ update s set a = s.a + 1 where exists (select 1 from r where s.a = r.b);
 select * from s;
 
 -- Update ao table distribution key
-create table ao_table (a int, b int) WITH (appendonly=true) distributed by (a);
-insert into ao_table select g, g from generate_series(1, 5) g;
-select * from ao_table;
-update ao_table set a = a + 1 where b = 3;
-select * from ao_table;
+create table update_ao_table (a int, b int) WITH (appendonly=true) distributed by (a);
+insert into update_ao_table select g, g from generate_series(1, 5) g;
+select * from update_ao_table;
+update update_ao_table set a = a + 1 where b = 3;
+select * from update_ao_table;
 
 -- Update aoco table distribution key
-create table aoco_table (a int, b int) WITH (appendonly=true, orientation=column) distributed by (a);
-insert into aoco_table select g,g from generate_series(1, 5) g;
-select * from aoco_table;
-update aoco_table set a = a + 1 where b = 3;
-select * from aoco_table;
+create table update_aoco_table (a int, b int) WITH (appendonly=true, orientation=column) distributed by (a);
+insert into update_aoco_table select g,g from generate_series(1, 5) g;
+select * from update_aoco_table;
+update update_aoco_table set a = a + 1 where b = 3;
+select * from update_aoco_table;
 
 -- Update prepare
 delete from s;
@@ -372,8 +372,8 @@ SELECT tableoid::regclass, * FROM update_gp_rangep WHERE b = 1;
 drop table r;
 drop table s;
 drop table update_dist;
-drop table ao_table;
-drop table aoco_table;
+drop table update_ao_table;
+drop table update_aoco_table;
 drop table nosplitupdate;
 drop table tsplit_entry;
 -- end_ignore
