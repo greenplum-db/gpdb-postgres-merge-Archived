@@ -8510,8 +8510,6 @@ EXPLAIN WITH cte as (SELECT *, row_number() over () FROM window_part_sales) SELE
    ->  WindowAgg  (cost=0.00..27819.00 rows=560400 width=48)
          ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..20814.00 rows=560400 width=40)
                ->  Append  (cost=0.00..9606.00 rows=186800 width=40)
-                     ->  Seq Scan on window_part_sales_1_prt_1_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
-                     ->  Seq Scan on window_part_sales_1_prt_1_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_2_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_2_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_3_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
@@ -8520,6 +8518,8 @@ EXPLAIN WITH cte as (SELECT *, row_number() over () FROM window_part_sales) SELE
                      ->  Seq Scan on window_part_sales_1_prt_4_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_5_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_5_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
+                     ->  Seq Scan on window_part_sales_1_prt_6_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
+                     ->  Seq Scan on window_part_sales_1_prt_6_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_usa  (cost=0.00..567.00 rows=15567 width=40)
                      ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_other_regions  (cost=0.00..567.00 rows=15567 width=40)
  Optimizer: Postgres query optimizer
@@ -8533,12 +8533,10 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY region) FROM wind
    ->  Subquery Scan on cte  (cost=0.00..4113.71 rows=32 width=48)
          Filter: (cte.date > '03-01-2011'::date)
          ->  WindowAgg  (cost=0.00..4113.71 rows=94 width=48)
-               Partition By: window_part_sales_1_prt_1_2_prt_usa.region
+               Partition By: window_part_sales_1_prt_2_2_prt_usa.region
                ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..4109.51 rows=94 width=40)
-                     Hash Key: window_part_sales_1_prt_1_2_prt_usa.region
+                     Hash Key: window_part_sales_1_prt_2_2_prt_usa.region
                      ->  Append  (cost=0.00..4103.90 rows=94 width=40)
-                           ->  Seq Scan on window_part_sales_1_prt_1_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
-                                 Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_2_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_3_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
@@ -8546,6 +8544,8 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY region) FROM wind
                            ->  Seq Scan on window_part_sales_1_prt_4_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_5_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
+                                 Filter: (region = 'usa'::text)
+                           ->  Seq Scan on window_part_sales_1_prt_6_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
@@ -8558,17 +8558,17 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY date,region) FROM
 ---------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=3208.34..3212.65 rows=108 width=48)
    ->  WindowAgg  (cost=3208.34..3210.49 rows=36 width=48)
-         Partition By: window_part_sales_1_prt_3_2_prt_usa.date, window_part_sales_1_prt_3_2_prt_usa.region
+         Partition By: window_part_sales_1_prt_4_2_prt_usa.date, window_part_sales_1_prt_4_2_prt_usa.region
          ->  Sort  (cost=3208.34..3208.61 rows=36 width=40)
-               Sort Key: window_part_sales_1_prt_3_2_prt_usa.date
+               Sort Key: window_part_sales_1_prt_4_2_prt_usa.date
                ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..3204.70 rows=36 width=40)
-                     Hash Key: window_part_sales_1_prt_3_2_prt_usa.date, window_part_sales_1_prt_3_2_prt_usa.region
+                     Hash Key: window_part_sales_1_prt_4_2_prt_usa.date, window_part_sales_1_prt_4_2_prt_usa.region
                      ->  Append  (cost=0.00..3202.54 rows=36 width=40)
-                           ->  Seq Scan on window_part_sales_1_prt_3_2_prt_usa  (cost=0.00..800.50 rows=9 width=40)
-                                 Filter: ((date > '03-01-2011'::date) AND (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_4_2_prt_usa  (cost=0.00..800.50 rows=9 width=40)
                                  Filter: ((date > '03-01-2011'::date) AND (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_5_2_prt_usa  (cost=0.00..800.50 rows=9 width=40)
+                                 Filter: ((date > '03-01-2011'::date) AND (region = 'usa'::text))
+                           ->  Seq Scan on window_part_sales_1_prt_6_2_prt_usa  (cost=0.00..800.50 rows=9 width=40)
                                  Filter: ((date > '03-01-2011'::date) AND (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_usa  (cost=0.00..800.50 rows=9 width=40)
                                  Filter: ((date > '03-01-2011'::date) AND (region = 'usa'::text))
@@ -8581,14 +8581,12 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY date,region) FROM
 ----------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=4120.90..4132.10 rows=281 width=48)
    ->  WindowAgg  (cost=4120.90..4126.50 rows=94 width=48)
-         Partition By: window_part_sales_1_prt_1_2_prt_usa.date, window_part_sales_1_prt_1_2_prt_usa.region
+         Partition By: window_part_sales_1_prt_2_2_prt_usa.date, window_part_sales_1_prt_2_2_prt_usa.region
          ->  Sort  (cost=4120.90..4121.60 rows=94 width=40)
-               Sort Key: window_part_sales_1_prt_1_2_prt_usa.date
+               Sort Key: window_part_sales_1_prt_2_2_prt_usa.date
                ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..4109.51 rows=94 width=40)
-                     Hash Key: window_part_sales_1_prt_1_2_prt_usa.date, window_part_sales_1_prt_1_2_prt_usa.region
+                     Hash Key: window_part_sales_1_prt_2_2_prt_usa.date, window_part_sales_1_prt_2_2_prt_usa.region
                      ->  Append  (cost=0.00..4103.90 rows=94 width=40)
-                           ->  Seq Scan on window_part_sales_1_prt_1_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
-                                 Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_2_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_3_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
@@ -8596,6 +8594,8 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY date,region) FROM
                            ->  Seq Scan on window_part_sales_1_prt_4_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_5_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
+                                 Filter: (region = 'usa'::text)
+                           ->  Seq Scan on window_part_sales_1_prt_6_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
                            ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_usa  (cost=0.00..683.75 rows=16 width=40)
                                  Filter: (region = 'usa'::text)
@@ -8608,19 +8608,15 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY date,region) FROM
 ----------------------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=25358.32..31597.44 rows=155978 width=48)
    ->  WindowAgg  (cost=25358.32..28477.88 rows=51993 width=48)
-         Partition By: window_part_sales_1_prt_1_2_prt_usa.date, window_part_sales_1_prt_1_2_prt_usa.region
+         Partition By: window_part_sales_1_prt_2_2_prt_usa.date, window_part_sales_1_prt_2_2_prt_usa.region
          ->  Sort  (cost=25358.32..25748.26 rows=51993 width=40)
-               Sort Key: window_part_sales_1_prt_1_2_prt_usa.date, window_part_sales_1_prt_1_2_prt_usa.region
+               Sort Key: window_part_sales_1_prt_2_2_prt_usa.date, window_part_sales_1_prt_2_2_prt_usa.region
                ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..11904.45 rows=51993 width=40)
-                     Hash Key: window_part_sales_1_prt_1_2_prt_usa.date, window_part_sales_1_prt_1_2_prt_usa.region
+                     Hash Key: window_part_sales_1_prt_2_2_prt_usa.date, window_part_sales_1_prt_2_2_prt_usa.region
                      ->  Append  (cost=0.00..8784.89 rows=51993 width=40)
-                           ->  Seq Scan on window_part_sales_1_prt_1_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
-                                 Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_2_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_3_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
-                                 Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
-                           ->  Seq Scan on window_part_sales_1_prt_3_2_prt_other_regions  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_4_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
@@ -8629,6 +8625,10 @@ EXPLAIN WITH cte as (SELECT *, row_number() over (PARTITION BY date,region) FROM
                            ->  Seq Scan on window_part_sales_1_prt_5_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_5_2_prt_other_regions  (cost=0.00..800.50 rows=5200 width=40)
+                                 Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
+                           ->  Seq Scan on window_part_sales_1_prt_6_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
+                                 Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
+                           ->  Seq Scan on window_part_sales_1_prt_6_2_prt_other_regions  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
                            ->  Seq Scan on window_part_sales_1_prt_outlying_dates_2_prt_usa  (cost=0.00..800.50 rows=5200 width=40)
                                  Filter: ((date > '03-01-2011'::date) OR (region = 'usa'::text))
