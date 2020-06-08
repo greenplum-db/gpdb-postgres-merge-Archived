@@ -32,6 +32,8 @@
 
 WalRcvData *WalRcv = NULL;
 
+extern volatile bool *pm_launch_walreceiver;
+
 /*
  * How long to wait for walreceiver to start up after requesting
  * postmaster to launch it. In seconds.
@@ -45,6 +47,7 @@ WalRcvShmemSize(void)
 	Size		size = 0;
 
 	size = add_size(size, sizeof(WalRcvData));
+	size = add_size(size, sizeof(*pm_launch_walreceiver));
 
 	return size;
 }
@@ -57,6 +60,7 @@ WalRcvShmemInit(void)
 
 	WalRcv = (WalRcvData *)
 		ShmemInitStruct("Wal Receiver Ctl", WalRcvShmemSize(), &found);
+	pm_launch_walreceiver = (bool *) (WalRcv + 1);
 
 	if (!found)
 	{
@@ -65,6 +69,8 @@ WalRcvShmemInit(void)
 		WalRcv->walRcvState = WALRCV_STOPPED;
 		SpinLockInit(&WalRcv->mutex);
 		WalRcv->latch = NULL;
+
+		*pm_launch_walreceiver = false;
 	}
 }
 

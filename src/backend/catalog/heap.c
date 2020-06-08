@@ -2279,7 +2279,6 @@ heap_drop_with_catalog(Oid relid)
 	Relation	rel;
 	bool		is_part_child = false;
 	bool		is_appendonly_rel;
-	bool		is_external_rel;
 	HeapTuple	tuple;
 	Oid			parentOid = InvalidOid,
 				defaultPartOid = InvalidOid;
@@ -2319,7 +2318,6 @@ heap_drop_with_catalog(Oid relid)
 	rel = relation_open(relid, AccessExclusiveLock);
 
 	is_appendonly_rel = RelationIsAppendOptimized(rel);
-	is_external_rel = rel_is_external_table(relid);
 
 	/*
 	 * There can no longer be anyone *else* touching the relation, but we

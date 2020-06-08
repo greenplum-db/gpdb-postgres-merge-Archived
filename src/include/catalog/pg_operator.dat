@@ -764,6 +764,7 @@
   oprcom => '<>(name,name)', oprnegate => '=(name,name)', oprcode => 'namene',
   oprrest => 'neqsel', oprjoin => 'neqjoinsel' },
 { oid => '654', descr => 'concatenate',
+  oid_symbol => 'OIDTextConcatenateOperator',
   oprname => '||', oprleft => 'text', oprright => 'text', oprresult => 'text',
   oprcode => 'textcat' },
 

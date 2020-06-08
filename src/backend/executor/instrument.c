@@ -274,7 +274,7 @@ InstrShmemSize(void)
 	Size		number_slots;
 
 	/* If start in utility mode, disallow Instrumentation on Shmem */
-	if (Gp_session_role == GP_ROLE_UTILITY)
+	if (Gp_role == GP_ROLE_UTILITY)
 		return size;
 
 	/* If GUCs not enabled, bypass Instrumentation on Shmem */
@@ -366,7 +366,7 @@ static bool
 shouldPickInstrInShmem(NodeTag tag)
 {
 	/* For utility mode, don't alloc in shmem */
-	if (Gp_session_role == GP_ROLE_UTILITY)
+	if (Gp_role == GP_ROLE_UTILITY)
 		return false;
 
 	if (!gp_enable_query_metrics || NULL == InstrumentGlobal)

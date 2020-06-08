@@ -639,6 +639,30 @@ gpdb::FuncStrict
 	return false;
 }
 
+bool
+gpdb::IsFuncNDVPreserving
+	(
+	Oid funcid
+	)
+{
+	// Given a function oid, return whether it's one of a list of NDV-preserving
+	// functions (estimated NDV of output is similar to that of the input)
+	switch (funcid)
+	{
+		// for now, these are the functions we consider for this optimization
+		case F_LOWER:
+		case F_LTRIM1:
+		// GPDB_12_MERGE_FIXME: This used to be OID 882. Why is there no #define
+		// for it in fmgroids.h, like there is for other functions?
+		//case BTRIM_SPACE_OID: 882
+		case F_BTRIM1:
+		case F_UPPER:
+			return true;
+		default:
+			return false;
+	}
+}
+
 char
 gpdb::FuncStability
 	(
@@ -2126,6 +2150,24 @@ gpdb::IsOpStrict
 	}
 	GP_WRAP_END;
 	return false;
+}
+
+bool
+gpdb::IsOpNDVPreserving
+	(
+	Oid opno
+	)
+{
+	switch (opno)
+	{
+		// for now, we consider only the concatenation op as NDV-preserving
+		// (note that we do additional checks later, e.g. col || 'const' is
+		// NDV-preserving, while col1 || col2 is not)
+		case OIDTextConcatenateOperator:
+			return true;
+		default:
+			return false;
+	}
 }
 
 void

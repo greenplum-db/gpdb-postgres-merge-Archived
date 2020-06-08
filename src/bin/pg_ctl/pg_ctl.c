@@ -574,7 +574,7 @@ static WaitPMResult
 wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 {
 	int			i;
-	bool gpdb_master_distributed_mode;
+	bool		gpdb_master_distributed_mode;
 
 	/* check if starting GPDB master in distributed mode */
 	if (strstr(post_opts, "-E"))

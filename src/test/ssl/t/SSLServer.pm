@@ -52,7 +52,7 @@ sub test_connect_ok
 
 	my ($common_connstr, $connstr, $test_name) = @_;
 
-	local $ENV{PGOPTIONS} = '-c gp_session_role=utility';
+	local $ENV{PGOPTIONS} = '-c gp_role=utility';
 
 	my $cmd = [
 		'psql', '-X', '-A', '-t', '-c',

@@ -1382,7 +1382,7 @@ sub psql
 	my $timeout           = undef;
 	my $timeout_exception = 'psql timed out';
 
-	local $ENV{PGOPTIONS} = '-c gp_session_role=utility';
+	local $ENV{PGOPTIONS} = '-c gp_role=utility';
 
 	my @psql_params =
 	  ('psql', '-XAtq', '-d', $self->connstr($dbname), '-f', '-');

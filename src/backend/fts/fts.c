@@ -58,7 +58,7 @@ bool am_ftshandler = false;
 /*
  * STATIC VARIABLES
  */
-static volatile pid_t *shmFtsProbePID;
+volatile pid_t *shmFtsProbePID = NULL;
 static bool skip_fts_probe = false;
 
 static volatile bool probe_requested = false;
@@ -94,16 +94,6 @@ sigIntHandler(SIGNAL_ARGS)
 		SetLatch(MyLatch);
 }
 
-void
-FtsProbeShmemInit(void)
-{
-	if (IsUnderPostmaster)
-		return;
-
-	shmFtsProbePID = (volatile pid_t*)ShmemAlloc(sizeof(*shmFtsProbePID));
-	*shmFtsProbePID = 0;
-}
-
 pid_t
 FtsProbePID(void)
 {
@@ -113,11 +103,7 @@ FtsProbePID(void)
 bool
 FtsProbeStartRule(Datum main_arg)
 {
-	/* we only start fts probe on master when -E is specified */
-	if (IsUnderMasterDispatchMode())
-		return true;
-
-	return false;
+	return (Gp_role == GP_ROLE_DISPATCH);
 }
 
 /*
