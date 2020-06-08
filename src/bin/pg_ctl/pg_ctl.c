@@ -577,7 +577,7 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 	bool		gpdb_master_distributed_mode;
 
 	/* check if starting GPDB master in distributed mode */
-	if (strstr(post_opts, "-E"))
+	if (strstr(post_opts, "gp_role=dispatch"))
 		gpdb_master_distributed_mode = true;
 	else
 		gpdb_master_distributed_mode = false;
