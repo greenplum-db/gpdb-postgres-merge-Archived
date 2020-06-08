@@ -5630,6 +5630,22 @@ NextCopyFromX(CopyState cstate, ExprContext *econtext,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("extra data after last expected column")));
 
+		/*
+		 * A completely empty line is not allowed with FILL MISSING FIELDS. Without
+		 * FILL MISSING FIELDS, it's almost surely an error, but not always:
+		 * a table with a single text column, for example, needs to accept empty
+		 * lines.
+		 */
+		if (cstate->line_buf.len == 0 &&
+			cstate->fill_missing &&
+			list_length(cstate->attnumlist) > 1)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("missing data for column \"%s\", found empty data line",
+							NameStr(TupleDescAttr(tupDesc, 1)->attname))));
+		}
+
 		fieldno = 0;
 
 		/* Loop to read the user attributes on the line. */
