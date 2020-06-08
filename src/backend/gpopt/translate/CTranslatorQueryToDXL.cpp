@@ -3169,7 +3169,7 @@ CTranslatorQueryToDXL::NoteDistributionPolicyOpclasses
 		for (int i = 0; i < policy_nattrs; i++)
 		{
 			AttrNumber attnum = policy->attrs[i];
-			Oid typeoid = desc->attrs[attnum - 1]->atttypid;
+			Oid typeoid = desc->attrs[attnum - 1].atttypid;
 			Oid opfamily;
 			Oid hashfunc;
 
