@@ -2544,17 +2544,17 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 			if (lead_boundary_type == EdxlfbUnboundedPreceding)
 				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_PRECEDING;
 			if (lead_boundary_type == EdxlfbBoundedPreceding)
-				window->frameOptions |= FRAMEOPTION_END_VALUE_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
 			if (lead_boundary_type == EdxlfbCurrentRow)
 				window->frameOptions |= FRAMEOPTION_END_CURRENT_ROW;
 			if (lead_boundary_type == EdxlfbBoundedFollowing)
-				window->frameOptions |= FRAMEOPTION_END_VALUE_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
 			if (lead_boundary_type == EdxlfbUnboundedFollowing)
 				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_FOLLOWING;
 			if (lead_boundary_type == EdxlfbDelayedBoundedPreceding)
-				window->frameOptions |= FRAMEOPTION_END_VALUE_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
 			if (lead_boundary_type == EdxlfbDelayedBoundedFollowing)
-				window->frameOptions |= FRAMEOPTION_END_VALUE_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
 			if (0 != win_frame_leading_dxlnode->Arity())
 			{
 				window->endOffset = (Node *) m_translator_dxl_to_scalar->TranslateDXLToScalar((*win_frame_leading_dxlnode)[0], &colid_var_mapping);
@@ -2566,17 +2566,17 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 			if (trail_boundary_type == EdxlfbUnboundedPreceding)
 				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_PRECEDING;
 			if (trail_boundary_type == EdxlfbBoundedPreceding)
-				window->frameOptions |= FRAMEOPTION_START_VALUE_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
 			if (trail_boundary_type == EdxlfbCurrentRow)
 				window->frameOptions |= FRAMEOPTION_START_CURRENT_ROW;
 			if (trail_boundary_type == EdxlfbBoundedFollowing)
-				window->frameOptions |= FRAMEOPTION_START_VALUE_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
 			if (trail_boundary_type == EdxlfbUnboundedFollowing)
 				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
 			if (trail_boundary_type == EdxlfbDelayedBoundedPreceding)
-				window->frameOptions |= FRAMEOPTION_START_VALUE_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
 			if (trail_boundary_type == EdxlfbDelayedBoundedFollowing)
-				window->frameOptions |= FRAMEOPTION_START_VALUE_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
 			if (0 != win_frame_trailing_dxlnode->Arity())
 			{
 				window->startOffset = (Node *) m_translator_dxl_to_scalar->TranslateDXLToScalar((*win_frame_trailing_dxlnode)[0], &colid_var_mapping);
