@@ -3695,7 +3695,8 @@ reindex_relation(Oid relid, int flags, int options)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		ereport(WARNING,
+		if ((options & REINDEX_REL_RECURSING_PARTITIONED_TABLE) == 0)
+			ereport(WARNING,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("REINDEX of partitioned tables is not yet implemented, skipping \"%s\"",
 						RelationGetRelationName(rel))));

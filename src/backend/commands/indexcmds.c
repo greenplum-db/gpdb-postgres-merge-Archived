@@ -101,6 +101,8 @@ static bool ReindexRelationConcurrently(Oid relationOid, int options);
 static void ReindexPartitionedIndex(Relation parentIdx);
 static void update_relispartition(Oid relationId, bool newval);
 
+static void ReindexRelationList(List *relids, int options, bool concurrent, bool multiple);
+
 /*
  * callback argument type for RangeVarCallbackForReindexIndex()
  */
@@ -2955,6 +2957,26 @@ ReindexTable(ReindexStmt *stmt)
 									   0,
 									   RangeVarCallbackOwnsTable, NULL);
 
+	/*
+	 * PostgreSQL doesn't allow REINDEX on a partitioned table, but we support
+	 * it in Greenplum.
+	 *
+	 *
+	 */
+	if (get_rel_relkind(heapOid) == RELKIND_PARTITIONED_TABLE)
+	{
+		// FIXME transasction block check?
+		List	   *prels;
+
+		prels = find_all_inheritors(heapOid,
+									concurrent ? ShareUpdateExclusiveLock : ShareLock,
+									NULL);
+
+		ReindexRelationList(prels, options | REINDEX_REL_RECURSING_PARTITIONED_TABLE,
+							concurrent, false);
+		return heapOid;
+	}
+
 	if (concurrent)
 	{
 		result = ReindexRelationConcurrently(heapOid, options);
@@ -3020,7 +3042,6 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	MemoryContext private_context;
 	MemoryContext old;
 	List	   *relids = NIL;
-	ListCell   *l;
 	int			num_keys;
 	bool		concurrent_warning = false;
 
@@ -3174,12 +3195,29 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	table_endscan(scan);
 	table_close(relationRelation, AccessShareLock);
 
+	ReindexRelationList(relids, options, concurrent, true);
+
+	MemoryContextDelete(private_context);
+
+}
+
+/*
+ * Perform REINDEX on each relation of the relids list.  The function
+ * opens and closes a transaction per relation.  This is designed for
+ * QD/utility, and is not useful for QE.
+ */
+static void
+ReindexRelationList(List *relids, int options, bool concurrent, bool multiple)
+{
+	ListCell   *l;
+
 	/* Now reindex each rel in a separate transaction */
 	PopActiveSnapshot();
 	CommitTransactionCommand();
 	foreach(l, relids)
 	{
 		Oid			relid = lfirst_oid(l);
+		bool		result;
 
 		StartTransactionCommand();
 		/* functions in indexes may want a snapshot set */
@@ -3187,13 +3225,11 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 
 		if (concurrent)
 		{
-			(void) ReindexRelationConcurrently(relid, options);
+			result = ReindexRelationConcurrently(relid, options);
 			/* ReindexRelationConcurrently() does the verbose output */
 		}
 		else
 		{
-			bool		result;
-
 			result = reindex_relation(relid,
 									  REINDEX_REL_PROCESS_TOAST |
 									  REINDEX_REL_CHECK_CONSTRAINTS,
@@ -3209,7 +3245,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		}
 
 		/* Dispatch a separate REINDEX command for each table. */
-		if (Gp_role == GP_ROLE_DISPATCH)
+		if (result && Gp_role == GP_ROLE_DISPATCH)
 		{
 			ReindexStmt	   *stmt;
 
@@ -3233,8 +3269,6 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		CommitTransactionCommand();
 	}
 	StartTransactionCommand();
-
-	MemoryContextDelete(private_context);
 }
 
 
