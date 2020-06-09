@@ -144,13 +144,11 @@ external_beginscan(Relation relation, uint32 scancounter,
 	scan->fs_formatter = NULL;
 	scan->fs_constraintExprs = NULL;
 	if (relation->rd_att->constr != NULL && relation->rd_att->constr->num_check > 0)
-	{
 		scan->fs_hasConstraints = true;
-	}
 	else
-	{
 		scan->fs_hasConstraints = false;
-	}
+
+	scan->fs_isPartition = relation->rd_rel->relispartition;
 
 
 	/*

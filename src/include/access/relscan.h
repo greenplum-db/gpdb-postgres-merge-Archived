@@ -207,9 +207,11 @@ typedef struct FileScanDescData
 	List	   *fs_custom_formatter_params; /* list of defelems that hold user's format parameters */
 	FormatterData *fs_formatter;
 
-	/* external partition */
+	/* CHECK constraints and partition check quals, if any */
 	bool		fs_hasConstraints;
 	struct ExprState **fs_constraintExprs;
+	bool		fs_isPartition;
+	struct ExprState *fs_partitionCheckExpr;
 }	FileScanDescData;
 
 typedef FileScanDescData *FileScanDesc;

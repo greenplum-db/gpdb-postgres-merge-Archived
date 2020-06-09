@@ -49,6 +49,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/partcache.h"
 #include "utils/syscache.h"
 #include "utils/uri.h"
 
@@ -819,6 +820,45 @@ ExternalConstraintCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *est
 	return true;
 }
 
+/*
+ * Check whether a row matches the partition constraint.
+ */
+static bool
+ExternalPartitionCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *estate)
+{
+	Relation	rel = scandesc->fs_rd;
+	ExprContext *econtext;
+
+	/*
+	 * Build expression nodetrees for rel's constraint expressions.
+	 * Keep them in the per-query memory context so they'll survive throughout the query.
+	 */
+	if (scandesc->fs_partitionCheckExpr == NULL)
+	{
+		List	   *partition_check;
+		MemoryContext	oldContext;
+
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		partition_check = RelationGetPartitionQual(rel);
+
+		scandesc->fs_partitionCheckExpr = ExecPrepareCheck(partition_check, estate);
+
+		MemoryContextSwitchTo(oldContext);
+	}
+
+	/*
+	 * We will use the EState's per-tuple context for evaluating constraint
+	 * expressions (creating it if it's not already there).
+	 */
+	econtext = GetPerTupleExprContext(estate);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
+
+	return ExecCheck(scandesc->fs_partitionCheckExpr, econtext);
+}
+
 static TupleTableSlot *
 exttable_IterateForeignScan(ForeignScanState *node)
 {
@@ -851,6 +891,24 @@ exttable_IterateForeignScan(ForeignScanState *node)
 
 		ExecStoreHeapTuple(tuple, slot, true);
 
+		/*
+		 * If this is a partition in a partitioned table, check each row against
+		 * the partition qual, and skip rows that don't belong in this partition.
+		 * Foreign tables are not required to enforce that, but that has been
+		 * the historical behavior for external tables.
+		 */
+		if (fdw_state->ess_ScanDesc->fs_isPartition &&
+			!ExternalPartitionCheck(slot, fdw_state->ess_ScanDesc, estate))
+			continue;
+
+		/*
+		 * Similarly, check CHECK constraints and skip rows that don't satisfy
+		 * them. Foreign tables are not required required to enforce CHECK
+		 * constraints either, they are merely hints to the optimizer, but it
+		 * is allowed. (In GPDB 6 and below, partition quals were stored in the
+		 * catalogs as CHECK constraints, so this was needed to check the
+		 * partition quals.)
+		 */
 		if (fdw_state->ess_ScanDesc->fs_hasConstraints &&
 			!ExternalConstraintCheck(slot, fdw_state->ess_ScanDesc, estate))
 			continue;
