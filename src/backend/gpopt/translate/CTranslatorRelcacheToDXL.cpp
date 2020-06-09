@@ -968,18 +968,12 @@ CTranslatorRelcacheToDXL::AddSystemColumns
 	BOOL is_ao_table
 	)
 {
-	BOOL has_oids = rel->rd_att->tdhasoid;
 	is_ao_table = is_ao_table || gpdb::IsAppendOnlyPartitionTable(rel->rd_id);
 
 	for (INT i= SelfItemPointerAttributeNumber; i > FirstLowInvalidHeapAttributeNumber; i--)
 	{
 		AttrNumber attno = AttrNumber(i);
 		GPOS_ASSERT(0 != attno);
-
-		if (ObjectIdAttributeNumber == i && !has_oids)
-		{
-			continue;
-		}
 
 		if (IsTransactionVisibilityAttribute(i) && is_ao_table)
 		{
