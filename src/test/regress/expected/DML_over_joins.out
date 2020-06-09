@@ -332,10 +332,10 @@ update p set c = c + 1 where b in (select b from s) and c = 0;
 select tableoid::regclass, c, count(*) from p group by 1, 2;
    tableoid    | c | count 
 ---------------+---+-------
- p_1_prt_1     | 1 |  3333
- p_1_prt_2     | 2 |  1667
- p_1_prt_3     | 3 |  1667
- p_1_prt_4     | 4 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_5     | 4 |  1667
  p_1_prt_extra | 5 |  1666
 (5 rows)
 
@@ -376,10 +376,10 @@ update p set c = c + 1 where b in (select b from s where b = 36);
 select tableoid::regclass, c, count(*) from p group by 1, 2;
    tableoid    | c | count 
 ---------------+---+-------
- p_1_prt_1     | 1 |  3332
- p_1_prt_2     | 2 |  1668
- p_1_prt_3     | 3 |  1667
- p_1_prt_4     | 4 |  1667
+ p_1_prt_2     | 1 |  3332
+ p_1_prt_3     | 2 |  1668
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_5     | 4 |  1667
  p_1_prt_extra | 5 |  1666
 (5 rows)
 
@@ -420,10 +420,10 @@ update p set c = c + 1 where b in (select b from s) and c = 0;
 select tableoid::regclass, c, count(*) from p group by 1, 2;
    tableoid    | c | count 
 ---------------+---+-------
- p_1_prt_1     | 1 |  3333
- p_1_prt_2     | 2 |  1667
- p_1_prt_3     | 3 |  1667
- p_1_prt_4     | 4 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_5     | 4 |  1667
  p_1_prt_extra | 5 |  1666
 (5 rows)
 
@@ -464,10 +464,10 @@ update p set c = c + 1 where b in (select b from s) and c = 0;
 select tableoid::regclass, c, count(*) from p group by 1, 2;
    tableoid    | c | count 
 ---------------+---+-------
- p_1_prt_1     | 1 |  3333
- p_1_prt_2     | 2 |  1667
- p_1_prt_3     | 3 |  1667
- p_1_prt_4     | 4 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_5     | 4 |  1667
  p_1_prt_extra | 5 |  1666
 (5 rows)
 
@@ -508,10 +508,10 @@ update p set c = c + 1 where b in (select b from s) and c = 0;
 select tableoid::regclass, c, count(*) from p group by 1, 2;
    tableoid    | c | count 
 ---------------+---+-------
- p_1_prt_1     | 1 |  3333
- p_1_prt_2     | 2 |  1667
- p_1_prt_3     | 3 |  1667
- p_1_prt_4     | 4 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_5     | 4 |  1667
  p_1_prt_extra | 5 |  1666
 (5 rows)
 
