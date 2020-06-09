@@ -1272,17 +1272,27 @@ CTranslatorScalarToDXL::TranslateArrayCoerceExprToDXL
 	CDXLNode *child_node = TranslateScalarToDXL(array_coerce_expr->arg, var_colid_mapping);
 	
 	GPOS_ASSERT(NULL != child_node);
-	
+
+	Oid elemfuncid = 0;
+
+	if (IsA(array_coerce_expr->elemexpr, FuncExpr))
+		elemfuncid = ((FuncExpr *)array_coerce_expr->elemexpr)->funcid;
+
+	// GPDB_12_MERGE_FIXME: faking an explicit cast is wrong
+	// This _will_ lead to wrong behavior, e.g.
+	// INSERT INTO bar SELECT b FROM foo;
+	// where foo.b is of type varchar(100)[]
+	// and bar.b is of type varchar(9)[]
 	CDXLNode *dxlnode = GPOS_NEW(m_mp) CDXLNode
 					(
 					m_mp,
 					GPOS_NEW(m_mp) CDXLScalarArrayCoerceExpr
 							(
 							m_mp,
-							GPOS_NEW(m_mp) CMDIdGPDB(array_coerce_expr->elemfuncid),
+							GPOS_NEW(m_mp) CMDIdGPDB(elemfuncid),
 							GPOS_NEW(m_mp) CMDIdGPDB(array_coerce_expr->resulttype),
 							array_coerce_expr->resulttypmod,
-							array_coerce_expr->isExplicit,
+							true,
 							(EdxlCoercionForm) array_coerce_expr->coerceformat,
 							array_coerce_expr->location
 							)
