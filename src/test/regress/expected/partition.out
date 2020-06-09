@@ -3090,7 +3090,6 @@ NOTICE:  CREATE TABLE will create partition "mpp_5397_1_prt_z" for table "mpp_53
 alter table mpp_5397 add default partition adefault;
 alter table mpp_5397 drop column d;
 alter table mpp_5397 split default partition start (21) inclusive end (25) inclusive;
-NOTICE:  dropped partition "adefault" for relation "mpp_5397"
 drop table mpp_5397;
 -- MPP-4987 -- make sure we can't damage a partitioning configuration
 -- this works

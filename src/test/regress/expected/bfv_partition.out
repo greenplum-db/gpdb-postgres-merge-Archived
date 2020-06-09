@@ -896,7 +896,7 @@ NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_dd" for table "mpp360
 alter table mpp3607 add partition ee start (-10);
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_ee" for table "mpp3607"
 alter table mpp3607 add partition ff start (-9) end (-8); -- Overlaps
-ERROR:  new partition overlaps existing partition "ee"
+ERROR:  partition "mpp3607_1_prt_ff" would overlap partition "mpp3607_1_prt_ee"
 drop table mpp3607;
 CREATE TABLE mpp3632(a int, b int, c int, d int, e int, f int, g int, h int, i int, j int, k int, l int, m int, n int, o int, p int, q int, r int, s int, t int, u int, v int, w int, x int, y int, z int)
 partition by range (a)

@@ -28,6 +28,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
+#include "partitioning/partbounds.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -221,56 +222,232 @@ qsort_stmt_cmp(const void *a, const void *b, void *arg)
 }
 
 /*
+ * Convert an array of partition bound Datums to List of Consts.
+ *
+ * The array of Datums representation is used e.g. in PartitionBoundInfo,
+ * whereas the Const List representation is used e.g. in the raw-parse output
+ * of PartitionBoundSpec.
+ */
+static List *
+datums_to_consts(PartitionKey partkey, Datum *datums)
+{
+	List	   *result = NIL;
+
+	for (int i = 0; i < partkey->partnatts; i++)
+	{
+		Const	   *c;
+
+		c = makeConst(partkey->parttypid[0],
+					  partkey->parttypmod[0],
+					  partkey->parttypcoll[0],
+					  partkey->parttyplen[0],
+					  datumCopy(datums[i],
+								partkey->parttypbyval[0],
+								partkey->parttyplen[0]),
+					  false,
+					  partkey->parttypbyval[0]);
+		result = lappend(result, c);
+	}
+
+	return result;
+}
+
+static Datum *
+consts_to_datums(PartitionKey partkey, List *consts)
+{
+	Datum	   *datums;
+	ListCell   *lc;
+	int			i;
+
+	if (partkey->partnatts != list_length(consts))
+		elog(ERROR, "wrong number of partition bounds");
+
+	datums = palloc(partkey->partnatts * sizeof(Datum));
+
+	i = 0;
+	foreach(lc, consts)
+	{
+		Const	   *c = (Const *) lfirst(lc);
+
+		if (!IsA(c, Const))
+			elog(ERROR, "expected Const in partition bound");
+
+		datums[i] = c->constvalue;
+		i++;
+	}
+
+	return datums;
+}
+
+/*
  * Sort the list of GpPartitionBoundSpecs based first on the START, if START
  * does not exists, use END. After sort, if any stmt contains an implicit START
  * or END, deduce the value and update the corresponding list of CreateStmts.
  */
 static List *
-deduceImplicitRangeBounds(ParseState *pstate, List *origstmts, PartitionKey key)
+deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmts)
 {
-	List *stmts;
-	ListCell *lc;
-	CreateStmt *prevstmt = NULL;
+	PartitionKey key = RelationGetPartitionKey(parentrel);
+	PartitionDesc desc = RelationGetPartitionDesc(parentrel);
+	List	   *stmts;
 
 	stmts = list_qsort(origstmts, qsort_stmt_cmp, key);
 
-	foreach(lc, stmts)
+	/*
+	 * This works slightly differenly, depending on whether this is a
+	 * CREATE TABLE command to create a whole new table, or an ALTER TABLE
+	 * ADD PARTTION to add to an existing table.
+	 */
+	if (desc->nparts == 0)
 	{
-		Node	   *n = lfirst(lc);
-		CreateStmt *stmt;
+		/*
+		 * CREATE TABLE, there are no existing partitions. We deduce the
+		 * missing START/END bounds based on the other partitions defined in
+		 * the same command.
+		 */
+		CreateStmt *prevstmt = NULL;
+		ListCell   *lc;
 
-		Assert(IsA(n, CreateStmt));
-		stmt = (CreateStmt *) n;
-		if (!stmt->partbound->lowerdatums)
+		foreach(lc, stmts)
 		{
-			if (prevstmt)
-				stmt->partbound->lowerdatums = prevstmt->partbound->upperdatums;
-			else
+			Node	   *n = lfirst(lc);
+			CreateStmt *stmt;
+
+			Assert(IsA(n, CreateStmt));
+			stmt = (CreateStmt *) n;
+
+			if (stmt->partbound->is_default)
+				continue;
+
+			if (!stmt->partbound->lowerdatums)
 			{
-				ColumnRef  *minvalue = makeNode(ColumnRef);
-				minvalue->location = -1;
-				minvalue->fields = lcons(makeString("minvalue"), NIL);
-				stmt->partbound->lowerdatums = list_make1(minvalue);
+				if (prevstmt)
+					stmt->partbound->lowerdatums = prevstmt->partbound->upperdatums;
+				else
+				{
+					ColumnRef  *minvalue = makeNode(ColumnRef);
+					minvalue->location = -1;
+					minvalue->fields = lcons(makeString("minvalue"), NIL);
+					stmt->partbound->lowerdatums = list_make1(minvalue);
+				}
+
+			}
+			if (!stmt->partbound->upperdatums)
+			{
+				Node *next = lc->next ? lfirst(lc->next) : NULL;
+				if (next)
+				{
+					CreateStmt *nextstmt = (CreateStmt *)next;
+					stmt->partbound->upperdatums = nextstmt->partbound->lowerdatums;
+				}
+				else
+				{
+					ColumnRef  *maxvalue = makeNode(ColumnRef);
+					maxvalue->location = -1;
+					maxvalue->fields = lcons(makeString("maxvalue"), NIL);
+					stmt->partbound->upperdatums = list_make1(maxvalue);
+				}
+			}
+			prevstmt = stmt;
+		}
+	}
+	else
+	{
+		/*
+		 * This is ALTER TABLE ADD PARTITION. We deduce the missing START/END
+		 * bound based on the existing partitions. In principle, we should also
+		 * take into account any other partitions defined in the same command,
+		 * but in practice it is not necessary, because the ALTER TABLE ADD
+		 * PARTITION syntax only allows creating one partition in one command.
+		 */
+		if (list_length(stmts) != 1)
+			elog(ERROR, "cannot add more than one partition to existing partitioned table in one command");
+		CreateStmt *stmt = linitial_node(CreateStmt, stmts);
+
+		if (!stmt->partbound->is_default)
+		{
+			if (!stmt->partbound->lowerdatums && !stmt->partbound->upperdatums)
+				elog(ERROR, "must specify partition bounds"); /* not allowed in syntax */
+
+			if (!stmt->partbound->lowerdatums)
+			{
+				int			existing_bound_offset;
+				Datum	   *upperdatums;
+				bool		equal;
+
+				upperdatums = consts_to_datums(key, stmt->partbound->upperdatums);
+
+				/*
+				 * Find the highest existing partition that's lower than or equal to the new
+				 * upper bound.
+				 */
+				existing_bound_offset = partition_range_datum_bsearch(key->partsupfunc,
+																	  key->partcollation,
+																	  desc->boundinfo,
+																	  key->partnatts,
+																	  upperdatums,
+																	  &equal);
+				/*
+				 * If there is an existing partition with a lower bound that's
+				 * equal to the given upper bound, there isn't much we can do.
+				 * The operation is doomed to fail. We set the lower bound as
+				 * MINVALUE, and let the later stages throw the error about
+				 * overlapping partitions.
+				 */
+				if (existing_bound_offset != -1 && !equal &&
+					desc->boundinfo->kind[existing_bound_offset][0] == PARTITION_RANGE_DATUM_VALUE)
+				{
+					/*
+					 * The new partition was defined with no START, and there is an existing
+					 * partition before the given END.
+					 */
+					stmt->partbound->lowerdatums = datums_to_consts(key,
+																	desc->boundinfo->datums[existing_bound_offset]);
+				}
+				else
+				{
+					ColumnRef  *minvalue = makeNode(ColumnRef);
+					minvalue->location = -1;
+					minvalue->fields = lcons(makeString("minvalue"), NIL);
+					stmt->partbound->lowerdatums = list_make1(minvalue);
+				}
 			}
 
-		}
-		if (!stmt->partbound->upperdatums)
-		{
-			Node *next = lc->next ? lfirst(lc->next) : NULL;
-			if (next)
+			if (!stmt->partbound->upperdatums)
 			{
-				CreateStmt *nextstmt = (CreateStmt *)next;
-				stmt->partbound->upperdatums = nextstmt->partbound->lowerdatums;
-			}
-			else
-			{
-				ColumnRef  *maxvalue = makeNode(ColumnRef);
-				maxvalue->location = -1;
-				maxvalue->fields = lcons(makeString("maxvalue"), NIL);
-				stmt->partbound->upperdatums = list_make1(maxvalue);
+				int			existing_bound_offset;
+				Datum	   *lowerdatums;
+				bool		equal;
+
+				lowerdatums = consts_to_datums(key, stmt->partbound->lowerdatums);
+
+				/*
+				 * Find the smallest existing partition that's greater than
+				 * the new lower bound.
+				 */
+				existing_bound_offset = partition_range_datum_bsearch(key->partsupfunc,
+																	  key->partcollation,
+																	  desc->boundinfo,
+																	  key->partnatts,
+																	  lowerdatums,
+																	  &equal);
+				existing_bound_offset++;
+
+				if (existing_bound_offset < desc->boundinfo->ndatums &&
+					desc->boundinfo->kind[existing_bound_offset][0] == PARTITION_RANGE_DATUM_VALUE)
+				{
+					stmt->partbound->upperdatums = datums_to_consts(key,
+																	desc->boundinfo->datums[existing_bound_offset]);
+				}
+				else
+				{
+					ColumnRef  *maxvalue = makeNode(ColumnRef);
+					maxvalue->location = -1;
+					maxvalue->fields = lcons(makeString("maxvalue"), NIL);
+					stmt->partbound->upperdatums = list_make1(maxvalue);
+				}
 			}
 		}
-		prevstmt = stmt;
 	}
 	return stmts;
 }
@@ -740,25 +917,11 @@ generateRangePartitions(ParseState *pstate,
 		boundspec->strategy = PARTITION_STRATEGY_RANGE;
 		boundspec->is_default = false;
 		if (start)
-			boundspec->lowerdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
-													  boundIter->partkey->parttypmod[0],
-													  boundIter->partkey->parttypcoll[0],
-													  boundIter->partkey->parttyplen[0],
-													  datumCopy(boundIter->currStart,
-																boundIter->partkey->parttypbyval[0],
-																boundIter->partkey->parttyplen[0]),
-													  false,
-													  boundIter->partkey->parttypbyval[0]));
+			boundspec->lowerdatums = datums_to_consts(boundIter->partkey,
+													  &boundIter->currStart);
 		if (end)
-			boundspec->upperdatums = list_make1(makeConst(boundIter->partkey->parttypid[0],
-													  boundIter->partkey->parttypmod[0],
-													  boundIter->partkey->parttypcoll[0],
-													  boundIter->partkey->parttyplen[0],
-													  datumCopy(boundIter->currEnd,
-																boundIter->partkey->parttypbyval[0],
-																boundIter->partkey->parttyplen[0]),
-													  false,
-													  boundIter->partkey->parttypbyval[0]));
+			boundspec->upperdatums = datums_to_consts(boundIter->partkey,
+													  &boundIter->currEnd);
 		boundspec->location = -1;
 
 		if (every && elem->partName)
@@ -1224,9 +1387,8 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	 * bounds for implicit START/END.
 	 */
 	/* GPDB range partition */
-	PartitionKey key = RelationGetPartitionKey(parentrel);
-	if (key->strategy == PARTITION_STRATEGY_RANGE)
-		result = deduceImplicitRangeBounds(pstate, result, key);
+	if (RelationGetPartitionKey(parentrel)->strategy == PARTITION_STRATEGY_RANGE)
+		result = deduceImplicitRangeBounds(pstate, parentrel, result);
 
 	free_parsestate(pstate);
 	table_close(parentrel, NoLock);
