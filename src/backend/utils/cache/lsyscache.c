@@ -4476,6 +4476,10 @@ get_index_column_opclass(Oid index_oid, int attno)
 	return opclass;
 }
 
+/* GPDB_12_MERGE_FIXME: only used by ORCA. Fix the callers to check
+ * Relation->relkind == RELKIND_PARTITIONED_TABLE instead. They should
+ * have the relcache entry at hand anyway.
+ */
 bool
 relation_is_partitioned(Oid relid)
 {
