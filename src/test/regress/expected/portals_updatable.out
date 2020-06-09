@@ -240,7 +240,7 @@ SELECT * from uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 22 | three
+  3 | 32 | three
 (3 rows)
 
 COMMIT;
@@ -249,7 +249,7 @@ SELECT * from uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 22 | three
+  3 | 32 | three
 (3 rows)
 
 --
@@ -260,7 +260,7 @@ DECLARE c CURSOR FOR SELECT * FROM uctest WHERE f1 = 3;
 FETCH 1 FROM c;
  f1 | f2 |  f3   
 ----+----+-------
-  3 | 22 | three
+  3 | 32 | three
 (1 row)
 
 UPDATE uctest SET f2 = other.f2 + 10 FROM
@@ -272,7 +272,7 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 32 | three
+  3 | 42 | three
 (3 rows)
 
 BEGIN;
@@ -280,7 +280,7 @@ DECLARE c CURSOR FOR SELECT * FROM uctest WHERE f1 = 3;
 FETCH 1 FROM c;
  f1 | f2 |  f3   
 ----+----+-------
-  3 | 32 | three
+  3 | 42 | three
 (1 row)
 
 UPDATE uctest SET f2 = (SELECT f2 - 10 FROM uctest WHERE f1 = 3) WHERE CURRENT OF c;
@@ -290,7 +290,7 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 22 | three
+  3 | 32 | three
 (3 rows)
 
 --
@@ -607,7 +607,7 @@ DECLARE c CURSOR FOR SELECT * FROM uctest WHERE f1 = 3 FOR READ ONLY;
 FETCH 1 FROM c;
  f1 | f2 |  f3   
 ----+----+-------
-  3 | 22 | three
+  3 | 32 | three
 (1 row)
 
 UPDATE uctest SET f2 = f2 + 10 WHERE CURRENT OF c; 
@@ -617,7 +617,7 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 32 | three
+  3 | 42 | three
 (3 rows)
 
 -- gp_dist_random, edge case treated as special RTE_RELATION
@@ -626,7 +626,7 @@ DECLARE c CURSOR FOR SELECT * FROM gp_dist_random('uctest') WHERE f1 = 3;
 FETCH 1 FROM c;
  f1 | f2 |  f3   
 ----+----+-------
-  3 | 32 | three
+  3 | 42 | three
 (1 row)
 
 UPDATE uctest SET f2 = f2 + 10 WHERE CURRENT OF c;
@@ -636,7 +636,7 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 ----+----+-------
   1 |  1 | one
   2 |  8 | two
-  3 | 42 | three
+  3 | 52 | three
 (3 rows)
 
 -- naive PREPARE usage
@@ -646,7 +646,7 @@ DECLARE a CURSOR FOR SELECT * FROM uctest WHERE f1 = 3;
 FETCH 1 FROM a;
  f1 | f2 |  f3   
 ----+----+-------
-  3 | 42 | three
+  3 | 52 | three
 (1 row)
 
 EXECUTE ucplan;
@@ -656,7 +656,7 @@ SELECT * FROM uctest ORDER BY 1, 2, 3;
 ----+-----+-------
   1 |   1 | one
   2 |   8 | two
-  3 | -42 | three
+  3 | -52 | three
 (3 rows)
 
 --
@@ -680,7 +680,7 @@ DECLARE c CURSOR FOR SELECT * FROM uctest where f1 = 3;
 FETCH 1 from c;
  f1 | f2  |  f3   
 ----+-----+-------
-  3 | -42 | three
+  3 | -52 | three
 (1 row)
 
 DELETE FROM uctest2 WHERE CURRENT OF c; 
@@ -769,7 +769,7 @@ FETCH ALL FROM c1;
  f1 | f2  |  f3   
 ----+-----+-------
   1 |   1 | one
-  3 | -42 | three
+  3 | -52 | three
   2 |   8 | two
 (3 rows)
 
@@ -790,7 +790,7 @@ DECLARE c1 CURSOR FOR SELECT * FROM ucview WHERE f1 = 3;
 FETCH 1 FROM c1;
  f1 | f2  |  f3   
 ----+-----+-------
-  3 | -42 | three
+  3 | -52 | three
 (1 row)
 
 DELETE FROM ucview WHERE CURRENT OF c1;
