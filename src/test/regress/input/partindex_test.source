@@ -598,7 +598,7 @@ FROM pg_catalog.pg_class c
      LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
      LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
      LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid
-WHERE c.relkind IN ('i','') AND c2.relname like 'unnamed_index_part_table%';
+WHERE c.relkind IN ('i', 'I') AND c2.relname like 'unnamed_index_part_table%';
 
 --
 -- ************************************************************
