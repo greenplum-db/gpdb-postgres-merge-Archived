@@ -106,6 +106,7 @@
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_stat_last_operation.h"
 #include "catalog/pg_stat_last_shoperation.h"
+#include "catalog/gp_partition_template.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 #include "foreign/foreign.h"
@@ -2359,6 +2360,12 @@ heap_drop_with_catalog(Oid relid)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		RemovePartitionKeyByRelId(relid);
+
+	/*
+	 * If a partitioned table, delete the gp_partition_template tuples.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		RemoveGpPartitionTemplateByRelId(relid);
 
 	/*
 	 * If the relation being dropped is the default partition itself,

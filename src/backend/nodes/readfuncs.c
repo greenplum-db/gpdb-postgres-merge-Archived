@@ -4260,6 +4260,68 @@ _readPartitionCmd(void)
 }
 
 #ifndef COMPILING_BINARY_FUNCS
+static GpPartitionDefinition *
+_readGpPartitionDefinition(void)
+{
+	READ_LOCALS(GpPartitionDefinition);
+
+	READ_NODE_FIELD(partDefElems);
+	READ_NODE_FIELD(enc_clauses);
+	READ_BOOL_FIELD(istemplate);
+
+	READ_DONE();
+}
+
+static GpPartDefElem *
+_readGpPartDefElem(void)
+{
+	READ_LOCALS(GpPartDefElem);
+
+	READ_STRING_FIELD(partName);
+	READ_NODE_FIELD(boundSpec);
+	READ_NODE_FIELD(subSpec);
+	READ_BOOL_FIELD(isDefault);
+	READ_NODE_FIELD(options);
+	READ_STRING_FIELD(accessMethod);
+	READ_STRING_FIELD(tablespacename);
+	READ_NODE_FIELD(colencs);
+
+	READ_DONE();
+}
+
+static GpPartitionRangeItem *
+_readGpPartitionRangeItem(void)
+{
+	READ_LOCALS(GpPartitionRangeItem);
+
+	READ_NODE_FIELD(val);
+	READ_ENUM_FIELD(edge, GpPartitionEdgeBounding);
+
+	READ_DONE();
+}
+
+static GpPartitionRangeSpec *
+_readGpPartitionRangeSpec(void)
+{
+	READ_LOCALS(GpPartitionRangeSpec);
+
+	READ_NODE_FIELD(partStart);
+	READ_NODE_FIELD(partEnd);
+	READ_NODE_FIELD(partEvery);
+
+	READ_DONE();
+}
+
+static GpPartitionListSpec *
+_readGpPartitionListSpec(void)
+{
+	READ_LOCALS(GpPartitionListSpec);
+
+	READ_NODE_FIELD(partValues);
+
+	READ_DONE();
+}
+
 /*
  * parseNodeString
  *
@@ -4711,6 +4773,16 @@ parseNodeString(void)
 		return_value = _readViewStmt();
 	else if (MATCHX("WITHCLAUSE"))
 		return_value = _readWithClause();
+	else if (MATCHX("GPPARTITIONDEFINITION"))
+		return_value = _readGpPartitionDefinition();
+	else if (MATCHX("GPPARTDEFELEM"))
+		return_value = _readGpPartDefElem();
+	else if (MATCHX("GPPARTITIONRANGEITEM"))
+		return_value = _readGpPartitionRangeItem();
+	else if (MATCHX("GPPARTITIONRANGESPEC"))
+		return_value = _readGpPartitionRangeSpec();
+	else if (MATCHX("GPPARTITIONLISTSPEC"))
+		return_value = _readGpPartitionListSpec();
 	else
 	{
         ereport(ERROR,

@@ -2538,8 +2538,6 @@ typedef struct GpPartDefElem
 	List 			   *options;	/* options from WITH clause */
 	char 			   *accessMethod;	/* table access method */
 	char			   *tablespacename; /* table space to use, or NULL */
-	int					partno;		/* number of the partition element */
-	long				rrand;		/* if not zero, "random" id for relname */
 	List			   *colencs;	/* column encoding clauses */
 	int					location;	/* token location, or -1 if unknown */
 } GpPartDefElem;
@@ -2553,7 +2551,6 @@ typedef struct GpPartitionRangeSpec
 	GpPartitionRangeItem	*partEnd;		/* end */
 	List 			   *partEvery;		/* every specification */
 	/* MPP-6297: check for WITH (tablename=name) clause */
-	char			   *pWithTnameStr;	/* and disable EVERY if tname set */
 	int					location;		/* token location, or -1 if unknown */
 } GpPartitionRangeSpec;
 

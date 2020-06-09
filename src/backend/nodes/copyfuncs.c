@@ -5623,8 +5623,6 @@ _copyGpPartDefElem(const GpPartDefElem *from)
 	COPY_NODE_FIELD(options);
 	COPY_STRING_FIELD(accessMethod);
 	COPY_STRING_FIELD(tablespacename);
-	COPY_SCALAR_FIELD(partno);
-	COPY_SCALAR_FIELD(rrand);
 	COPY_NODE_FIELD(colencs);
 	COPY_LOCATION_FIELD(location);
 
@@ -5651,7 +5649,6 @@ _copyGpPartitionRangeSpec(const GpPartitionRangeSpec *from)
 	COPY_NODE_FIELD(partStart);
 	COPY_NODE_FIELD(partEnd);
 	COPY_NODE_FIELD(partEvery);
-	COPY_STRING_FIELD(pWithTnameStr);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;

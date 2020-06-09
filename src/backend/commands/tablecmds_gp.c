@@ -19,6 +19,7 @@
 #include "access/reloptions.h"
 #include "access/table.h"
 #include "access/xact.h"
+#include "catalog/gp_partition_template.h"
 #include "catalog/partition.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_collation.h"
@@ -1078,6 +1079,8 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 			Relation 				temprel = rel;
 			PartitionSpec 			*tempsubpart = NULL;
 			ListCell 				*l;
+			List					*ancestors = get_partition_ancestors(RelationGetRelid(rel));
+			int						 level = list_length(ancestors) + 1;
 
 			gpPartDef->partDefElems = list_make1(elem);
 
@@ -1113,6 +1116,11 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 				temprel = table_open(firstchildoid, AccessShareLock);
 
 				temptempsubpart = generatePartitionSpec(temprel);
+
+				temptempsubpart->gpPartDef = GetGpPartitionTemplate(
+					ancestors ? llast_oid(ancestors) : RelationGetRelid(rel), level);
+				level++;
+
 				if (tempsubpart == NULL)
 					subpart = tempsubpart = temptempsubpart;
 				else

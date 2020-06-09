@@ -27,7 +27,8 @@ OBJS += pg_extprotocol.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
        pg_appendonly.o \
        oid_dispatch.o aocatalog.o storage_tablespace.o storage_database.o \
-       storage_tablespace_twophase.o storage_tablespace_xact.o
+       storage_tablespace_twophase.o storage_tablespace_xact.o \
+       gp_partition_template.o
 
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
@@ -70,7 +71,7 @@ CATALOG_HEADERS := \
 	pg_default_acl.h pg_init_privs.h pg_seclabel.h pg_shseclabel.h \
 	pg_collation.h pg_partitioned_table.h pg_range.h pg_transform.h \
 	pg_sequence.h pg_publication.h pg_publication_rel.h pg_subscription.h \
-	pg_subscription_rel.h
+	pg_subscription_rel.h gp_partition_template.h
 
 GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h
 

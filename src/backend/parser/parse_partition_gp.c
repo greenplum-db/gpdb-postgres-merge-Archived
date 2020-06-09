@@ -16,6 +16,7 @@
 #include "access/table.h"
 #include "catalog/partition.h"
 #include "catalog/pg_collation.h"
+#include "catalog/gp_partition_template.h"
 #include "cdb/cdbvars.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -1242,6 +1243,9 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	{
 		Assert(subPartSpec->gpPartDef->istemplate);
 		isSubTemplate = subPartSpec->gpPartDef->istemplate;
+		if (isSubTemplate)
+			StoreGpPartitionTemplate(ancestors ? llast_oid(ancestors) : parentrelid,
+									 partcomp.level, subPartSpec->gpPartDef);
 	}
 
 	foreach(lc, parentattenc)

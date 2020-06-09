@@ -5340,6 +5340,58 @@ _outAlterPublicationStmt(StringInfo str, const AlterPublicationStmt *node)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
+_outGpPartitionDefinition(StringInfo str, const GpPartitionDefinition *node)
+{
+	WRITE_NODE_TYPE("GPPARTITIONDEFINITION");
+
+	WRITE_NODE_FIELD(partDefElems);
+	WRITE_NODE_FIELD(enc_clauses);
+	WRITE_BOOL_FIELD(istemplate);
+}
+
+static void
+_outGpPartDefElem(StringInfo str, const GpPartDefElem *node)
+{
+	WRITE_NODE_TYPE("GPPARTDEFELEM");
+
+	WRITE_STRING_FIELD(partName);
+	WRITE_NODE_FIELD(boundSpec);
+	WRITE_NODE_FIELD(subSpec);
+	WRITE_BOOL_FIELD(isDefault);
+	WRITE_NODE_FIELD(options);
+	WRITE_STRING_FIELD(accessMethod);
+	WRITE_STRING_FIELD(tablespacename);
+	WRITE_NODE_FIELD(colencs);
+}
+
+static void
+_outGpPartitionRangeItem(StringInfo str, const GpPartitionRangeItem *node)
+{
+	WRITE_NODE_TYPE("GPPARTITIONRANGEITEM");
+
+	WRITE_NODE_FIELD(val);
+	WRITE_ENUM_FIELD(edge, GpPartitionEdgeBounding);
+}
+
+static void
+_outGpPartitionRangeSpec(StringInfo str, const GpPartitionRangeSpec *node)
+{
+	WRITE_NODE_TYPE("GPPARTITIONRANGESPEC");
+
+	WRITE_NODE_FIELD(partStart);
+	WRITE_NODE_FIELD(partEnd);
+	WRITE_NODE_FIELD(partEvery);
+}
+
+static void
+_outGpPartitionListSpec(StringInfo str, const GpPartitionListSpec *node)
+{
+	WRITE_NODE_TYPE("GPPARTITIONLISTSPEC");
+
+	WRITE_NODE_FIELD(partValues);
+}
+
+static void
 _outTupleDescNode(StringInfo str, const TupleDescNode *node)
 {
 	int			i;
@@ -6406,6 +6458,21 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_CreateTransformStmt:
 				_outCreateTransformStmt(str, obj);
+				break;
+			case T_GpPartitionDefinition:
+				_outGpPartitionDefinition(str, obj);
+				break;
+			case T_GpPartDefElem:
+				_outGpPartDefElem(str, obj);
+				break;
+			case T_GpPartitionRangeItem:
+				_outGpPartitionRangeItem(str, obj);
+				break;
+			case T_GpPartitionRangeSpec:
+				_outGpPartitionRangeSpec(str, obj);
+				break;
+			case T_GpPartitionListSpec:
+				_outGpPartitionListSpec(str, obj);
 				break;
 
 			default:
