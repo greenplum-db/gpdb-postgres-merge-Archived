@@ -9059,10 +9059,9 @@ DELETE FROM mpp21090_pttab_addcol_addpt_dropcol_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_decimal ORDER BY 1,2,3;
  col2  | col3 | col4 | col5  
 -------+------+------+-------
-  1.00 | c    |    1 |  1.00
   2.00 | a    |    0 |  2.00
  35.00 | b    |    1 | 35.00
-(3 rows)
+(2 rows)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addcol_addpt_dropcol_int4;
@@ -9554,22 +9553,20 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 | col5  
--------+------+------+-------
-  1.00 | d    |   10 | 35.00
-  2.00 | a    |    0 |  2.00
- 35.00 | b    |   10 |  2.00
- 35.00 | c    |   10 |  2.00
+ col2 | col3 | col4 | col5  
+------+------+------+-------
+ 1.00 | b    |   10 |  2.00
+ 1.00 | c    |   10 |  2.00
+ 1.00 | d    |   10 | 35.00
+ 2.00 | a    |    0 |  2.00
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 | col5  
--------+------+------+-------
-  2.00 | a    |    0 |  2.00
- 35.00 | b    |   10 |  2.00
- 35.00 | c    |   10 |  2.00
-(3 rows)
+ col2 | col3 | col4 | col5 
+------+------+------+------
+ 2.00 | a    |    0 | 2.00
+(1 row)
 
 -- TEST
 DROP TABLE IF EXISTS mpp21090_pttab_addpt_dropcol_addcol_dml_int4;
@@ -9876,19 +9873,19 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_addcol_dml_numeric SET col2 = 1.000000 WHERE col2 = 35.000000;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
-   col2    | col3 | col4 |   col5    
------------+------+------+-----------
-  1.000000 | b    |   10 |  2.000000
-  1.000000 | c    |   10 |  2.000000
-  1.000000 | d    |   10 | 35.000000
-  2.000000 | a    |    0 |  2.000000
+   col2   | col3 | col4 |   col5    
+----------+------+------+-----------
+ 1.000000 | b    |   10 |  2.000000
+ 1.000000 | c    |   10 |  2.000000
+ 1.000000 | d    |   10 | 35.000000
+ 2.000000 | a    |    0 |  2.000000
 (4 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
-   col2    | col3 | col4 |   col5    
------------+------+------+-----------
-  2.000000 | a    |    0 |  2.000000
+   col2   | col3 | col4 |   col5   
+----------+------+------+----------
+ 2.000000 | a    |    0 | 2.000000
 (1 row)
 
 -- TEST
@@ -10091,18 +10088,18 @@ SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
 -- Update partition key
 UPDATE mpp21090_pttab_addpt_dropcol_dml_decimal SET col2 = 1.00 WHERE col2 = 35.00;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 
--------+------+------
-  1.00 | b    |   10
-  1.00 | b    |   10
-  2.00 | a    |    0
+ col2 | col3 | col4 
+------+------+------
+ 1.00 | b    |   10
+ 1.00 | b    |   10
+ 2.00 | a    |    0
 (3 rows)
 
 DELETE FROM mpp21090_pttab_addpt_dropcol_dml_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
- col2  | col3 | col4 
--------+------+------
-  2.00 | a    |    0
+ col2 | col3 | col4 
+------+------+------
+ 2.00 | a    |    0
 (1 row)
 
 -- TEST
@@ -11930,9 +11927,9 @@ SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
 
 DELETE FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
-   col2    | col3 |   col4   | col5 
------------+------+----------+------
-  2.000000 | a    | 2.000000 |    0
+   col2   | col3 |   col4   | col5 
+----------+------+----------+------
+ 2.000000 | a    | 2.000000 |    0
 (1 row)
 
 -- TEST
@@ -12318,9 +12315,9 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
 
 DELETE FROM mpp21090_pttab_droplastcol_addpt_decimal WHERE col2 = 1.00;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
- col1 | col2  | col3 | col4 
-------+-------+------+------
- 2.00 |  2.00 | a    |    0
+ col1 | col2 | col3 | col4 
+------+------+------+------
+ 2.00 | 2.00 | a    |    0
 (1 row)
 
 -- TEST
@@ -12534,9 +12531,9 @@ SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
 
 DELETE FROM mpp21090_pttab_droplastcol_addpt_numeric WHERE col2 = 1.000000;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
-   col1   |   col2    | col3 | col4 
-----------+-----------+------+------
- 2.000000 |  2.000000 | a    |    0
+   col1   |   col2   | col3 | col4 
+----------+----------+------+------
+ 2.000000 | 2.000000 | a    |    0
 (1 row)
 
 -- TEST
