@@ -24,7 +24,9 @@
 #include "catalog/pg_exttable.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#if 0
 #include "cdb/partitionselection.h"
+#endif
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
@@ -2892,6 +2894,8 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 	CDXLTranslationContextArray *ctxt_translation_prev_siblings
 	)
 {
+	return NULL;
+#if 0
 	PartitionSelector *partition_selector = MakeNode(PartitionSelector);
 
 	Plan *plan = &(partition_selector->plan);
@@ -2991,6 +2995,7 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 	child_contexts->Release();
 
 	return (Plan *) partition_selector;
+#endif
 }
 
 //---------------------------------------------------------------------------

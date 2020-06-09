@@ -272,6 +272,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfo
 #endif
 }
 
+#if 0
 // return index info list of indexes defined on a partitioned table
 CMDIndexInfoArray *
 CTranslatorRelcacheToDXL::RetrieveRelIndexInfoForPartTable
@@ -327,6 +328,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfoForPartTable
 	}
 	return md_index_info_array;
 }
+#endif
 
 // return index info list of indexes defined on regular, external tables or leaf partitions
 CMDIndexInfoArray *
@@ -384,6 +386,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfoForNonPartTable
 	return md_index_info_array;
 }
 
+#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorRelcacheToDXL::RetrievePartTableIndexInfo
@@ -420,6 +423,7 @@ CTranslatorRelcacheToDXL::RetrievePartTableIndexInfo
 	
 	return index_info_list;
 }
+#endif
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -1168,6 +1172,7 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 	return index;
 }
 
+#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorRelcacheToDXL::RetrievePartTableIndex
@@ -1438,6 +1443,7 @@ CTranslatorRelcacheToDXL::LevelHasDefaultPartition
 	
 	return false;
 }
+#endif
 
 //---------------------------------------------------------------------------
 //	@function:
