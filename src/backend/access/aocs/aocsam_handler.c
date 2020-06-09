@@ -878,7 +878,66 @@ aoco_relation_nontransactional_truncate(Relation rel)
 static void
 aoco_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 {
-	elog(ERROR, "not implemented yet");
+	SMgrRelation dstrel;
+
+	/*
+	 * Use the "AO-specific" (non-shared buffers backed storage) SMGR
+	 * implementation
+	 */
+	dstrel = smgropen(*newrnode, rel->rd_backend, SMGR_AO);
+	RelationOpenSmgr(rel);
+
+#if 0
+	/*
+	 * Since we copy the file directly without looking at the shared buffers,
+	 * we'd better first flush out any pages of the source relation that are
+	 * in shared buffers.  We assume no new changes will be made while we are
+	 * holding exclusive lock on the rel.
+	 */
+	FlushRelationBuffers(rel);
+#endif
+
+	/*
+	 * Create and copy all forks of the relation, and schedule unlinking of
+	 * old physical files.
+	 *
+	 * NOTE: any conflict in relfilenode value will be caught in
+	 * RelationCreateStorage().
+	 */
+	RelationCreateStorage(*newrnode, rel->rd_rel->relpersistence, SMGR_AO);
+
+	copy_append_only_data(rel->rd_node, *newrnode, rel->rd_backend, rel->rd_rel->relpersistence);
+#if 0
+	/* copy main fork */
+	RelationCopyStorage(rel->rd_smgr, dstrel, MAIN_FORKNUM,
+	                    rel->rd_rel->relpersistence);
+
+	/* copy those extra forks that exist */
+	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
+	     forkNum <= MAX_FORKNUM; forkNum++)
+	{
+		if (smgrexists(rel->rd_smgr, forkNum))
+		{
+			smgrcreate(dstrel, forkNum, false);
+
+			/*
+			 * WAL log creation if the relation is persistent, or this is the
+			 * init fork of an unlogged relation.
+			 */
+			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+					forkNum == INIT_FORKNUM))
+				log_smgrcreate(newrnode, forkNum);
+			RelationCopyStorage(rel->rd_smgr, dstrel, forkNum,
+			                    rel->rd_rel->relpersistence);
+		}
+	}
+#endif
+
+
+	/* drop old relation, and close new one */
+	RelationDropStorage(rel);
+	smgrclose(dstrel);
 }
 
 static void
