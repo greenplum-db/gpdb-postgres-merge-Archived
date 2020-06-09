@@ -1150,6 +1150,11 @@ _readAConst(void)
 {
 	READ_LOCALS(A_Const);
 
+	/* skip " :val " */
+	token = pg_strtok(&length);
+	if (length != 4 || token[0] != ':' || token[1] != 'v')
+		elog(ERROR,"Unable to understand A_CONST node \"%.30s\"", token);
+
 	token = pg_strtok(&length);
 	token = debackslash(token,length);
 	local_node->val.type = T_String;
