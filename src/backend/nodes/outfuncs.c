@@ -3488,7 +3488,7 @@ _outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 	WRITE_BOOL_FIELD(validate_default);
 	WRITE_NODE_FIELD(changedConstraintOids);
 
-	/* node->changedContraintDefs is a list of naked strings, so
+	/* node->changedConstraintDefs is a list of naked strings, so
 	 * we can't use WRITE_NODE_FIELD on it. Temporarily wrap them in Values.
 	 */
 	wrapStringList(node->changedConstraintDefs);
