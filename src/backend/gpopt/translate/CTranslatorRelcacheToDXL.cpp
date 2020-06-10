@@ -3114,21 +3114,24 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 {
 	IMDRelation::Erelstoragetype rel_storage_type = IMDRelation::ErelstorageSentinel;
 
-	switch (rel->rd_rel->relstorage)
+	switch (rel->rd_rel->relam)
 	{
-		case RELSTORAGE_HEAP:
+		case HEAP_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageHeap;
 			break;
-		case RELSTORAGE_AOCOLS:
+		case AOCO_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageAppendOnlyCols;
 			break;
-		case RELSTORAGE_AOROWS:
+		case APPENDOPTIMIZED_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageAppendOnlyRows;
 			break;
+// GPDB_12_MERGE_FIXME: why did ORCA even care about relstorage = 'v'??? DEAD CODE!
+#if NOT_USED
 		case RELSTORAGE_VIRTUAL:
 			rel_storage_type = IMDRelation::ErelstorageVirtual;
 			break;
-		case RELSTORAGE_FOREIGN:
+#endif
+		case 0:
 			if (gpdb::RelIsExternalTable(rel->rd_id))
 				rel_storage_type = IMDRelation::ErelstorageExternal;
 			else

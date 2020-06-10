@@ -29,6 +29,7 @@
 #endif
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/typcache.h"
 #include "utils/uri.h"
 #include "gpos/base.h"
