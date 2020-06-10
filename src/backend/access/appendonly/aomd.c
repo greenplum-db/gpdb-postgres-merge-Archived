@@ -336,7 +336,7 @@ copy_file(char *srcsegpath, char *dstsegpath,
 				(errcode_for_file_access(),
 				 (errmsg("could not create destination file %s: %m", dstsegpath))));
 
-	left = FileSize(srcFile);
+	left = FileDiskSize(srcFile);
 	if (left < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -350,13 +350,13 @@ copy_file(char *srcsegpath, char *dstsegpath,
 		CHECK_FOR_INTERRUPTS();
 
 		len = Min(left, BLCKSZ);
-		if (FileRead(srcFile, buffer, offset, len, WAIT_EVENT_DATA_FILE_READ) != len)
+		if (FileRead(srcFile, buffer, len, offset, WAIT_EVENT_DATA_FILE_READ) != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read %d bytes from file \"%s\": %m",
 							len, srcsegpath)));
 
-		if (FileWrite(dstFile, buffer, offset, len, WAIT_EVENT_DATA_FILE_WRITE) != len)
+		if (FileWrite(dstFile, buffer, len, offset, WAIT_EVENT_DATA_FILE_WRITE) != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not write %d bytes to file \"%s\": %m",
