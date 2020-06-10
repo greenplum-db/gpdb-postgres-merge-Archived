@@ -1042,20 +1042,36 @@ AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorRe
 	{
 		bool		shouldFree = false;
 
+		Assert(executorReadBlock->mt_bind);
+
 		/* If the tuple is not in the latest format, convert it */
 		// GPDB_12_MERGE_FIXME: Is pg_upgrade from old versions still a thing? Can we drop this?
-#if 0
 		if (formatVersion < AORelationVersion_GetLatest())
-			tuple = upgrade_tuple(executorReadBlock, tuple, slot->tts_mt_bind, formatVersion, &shouldFree);
-#endif
+			tuple = upgrade_tuple(executorReadBlock, tuple, executorReadBlock->mt_bind, formatVersion, &shouldFree);
 
-		Assert(executorReadBlock->mt_bind);
-		
 		ExecClearTuple(slot);
 		memtuple_deform(tuple, executorReadBlock->mt_bind, slot->tts_values, slot->tts_isnull);
 		slot->tts_tid = fake_ctid;
+
 		if (shouldFree)
-			(slot)->tts_flags |= TTS_FLAG_SHOULDFREE;
+		{
+			/*
+			 * Store the converted memtuple in slot->data, so that it gets free'd
+			 * automatically when it's no longer needed.
+			 *
+			 * GPDB_12_MERGE_FIXME: we're assuming that it's a VirtualTupleTableSlot.
+			 * But we cannot assert it here, becuase it's actually not;
+			 * appendonly_slot_callbacks() returns a copy of TTSOpsVirtual, so it's
+			 * a not exactly a virtual tuple slot, but something compatible. An
+			 * assertion sure would be nice.
+			 */
+			VirtualTupleTableSlot *vslot = (VirtualTupleTableSlot *) slot;
+			Assert(vslot->data == NULL);
+			Assert(!TTS_SHOULDFREE(slot));
+
+			slot->tts_flags |= TTS_FLAG_SHOULDFREE;
+			vslot->data = (char *) tuple;
+		}
 		ExecStoreVirtualTuple(slot);
 	}
 
