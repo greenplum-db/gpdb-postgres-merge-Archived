@@ -235,7 +235,6 @@ select verify('oid_check_ao_pt1');
       1
 (1 row)
 
-reset gp_default_storage_options;
 --
 -- pg_constraint
 --
@@ -248,16 +247,15 @@ $$
                (select oid from gp_dist_random('pg_constraint')
                where conrelid = $1::regclass)) foo;
 $$ language sql;
-CREATE TABLE constraint_pt1 (id int, date date, amt decimal(10,2)) DISTRIBUTED BY (id)
+CREATE TABLE constraint_pt1 (id int, date date, amt decimal(10,2),
+  CONSTRAINT amt_check CHECK (amt > 0)) DISTRIBUTED BY (id)
 PARTITION BY RANGE (date)
       (PARTITION Jan08 START (date '2008-01-01') INCLUSIVE ,
       PARTITION Feb08 START (date '2008-02-01') INCLUSIVE ,
       PARTITION Mar08 START (date '2008-03-01') INCLUSIVE
       END (date '2008-04-01') EXCLUSIVE);
-NOTICE:  CREATE TABLE will create partition "constraint_pt1_1_prt_jan08" for table "constraint_pt1"
-NOTICE:  CREATE TABLE will create partition "constraint_pt1_1_prt_feb08" for table "constraint_pt1"
-NOTICE:  CREATE TABLE will create partition "constraint_pt1_1_prt_mar08" for table "constraint_pt1"
-CREATE TABLE constraint_t1 (id int, date date, amt decimal(10,2)) DISTRIBUTED BY (id);
+CREATE TABLE constraint_t1 (id int, date date, amt decimal(10,2),
+  CONSTRAINT amt_check CHECK (amt > 0)) DISTRIBUTED BY (id);
 INSERT INTO constraint_pt1 SELECT i, '2008-01-13', i FROM generate_series(1,5)i;
 INSERT INTO constraint_pt1 SELECT i, '2008-02-13', i FROM generate_series(1,5)i;
 INSERT INTO constraint_pt1 SELECT i, '2008-03-13', i FROM generate_series(1,5)i;
@@ -336,16 +334,14 @@ SELECT * FROM constraint_pt1 ORDER BY date, id;
 
 -- exchange with appendonly
 CREATE TABLE constraint_pt2 (id int, date date, amt decimal(10,2)
-       CHECK (amt > 0)) DISTRIBUTED BY (id)
+       CONSTRAINT amt_check CHECK (amt > 0)) DISTRIBUTED BY (id)
 PARTITION BY RANGE (date)
       (PARTITION Jan08 START (date '2008-01-01') INCLUSIVE,
       PARTITION Feb08 START (date '2008-02-01') INCLUSIVE,
       PARTITION Mar08 START (date '2008-03-01') INCLUSIVE
       END (date '2008-04-01') EXCLUSIVE);
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_jan08" for table "constraint_pt2"
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_feb08" for table "constraint_pt2"
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_mar08" for table "constraint_pt2"
-CREATE TABLE constraint_t2 (id int, date date, amt decimal(10,2))
+CREATE TABLE constraint_t2 (id int, date date, amt decimal(10,2),
+       CONSTRAINT amt_check CHECK (amt > 0))
        WITH (appendonly=true, orientation=column) DISTRIBUTED BY (id);
 INSERT INTO constraint_pt2 SELECT i, '2008-01-13', i FROM generate_series(1,5)i;
 INSERT INTO constraint_pt2 SELECT i, '2008-01-20', i FROM generate_series(11,15)i;
@@ -360,13 +356,13 @@ ANALYZE constraint_pt2;
 select verify('constraint_pt2_1_prt_feb08');
  verify 
 --------
-      2
+      1
 (1 row)
 
 select verify('constraint_t2');
  verify 
 --------
-      2
+      1
 (1 row)
 
 SELECT * FROM constraint_pt2 ORDER BY date, id;
@@ -412,8 +408,6 @@ ALTER TABLE constraint_pt2 ADD PARTITION START (date '2009-02-01') INCLUSIVE
        END (date '2009-03-01') EXCLUSIVE,
        EXCHANGE PARTITION mar08 WITH TABLE constraint_t3,
        RENAME PARTITION FOR ('2008-01-16') TO jan2ndhalf;
-NOTICE:  CREATE TABLE will create partition "constraint_pt2_1_prt_r1905570446" for table "constraint_pt2"
-NOTICE:  renamed partition "jan08_31" to "jan2ndhalf" for relation "constraint_pt2"
 select verify('constraint_pt2_1_prt_mar08');
  verify 
 --------
@@ -456,13 +450,13 @@ SELECT * FROM constraint_t2;
 select verify('constraint_pt2_1_prt_feb08');
  verify 
 --------
-      2
+      1
 (1 row)
 
 -- exchange a subpartition
 SET client_min_messages='warning';
-CREATE TABLE constraint_pt3 (id int, year int, month int CHECK (month > 0),
-       day int CHECK (day > 0), region text)
+CREATE TABLE constraint_pt3 (id int, year int, month int CONSTRAINT month_check CHECK (month > 0),
+       day int CONSTRAINT day_check CHECK (day > 0), region text)
 DISTRIBUTED BY (id)
 PARTITION BY RANGE (year)
       SUBPARTITION BY RANGE (month)
@@ -486,32 +480,29 @@ INSERT INTO constraint_pt3 SELECT i, 2002, 4, i, 'europe' FROM generate_series(1
 -- look at the constraints of the partition we plan to exchange
 SELECT conname, pg_get_constraintdef(oid) from pg_constraint where conrelid =
        'constraint_pt3_1_prt_2_2_prt_3_3_prt_europe'::regclass;
-                      conname                      |            pg_get_constraintdef            
----------------------------------------------------+--------------------------------------------
- constraint_pt3_1_prt_2_2_prt_3_3_prt_europe_check | CHECK ((region = 'europe'::text))
- constraint_pt3_1_prt_2_2_prt_3_check              | CHECK (((month >= 2) AND (month < 3)))
- constraint_pt3_1_prt_2_check                      | CHECK (((year >= 2001) AND (year < 2002)))
- constraint_pt3_day_check                          | CHECK ((day > 0))
- constraint_pt3_month_check                        | CHECK ((month > 0))
-(5 rows)
+   conname   | pg_get_constraintdef 
+-------------+----------------------
+ day_check   | CHECK ((day > 0))
+ month_check | CHECK ((month > 0))
+(2 rows)
 
 drop table if exists constraint_t3;
-CREATE TABLE constraint_t3 (id int, year int, month int, day int, region text)
+CREATE TABLE constraint_t3 (id int, year int, month int CONSTRAINT month_check CHECK (month > 0),
+       day int CONSTRAINT day_check CHECK (day > 0), region text)
        WITH (appendonly=true) DISTRIBUTED BY (id);
 ALTER TABLE constraint_pt3 ALTER PARTITION FOR ('2001')
       ALTER PARTITION FOR ('2')
       EXCHANGE PARTITION FOR ('europe') WITH TABLE constraint_t3;
-NOTICE:  exchanged partition "europe" of partition for value ('2') of partition for value ('2001') of relation "constraint_pt3" with relation "constraint_t3"
 select verify('constraint_pt3_1_prt_2_2_prt_3_3_prt_europe');
  verify 
 --------
-      5
+      2
 (1 row)
 
 select verify('constraint_t3');
  verify 
 --------
-      5
+      2
 (1 row)
 
 INSERT INTO constraint_pt3 SELECT i, 2001, 02, i, 'europe' FROM generate_series(11,15)i;
@@ -564,19 +555,16 @@ SELECT * FROM constraint_t3 ORDER BY year, month, region, id;
  month  | integer |           |          |         | plain    |              | 
  day    | integer |           |          |         | plain    |              | 
  region | text    |           |          |         | extended |              | 
+Partition of: constraint_pt3_1_prt_2_2_prt_3 FOR VALUES IN ('europe')
+Partition constraint: ((year IS NOT NULL) AND (year >= 2001) AND (year < 2002) AND (month IS NOT NULL) AND (month >= 2) AND (month < 3) AND (region IS NOT NULL) AND (region = 'europe'::text))
 Compression Type: None
 Compression Level: 0
 Block Size: 32768
 Checksum: t
 Check constraints:
-    "constraint_pt3_1_prt_2_2_prt_3_3_prt_europe_check" CHECK (region = 'europe'::text)
-    "constraint_pt3_1_prt_2_2_prt_3_check" CHECK (month >= 2 AND month < 3)
-    "constraint_pt3_1_prt_2_check" CHECK (year >= 2001 AND year < 2002)
-    "constraint_pt3_day_check" CHECK (day > 0)
-    "constraint_pt3_month_check" CHECK (month > 0)
-Inherits: constraint_pt3_1_prt_2_2_prt_3
+    "day_check" CHECK (day > 0)
+    "month_check" CHECK (month > 0)
 Distributed by: (id)
-Options: appendonly=true
 
 CREATE DOMAIN const_domain1 AS TEXT
       CONSTRAINT cons_check1 check (char_length(VALUE) = 5);
