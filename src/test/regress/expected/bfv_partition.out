@@ -2153,7 +2153,7 @@ Distributed randomly
  stringu2    | name    |           |          | 
  string4     | name    |           |          | 
  startdate   | date    |           |          | 
-Partition of: mpp3817 FOR VALUES FROM ('10-01-2007') TO ('11-01-2007')
+Partition of: mpp3817 FOR VALUES FROM ('09-01-2007') TO ('10-01-2007')
 Distributed randomly
 
 \d mpp3817_1_prt_default_part
