@@ -70,7 +70,7 @@ install-tests:
 	$(MAKE) -C $(top_builddir)/contrib/pageinspect install
 
 installcheck: all gpdiff.pl gpstringsubs.pl install-tests
-	$(pg_isolation_regress_installcheck) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
+	$(pg_isolation_regress_installcheck) --init-file=$(srcdir)/init_file --load-extension=pageinspect --schedule=$(srcdir)/isolation_schedule
 
 check: all
 	$(pg_isolation_regress_check) --schedule=$(srcdir)/isolation_schedule
