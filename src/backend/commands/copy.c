@@ -1263,8 +1263,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
 							   NULL, NULL, stmt->attlist, options);
 		cstate->whereClause = whereClause;
-		// GPDB_12_MERGE_FIXME
-		//cstate->range_table = range_table;
 
 		/*
 		 * Error handling setup
@@ -2333,30 +2331,12 @@ static uint64
 CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 {
 	CopyStmt   *dispatchStmt;
-	List	   *all_relids;
 	CdbPgResults pgresults = {0};
 	int			i;
 	uint64		processed = 0;
 	uint64		rejected = 0;
 
 	dispatchStmt = copyObject((CopyStmt *) stmt);
-
-	all_relids = list_make1_oid(RelationGetRelid(cstate->rel));
-
-	/* add in AO segno map for dispatch */
-	if (dispatchStmt->is_from)
-	{
-		// GPDB_12_MERGE_FIXME: How are we going to do this with new partitioning implementation?
-#if 0
-		if (rel_is_partitioned(RelationGetRelid(cstate->rel)))
-		{
-			PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
-
-			all_relids = list_concat(all_relids, all_partition_relids(pn));
-		}
-#endif
-		
-	}
 
 	CdbDispatchUtilityStatement((Node *) dispatchStmt,
 								DF_NEED_TWO_PHASE |
@@ -3222,154 +3202,6 @@ CopyTo(CopyState cstate)
 
 	if (cstate->rel)
 	{
-		/* GPDB_12_MERGE_FIXME: leave it here waiting for we settled the partitioning */
-#if 0
-		foreach(lc, target_rels)
-		{
-			Relation rel = lfirst(lc);
-			Datum	   *values;
-			bool	   *nulls;
-			HeapScanDesc scandesc = NULL;			/* used if heap table */
-			AppendOnlyScanDesc aoscandesc = NULL;	/* append only table */
-
-			tupDesc = RelationGetDescr(rel);
-			attr = tupDesc->attrs;
-			num_phys_attrs = tupDesc->natts;
-
-			/*
-			 * We need to update attnumlist because different partition
-			 * entries might have dropped tables.
-			 */
-			cstate->attnumlist =
-				CopyGetAttnums(tupDesc, rel, cstate->attnamelist);
-
-			pfree(cstate->out_functions);
-			cstate->out_functions =
-				(FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-
-			/* Get info about the columns we need to process. */
-			foreach(cur, cstate->attnumlist)
-			{
-				int			attnum = lfirst_int(cur);
-				Oid			out_func_oid;
-				bool		isvarlena;
-
-				if (cstate->binary)
-					getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
-											&out_func_oid,
-											&isvarlena);
-				else
-					getTypeOutputInfo(attr[attnum - 1]->atttypid,
-									  &out_func_oid,
-									  &isvarlena);
-
-				fmgr_info(out_func_oid, &cstate->out_functions[attnum - 1]);
-			}
-
-			values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-			nulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
-
-			if (RelationIsHeap(rel))
-			{
-				HeapTuple	tuple;
-
-				scandesc = heap_beginscan(rel, GetActiveSnapshot(), 0, NULL);
-
-				while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
-				{
-					CHECK_FOR_INTERRUPTS();
-
-					/* Deconstruct the tuple ... faster than repeated heap_getattr */
-					heap_deform_tuple(tuple, tupDesc, values, nulls);
-
-					/* Format and send the data */
-					CopyOneRowTo(cstate, HeapTupleGetOid(tuple), values, nulls);
-					processed++;
-				}
-
-				heap_endscan(scandesc);
-			}
-			else if (RelationIsAoRows(rel))
-			{
-				TupleTableSlot	*slot = MakeSingleTupleTableSlot(tupDesc);
-				MemTupleBinding *mt_bind = create_memtuple_binding(tupDesc);
-
-				aoscandesc = appendonly_beginscan(rel, GetActiveSnapshot(),
-												  GetActiveSnapshot(), 0, NULL);
-
-				while (appendonly_getnext(aoscandesc, ForwardScanDirection, slot))
-				{
-					MemTuple	tuple;
-
-					CHECK_FOR_INTERRUPTS();
-
-					/* Extract all the values of the tuple */
-					slot_getallattrs(slot);
-					values = slot_get_values(slot);
-					nulls = slot_get_isnull(slot);
-
-					/* Format and send the data */
-					CopyOneRowTo(cstate, values, nulls);
-					processed++;
-				}
-
-				ExecDropSingleTupleTableSlot(slot);
-
-				appendonly_endscan(aoscandesc);
-			}
-			else if (RelationIsAoCols(rel))
-			{
-				AOCSScanDesc scan = NULL;
-				TupleTableSlot *slot = MakeSingleTupleTableSlot(tupDesc);
-				bool *proj = NULL;
-
-				int nvp = tupDesc->natts;
-				int i;
-
-				proj = palloc(sizeof(bool) * nvp);
-				for(i = 0; i < nvp; ++i)
-				    proj[i] = true;
-
-				scan = aocs_beginscan(rel, GetActiveSnapshot(),
-									  GetActiveSnapshot(),
-									  NULL /* relationTupleDesc */, proj);
-
-				while (aocs_getnext(scan, ForwardScanDirection, slot))
-				{
-				    CHECK_FOR_INTERRUPTS();
-
-				    slot_getallattrs(slot);
-				    values = slot_get_values(slot);
-				    nulls = slot_get_isnull(slot);
-
-					CopyOneRowTo(cstate, InvalidOid, values, nulls);
-					processed++;
-				}
-
-				ExecDropSingleTupleTableSlot(slot);
-				aocs_endscan(scan);
-
-				pfree(proj);
-			}
-			else if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-			{
-				/* should never get here */
-				if (!cstate->skip_ext_partition)
-				{
-				    elog(ERROR, "internal error");
-				}
-			}
-			else
-			{
-				/* should never get here */
-				Assert(false);
-			}
-
-			/* partition table, so close */
-			if (cstate->partitions)
-				heap_close(rel, NoLock);
-		}
-#else /* GPDB_12_MERGE_FIXME */
 		TupleTableSlot *slot;
 		TableScanDesc scandesc;
 
@@ -3391,7 +3223,6 @@ CopyTo(CopyState cstate)
 
 		ExecDropSingleTupleTableSlot(slot);
 		table_endscan(scandesc);
-#endif /* GPDB_12_MERGE_FIXME */
 	}
 	else
 	{
@@ -4194,7 +4025,6 @@ CopyFrom(CopyState cstate)
 					  1,		/* must match rel's position in range_table */
 					  NULL,
 					  0);
-	ResultRelInfoChooseSegno(resultRelInfo);
 
 	target_resultRelInfo = resultRelInfo;
 
@@ -4995,36 +4825,6 @@ CopyFrom(CopyState cstate)
 				cstate->on_segment ? processed : 0);
 	}
 
-	/*
-	 * GPDB_12_MERGE_FIXME:
-	 * Probably safe to remove now that 5778f31124d is in. Maintaining the
-	 * commented out section for now until all conflicts are resolved.
-	 */
-#if 0
-	if (cstate->dispatch_mode == COPY_DISPATCH)
-	{
-		for (i = estate->es_num_result_relations - 1; i >= 0; i--)
-		{
-			resultRelInfo = &estate->es_result_relations[i];
-
-			if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-			{
-				int64 tupcount;
-
-				tupcount = processed;
-
-				/* find out which segnos the result rels in the QE's used */
-				ResultRelInfoChooseSegno(resultRelInfo);
-
-				if (resultRelInfo->ri_aoInsertDesc)
-					resultRelInfo->ri_aoInsertDesc->insertCount += tupcount;
-				if (resultRelInfo->ri_aocsInsertDesc)
-					resultRelInfo->ri_aocsInsertDesc->insertCount += tupcount;
-			}
-		}
-	}
-#endif
-	
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/* Allow the FDW to shut down */
@@ -5962,29 +5762,6 @@ retry:
 		PG_END_TRY();
 	}
 
-	// GPDB_12_MERGE_FIXME
-#if 0	
-	/*
-	 * Remap the values to the form expected by the target partition.
-	 */
-	if (frame.relid != RelationGetRelid(resultRelInfo->ri_RelationDesc))
-	{
-		MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
-
-		resultRelInfo = targetid_get_partition(frame.relid, estate, true);
-		slot = reconstructPartitionTupleSlot(baseSlot, resultRelInfo);
-
-		MemoryContextSwitchTo(oldcontext);
-
-		/* since resultRelInfo has changed, refresh these values */
-		tupDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
-		attr = tupDesc->attrs;
-		num_phys_attrs = tupDesc->natts;
-	}
-	else
-		slot = baseSlot;
-#endif
-	
 	/*
 	 * Read any attributes that were processed in the QD already. The attribute
 	 * numbers in the message are already in terms of the target partition, so

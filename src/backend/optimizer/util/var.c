@@ -28,7 +28,6 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/prep.h"
 #include "optimizer/walkers.h"
-#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
@@ -95,6 +94,11 @@ static Relids alias_relid_set(Query *query, Relids relids);
  *
  * Will recurse into sublinks.	Also, may be invoked directly on a Query.
  */
+typedef bool (*Cdb_walk_vars_callback_Aggref)(Aggref *aggref, void *context, int sublevelsup);
+typedef bool (*Cdb_walk_vars_callback_Var)(Var *var, void *context, int sublevelsup);
+typedef bool (*Cdb_walk_vars_callback_CurrentOf)(CurrentOfExpr *expr, void *context, int sublevelsup);
+typedef bool (*Cdb_walk_vars_callback_placeholdervar)(PlaceHolderVar *expr, void *context, int sublevelsup);
+
 typedef struct Cdb_walk_vars_context
 {
     Cdb_walk_vars_callback_Var      	callback_var;
@@ -142,7 +146,7 @@ cdb_walk_vars_walker(Node *node, void *wvwcontext)
 	return expression_tree_walker(node, cdb_walk_vars_walker, ctx);
 }                               /* cdb_walk_vars_walker */
 
-bool
+static bool
 cdb_walk_vars(Node                         *node,
               Cdb_walk_vars_callback_Var    callback_var,
               Cdb_walk_vars_callback_Aggref callback_aggref,
@@ -208,16 +212,6 @@ pull_varnos_of_level(Node *node, int levelsup)
 
 	return context.varnos;
 }
-
-/*
- * CDB
- */
-Relids
-pull_upper_varnos(Node *node)
-{
-	return pull_varnos_of_level(node, 1);
-}
-
 
 static bool
 pull_varnos_walker(Node *node, pull_varnos_context *context)
@@ -647,7 +641,7 @@ contain_vars_of_level_or_above_cbAggref(Aggref *aggref, void *unused, int sublev
                          sublevelsup);
 }
 
-bool
+static bool
 contain_vars_of_level_or_above_cbPlaceHolderVar(PlaceHolderVar *placeholdervar, void *unused, int sublevelsup)
 {
 	if(placeholdervar->phlevelsup >= sublevelsup)

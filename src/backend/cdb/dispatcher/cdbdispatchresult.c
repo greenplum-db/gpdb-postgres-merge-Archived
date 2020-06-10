@@ -680,36 +680,6 @@ cdbdisp_sumRejectedRows(CdbDispatchResults *results)
 
 }
 
-/* GPDB_12_MERGE_FIXME: obsolete, I hope */
-#if 0
-/*
- * sum tuple counts that were added into a partitioned AO table
- */
-HTAB *
-cdbdisp_sumAoPartTupCount(CdbDispatchResults *results)
-{
-	int			i;
-	HTAB	   *ht = NULL;
-
-	for (i = 0; i < results->resultCount; ++i)
-	{
-		CdbDispatchResult *dispatchResult = &results->resultArray[i];
-		int			nres = cdbdisp_numPGresult(dispatchResult);
-		int			ires;
-
-		for (ires = 0; ires < nres; ++ires)
-		{
-			PGresult   *pgresult = cdbdisp_getPGresult(dispatchResult, ires);
-
-			ht = PQprocessAoTupCounts(ht, (void *) pgresult->aotupcounts,
-									  pgresult->naotupcounts);
-		}
-	}
-
-	return ht;
-}
-#endif
-
 /*
  * Return ptr to first resultArray entry for a given sliceIndex.
  */

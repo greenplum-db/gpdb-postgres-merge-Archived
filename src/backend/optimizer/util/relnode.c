@@ -37,7 +37,6 @@
 #include "cdb/cdbutil.h"
 #include "nodes/makefuncs.h"                /* makeVar() */
 #include "nodes/nodeFuncs.h"
-#include "optimizer/var.h"                  /* contain_vars_of_level_or_above */
 #include "parser/parse_expr.h"              /* exprType(), exprTypmod() */
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"

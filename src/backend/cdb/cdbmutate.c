@@ -19,7 +19,6 @@
 #include "access/xact.h"
 #include "parser/parsetree.h"	/* for rt_fetch() */
 #include "optimizer/planmain.h"
-#include "optimizer/var.h"
 #include "parser/parse_relation.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"

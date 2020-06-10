@@ -44,7 +44,6 @@
 #include "optimizer/planner.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "optimizer/planshare.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"

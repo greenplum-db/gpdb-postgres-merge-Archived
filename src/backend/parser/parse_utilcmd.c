@@ -4861,59 +4861,6 @@ TypeNameGetStorageDirective(TypeName *typname)
 	return out;
 }
 
-#ifdef GPDB_12_MERGE_FIXME
-/*
- * GPDB_12_MERGE_FIXME: appendonly and orientation are no loger passed as
- * arguments. This code was used in child partition cases and the caller is
- * currently disabled. Address this issue when the caller gets reenabled
- */
-
-/*
- * Tells the caller if CO is explicitly disabled, to handle cases where we
- * want to ignore encoding clauses in partition expansion.
- *
- * This is an ugly special case that backup expects to work and since we've got
- * tonnes of dumps out there and the possibility that users have learned this
- * grammar from them, we must continue to support it.
- */
-static bool
-co_explicitly_disabled(List *opts)
-{
-	ListCell *lc;
-
-	foreach(lc, opts)
-	{
-		DefElem *el = lfirst(lc);
-		char *arg = NULL;
-
-		/* Argument will be a Value */
-		if (!el->arg)
-		{
-			continue;
-		}
-
-		arg = defGetString(el);
-		bool result = false;
-		if (pg_strcasecmp("appendonly", el->defname) == 0 &&
-			pg_strcasecmp("false", arg) == 0)
-		{
-			result = true;
-		}
-		else if (pg_strcasecmp("orientation", el->defname) == 0 &&
-				 pg_strcasecmp("column", arg) != 0)
-		{
-			result = true;
-		}
-
-		if (result)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-#endif
-
 /*
  * transformPartitionCmd
  *		Analyze the ATTACH/DETACH PARTITION command

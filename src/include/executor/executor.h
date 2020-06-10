@@ -643,9 +643,6 @@ extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 extern void fake_outer_params(JoinState *node);
 extern void ExecPrefetchJoinQual(JoinState *node);
 
-/* ResultRelInfo and Append Only segment assignment */
-extern void ResultRelInfoChooseSegno(ResultRelInfo *resultRelInfo);
-
 /* Additions for MPP Slice table utilities defined in execUtils.c */
 extern GpExecIdentity getGpExecIdentity(QueryDesc *queryDesc,
 										  ScanDirection direction,

@@ -2333,41 +2333,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 }
 
 /*
- * ResultRelInfoChooseSegno
- *
- * based on a list of relid->segno mapping, look for our own resultRelInfo
- * relid in the mapping and find the segfile number that this resultrel should
- * use if it is inserting into an AO relation. for any non AO relation this is
- * irrelevant and will return early.
- *
- * Note that we rely on the fact that the caller has a well constructed mapping
- * and that it includes all the relids of *any* AO relation that may insert
- * data during this transaction. For non partitioned tables the mapping list
- * will have only one element - our table. for partitioning it may have
- * multiple (depending on how many partitions are AO).
- */
-void
-ResultRelInfoChooseSegno(ResultRelInfo *resultRelInfo)
-{
-#ifdef GPDB_12_MERGE_FIXME
-	/* FIXME: All of this has to placed behind the tableam api */
-
-	if (resultRelInfo->ri_aosegno != InvalidFileSegNumber)
-		return;		/* a target was chosen already */
-
-	/* only relevant for AO relations */
-	if(!relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-		return;
-
-	Assert(resultRelInfo->ri_RelationDesc);
-
-	resultRelInfo->ri_aosegno = ChooseSegnoForWrite(resultRelInfo->ri_RelationDesc);
-
-	Assert(resultRelInfo->ri_aosegno != InvalidFileSegNumber);
-#endif
-}
-
-/*
  *		ExecGetTriggerResultRel
  *		Get a ResultRelInfo for a trigger target relation.
  *
