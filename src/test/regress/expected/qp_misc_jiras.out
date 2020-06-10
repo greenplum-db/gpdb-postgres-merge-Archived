@@ -4513,6 +4513,9 @@ group by 1;
 drop view qp_misc_jiras.uview;
 drop table qp_misc_jiras.utable;
 -- end_ignore
+-- Test for an old planner bug, related to MPP group by planning,
+-- where EXPLAIN on this query produced a "bogus var" warning.
+-- (The code has been completely rewritten since, though)
 CREATE TABLE qp_misc_jiras.foo_6325 (
   foo_6325_attr text
 )
@@ -4533,17 +4536,17 @@ from (
 group by 1, 2;
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=146545723.88..146554223.88 rows=100000 width=36)
-   ->  GroupAggregate  (cost=146545723.88..146554223.88 rows=33334 width=36)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=593965281.42..614907081.42 rows=100000 width=36)
+   ->  GroupAggregate  (cost=593965281.42..614905081.42 rows=33334 width=36)
          Group Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
-         ->  Sort  (cost=146545723.88..146548223.88 rows=333334 width=36)
-               Sort Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
-               ->  HashAggregate  (cost=146421066.04..146436066.04 rows=333334 width=36)
-                     Group Key: (c.bar_6325_attr)::integer, a.foo_6325_attr
-                     ->  Nested Loop  (cost=0.00..104548028.00 rows=929280000 width=36)
+         ->  GroupAggregate  (cost=593965281.42..614889081.42 rows=333334 width=36)
+               Group Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+               ->  Sort  (cost=593965281.42..600934881.42 rows=929280000 width=36)
+                     Sort Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+                     ->  Nested Loop  (cost=0.00..118486964.00 rows=929280000 width=36)
                            ->  Seq Scan on foo_6325 a  (cost=0.00..628.00 rows=17600 width=32)
                            ->  Materialize  (cost=0.00..3532.00 rows=52800 width=32)
-                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..2740.00 rows=52800 width=32)
+                                 ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..2740.00 rows=52800 width=32)
                                        ->  Seq Scan on bar_6325 c  (cost=0.00..628.00 rows=17600 width=32)
  Optimizer: Postgres query optimizer
 (13 rows)

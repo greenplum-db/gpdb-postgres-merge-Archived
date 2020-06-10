@@ -1949,7 +1949,9 @@ drop table qp_misc_jiras.utable;
 -- end_ignore
 
 
-
+-- Test for an old planner bug, related to MPP group by planning,
+-- where EXPLAIN on this query produced a "bogus var" warning.
+-- (The code has been completely rewritten since, though)
 CREATE TABLE qp_misc_jiras.foo_6325 (
   foo_6325_attr text
 )
