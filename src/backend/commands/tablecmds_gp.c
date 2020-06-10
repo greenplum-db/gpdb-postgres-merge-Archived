@@ -1148,11 +1148,29 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 			DropStmt *dropstmt = makeNode(DropStmt);
 			Oid partrelid;
 			Relation partrel;
+			PartitionDesc partdesc;
 
 			partrelid = GpFindTargetPartition(rel, pid, pc->missing_ok);
 			if (!OidIsValid(partrelid))
 				break;
+
 			partrel = table_open(partrelid, AccessShareLock);
+			partdesc = RelationGetPartitionDesc(rel);
+			/*
+			 * GPDB_12_MERGE_FIXME: how to protect if two drop partition cmds
+			 * are specified in same alter table stmt?
+			 */
+			if (partdesc->nparts == 1)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("cannot drop partition \"%s\" of \"%s\" -- only one remains",
+								RelationGetRelationName(partrel),
+								RelationGetRelationName(rel)),
+						 errhint("Use DROP TABLE \"%s\" to remove the table and the final partition ",
+								 RelationGetRelationName(rel))));
+			}
+
 			dropstmt->objects = list_make1(
 				list_make2(makeString(
 							   get_namespace_name(RelationGetNamespace(partrel))),
