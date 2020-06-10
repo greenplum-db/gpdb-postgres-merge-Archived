@@ -11,13 +11,13 @@ ERROR:  syntax error at or near ")"
 LINE 1: alter table atsdb set distributed by ();
                                               ^
 alter table atsdb set distributed by (m);
-ERROR:  column "m" of relation "atsdb" does not exist
+ERROR:  column "m" does not exist
 alter table atsdb set distributed by (i, i);
 ERROR:  duplicate column in DISTRIBUTED BY clause
 LINE 1: alter table atsdb set distributed by (i, i);
                                                  ^
 alter table atsdb set distributed by (i, m);
-ERROR:  column "m" of relation "atsdb" does not exist
+ERROR:  column "m" does not exist
 alter table atsdb set distributed by (i);
 WARNING:  distribution policy of relation "atsdb" already set to (i)
 HINT:  Use ALTER TABLE "atsdb" SET WITH (REORGANIZE=TRUE) DISTRIBUTED BY (i) to force redistribution
@@ -707,25 +707,13 @@ drop view distcheck;
 -- Should succeed
 create table atsdb (i int, k int) distributed by (i) partition by range(i) (start (1) end(10)
 every(1));
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_1" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_2" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_3" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_4" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_5" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_6" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_7" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_8" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_9" for table "atsdb"
-alter table atsdb alter partition for(rank(5)) set distributed by (i);
-NOTICE:  altering table "atsdb_1_prt_5" (partition for rank 5 of relation "atsdb")
+alter table atsdb alter partition for (5) set distributed by (i);
 WARNING:  distribution policy of relation "atsdb_1_prt_5" already set to (i)
 HINT:  Use ALTER TABLE "atsdb_1_prt_5" SET WITH (REORGANIZE=TRUE) DISTRIBUTED BY (i) to force redistribution
-alter table atsdb alter partition for(rank(5)) set distributed by (i);
-NOTICE:  altering table "atsdb_1_prt_5" (partition for rank 5 of relation "atsdb")
+alter table atsdb alter partition for (5) set distributed by (i);
 WARNING:  distribution policy of relation "atsdb_1_prt_5" already set to (i)
 HINT:  Use ALTER TABLE "atsdb_1_prt_5" SET WITH (REORGANIZE=TRUE) DISTRIBUTED BY (i) to force redistribution
-alter table atsdb alter partition for(rank(5)) set distributed by (i);
-NOTICE:  altering table "atsdb_1_prt_5" (partition for rank 5 of relation "atsdb")
+alter table atsdb alter partition for (5) set distributed by (i);
 WARNING:  distribution policy of relation "atsdb_1_prt_5" already set to (i)
 HINT:  Use ALTER TABLE "atsdb_1_prt_5" SET WITH (REORGANIZE=TRUE) DISTRIBUTED BY (i) to force redistribution
 drop table atsdb;
@@ -1132,8 +1120,7 @@ select * from mpp5738;
  10 | 11 | 12 | 10
 (10 rows)
 
-alter table mpp5738 alter partition for(rank(1)) set with (appendonly=true);
-NOTICE:  altering table "mpp5738_1_prt_1" (partition for rank 1 of relation "mpp5738")
+alter table mpp5738 alter partition for (1) set with (appendonly=true);
 ERROR:  option "appendonly" not supported
 select * from mpp5738;
  a  | b  | c  | d  

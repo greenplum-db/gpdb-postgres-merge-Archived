@@ -1039,7 +1039,13 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		rel = table_open(partrelid, AccessShareLock);
 	}
 
-	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+	/*
+	 * Most ALTER PARTITION commands are to ADD/DROP subpartitions, and don't
+	 * make sense unless the partition itself is a partitioned table. SET
+	 * DISTRIBUTED BY is an exception.
+	 */
+	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+		cmd->subtype != AT_SetDistributedBy)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1194,6 +1200,20 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		{
 			List *returnstmt = AtExecGPSplitPartition(rel, cmd);
 			stmts = list_concat(stmts, returnstmt);
+		}
+		break;
+
+		case AT_SetDistributedBy:
+		{
+			AlterTableStmt *newstmt = makeNode(AlterTableStmt);
+
+			newstmt->relation = makeRangeVar(get_namespace_name(rel->rd_rel->relnamespace),
+											 pstrdup(RelationGetRelationName(rel)), -1);
+			newstmt->cmds = list_make1(cmd);
+			newstmt->relkind = OBJECT_TABLE;
+			newstmt->missing_ok = false;
+
+			stmts = lappend(stmts, newstmt);
 		}
 		break;
 
