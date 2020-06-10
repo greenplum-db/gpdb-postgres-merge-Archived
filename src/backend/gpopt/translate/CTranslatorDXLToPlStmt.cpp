@@ -249,7 +249,13 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL
 //	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
 	planned_stmt->intoPolicy = m_dxl_to_plstmt_context->GetDistributionPolicy();
 
-	planned_stmt->nParamExec = m_dxl_to_plstmt_context->GetCurrentParamId();
+	// GPDB_12_MERGE_FIXME: keep track of param id: type in the translator
+	// planned_stmt->nParamExec = m_dxl_to_plstmt_context->GetCurrentParamId();
+	if (m_dxl_to_plstmt_context->GetCurrentParamId() != 0)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				GPOS_WSZ_LIT("FIXME: fix parameter translation"));
+	else
+		planned_stmt->paramExecTypes = NIL;
 
 	planned_stmt->slices = m_dxl_to_plstmt_context->GetSlices(&planned_stmt->numSlices);
 	planned_stmt->subplan_sliceIds = m_dxl_to_plstmt_context->GetSubplanSliceIdArray();
