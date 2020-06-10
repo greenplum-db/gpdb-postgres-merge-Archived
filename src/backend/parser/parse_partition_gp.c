@@ -1337,7 +1337,15 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			if (subPartSpec)
 			{
 				tmpSubPartSpec = copyObject(subPartSpec);
-				if (!isSubTemplate)
+				if (isSubTemplate)
+				{
+					if (elem->subSpec)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("subpartition configuration conflicts with subpartition template"),
+								 parser_errposition(pstate, ((GpPartitionDefinition*)elem->subSpec)->location)));
+				}
+				else
 					tmpSubPartSpec->gpPartDef = (GpPartitionDefinition*) elem->subSpec;
 
 				if (tmpSubPartSpec->gpPartDef == NULL)
