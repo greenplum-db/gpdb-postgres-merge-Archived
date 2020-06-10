@@ -249,30 +249,30 @@ drop index mpp3033b_unique2;
 drop index mpp3033b_hundred;
 drop index mpp3033b_stringu1;
 CREATE UNIQUE INDEX mpp3033a_unique1 ON mpp3033a (unique1);
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa"
-NOTICE:  building index for child partition "mpp3033a_1_prt_bb"
-NOTICE:  building index for child partition "mpp3033a_1_prt_default_part"
 CREATE UNIQUE INDEX mpp3033a_unique2 ON mpp3033a (unique2);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033a_hundred ON mpp3033a (hundred);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033a_stringu1 ON mpp3033a (stringu1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_unique1 ON mpp3033b (unique1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b_1_prt_aa" lacks column "unique2" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_unique2 ON mpp3033b (unique2);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_hundred ON mpp3033b (hundred);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_stringu1 ON mpp3033b (stringu1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 select count(*) from mpp3033a;
  count 
 -------
@@ -842,38 +842,30 @@ drop index mpp3033b_unique2;
 drop index mpp3033b_hundred;
 drop index mpp3033b_stringu1;
 CREATE UNIQUE INDEX mpp3033a_unique1 ON mpp3033a (unique1);
-NOTICE:  building index for child partition "mpp3033a_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_1"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_2"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_3"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_4"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_5"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_6"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_7"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_8"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_9"
-NOTICE:  building index for child partition "mpp3033a_1_prt_aa_10"
 CREATE UNIQUE INDEX mpp3033a_unique2 ON mpp3033a (unique2);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033a_hundred ON mpp3033a (hundred);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033a_stringu1 ON mpp3033a (stringu1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033a"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_unique1 ON mpp3033b (unique1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b_1_prt_1" lacks column "unique2" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_unique2 ON mpp3033b (unique2);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_hundred ON mpp3033b (hundred);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_stringu1 ON mpp3033b (stringu1);
-ERROR:  UNIQUE constraint must contain all columns in the partition key of relation "mpp3033b"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+NOTICE:  updating distribution policy to match new UNIQUE index
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
 select count(*) from mpp3033a;
  count 
 -------
