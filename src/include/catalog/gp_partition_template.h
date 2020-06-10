@@ -35,7 +35,7 @@ CATALOG(gp_partition_template,5022,PartitionTemplateRelationId)
 	int16       level;
 
 #ifdef CATALOG_VARLEN
-	pg_node_tree def;
+	pg_node_tree template;
 #endif
 } FormData_gp_partition_template;
 
@@ -53,8 +53,10 @@ typedef FormData_gp_partition_template *Form_gp_partition_template;
  * toasting.h. What happens if def is very large string?
  */
 
-extern void StoreGpPartitionTemplate(Oid relid, int32 level, GpPartitionDefinition *gpPartDef);
-extern void RemoveGpPartitionTemplateByRelId(Oid relid);
+extern void StoreGpPartitionTemplate(Oid relid, int32 level,
+									 GpPartitionDefinition *gpPartDef, bool replace);
 extern GpPartitionDefinition *GetGpPartitionTemplate(Oid relid, int32 level);
+extern void RemoveGpPartitionTemplateByRelId(Oid relid);
+extern bool RemoveGpPartitionTemplate(Oid relid, int32 level);
 
 #endif							/* GP_PARTITION_TEMPLATE_H */

@@ -1217,7 +1217,7 @@ List *
 generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 				   PartitionSpec *subPartSpec, const char *queryString,
 				   List *parentoptions, const char *parentaccessmethod,
-				   List *parentattenc)
+				   List *parentattenc, bool forvalidationonly)
 {
 	Relation	parentrel;
 	List	   *result = NIL;
@@ -1243,9 +1243,15 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	{
 		Assert(subPartSpec->gpPartDef->istemplate);
 		isSubTemplate = subPartSpec->gpPartDef->istemplate;
+		/*
+		 * GPDB_12_MERGE_FIXME: Currently, StoreGpPartitionTemplate() is called
+		 * multiple times for a level, hence need to pass replace as false. Can
+		 * we avoid these multiple calls to StoreGpPartitionTemplate() for same
+		 * level?
+		 */
 		if (isSubTemplate)
 			StoreGpPartitionTemplate(ancestors ? llast_oid(ancestors) : parentrelid,
-									 partcomp.level, subPartSpec->gpPartDef);
+									 partcomp.level, subPartSpec->gpPartDef, false);
 	}
 
 	foreach(lc, parentattenc)
@@ -1394,12 +1400,20 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	}
 
 	/*
+	 * GPDB range partition
+	 *
 	 * Validate and maybe update range partitions bound here instead of in
 	 * check_new_partition_bound(), because we need to modify the lower or upper
 	 * bounds for implicit START/END.
+	 *
+	 * Need to skip this step forvalidationonly -- which is called by SET
+	 * SUBPARTITION TEMPLATE. Reason is deduceImplicitRangeBounds() assumes
+	 * for ADD PARTITION, only one partition is being added if missing START
+	 * or END specification. While that's true for ADD PARTITION, it's not
+	 * while setting template.
 	 */
-	/* GPDB range partition */
-	if (RelationGetPartitionKey(parentrel)->strategy == PARTITION_STRATEGY_RANGE)
+	if (RelationGetPartitionKey(parentrel)->strategy == PARTITION_STRATEGY_RANGE &&
+		!forvalidationonly)
 		result = deduceImplicitRangeBounds(pstate, parentrel, result);
 
 	free_parsestate(pstate);

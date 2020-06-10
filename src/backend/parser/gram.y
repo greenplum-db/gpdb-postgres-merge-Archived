@@ -3947,94 +3947,32 @@ alter_table_partition_cmd:
 					$$ = (Node *)n;
 #endif
 				}
-			| SET SUBPARTITION TEMPLATE
-            '(' TabSubPartitionElemList ')' 
+			| SET TabSubPartitionTemplate
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionId  *pid   = makeNode(AlterPartitionId);
-					AlterPartitionCmd *pc    = makeNode(AlterPartitionCmd);
-					AlterTableCmd     *n     = makeNode(AlterTableCmd);
-                    PartitionElem     *pelem = makeNode(PartitionElem); 
-					//PartitionSpec	  *ps    = makeNode(PartitionSpec); 
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
+					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-					/* treat this case as similar to ADD PARTITION */
-
-                    pid->idtype    = AT_AP_IDName;
-                    pid->location  = @3;
-                    pid->partiddef = 
-						(Node *)makeString("subpartition_template");
-
-                    pc->partid = (Node *) pid;
-
-					/* build a subpartition spec and add it to CREATE TABLE */
-					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
-#if 0
-					ps->partDefElems   = $5;
-					ps->subSpec	   = NULL;
-					ps->istemplate = true;
-					ps->location   = @4;
-					
-                    pelem->partName  = NULL;
-                    pelem->boundSpec = NULL;
-                    pelem->subSpec   = (Node *)ps;
-                    pelem->location  = @4;
-                    pelem->isDefault = true;
-                    pelem->storeAttr = NULL;
-#endif
-					pc->arg1 = (Node *) pelem;
-
-					/* build a subpartition spec and add it to CREATE TABLE */
-					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
-#if 0
-					/* a little (temporary?) syntax check on templates */
-					if (ps->partDefElems)
-					{
-						List *elems;
-						ListCell *lc;
-						Assert(IsA(ps->partDefElems, List));
-
-						elems = (List *)ps->partDefElems;
-						foreach(lc, elems)
-						{
-							PartitionElem *e = lfirst(lc);
-
-							if (!IsA(e, PartitionElem))
-								continue;
-
-							if (e->subSpec)
-								ereport(ERROR,
-										(errcode(ERRCODE_SYNTAX_ERROR),
-										 errmsg("template cannot contain specification for child partition")));
-						}
-					}
-#endif
-                    pc->location = @5;
+					pc->partid = NULL;
+					pc->arg = $2;
+					pc->location = @2;
 
 					n->subtype = AT_PartSetTemplate;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| SET SUBPARTITION TEMPLATE
             '('  ')' 
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-                    pc->partid = NULL; 
-                    pc->arg1 = NULL;
-                    pc->arg2 = NULL;
-                    pc->location = @4;
+					pc->partid = NULL;
+					pc->arg = NULL;
+					pc->location = @4;
 
 					n->subtype = AT_PartSetTemplate;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| SPLIT 
 			DEFAULT PARTITION TabPartitionBoundarySpecStart

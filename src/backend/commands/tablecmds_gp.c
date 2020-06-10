@@ -1138,7 +1138,7 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 
 			List *cstmts = generatePartitions(RelationGetRelid(rel),
 											  gpPartDef, subpart, NULL,
-											  NIL, NULL, NULL);
+											  NIL, NULL, NULL, false);
 			foreach(l, cstmts)
 			{
 				Node *stmt = (Node *) lfirst(l);
@@ -1214,6 +1214,64 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 			newstmt->missing_ok = false;
 
 			stmts = lappend(stmts, newstmt);
+		}
+		break;
+
+		case AT_PartSetTemplate:
+		{
+			GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+			GpPartitionDefinition *templateDef = (GpPartitionDefinition *) pc->arg;
+			List *ancestors = get_partition_ancestors(RelationGetRelid(rel));
+			int level = list_length(ancestors) + 1;
+			Oid topParentrelid = ancestors ? llast_oid(ancestors) : RelationGetRelid(rel);
+
+			if (templateDef)
+			{
+				Relation firstrel;
+				Oid firstchildoid;
+				PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+
+				if (partdesc->nparts == 0)
+					elog(ERROR, "GPDB SET SUBPARTITION TEMPLATE syntax needs at least one sibling to exist");
+
+				firstchildoid = partdesc->oids[0];
+				firstrel = table_open(firstchildoid, AccessShareLock);
+				if (firstrel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+					elog(ERROR, "level %d is not partitioned and hence can't set subpartition template for the same",
+						 level);
+
+				/* if this is not leaf level partition then sub-partition must exist for next level */
+				if (!RelationGetPartitionDesc(firstrel)->is_leaf[0])
+				{
+					if (GetGpPartitionTemplate(topParentrelid, level + 1) == NULL)
+						elog(ERROR, "can't add partition at level %d since next level template doesn't exist",
+							 level);
+				}
+
+				/*
+				 * call generatePartitions() using first child as partition to
+				 * add partitions, just to validate the subpartition template,
+				 * if anything wrong it will error out.
+				 */
+				generatePartitions(firstchildoid, templateDef, NULL, NULL, NIL,
+								   NULL, NULL, true);
+				table_close(firstrel, AccessShareLock);
+
+				StoreGpPartitionTemplate(topParentrelid, level, templateDef, true);
+			}
+			else
+			{
+				bool removed = RemoveGpPartitionTemplate(topParentrelid, level);
+				if (!removed)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("relation \"%s\" does not have a level %d subpartition template specification",
+									RelationGetRelationName(origrel), level)));
+			}
+
+			if (rel != origrel)
+				table_close(rel, AccessShareLock);
+			return;
 		}
 		break;
 

@@ -4222,11 +4222,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 			case AT_PartSplit:
 			case AT_PartTruncate:
 			case AT_PartExchange:
+			case AT_PartSetTemplate:
 				newcmds = lappend(newcmds, cmd);
 				break;
 
             case AT_PartRename:			/* Rename */
-            case AT_PartSetTemplate:	/* Set Subpartition Template */
+
 				/* GDPB_12_MERGE_FIXME: need to re-implement this */
 				elog(ERROR, "not implemented");
 #if 0
