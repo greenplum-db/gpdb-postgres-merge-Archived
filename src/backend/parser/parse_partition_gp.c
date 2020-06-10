@@ -30,18 +30,19 @@
 #include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
 #include "partitioning/partbounds.h"
-#include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/partcache.h"
 #include "utils/rel.h"
-#include "utils/ruleutils.h"
+#include "utils/timestamp.h"
 
 typedef struct
 {
 	PartitionKeyData *partkey;
 	Datum		endVal;
+	bool		isEndValMaxValue;
 
 	ExprState   *plusexprstate;
 	ParamListInfo plusexpr_params;
@@ -140,17 +141,33 @@ qsort_stmt_cmp(const void *a, const void *b, void *arg)
 		for (i = 0; i < partnatts; i++)
 		{
 			ListCell *lc;
-			Const *n;
+			Node *n;
 			Datum b1upperdatum;
 			Datum b2upperdatum;
 
 			lc = list_nth_cell(b1upperdatums, i);
 			n = lfirst(lc);
-			b1upperdatum = n->constvalue;
+			if (IsA(n, Const))
+				b1upperdatum = ((Const *)n)->constvalue;
+			else
+			{
+				Assert(IsA(n, ColumnRef));
+				Assert(list_length(((ColumnRef *)n)->fields)== 1);
+				Assert(strcmp(strVal(linitial(((ColumnRef *)n)->fields)), "maxvalue") == 0);
+				return 1;
+			}
 
 			lc = list_nth_cell(b2upperdatums, i);
 			n = lfirst(lc);
-			b2upperdatum = n->constvalue;
+			if (IsA(n, Const))
+				b2upperdatum = ((Const *)n)->constvalue;
+			else
+			{
+				Assert(IsA(n, ColumnRef));
+				Assert(list_length(((ColumnRef *)n)->fields)== 1);
+				Assert(strcmp(strVal(linitial(((ColumnRef *)n)->fields)), "maxvalue") == 0);
+				return -1;
+			}
 
 			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
 													 partcollation[i],
@@ -165,17 +182,26 @@ qsort_stmt_cmp(const void *a, const void *b, void *arg)
 		for (i = 0; i < partnatts; i++)
 		{
 			ListCell *lc;
-			Const *n;
+			Node *n;
 			Datum b1lowerdatum;
 			Datum b2upperdatum;
 
 			lc = list_nth_cell(b1lowerdatums, i);
 			n = lfirst(lc);
-			b1lowerdatum = n->constvalue;
+			Assert(IsA(n, Const));
+			b1lowerdatum = ((Const *)n)->constvalue;
 
 			lc = list_nth_cell(b2upperdatums, i);
 			n = lfirst(lc);
-			b2upperdatum = n->constvalue;
+			if (IsA(n, Const))
+				b2upperdatum = ((Const *)n)->constvalue;
+			else
+			{
+				Assert(IsA(n, ColumnRef));
+				Assert(list_length(((ColumnRef *)n)->fields)== 1);
+				Assert(strcmp(strVal(linitial(((ColumnRef *)n)->fields)), "maxvalue") == 0);
+				return -1;
+			}
 
 			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
 													 partcollation[i],
@@ -198,17 +224,26 @@ qsort_stmt_cmp(const void *a, const void *b, void *arg)
 		for (i = 0; i < partnatts; i++)
 		{
 			ListCell *lc;
-			Const *n;
+			Node *n;
 			Datum b1upperdatum;
 			Datum b2lowerdatum;
 
 			lc = list_nth_cell(b1upperdatums, i);
 			n = lfirst(lc);
-			b1upperdatum = n->constvalue;
+			if (IsA(n, Const))
+				b1upperdatum = ((Const *)n)->constvalue;
+			else
+			{
+				Assert(IsA(n, ColumnRef));
+				Assert(list_length(((ColumnRef *)n)->fields)== 1);
+				Assert(strcmp(strVal(linitial(((ColumnRef *)n)->fields)), "maxvalue") == 0);
+				return 1;
+			}
 
 			lc = list_nth_cell(b2lowerdatums, i);
 			n = lfirst(lc);
-			b2lowerdatum = n->constvalue;
+			Assert(IsA(n, Const));
+			b2lowerdatum = ((Const *)n)->constvalue;
 
 			cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
 													 partcollation[i],
@@ -281,9 +316,9 @@ consts_to_datums(PartitionKey partkey, List *consts)
 }
 
 /*
- * Sort the list of GpPartitionBoundSpecs based first on the START, if START
- * does not exists, use END. After sort, if any stmt contains an implicit START
- * or END, deduce the value and update the corresponding list of CreateStmts.
+ * Sort the list of GpPartitionBoundSpecs based first on START, if START does
+ * not exist, use END. After sort, if any stmt contains an implicit START or
+ * END, deduce the value and update the corresponding list of CreateStmts.
  */
 static List *
 deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmts)
@@ -454,85 +489,6 @@ deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmt
 }
 
 /*
- * Initialize an ExprState for the '+' operator on the given interval.
- * also update the passed in estate.
- */
-static ExprState *
-initPlusExprState(ParseState *pstate, EState *estate, const char *part_col_name,
-				  Oid part_col_typid, int32 part_col_typmod,
-				  Oid part_col_collation, Node *interval)
-{
-	Node          *plusexpr;
-	Param         *param;
-	ParamListInfo plusexpr_params;
-
-	/*
-	 * NOTE: We don't use transformPartitionBoundValue() here. We don't want to cast
-	 * the EVERY clause to that type; rather, we'll be passing it to the + operator.
-	 * For example, if the partition column is a timestamp, the EVERY clause
-	 * can be an interval, so don't try to cast it to timestamp.
-	 */
-
-	param = makeNode(Param);
-	param->paramkind = PARAM_EXTERN;
-	param->paramid = 1;
-	param->paramtype = part_col_typid;
-	param->paramtypmod = part_col_typmod;
-	param->paramcollid = part_col_collation;
-	param->location = -1;
-
-	/* Look up + operator */
-	plusexpr = (Node *) make_op(pstate,
-								list_make2(makeString("pg_catalog"), makeString("+")),
-								(Node *) param,
-								(Node *) transformExpr(pstate, interval, EXPR_KIND_PARTITION_BOUND),
-								pstate->p_last_srf,
-								-1);
-
-	/*
-	 * Check that the input expression's collation is compatible with one
-	 * specified for the parent's partition key (partcollation).  Don't throw
-	 * an error if it's the default collation which we'll replace with the
-	 * parent's collation anyway.
-	 */
-	if (IsA(plusexpr, CollateExpr))
-	{
-		Oid			exprCollOid = exprCollation(plusexpr);
-
-		if (OidIsValid(exprCollOid) &&
-			exprCollOid != DEFAULT_COLLATION_OID &&
-			exprCollOid != part_col_collation)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-						errmsg("collation of partition bound value for column \"%s\" does not match partition key collation \"%s\"",
-							   part_col_name, get_collation_name(part_col_collation))));
-	}
-
-	plusexpr = coerce_to_target_type(pstate,
-									 plusexpr, exprType(plusexpr),
-									 part_col_typid,
-									 part_col_typmod,
-									 COERCION_ASSIGNMENT,
-									 COERCE_IMPLICIT_CAST,
-									 -1);
-	if (plusexpr == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-					errmsg("specified value cannot be cast to type %s for column \"%s\"",
-						   format_type_be(part_col_typid), part_col_name)));
-
-	plusexpr_params = makeParamList(1);
-	plusexpr_params->params[0].value = (Datum) 0;
-	plusexpr_params->params[0].isnull = true;
-	plusexpr_params->params[0].pflags = 0;
-	plusexpr_params->params[0].ptype = part_col_typid;
-
-	estate->es_param_list_info = plusexpr_params;
-
-	return ExecInitExprWithParams((Expr *) plusexpr, plusexpr_params);
-}
-
-/*
  * Functions for iterating through all the partition bounds based on
  * START/END/EVERY.
  */
@@ -543,6 +499,7 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 	PartEveryIterator *iter;
 	Datum		startVal = 0;
 	Datum		endVal = 0;
+	bool		isEndValMaxValue = false;
 	Datum		everyVal;
 	Oid			plusop;
 	Oid			part_col_typid;
@@ -592,13 +549,11 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 				 errmsg("cannot use NULL with range partition specification"),
 				 parser_errposition(pstate, exprLocation(end))));
 
-		canonicalizeRangeEnd(pstate,
-							 endConst,
-							 endIncl,
-							 part_col_name,
-							 part_col_typid,
-							 part_col_typmod,
-							 part_col_collation);
+		if (endIncl)
+			convert_inclusive_end(endConst, part_col_typid, part_col_typmod);
+
+		if (endConst->constisnull)
+			isEndValMaxValue = true;
 
 		endVal = endConst->constvalue;
 	}
@@ -606,9 +561,13 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 	iter = palloc0(sizeof(PartEveryIterator));
 	iter->partkey = partkey;
 	iter->endVal = endVal;
+	iter->isEndValMaxValue = isEndValMaxValue;
 
 	if (every)
 	{
+		Node		*plusexpr;
+		Param		*param;
+
 		if (start == NULL || end == NULL)
 		{
 			ereport(ERROR,
@@ -617,15 +576,73 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 				 parser_errposition(pstate, exprLocation(every))));
 		}
 
+		/*
+		 * NOTE: We don't use transformPartitionBoundValue() here. We don't want to cast
+		 * the EVERY clause to that type; rather, we'll be passing it to the + operator.
+		 * For example, if the partition column is a timestamp, the EVERY clause
+		 * can be an interval, so don't try to cast it to timestamp.
+		 */
+
+		param = makeNode(Param);
+		param->paramkind = PARAM_EXTERN;
+		param->paramid = 1;
+		param->paramtype = part_col_typid;
+		param->paramtypmod = part_col_typmod;
+		param->paramcollid = part_col_collation;
+		param->location = -1;
+
+		/* Look up + operator */
+		plusexpr = (Node *) make_op(pstate,
+									list_make2(makeString("pg_catalog"), makeString("+")),
+									(Node *) param,
+									(Node *) transformExpr(pstate, every, EXPR_KIND_PARTITION_BOUND),
+									pstate->p_last_srf,
+									-1);
+
+		/*
+		 * Check that the input expression's collation is compatible with one
+		 * specified for the parent's partition key (partcollation).  Don't throw
+		 * an error if it's the default collation which we'll replace with the
+		 * parent's collation anyway.
+		 */
+		if (IsA(plusexpr, CollateExpr))
+		{
+			Oid		exprCollOid = exprCollation(plusexpr);
+
+			if (OidIsValid(exprCollOid) &&
+				exprCollOid != DEFAULT_COLLATION_OID &&
+				exprCollOid != part_col_collation)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+							errmsg("collation of partition bound value for column \"%s\" does not match partition key collation \"%s\"",
+							part_col_name, get_collation_name(part_col_collation))));
+		}
+
+		plusexpr = coerce_to_target_type(pstate,
+										 plusexpr, exprType(plusexpr),
+										 part_col_typid,
+										 part_col_typmod,
+										 COERCION_ASSIGNMENT,
+										 COERCE_IMPLICIT_CAST,
+										 -1);
+
+		if (plusexpr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+						errmsg("specified value cannot be cast to type %s for column \"%s\"",
+							   format_type_be(part_col_typid), part_col_name)));
+
 		iter->estate = CreateExecutorState();
-		iter->plusexprstate = initPlusExprState(pstate,
-												iter->estate,
-												part_col_name,
-												part_col_typid,
-												part_col_typmod,
-												part_col_collation,
-												every);
-		iter->plusexpr_params = iter->estate->es_param_list_info;
+
+		iter->plusexpr_params = makeParamList(1);
+		iter->plusexpr_params->params[0].value = (Datum) 0;
+		iter->plusexpr_params->params[0].isnull = true;
+		iter->plusexpr_params->params[0].pflags = 0;
+		iter->plusexpr_params->params[0].ptype = part_col_typid;
+
+		iter->estate->es_param_list_info = iter->plusexpr_params;
+
+		iter->plusexprstate = ExecInitExprWithParams((Expr *) plusexpr, iter->plusexpr_params);
 	}
 	else
 	{
@@ -747,6 +764,7 @@ nextPartBound(PartEveryIterator *iter)
 		iter->called = true;
 		iter->currStart = iter->currEnd;
 		iter->currEnd = iter->endVal;
+		iter->endReached = true;
 		return true;
 	}
 }
@@ -920,7 +938,13 @@ generateRangePartitions(ParseState *pstate,
 		if (start)
 			boundspec->lowerdatums = datums_to_consts(boundIter->partkey,
 													  &boundIter->currStart);
-		if (end)
+		if (end && boundIter->endReached && boundIter->isEndValMaxValue)
+		{
+			ColumnRef  *maxvalue = makeNode(ColumnRef);
+			maxvalue->fields = list_make1(makeString("maxvalue"));
+			boundspec->upperdatums = list_make1(maxvalue);
+		}
+		else if (end)
 			boundspec->upperdatums = datums_to_consts(boundIter->partkey,
 													  &boundIter->currEnd);
 		boundspec->location = -1;
@@ -1161,52 +1185,142 @@ merge_partition_encoding(ParseState *pstate, List *elem_colencs, List *penc)
 }
 
 /*
- * Canonicalize the end/upper range bound. If the bound value was inclusive,
- * convert it into an exclusive value, otherwise do nothing.
+ * Convert an inclusive end value from the legacy END..INCLUSIVE syntax into an
+ * exclusive end value. This is required because the upper range bound that we
+ * store in the catalog (i.e. PartitionBoundSpec->upperdatums) is always
+ * exclusive.
+ *
+ * We only support END..INCLUSIVE for limited data types. For the supported data
+ * types, we perform a '+1' operation on the end datum, except for the case when
+ * the end datum is already the maximum value of the data type, in which case we
+ * mark endCosnt->constisnull as true and preserve the original
+ * endConst->constvalue. The caller is responsible for checking
+ * endCosnt->constisnull and if that is true constructing an upperdatum of
+ * MAXVALUE.
  */
 void
-canonicalizeRangeEnd(ParseState *pstate, Const *endConst, bool endIncl,
-					 const char *part_col_name, Oid part_col_typid,
-					 int32 part_col_typmod, Oid part_col_collation)
+convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod)
 {
-	ExprState	*plusexprstate;
-	EState		*estate;
-	A_Const		*one;
-	Datum 		endplusone;
-	bool		isnull;
+	if (part_col_typmod != -1 &&
+		(part_col_typid == TIMEOID ||
+		 part_col_typid == TIMETZOID ||
+		 part_col_typid == TIMESTAMPOID ||
+		 part_col_typid == TIMESTAMPTZOID ||
+		 part_col_typid == INTERVALOID))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("END INCLUSIVE not supported when partition key has precision specification: %s",
+						   format_type_with_typemod(part_col_typid, part_col_typmod)),
+					errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
 
-	if (!endIncl)
-		return;
+	switch (part_col_typid)
+	{
+		case INT2OID:
+		{
+			int16 value = DatumGetInt16(endConst->constvalue);
+			if (value < PG_INT16_MAX)
+				endConst->constvalue = Int16GetDatum(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case INT4OID:
+		{
+			int32 value = DatumGetInt32(endConst->constvalue);
+			if (value < PG_INT32_MAX)
+				endConst->constvalue = Int32GetDatum(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case INT8OID:
+		{
+			int64 value = DatumGetInt64(endConst->constvalue);
+			if (value < PG_INT64_MAX)
+				endConst->constvalue = Int64GetDatum(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case DATEOID:
+		{
+			DateADT value = DatumGetDateADT(endConst->constvalue);
+			if (!DATE_IS_NOEND(value))
+				endConst->constvalue = DatumGetDateADT(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case TIMEOID:
+		{
+			TimeADT value = DatumGetTimeADT(endConst->constvalue);
+			struct pg_tm tt,
+						*tm = &tt;
+			fsec_t		fsec;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: better not to hard code the type as Integer.
-	 * A better way is to check the data type of the part key and construct
-	 * the node with the same type. For now, this is compatible with part
-	 * key of type 'int' and 'date'. Another alternative is to leverage the
-	 * '*range_canonical()' functions for build-in range types.
-	 */
-	one = makeNode(A_Const);
-	one->val.type = T_Integer;
-	one->val.val.ival = 1;
-	one->location = -1;
-	estate = CreateExecutorState();
-	plusexprstate = initPlusExprState(pstate,
-									  estate,
-									  part_col_name,
-									  part_col_typid,
-									  part_col_typmod,
-									  part_col_collation,
-									  (Node *) one);
+			time2tm(value, tm, &fsec);
+			if (tm->tm_hour != HOURS_PER_DAY)
+				endConst->constvalue += 1;
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case TIMETZOID:
+		{
+			TimeTzADT *valueptr = DatumGetTimeTzADTP(endConst->constvalue);
+			struct pg_tm tt,
+						 *tm = &tt;
+			fsec_t		fsec;
+			int			tz;
 
-	estate->es_param_list_info->params[0].isnull = false;
-	estate->es_param_list_info->params[0].value = endConst->constvalue;
-	endplusone = ExecEvalExprSwitchContext(plusexprstate,
-										   GetPerTupleExprContext(estate),
-										   &isnull);
-	if (isnull)
-		elog(ERROR, "plus-operator returned NULL"); // GPDB_12_MERGE_FIXME: better message
-
-	endConst->constvalue = endplusone;
+			timetz2tm(valueptr, tm, &fsec, &tz);
+			if (tm->tm_hour != HOURS_PER_DAY)
+				valueptr->time += 1;
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case TIMESTAMPOID:
+		{
+			Timestamp value = DatumGetTimestamp(endConst->constvalue);
+			if (!TIMESTAMP_IS_NOEND(value))
+				endConst->constvalue = TimestampGetDatum(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case TIMESTAMPTZOID:
+		{
+			TimestampTz value = DatumGetTimestampTz(endConst->constvalue);
+			if (!TIMESTAMP_IS_NOEND(value))
+				endConst->constvalue = TimestampTzGetDatum(value + 1);
+			else
+				endConst->constisnull = true;
+		}
+		break;
+		case INTERVALOID:
+		{
+			Interval *intervalp = DatumGetIntervalP(endConst->constvalue);
+			if ((intervalp->month == PG_INT32_MAX &&
+				intervalp->day == PG_INT32_MAX &&
+				intervalp->time == PG_INT64_MAX))
+					endConst->constisnull = true;
+			else if (intervalp->time < PG_INT64_MAX)
+				intervalp->time += 1;
+			else if (intervalp->day < PG_INT32_MAX)
+				intervalp->day += 1;
+			else
+				intervalp->month += 1;
+		}
+		break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("END INCLUSIVE not supported for partition key data type: %s",
+							   format_type_be(part_col_typid)),
+						errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
+			break;
+	}
 }
 
 /*

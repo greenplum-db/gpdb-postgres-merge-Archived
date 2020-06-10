@@ -3988,8 +3988,8 @@ alter_table_partition_cmd:
 					pid->location  = @2;
 
 					pc->partid = pid;
-					pc->start = $4;
-					pc->end = $5;
+					pc->start = (GpPartitionRangeItem *)$4;
+					pc->end = (GpPartitionRangeItem *)$5;
 					pc->at = NULL;
 					pc->arg2 = (GpAlterPartitionCmd *)$6;
 					pc->location = @5;

@@ -1528,3 +1528,151 @@ CREATE UNIQUE INDEX uidx_t_idx_col_contain_partkey on t_idx_col_contain_partkey(
 CREATE UNIQUE INDEX uidx_t_idx_col_contain_partkey on t_idx_col_contain_partkey(r_regionkey, r_name);
 DROP INDEX uidx_t_idx_col_contain_partkey;
 DROP TABLE t_idx_col_contain_partkey;
+
+--
+-- END INCLUSIVE should work for CREATE, ADD PARTITION, and SPLIT PARTITION for
+-- the following data types. The INCLUSIVE END value will be converted to an
+-- EXCLUSIVE upper bound during transformation. If the INCLUSIVE END value is
+-- smaller than the maximum value of the data type, the exclusive upper bound
+-- will be the END INCLUSIVE value + '1', where '1' is the resolution of the
+-- data type. Otherwise, MAXVALUE will be stored as the upper bound.
+--
+-- END INCLUSIVE should work for bigint
+CREATE TABLE end_inclusive_bigint (a int, b bigint)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION pmax_create START (9223372036854775805) END (9223372036854775807) INCLUSIVE EVERY (1),
+        PARTITION p1 START (1) END (3) INCLUSIVE,
+        PARTITION p20 START (20),
+        DEFAULT PARTITION other
+        );
+ALTER TABLE end_inclusive_bigint SPLIT DEFAULT PARTITION START (7) END (10) INCLUSIVE INTO (PARTITION p7, DEFAULT PARTITION);
+\d+ end_inclusive_bigint
+
+ALTER TABLE end_inclusive_bigint DROP PARTITION pmax_create_1;
+ALTER TABLE end_inclusive_bigint DROP PARTITION pmax_create_2;
+ALTER TABLE end_inclusive_bigint ADD PARTITION pmax_add START (9223372036854775805) END (9223372036854775807) INCLUSIVE;
+\d+ end_inclusive_bigint
+
+ALTER TABLE end_inclusive_bigint DROP PARTITION pmax_add;
+ALTER TABLE end_inclusive_bigint SPLIT DEFAULT PARTITION START (9223372036854775805) END (9223372036854775807) INCLUSIVE INTO (PARTITION pmax_split, DEFAULT PARTITION);
+\d+ end_inclusive_bigint
+
+-- END INCLUSIVE should work for int
+CREATE TABLE end_inclusive_int (a int, b int)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 END (3) INCLUSIVE,
+        PARTITION pmax END (2147483647) INCLUSIVE
+        );
+\d+ end_inclusive_int
+
+-- END INCLUSIVE should work for smallint
+CREATE TABLE end_inclusive_smallint (a int, b smallint)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START (1) END (3) INCLUSIVE,
+        PARTITION pmax START (4) END (32767) INCLUSIVE
+        );
+\d+ end_inclusive_smallint
+
+-- END INCLUSIVE should work for date
+CREATE TABLE end_inclusive_date (a int, b date)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('2020-06-16') END ('2020-06-17') INCLUSIVE,
+        PARTITION pmax START ('2020-06-18') END ('infinity') INCLUSIVE
+        );
+\d+ end_inclusive_date
+
+-- END INCLUSIVE should work for time without time zone
+CREATE TABLE end_inclusive_time (a int, b time)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('00:00:00.000001') END ('01:00:00') INCLUSIVE,
+        PARTITION pmax START ('23:00:00') END ('24:00:00') INCLUSIVE
+        );
+\d+ end_inclusive_time
+
+-- END INCLUSIVE should work for time with time zone
+CREATE TABLE end_inclusive_timetz (a int, b time with time zone)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('00:00:00 EST') END ('01:00:00 PST') INCLUSIVE,
+        PARTITION pmax START ('23:00:00 EST') END ('24:00:00 PST') INCLUSIVE
+        );
+\d+ end_inclusive_timetz
+
+-- END INCLUSIVE should work for timestamp without time zone
+CREATE TABLE end_inclusive_timestamp (a int, b timestamp)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('2020-06-16 00:00:00') END ('2020-06-16 01:00:00') INCLUSIVE,
+        PARTITION pmax START ('2020-06-16 23:00:00') END ('infinity') INCLUSIVE
+        );
+\d+ end_inclusive_timestamp
+
+-- END INCLUSIVE should work for timestamp with time zone
+CREATE TABLE end_inclusive_timestamptz (a int, b timestamp with time zone)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('2020-06-16 00:00:00 PST') END ('2020-06-16 01:00:00 PST') INCLUSIVE,
+        PARTITION pmax START ('2020-06-16 23:00:00 EST') END ('infinity') INCLUSIVE
+        );
+\d+ end_inclusive_timestamptz
+
+-- END INCLUSIVE should work for interval
+CREATE TABLE end_inclusive_interval (a int, b interval)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('1 year') END ('2 years') INCLUSIVE
+        );
+\d+ end_inclusive_interval
+
+-- END INCLUSIVE with MAXVALUE should work with implicit START/END
+DROP TABLE end_inclusive_int;
+CREATE TABLE end_inclusive_int (a int, b int)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START (1),
+        PARTITION pmax END (2147483647) INCLUSIVE,
+        PARTITION p2 START (2) END (5) INCLUSIVE
+        );
+\d+ end_inclusive_int
+
+DROP TABLE end_inclusive_int;
+CREATE TABLE end_inclusive_int (a int, b int)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION pmax END (2147483647) INCLUSIVE,
+        PARTITION p1 START (1),
+        PARTITION p2 START (2) END (5) INCLUSIVE
+        );
+\d+ end_inclusive_int
+
+-- END INCLUSIVE should fail when precision is specified
+CREATE TABLE end_inclusive_time_with_precision (a int, b time(5))
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START ('00:00:00') END ('01:00:00') INCLUSIVE
+        );
+
+-- END INCLUSIVE should fail for unsupported data types
+CREATE TABLE end_inclusive_numeric (a int, b numeric)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (b)
+        (
+        PARTITION p1 START (1) END (3) INCLUSIVE
+        );

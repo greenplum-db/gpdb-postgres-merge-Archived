@@ -792,24 +792,27 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 								 errmsg("cannot use NULL with range partition specification"),
 								 parser_errposition(pstate,	pc->location)));
 
-					canonicalizeRangeEnd(pstate,
-										  endConst,
-										  endIncl,
-										  part_col_name,
-										  part_col_typid,
-										  part_col_typmod,
-										  part_col_collation);
+					if (endIncl)
+						convert_inclusive_end(endConst, part_col_typid, part_col_typmod);
 
-					boundspec1->upperdatums =
-						list_make1(makeConst(partkey->parttypid[0],
-											 partkey->parttypmod[0],
-											 partkey->parttypcoll[0],
-											 partkey->parttyplen[0],
-											 datumCopy(endConst->constvalue,
-													   partkey->parttypbyval[0],
-													   partkey->parttyplen[0]),
-											 false,
-											 partkey->parttypbyval[0]));
+					if (!endConst->constisnull)
+						boundspec1->upperdatums =
+							list_make1(makeConst(partkey->parttypid[0],
+												 partkey->parttypmod[0],
+												 partkey->parttypcoll[0],
+												 partkey->parttyplen[0],
+												 datumCopy(endConst->constvalue,
+														   partkey->parttypbyval[0],
+														   partkey->parttyplen[0]),
+												 false,
+												 partkey->parttypbyval[0]));
+					else
+					{
+						Assert(endIncl == true);
+						ColumnRef  *maxvalue = makeNode(ColumnRef);
+						maxvalue->fields = list_make1(makeString("maxvalue"));
+						boundspec1->upperdatums = list_make1(maxvalue);
+					}
 				}
 
 				if (start)
