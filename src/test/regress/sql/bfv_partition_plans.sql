@@ -157,8 +157,8 @@ create table mpp23288(a int, b int)
   partition by range (a)
   (
       PARTITION pfirst  END(5) INCLUSIVE,
-      PARTITION pinter  START(5) EXCLUSIVE END (10) INCLUSIVE,
-      PARTITION plast   START (10) EXCLUSIVE
+      PARTITION pinter  START(6) END (10) INCLUSIVE,
+      PARTITION plast   START (11)
   );
 
 insert into mpp23288(a) select generate_series(1,20);
