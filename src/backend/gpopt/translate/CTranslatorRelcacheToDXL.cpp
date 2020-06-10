@@ -615,7 +615,7 @@ CTranslatorRelcacheToDXL::RetrieveRel
 		check_constraint_mdids = RetrieveRelCheckConstraints(mp, oid);
 
 		is_temporary = (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP);
-		has_oids = rel->rd_rel->relhasoids;
+		has_oids = false;
 	
 		GPOS_DELETE_ARRAY(attno_mapping);
 		gpdb::CloseRelation(rel);
@@ -667,6 +667,8 @@ CTranslatorRelcacheToDXL::RetrieveRel
 		if (is_partitioned)
 			mdpart_constraint = RetrievePartConstraintForRel(mp, md_accessor, oid, mdcol_array, md_index_info_array->Size() > 0 /*has_index*/);
 
+		// GPDB_12_MERGE_FIXME: this leaves dead code in CMDRelationGPDB. We
+		// should gut it all the way
 		md_rel = GPOS_NEW(mp) CMDRelationGPDB
 							(
 							mp,
