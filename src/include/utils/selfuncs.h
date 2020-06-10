@@ -162,6 +162,8 @@ extern double var_eq_non_const(VariableStatData *vardata, Oid oproid,
 							   Node *other,
 							   bool varonleft, bool negate);
 
+extern double convert_timevalue_to_scalar(Datum value, Oid typid,
+										  bool *failure);
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 							   Node *arg, int varRelid,

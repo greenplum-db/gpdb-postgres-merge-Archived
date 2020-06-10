@@ -193,8 +193,6 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 										  int rangelo, int rangehi);
 static char *convert_string_datum(Datum value, Oid typid, Oid collid,
 								  bool *failure);
-static double convert_timevalue_to_scalar(Datum value, Oid typid,
-										  bool *failure);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 									VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
