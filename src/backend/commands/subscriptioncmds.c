@@ -52,7 +52,10 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
+#include "catalog/heap.h"
 #include "catalog/oid_dispatch.h"
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
 
 static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
 
@@ -521,6 +524,19 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 
 	table_close(rel, RowExclusiveLock);
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackAddObject(PublicationRelationId, myself.objectId, GetUserId(), "CREATE", "SUBSCRIPTION");
+	}
+
 	if (enabled)
 		ApplyLauncherWakeupAtCommit();
 
@@ -984,6 +1000,19 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	originid = replorigin_by_name(originname, true);
 	if (originid != InvalidRepOriginId)
 		replorigin_drop(originid, false);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackAddObject(PublicationRelationId, myself.objectId, GetUserId(), "DROP", "SUBSCRIPTION");
+	}
 
 	/*
 	 * If there is no slot associated with the subscription, we can finish

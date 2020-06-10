@@ -2652,6 +2652,12 @@ readNodeBinary(void)
 			case T_AlterPublicationStmt:
 				return_value = _readAlterPublicationStmt();
 				break;
+			case T_CreateSubscriptionStmt:
+				return_value = _readCreateSubscriptionStmt();
+				break;
+			case T_DropSubscriptionStmt:
+				return_value = _readDropSubscriptionStmt();
+				break;
 
 			case T_CreatePolicyStmt:
 				return_value = _readCreatePolicyStmt();

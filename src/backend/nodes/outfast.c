@@ -1788,6 +1788,12 @@ _outNode(StringInfo str, void *obj)
 			case T_AlterPublicationStmt:
 				_outAlterPublicationStmt(str, obj);
 				break;
+			case T_CreateSubscriptionStmt:
+				_outCreateSubscriptionStmt(str, obj);
+				break;
+			case T_DropSubscriptionStmt:
+				_outDropSubscriptionStmt(str, obj);
+				break;
 
 			case T_CreatePolicyStmt:
 				_outCreatePolicyStmt(str, obj);

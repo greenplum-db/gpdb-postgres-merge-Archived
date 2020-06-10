@@ -4053,6 +4053,39 @@ _readAlterPublicationStmt()
 	READ_DONE();
 }
 
+static CreateSubscriptionStmt *
+_readCreateSubscriptionStmt()
+{
+	READ_LOCALS(CreateSubscriptionStmt);
+
+	READ_STRING_FIELD(subname);
+	READ_STRING_FIELD(conninfo);
+	READ_NODE_FIELD(publication);
+	READ_NODE_FIELD(options);
+
+	/*
+	 * conninfo can be an empty string, but the serialization
+	 * doesn't distinguish an empty string from NULL. The
+	 * code that executes the command in't prepared for a NULL.
+	 */
+	if (local_node->conninfo == NULL)
+		local_node->conninfo = pstrdup("");
+
+	READ_DONE();
+}
+
+static DropSubscriptionStmt *
+_readDropSubscriptionStmt()
+{
+	READ_LOCALS(DropSubscriptionStmt);
+
+	READ_STRING_FIELD(subname);
+	READ_BOOL_FIELD(missing_ok);
+	READ_ENUM_FIELD(behavior, DropBehavior);
+
+	READ_DONE();
+}
+
 static CreatePolicyStmt *
 _readCreatePolicyStmt()
 {
@@ -4693,6 +4726,10 @@ parseNodeString(void)
 		return_value = _readCreatePublicationStmt();
 	else if (MATCHX("ALTERPUBLICATIONSTMT"))
 		return_value = _readAlterPublicationStmt();
+	else if (MATCHX("CREATESUBSCRIPTIONSTMT"))
+		return_value = _readCreateSubscriptionStmt();
+	else if (MATCHX("DROPSUBSCRIPTIONSTMT"))
+		return_value = _readDropSubscriptionStmt();
 	else if (MATCHX("CREATEPOLICYSTMT"))
 		return_value = _readCreatePolicyStmt();
 	else if (MATCHX("CREATEROLESTMT"))
