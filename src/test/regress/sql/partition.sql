@@ -863,7 +863,7 @@ alter table ataprank alter partition girls drop partition for ('2003-01-01');
 alter table ataprank alter partition girls drop partition for ('2004-01-01');
 
 -- ok, skipping
-alter table ataprank alter partition girls drop partition if exists for ('2006-01-01');
+alter table ataprank alter partition girls drop partition if exists for ('2004-01-01');
 
 -- ok
 alter table ataprank alter partition girls rename partition jan05 
