@@ -246,10 +246,7 @@ ExecEndForeignScan(ForeignScanState *node)
 	if (plan->operation != CMD_SELECT)
 		node->fdwroutine->EndDirectModify(node);
 	else
-	{
-		if (!node->is_squelched)
-			node->fdwroutine->EndForeignScan(node);
-	}
+		node->fdwroutine->EndForeignScan(node);
 
 	/* Shut down any outer plan. */
 	if (outerPlanState(node))
@@ -383,6 +380,8 @@ void
 ExecShutdownForeignScan(ForeignScanState *node)
 {
 	FdwRoutine *fdwroutine = node->fdwroutine;
+
+	node->is_squelched = true;
 
 	if (fdwroutine->ShutdownForeignScan)
 		fdwroutine->ShutdownForeignScan(node);
