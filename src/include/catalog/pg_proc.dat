@@ -6343,7 +6343,7 @@
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',
-  oid_symbol => 'AGGFNOID_COUNT_ANY',
+  oid_symbol => 'COUNT_ANY_OID',
   descr => 'number of input rows for which the input expression is not null',
   proname => 'count', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
   proargtypes => 'any', prosrc => 'aggregate_dummy' },
