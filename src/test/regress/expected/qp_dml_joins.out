@@ -383,7 +383,6 @@ SELECT * FROM dml_ao_pt_r WHERE c ='text' ORDER BY 1;
 (10 rows)
 
 ALTER TABLE dml_ao_pt_r DROP DEFAULT partition;
-NOTICE:  dropped partition "def" for relation "dml_ao_pt_r"
 SELECT COUNT(*) FROM dml_ao_pt_r;
  count 
 -------
@@ -1255,7 +1254,6 @@ SELECT * FROM dml_co_pt_r WHERE c ='text' ORDER BY 1;
 (10 rows)
 
 ALTER TABLE dml_co_pt_r DROP DEFAULT partition;
-NOTICE:  dropped partition "def" for relation "dml_co_pt_r"
 SELECT COUNT(*) FROM dml_co_pt_r;
  count 
 -------
@@ -2697,7 +2695,6 @@ SELECT * FROM dml_heap_pt_r WHERE c ='text' ORDER BY 1;
 (10 rows)
 
 ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
-NOTICE:  dropped partition "def" for relation "dml_heap_pt_r"
 SELECT COUNT(*) FROM dml_heap_pt_r;
  count 
 -------
@@ -2914,7 +2911,6 @@ SELECT COUNT(*) FROM dml_heap_pt_r;
 (1 row)
 
 ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
-NOTICE:  dropped partition "def" for relation "dml_heap_pt_r"
 rollback;
 --Join with DISTINCT
 begin;
@@ -3312,7 +3308,6 @@ SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
 (1 row)
 
 ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
-NOTICE:  dropped partition "def" for relation "dml_heap_pt_r"
 --Update with prepare plans
 begin;
 PREPARE plan_upd as UPDATE dml_heap_pt_r SET a = dml_heap_pt_s.a +1 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b ;

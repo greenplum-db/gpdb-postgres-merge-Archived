@@ -102,10 +102,6 @@ where partcons is NOT NULL;
 -- the existing part4 along with indexes is dropped 
 -- and 2 new parts are added - NO new indexes create
 alter table part_table1 split partition for ('31') at ('35') into (partition part41, partition part42);
-NOTICE:  exchanged partition "part4" of relation "part_table1" with relation "pg_temp_651879"
-NOTICE:  dropped partition "part4" for relation "part_table1"
-NOTICE:  CREATE TABLE will create partition "part_table1_1_prt_part41" for table "part_table1"
-NOTICE:  CREATE TABLE will create partition "part_table1_1_prt_part42" for table "part_table1"
 -- back to showing 2 rows - the 2nd index above is gone
 select indKey, defaultLevels, partCons from gp_build_logical_index('part_table1'::regclass);
  indkey | defaultlevels | partcons 

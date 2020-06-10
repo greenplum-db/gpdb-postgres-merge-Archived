@@ -1518,11 +1518,8 @@ alter table ataprank alter partition girls drop partition if exists jan01;
 NOTICE:  partition "jan01" of partition "girls" of relation "ataprank" does not exist, skipping
 -- ok
 alter table ataprank alter partition girls drop partition for ('2002-01-01');
-NOTICE:  dropped partition "jan02" for partition "girls" of relation "ataprank" and its children
 alter table ataprank alter partition girls drop partition for ('2003-01-01');
-NOTICE:  dropped partition "jan03" for partition "girls" of relation "ataprank" and its children
 alter table ataprank alter partition girls drop partition for ('2004-01-01');
-NOTICE:  dropped partition "jan04" for partition "girls" of relation "ataprank" and its children
 -- ok, skipping
 alter table ataprank alter partition girls drop partition if exists for ('2004-01-01');
 -- ok
@@ -1617,7 +1614,6 @@ NOTICE:  CREATE TABLE will create partition "ataprank2_1_prt_boys_2_prt_jan00_3_
 alter table ataprank drop partition neuter;
 ERROR:  partition "neuter" of relation "ataprank" does not exist
 alter table ataprank2 drop partition neuter;
-NOTICE:  dropped partition "neuter" for relation "ataprank2" and its children
 -- fail , no subpartition spec for ataprank2, work for ataprank
 alter table ataprank
 add default partition neuter ;
@@ -5657,8 +5653,6 @@ alter table cov1 set subpartition template (values (1,2) (values (2,3)));
 ERROR:  template cannot contain specification for child partition
 -- create and drop default partition in one statement!
 alter table cov1 add default partition def1, drop default partition;
-NOTICE:  CREATE TABLE will create partition "cov1_1_prt_def1" for table "cov1"
-NOTICE:  dropped partition "def1" for relation "cov1"
 drop table cov1;
 -- every 5 (1) now disallowed...
 create table cov1 (a int, b int)

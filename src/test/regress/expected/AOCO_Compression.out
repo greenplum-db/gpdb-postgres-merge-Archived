@@ -794,10 +794,8 @@ Select count(*) from co_cr_sub_partzlib8192_1;
 
 --Alter table Drop Partition 
 alter table co_cr_sub_partzlib8192_1 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "co_cr_sub_partzlib8192_1" and its children
 -- Drop the default partition 
 alter table co_cr_sub_partzlib8192_1 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "co_cr_sub_partzlib8192_1" and its children
 --Alter table alter type of a column 
 Alter table co_cr_sub_partzlib8192_1 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)
@@ -1252,10 +1250,8 @@ Select count(*) from co_cr_sub_partzlib8192_1_2;
 
 --Alter table Drop Partition 
 alter table co_cr_sub_partzlib8192_1_2 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "co_cr_sub_partzlib8192_1_2" and its children
 -- Drop the default partition 
 alter table co_cr_sub_partzlib8192_1_2 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "co_cr_sub_partzlib8192_1_2" and its children
 --Alter table alter type of a column 
 Alter table co_cr_sub_partzlib8192_1_2 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)
@@ -1646,10 +1642,8 @@ Select count(*) from co_wt_sub_partrle_type8192_1;
 
 --Alter table Drop Partition 
 alter table co_wt_sub_partrle_type8192_1 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "co_wt_sub_partrle_type8192_1" and its children
 -- Drop the default partition 
 alter table co_wt_sub_partrle_type8192_1 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "co_wt_sub_partrle_type8192_1" and its children
 --Alter table alter type of a column 
 Alter table co_wt_sub_partrle_type8192_1 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)
@@ -2103,10 +2097,8 @@ Select count(*) from co_wt_sub_partrle_type8192_1_2;
 
 --Alter table Drop Partition 
 alter table co_wt_sub_partrle_type8192_1_2 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "co_wt_sub_partrle_type8192_1_2" and its children
 -- Drop the default partition 
 alter table co_wt_sub_partrle_type8192_1_2 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "co_wt_sub_partrle_type8192_1_2" and its children
 --Alter table alter type of a column 
 Alter table co_wt_sub_partrle_type8192_1_2 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)
@@ -2506,10 +2498,8 @@ Select count(*) from ao_wt_sub_partzlib8192_5;
 
 --Alter table Drop Partition 
 alter table ao_wt_sub_partzlib8192_5 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "ao_wt_sub_partzlib8192_5" and its children
 -- Drop the default partition 
 alter table ao_wt_sub_partzlib8192_5 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "ao_wt_sub_partzlib8192_5" and its children
 --Alter table alter type of a column 
 Alter table ao_wt_sub_partzlib8192_5 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)
@@ -2978,10 +2968,8 @@ Select count(*) from ao_wt_sub_partzlib8192_5_2;
 
 --Alter table Drop Partition 
 alter table ao_wt_sub_partzlib8192_5_2 drop partition new_p;
-NOTICE:  dropped partition "new_p" for relation "ao_wt_sub_partzlib8192_5_2" and its children
 -- Drop the default partition 
 alter table ao_wt_sub_partzlib8192_5_2 drop default partition;
-NOTICE:  dropped partition "df_p" for relation "ao_wt_sub_partzlib8192_5_2" and its children
 --Alter table alter type of a column 
 Alter table ao_wt_sub_partzlib8192_5_2 Alter column a3 TYPE int4; 
 --Insert data to the table, select count(*)

@@ -1770,17 +1770,13 @@ ERROR:  missing name or value for DROP for partition "jan01" of partition "girls
 -- ok
 alter table ataprank alter partition girls drop partition 
 for (rank(1)) ;
-NOTICE:  dropped partition "jan01" for partition "girls" of relation "ataprank" and its children
 -- ok , skipping
 alter table ataprank alter partition girls drop partition if exists jan01;
 NOTICE:  partition "jan01" of partition "girls" of relation "ataprank" does not exist, skipping
 -- ok
 alter table ataprank alter partition girls drop partition for ('2002-01-01');
-NOTICE:  dropped partition "jan02" for partition "girls" of relation "ataprank" and its children
 alter table ataprank alter partition girls drop partition for ('2003-01-01');
-NOTICE:  dropped partition "jan03" for partition "girls" of relation "ataprank" and its children
 alter table ataprank alter partition girls drop partition for ('2004-01-01');
-NOTICE:  dropped partition "jan04" for partition "girls" of relation "ataprank" and its children
 -- ok, skipping
 alter table ataprank alter partition girls drop partition if exists for (rank(5));
 NOTICE:  partition for specified rank of partition "girls" of relation "ataprank" does not exist, skipping
@@ -1876,7 +1872,6 @@ NOTICE:  CREATE TABLE will create partition "ataprank2_1_prt_boys_2_prt_jan00_3_
 alter table ataprank drop partition neuter;
 ERROR:  partition "neuter" of relation "ataprank" does not exist
 alter table ataprank2 drop partition neuter;
-NOTICE:  dropped partition "neuter" for relation "ataprank2" and its children
 -- fail , no subpartition spec for ataprank2, work for ataprank
 alter table ataprank
 add default partition neuter ;
@@ -2615,7 +2610,6 @@ drop table k;
 create table k (i int) with (appendonly = true, orientation = column) distributed by (i) partition by range(i) (start(1) end(10) every(5));
 alter table k add partition co start(11) end (17) with (appendonly = true, orientation = column);
 alter table k split partition co at (14) into (partition co1, partition co2);
-NOTICE:  dropped partition "co" for relation "k"
 drop table k;
 create table k (a int, b int) with (appendonly = true) distributed by (a) partition by list(b)
 (
@@ -2623,7 +2617,6 @@ create table k (a int, b int) with (appendonly = true) distributed by (a) partit
 	partition b values (5, 6, 7 ,8) with (appendonly = true, orientation = column)
 );
 alter table k split partition for(2) at(2) into (partition one, partition two);
-NOTICE:  dropped partition "a" for relation "k"
 drop table k;
 -- Test errors for default handling
 create table k (i int) partition by range(i) (start(1) end(2), 
@@ -3350,7 +3343,6 @@ NOTICE:  CREATE TABLE will create partition "mpp_5397_1_prt_z" for table "mpp_53
 alter table mpp_5397 add default partition adefault;
 alter table mpp_5397 drop column d;
 alter table mpp_5397 split default partition start (21) inclusive end (25) inclusive;
-NOTICE:  dropped partition "adefault" for relation "mpp_5397"
 drop table mpp_5397;
 -- MPP-4987 -- make sure we can't damage a partitioning configuration
 -- this works
@@ -5921,8 +5913,6 @@ alter table cov1 set subpartition template (values (1,2) (values (2,3)));
 ERROR:  template cannot contain specification for child partition
 -- create and drop default partition in one statement!
 alter table cov1 add default partition def1, drop default partition;
-NOTICE:  CREATE TABLE will create partition "cov1_1_prt_def1" for table "cov1"
-NOTICE:  dropped partition "def1" for relation "cov1"
 drop table cov1;
 -- every 5 (1) now disallowed...
 create table cov1 (a int, b int)
@@ -7988,7 +7978,6 @@ alter table sales drop column tax;
 create table newpart(like sales);
 alter table newpart add constraint newpart_pkey primary key(pkid, option3);
 alter table sales split partition for(1) at (50) into (partition aa1, partition aa2);
-NOTICE:  dropped partition "aa" for relation "sales"
 select table_schema, table_name, constraint_name, constraint_type
 	from information_schema.table_constraints
 	where table_name in ('sales', 'newpart')

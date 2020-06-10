@@ -1647,7 +1647,6 @@ rollback;
 -- @description union_update_test26: Negative Tests Update the partition key to an out of dml_union_range value with no default partition
 begin;
 ALTER TABLE dml_union_s drop default partition;
-NOTICE:  dropped partition "def" for relation "dml_union_s"
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
  count 
 -------
@@ -1662,7 +1661,6 @@ rollback;
 -- @description union_update_test27: Negative Tests Update the partition key to an out of range value with no default partition
 begin;
 ALTER TABLE dml_union_s drop default partition;
-NOTICE:  dropped partition "def" for relation "dml_union_s"
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
  count 
 -------
@@ -1677,7 +1675,6 @@ rollback;
 -- @description union_update_test28: Negative Tests Update the partition key to an out of dml_union_range value with no default partition
 begin;
 ALTER TABLE dml_union_s drop default partition;
-NOTICE:  dropped partition "def" for relation "dml_union_s"
 SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
  count 
 -------

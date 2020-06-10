@@ -1044,7 +1044,6 @@ select * from rank ;
 (10 rows)
 
 alter table rank DROP partition boys restrict;
-NOTICE:  dropped partition "boys" for relation "rank" and its children
 select * from rank ;
  id | rank |    year    | gender 
 ----+------+------------+--------
@@ -1066,7 +1065,6 @@ alter table rank DROP partition if exists for('N');
 ERROR:  FOR expression matches DEFAULT partition for specified value of relation "rank"
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table rank DROP default partition if exists ;
-NOTICE:  dropped partition "neuter" for relation "rank" and its children
 -- can't drop the final partition - must drop the table
 alter table rank DROP partition girls;
 ERROR:  cannot drop partition "girls" of relation "rank" -- only one remains

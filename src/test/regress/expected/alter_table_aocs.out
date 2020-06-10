@@ -577,12 +577,9 @@ create table alter_aocs_part_table (a int, b int) with (appendonly=true, orienta
 insert into alter_aocs_part_table values (generate_series(1,10), generate_series(1,10));
 alter table alter_aocs_part_table drop partition for (rank(1));
 alter table alter_aocs_part_table split default partition start(6) inclusive end(7) exclusive;
-NOTICE:  dropped partition "foo" for relation "alter_aocs_part_table"
 alter table alter_aocs_part_table split default partition start(6) inclusive end(8) exclusive;
-NOTICE:  dropped partition "foo" for relation "alter_aocs_part_table"
 ERROR:  new partition overlaps existing partition "r2064870801"
 alter table alter_aocs_part_table split default partition start(7) inclusive end(8) exclusive;
-NOTICE:  dropped partition "foo" for relation "alter_aocs_part_table"
 select partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive, partitionisdefault
     from pg_partitions where tablename = 'alter_aocs_part_table';
  partitionrangestart | partitionstartinclusive | partitionrangeend | partitionendinclusive | partitionisdefault 
@@ -650,7 +647,6 @@ select count(*) from pg_appendonly where relid='aocs_multi_level_part_table_1_pr
 (1 row)
 
 alter table aocs_multi_level_part_table drop partition yearYYYY;
-NOTICE:  dropped partition "yearyyyy" for relation "aocs_multi_level_part_table" and its children
 alter table aocs_multi_level_part_table add default partition yearYYYY with (appendonly=true, orientation=column) (default subpartition def);
 select count(*) from pg_appendonly where relid='aocs_multi_level_part_table_1_prt_yearyyyy'::regclass;
  count 
