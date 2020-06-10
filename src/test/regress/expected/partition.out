@@ -6052,8 +6052,8 @@ create table tc
         default partition d,
         start (0) inclusive end(100) inclusive every (50)
     );
-ERROR:  PRIMARY KEY constraint must contain all columns in the partition key
-HINT:  Include column "b" in the PRIMARY KEY constraint or create a part-wise UNIQUE index after creating the table instead.
+DETAIL:  PRIMARY KEY constraint on table "tc" lacks column "b" which is part of the partition key.
+ERROR:  insufficient columns in PRIMARY KEY constraint definition
 create table cc
     (a int primary key, b int, c int)
     distributed by (a)
@@ -6062,8 +6062,8 @@ create table cc
         default partition d,
         start (0) inclusive end(100) inclusive every (50)
     );
-ERROR:  PRIMARY KEY constraint must contain all columns in the partition key
-HINT:  Include column "b" in the PRIMARY KEY constraint or create a part-wise UNIQUE index after creating the table instead.
+DETAIL:  PRIMARY KEY constraint on table "cc" lacks column "b" which is part of the partition key.
+ERROR:  insufficient columns in PRIMARY KEY constraint definition
 create table at
     (a int, b int, c int)
     distributed by (a)
@@ -6077,14 +6077,14 @@ NOTICE:  CREATE TABLE will create partition "at_1_prt_2" for table "at"
 NOTICE:  CREATE TABLE will create partition "at_1_prt_3" for table "at"
 alter table at
     add primary key (a);
-ERROR:  PRIMARY KEY constraint must contain all columns in the partition key of relation "at"
-HINT:  Include the partition key or create a part-wise UNIQUE index instead.
+DETAIL:  PRIMARY KEY constraint on table "at" lacks column "b" which is part of the partition key.
+ERROR:  insufficient columns in PRIMARY KEY constraint definition
 -- MPP-14471 end
 -- MPP-17606 (using table "at" from above)
 alter table at
     alter column b
 	type numeric;
-ERROR:  cannot alter type of a column used in a partitioning key
+ERROR:  cannot alter type of column named in partition key
 	
 -- MPP-17606 end
 -- MPP-17707 start
