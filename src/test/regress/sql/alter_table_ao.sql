@@ -318,10 +318,13 @@ alter table ao_multi_level_part_table add partition part3 start(date '2010-01-01
 
 -- Add default partition (defaults to heap storage unless set with AO)
 alter table ao_multi_level_part_table add default partition yearYYYY (default subpartition def);
-select count(*) from pg_appendonly where relid='ao_multi_level_part_table_1_prt_yearyyyy'::regclass;
+SELECT am.amname FROM pg_class c LEFT JOIN pg_am am ON (c.relam = am.oid)
+WHERE c.relname = 'ao_multi_level_part_table_1_prt_yearyyyy_2_prt_def';
+
 alter table ao_multi_level_part_table drop partition yearYYYY;
 alter table ao_multi_level_part_table add default partition yearYYYY with (appendonly=true) (default subpartition def);
-select count(*) from pg_appendonly where relid='ao_multi_level_part_table_1_prt_yearyyyy'::regclass;
+SELECT am.amname FROM pg_class c LEFT JOIN pg_am am ON (c.relam = am.oid)
+WHERE c.relname = 'ao_multi_level_part_table_1_prt_yearyyyy_2_prt_def';
 
 -- index on atts 1, 4
 create index ao_mlp_idx on ao_multi_level_part_table(date, amount);
