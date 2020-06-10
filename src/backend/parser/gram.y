@@ -5699,7 +5699,6 @@ TabPartitionBoundarySpec:
 					n->partStart = (GpPartitionRangeItem *)$1;
 					n->partEnd   = (GpPartitionRangeItem *)$2;
 					n->partEvery = $3;
-					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
 				}
@@ -5710,7 +5709,6 @@ TabPartitionBoundarySpec:
 					n->partStart = NULL;
 					n->partEnd   = (GpPartitionRangeItem *)$1;
 					n->partEvery = $2;
-					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
 				}
@@ -5738,7 +5736,6 @@ TabAddPartitionBoundarySpec:
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = (GpPartitionRangeItem *)$1;
 					n->partEnd   = (GpPartitionRangeItem *)$2;
-					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
 				}
@@ -5747,7 +5744,6 @@ TabAddPartitionBoundarySpec:
 					GpPartitionRangeSpec *n = makeNode(GpPartitionRangeSpec);
 					n->partStart = NULL;
 					n->partEnd   = (GpPartitionRangeItem *)$1;
-					n->pWithTnameStr = NULL;
 					n->location  = @1;
 					$$ = (Node *)n;
 				}
