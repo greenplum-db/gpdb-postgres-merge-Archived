@@ -32,6 +32,7 @@
 #include "catalog/pg_collation.h"
 extern "C" {
 	#include "access/exttable_fdw_shim.h"
+	#include "utils/fmgroids.h"
 	#include "utils/memutils.h"
 	#include "parser/parse_agg.h"
 }
@@ -652,10 +653,8 @@ gpdb::IsFuncNDVPreserving
 		// for now, these are the functions we consider for this optimization
 		case F_LOWER:
 		case F_LTRIM1:
-		// GPDB_12_MERGE_FIXME: This used to be OID 882. Why is there no #define
-		// for it in fmgroids.h, like there is for other functions?
-		//case BTRIM_SPACE_OID: 882
 		case F_BTRIM1:
+		case F_RTRIM1:
 		case F_UPPER:
 			return true;
 		default:
