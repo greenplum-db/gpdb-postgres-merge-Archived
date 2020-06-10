@@ -1372,7 +1372,7 @@ gpdb::HeapAttIsNull
 {
 	GP_WRAP_START;
 	{
-		return heap_attisnull(tup, attno);
+		return heap_attisnull(tup, attno, NULL);
 	}
 	GP_WRAP_END;
 	return false;
