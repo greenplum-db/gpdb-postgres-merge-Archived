@@ -1263,31 +1263,31 @@ select sales_par.* from sales_par where id in (select s.b from s, r where s.a = 
 
 update sales_par set region = 'new_region' where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
 select sales_par.* from sales_par where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
- id | year | month | day | region 
-----+------+-------+-----+--------
- 18 | 2006 |     7 |  19 | usa
-  9 | 2004 |    10 |  10 | europe
+ id | year | month | day |   region   
+----+------+-------+-----+------------
+ 18 | 2006 |     7 |  19 | new_region
+  9 | 2004 |    10 |  10 | new_region
 (2 rows)
 
 select sales_par.* from sales_par,s,r where sales_par.id = s.b and sales_par.month = r.b+1;
- id | year | month | day |  region   
-----+------+-------+-----+-----------
+ id | year | month | day |   region   
+----+------+-------+-----+------------
  15 | 2003 |     4 |  16 | australia
   3 | 2005 |     4 |   4 | australia
- 18 | 2006 |     7 |  19 | usa
+ 18 | 2006 |     7 |  19 | new_region
   6 | 2008 |     7 |   7 | usa
-  9 | 2004 |    10 |  10 | europe
+  9 | 2004 |    10 |  10 | new_region
 (5 rows)
 
 update sales_par set month = month+1 from r,s where sales_par.id = s.b and sales_par.month = r.b+1;
 select sales_par.* from sales_par,s,r where sales_par.id = s.b and sales_par.month = r.b+2;
- id | year | month | day |  region   
-----+------+-------+-----+-----------
+ id | year | month | day |   region   
+----+------+-------+-----+------------
  15 | 2003 |     5 |  16 | australia
   3 | 2005 |     5 |   4 | australia
   6 | 2008 |     8 |   7 | usa
- 18 | 2006 |     8 |  19 | usa
-  9 | 2004 |    11 |  10 | europe
+ 18 | 2006 |     8 |  19 | new_region
+  9 | 2004 |    11 |  10 | new_region
 (5 rows)
 
 select sales_par.* from sales_par where id in (select s.b-1 from s,r where s.a = r.b);
