@@ -1,5 +1,12 @@
 -- Generic extended statistics support
 
+
+-- By default, Greenplum computes selectivity slightly differently from
+-- upstream. Disable selectivity damping for these tests, so that we get
+-- roughly the same estimates as in upstream.
+set gp_selectivity_damping_for_scans = off;
+set gp_selectivity_damping_for_joins = off;
+
 -- We will be checking execution plans without/with statistics, so
 -- let's make sure we get simple non-parallel plans. Also set the
 -- work_mem low so that we can use small amounts of data.
@@ -135,6 +142,8 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
 
+-- GPDB: the next two fall back to the default ndistinct estimate, which is 200 in
+-- PostgreSQL and 1000 in Greenplum.
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
@@ -158,6 +167,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 
 -- last two plans keep using Group Aggregate, because 'd' is not covered
 -- by the statistic and while it's NULL-only we assume 200 values for it
+-- (In Greenplum the default estimate is 1000, not 200)
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');

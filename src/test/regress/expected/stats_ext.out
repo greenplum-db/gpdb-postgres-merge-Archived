@@ -1,4 +1,9 @@
 -- Generic extended statistics support
+-- By default, Greenplum computes selectivity slightly differently from
+-- upstream. Disable selectivity damping for these tests, so that we get
+-- roughly the same estimates as in upstream.
+set gp_selectivity_damping_for_scans = off;
+set gp_selectivity_damping_for_joins = off;
 -- We will be checking execution plans without/with statistics, so
 -- let's make sure we get simple non-parallel plans. Also set the
 -- work_mem low so that we can use small amounts of data.
@@ -185,16 +190,18 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
        100 |     11
 (1 row)
 
+-- GPDB: the next two fall back to the default ndistinct estimate, which is 200 in
+-- PostgreSQL and 1000 in Greenplum.
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
  estimated | actual 
 -----------+--------
-       200 |     11
+      1000 |     11
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
  estimated | actual 
 -----------+--------
-       200 |     11
+      1000 |     11
 (1 row)
 
 -- correct command
@@ -230,16 +237,17 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 
 -- last two plans keep using Group Aggregate, because 'd' is not covered
 -- by the statistic and while it's NULL-only we assume 200 values for it
+-- (In Greenplum the default estimate is 1000, not 200)
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
  estimated | actual 
 -----------+--------
-       200 |     11
+      1000 |     11
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
  estimated | actual 
 -----------+--------
-       200 |     11
+      1000 |     11
 (1 row)
 
 TRUNCATE TABLE ndistinct;
@@ -286,7 +294,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
  estimated | actual 
 -----------+--------
-       500 |     50
+      1000 |     50
 (1 row)
 
 DROP STATISTICS s10;
@@ -314,19 +322,19 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
  estimated | actual 
 -----------+--------
-       500 |   5000
+      1000 |   5000
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
  estimated | actual 
 -----------+--------
-       500 |   1632
+      1000 |   1632
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
  estimated | actual 
 -----------+--------
-       500 |     50
+      1000 |     50
 (1 row)
 
 -- functional dependencies tests
@@ -437,7 +445,7 @@ ANALYZE mcv_lists;
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
  estimated | actual 
 -----------+--------
-         3 |      4
+         4 |      4
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
@@ -452,7 +460,7 @@ ANALYZE mcv_lists;
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
  estimated | actual 
 -----------+--------
-         3 |      4
+         4 |      4
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
@@ -476,13 +484,13 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 1 AND b < ''1''');
  estimated | actual 
 -----------+--------
-         1 |     50
+         2 |     50
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 0 AND b <= ''0''');
  estimated | actual 
 -----------+--------
-         1 |     50
+         2 |     50
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
@@ -494,13 +502,13 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 5 AND b < ''1'' AND c < 5');
  estimated | actual 
 -----------+--------
-         1 |     50
+         2 |     50
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 4 AND b <= ''0'' AND c <= 4');
  estimated | actual 
 -----------+--------
-         1 |     50
+         2 |     50
 (1 row)
 
 -- create statistics
@@ -649,13 +657,13 @@ ANALYZE mcv_lists_bool;
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE a AND b AND c');
  estimated | actual 
 -----------+--------
-       156 |   1250
+       157 |   1250
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND c');
  estimated | actual 
 -----------+--------
-       156 |      0
+       157 |      0
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND NOT b AND c');
