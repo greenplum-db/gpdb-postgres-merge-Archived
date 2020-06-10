@@ -3014,9 +3014,9 @@ explain select * from qp_misc_jiras.tbl6833_vac; -- should not hit cdbRelSize();
 select relname, reltuples, relpages from pg_class where relname like 'tbl6833_vac%'; -- should show relpages = 1.0
         relname         | reltuples | relpages 
 ------------------------+-----------+----------
- tbl6833_vac_1_prt_bb_1 |         0 |        0
+ tbl6833_vac_1_prt_bb_1 |         0 |        1
  tbl6833_vac_1_prt_bb_2 |         0 |        1
- tbl6833_vac            |         0 |        1
+ tbl6833_vac            |         0 |        0
 (3 rows)
 
 drop table qp_misc_jiras.tbl6833_anl;
