@@ -98,4 +98,10 @@ ao_foreach_extent_file(ao_extent_callback callback, void *ctx)
                 break;
         }
     }
+
+    /*
+     * ao never used relfilenode as data store file, but we reuse md_create as
+     * ao table creation. We need to clean all file when drop a table
+     */
+    callback(0, ctx);
 }

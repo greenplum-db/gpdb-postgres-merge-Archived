@@ -280,7 +280,10 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	char *segPath = unlinkFiles->segPath;
 	char *segPathSuffixPosition = unlinkFiles->segpathSuffixPosition;
 
-	sprintf(segPathSuffixPosition, ".%u", segno);
+	if( segno == 0)
+		*segPathSuffixPosition = '\0';
+	else
+		sprintf(segPathSuffixPosition, ".%u", segno);
 
 	if (unlinkFiles->isRedo)
 	{

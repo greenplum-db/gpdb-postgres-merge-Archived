@@ -887,7 +887,6 @@ aoco_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	dstrel = smgropen(*newrnode, rel->rd_backend, SMGR_AO);
 	RelationOpenSmgr(rel);
 
-#if 0
 	/*
 	 * Since we copy the file directly without looking at the shared buffers,
 	 * we'd better first flush out any pages of the source relation that are
@@ -895,7 +894,6 @@ aoco_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	 * holding exclusive lock on the rel.
 	 */
 	FlushRelationBuffers(rel);
-#endif
 
 	/*
 	 * Create and copy all forks of the relation, and schedule unlinking of
@@ -907,7 +905,7 @@ aoco_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	RelationCreateStorage(*newrnode, rel->rd_rel->relpersistence, SMGR_AO);
 
 	copy_append_only_data(rel->rd_node, *newrnode, rel->rd_backend, rel->rd_rel->relpersistence);
-#if 0
+
 	/* copy main fork */
 	RelationCopyStorage(rel->rd_smgr, dstrel, MAIN_FORKNUM,
 	                    rel->rd_rel->relpersistence);
@@ -932,8 +930,6 @@ aoco_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 			                    rel->rd_rel->relpersistence);
 		}
 	}
-#endif
-
 
 	/* drop old relation, and close new one */
 	RelationDropStorage(rel);
