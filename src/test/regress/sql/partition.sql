@@ -1981,7 +1981,9 @@ partition by range(col2)
   partition part1 start (NULL)
 );
 
---MPP-6240
+-- Test pg_dump on a somewhat complicated partitioned table. (MPP-6240)
+-- We actually just create the table here, and leave it behind, so that
+-- it gets dumped by pg_dump at end of the regression test suite.
 CREATE TABLE supplier_hybrid_part(
                 S_SUPPKEY INTEGER,
                 S_NAME CHAR(25),
@@ -2001,8 +2003,6 @@ subpartition by list (s_nationkey) subpartition template (
 (               
 partition p1 start('1') end('10001') every(10000)
 );
-select pg_get_partition_def('supplier_hybrid_part'::regclass, true);
-drop table supplier_hybrid_part;
 
 -- MPP-3544
 -- Domain

@@ -3575,7 +3575,9 @@ partition by range(col2)
 ERROR:  cannot use NULL with range partition specification
 LINE 9:   partition part1 start (NULL)
                                  ^
---MPP-6240
+-- Test pg_dump on a somewhat complicated partitioned table. (MPP-6240)
+-- We actually just create the table here, and leave it behind, so that
+-- it gets dumped by pg_dump at end of the regression test suite.
 CREATE TABLE supplier_hybrid_part(
                 S_SUPPKEY INTEGER,
                 S_NAME CHAR(25),
@@ -3597,30 +3599,6 @@ partition p1 start('1') end('10001') every(10000)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 's_suppkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1" for table "supplier_hybrid_part"
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1_2_prt_1" for table "supplier_hybrid_part_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1_2_prt_2" for table "supplier_hybrid_part_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1_2_prt_3" for table "supplier_hybrid_part_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1_2_prt_4" for table "supplier_hybrid_part_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "supplier_hybrid_part_1_prt_p1_2_prt_5" for table "supplier_hybrid_part_1_prt_p1"
-select pg_get_partition_def('supplier_hybrid_part'::regclass, true);
-                                                       pg_get_partition_def                                                        
------------------------------------------------------------------------------------------------------------------------------------
- PARTITION BY RANGE(s_suppkey)                                                                                                    +
-           SUBPARTITION BY LIST(s_nationkey)                                                                                      +
-           (                                                                                                                      +
-           PARTITION p1 START (1) END (10001) EVERY (10000)                                                                       +
-                   (                                                                                                              +
-                   VALUES(22, 21, 17),                                                                                            +
-                   VALUES(6, 11, 1, 7, 16, 2) WITH (checksum='false', appendonly='true', blocksize='1171456', compresslevel='3'), +
-                   VALUES(18, 20),                                                                                                +
-                   VALUES(9, 23, 13) WITH (checksum='true', appendonly='true', blocksize='1335296', compresslevel='7'),           +
-                   VALUES(0, 3, 12, 15, 14, 8, 4, 24, 19, 10, 5)                                                                  +
-                   )                                                                                                              +
-           )
-(1 row)
-
-drop table supplier_hybrid_part;
 -- MPP-3544
 -- Domain
 create domain domainvarchar varchar(5);
