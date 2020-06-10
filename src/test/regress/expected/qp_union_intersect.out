@@ -1319,12 +1319,9 @@ SELECT COUNT(DISTINCT(a)) FROM dml_union_r;
 (1 row)
 
 UPDATE dml_union_r SET a = dml_union_s.a FROM dml_union_s WHERE dml_union_r.b in (SELECT b FROM dml_union_r UNION SELECT b FROM dml_union_s);
+ERROR:  multiple updates to a row by the same query is not allowed  (seg2 10.152.10.75:25434 pid=18097)
 SELECT COUNT(DISTINCT(a)) FROM dml_union_r;
- count 
--------
-   100
-(1 row)
-
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
 -- @description union_update_test21:  UNION/INTERSECT/EXCEPT within dml_union_sub-query
 begin;
