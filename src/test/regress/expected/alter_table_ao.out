@@ -528,8 +528,7 @@ select * from ao_multi_level_part_table;
  03-03-2009 | asia   | Japan   |   1.01
 (3 rows)
 
-alter table ao_multi_level_part_table truncate partition for (rank(1));
-NOTICE:  truncated partition "part1" for relation "ao_multi_level_part_table" and its children
+alter table ao_multi_level_part_table truncate partition for ('2008-02-02');
 select * from ao_multi_level_part_table;
     date    | region | region1 | amount 
 ------------+--------+---------+--------
@@ -538,7 +537,6 @@ select * from ao_multi_level_part_table;
 (2 rows)
 
 alter table ao_multi_level_part_table alter partition part2 truncate partition usa;
-NOTICE:  truncated partition "usa" for partition "part2" of relation "ao_multi_level_part_table"
 select * from ao_multi_level_part_table;
     date    | region | region1 | amount 
 ------------+--------+---------+--------
@@ -546,7 +544,6 @@ select * from ao_multi_level_part_table;
 (1 row)
 
 alter table ao_multi_level_part_table truncate partition part2;
-NOTICE:  truncated partition "part2" for relation "ao_multi_level_part_table" and its children
 select * from ao_multi_level_part_table;
  date | region | region1 | amount 
 ------+--------+---------+--------
@@ -568,7 +565,7 @@ select count(*) from pg_attribute where attrelid='ao_multi_level_part_table'::re
 
 -- splitting top partition of a multi-level partition should not work
 alter table ao_multi_level_part_table split partition part3 at (date '2011-01-01') into (partition part3, partition part4);
-ERROR:  cannot split partition with child partitions
+ERROR:  cannot SPLIT PARTITION for relation "ao_multi_level_part_table" -- partition has children
 HINT:  Try splitting the child partitions.
 --
 -- Check index scan
