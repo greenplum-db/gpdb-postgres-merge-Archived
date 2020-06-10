@@ -3139,17 +3139,39 @@ ALTER TABLE SG_CAL_EVENT_SILVERTAIL_HOUR SPLIT DEFAULT PARTITION
 START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
 DEFAULT PARTITION );
-select pg_get_partition_def('sg_cal_event_silvertail_hour'::regclass, true);
-                                                                                                pg_get_partition_def                                                                                                 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- PARTITION BY RANGE(transactiontime)                                                                                                                                                                                +
-           (                                                                                                                                                                                                        +
-           PARTITION "P2009041607" START ('Thu Apr 16 07:00:00 2009'::timestamp(2) without time zone) END ('Thu Apr 16 08:00:00 2009'::timestamp(2) without time zone) WITH (appendonly='true', compresslevel='5'), +
-           PARTITION "P2009041608" START ('Thu Apr 16 08:00:00 2009'::timestamp(2) without time zone) END ('Thu Apr 16 09:00:00 2009'::timestamp(2) without time zone) WITH (appendonly='true', compresslevel='5'), +
-           PARTITION p2009042907 START ('Wed Apr 29 07:00:00 2009'::timestamp(2) without time zone) END ('Wed Apr 29 08:00:00 2009'::timestamp(2) without time zone) WITH (appendonly='true', compresslevel='5'),   +
-           DEFAULT PARTITION st_default  WITH (appendonly='true', compresslevel='5')                                                                                                                                +
-           )
-(1 row)
+\d+ sg_cal_event_silvertail_hour
+                                  Partitioned table "public.sg_cal_event_silvertail_hour"
+     Column      |              Type              | Collation | Nullable | Default | Storage  | Stats target | Description 
+-----------------+--------------------------------+-----------+----------+---------+----------+--------------+-------------
+ caldt           | date                           |           | not null |         | plain    |              | 
+ calhr           | smallint                       |           | not null |         | plain    |              | 
+ ip              | character varying(128)         |           |          |         | extended |              | 
+ transactionid   | character varying(32)          |           |          |         | extended |              | 
+ transactiontime | timestamp(2) without time zone |           |          |         | plain    |              | 
+Partition key: RANGE (transactiontime)
+Partitions: "sg_cal_event_silvertail_hour_1_prt_P2009041607" FOR VALUES FROM ('Thu Apr 16 07:00:00 2009') TO ('Thu Apr 16 08:00:00 2009'),
+            "sg_cal_event_silvertail_hour_1_prt_P2009041608" FOR VALUES FROM ('Thu Apr 16 08:00:00 2009') TO ('Thu Apr 16 09:00:00 2009'),
+            sg_cal_event_silvertail_hour_1_prt_p2009042907 FOR VALUES FROM ('Wed Apr 29 07:00:00 2009') TO ('Wed Apr 29 08:00:00 2009'),
+            sg_cal_event_silvertail_hour_1_prt_st_default DEFAULT
+Distributed by: (ip)
+
+\d+ sg_cal_event_silvertail_hour_1_prt_P2009042907
+                               Table "public.sg_cal_event_silvertail_hour_1_prt_p2009042907"
+     Column      |              Type              | Collation | Nullable | Default | Storage  | Stats target | Description 
+-----------------+--------------------------------+-----------+----------+---------+----------+--------------+-------------
+ caldt           | date                           |           | not null |         | plain    |              | 
+ calhr           | smallint                       |           | not null |         | plain    |              | 
+ ip              | character varying(128)         |           |          |         | extended |              | 
+ transactionid   | character varying(32)          |           |          |         | extended |              | 
+ transactiontime | timestamp(2) without time zone |           |          |         | plain    |              | 
+Partition of: sg_cal_event_silvertail_hour FOR VALUES FROM ('Wed Apr 29 07:00:00 2009') TO ('Wed Apr 29 08:00:00 2009')
+Partition constraint: ((transactiontime IS NOT NULL) AND (transactiontime >= 'Wed Apr 29 07:00:00 2009'::timestamp(2) without time zone) AND (transactiontime < 'Wed Apr 29 08:00:00 2009'::timestamp(2) without time zone))
+Compression Type: zlib
+Compression Level: 5
+Block Size: 32768
+Checksum: t
+Distributed by: (ip)
+Options: compresslevel=5
 
 drop table sg_cal_event_silvertail_hour;
 -- Make sure we inherit master's storage settings

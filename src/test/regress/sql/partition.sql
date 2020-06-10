@@ -1744,7 +1744,8 @@ START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
 DEFAULT PARTITION );
 
-select pg_get_partition_def('sg_cal_event_silvertail_hour'::regclass, true);
+\d+ sg_cal_event_silvertail_hour
+\d+ sg_cal_event_silvertail_hour_1_prt_P2009042907
 
 drop table sg_cal_event_silvertail_hour;
 
