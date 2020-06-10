@@ -717,7 +717,7 @@ CTranslatorRelcacheToDXL::RetrieveRelColumns
 
 	for (ULONG ul = 0;  ul < (ULONG) rel->rd_att->natts; ul++)
 	{
-		Form_pg_attribute att = rel->rd_att->attrs[ul];
+		Form_pg_attribute att = &rel->rd_att->attrs[ul];
 		CMDName *md_colname = CDXLUtils::CreateMDNameFromCharArray(mp, NameStr(att->attname));
 	
 		// translate the default column value
@@ -835,7 +835,7 @@ CTranslatorRelcacheToDXL::GetDefaultColumnValue
 	if (NULL == node)
 	{
 		// get the default value for the type
-		Form_pg_attribute att_tup = rd_att->attrs[attno - 1];
+		Form_pg_attribute att_tup = &rd_att->attrs[attno - 1];
 		node = gpdb::GetTypeDefault(att_tup->atttypid);
 	}
 
