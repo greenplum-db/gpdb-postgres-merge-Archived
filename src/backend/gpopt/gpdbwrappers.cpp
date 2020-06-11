@@ -3011,6 +3011,7 @@ gpdb::EvaluateExpr
 }
 
 // interpret the value of "With oids" option from a list of defelems
+// GPDB_12_MERGE_FIXME: this leaves dead code in CMDRelationGPDB
 bool
 gpdb::InterpretOidsOption
 	(
@@ -3020,7 +3021,7 @@ gpdb::InterpretOidsOption
 {
 	GP_WRAP_START;
 	{
-		return interpretOidsOption(options, allowOids);
+		return false;
 	}
 	GP_WRAP_END;
 	return false;
