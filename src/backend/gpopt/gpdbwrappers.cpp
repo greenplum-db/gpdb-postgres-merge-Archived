@@ -445,7 +445,7 @@ gpdb::CopyObject
 {
 	GP_WRAP_START;
 	{
-		return copyObject(from);
+		return copyObjectImpl(from);
 	}
 	GP_WRAP_END;
 	return NULL;
