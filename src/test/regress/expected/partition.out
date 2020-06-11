@@ -6444,8 +6444,6 @@ explain select foo_p.b, foo_p.t from foo_p left outer join bar on foo_p.a = bar.
                      Filter: k = ('{1}'::integer[])[1]
          ->  Hash  (cost=28.50..28.50 rows=2 width=35)
                ->  Append  (cost=0.00..28.50 rows=2 width=35)
-                     ->  Seq Scan on foo_p_1_prt_other  (cost=0.00..1.00 rows=1 width=40)
-                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
                      ->  Seq Scan on foo_p_1_prt_2  (cost=0.00..5.50 rows=1 width=34)
                            Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
                      ->  Seq Scan on foo_p_1_prt_3  (cost=0.00..5.50 rows=1 width=34)
@@ -6455,6 +6453,8 @@ explain select foo_p.b, foo_p.t from foo_p left outer join bar on foo_p.a = bar.
                      ->  Seq Scan on foo_p_1_prt_5  (cost=0.00..5.50 rows=1 width=34)
                            Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
                      ->  Seq Scan on foo_p_1_prt_6  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_other  (cost=0.00..1.00 rows=1 width=40)
                            Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
  Optimizer: Postgres query optimizer
 (21 rows)
