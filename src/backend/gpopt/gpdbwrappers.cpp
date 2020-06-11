@@ -32,9 +32,11 @@
 #include "catalog/pg_collation.h"
 extern "C" {
 	#include "access/exttable_fdw_shim.h"
+	#include "optimizer/clauses.h"
+	#include "optimizer/plancat.h"
+	#include "parser/parse_agg.h"
 	#include "utils/fmgroids.h"
 	#include "utils/memutils.h"
-	#include "parser/parse_agg.h"
 }
 #define GP_WRAP_START	\
 	sigjmp_buf local_sigjmp_buf;	\
