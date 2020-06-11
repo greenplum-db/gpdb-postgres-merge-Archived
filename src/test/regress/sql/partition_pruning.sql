@@ -823,7 +823,7 @@ insert into sales_exchange_part values(1, '2011-01-01', 10.1, 'usa');
 
 -- Exchange
 ALTER TABLE sales 
-ALTER PARTITION FOR (RANK(1))
+ALTER PARTITION FOR (date '2011-01-01')
 EXCHANGE PARTITION FOR ('usa') WITH TABLE sales_exchange_part ;
 ANALYZE sales;
 
