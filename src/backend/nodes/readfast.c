@@ -1173,8 +1173,6 @@ _readAssertOp(void)
 	READ_DONE();
 }
 
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 /*
  * _readPartitionSelector
  */
@@ -1183,7 +1181,7 @@ _readPartitionSelector(void)
 {
 	READ_LOCALS(PartitionSelector);
 
-	READ_INT_FIELD(relid);
+	READ_INT_FIELD(parentRTI);
 	READ_INT_FIELD(nLevels);
 	READ_INT_FIELD(scanId);
 	READ_INT_FIELD(selectorId);
@@ -1195,13 +1193,12 @@ _readPartitionSelector(void)
 	READ_BOOL_FIELD(staticSelection);
 	READ_NODE_FIELD(staticPartOids);
 	READ_NODE_FIELD(staticScanIds);
-	READ_NODE_FIELD(partTabTargetlist);
+	READ_NODE_FIELD(partkeyExpressions);
 
 	ReadCommonPlan(&local_node->plan);
 
 	READ_DONE();
 }
-#endif
 
 static Bitmapset *
 _readBitmapset(void)
@@ -1980,12 +1977,9 @@ readNodeBinary(void)
 			case T_AssertOp:
 				return_value = _readAssertOp();
 				break;
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 			case T_PartitionSelector:
 				return_value = _readPartitionSelector();
 				break;
-#endif
 			case T_Alias:
 				return_value = _readAlias();
 				break;

@@ -181,8 +181,6 @@ plan_tree_walker(Node *node,
 				return true;
 			break;
 
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 		case T_PartitionSelector:
 			if (walk_plan_node_fields((Plan *) node, walker, context))
 				return true;
@@ -194,10 +192,9 @@ plan_tree_walker(Node *node,
 				return true;
 			if (walker(((PartitionSelector *) node)->propagationExpression, context))
 				return true;
-			if (walker(((PartitionSelector *) node)->partTabTargetlist, context))
+			if (walker(((PartitionSelector *) node)->partkeyExpressions, context))
 				return true;
 			break;
-#endif
 
 		case T_Append:
 			if (walk_plan_node_fields((Plan *) node, walker, context))

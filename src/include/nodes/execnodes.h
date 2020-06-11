@@ -3054,4 +3054,37 @@ typedef struct MotionState
 	int			numInputSegs;	/* the number of segments on the sending slice */
 } MotionState;
 
+/* ----------------
+ *	 PartitionSelectorState information
+ *
+ *		A PartitionSelector is used to affect an which partitions are scanned
+ *		at "other" side of a join.
+ *
+ * This is a GPDB mechanism, used for runtime partition pruning based on
+ * actual values seen in a join. It is in addition to the partition pruning
+ * done at plan-time and at executor startup.
+ * ----------------
+ */
+typedef struct PartitionSelectorState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+
+	/* GPDB_12_MERGE_FIXME: we only implement the mechanism used by the Postgres
+	 * planner at the moment, the one that uses PartSelected nodes.
+	 */
+#if 0
+	PartitionNode *rootPartitionNode;		/* PartitionNode for root table */
+	PartitionAccessMethods *accessMethods;	/* Access method for partition */
+	struct PartitionRule **levelPartRules;	/* accepted partitions for all levels */
+	List	   *levelEqExprStates;			/* ExprState for equality expressions for all levels */
+	List	   *levelExprStateLists;		/* ExprState list for general expressions for all levels */
+	List	   *residualPredicateExprStateList;	/* ExprState list for evaluating residual predicate */
+	ExprState  *propagationExprState;		/* ExprState for evaluating propagation expression */
+#endif
+
+	List	   *partkeyExpressions;		/* list of ExprStates to evaluate partitioning keys */
+
+	Relation	parentrel;			/* partitioned table we're selecting from */
+} PartitionSelectorState;
+
 #endif							/* EXECNODES_H */

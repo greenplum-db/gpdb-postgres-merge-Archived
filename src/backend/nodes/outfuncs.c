@@ -1363,8 +1363,6 @@ _outAssertOp(StringInfo str, const AssertOp *node)
 	_outPlanInfo(str, (Plan *) node);
 }
 
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 /*
  * _outPartitionSelector
  */
@@ -1373,7 +1371,7 @@ _outPartitionSelector(StringInfo str, const PartitionSelector *node)
 {
 	WRITE_NODE_TYPE("PartitionSelector");
 
-	WRITE_INT_FIELD(relid);
+	WRITE_INT_FIELD(parentRTI);
 	WRITE_INT_FIELD(nLevels);
 	WRITE_INT_FIELD(scanId);
 	WRITE_INT_FIELD(selectorId);
@@ -1385,11 +1383,10 @@ _outPartitionSelector(StringInfo str, const PartitionSelector *node)
 	WRITE_BOOL_FIELD(staticSelection);
 	WRITE_NODE_FIELD(staticPartOids);
 	WRITE_NODE_FIELD(staticScanIds);
-	WRITE_NODE_FIELD(partTabTargetlist);
+	WRITE_NODE_FIELD(partkeyExpressions);
 
 	_outPlanInfo(str, (Plan *) node);
 }
-#endif
 
 /*****************************************************************************
  *
@@ -4132,6 +4129,15 @@ _outDMLActionExpr(StringInfo str, const DMLActionExpr *node)
 }
 
 static void
+_outPartSelectedExpr(StringInfo str, const PartSelectedExpr *node)
+{
+	WRITE_NODE_TYPE("PARTSELECTEDEXPR");
+
+	WRITE_INT_FIELD(dynamicScanId);
+	WRITE_OID_FIELD(partOid);
+}
+
+static void
 _outTriggerTransition(StringInfo str, const TriggerTransition *node)
 {
 	WRITE_NODE_TYPE("TRIGGERTRANSITION");
@@ -5654,12 +5660,9 @@ outNode(StringInfo str, const void *obj)
 			case T_AssertOp:
 				_outAssertOp(str, obj);
 				break;
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 			case T_PartitionSelector:
 				_outPartitionSelector(str, obj);
 				break;
-#endif
 			case T_Alias:
 				_outAlias(str, obj);
 				break;
@@ -6396,6 +6399,10 @@ outNode(StringInfo str, const void *obj)
 
 			case T_DMLActionExpr:
 				_outDMLActionExpr(str, obj);
+				break;
+
+			case T_PartSelectedExpr:
+				_outPartSelectedExpr(str, obj);
 				break;
 
 			case T_CreateTrigStmt:

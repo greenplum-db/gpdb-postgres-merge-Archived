@@ -28,6 +28,7 @@
 #include "utils/lsyscache.h"
 #include "cdb/cdbvars.h"
 #include "parser/parse_oper.h"
+#include "utils/partcache.h"
 
 static Expr *FindEqKey(PlannerInfo *root, Bitmapset *inner_relids, DynamicScanInfo *dyninfo, int partKeyAttno);
 
@@ -99,12 +100,6 @@ bool
 inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 									List **partSelectors_p)
 {
-	/* GPDB_12_MERGE_FIXME: Do we still need this, now that we got the
-	 * upstream partitioning stuff? Does v12 do runtime partition elimination
-	 * well enough?
-	 */
-	return false;
-#if 0
 	ListCell   *lc;
 	Path	   *outerpath = join_path->outerjoinpath;
 	Path	   *innerpath = join_path->innerjoinpath;
@@ -181,7 +176,6 @@ inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 	foreach(lc, root->dynamicScans)
 	{
 		DynamicScanInfo *dyninfo = (DynamicScanInfo *) lfirst(lc);
-		ListCell   *lpk;
 		List	   *partKeyAttnos = NIL;
 		List	   *partKeyExprs = NIL;
 		Bitmapset  *childrelids;
@@ -199,10 +193,16 @@ inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 		 * Find equivalence conditions between the partitioning keys and
 		 * the relations on the inner side of the join.
 		 */
-		foreach(lpk, dyninfo->partKeyAttnos)
+		for (int i = 0; i < dyninfo->partkey->partnatts; i++)
 		{
-			int			partKeyAttno = lfirst_int(lpk);
+			AttrNumber	partKeyAttno = dyninfo->partkey->partattrs[i];
 			Expr	   *expr;
+
+			if (partKeyAttno == 0)
+			{
+				/* GPDB_12_MERGE_FIXME: expressions not supported */
+				continue;
+			}
 
 			expr = FindEqKey(root, inner_relids, dyninfo, partKeyAttno);
 
@@ -280,7 +280,6 @@ inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 	}
 	else
 		return false;
-#endif
 }
 
 /*
@@ -407,51 +406,13 @@ FindEqKey(PlannerInfo *root, Bitmapset *inner_relids,
 Plan *
 create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *best_path)
 {
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-	elog(ERROR, "PartitionSelectors disabled");
-#if 0
 	PartitionSelector *ps;
 	Plan	   *subplan;
-	ListCell   *lc_attno;
-	ListCell   *lc_expr;
-	List	   *partTabTargetlist;
-	int			max_attr;
-	int			attno;
-	Expr	  **partKeyExprs;
+	List	   *partkeyExpressions;
 
 	subplan = create_plan_recurse(root, best_path->subpath, 0);
 
-	max_attr = find_base_rel(root, best_path->dsinfo->rtindex)->max_attr;
-	partKeyExprs = palloc0((max_attr + 1) * sizeof(Expr *));
-
-	forboth(lc_attno, best_path->partKeyAttnos, lc_expr, best_path->partKeyExprs)
-	{
-		int			partKeyAttno = lfirst_int(lc_attno);
-		Expr	   *partKeyExpr = (Expr *) lfirst(lc_expr);
-
-		if (partKeyAttno > max_attr)
-			elog(ERROR, "invalid partitioning key attribute number");
-
-		partKeyExprs[partKeyAttno] = partKeyExpr;
-	}
-
-	partTabTargetlist = NIL;
-	for (attno = 1; attno <= max_attr; attno++)
-	{
-		Expr	   *expr = partKeyExprs[attno];
-		char		attname[20];
-
-		if (!expr)
-			expr = (Expr *) makeBoolConst(false, true);
-
-		snprintf(attname, sizeof(attname), "partcol_%d", attno);
-
-		partTabTargetlist = lappend(partTabTargetlist,
-									makeTargetEntry(expr,
-													attno,
-													pstrdup(attname),
-													false));
-	}
+	partkeyExpressions = best_path->partKeyExprs;
 
 	ps = makeNode(PartitionSelector);
 	ps->plan.targetlist = subplan->targetlist;
@@ -464,11 +425,11 @@ create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *best_pa
 	ps->plan.plan_rows = subplan->plan_rows;
 	ps->plan.plan_width = subplan->plan_width;
 
-	ps->relid = best_path->dsinfo->parentOid;
+	ps->parentRTI = best_path->dsinfo->rtindex;
 	ps->nLevels = 1;
 	ps->scanId = best_path->dsinfo->dynamicScanId;
 	ps->selectorId = -1;
-	ps->partTabTargetlist = partTabTargetlist;
+	ps->partkeyExpressions = partkeyExpressions;
 	ps->levelExpressions = NIL;
 	ps->residualPredicate = NULL;
 	ps->printablePredicate = (Node *) best_path->partKeyExprs;
@@ -480,7 +441,6 @@ create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *best_pa
 		makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum(ps->scanId), false, true);
 
 	return (Plan *) ps;
-#endif
 }
 
 /*

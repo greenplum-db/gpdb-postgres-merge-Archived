@@ -1753,13 +1753,10 @@ typedef struct PlanInvalItem
  *
  * ----------------
  */
-// GPDB_12_MERGE_FIXME: This came from legacy GPDB partitioning. Is it still
-// used?
-#if 0
 typedef struct PartitionSelector
 {
 	Plan		plan;
-	Oid 		relid;  				/* OID of target relation */
+	Index		parentRTI;				/* index in range table of parent rel */
 	int 		nLevels;				/* number of partition levels */
 	int32 		scanId; 				/* id of the corresponding dynamic scan */
 	int32		selectorId;				/* id of this partition selector */
@@ -1772,11 +1769,10 @@ typedef struct PartitionSelector
 	Node		*printablePredicate;	/* printable predicate (for explain purposes) */
 
 	/*
-	 * Fields for dynamic selection, by projecting input tuples to a tuple
-	 * that has the partitioning key values in the same positions as in the
-	 * partitioned table.
+	 * Fields for dynamic selection, by extracting partitioning keys from
+	 * input tuples.
 	 */
-	List	    *partTabTargetlist;
+	List	   *partkeyExpressions;
 
 	/* Fields for static selection */
 	bool		staticSelection;    	/* static selection performed? */
@@ -1784,6 +1780,5 @@ typedef struct PartitionSelector
 	List		*staticScanIds;     	/* scan ids used to propagate statically selected part oids */
 
 } PartitionSelector;
-#endif
 
 #endif							/* PLANNODES_H */

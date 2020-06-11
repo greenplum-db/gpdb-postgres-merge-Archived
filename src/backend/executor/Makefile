@@ -39,7 +39,8 @@ OBJS += nodeMotion.o \
        nodeSequence.o \
        nodeAssertOp.o \
        nodeSplitUpdate.o \
-       nodeTupleSplit.o
+       nodeTupleSplit.o \
+       nodePartitionSelector.o
 
 # GPDB_12_MERGE_FIXME: Are any of these still needed?
 #OBJS += nodeDynamicIndexscan.o \

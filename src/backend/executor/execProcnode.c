@@ -490,13 +490,10 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
  			result = (PlanState *) ExecInitAssertOp((AssertOp *) node,
  												  estate, eflags);
 			break;
-#if 0
-/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			result = (PlanState *) ExecInitPartitionSelector((PartitionSelector *) node,
 															estate, eflags);
 			break;
-#endif
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			result = NULL;		/* keep compiler quiet */
@@ -1018,12 +1015,9 @@ ExecEndNode(PlanState *node)
 		case T_AssertOpState:
 			ExecEndAssertOp((AssertOpState *) node);
 			break;
-#if 0
-/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelectorState:
 			ExecEndPartitionSelector((PartitionSelectorState *) node);
 			break;
-#endif
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));

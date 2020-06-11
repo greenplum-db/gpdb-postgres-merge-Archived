@@ -490,7 +490,7 @@ typedef struct
 	Relids		children;
 
 	/* Partitioning key information */
-	List	   *partKeyAttnos;
+	PartitionKey partkey;
 
 	/* Set to true, if a PartitionSelector has been created for this scan */
 	bool		hasSelector;

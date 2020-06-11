@@ -17,13 +17,9 @@
 #ifndef NODEPARTITIONSELECTOR_H
 #define NODEPARTITIONSELECTOR_H
 
-#if 0
-/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
-extern TupleTableSlot* ExecPartitionSelector(PartitionSelectorState *node);
 extern PartitionSelectorState* ExecInitPartitionSelector(PartitionSelector *node, EState *estate, int eflags);
 extern void ExecEndPartitionSelector(PartitionSelectorState *node);
 extern void ExecReScanPartitionSelector(PartitionSelectorState *node);
-#endif
 
 #endif   /* NODEPARTITIONSELECTOR_H */
 

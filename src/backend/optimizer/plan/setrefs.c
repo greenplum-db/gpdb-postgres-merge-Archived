@@ -903,17 +903,15 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			set_dummy_tlist_references(plan, rtoffset);
 			break;
 
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 		case T_PartitionSelector:
 			{
 				PartitionSelector *ps = (PartitionSelector *) plan;
 				indexed_tlist *childplan_itlist =
 					build_tlist_index(plan->lefttree->targetlist);
 
-				set_upper_references(root, plan, rtoffset);
+				set_dummy_tlist_references(plan, rtoffset);
+				ps->parentRTI += rtoffset;
 
-				//set_dummy_tlist_references(plan, rtoffset);
 				Assert(ps->plan.qual == NIL);
 
 				ps->levelEqExpressions = (List *)
@@ -926,11 +924,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_upper_expr(root, ps->propagationExpression, childplan_itlist, OUTER_VAR,rtoffset);
 				ps->printablePredicate =
 					fix_upper_expr(root, ps->printablePredicate, childplan_itlist, OUTER_VAR,rtoffset);
-				ps->partTabTargetlist = (List *)
-					fix_upper_expr(root, (Node *) ps->partTabTargetlist, childplan_itlist, OUTER_VAR,rtoffset);
+
+				ps->partkeyExpressions = (List *)
+					fix_upper_expr(root, (Node *) ps->partkeyExpressions, childplan_itlist, OUTER_VAR,rtoffset);
 			}
 			break;
-#endif			
+
 		case T_LockRows:
 			{
 				LockRows   *splan = (LockRows *) plan;

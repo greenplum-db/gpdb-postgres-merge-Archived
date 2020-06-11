@@ -1996,31 +1996,35 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				}
 			}
 			break;
-#if 0
-/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			{
-				PartitionSelector  *ps = (PartitionSelector *)plan;
-				char			   *relname = get_rel_name(ps->relid);
+				PartitionSelector *ps = (PartitionSelector *) plan;
+				Index		rti = ps->parentRTI;
+				char	   *refname;
+				RangeTblEntry *rte;
+
+				rte = rt_fetch(rti, es->rtable);
+				refname = (char *) list_nth(es->rtable_names, rti - 1);
+				if (refname == NULL)
+					refname = rte->eref->aliasname;
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
 				{
 					if (ps->scanId != 0)
 						appendStringInfo(es->str, " for %s (dynamic scan id: %d)",
-										 quote_identifier(relname),
+										 quote_identifier(refname),
 										 ps->scanId);
 					else
-						appendStringInfo(es->str, " for %s", quote_identifier(relname));
+						appendStringInfo(es->str, " for %s", quote_identifier(refname));
 				}
 				else
 				{
-					ExplainPropertyText("Relation", relname, es);
+					ExplainPropertyText("Alias", refname, es);
 					if (ps->scanId != 0)
 						ExplainPropertyInteger("Dynamic Scan Id", NULL, ps->scanId, es);
 				}
 			}
 			break;
-#endif
 		default:
 			break;
 	}
@@ -2489,13 +2493,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_AssertOp:
 			show_upper_qual(plan->qual, "Assert Cond", planstate, ancestors, es);
 			break;
-#if 0
-/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			explain_partition_selector((PartitionSelector *) plan,
 									   parentplanstate, ancestors, es);
 			break;
-#endif
 		default:
 			break;
 	}

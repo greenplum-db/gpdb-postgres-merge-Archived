@@ -2366,6 +2366,27 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+
+		case T_PartitionSelector:
+			{
+				PartitionSelector *pselector = (PartitionSelector *) node;
+
+				if (expression_tree_walker((Node *) pselector->levelEqExpressions, walker,
+										   context))
+					return true;
+				if (expression_tree_walker((Node *) pselector->levelExpressions, walker,
+										   context))
+					return true;
+				if (walker((Node *) pselector->residualPredicate, context))
+					return true;
+				if (walker((Node *) pselector->printablePredicate, context))
+					return true;
+				if (expression_tree_walker((Node *) pselector->partkeyExpressions, walker,
+										   context))
+					return true;
+			}
+			break;
+
 		case T_TableFunc:
 			{
 				TableFunc  *tf = (TableFunc *) node;
@@ -3362,6 +3383,21 @@ expression_tree_mutator(Node *node,
 				RowIdExpr *newnode;
 
 				FLATCOPY(newnode, rowidexpr, RowIdExpr);
+				return (Node *) newnode;
+			}
+			break;
+
+		case T_PartitionSelector:
+			{
+				PartitionSelector *pselector = (PartitionSelector *) node;
+				PartitionSelector *newnode;
+
+				FLATCOPY(newnode, pselector, PartitionSelector);
+				MUTATE(newnode->levelEqExpressions, pselector->levelEqExpressions, List *);
+				MUTATE(newnode->levelExpressions, pselector->levelExpressions, List *);
+				MUTATE(newnode->residualPredicate, pselector->residualPredicate, Node *);
+				MUTATE(newnode->printablePredicate, pselector->printablePredicate, Node *);
+				MUTATE(newnode->partkeyExpressions, pselector->partkeyExpressions, List *);
 				return (Node *) newnode;
 			}
 			break;

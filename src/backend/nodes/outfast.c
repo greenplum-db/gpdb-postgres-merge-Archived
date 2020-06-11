@@ -1111,12 +1111,9 @@ _outNode(StringInfo str, void *obj)
 			case T_AssertOp:
 				_outAssertOp(str, obj);
 				break;
-/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
-#if 0
 			case T_PartitionSelector:
 				_outPartitionSelector(str, obj);
 				break;
-#endif
 			case T_Alias:
 				_outAlias(str, obj);
 				break;
@@ -1812,6 +1809,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RowIdExpr:
 				_outRowIdExpr(str, obj);
+				break;
+			case T_PartSelectedExpr:
+				_outPartSelectedExpr(str, obj);
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
