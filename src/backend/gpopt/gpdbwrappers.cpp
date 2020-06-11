@@ -33,6 +33,7 @@
 extern "C" {
 	#include "access/exttable_fdw_shim.h"
 	#include "optimizer/clauses.h"
+	#include "optimizer/optimizer.h"
 	#include "optimizer/plancat.h"
 	#include "parser/parse_agg.h"
 	#include "utils/fmgroids.h"
@@ -971,7 +972,7 @@ gpdb::GetCheckConstraintOids
 	GP_WRAP_END;
 	return NULL;
 }
-
+#if 0
 Node *
 gpdb::GetRelationPartContraints
 	(
@@ -1033,6 +1034,7 @@ gpdb::GetRootPartition
 	GP_WRAP_END;
 	return InvalidOid;
 }
+#endif
 
 bool
 gpdb::GetCastFunc
@@ -1257,7 +1259,7 @@ gpdb::GetOpName
 	GP_WRAP_END;
 	return NULL;
 }
-
+#if 0
 List *
 gpdb::GetPartitionAttrs
 	(
@@ -1308,6 +1310,7 @@ gpdb::GetParts
 	GP_WRAP_END;
 	return NULL;
 }
+#endif
 
 List *
 gpdb::GetRelationKeys
@@ -1761,7 +1764,7 @@ gpdb::ListFreeDeep
 	}
 	GP_WRAP_END;
 }
-
+#if 0
 bool
 gpdb::IsAppendOnlyPartitionTable
 	(
@@ -1790,6 +1793,7 @@ gpdb::IsMultilevelPartitionUniform
 	GP_WRAP_END;
 	return false;
 }
+#endif
 
 TypeCacheEntry *
 gpdb::LookupTypeCache
@@ -2298,7 +2302,7 @@ gpdb::MutateRangeTable
 	GP_WRAP_END;
 	return NIL;
 }
-
+#if 0
 bool
 gpdb::RelPartIsRoot
 	(
@@ -2340,6 +2344,7 @@ gpdb::RelPartIsNone
 	GP_WRAP_END;
 	return false;
 }
+#endif
 
 bool
 gpdb::HasSubclassSlow
@@ -2475,7 +2480,7 @@ gpdb::GetRelationIndexes
 	GP_WRAP_END;
 	return NIL;
 }
-
+#if 0
 LogicalIndexes *
 gpdb::GetLogicalPartIndexes
 	(
@@ -2490,7 +2495,6 @@ gpdb::GetLogicalPartIndexes
 	GP_WRAP_END;
 	return NULL;
 }
-
 LogicalIndexInfo *
 gpdb::GetLogicalIndexInfo
 	(
@@ -2506,6 +2510,7 @@ gpdb::GetLogicalIndexInfo
 	GP_WRAP_END;
 	return NULL;
 }
+#endif
 
 Relation
 gpdb::GetRelation
@@ -3061,7 +3066,7 @@ gpdb::EvalConstExpressions
 	GP_WRAP_END;
 	return NULL;
 }
-
+#if 0
 SelectedParts *
 gpdb::RunStaticPartitionSelection
 	(
@@ -3075,6 +3080,7 @@ gpdb::RunStaticPartitionSelection
 	GP_WRAP_END;
 	return NULL;
 }
+#endif
 
 FaultInjectorType_e
 gpdb::InjectFaultInOptTasks
@@ -3089,7 +3095,7 @@ gpdb::InjectFaultInOptTasks
 	GP_WRAP_END;
 	return FaultInjectorTypeNotSpecified;
 }
-
+#if 0
 gpos::ULONG
 gpdb::CountLeafPartTables
        (
@@ -3105,6 +3111,7 @@ gpdb::CountLeafPartTables
 
 	return 0;
 }
+#endif
 
 /*
  * To detect changes to catalog tables that require resetting the Metadata
@@ -3152,8 +3159,10 @@ register_mdcache_invalidation_callbacks(void)
 		CONSTROID,			/* pg_constraint */
 		OPEROID,			/* pg_operator */
 		OPFAMILYOID,		/* pg_opfamily */
+#if 0
 		PARTOID,			/* pg_partition */
 		PARTRULEOID,		/* pg_partition_rule */
+#endif
 		STATRELATTINH,			/* pg_statistics */
 		TYPEOID,			/* pg_type */
 		PROCOID,			/* pg_proc */

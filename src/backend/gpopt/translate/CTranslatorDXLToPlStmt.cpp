@@ -234,11 +234,13 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL
 	planned_stmt->subplans = m_dxl_to_plstmt_context->GetSubplanEntriesList();
 	planned_stmt->planTree = plan;
 
+#if 0
 	// store partitioned table indexes in planned stmt
 	planned_stmt->queryPartOids = m_dxl_to_plstmt_context->GetPartitionedTablesList();
+	planned_stmt->numSelectorsPerScanId = m_dxl_to_plstmt_context->GetNumPartitionSelectorsList();
+#endif
 	planned_stmt->canSetTag = can_set_tag;
 	planned_stmt->relationOids = oids_list;
-	planned_stmt->numSelectorsPerScanId = m_dxl_to_plstmt_context->GetNumPartitionSelectorsList();
 
 	planned_stmt->commandType = m_cmd_type;
 	

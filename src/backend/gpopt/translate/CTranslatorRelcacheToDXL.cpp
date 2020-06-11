@@ -1080,7 +1080,7 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 		CMDIdGPDB *mdid_rel = GPOS_NEW(mp) CMDIdGPDB(rel_oid);
 
 		md_rel = md_accessor->RetrieveRel(mdid_rel);
-	
+#if 0
 		if (md_rel->IsPartitioned())
 		{
 			LogicalIndexes *logical_indexes = gpdb::GetLogicalPartIndexes(rel_oid);
@@ -1098,7 +1098,7 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 				return index;
 			}
 		}
-	
+#endif
 		index_type = IMDIndex::EmdindBtree;
 		mdid_item_type = GPOS_NEW(mp) CMDIdGPDB(GPDB_ANY);
 		if (GIN_AM_OID == index_rel->rd_rel->relam)
