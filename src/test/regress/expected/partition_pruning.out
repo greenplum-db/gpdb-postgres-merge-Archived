@@ -3217,22 +3217,21 @@ select * from sales_1_prt_2_2_prt_europe;
 (0 rows)
 
 update sales set region = 'europe' where trans_id = 1;
-ERROR:  moving tuple from partition "sales_1_prt_2_2_prt_usa" to partition "sales_1_prt_2_2_prt_europe" not supported  (seg2 127.0.1.1:25434 pid=17863)
 select * from sales_1_prt_2_2_prt_europe;
+ trans_id |    date    | amount | region 
+----------+------------+--------+--------
+        1 | 01-01-2011 |  10.10 | europe
+(1 row)
+
+select * from sales_1_prt_2_2_prt_usa;
  trans_id | date | amount | region 
 ----------+------+--------+--------
 (0 rows)
 
-select * from sales_1_prt_2_2_prt_usa;
- trans_id |    date    | amount | region 
-----------+------------+--------+--------
-        1 | 01-01-2011 |  10.10 | usa
-(1 row)
-
 select * from sales;
  trans_id |    date    | amount | region 
 ----------+------------+--------+--------
-        1 | 01-01-2011 |  10.10 | usa
+        1 | 01-01-2011 |  10.10 | europe
 (1 row)
 
 -- Distinct From
