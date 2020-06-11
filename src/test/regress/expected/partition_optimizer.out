@@ -4598,29 +4598,24 @@ PARTITION BY RANGE(day_dt)
           (
           PARTITION p20090312  START ('2008-03-12'::date)
           );
-NOTICE:  CREATE TABLE will create partition "mpp6589b_1_prt_p20090312" for table "mpp6589b"
-select pg_get_partition_def('mpp6589b'::regclass,true);
-                   pg_get_partition_def                   
-----------------------------------------------------------
- PARTITION BY RANGE(day_dt)                              +
-           (                                             +
-           PARTITION p20090312 START ('03-12-2008'::date)+
-           )
-(1 row)
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589b%';
+         relname          |                 pg_get_expr                  
+--------------------------+----------------------------------------------
+ mpp6589b                 | 
+ mpp6589b_1_prt_p20090312 | FOR VALUES FROM ('03-12-2008') TO (MAXVALUE)
+(2 rows)
 
 -- should work
 ALTER TABLE mpp6589b 
 SPLIT PARTITION p20090312 AT( '20090310' ) 
 INTO( PARTITION p20090309, PARTITION p20090312_tmp);
-select pg_get_partition_def('mpp6589b'::regclass,true);
-                                pg_get_partition_def                                 
--------------------------------------------------------------------------------------
- PARTITION BY RANGE(day_dt)                                                         +
-           (                                                                        +
-           PARTITION p20090309 START ('03-12-2008'::date) END ('03-10-2009'::date), +
-           PARTITION p20090312_tmp START ('03-10-2009'::date)                       +
-           )
-(1 row)
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589b%';
+           relname            |                   pg_get_expr                    
+------------------------------+--------------------------------------------------
+ mpp6589b                     | 
+ mpp6589b_1_prt_p20090309     | FOR VALUES FROM ('03-12-2008') TO ('03-10-2009')
+ mpp6589b_1_prt_p20090312_tmp | FOR VALUES FROM ('03-10-2009') TO (MAXVALUE)
+(3 rows)
 
 -- MPP-7191, MPP-7193: partitioned tables - fully-qualify storage type
 -- if not specified (and not a template)
@@ -5939,12 +5934,13 @@ ERROR:  AT clause parameter is not a member of the target partition specificatio
 -- good split
 alter table cov1 split partition p1 at (5,6,7) 
 into (partition p1, partition p2);
-select partitionboundary from pg_partitions where tablename = 'cov1';
-         partitionboundary          
-------------------------------------
- PARTITION p1 VALUES(1, 2, 3, 4, 8)
- PARTITION p2 VALUES(5, 6, 7)
-(2 rows)
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'cov1%';
+    relname    |          pg_get_expr          
+---------------+-------------------------------
+ cov1          | 
+ cov1_1_prt_p1 | FOR VALUES IN (1, 2, 3, 4, 8)
+ cov1_1_prt_p2 | FOR VALUES IN (5, 6, 7)
+(3 rows)
 
 drop table cov1;
 -- MPP-11120

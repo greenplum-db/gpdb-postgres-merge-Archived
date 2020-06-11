@@ -2367,18 +2367,18 @@ PARTITION BY RANGE(day_dt)
           PARTITION p20090312  END ('2009-03-12'::date)
           );
 
-select pg_get_partition_def('mpp6589a'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589a%';
 
 -- should work
 ALTER TABLE mpp6589a 
 SPLIT PARTITION p20090312 AT( '20090310' ) 
 INTO( PARTITION p20090309, PARTITION p20090312_tmp);
 
-select pg_get_partition_def('mpp6589a'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589a%';
 
 CREATE TABLE mpp6589i(a int, b int) 
 partition by range (b) (start (1) end (3));
-select pg_get_partition_def('mpp6589i'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589i%';
 
 -- should fail (overlap)
 ALTER TABLE mpp6589i ADD PARTITION start (2);
@@ -2387,7 +2387,7 @@ ALTER TABLE mpp6589i ADD PARTITION start (3) exclusive;
 
 -- should work - make sure can add an open-ended final partition
 ALTER TABLE mpp6589i ADD PARTITION start (3);
-select pg_get_partition_def('mpp6589i'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589i%';
 
 -- test open-ended SPLIT
 CREATE TABLE mpp6589b
@@ -2401,14 +2401,14 @@ PARTITION BY RANGE(day_dt)
           PARTITION p20090312  START ('2008-03-12'::date)
           );
 
-select pg_get_partition_def('mpp6589b'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589b%';
 
 -- should work
 ALTER TABLE mpp6589b 
 SPLIT PARTITION p20090312 AT( '20090310' ) 
 INTO( PARTITION p20090309, PARTITION p20090312_tmp);
 
-select pg_get_partition_def('mpp6589b'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589b%';
 
 -- MPP-7191, MPP-7193: partitioned tables - fully-qualify storage type
 -- if not specified (and not a template)
@@ -2760,7 +2760,7 @@ alter table cov1 split partition p1 at (5,50);
 alter table cov1 split partition p1 at (5,6,7) 
 into (partition p1, partition p2);
 
-select partitionboundary from pg_partitions where tablename = 'cov1';
+select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'cov1%';
 
 drop table cov1;
 
