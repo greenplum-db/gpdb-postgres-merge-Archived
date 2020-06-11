@@ -121,7 +121,7 @@ vacuum ao_age_test;
 -- each of the three tables.
 -- AO/CO tables should have relfrozenxid = 0.
 select relname, relfrozenxid from pg_class
-where relname like 'ao_age_test%' and relkind = 'r' order by 1;
+where relname like 'ao_age_test%' and relkind in ('r','p') order by 1;
 
 -- Vacuum the other two empty tables and verify the age of auxiliary tables is
 -- updated correctly.

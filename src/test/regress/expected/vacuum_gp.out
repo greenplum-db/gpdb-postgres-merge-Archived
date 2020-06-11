@@ -158,7 +158,7 @@ vacuum ao_age_test;
 -- each of the three tables.
 -- AO/CO tables should have relfrozenxid = 0.
 select relname, relfrozenxid from pg_class
-where relname like 'ao_age_test%' and relkind = 'r' order by 1;
+where relname like 'ao_age_test%' and relkind in ('r','p') order by 1;
        relname        | relfrozenxid 
 ----------------------+--------------
  ao_age_test          |            0

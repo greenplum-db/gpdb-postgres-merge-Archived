@@ -1315,8 +1315,23 @@ AddNewRelationTuple(Relation pg_class_desc,
 			break;
 	}
 
-	new_rel_reltup->relfrozenxid = relfrozenxid;
-	new_rel_reltup->relminmxid = relminmxid;
+	/* Initialize relfrozenxid and relminmxid */
+	if (should_have_valid_relfrozenxid(new_rel_desc, relkind))
+	{
+		new_rel_reltup->relfrozenxid = relfrozenxid;
+		new_rel_reltup->relminmxid = relminmxid;
+	}
+	else
+	{
+		/*
+		 * Other relation types will not contain XIDs, so set relfrozenxid to
+		 * InvalidTransactionId.  (Note: a sequence does contain a tuple, but
+		 * we force its xmin to be FrozenTransactionId always; see
+		 * commands/sequence.c.)
+		 */
+		new_rel_reltup->relfrozenxid = InvalidTransactionId;
+		new_rel_reltup->relminmxid = InvalidMultiXactId;
+	}
 	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->reloftype = reloftype;
@@ -3951,23 +3966,16 @@ insert_ordered_unique_oid(List *list, Oid datum)
  * This is to keep consistent behavior for relfrozenxid before
  * and after upgrade.
  */
-/* GPDB_12_MERGE_FIXME: what was this for? Not needed anymore, I presume? */
-#if 0
 bool
-should_have_valid_relfrozenxid(char relkind)
+should_have_valid_relfrozenxid(Relation relation,char relkind)
 {
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
-			if (relstorage == RELSTORAGE_FOREIGN  ||
-				relstorage == RELSTORAGE_VIRTUAL ||
-				relstorage == RELSTORAGE_AOROWS ||
-				relstorage == RELSTORAGE_AOCOLS)
-			{
+			if (RelationIsAppendOptimized(relation))
 				return false;
-			}
-			return true;
 
+			return true;
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
 		case RELKIND_AOSEGMENTS:
@@ -3978,7 +3986,6 @@ should_have_valid_relfrozenxid(char relkind)
 
 	return false;
 }
-#endif
 
 /*
  * StorePartitionKey
