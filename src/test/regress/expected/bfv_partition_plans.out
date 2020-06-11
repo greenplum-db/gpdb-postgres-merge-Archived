@@ -1179,33 +1179,30 @@ EVERY ('2 mons'::interval)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'oid' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_foo" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_2" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_3" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_4" for table "mpp8031"
 explain analyze select a.* from mpp8031 a, mpp8031 b where a.oid = b.oid;
                                                                QUERY PLAN                                                               
 ----------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=6799.00..10930007.60 rows=80883360 width=16) (actual time=0.829..0.829 rows=0 loops=2)
-   ->  Hash Join  (cost=6799.00..10930007.60 rows=26961120 width=16) (actual time=0.000..0.040 rows=0 loops=1)
-         Hash Cond: a.oid = b.oid
-         ->  Append  (cost=0.00..3244.00 rows=94800 width=16) (actual time=0.000..0.040 rows=0 loops=1)
-               ->  Seq Scan on mpp8031_1_prt_foo a  (cost=0.00..811.00 rows=23700 width=16) (actual time=0.000..0.017 rows=0 loops=1)
-               ->  Seq Scan on mpp8031_1_prt_2 a_1  (cost=0.00..811.00 rows=23700 width=16) (actual time=0.000..0.008 rows=0 loops=1)
-               ->  Seq Scan on mpp8031_1_prt_3 a_2  (cost=0.00..811.00 rows=23700 width=16) (actual time=0.000..0.007 rows=0 loops=1)
-               ->  Seq Scan on mpp8031_1_prt_4 a_3  (cost=0.00..811.00 rows=23700 width=16) (actual time=0.000..0.007 rows=0 loops=1)
-         ->  Hash  (cost=3244.00..3244.00 rows=94800 width=4) (never executed)
-               ->  Append  (cost=0.00..3244.00 rows=94800 width=4) (never executed)
-                     ->  Seq Scan on mpp8031_1_prt_foo b  (cost=0.00..811.00 rows=23700 width=4) (never executed)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=8221.00..12550518.80 rows=80883360 width=16) (actual time=0.756..0.756 rows=0 loops=1)
+   ->  Hash Join  (cost=8221.00..10932851.60 rows=26961120 width=16) (never executed)
+         Hash Cond: (a.oid = b.oid)
+         ->  Append  (cost=0.00..4666.00 rows=94800 width=16) (never executed)
+               ->  Seq Scan on mpp8031_1_prt_foo_1 a  (cost=0.00..811.00 rows=23700 width=16) (never executed)
+               ->  Seq Scan on mpp8031_1_prt_2 a_1  (cost=0.00..811.00 rows=23700 width=16) (never executed)
+               ->  Seq Scan on mpp8031_1_prt_3 a_2  (cost=0.00..811.00 rows=23700 width=16) (never executed)
+               ->  Seq Scan on mpp8031_1_prt_4 a_3  (cost=0.00..811.00 rows=23700 width=16) (never executed)
+         ->  Hash  (cost=4666.00..4666.00 rows=94800 width=4) (never executed)
+               ->  Append  (cost=0.00..4666.00 rows=94800 width=4) (never executed)
+                     ->  Seq Scan on mpp8031_1_prt_foo_1 b  (cost=0.00..811.00 rows=23700 width=4) (never executed)
                      ->  Seq Scan on mpp8031_1_prt_2 b_1  (cost=0.00..811.00 rows=23700 width=4) (never executed)
                      ->  Seq Scan on mpp8031_1_prt_3 b_2  (cost=0.00..811.00 rows=23700 width=4) (never executed)
                      ->  Seq Scan on mpp8031_1_prt_4 b_3  (cost=0.00..811.00 rows=23700 width=4) (never executed)
-   (slice0)    Executor memory: 386K bytes.
-   (slice1)    Executor memory: 142K bytes avg x 3 workers, 142K bytes max (seg0).
+ Planning Time: 2.439 ms
+   (slice0)    Executor memory: 51K bytes.
+   (slice1)    Executor memory: 57K bytes avg x 3 workers, 57K bytes max (seg0).
  Memory used:  128000kB
  Optimizer: Postgres query optimizer
- Total runtime: 4.237 ms
-(19 rows)
+ Execution Time: 1.481 ms
+(20 rows)
 
 drop table mpp8031;
 -- Partitioned tables with default partitions and indexes on all parts,
