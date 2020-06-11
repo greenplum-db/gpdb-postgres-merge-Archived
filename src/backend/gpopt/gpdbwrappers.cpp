@@ -2560,6 +2560,7 @@ gpdb::CreateForeignScanForExternalTable
 	return NULL;
 }
 
+// GPDB_12_MERGE_FIXME: Change signature to take in Expr instead of Node
 TargetEntry *
 gpdb::FindFirstMatchingMemberInTargetList
 	(
@@ -2569,7 +2570,7 @@ gpdb::FindFirstMatchingMemberInTargetList
 {
 	GP_WRAP_START;
 	{
-		return tlist_member(node, targetlist);
+		return tlist_member((Expr *) node, targetlist);
 	}
 	GP_WRAP_END;
 	return NULL;
