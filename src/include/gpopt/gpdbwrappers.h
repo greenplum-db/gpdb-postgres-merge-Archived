@@ -683,6 +683,9 @@ namespace gpdb {
 	// returns true if a query cancel is requested in GPDB
 	bool IsAbortRequested(void);
 
+	// Given the type OID, get the typelem (InvalidOid if not an array type).
+	Oid GetElementType(Oid array_type_oid);
+
 	GpPolicy *MakeGpPolicy(GpPolicyType ptype, int nattrs,
 						   int numsegments);
 

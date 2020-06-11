@@ -3258,6 +3258,20 @@ gpdb::IsAbortRequested
 	return (QueryCancelPending || ProcDiePending);
 }
 
+// Given the type OID, get the typelem (InvalidOid if not an array type).
+Oid
+gpdb::GetElementType
+	(
+	Oid array_type_oid
+	)
+{
+	GP_WRAP_START;
+	{
+		return get_element_type(array_type_oid);
+	}
+	GP_WRAP_END;
+}
+
 GpPolicy *
 gpdb::MakeGpPolicy
 		(
