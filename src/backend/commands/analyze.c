@@ -400,8 +400,6 @@ analyze_rel_internal(Oid relid, RangeVar *relation,
 					   true, in_outer_xact, elevel, ctx);
 
 	/* MPP-6929: metadata tracking */
-	/* GPDB_12_MERGE_FIXME: vacuumStatement_IsTemporary function was lost? */
-#if 0
 	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
 	{
 		char *asubtype = "";
@@ -416,7 +414,6 @@ analyze_rel_internal(Oid relid, RangeVar *relation,
 						   asubtype
 			);
 	}
-#endif
 	
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it

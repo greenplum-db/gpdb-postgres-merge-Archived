@@ -1839,6 +1839,7 @@ heap_create_with_catalog(const char *relname,
 
 		switch (relkind)
 		{
+			case RELKIND_PARTITIONED_TABLE:
 			case RELKIND_RELATION:
 				break;
 			case RELKIND_INDEX:

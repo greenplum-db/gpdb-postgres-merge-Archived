@@ -2644,3 +2644,35 @@ vac_update_relstats_from_list(List *updated_stats)
 		relation_close(rel, AccessShareLock);
 	}
 }
+
+bool
+vacuumStatement_IsTemporary(Relation onerel)
+{
+	bool bTemp = false;
+	/* MPP-7576: don't track internal namespace tables */
+	switch (RelationGetNamespace(onerel))
+	{
+		case PG_CATALOG_NAMESPACE:
+			/* MPP-7773: don't track objects in system namespace
+			 * if modifying system tables (eg during upgrade)
+			 */
+			if (allowSystemTableMods)
+				bTemp = true;
+			break;
+
+		case PG_TOAST_NAMESPACE:
+		case PG_BITMAPINDEX_NAMESPACE:
+		case PG_AOSEGMENT_NAMESPACE:
+			bTemp = true;
+			break;
+		default:
+			break;
+	}
+
+	/* MPP-7572: Don't track metadata if table in any
+	 * temporary namespace
+	 */
+	if (!bTemp)
+		bTemp = isAnyTempNamespace(RelationGetNamespace(onerel));
+	return bTemp;
+}
