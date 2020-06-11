@@ -3189,24 +3189,14 @@ NOTICE:  building index for child partition "sales_1_prt_5_2_prt_asia"
 NOTICE:  building index for child partition "sales_1_prt_5_2_prt_europe"
 NOTICE:  building index for child partition "sales_1_prt_5_2_prt_other_regions"
 explain select * from sales where date = '2011-01-01' and region = 'usa';
-                                                                                 QUERY PLAN                                                                                  
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.12..800.58 rows=4 width=45)
-   ->  Append  (cost=0.12..800.58 rows=2 width=45)
-         ->  Index Scan using sales_1_prt_outlying_dates_2_prt_usa_date_idx on sales_1_prt_outlying_dates_2_prt_usa  (cost=0.12..200.14 rows=1 width=54)
-               Index Cond: (date = '01-01-2011'::date)
-               Filter: (region = 'usa'::text)
-         ->  Index Scan using sales_1_prt_outlying_dates_2_prt_other_regions_date_idx on sales_1_prt_outlying_dates_2_prt_other_regions  (cost=0.12..200.14 rows=1 width=54)
-               Index Cond: (date = '01-01-2011'::date)
-               Filter: (region = 'usa'::text)
-         ->  Index Scan using sales_1_prt_2_2_prt_other_regions_date_idx on sales_1_prt_2_2_prt_other_regions  (cost=0.12..200.14 rows=1 width=54)
-               Index Cond: (date = '01-01-2011'::date)
-               Filter: (region = 'usa'::text)
-         ->  Index Scan using sales_1_prt_2_2_prt_usa_date_idx on sales_1_prt_2_2_prt_usa  (cost=0.12..200.14 rows=1 width=19)
-               Index Cond: (date = '01-01-2011'::date)
-               Filter: (region = 'usa'::text)
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.12..8.16 rows=1 width=19)
+   ->  Index Scan using sales_1_prt_2_2_prt_usa_date_idx on sales_1_prt_2_2_prt_usa  (cost=0.12..8.14 rows=1 width=19)
+         Index Cond: (date = '01-01-2011'::date)
+         Filter: (region = 'usa'::text)
  Optimizer: Postgres query optimizer
-(21 rows)
+(5 rows)
 
 select * from sales where date = '2011-01-01' and region = 'usa';
  trans_id |    date    | amount | region 
