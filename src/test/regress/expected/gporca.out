@@ -9079,9 +9079,9 @@ INSERT INTO array_table values(8,array[3],'b');
 SELECT f3, myagg3(f1) from (select * from array_table order by f1 limit 10) as foo GROUP BY f3 ORDER BY f3;
  f3 | myagg3  
 ----+---------
- a  | {1,4,7}
- b  | {5,2,8}
- c  | {3,6}
+ a  | {4,1,7}
+ b  | {8,2,5}
+ c  | {6,3}
 (3 rows)
 
 -- MPP-22453: wrong result in indexscan when the indexqual compares different data types
