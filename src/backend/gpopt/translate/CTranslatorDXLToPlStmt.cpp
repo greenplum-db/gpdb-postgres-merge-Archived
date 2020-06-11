@@ -1402,7 +1402,7 @@ CTranslatorDXLToPlStmt::TranslateDXLValueScanToRangeTblEntry
 	}
 
 	rte->values_lists = values_lists;
-	rte->values_collations = values_collations;
+	rte->colcollations = values_collations;
 	rte->eref = alias;
 
 	return rte;
