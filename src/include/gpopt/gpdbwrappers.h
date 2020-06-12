@@ -250,8 +250,10 @@ namespace gpdb {
 	// get the list of check constraints for a given relation
 	List *GetCheckConstraintOids(Oid rel_oid);
 
+#if 0
 	// part constraint expression tree
 	Node *GetRelationPartContraints(Oid rel_oid, List **default_levels);
+#endif
 
 	// get the cast function for the specified source and destination types
 	bool GetCastFunc(Oid src_oid, Oid dest_oid, bool *is_binary_coercible, Oid *cast_fn_oid, CoercionPathType *pathtype);
@@ -298,6 +300,7 @@ namespace gpdb {
 	// operator name
 	char *GetOpName(Oid opno);
 
+#if 0
 	// parts of a partitioned table
 	bool IsLeafPartition(Oid oid);
 
@@ -316,6 +319,7 @@ namespace gpdb {
 	/* GPDB_12_MERGE_FIXME: mergings stats not yet implemented with new partitioning implementation */
 	// parts of a partitioned table
 	//PartitionNode *GetParts(Oid relid, int16 level, Oid parent, bool inctemplate, bool includesubparts);
+#endif
 
 	// keys of the relation with the given oid
 	List *GetRelationKeys(Oid relid);
@@ -410,11 +414,13 @@ namespace gpdb {
 	// deep free of a list
 	void ListFreeDeep(List *list);
 
+#if 0
 	// does a partition table have an appendonly child
 	bool IsAppendOnlyPartitionTable(Oid root_oid);
 
 	// does a multi-level partitioned table have uniform partitioning hierarchy
 	bool IsMultilevelPartitionUniform(Oid root_oid);
+#endif
 
 	// lookup type cache
 	TypeCacheEntry *LookupTypeCache(Oid type_id, int flags);
@@ -512,6 +518,7 @@ namespace gpdb {
 	// the part of MutateQueryTree that processes a query's rangetable
 	List *MutateRangeTable(List *rtable, Node *(*mutator)(), void *context, int flags);
 
+#if 0
 	// check whether the part with the given oid is the root of a partition table
 	bool RelPartIsRoot(Oid relid);
 	
@@ -520,6 +527,7 @@ namespace gpdb {
 	
 	// check whether table with the given oid is a regular table and not part of a partitioned table
 	bool RelPartIsNone(Oid relid);
+#endif
 
 	// check whether a relation is inherited
 	bool HasSubclassSlow(Oid rel_oid);
@@ -531,6 +539,7 @@ namespace gpdb {
     // and the parts are distributed differently, return Random distribution
     GpPolicy *GetDistributionPolicy(Relation rel);
     
+#if 0
     // return true if the table is partitioned and hash-distributed, and one of  
     // the child partitions is randomly distributed
     gpos::BOOL IsChildPartDistributionMismatched(Relation rel);
@@ -538,6 +547,7 @@ namespace gpdb {
     // return true if the table is partitioned and any of the child partitions
     // have a trigger of the given type
     gpos::BOOL ChildPartHasTriggers(Oid oid, int trigger_type);
+#endif
 
 	// does a relation exist with the given oid
 	bool RelationExists(Oid oid);
@@ -549,11 +559,13 @@ namespace gpdb {
 	// close the given relation
 	void CloseRelation(Relation rel);
 
+#if 0
 	// return the logical indexes for a partitioned table
 	LogicalIndexes *GetLogicalPartIndexes(Oid oid);
 	
 	// return the logical info structure for a given logical index oid
 	LogicalIndexInfo *GetLogicalIndexInfo(Oid root_oid, Oid index_oid);
+#endif
 	
 	// return a list of index oids for a given relation
 	List *GetRelationIndexes(Relation relation);
@@ -669,14 +681,18 @@ namespace gpdb {
 	// transform array Const to an ArrayExpr
 	Node *EvalConstExpressions(Node *node);
 
+#if 0
 	// static partition selection given a PartitionSelector node
 	SelectedParts *RunStaticPartitionSelection(PartitionSelector *ps);
+#endif
 
 	// simple fault injector used by COptTasks.cpp to inject GPDB fault
 	FaultInjectorType_e InjectFaultInOptTasks(const char* fault_name);
 
+#if 0
 	// return the number of leaf partition for a given table oid
 	gpos::ULONG CountLeafPartTables(Oid oidRelation);
+#endif
 
 	// Does the metadata cache need to be reset (because of a catalog
 	// table has been changed?)

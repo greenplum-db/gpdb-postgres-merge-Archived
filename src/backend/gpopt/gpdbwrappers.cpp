@@ -2390,6 +2390,7 @@ gpdb::GetDistributionPolicy
     return NULL;
 }
 
+#if 0
 gpos::BOOL
 gpdb::IsChildPartDistributionMismatched
 	(
@@ -2404,6 +2405,7 @@ gpdb::IsChildPartDistributionMismatched
     GP_WRAP_END;
     return false;
 }
+#endif
 
 bool
 gpdb::RelationExists
