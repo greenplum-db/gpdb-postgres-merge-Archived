@@ -15,11 +15,13 @@
 #ifndef GPDB_gpdbwrappers_H
 #define GPDB_gpdbwrappers_H
 
+extern "C" {
 #include "postgres.h"
 #include "access/attnum.h"
 #include "utils/faultinjector.h"
 #include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
+}
 
 // fwd declarations
 typedef struct SysScanDescData *SysScanDesc;
