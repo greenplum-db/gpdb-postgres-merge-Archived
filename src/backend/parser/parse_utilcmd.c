@@ -374,10 +374,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	if (stmt->relKind == RELKIND_RELATION)
 	{
+#if 0
 		int			numsegments = -1;
 
 		/* GPDB_12_MERGE_FIXME */
-#if 0
 		AssertImply(stmt->is_part_parent,
 					stmt->distributedBy == NULL);
 		AssertImply(stmt->is_part_child,

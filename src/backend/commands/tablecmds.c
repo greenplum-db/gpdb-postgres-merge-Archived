@@ -4798,8 +4798,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* GPDB_12_MERGE_FIXME: do we have these checks on ATTACH? */
 			if (!recursing)
 			{
-				Oid			relid = RelationGetRelid(rel);
-
 				// GPDB_12_MERGE_FIXME
 				//ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 
@@ -5801,7 +5799,6 @@ ATAocsWriteNewColumns(AlteredTableInfo *tab)
 		newval->exprstate = ExecPrepareExpr((Expr *) newval->expr, estate);
 	}
 
-    Oid         segrelid;
 	rel = heap_open(tab->relid, NoLock);
 	Assert(rel->rd_rel->relam == AOCO_TABLE_AM_OID);
 
