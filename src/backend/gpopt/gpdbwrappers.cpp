@@ -3307,7 +3307,7 @@ gpdb::HashBpChar(Datum d)
 {
 	GP_WRAP_START;
 	{
-		return DatumGetUInt32(DirectFunctionCall1(hashbpchar, d));
+		return DatumGetUInt32(DirectFunctionCall1Coll(hashbpchar, C_COLLATION_OID, d));
 	}
 	GP_WRAP_END;
 }
@@ -3317,7 +3317,7 @@ gpdb::HashText(Datum d)
 {
 	GP_WRAP_START;
 	{
-		return DatumGetUInt32(DirectFunctionCall1(hashtext, d));
+		return DatumGetUInt32(DirectFunctionCall1Coll(hashtext, C_COLLATION_OID, d));
 	}
 	GP_WRAP_END;
 }
