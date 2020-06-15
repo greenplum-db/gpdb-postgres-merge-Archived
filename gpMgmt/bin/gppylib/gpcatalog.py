@@ -34,6 +34,7 @@ MASTER_ONLY_TABLES = [
     'pg_stat_last_operation',
     'pg_stat_last_shoperation',
     'pg_statistic',
+    'gp_partition_template', # GPDB_12_MERGE_FIXME: is gp_partition_template intentionally missing from segments?
     ]
 
 # Hard coded tables that have different values on every segment

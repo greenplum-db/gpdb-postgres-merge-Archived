@@ -39,6 +39,8 @@ CATALOG(gp_partition_template,5022,PartitionTemplateRelationId)
 #endif
 } FormData_gp_partition_template;
 
+FOREIGN_KEY(relid REFERENCES pg_class(oid));
+
 /* ----------------
  *		Form_gp_partition_template corresponds to a pointer to a tuple with
  *		the format of gp_partition_template relation.
