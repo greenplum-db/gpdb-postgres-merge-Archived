@@ -29,6 +29,12 @@ create or replace function pg_basebackup(host text, dbid int, port int, slotname
     else:
         plpy.error('invalid xlog method')
 
+    # GPDB_12_MERGE_FIXME: avoid checking checksum for heap tables
+    # till we code logic to skip/verify checksum for
+    # appendoptimized tables. Enabling this results in basebackup
+    # failures with appendoptimized tables.
+    cmd += ' --no-verify-checksums'
+
     try:
         # Unset PGAPPNAME so that the pg_stat_replication.application_name is not affected
         if os.getenv('PGAPPNAME') is not None:
