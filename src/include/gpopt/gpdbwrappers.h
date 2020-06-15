@@ -524,10 +524,10 @@ namespace gpdb {
 	
 	// check whether the part with the given oid is an interior subpartition
 	bool RelPartIsInterior(Oid relid);
+#endif
 	
 	// check whether table with the given oid is a regular table and not part of a partitioned table
 	bool RelPartIsNone(Oid relid);
-#endif
 
 	// check whether a relation is inherited
 	bool HasSubclassSlow(Oid rel_oid);

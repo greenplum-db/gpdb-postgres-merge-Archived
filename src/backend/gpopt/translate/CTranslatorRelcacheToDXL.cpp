@@ -252,13 +252,14 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfo
 {
 	GPOS_ASSERT(NULL != rel);
 
+	return RetrieveRelIndexInfoForNonPartTable(mp, rel);
+#if 0
 	if (gpdb::RelPartIsNone(rel->rd_id) || gpdb::IsLeafPartition(rel->rd_id))
 	{
 		return RetrieveRelIndexInfoForNonPartTable(mp, rel);
 	}
 
 	return NULL;
-#if 0
 	else if (gpdb::RelPartIsRoot(rel->rd_id))
 	{
 		return RetrieveRelIndexInfoForPartTable(mp, rel);
@@ -469,7 +470,7 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 	OID rel_oid
 	)
 {
-	if (gpdb::RelPartIsNone(rel_oid))
+	if (!gpdb::RelPartIsNone(rel_oid))
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Query on partitioned tables"));
 	}
@@ -480,14 +481,18 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 	}
 #endif
 
+#if 0
 	List *part_keys = gpdb::GetPartitionAttrs(rel_oid);
 	ULONG num_of_levels = gpdb::ListLength(part_keys);
+#endif
+	ULONG num_of_levels = 0;
 
 	if (0 == num_of_levels && gpdb::HasSubclassSlow(rel_oid))
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Inherited tables"));
 	}
 
+#if 0
 	if (1 < num_of_levels)
 	{
 		if (!optimizer_multilevel_partitioning)
@@ -500,6 +505,7 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 			GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Multi-level partitioned tables with non-uniform partitioning structure"));
 		}
 	}
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -589,11 +595,15 @@ CTranslatorRelcacheToDXL::RetrieveRel
 			distr_op_families = RetrieveRelDistributionOpFamilies(mp, gp_policy);
 		}
 
+#if 0
 		convert_hash_to_random = gpdb::IsChildPartDistributionMismatched(rel);
+#endif
+		convert_hash_to_random = false;
 
 		// collect relation indexes
 		md_index_info_array = RetrieveRelIndexInfo(mp, rel);
 
+#if 0
 		// get partition keys
 		if (IMDRelation::ErelstorageExternal != rel_storage_type)
 		{
@@ -606,6 +616,7 @@ CTranslatorRelcacheToDXL::RetrieveRel
 		{
 			num_leaf_partitions = gpdb::CountLeafPartTables(oid);
 		}
+#endif
 
 		// get key sets
 		BOOL should_add_default_keys = RelHasSystemColumns(rel->rd_rel->relkind);
@@ -663,9 +674,11 @@ CTranslatorRelcacheToDXL::RetrieveRel
 	{
 		CMDPartConstraintGPDB *mdpart_constraint = NULL;
 
+#if 0
 		// retrieve the part constraints if relation is partitioned
 		if (is_partitioned)
 			mdpart_constraint = RetrievePartConstraintForRel(mp, md_accessor, oid, mdcol_array, md_index_info_array->Size() > 0 /*has_index*/);
+#endif
 
 		// GPDB_12_MERGE_FIXME: this leaves dead code in CMDRelationGPDB. We
 		// should gut it all the way
@@ -970,7 +983,7 @@ CTranslatorRelcacheToDXL::AddSystemColumns
 	BOOL is_ao_table
 	)
 {
-	is_ao_table = is_ao_table || gpdb::IsAppendOnlyPartitionTable(rel->rd_id);
+	/* is_ao_table = is_ao_table || gpdb::IsAppendOnlyPartitionTable(rel->rd_id); */
 
 	for (INT i= SelfItemPointerAttributeNumber; i > FirstLowInvalidHeapAttributeNumber; i--)
 	{
@@ -1072,10 +1085,12 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 
 		OID rel_oid = form_pg_index->indrelid;
 
+#if 0
 		if (gpdb::IsLeafPartition(rel_oid))
 		{
 			rel_oid = gpdb::GetRootPartition(rel_oid);
 		}
+#endif
 
 		CMDIdGPDB *mdid_rel = GPOS_NEW(mp) CMDIdGPDB(rel_oid);
 
@@ -2661,6 +2676,7 @@ CTranslatorRelcacheToDXL::RetrieveNumChildPartitions
     	   // not a partitioned table
             num_part_tables = 1;
        }
+#if 0
        else if (gpdb::IsLeafPartition(rel_oid))
        {
            // leaf partition
@@ -2671,6 +2687,7 @@ CTranslatorRelcacheToDXL::RetrieveNumChildPartitions
            num_part_tables = gpdb::CountLeafPartTables(rel_oid);
        }
        GPOS_ASSERT(gpos::ulong_max != num_part_tables);
+#endif
 
        return num_part_tables;
 }
@@ -3147,6 +3164,7 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 	return rel_storage_type;
 }
 
+#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
@@ -3206,6 +3224,7 @@ CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
 	gpdb::ListFree(part_keys_list);
 	gpdb::ListFree(part_types_list);
 }
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -3437,6 +3456,7 @@ CTranslatorRelcacheToDXL::RetrievePartConstraintForIndex
 	return mdpart_constraint;
 }
 
+#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorRelcacheToDXL::RetrievePartConstraintForRel
@@ -3528,6 +3548,7 @@ CTranslatorRelcacheToDXL::RetrievePartConstraintForRel
 
 	return mdpart_constraint;
 }
+#endif
 
 //---------------------------------------------------------------------------
 //	@function:

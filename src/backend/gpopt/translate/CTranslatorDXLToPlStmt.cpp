@@ -146,7 +146,7 @@ CTranslatorDXLToPlStmt::InitTranslators()
 			{EdxlopPhysicalMaterialize, 			&gpopt::CTranslatorDXLToPlStmt::TranslateDXLMaterialize},
 			{EdxlopPhysicalSequence, 				&gpopt::CTranslatorDXLToPlStmt::TranslateDXLSequence},
 			{EdxlopPhysicalDynamicTableScan,		&gpopt::CTranslatorDXLToPlStmt::TranslateDXLDynTblScan},
-			{EdxlopPhysicalDynamicIndexScan,		&gpopt::CTranslatorDXLToPlStmt::TranslateDXLDynIdxScan},
+			/* {EdxlopPhysicalDynamicIndexScan,		&gpopt::CTranslatorDXLToPlStmt::TranslateDXLDynIdxScan}, */
 			{EdxlopPhysicalTVF,						&gpopt::CTranslatorDXLToPlStmt::TranslateDXLTvf},
 			{EdxlopPhysicalDML,						&gpopt::CTranslatorDXLToPlStmt::TranslateDXLDml},
 			{EdxlopPhysicalSplit,					&gpopt::CTranslatorDXLToPlStmt::TranslateDXLSplit},
@@ -3521,6 +3521,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan
 	return (Plan *) dyn_seq_scan;
 }
 
+#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToPlStmt::TranslateDXLDynIdxScan
@@ -3633,6 +3634,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDynIdxScan
 
 	return (Plan *) dyn_idx_scan;
 }
+#endif
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -5386,12 +5388,16 @@ CTranslatorDXLToPlStmt::TranslateDXLBitmapIndexProbe
 
 	if (IsA(bitmap_tbl_scan, DynamicBitmapHeapScan))
 	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				GPOS_WSZ_LIT("FIXME: dynamic bitmap index scan"));
+#if 0
 		/* It's a Dynamic Bitmap Index Scan */
 		dyn_bitmap_idx_scan = MakeNode(DynamicBitmapIndexScan);
 		dyn_bitmap_idx_scan->partIndex = ((DynamicBitmapHeapScan *) bitmap_tbl_scan)->partIndex;
 		dyn_bitmap_idx_scan->partIndexPrintable = ((DynamicBitmapHeapScan *) bitmap_tbl_scan)->partIndexPrintable;
 
 		bitmap_idx_scan = &(dyn_bitmap_idx_scan->biscan);
+#endif
 	}
 	else
 	{
@@ -5442,6 +5448,7 @@ CTranslatorDXLToPlStmt::TranslateDXLBitmapIndexProbe
 	 */
 	SetParamIds(plan);
 
+#if 0
 	/*
 	 * If it's a Dynamic Bitmap Index Scan, also fill in the information
 	 * about the indexes on the partitions.
@@ -5450,6 +5457,7 @@ CTranslatorDXLToPlStmt::TranslateDXLBitmapIndexProbe
 	{
 		dyn_bitmap_idx_scan->logicalIndexInfo = gpdb::GetLogicalIndexInfo(oidRel, index_oid);
 	}
+#endif
 
 	return plan;
 }

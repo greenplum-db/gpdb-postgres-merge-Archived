@@ -257,8 +257,8 @@ namespace gpdxl
 								);
 
 			// get partition keys and types for a relation
-			static
-			void RetrievePartKeysAndTypes(CMemoryPool *mp, Relation rel, OID oid, ULongPtrArray **part_keys, CharPtrArray **part_types);
+			/* static */
+			/* void RetrievePartKeysAndTypes(CMemoryPool *mp, Relation rel, OID oid, ULongPtrArray **part_keys, CharPtrArray **part_types); */
 
 			// get keysets for relation
 			static
@@ -317,9 +317,11 @@ namespace gpdxl
 				BOOL is_unbounded
 				);
 
+#if 0
 			// retrieve part constraint for relation
 			static
 			CMDPartConstraintGPDB *RetrievePartConstraintForRel(CMemoryPool *mp, CMDAccessor *md_accessor, OID rel_oid, CMDColumnArray *mdcol_array, BOOL has_index);
+#endif
 
 			// retrieve part constraint from a GPDB node
 			static

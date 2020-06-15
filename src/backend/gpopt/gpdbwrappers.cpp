@@ -2330,6 +2330,7 @@ gpdb::RelPartIsInterior
 	GP_WRAP_END;
 	return false;
 }
+#endif
 
 bool
 gpdb::RelPartIsNone
@@ -2344,7 +2345,6 @@ gpdb::RelPartIsNone
 	GP_WRAP_END;
 	return false;
 }
-#endif
 
 bool
 gpdb::HasSubclassSlow
