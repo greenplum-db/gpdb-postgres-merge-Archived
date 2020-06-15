@@ -217,7 +217,7 @@ TruncateAOSegmentFile(File fd, Relation rel, int32 segFileNum, int64 offset)
 
 struct mdunlink_ao_callback_ctx
 {
-	RelFileNode rnode; /* used to register forget request */
+	RelFileNode rnode;/* used to register forget request */
 	char *segPath;
 	char *segpathSuffixPosition;
 	bool isRedo;
@@ -257,8 +257,7 @@ mdunlink_ao(RelFileNodeBackend rnode, ForkNumber forkNumber, bool isRedo)
 		char *segPathSuffixPosition = segPath + pathSize;
 		struct mdunlink_ao_callback_ctx unlinkFiles = { 0 };
 		unlinkFiles.isRedo = isRedo;
-		if (isRedo)
-			unlinkFiles.rnode = rnode.node;
+		unlinkFiles.rnode = rnode.node;
 
 		strncpy(segPath, path, pathSize);
 
@@ -281,7 +280,61 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	char *segPathSuffixPosition = unlinkFiles->segpathSuffixPosition;
 
 	if( segno == 0)
+	{
 		*segPathSuffixPosition = '\0';
+
+		/* truncate(2) would be easier here, but Windows hasn't got it */
+		int			fd;
+		int			ret;
+
+		fd = OpenTransientFile(segPath, O_RDWR | PG_BINARY);
+		if (fd >= 0)
+		{
+			int			save_errno;
+
+			ret = ftruncate(fd, 0);
+			save_errno = errno;
+			CloseTransientFile(fd);
+			errno = save_errno;
+		}
+		else
+			ret = -1;
+
+		if (ret < 0 && errno != ENOENT)
+		{
+			ereport(WARNING,
+			        (errcode_for_file_access(),
+				        errmsg("could not truncate file \"%s\": %m", segPath)));
+
+		}
+
+		/* Register request to unlink first segment later */
+		/* copy code from register_forget_request */
+		if (unlinkFiles->isRedo)
+		{
+			if (unlink(segPath) != 0)
+			{
+				/* ENOENT is expected after the end of the extensions */
+				if (errno != ENOENT)
+					ereport(WARNING,
+					        (errcode_for_file_access(),
+						        errmsg("could not remove file \"%s\": %m",
+						               segPath)));
+				else
+					return false;
+			}
+		}
+		else
+		{
+
+			FileTag		tag;
+			INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
+			             SYNC_HANDLER_AO);
+			RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
+		}
+
+		return true;
+	}
 	else
 		sprintf(segPathSuffixPosition, ".%u", segno);
 
