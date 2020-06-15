@@ -64,7 +64,6 @@ CATALOG_HEADERS := \
 	pg_auth_time_constraint.h \
 	pg_compression.h \
 	pg_proc_callback.h \
-	pg_partition_encoding.h \
 	pg_type_encoding.h \
 	pg_stat_last_operation.h pg_stat_last_shoperation.h \
 	pg_foreign_table.h pg_policy.h pg_replication_origin.h \

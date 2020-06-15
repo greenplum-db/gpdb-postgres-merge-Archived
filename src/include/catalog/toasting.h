@@ -107,7 +107,6 @@ DECLARE_TOAST(pg_tablespace, 4185, 4186);
 /* GPDB additional normal catalogs */
 DECLARE_TOAST(pg_attribute_encoding, 6233, 6234);
 DECLARE_TOAST(pg_type_encoding, 6222, 6223);
-DECLARE_TOAST(pg_partition_encoding, 9905, 9906);
 DECLARE_TOAST(pg_extprotocol, 7173, 7174);
 
 /* GPDB additional shared catalogs */
