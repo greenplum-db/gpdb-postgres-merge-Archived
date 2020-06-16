@@ -13,18 +13,6 @@ partition by range (f2)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_1" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_2" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_3" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_4" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_5" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_6" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_7" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_8" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_9" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_10" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_11" for table "timestamp_month_rangep_startincl"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_rangep_startincl_1_prt_12" for table "timestamp_month_rangep_startincl"
 CREATE TABLE TIMESTAMP_MONTH_rangep_STARTEXCL (i1 int, f2 timestamp)
 partition by range (f2)
 (
@@ -57,11 +45,6 @@ partition by list (f2)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "timestamp_month_listp_1_prt_jan1" for table "timestamp_month_listp"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_listp_1_prt_jan2" for table "timestamp_month_listp"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_listp_1_prt_jan3" for table "timestamp_month_listp"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_listp_1_prt_jan4" for table "timestamp_month_listp"
-NOTICE:  CREATE TABLE will create partition "timestamp_month_listp_1_prt_jan5" for table "timestamp_month_listp"
 -- TEST
 -- Middle of a middle range
 INSERT INTO TIMESTAMP_MONTH_rangep_STARTINCL values (1, '2000-07-16');
@@ -424,11 +407,6 @@ Distributed by: (empid)
 --
 -- SETUP
 create table pt(a int, b int, c int) distributed by (a) partition by range(b) (start(0) end(10) every (2));
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_1" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_2" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_3" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_4" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_5" for table "pt"
 alter table pt_1_prt_1 set distributed randomly;
 ERROR:  can't set the distribution policy of "pt_1_prt_1"
 HINT:  Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.
@@ -439,11 +417,6 @@ insert into pt select g%10, g%2 + 1, g*2 from generate_series(1,20) g;
 insert into pt values(1,1,3);
 insert into t select g%10, g%2 + 1 from generate_series(1,20) g;
 create index pt_c on pt(c);
-NOTICE:  building index for child partition "pt_1_prt_1"
-NOTICE:  building index for child partition "pt_1_prt_2"
-NOTICE:  building index for child partition "pt_1_prt_3"
-NOTICE:  building index for child partition "pt_1_prt_4"
-NOTICE:  building index for child partition "pt_1_prt_5"
 analyze t;
 analyze pt;
 -- TEST
@@ -508,12 +481,6 @@ PARTITION BY RANGE (b)
 ); 
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'b' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_1" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_2" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_1" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_2" for table "bar_1_prt_2"
 INSERT INTO foo VALUES (1);
 INSERT INTO bar VALUES (2,3);
 SELECT * FROM foo FULL JOIN bar ON foo.a = bar.b;
@@ -545,12 +512,6 @@ PARTITION BY RANGE (b)
 ); 
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'b' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_1" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_2" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_1" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_2" for table "bar_1_prt_2"
 INSERT INTO foo VALUES (1);
 INSERT INTO bar VALUES (2,3);
 SELECT * FROM foo FULL JOIN bar ON foo.a = bar.b;
@@ -582,12 +543,6 @@ PARTITION BY RANGE (b)
 ); 
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'b' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_1" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1_2_prt_2" for table "bar_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_1" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_2" for table "bar_1_prt_2"
 INSERT INTO foo VALUES (1);
 INSERT INTO bar VALUES (2,3);
 SELECT * FROM foo FULL JOIN bar ON foo.a = bar.b;
@@ -618,9 +573,6 @@ CREATE TABLE mpp3263 (
 ( partition aa start (0) end (1000) every (500), default partition default_part );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3263_1_prt_default_part" for table "mpp3263"
-NOTICE:  CREATE TABLE will create partition "mpp3263_1_prt_aa_1" for table "mpp3263"
-NOTICE:  CREATE TABLE will create partition "mpp3263_1_prt_aa_2" for table "mpp3263"
 -- These are OK
 alter table mpp3263 add column AAA int;
 alter table mpp3263 add column BBB int;
@@ -641,7 +593,6 @@ subpartition template (
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3541_1_prt_pst" for table "mpp3541"
 ERROR:  invalid boundary specification for RANGE partition
 LINE 5:   subpartition male values ('Male','M'),
           ^
@@ -703,12 +654,6 @@ ERROR:  relation "mpp3542_000000000011111111112222222222333333333344444444445555
 create table mpp3466 (i int) partition by range(i) (start(1) end(10) every(2), default partition f);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_f" for table "mpp3466"
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_2" for table "mpp3466"
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_3" for table "mpp3466"
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_4" for table "mpp3466"
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_5" for table "mpp3466"
-NOTICE:  CREATE TABLE will create partition "mpp3466_1_prt_6" for table "mpp3466"
 alter table mpp3466 split partition f at (3) into (partition f, partition new);
 ERROR:  AT clause cannot be used when splitting a default RANGE partition
 drop table mpp3466;
@@ -718,14 +663,6 @@ partition by range (b)
  (              
  partition aa start (date '2008-01-01') end (date '2009-01-01') 
  every (interval '50 days'));
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_1" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_2" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_3" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_4" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_5" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_6" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_7" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_8" for table "mpp3058"
 drop table mpp3058;
 create table mpp3058 (a char(1), b date, d char(3))   
 distributed by (a)     
@@ -733,7 +670,6 @@ partition by range (b)
 (        
      partition aa start ('2008-01-01') end ('2010-01-01')           
   );
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa" for table "mpp3058"
 drop table mpp3058;
 -- Expected Error
 create table mpp3058 (a char(1), b date, d char(3))   
@@ -776,7 +712,6 @@ partition by range (b)
 (        
      partition aa start ('2008-01-01') end ('2010-01-01')           
   );
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa" for table "mpp3058"
 drop table mpp3058;
 create table mpp3058 (a char(1), b date, d char(3))   
 distributed by (a)        
@@ -784,37 +719,6 @@ partition by range (b)
 (
      partition aa start ('2008-01-01') end ('2008-02-01') every(interval '1 day')
   );
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_1" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_2" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_3" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_4" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_5" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_6" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_7" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_8" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_9" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_10" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_11" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_12" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_13" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_14" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_15" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_16" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_17" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_18" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_19" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_20" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_21" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_22" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_23" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_24" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_25" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_26" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_27" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_28" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_29" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_30" for table "mpp3058"
-NOTICE:  CREATE TABLE will create partition "mpp3058_1_prt_aa_31" for table "mpp3058"
 drop table mpp3058;
 -- Expected Error
 create table mpp3058 (a char(1), b date, d char(3))  
@@ -856,7 +760,6 @@ create table mpp3607 (aa int, bb int) partition by range (bb)
 (partition foo start(2));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_foo" for table "mpp3607"
 alter table mpp3607 add partition baz end (3); -- Expected Overlaps
 ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition baz end (4); -- Expected Overlaps
@@ -874,27 +777,22 @@ alter table mpp3607 add partition bb end (0); -- Expected Overlaps
 ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa end (-4); -- partition rule aa < -4, foo >=2
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 add partition bb end (-3); -- Overlaps
 ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa end (0); -- partition rule aa < 0, foo >=2
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa start (4); -- Overlaps
 ERROR:  partition "mpp3607_1_prt_aa" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition aa start (3) end (4); -- Overlaps
 ERROR:  partition "mpp3607_1_prt_aa" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition aa start (0) end (1); -- partition rule aa bb>=0 and bb<1, foo bb>=2
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_aa" for table "mpp3607"
 alter table mpp3607 add partition bb start (-1) end (0); -- partition rule bb bb>=-1 and bb<0
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_bb" for table "mpp3607"
 alter table mpp3607 add partition cc start (-4); -- partition rule cc bb>=-4 and bb <-1
 NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_cc" for table "mpp3607"
 alter table mpp3607 add partition dd start (-5) end (-4);
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_dd" for table "mpp3607"
 alter table mpp3607 add partition ee start (-10);
-NOTICE:  CREATE TABLE will create partition "mpp3607_1_prt_ee" for table "mpp3607"
 alter table mpp3607 add partition ff start (-9) end (-8); -- Overlaps
 ERROR:  partition "mpp3607_1_prt_ff" would overlap partition "mpp3607_1_prt_ee"
 drop table mpp3607;
@@ -903,36 +801,18 @@ partition by range (a)
 ( partition aa start (1) end (10) every (1) );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_1" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_2" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_3" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_4" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_5" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_6" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_7" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_8" for table "mpp3632"
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_aa_9" for table "mpp3632"
 alter table mpp3632 add partition a1 start (30);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a1" for table "mpp3632"
 alter table mpp3632 add partition a2 start (25) end (30);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a2" for table "mpp3632"
 alter table mpp3632 add partition a3 start (10) end (20);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a3" for table "mpp3632"
 alter table mpp3632 add partition a4 start (20) end (21);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a4" for table "mpp3632"
 alter table mpp3632 add partition a5 start (22) end (24);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a5" for table "mpp3632"
 alter table mpp3632 add partition a6 start (21) end (22);
-NOTICE:  CREATE TABLE will create partition "mpp3632_1_prt_a6" for table "mpp3632"
 -- alter table mpp3632 add partition a7 start (23) end (24); -- MPP-3667
 drop table mpp3632;
 create table mpp3671 (i int) partition by list(i) (partition a values(1, 2, 3, 4),
 partition b values(5, 6, 7, 8), default partition default_part);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_a" for table "mpp3671"
-NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_b" for table "mpp3671"
-NOTICE:  CREATE TABLE will create partition "mpp3671_1_prt_default_part" for table "mpp3671"
 insert into mpp3671 select i from generate_series(1, 10) i;
 alter table mpp3671 split partition for(1) at (1,2) into (partition f1a, partition f1b);
 drop table mpp3671;
@@ -1262,8 +1142,6 @@ create table mpp3588 (i int) partition by list(i) (partition a values(1, 2, 3, 4
 partition b values(5, 6, 7, 8));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_a" for table "mpp3588"
-NOTICE:  CREATE TABLE will create partition "mpp3588_1_prt_b" for table "mpp3588"
 insert into mpp3588 select i from generate_series(1, 8) i;
 alter table mpp3588 split partition for(1) at (1,2) into (partition fa, partition fb);
 alter table mpp3588 split partition for(1) at (1,2) into (partition f1a, partition f1b); -- This has partition rules that overlaps
@@ -1283,46 +1161,20 @@ ERROR:  AT clause cannot contain all values in the partition to be split
 drop table mpp3588;
 -- MPP-3691, MPP-3681
 create table mpp3681 (id int, date date, amt decimal(10,2)) distributed by (id) partition by range(date) (start (date '2008-01-01') inclusive end ('2008-04-01') exclusive every (interval '1 month')); 
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_1" for table "mpp3681"
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_2" for table "mpp3681"
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_3" for table "mpp3681"
 alter table mpp3681 add default partition def;
-NOTICE:  CREATE TABLE will create partition "mpp3681_1_prt_def" for table "mpp3681"
 alter table mpp3681 split default partition start('2008-04-01') inclusive end('2008-05-01') exclusive into (partition apr08, default partition);
 drop table mpp3681;
 -- MPP-3593
 create table mpp3593 (i int) partition by range(i) (start(1) end(100) every(10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_1" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_2" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_3" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_4" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_5" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_6" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_7" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_8" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_9" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_10" for table "mpp3593"
 insert into mpp3593 select i from generate_series(1, 99) i;
 alter table mpp3593 split partition for(1) at (5) into (partition aa, partition bb);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_aa" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_bb" for table "mpp3593"
 alter table mpp3593 split partition for(15) at (20) into (partition a1, partition b1);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_a1" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_b1" for table "mpp3593"
 alter table mpp3593 split partition for(25) at (30) into (partition a2, partition b2);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_a2" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_b2" for table "mpp3593"
 alter table mpp3593 split partition for(35) at (40) into (partition a3, partition b3);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_a3" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_b3" for table "mpp3593"
 alter table mpp3593 split partition for(55) at (60) into (partition a4, partition b4);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_a4" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_b4" for table "mpp3593"
 alter table mpp3593 split partition for(45) at (50) into (partition a5, partition b5);
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_a5" for table "mpp3593"
-NOTICE:  CREATE TABLE will create partition "mpp3593_1_prt_b5" for table "mpp3593"
 drop table mpp3593;
 CREATE TABLE mpp3742 (
 c_id varchar(36),
@@ -1335,22 +1187,12 @@ PRIMARY KEY (c_id,ss_id,c_ts)) partition by range (c_ts)
   end (date '2008-01-01') every (interval '1 month'),
   default partition default_part
 );
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_default_part" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_2" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_3" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_4" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_5" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_6" for table "mpp3742"
-NOTICE:  CREATE TABLE will create partition "mpp3742_1_prt_7" for table "mpp3742"
 alter table mpp3742 split default partition start ('2009-01-01') end ('2009-02-01') into (partition a3, default partition);
 drop table mpp3742;
 create table mpp3597 (i int) partition by list(i) (partition a values(1, 2, 3, 4),
 partition b values(5, 6, 7, 8), default partition default_part);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_a" for table "mpp3597"
-NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_b" for table "mpp3597"
-NOTICE:  CREATE TABLE will create partition "mpp3597_1_prt_default_part" for table "mpp3597"
 insert into mpp3597 select i from generate_series(1, 100) i;
 insert into mpp3597 values (NULL);
 alter table mpp3597 split default partition at (NULL);
@@ -1364,13 +1206,6 @@ drop table mpp3597;
 create table mpp3594 (i date) partition by range(i) (start('2008-07-01') end('2009-01-01') every(interval '1 month'), default partition default_part);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_default_part" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_2" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_3" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_4" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_5" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_6" for table "mpp3594"
-NOTICE:  CREATE TABLE will create partition "mpp3594_1_prt_7" for table "mpp3594"
 alter table mpp3594 split default partition start ('2009-01-01') end ('2009-02-01') into (partition aa, partition nodate);
 ERROR:  default partition name missing from INTO clause
 drop table mpp3594;
@@ -1378,11 +1213,6 @@ CREATE TABLE mpp3512 (id int, rank int, year int, gender char(1), count int)
 DISTRIBUTED BY (id);
 create table mpp3512_part (like mpp3512) partition by range (year) ( start (2001) end (2006) every ('1'));
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
-NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_1" for table "mpp3512_part"
-NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_2" for table "mpp3512_part"
-NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_3" for table "mpp3512_part"
-NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_4" for table "mpp3512_part"
-NOTICE:  CREATE TABLE will create partition "mpp3512_part_1_prt_5" for table "mpp3512_part"
 create table mpp3512a (like mpp3512_part);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 \d mpp3512
@@ -1428,8 +1258,6 @@ subpartition by range (ps_supplycost)
 (default partition foo (default subpartition bar));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'ps_partkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3988_1_prt_foo" for table "mpp3988"
-NOTICE:  CREATE TABLE will create partition "mpp3988_1_prt_foo_2_prt_bar" for table "mpp3988_1_prt_foo"
 drop table mpp3988;
 CREATE TABLE mpp3816 (
         unique1         int4,
@@ -1453,14 +1281,6 @@ CREATE TABLE mpp3816 (
 ( start ('2007-06-01') end ('2008-01-01') every (interval '1 month'), default partition default_part );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_default_part" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_2" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_3" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_4" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_5" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_6" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_7" for table "mpp3816"
-NOTICE:  CREATE TABLE will create partition "mpp3816_1_prt_8" for table "mpp3816"
 alter table mpp3816 add column AAA int;
 alter table mpp3816 add column BBB int;
 alter table mpp3816 drop column BBB;
@@ -1485,8 +1305,6 @@ CREATE TABLE mpp3762_cities_partition (
         city     varchar(80) primary key,
         location point
 )  partition by list (city) ( partition a values ('Los Angeles'), partition b values ('San Mateo') );
-NOTICE:  CREATE TABLE will create partition "mpp3762_cities_partition_1_prt_a" for table "mpp3762_cities_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_cities_partition_1_prt_b" for table "mpp3762_cities_partition"
 CREATE TABLE mpp3762_weather_partition (
         city      varchar(80) references mpp3762_cities_partition(city),
         temp_lo   int,
@@ -1496,45 +1314,11 @@ CREATE TABLE mpp3762_weather_partition (
 ) partition by range(date) ( start('2008-01-01') end ('2009-01-01') every (interval '1 month'));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'city' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_1" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_2" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_3" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_4" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_5" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_6" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_7" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_8" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_9" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_10" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_11" for table "mpp3762_weather_partition"
-NOTICE:  CREATE TABLE will create partition "mpp3762_weather_partition_1_prt_12" for table "mpp3762_weather_partition"
 WARNING:  referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced
 drop table mpp3762_cities, mpp3762_weather cascade;
 drop table mpp3762_cities_partition, mpp3762_weather_partition cascade;
 create table mpp3754a ( i int, d date, primary key (d)) partition by range(d) ( start ('2008-01-01')  inclusive end ('2008-12-01')  exclusive every (interval '1 month'));
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_1" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_2" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_3" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_4" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_5" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_6" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_7" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_8" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_9" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_10" for table "mpp3754a"
-NOTICE:  CREATE TABLE will create partition "mpp3754a_1_prt_11" for table "mpp3754a"
 create table mpp3754b ( i int, d date, constraint prim_tr primary key (d)) partition by range(d) ( start ('2008-01-01')  inclusive end ('2008-12-01')  exclusive every (interval '1 month'));
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_1" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_2" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_3" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_4" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_5" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_6" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_7" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_8" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_9" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_10" for table "mpp3754b"
-NOTICE:  CREATE TABLE will create partition "mpp3754b_1_prt_11" for table "mpp3754b"
 drop table mpp3754a;
 drop table mpp3754b;
 CREATE TABLE mpp4582 (id int,
@@ -1549,24 +1333,6 @@ partition boys values ('M'),
 partition girls values ('F'),
 default partition neuter
 );
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys" for table "mpp4582"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys_2_prt_1" for table "mpp4582_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys_2_prt_2" for table "mpp4582_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys_2_prt_3" for table "mpp4582_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys_2_prt_4" for table "mpp4582_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_boys_2_prt_5" for table "mpp4582_1_prt_boys"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls" for table "mpp4582"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls_2_prt_1" for table "mpp4582_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls_2_prt_2" for table "mpp4582_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls_2_prt_3" for table "mpp4582_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls_2_prt_4" for table "mpp4582_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_girls_2_prt_5" for table "mpp4582_1_prt_girls"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter" for table "mpp4582"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter_2_prt_1" for table "mpp4582_1_prt_neuter"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter_2_prt_2" for table "mpp4582_1_prt_neuter"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter_2_prt_3" for table "mpp4582_1_prt_neuter"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter_2_prt_4" for table "mpp4582_1_prt_neuter"
-NOTICE:  CREATE TABLE will create partition "mpp4582_1_prt_neuter_2_prt_5" for table "mpp4582_1_prt_neuter"
 ALTER table mpp4582 drop partition for ('-1');
 ERROR:  value too long for type character(1)
 ALTER table mpp4582 drop partition for ('--');
@@ -1612,12 +1378,6 @@ CREATE TABLE mpp3641a (
 ( partition aa start (0) end (500) every (100), default partition default_part );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_default_part" for table "mpp3641a"
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_aa_1" for table "mpp3641a"
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_aa_2" for table "mpp3641a"
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_aa_3" for table "mpp3641a"
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_aa_4" for table "mpp3641a"
-NOTICE:  CREATE TABLE will create partition "mpp3641a_1_prt_aa_5" for table "mpp3641a"
 CREATE TABLE mpp3641b (
         unique1         int4,
         unique2         int4,
@@ -1640,219 +1400,15 @@ subpartition by range (unique2) subpartition template ( start (0) end (500) ever
 ( start (0) end (500) every (100));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1_2_prt_1" for table "mpp3641b_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1_2_prt_2" for table "mpp3641b_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1_2_prt_3" for table "mpp3641b_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1_2_prt_4" for table "mpp3641b_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_1_2_prt_5" for table "mpp3641b_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2_2_prt_1" for table "mpp3641b_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2_2_prt_2" for table "mpp3641b_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2_2_prt_3" for table "mpp3641b_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2_2_prt_4" for table "mpp3641b_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_2_2_prt_5" for table "mpp3641b_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3_2_prt_1" for table "mpp3641b_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3_2_prt_2" for table "mpp3641b_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3_2_prt_3" for table "mpp3641b_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3_2_prt_4" for table "mpp3641b_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_3_2_prt_5" for table "mpp3641b_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4_2_prt_1" for table "mpp3641b_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4_2_prt_2" for table "mpp3641b_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4_2_prt_3" for table "mpp3641b_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4_2_prt_4" for table "mpp3641b_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_4_2_prt_5" for table "mpp3641b_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5_2_prt_1" for table "mpp3641b_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5_2_prt_2" for table "mpp3641b_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5_2_prt_3" for table "mpp3641b_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5_2_prt_4" for table "mpp3641b_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_5_2_prt_5" for table "mpp3641b_1_prt_5"
 alter table mpp3641b add default partition default_part;
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part" for table "mpp3641b"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part_2_prt_1" for table "mpp3641b_1_prt_default_part"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part_2_prt_2" for table "mpp3641b_1_prt_default_part"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part_2_prt_3" for table "mpp3641b_1_prt_default_part"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part_2_prt_4" for table "mpp3641b_1_prt_default_part"
-NOTICE:  CREATE TABLE will create partition "mpp3641b_1_prt_default_part_2_prt_5" for table "mpp3641b_1_prt_default_part"
 CREATE INDEX mpp3641a_unique1 ON mpp3641a USING btree(unique1 int4_ops);
-NOTICE:  building index for child partition "mpp3641a_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_1"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_2"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_3"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_4"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_5"
 CREATE INDEX mpp3641a_unique2 ON mpp3641a USING btree(unique2 int4_ops);
-NOTICE:  building index for child partition "mpp3641a_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_1"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_2"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_3"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_4"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_5"
 CREATE INDEX mpp3641a_hundred ON mpp3641a USING btree(hundred int4_ops);
-NOTICE:  building index for child partition "mpp3641a_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_1"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_2"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_3"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_4"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_5"
 CREATE INDEX mpp3641a_stringu1 ON mpp3641a USING btree(stringu1 name_ops);
-NOTICE:  building index for child partition "mpp3641a_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_1"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_2"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_3"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_4"
-NOTICE:  building index for child partition "mpp3641a_1_prt_aa_5"
 CREATE INDEX mpp3641b_unique1 ON mpp3641b USING btree(unique1 int4_ops);
-NOTICE:  building index for child partition "mpp3641b_1_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_5"
 CREATE INDEX mpp3641b_unique2 ON mpp3641b USING btree(unique2 int4_ops);
-NOTICE:  building index for child partition "mpp3641b_1_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_5"
 CREATE INDEX mpp3641b_hundred ON mpp3641b USING btree(hundred int4_ops);
-NOTICE:  building index for child partition "mpp3641b_1_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_5"
 CREATE INDEX mpp3641b_stringu1 ON mpp3641b USING btree(stringu1 name_ops);
-NOTICE:  building index for child partition "mpp3641b_1_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_1_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_2_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_3_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_4_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_5_2_prt_5"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_1"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_2"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_3"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_4"
-NOTICE:  building index for child partition "mpp3641b_1_prt_default_part_2_prt_5"
 \t
 \di mpp3641*
  bfv_partition | mpp3641a_1_prt_aa_1_hundred_idx                  | index             | mpp3641_user | mpp3641a_1_prt_aa_1
@@ -2054,8 +1610,6 @@ create table rgs.mpp4604(
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p1" for table "mpp4604"
-NOTICE:  CREATE TABLE will create partition "mpp4604_1_prt_p2" for table "mpp4604"
 ALTER TABLE rgs.mpp4604 SPLIT PARTITION p2 AT( '2008-10-20' ) INTO( PARTITION p2_tmp, PARTITION p3 );
 alter table rgs.mpp4604 drop partition p3;
 drop schema rgs cascade;
@@ -2082,19 +1636,6 @@ CREATE TABLE mpp3817 (
 ( start ('2007-01-01') end ('2008-01-01') every (interval '1 month'), default partition default_part );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_default_part" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_2" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_3" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_4" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_5" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_6" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_7" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_8" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_9" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_10" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_11" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_12" for table "mpp3817"
-NOTICE:  CREATE TABLE will create partition "mpp3817_1_prt_13" for table "mpp3817"
 alter table mpp3817 drop column unique1; -- Set distribution key to randomly
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -2577,70 +2118,8 @@ START ('2008-09-30')
 END ('2008-10-01')
 EVERY (INTERVAL '1 day')
 );
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1" for table "sg_cal_detail_r1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf" for table "sg_cal_detail_r1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf_3_prt_et1" for table "sg_cal_detail_r1_1_prt_1_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf_3_prt_et2" for table "sg_cal_detail_r1_1_prt_1_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf_3_prt_et3" for table "sg_cal_detail_r1_1_prt_1_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf_3_prt_et4" for table "sg_cal_detail_r1_1_prt_1_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_smf_3_prt_etx" for table "sg_cal_detail_r1_1_prt_1_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc" for table "sg_cal_detail_r1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc_3_prt_et1" for table "sg_cal_detail_r1_1_prt_1_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc_3_prt_et2" for table "sg_cal_detail_r1_1_prt_1_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc_3_prt_et3" for table "sg_cal_detail_r1_1_prt_1_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc_3_prt_et4" for table "sg_cal_detail_r1_1_prt_1_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_sjc_3_prt_etx" for table "sg_cal_detail_r1_1_prt_1_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den" for table "sg_cal_detail_r1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den_3_prt_et1" for table "sg_cal_detail_r1_1_prt_1_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den_3_prt_et2" for table "sg_cal_detail_r1_1_prt_1_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den_3_prt_et3" for table "sg_cal_detail_r1_1_prt_1_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den_3_prt_et4" for table "sg_cal_detail_r1_1_prt_1_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_den_3_prt_etx" for table "sg_cal_detail_r1_1_prt_1_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx" for table "sg_cal_detail_r1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx_3_prt_et1" for table "sg_cal_detail_r1_1_prt_1_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx_3_prt_et2" for table "sg_cal_detail_r1_1_prt_1_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx_3_prt_et3" for table "sg_cal_detail_r1_1_prt_1_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx_3_prt_et4" for table "sg_cal_detail_r1_1_prt_1_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_phx_3_prt_etx" for table "sg_cal_detail_r1_1_prt_1_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc" for table "sg_cal_detail_r1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc_3_prt_et1" for table "sg_cal_detail_r1_1_prt_1_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc_3_prt_et2" for table "sg_cal_detail_r1_1_prt_1_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc_3_prt_et3" for table "sg_cal_detail_r1_1_prt_1_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc_3_prt_et4" for table "sg_cal_detail_r1_1_prt_1_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_1_2_prt_xdc_3_prt_etx" for table "sg_cal_detail_r1_1_prt_1_2_prt_xdc"
 ALTER TABLE sg_cal_detail_r1 ADD PARTITION START ('2008-10-01') INCLUSIVE END ('2008-10-02') EXCLUSIVE
 WITH (appendonly=true, compresslevel=5, blocksize=2097152);
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926" for table "sg_cal_detail_r1"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf" for table "sg_cal_detail_r1_1_prt_r348824926"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf_3_prt_et1" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf_3_prt_et2" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf_3_prt_et3" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf_3_prt_et4" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf_3_prt_etx" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_smf"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc" for table "sg_cal_detail_r1_1_prt_r348824926"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc_3_prt_et1" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc_3_prt_et2" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc_3_prt_et3" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc_3_prt_et4" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc_3_prt_etx" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_sjc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den" for table "sg_cal_detail_r1_1_prt_r348824926"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den_3_prt_et1" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den_3_prt_et2" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den_3_prt_et3" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den_3_prt_et4" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_den_3_prt_etx" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_den"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx" for table "sg_cal_detail_r1_1_prt_r348824926"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx_3_prt_et1" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx_3_prt_et2" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx_3_prt_et3" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx_3_prt_et4" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx_3_prt_etx" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_phx"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc" for table "sg_cal_detail_r1_1_prt_r348824926"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc_3_prt_et1" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc_3_prt_et2" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc_3_prt_et3" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc_3_prt_et4" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc"
-NOTICE:  CREATE TABLE will create partition "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc_3_prt_etx" for table "sg_cal_detail_r1_1_prt_r348824926_2_prt_xdc"
 select count(*) from pg_class where relname like 'sg_cal_detail_r1%';
  count 
 -------
@@ -2668,15 +2147,6 @@ set optimizer_analyze_root_partition=on;
 create table mpp3487 (i int) partition by range (i) (start(1) end(10) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_1" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_2" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_3" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_4" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_5" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_6" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_7" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_8" for table "mpp3487"
-NOTICE:  CREATE TABLE will create partition "mpp3487_1_prt_9" for table "mpp3487"
 insert into mpp3487 select i from generate_series(1, 9) i;
 vacuum analyze mpp3487;
 select  schemaname, tablename, attname, null_frac, avg_width, n_distinct, most_common_freqs, histogram_bounds from pg_stats where tablename like 'mpp3487%' order by 2;
@@ -2709,54 +2179,6 @@ SUBPARTITION TEMPLATE
 ( START (date '2008-01-01') INCLUSIVE
    END (date '2009-01-01') EXCLUSIVE
    EVERY (INTERVAL '1 month') );
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_usa" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_asia" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_europe" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_usa" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_asia" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_europe" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_usa" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_asia" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_europe" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_usa" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_asia" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_europe" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_usa" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_asia" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_europe" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_usa" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_asia" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_europe" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_usa" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_asia" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_europe" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_usa" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_asia" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_europe" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_usa" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_asia" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_europe" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_usa" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_asia" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_europe" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_usa" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_asia" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_europe" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_usa" for table "sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_asia" for table "sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_europe" for table "sales_1_prt_12"
 -- Invalid TEMPLATE
 ALTER TABLE qa147.sales SET SUBPARTITION TEMPLATE (NULL);
 ERROR:  syntax error at or near "NULL"
@@ -2881,54 +2303,6 @@ SUBPARTITION TEMPLATE
 ( START (date '2008-01-01') INCLUSIVE 
    END (date '2009-01-01') EXCLUSIVE 
    EVERY (INTERVAL '1 month') ); 
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_1" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_1_2_prt_usa" for table "qa147sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_1_2_prt_asia" for table "qa147sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_1_2_prt_europe" for table "qa147sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_2" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_2_2_prt_usa" for table "qa147sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_2_2_prt_asia" for table "qa147sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_2_2_prt_europe" for table "qa147sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_3" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_3_2_prt_usa" for table "qa147sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_3_2_prt_asia" for table "qa147sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_3_2_prt_europe" for table "qa147sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_4" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_4_2_prt_usa" for table "qa147sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_4_2_prt_asia" for table "qa147sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_4_2_prt_europe" for table "qa147sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_5" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_5_2_prt_usa" for table "qa147sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_5_2_prt_asia" for table "qa147sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_5_2_prt_europe" for table "qa147sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_6" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_6_2_prt_usa" for table "qa147sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_6_2_prt_asia" for table "qa147sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_6_2_prt_europe" for table "qa147sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_7" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_7_2_prt_usa" for table "qa147sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_7_2_prt_asia" for table "qa147sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_7_2_prt_europe" for table "qa147sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_8" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_8_2_prt_usa" for table "qa147sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_8_2_prt_asia" for table "qa147sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_8_2_prt_europe" for table "qa147sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_9" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_9_2_prt_usa" for table "qa147sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_9_2_prt_asia" for table "qa147sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_9_2_prt_europe" for table "qa147sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_10" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_10_2_prt_usa" for table "qa147sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_10_2_prt_asia" for table "qa147sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_10_2_prt_europe" for table "qa147sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_11" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_11_2_prt_usa" for table "qa147sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_11_2_prt_asia" for table "qa147sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_11_2_prt_europe" for table "qa147sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_12" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_12_2_prt_usa" for table "qa147sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_12_2_prt_asia" for table "qa147sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_12_2_prt_europe" for table "qa147sales_1_prt_12"
 -- Clear TEMPLATE
 ALTER TABLE qa147sales SET SUBPARTITION TEMPLATE ();
 select relid::regclass, level, template from gp_partition_template where relid = 'qa147sales'::regclass;
@@ -2996,45 +2370,6 @@ SUBPARTITION TEMPLATE
   PARTITION usa VALUES ('usa'),
   PARTITION asia VALUES ('asia'),
   PARTITION europe VALUES ('europe') );
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_1" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_2" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_3" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_4" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_5" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_6" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_7" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_8" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_9" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_10" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_11" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_usa_2_prt_12" for table "qa147sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_1" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_2" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_3" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_4" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_5" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_6" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_7" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_8" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_9" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_10" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_11" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_asia_2_prt_12" for table "qa147sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe" for table "qa147sales"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_1" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_2" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_3" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_4" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_5" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_6" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_7" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_8" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_9" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_10" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_11" for table "qa147sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "qa147sales_1_prt_europe_2_prt_12" for table "qa147sales_1_prt_europe"
 -- Clear TEMPLATE
 ALTER TABLE qa147sales SET SUBPARTITION TEMPLATE ();
 select relid::regclass, level, template from gp_partition_template where relid = 'qa147sales'::regclass;
@@ -3114,54 +2449,6 @@ SUBPARTITION TEMPLATE
 ( START (date '2008-01-01') INCLUSIVE
    END (date '2009-01-01') EXCLUSIVE
    EVERY (INTERVAL '1 month') );
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_usa" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_asia" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_1_2_prt_europe" for table "sales_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_usa" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_asia" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_europe" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_usa" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_asia" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_europe" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_usa" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_asia" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_europe" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_usa" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_asia" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_europe" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_usa" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_asia" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_6_2_prt_europe" for table "sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_usa" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_asia" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_7_2_prt_europe" for table "sales_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_usa" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_asia" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_8_2_prt_europe" for table "sales_1_prt_8"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_usa" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_asia" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_9_2_prt_europe" for table "sales_1_prt_9"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_usa" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_asia" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_10_2_prt_europe" for table "sales_1_prt_10"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_usa" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_asia" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_11_2_prt_europe" for table "sales_1_prt_11"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_usa" for table "sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_asia" for table "sales_1_prt_12"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_12_2_prt_europe" for table "sales_1_prt_12"
 -- Clear TEMPLATE
 ALTER TABLE qa147.sales SET SUBPARTITION TEMPLATE ();
 select relid::regclass, level, template from gp_partition_template where relid = 'qa147.sales'::regclass;
@@ -3236,45 +2523,6 @@ SUBPARTITION TEMPLATE
   PARTITION usa VALUES ('usa'),
   PARTITION asia VALUES ('asia'),
   PARTITION europe VALUES ('europe') );
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_1" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_2" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_3" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_4" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_5" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_6" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_7" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_8" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_9" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_10" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_11" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_usa_2_prt_12" for table "sales_1_prt_usa"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_1" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_2" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_3" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_4" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_5" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_6" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_7" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_8" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_9" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_10" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_11" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_asia_2_prt_12" for table "sales_1_prt_asia"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_1" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_2" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_3" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_4" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_5" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_6" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_7" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_8" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_9" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_10" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_11" for table "sales_1_prt_europe"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_europe_2_prt_12" for table "sales_1_prt_europe"
 -- Clear TEMPLATE
 ALTER TABLE qa147.sales SET SUBPARTITION TEMPLATE ();
 select relid::regclass, level, template from gp_partition_template where relid = 'qa147.sales'::regclass;
@@ -3345,106 +2593,6 @@ set gp_autostats_on_change_threshold=100;
 create table mpp5427 (i int) partition by range (i) (start(1) end(10000000) every(100000));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_1" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_2" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_3" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_4" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_5" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_6" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_7" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_8" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_9" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_10" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_11" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_12" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_13" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_14" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_15" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_16" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_17" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_18" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_19" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_20" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_21" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_22" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_23" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_24" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_25" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_26" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_27" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_28" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_29" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_30" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_31" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_32" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_33" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_34" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_35" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_36" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_37" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_38" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_39" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_40" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_41" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_42" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_43" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_44" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_45" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_46" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_47" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_48" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_49" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_50" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_51" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_52" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_53" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_54" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_55" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_56" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_57" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_58" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_59" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_60" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_61" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_62" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_63" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_64" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_65" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_66" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_67" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_68" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_69" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_70" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_71" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_72" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_73" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_74" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_75" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_76" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_77" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_78" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_79" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_80" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_81" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_82" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_83" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_84" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_85" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_86" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_87" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_88" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_89" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_90" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_91" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_92" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_93" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_94" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_95" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_96" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_97" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_98" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_99" for table "mpp5427"
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_100" for table "mpp5427"
 insert into mpp5427 select i from generate_series(1, 100) i;
 select * from pg_stats where tablename like 'mpp5427%';
  schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram 
@@ -3465,7 +2613,6 @@ select * from pg_stats where tablename like 'mpp5427%';
 
 truncate table mpp5427;
 alter table mpp5427 add default partition default_part;
-NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_default_part" for table "mpp5427"
 insert into mpp5427 select i from generate_series(1, 100) i;
 select * from pg_stats where tablename like 'mpp5427%';
  schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram 
@@ -3561,26 +2708,6 @@ subpartition template
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'ps_partkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_def" for table "partsupp_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_def_2_prt_subdef" for table "partsupp_def_1_prt_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_def_2_prt_sp1_1" for table "partsupp_def_1_prt_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_def_2_prt_sp1_2" for table "partsupp_def_1_prt_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_def_2_prt_sp1_3" for table "partsupp_def_1_prt_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_1" for table "partsupp_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_1_2_prt_subdef" for table "partsupp_def_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_1_2_prt_sp1_1" for table "partsupp_def_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_1_2_prt_sp1_2" for table "partsupp_def_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_1_2_prt_sp1_3" for table "partsupp_def_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_2" for table "partsupp_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_2_2_prt_subdef" for table "partsupp_def_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_2_2_prt_sp1_1" for table "partsupp_def_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_2_2_prt_sp1_2" for table "partsupp_def_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_2_2_prt_sp1_3" for table "partsupp_def_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_3" for table "partsupp_def"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_3_2_prt_subdef" for table "partsupp_def_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_3_2_prt_sp1_1" for table "partsupp_def_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_3_2_prt_sp1_2" for table "partsupp_def_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def_1_prt_aa_3_2_prt_sp1_3" for table "partsupp_def_1_prt_aa_3"
 alter table partsupp_def set subpartition template();
 alter table partsupp_def set subpartition template( subpartition aaa start(400) end (600) every(100) );
 -- Note 1: We cannot add subpartition template since we have a default partition
@@ -3609,21 +2736,6 @@ subpartition template
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'ps_partkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_1" for table "partsupp_def2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_1_2_prt_subdef" for table "partsupp_def2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_1_2_prt_sp1_1" for table "partsupp_def2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_1_2_prt_sp1_2" for table "partsupp_def2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_1_2_prt_sp1_3" for table "partsupp_def2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_2" for table "partsupp_def2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_2_2_prt_subdef" for table "partsupp_def2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_2_2_prt_sp1_1" for table "partsupp_def2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_2_2_prt_sp1_2" for table "partsupp_def2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_2_2_prt_sp1_3" for table "partsupp_def2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_3" for table "partsupp_def2"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_3_2_prt_subdef" for table "partsupp_def2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_3_2_prt_sp1_1" for table "partsupp_def2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_3_2_prt_sp1_2" for table "partsupp_def2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partsupp_def2_1_prt_aa_3_2_prt_sp1_3" for table "partsupp_def2_1_prt_aa_3"
 alter table partsupp_def2 set subpartition template();
 alter table partsupp_def2 set subpartition template( subpartition aaa start(400) end (600) every(100) );
 select relid::regclass, level, template from gp_partition_template where relid = 'partsupp_def2'::regclass;
@@ -3635,16 +2747,13 @@ select relid::regclass, level, template from gp_partition_template where relid =
 drop table partsupp_def;
 drop table partsupp_def2;
 create table mpp5431 (c1 date, c2 int) distributed by (c2) partition by range (c1) (partition p20090401 start('2009-04-01 00:00:00'::timestamp) inclusive end ('2009-04-02 00:00:00'::timestamp) exclusive);
-NOTICE:  CREATE TABLE will create partition "mpp5431_1_prt_p20090401" for table "mpp5431"
 alter table mpp5431 add partition p20090402 start('2009-04-02 00:00:00'::timestamp) inclusive end ('2009-04-03 00:00:00'::timestamp) exclusive;
-NOTICE:  CREATE TABLE will create partition "mpp5431_1_prt_p20090402" for table "mpp5431"
 create or replace function mpp5431_f1 () returns void as $$
 begin
 alter table mpp5431 add partition p20090403 start('2009-04-03 00:00:00'::timestamp) inclusive end ('2009-04-04 00:00:00'::timestamp) exclusive;
 end;
 $$ LANGUAGE 'plpgsql';
 select mpp5431_f1();
-NOTICE:  CREATE TABLE will create partition "mpp5431_1_prt_p20090403" for table "mpp5431"
  mpp5431_f1 
 ------------
  
@@ -3673,9 +2782,6 @@ CREATE TABLE mpp6612 (
 ( partition aa start (0) end (1000) every (500), default partition default_part );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'unique1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp6612_1_prt_default_part" for table "mpp6612"
-NOTICE:  CREATE TABLE will create partition "mpp6612_1_prt_aa_1" for table "mpp6612"
-NOTICE:  CREATE TABLE will create partition "mpp6612_1_prt_aa_2" for table "mpp6612"
 -- Modify any other column
 alter table mpp6612 alter column unique2 type char(15);
 alter table mpp6612 alter column unique2 type char(10);
@@ -3788,12 +2894,6 @@ partition y2008 start (date '2008-01-01') end (date '2008-12-05')
 ));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aaa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008" for table "mpp4048"
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008_2_prt_dec" for table "mpp4048_1_prt_y2008"
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008_2_prt_dec_3_prt_1" for table "mpp4048_1_prt_y2008_2_prt_dec"
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008_2_prt_dec_3_prt_2" for table "mpp4048_1_prt_y2008_2_prt_dec"
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008_2_prt_dec_3_prt_3" for table "mpp4048_1_prt_y2008_2_prt_dec"
-NOTICE:  CREATE TABLE will create partition "mpp4048_1_prt_y2008_2_prt_dec_3_prt_4" for table "mpp4048_1_prt_y2008_2_prt_dec"
 drop table mpp4048;
 -- This is only for ADD primary key for partition table
 -- DROP primary key is still in progress
@@ -3804,8 +2904,6 @@ PARTITION BY RANGE (date)
 ( START (date '2008-01-01') INCLUSIVE 
    END (date '2008-01-03') EXCLUSIVE 
    EVERY (INTERVAL '1 day') );
-NOTICE:  CREATE TABLE will create partition "mpp6573_1_prt_1" for table "mpp6573"
-NOTICE:  CREATE TABLE will create partition "mpp6573_1_prt_2" for table "mpp6573"
 alter table mpp6573 add primary key (id, date) ;
 \d mpp6573*
         Partitioned table "bfv_partition.mpp6573"
@@ -3880,14 +2978,11 @@ select 1 as foobar;
 -- s/(mpp6724_1_prt_r)\d+/$1xxxxxx/g
 -- end_matchsubs
 create table mpp6724 ( c1 int, dt DATE, c2 varchar, PRIMARY KEY ( c1,dt ) ) distributed by (c1) partition by range ( dt ) ( start ( date '2009-01-01' ) inclusive end ( date '2009-01-03' ) EXCLUSIVE EVERY ( INTERVAL '1 day' ) );
-NOTICE:  CREATE TABLE will create partition "mpp6724_1_prt_1" for table "mpp6724"
-NOTICE:  CREATE TABLE will create partition "mpp6724_1_prt_2" for table "mpp6724"
 insert into mpp6724 values ( 1,'2009-01-01','One'), (2,'2009-01-02','Two'),(3,'2009-01-01','three'), (3,'2009-01-02', 'three`');
 insert into mpp6724 values ( 1,'2009-01-01','One'); -- This violate the primary key, expected to fail
 ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_1_pkey"  (seg0 127.0.0.1:40000 pid=32487)
 DETAIL:  Key (c1, dt)=(1, 01-01-2009) already exists.
 alter table mpp6724 add partition start ( date '2009-01-03' ) inclusive end ( date '2009-01-04' ) ;
-NOTICE:  CREATE TABLE will create partition "mpp6724_1_prt_r1600720188" for table "mpp6724"
 insert into mpp6724 values ( 4,'2009-01-03','Four');
 -- Should fail because violates the primary key
 insert into mpp6724 values ( 4,'2009-01-03','Four');
@@ -3916,36 +3011,12 @@ partition by range (a)
 ( partition aa start (1) end (5) every (1) );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "partition_cleanup1_1_prt_aa_1" for table "partition_cleanup1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup1_1_prt_aa_2" for table "partition_cleanup1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup1_1_prt_aa_3" for table "partition_cleanup1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup1_1_prt_aa_4" for table "partition_cleanup1"
 CREATE TABLE partition_999.partition_cleanup2(a int, b int, c int, d int, e int, f int, g int, h int, i int, j int, k int, l int, m int, n int, o int, p int, q int, r int, s int, t int, u int, v int, w int, x int, y int, z int)
 partition by range (a)
 subpartition by range (b) subpartition template ( start (1) end (5) every (1))
 ( partition aa start (1) end (5) every (1) );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_1" for table "partition_cleanup2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_1_2_prt_1" for table "partition_cleanup2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_1_2_prt_2" for table "partition_cleanup2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_1_2_prt_3" for table "partition_cleanup2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_1_2_prt_4" for table "partition_cleanup2_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_2" for table "partition_cleanup2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_2_2_prt_1" for table "partition_cleanup2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_2_2_prt_2" for table "partition_cleanup2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_2_2_prt_3" for table "partition_cleanup2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_2_2_prt_4" for table "partition_cleanup2_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_3" for table "partition_cleanup2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_3_2_prt_1" for table "partition_cleanup2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_3_2_prt_2" for table "partition_cleanup2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_3_2_prt_3" for table "partition_cleanup2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_3_2_prt_4" for table "partition_cleanup2_1_prt_aa_3"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_4" for table "partition_cleanup2"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_4_2_prt_1" for table "partition_cleanup2_1_prt_aa_4"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_4_2_prt_2" for table "partition_cleanup2_1_prt_aa_4"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_4_2_prt_3" for table "partition_cleanup2_1_prt_aa_4"
-NOTICE:  CREATE TABLE will create partition "partition_cleanup2_1_prt_aa_4_2_prt_4" for table "partition_cleanup2_1_prt_aa_4"
 drop table partition_cleanup1;
 drop schema partition_999 cascade;
 NOTICE:  drop cascades to table partition_cleanup2
@@ -4015,9 +3086,6 @@ and datname = current_database();
 CREATE TABLE grant_test (f1 int) PARTITION BY RANGE (f1) (START (2018) END (2020) EVERY (1), DEFAULT PARTITION extra);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "grant_test_1_prt_extra" for table "grant_test"
-NOTICE:  CREATE TABLE will create partition "grant_test_1_prt_2" for table "grant_test"
-NOTICE:  CREATE TABLE will create partition "grant_test_1_prt_3" for table "grant_test"
 CREATE FUNCTION grant_table_in_function() RETURNS void AS
 $$
 BEGIN
