@@ -48,11 +48,6 @@ FOREIGN_KEY(relid REFERENCES pg_class(oid));
  */
 typedef FormData_gp_partition_template *Form_gp_partition_template;
 
-/*
- * GPDB_12_MERGE_FIXME: do we need to define toast table for this table in
- * toasting.h. What happens if def is very large string?
- */
-
 extern void StoreGpPartitionTemplate(Oid relid, int32 level,
 									 GpPartitionDefinition *gpPartDef, bool replace);
 extern GpPartitionDefinition *GetGpPartitionTemplate(Oid relid, int32 level);
