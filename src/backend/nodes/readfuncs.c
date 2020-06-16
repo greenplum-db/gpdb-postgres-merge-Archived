@@ -4086,6 +4086,20 @@ _readDropSubscriptionStmt()
 	READ_DONE();
 }
 
+static AlterSubscriptionStmt *
+_readAlterSubscriptionStmt()
+{
+	READ_LOCALS(AlterSubscriptionStmt);
+
+	READ_ENUM_FIELD(kind, AlterSubscriptionType);
+	READ_STRING_FIELD(subname);
+	READ_STRING_FIELD(conninfo);
+	READ_NODE_FIELD(publication);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
 static CreatePolicyStmt *
 _readCreatePolicyStmt()
 {
@@ -4730,6 +4744,8 @@ parseNodeString(void)
 		return_value = _readCreateSubscriptionStmt();
 	else if (MATCHX("DROPSUBSCRIPTIONSTMT"))
 		return_value = _readDropSubscriptionStmt();
+	else if (MATCHX("ALTERSUBSCRIPTIONSTMT"))
+		return_value = _readAlterSubscriptionStmt();
 	else if (MATCHX("CREATEPOLICYSTMT"))
 		return_value = _readCreatePolicyStmt();
 	else if (MATCHX("CREATEROLESTMT"))

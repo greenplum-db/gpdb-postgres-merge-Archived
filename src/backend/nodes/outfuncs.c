@@ -5365,6 +5365,18 @@ _outDropSubscriptionStmt(StringInfo str, const DropSubscriptionStmt *node)
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
 }
 
+static void
+_outAlterSubscriptionStmt(StringInfo str, const AlterSubscriptionStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERSUBSCRIPTIONSTMT");
+
+	WRITE_ENUM_FIELD(kind, AlterSubscriptionType);
+	WRITE_STRING_FIELD(subname);
+	WRITE_STRING_FIELD(conninfo);
+	WRITE_NODE_FIELD(publication);
+	WRITE_NODE_FIELD(options);
+}
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outGpPartitionDefinition(StringInfo str, const GpPartitionDefinition *node)
@@ -6482,6 +6494,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_DropSubscriptionStmt:
 				_outDropSubscriptionStmt(str, obj);
+				break;
+			case T_AlterSubscriptionStmt:
+				_outAlterSubscriptionStmt(str, obj);
 				break;
 
 			case T_CreatePolicyStmt:
