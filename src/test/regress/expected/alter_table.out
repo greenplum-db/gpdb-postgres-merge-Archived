@@ -2132,6 +2132,9 @@ insert into at_partitioned values(3, 'bar');
 create temp table old_oids as
   select relname, oid as oldoid, relfilenode as oldfilenode
   from pg_class where relname like 'at_partitioned%';
+-- GPDB: the output for these queries differ from upstream, because GPDB
+-- assigns a new relfilenode for every table, it never uses the table's
+-- OID as the relfilenode like Postgres does.
 select relname,
   c.oid = oldoid as orig_oid,
   case relfilenode
@@ -2147,10 +2150,10 @@ select relname,
            relname            | orig_oid | storage |     desc      
 ------------------------------+----------+---------+---------------
  at_partitioned               | t        | none    | 
- at_partitioned_0             | t        | own     | 
- at_partitioned_0_id_name_key | t        | own     | child 0 index
- at_partitioned_1             | t        | own     | 
- at_partitioned_1_id_name_key | t        | own     | child 1 index
+ at_partitioned_0             | t        | orig    | 
+ at_partitioned_0_id_name_key | t        | orig    | child 0 index
+ at_partitioned_1             | t        | orig    | 
+ at_partitioned_1_id_name_key | t        | orig    | child 1 index
  at_partitioned_id_name_key   | t        | none    | parent index
 (6 rows)
 
@@ -2181,10 +2184,10 @@ select relname,
            relname            | orig_oid | storage |     desc     
 ------------------------------+----------+---------+--------------
  at_partitioned               | t        | none    | 
- at_partitioned_0             | t        | own     | 
- at_partitioned_0_id_name_key | f        | own     | parent index
- at_partitioned_1             | t        | own     | 
- at_partitioned_1_id_name_key | f        | own     | parent index
+ at_partitioned_0             | t        | orig    | 
+ at_partitioned_0_id_name_key | f        | OTHER   | parent index
+ at_partitioned_1             | t        | orig    | 
+ at_partitioned_1_id_name_key | f        | OTHER   | parent index
  at_partitioned_id_name_key   | f        | none    | parent index
 (6 rows)
 

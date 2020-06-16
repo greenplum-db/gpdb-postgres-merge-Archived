@@ -1416,6 +1416,9 @@ create temp table old_oids as
   select relname, oid as oldoid, relfilenode as oldfilenode
   from pg_class where relname like 'at_partitioned%';
 
+-- GPDB: the output for these queries differ from upstream, because GPDB
+-- assigns a new relfilenode for every table, it never uses the table's
+-- OID as the relfilenode like Postgres does.
 select relname,
   c.oid = oldoid as orig_oid,
   case relfilenode
