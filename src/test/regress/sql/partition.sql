@@ -1295,10 +1295,10 @@ create table k (i int) partition by range(i) (start(1) end(10) every(2),
 default partition mydef);
 insert into k select i from generate_series(1, 30) i;
 alter table k split default partition start(15) end(20) into
-(partition foo, default partition);
+(partition mydef, partition foo);
 select * from k_1_prt_foo;
 alter table k split default partition start(22) exclusive end(25) inclusive
-into (partition bar, default partition);
+into (partition bar, partition mydef);
 select * from k_1_prt_bar;
 alter table k split partition bar at (23) into (partition baz, partition foz);
 select partitiontablename,partitionposition,partitionrangestart,
@@ -1393,7 +1393,7 @@ alter table a split partition for ('2005-01-01') at (date '2006-01-01')
   into (partition f, partition g);
 alter table a add default partition mydef;
 alter table a split default partition start(date '2010-01-01') end(date
-'2011-01-01') into(partition mydef, default partition);
+'2011-01-01') into(partition mydef, partition other);
 set session authorization part_role;
 select has_table_privilege('part_role', 'a'::regclass,'insert');
 select has_table_privilege('part_role', 'a_1_prt_f'::regclass,'insert');
@@ -1405,13 +1405,13 @@ insert into a values('2010-10-10');
 \c -
 drop table a;
 drop role part_role;
--- Check that when we split a default, the INTO clause must specify "default partition"
+-- Check that when we split a default, the INTO clause must named the default
 create table k (i date) partition by range(i) (start('2008-01-01')
 end('2009-01-01') every(interval '1 month'), default partition default_part);
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
 into (partition aa, partition nodate);
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
-into (partition aa, default partition);
+into (partition aa, partition default_part);
 -- check that it works without INTO
 alter table k split default partition start ('2009-02-01') end ('2009-03-01');
 drop table k;
@@ -1513,7 +1513,7 @@ insert into rank_exc values(1, 1, 2007, 'M', 1);
 insert into rank_exc values(2, 2, 2008, 'M', 3);
 select * from rank_exc;
 alter table rank_exc alter partition boys split default partition start ('2007')
-end ('2008') into (partition year7, default partition);
+end ('2008') into (partition bfuture, partition year7);
 select * from rank_exc_1_prt_boys_2_prt_bfuture;
 select * from rank_exc_1_prt_boys_2_prt_year7;
 select * from rank_exc;
@@ -1531,7 +1531,7 @@ select * from r;
 
 -- Split test
 alter table rank_exc alter partition girls split default partition start('2008')
-  end('2020') into (partition years, default partition);
+  end('2020') into (partition years, partition gfuture);
 insert into rank_exc values(4, 4, 2009, 'F', 100);
 drop table rank_exc;
 drop table r;
@@ -1742,7 +1742,7 @@ DEFAULT PARTITION st_default
 ALTER TABLE SG_CAL_EVENT_SILVERTAIL_HOUR SPLIT DEFAULT PARTITION
 START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
-DEFAULT PARTITION );
+PARTITION st_default );
 
 \d+ sg_cal_event_silvertail_hour
 \d+ sg_cal_event_silvertail_hour_1_prt_P2009042907

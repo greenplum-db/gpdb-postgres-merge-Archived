@@ -1771,11 +1771,9 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 -- should fail
 alter table k split default partition start(30) end (300) into (partition mydef, partition mydef);
-ERROR:  For SPLIT default partition, INTO clause can only have second argument as "DEFAULT PARTITION"
-LINE 1: ...ble k split default partition start(30) end (300) into (part...
-                                                             ^
+ERROR:  both INTO partitions already exist
 alter table k split partition for(3) at (20);
-ERROR:  AT clause parameter is not a member of the target partition specification
+ERROR:  partition "k_1_prt_1" would overlap partition "k_1_prt_4"
 drop table k;
 -- should work
 create table k (i int) partition by range(i) (start(1) end(10) every(2), 
@@ -1784,7 +1782,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into k select i from generate_series(1, 30) i;
 alter table k split default partition start(15) end(20) into
-(partition foo, default partition);
+(partition mydef, partition foo);
 select * from k_1_prt_foo;
  i  
 ----
@@ -1796,7 +1794,7 @@ select * from k_1_prt_foo;
 (5 rows)
 
 alter table k split default partition start(22) exclusive end(25) inclusive
-into (partition bar, default partition);
+into (partition bar, partition mydef);
 select * from k_1_prt_bar;
  i  
 ----
@@ -2010,11 +2008,9 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
 into (partition aa, partition nodate);
-ERROR:  For SPLIT default partition, INTO clause can only have second argument as "DEFAULT PARTITION"
-LINE 2: into (partition aa, partition nodate);
-        ^
+ERROR:  default partition name missing from INTO clause
 alter table k split default partition start ('2009-01-01') end ('2009-02-01')
-into (partition aa, default partition);
+into (partition aa, partition default_part);
 -- check that it works without INTO
 alter table k split default partition start ('2009-02-01') end ('2009-03-01');
 drop table k;
@@ -2127,7 +2123,7 @@ select * from rank_exc;
 (2 rows)
 
 alter table rank_exc alter partition boys split default partition start ('2007')
-end ('2008') into (partition year7, default partition);
+end ('2008') into (partition bfuture, partition year7);
 select * from rank_exc_1_prt_boys_2_prt_bfuture;
  id | rank | year | gender | count 
 ----+------+------+--------+-------
@@ -2180,7 +2176,7 @@ select * from r;
 
 -- Split test
 alter table rank_exc alter partition girls split default partition start('2008')
-  end('2020') into (partition years, default partition);
+  end('2020') into (partition years, partition gfuture);
 insert into rank_exc values(4, 4, 2009, 'F', 100);
 drop table rank_exc;
 drop table r;
@@ -2417,7 +2413,7 @@ DEFAULT PARTITION st_default
 ALTER TABLE SG_CAL_EVENT_SILVERTAIL_HOUR SPLIT DEFAULT PARTITION
 START ('2009-04-29 07:00:00'::timestamp) INCLUSIVE END ('2009-04-29
 08:00:00'::timestamp) EXCLUSIVE INTO ( PARTITION P2009042907 ,
-DEFAULT PARTITION );
+PARTITION st_default );
 \d+ sg_cal_event_silvertail_hour
                                   Partitioned table "public.sg_cal_event_silvertail_hour"
      Column      |              Type              | Collation | Nullable | Default | Storage  | Stats target | Description 
