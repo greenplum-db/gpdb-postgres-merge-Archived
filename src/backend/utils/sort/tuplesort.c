@@ -114,6 +114,8 @@
 #include "utils/sortsupport.h"
 #include "utils/tuplesort.h"
 
+#include "utils/faultinjector.h"
+
 
 /* sort-type codes for sort__start probes */
 #define HEAP_SORT		0
@@ -2567,6 +2569,29 @@ mergeruns(Tuplesortstate *state)
 				svDummy;
 	int			numTapes;
 	int			numInputTapes;
+
+	/* GPDB_12_MERGE_FIXME: This fault injection point is here to placate
+	 * the query_finish_pending test. This used to be only in tuplesort_mk.c,
+	 * not here. This makes the test pass, but it's a bit fake, because we
+	 * don't actually have any checks for QueryFinishPending in tuplesort.c,
+	 * like we used to in tuplesort_mk.c. That means that sort will not
+	 * respond quickly to a query finish interrupt. Should we sprinkle some
+	 * QueryFinishPending checks in this file?
+	 */
+#ifdef FAULT_INJECTOR
+
+	/*
+	 * MPP-18288: We're injecting an interrupt here. We have to hold
+	 * interrupts while we're injecting it to make sure the interrupt is not
+	 * handled within the fault injector itself.
+	 */
+	HOLD_INTERRUPTS();
+	FaultInjector_InjectFaultIfSet("execsort_sort_mergeruns",
+								   DDLNotSpecified,
+								   "", //databaseName
+								   ""); // tableName
+	RESUME_INTERRUPTS();
+#endif
 
 	Assert(state->status == TSS_BUILDRUNS);
 	Assert(state->memtupcount == 0);

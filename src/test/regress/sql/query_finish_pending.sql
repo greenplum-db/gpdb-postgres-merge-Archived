@@ -6,14 +6,14 @@ insert into _tmp_table select i, i % 100, i % 10000, i % 75 from generate_series
 set statement_mem="2MB";
 set gp_cte_sharing=on;
 
-select gp_inject_fault('execsort_mksort_mergeruns', 'reset', 2);
+select gp_inject_fault('execsort_sort_mergeruns', 'reset', 2);
 -- set QueryFinishPending=true in sort mergeruns. This will stop sort and set result_tape to NULL
-select gp_inject_fault('execsort_mksort_mergeruns', 'finish_pending', 2);
+select gp_inject_fault('execsort_sort_mergeruns', 'finish_pending', 2);
 
 -- return results although sort will be interrupted in one of the segments 
 select DISTINCT S from (select row_number() over(partition by i1 order by i2) AS T, count(*) over (partition by i1) AS S from _tmp_table) AS TMP;
 
-select gp_inject_fault('execsort_mksort_mergeruns', 'status', 2);
+select gp_inject_fault('execsort_sort_mergeruns', 'status', 2);
 
 -- test if shared input scan deletes memory correctly when QueryFinishPending and its child has been eagerly freed,
 -- where the child is a Sort node
@@ -54,7 +54,7 @@ select * from cte c1, cte c2 limit 2;
 select gp_inject_fault('execshare_input_next', 'status', 2);
 
 -- Disable faultinjectors
-select gp_inject_fault('execsort_mksort_mergeruns', 'reset', 2);
+select gp_inject_fault('execsort_sort_mergeruns', 'reset', 2);
 select gp_inject_fault('execshare_input_next', 'reset', 2);
 
 -- test if a query can be canceled when cancel signal arrives fast than the query dispatched.
