@@ -430,12 +430,12 @@ heap_create(const char *relname,
 	{
 		create_storage = true;
 		/*
-		 * GPDB: relfilenode has its own counter, hence let
-		 * RelationBuildLocalRelation() assign the value to it.
+		 * In PostgreSQL, the relation OID is used as the relfilenode initially.
+		 * In GPDB, relfilenode is assigned using a separate counter. Pass '1'
+		 * to RelationBuildLocalRelation() to signal that it should assign a
+		 * a new value.
 		 */
-#if 0
-		relfilenode = relid;
-#endif
+		relfilenode = 1;
 	}
 
 	/*

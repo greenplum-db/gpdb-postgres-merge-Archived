@@ -3451,23 +3451,26 @@ RelationBuildLocalRelation(const char *relname,
 	 * manager in Greenplum breaks if this happens, see GPDB_91_MERGE_FIXME in
 	 * GetNewRelFileNode() for details.
 	 */
-	if (relid < FirstNormalObjectId) /* bootstrap only */
-		rel->rd_rel->relfilenode = relid;
-	else if (OidIsValid(relfilenode))
-		rel->rd_rel->relfilenode = relfilenode;
-	else
+	if (relfilenode == 1 || mapped_relation)
 	{
-		rel->rd_rel->relfilenode = GetNewRelFileNode(reltablespace, NULL, relpersistence);
-		if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-			AdvanceObjectId(relid);
+		if (relid < FirstNormalObjectId) /* bootstrap only */
+			relfilenode = relid;
+		else
+		{
+			relfilenode = GetNewRelFileNode(reltablespace, NULL, relpersistence);
+			if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
+				AdvanceObjectId(relid);
+		}
 	}
 
 	if (mapped_relation)
 	{
-		/* Add it to the active mapping information */
-		RelationMapUpdateMap(relid, rel->rd_rel->relfilenode, shared_relation, true);
 		rel->rd_rel->relfilenode = InvalidOid;
+		/* Add it to the active mapping information */
+		RelationMapUpdateMap(relid, relfilenode, shared_relation, true);
 	}
+	else
+		rel->rd_rel->relfilenode = relfilenode;
 
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
