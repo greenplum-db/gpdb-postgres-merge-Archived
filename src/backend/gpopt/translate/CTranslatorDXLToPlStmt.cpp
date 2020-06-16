@@ -2333,11 +2333,13 @@ CTranslatorDXLToPlStmt::TranslateDXLAgg
 	{
 		agg->grpColIdx = (AttrNumber *) gpdb::GPDBAlloc(agg->numCols * sizeof(AttrNumber));
 		agg->grpOperators = (Oid *) gpdb::GPDBAlloc(agg->numCols * sizeof(Oid));
+		agg->grpCollations = (Oid *) gpdb::GPDBAlloc(agg->numCols * sizeof(Oid));
 	}
 	else
 	{
 		agg->grpColIdx = NULL;
 		agg->grpOperators = NULL;
+		agg->grpCollations = NULL;
 	}
 
 	const ULONG length = grouping_colid_array->Size();
@@ -2354,6 +2356,7 @@ CTranslatorDXLToPlStmt::TranslateDXLAgg
 		// Also find the equality operators to use for each grouping col.
 		Oid typeId = gpdb::ExprType((Node *) target_entry_grouping_col->expr);
 		agg->grpOperators[ul] = gpdb::GetEqualityOp(typeId);
+		agg->grpCollations[ul] = gpdb::ExprCollation((Node*) target_entry_grouping_col->expr);
 		Assert(agg->grpOperators[ul] != 0);
 	}
 
@@ -2443,11 +2446,13 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 	window->partNumCols = part_by_cols_array->Size();
 	window->partColIdx = NULL;
 	window->partOperators = NULL;
+	window->partCollations = NULL;
 
 	if (window->partNumCols > 0)
 	{
 		window->partColIdx = (AttrNumber *) gpdb::GPDBAlloc(window->partNumCols * sizeof(AttrNumber));
 		window->partOperators = (Oid *) gpdb::GPDBAlloc(window->partNumCols * sizeof(Oid));
+		window->partCollations = (Oid *) gpdb::GPDBAlloc(window->partNumCols * sizeof(Oid));
 	}
 
 	const ULONG num_of_part_cols = part_by_cols_array->Size();
@@ -2465,6 +2470,7 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 		Oid type_id = gpdb::ExprType((Node *) te_part_colid->expr);
 		window->partOperators[ul] = gpdb::GetEqualityOp(type_id);
 		Assert(window->partOperators[ul] != 0);
+		window->partCollations[ul] = gpdb::ExprCollation((Node*) te_part_colid->expr);
 	}
 
 	// translate window keys
@@ -2490,8 +2496,9 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 		window->ordNumCols = num_of_cols;
 		window->ordColIdx = (AttrNumber *) gpdb::GPDBAlloc(num_of_cols * sizeof(AttrNumber));
 		window->ordOperators = (Oid *) gpdb::GPDBAlloc(num_of_cols * sizeof(Oid));
+		window->ordCollations = (Oid *) gpdb::GPDBAlloc(num_of_cols * sizeof(Oid));
 		bool *is_nulls_first = (bool *) gpdb::GPDBAlloc(num_of_cols * sizeof(bool));
-		TranslateSortCols(sort_col_list_dxlnode, &child_context, window->ordColIdx, window->ordOperators, NULL, is_nulls_first);
+		TranslateSortCols(sort_col_list_dxlnode, &child_context, window->ordColIdx, window->ordOperators, window->ordCollations, is_nulls_first);
 
 		// The firstOrder* fields are separate from just picking the first of ordCol*,
 		// because the Postgres planner might omit columns that are redundant with the
