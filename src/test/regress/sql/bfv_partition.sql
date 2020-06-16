@@ -463,7 +463,7 @@ partition b values(5, 6, 7, 8), default partition default_part);
 insert into mpp3671 select i from generate_series(1, 10) i;
 alter table mpp3671 split partition for(1) at (1,2) into (partition f1a, partition f1b);
 drop table mpp3671;
-create table mpp3639 (i int) partition by range(i) (start(0) exclusive end(100) inclusive every(10));
+create table mpp3639 (i int) partition by range(i) (start(1) end(100) inclusive every(10));
 insert into mpp3639 select i from generate_series(1, 100) i;
 insert into mpp3639 select i from generate_series(1, 100) i;
 insert into mpp3639 select i from generate_series(1, 100) i;
