@@ -1249,7 +1249,7 @@ CTranslatorDXLToPlStmt::TranslateDXLTvfToRangeTblEntry
 	FuncExpr *func_expr = MakeNode(FuncExpr);
 
 	func_expr->funcid = CMDIdGPDB::CastMdid(dxlop->FuncMdId())->Oid();
-	func_expr->funcretset = true;
+	func_expr->funcretset = gpdb::GetFuncRetset(func_expr->funcid);
 	// this is a function call, as opposed to a cast
 	func_expr->funcformat = COERCE_EXPLICIT_CALL;
 	func_expr->funcresulttype = CMDIdGPDB::CastMdid(dxlop->ReturnTypeMdId())->Oid();
