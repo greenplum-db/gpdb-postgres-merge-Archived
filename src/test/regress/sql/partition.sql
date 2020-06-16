@@ -1660,16 +1660,16 @@ partition girls values ('F')
 alter table rank_settemp set subpartition template ();
 
 -- nothing there
-select * from pg_partition_templates where tablename like 'rank_settemp%';
+select relid::regclass, level from gp_partition_template where relid = 'rank_settemp'::regclass;
 
 alter table rank_settemp set subpartition template (default subpartition def2);
 
 -- def2 is there
-select * from pg_partition_templates where tablename like 'rank_settemp%';
+select relid::regclass, level, template from gp_partition_template where relid = 'rank_settemp'::regclass;
 
 alter table rank_settemp set subpartition template (default subpartition def2);
 -- Should still be there
-select * from pg_partition_templates where tablename like 'rank_settemp%';
+select relid::regclass, level, template from gp_partition_template where relid = 'rank_settemp'::regclass;
 
 
 alter table rank_settemp set subpartition template (start (date '2006-01-01') with (appendonly=true));
@@ -1677,7 +1677,7 @@ alter table rank_settemp add partition f1 values ('N');
 alter table rank_settemp set subpartition template (start (date '2007-01-01') with (appendonly=true, compresslevel=5));
 alter table rank_settemp add partition f2 values ('C');
 
-select * from pg_partition_templates where tablename like 'rank_settemp%';
+select relid::regclass, level, template from gp_partition_template where relid = 'rank_settemp'::regclass;
 
 drop table rank_settemp;
 
@@ -1829,23 +1829,20 @@ truncate table mpp5941;
 
 -- now look at the templates that we have
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- clear level 1
 
 alter table mpp5941 set subpartition template ();
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- clear level 2
 
 alter table mpp5941 alter partition for ('2008-01-01') 
 set subpartition template ();
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- clear level 3
 
@@ -1853,8 +1850,7 @@ alter table mpp5941 alter partition for ('2008-01-01')
 alter partition for (1)
 set subpartition template ();
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- no level 4 (error)
 
@@ -1862,8 +1858,7 @@ alter table mpp5941 alter partition for ('2008-01-01')
 alter partition for (1) alter partition for ('QA')
 set subpartition template ();
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- no level 5 (error)
 
@@ -1872,8 +1867,7 @@ alter partition for (1) alter partition for ('QA')
 alter partition for ('M')
 set subpartition template ();
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- set level 1 (error, because no templates for level 2, 3)
 
@@ -1895,8 +1889,7 @@ set subpartition template (
 subpartition lll1 values ('M'), 
 subpartition lll2 values ('F') );
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- set level 2
 
@@ -1905,8 +1898,7 @@ set subpartition template (
 subpartition ll1 values ('Engineering'), 
 subpartition ll2 values ('QA') );
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 -- set level 1
 
@@ -1914,8 +1906,7 @@ alter table mpp5941 set subpartition template (
 subpartition l1 values (1,2,3,4,5), 
 subpartition l2 values (6,7,8,9,10) );
 
-select tablename, partitionname, partitionlevel from pg_partition_templates 
-where tablename = 'mpp5941';
+select relid::regclass, level from gp_partition_template where relid = 'mpp5941'::regclass;
 
 
 drop table mpp5941;
@@ -2458,7 +2449,7 @@ subpartition l2 values (6,7,8,9,10) );
 alter table mpp5992 
 set subpartition template (subpartition l1 values (1,2,3), 
 subpartition l2 values (4,5,6), subpartition l3 values (7,8,9,10));
-select * from pg_partition_templates where tablename='mpp5992';
+select relid::regclass, level, template from gp_partition_template where relid = 'mpp5992'::regclass;
 
 -- Now we can add a new partition
 alter table mpp5992 
