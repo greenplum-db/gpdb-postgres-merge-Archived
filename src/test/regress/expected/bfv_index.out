@@ -71,26 +71,6 @@ default partition dflt
 ;
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'col1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_dflt" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_2" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_3" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_4" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_5" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_6" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_7" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_8" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_9" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_10" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_11" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_12" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_13" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_14" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_15" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_16" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_17" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_18" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_19" for table "bfv_tab2_facttable1"
-NOTICE:  CREATE TABLE will create partition "bfv_tab2_facttable1_1_prt_20" for table "bfv_tab2_facttable1"
 insert into bfv_tab2_facttable1 select col1, col1, col1 from (select generate_series(1,20) col1)a;
 CREATE TABLE bfv_tab2_dimdate (
 wk_id smallint,
@@ -374,8 +354,6 @@ partition by range(a)
 partition p2 start(500) end(1001));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "tbl23383_partitioned_1_prt_p1" for table "tbl23383_partitioned"
-NOTICE:  CREATE TABLE will create partition "tbl23383_partitioned_1_prt_p2" for table "tbl23383_partitioned"
 insert into Tbl23383_partitioned select g,g,g,g from generate_series(1,1000) g;
 create index idx23383_b on Tbl23383_partitioned(b);
 NOTICE:  building index for child partition "tbl23383_partitioned_1_prt_p1"

@@ -198,9 +198,7 @@ SELECT * FROM partition_tables_show_all();
 SELECT recreate_two_level_table();
 NOTICE:  table "r" does not exist, skipping
 CONTEXT:  SQL function "recreate_two_level_table" statement 1
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -241,7 +239,6 @@ INSERT INTO r VALUES (6,'xxxx'),(6,'xxxx'); --should be prevented by constraint
 ERROR:  duplicate key value violates unique constraint "r_1_prt_r2_r_key_r_name_key"  (seg2 127.0.0.1:25434 pid=78720)
 DETAIL:  Key (r_key, r_name)=(6, xxxx                     ) already exists.
 ALTER TABLE r ADD PARTITION added_part START(8) INCLUSIVE END (10) EXCLUSIVE;
-NOTICE:  CREATE TABLE will create partition "r_1_prt_added_part" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -295,7 +292,6 @@ SELECT * FROM partition_tables_show_all();
 (4 rows)
 
 ALTER TABLE r ADD DEFAULT PARTITION d;
-NOTICE:  CREATE TABLE will create partition "r_1_prt_d" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -467,9 +463,7 @@ INSERT INTO r VALUES (9,'xxxx'),(9,'xxxx');     --should be allowed: no unique c
 INSERT INTO r VALUES (22,'xxxx'),(22,'xxxx');   --should be allowed: no unique constraint exists
 -- EXCHANGE... prepare table e and swap with partition
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -570,8 +564,6 @@ SELECT * FROM partition_tables_show_all();
 DROP TABLE IF EXISTS r;
 CREATE TABLE r (r_key INTEGER NOT NULL,UNIQUE(r_key)) DISTRIBUTED BY (r_key)
 PARTITION BY range (r_key) (PARTITION r1 START (0), PARTITION r2 START (5) END (8));
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
        depname        | classtype |       refname        | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 ----------------------+-----------+----------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -642,9 +634,7 @@ ERROR:  duplicate key value violates unique constraint "r_1_prt_r2_r_key_key"  (
 DETAIL:  Key (r_key)=(6) already exists.
 --PRIMARY KEY constraint: validate we correctly add it and can only drop from root
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -713,8 +703,6 @@ SELECT * FROM partition_tables_show_all();
 --EXCLUSION constraint: validate we cannot create an exclusion constraint on a
 --partition table. These are disallowed in GPDB.
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
  recreate_two_level_table 
 --------------------------
  
@@ -763,8 +751,6 @@ PARTITION BY list (r_key)
     PARTITION r1 VALUES (0),
     PARTITION r2 VALUES (1)
 );
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 ALTER TABLE r ADD UNIQUE(r_key,r_name);
 SELECT * FROM dependencies_show_for_cons_idx();
            depname           | classtype |           refname           | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
@@ -797,7 +783,6 @@ SELECT * FROM partition_tables_show_all();
 (3 rows)
 
 ALTER TABLE r ADD PARTITION r3 VALUES(2);
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r3" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
            depname           | classtype |           refname           | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -----------------------------+-----------+-----------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -838,8 +823,6 @@ SELECT * FROM partition_tables_show_all();
 DROP TABLE IF EXISTS r;
 CREATE TABLE r (r_key INTEGER NOT NULL,PRIMARY KEY (r_key)) DISTRIBUTED BY (r_key)
   PARTITION BY range (r_key) (PARTITION r1 START (0), PARTITION r2 START (5) END (8));
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 SELECT * FROM dependencies_show_for_cons_idx();
       depname       | classtype |      refname       | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 --------------------+-----------+--------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -918,17 +901,11 @@ SELECT * FROM partition_tables_show_all();
 SELECT recreate_three_level_table();
 NOTICE:  table "r" does not exist, skipping
 CONTEXT:  SQL function "recreate_three_level_table" statement 1
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1042,17 +1019,11 @@ SELECT * FROM partition_tables_show_all();
 
 --PRIMARY KEY constraint: validate we correctly add it and can only drop from root
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1166,17 +1137,11 @@ SELECT * FROM partition_tables_show_all();
 
 --New partition table 'C' should be created with constraints.
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1239,7 +1204,6 @@ SELECT * FROM partition_tables_show_all();
 (7 rows)
 
 ALTER TABLE r ALTER PARTITION r1 ADD PARTITION c VALUES ('C');
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_c" for table "r_1_prt_r1"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -1302,17 +1266,11 @@ SELECT * FROM partition_tables_show_all();
 
 -- EXCHANGE... prepare table e2 and swap with partition
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1500,12 +1458,6 @@ CREATE TABLE r (r_key INTEGER NOT NULL,r_name CHAR(25), UNIQUE(r_key, r_name))
   SUBPARTITION BY list (r_name) SUBPARTITION TEMPLATE
   (SUBPARTITION a VALUES ('A'),SUBPARTITION b VALUES ('B'))
   (PARTITION r1 START (0),PARTITION r2 START (5) END (8));
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -1597,12 +1549,6 @@ CREATE TABLE r (r_key INTEGER NOT NULL,r_name CHAR(25), PRIMARY KEY(r_key, r_nam
   SUBPARTITION BY list (r_name) SUBPARTITION TEMPLATE
 (SUBPARTITION a VALUES ('A'),SUBPARTITION b VALUES ('B'))
 (PARTITION r1 START (0),PARTITION r2 START (5) END (8));
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 SELECT * FROM dependencies_show_for_cons_idx();
          depname         | classtype |         refname         | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------+-----------+-------------------------+--------------+---------------+----------+---------------+-------------+---------
@@ -1691,9 +1637,7 @@ SELECT * FROM partition_tables_show_all();
 -- You should not be able to add a constraint to partition leaves
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -1720,17 +1664,11 @@ SELECT * FROM dependencies_show_for_cons_idx();
 -- Cannot add a dangling constraint to a leaf partition of a multi-level table
 ---------------------------------------------------------------------
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1759,9 +1697,7 @@ SELECT * FROM dependencies_show_for_cons_idx();
 -- exchange partition should fail with dangling constraint ONLY on new table
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -1806,9 +1742,7 @@ SELECT * FROM partition_tables_show_all();
 -- exchange partition: constraint on root should be added to old partition before exchange
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
@@ -1856,17 +1790,11 @@ SELECT * FROM partition_tables_show_all();
 --  node.
 --create the index at the root; should only be able to drop it from root
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -1963,17 +1891,11 @@ SELECT * FROM dependencies_show_for_idx();
 
 --create the index starting at mid-level; should only be able to drop it from mid-level
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -2014,17 +1936,11 @@ SELECT * FROM dependencies_show_for_idx();
 --yes, this is inconsistent with index subsumption but upstream does it this way
 --in particular, there's no subsumption going on here.
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -2105,17 +2021,11 @@ SELECT * FROM dependencies_show_for_idx();
 
 --test subsumption of lower-level index from upper-level one
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -2166,17 +2076,11 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show subsumption works across rename
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -2238,17 +2142,11 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show that renaming still does not allow a name conflict
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
@@ -2291,17 +2189,11 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show that renaming a mid-level index still prevents it from being dropped.
 SELECT recreate_three_level_table();
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_a" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r1_2_prt_b" for table "r_1_prt_r1"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2" for table "r"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_a" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
-NOTICE:  CREATE TABLE will create partition "r_1_prt_r2_2_prt_b" for table "r_1_prt_r2"
 CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------

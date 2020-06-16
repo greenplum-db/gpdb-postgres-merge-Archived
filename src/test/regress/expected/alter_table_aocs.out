@@ -366,8 +366,6 @@ create table addcol7 (
          with (appendonly=true, orientation=column, compresslevel=5),
       partition part201203 values('201203')
          with (appendonly=true, orientation=column, compresslevel=5));
-NOTICE:  CREATE TABLE will create partition "addcol7_1_prt_part201202" for table "addcol7"
-NOTICE:  CREATE TABLE will create partition "addcol7_1_prt_part201203" for table "addcol7"
 insert into addcol7 select '201202', 100*i, i, 'a'
    from generate_series(1,10)i;
 insert into addcol7 select '201203', 101*i, i, 'b'
@@ -393,7 +391,6 @@ alter table addcol7
    add partition part201204 values('201204')
       with (appendonly=true, compresslevel=5),
    add column new2 varchar default 'abc';
-NOTICE:  CREATE TABLE will create partition "addcol7_1_prt_part201204" for table "addcol7"
 -- insert, select, update, delete and vacuum post alter
 insert into addcol7 values
    ('201202', 101, 1, 'p1', 3/5::float, 'newcol2'),

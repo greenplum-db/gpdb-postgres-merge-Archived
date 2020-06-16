@@ -600,15 +600,6 @@ drop table atsdb;
 -- Check that we correctly cascade for partitioned tables
 create table atsdb (i int, j int, k int) distributed by (i) partition by range(k)
 (start(1) end(10) every(1));
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_1" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_2" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_3" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_4" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_5" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_6" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_7" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_8" for table "atsdb"
-NOTICE:  CREATE TABLE will create partition "atsdb_1_prt_9" for table "atsdb"
 insert into atsdb select i+2, i+1, i from generate_series(1, 9) i;
 select * from distcheck where rel like 'atsdb%';
       rel      | attname 
@@ -1095,15 +1086,6 @@ create table mpp5738 (a int, b int, c int, d int)
 partition by range(d) (start(1) end(10) inclusive every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_1" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_2" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_3" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_4" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_5" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_6" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_7" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_8" for table "mpp5738"
-NOTICE:  CREATE TABLE will create partition "mpp5738_1_prt_9" for table "mpp5738"
 insert into mpp5738 select i, i+1, i+2, i from generate_series(1, 10) i;
 select * from mpp5738;
  a  | b  | c  | d  
@@ -1301,7 +1283,6 @@ partition by list(col2)
 (
     partition part1 values(1,2,3,4,5,6,7,8,9,10) WITH (appendonly=false )
 );
-NOTICE:  CREATE TABLE will create partition "distrib_part_test_1_prt_part1" for table "distrib_part_test"
 create index distrib_part_test_idx on distrib_part_test(col1);
 NOTICE:  building index for child partition "distrib_part_test_1_prt_part1"
 ALTER TABLE public.distrib_part_test SET with (reorganize=false) DISTRIBUTED RANDOMLY;

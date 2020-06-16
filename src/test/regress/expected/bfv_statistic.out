@@ -323,10 +323,6 @@ ANALYZE T25289_T3;
 CREATE TABLE T25289_T4 (c int, d int)
 WITH (APPENDONLY=ON) DISTRIBUTED BY (c)
 PARTITION BY RANGE(d) (START(1) END (5) EVERY(1));
-NOTICE:  CREATE TABLE will create partition "t25289_t4_1_prt_1" for table "t25289_t4"
-NOTICE:  CREATE TABLE will create partition "t25289_t4_1_prt_2" for table "t25289_t4"
-NOTICE:  CREATE TABLE will create partition "t25289_t4_1_prt_3" for table "t25289_t4"
-NOTICE:  CREATE TABLE will create partition "t25289_t4_1_prt_4" for table "t25289_t4"
 ANALYZE T25289_T4;
 --
 -- expect NO crash when the statistic slot for an attribute is broken

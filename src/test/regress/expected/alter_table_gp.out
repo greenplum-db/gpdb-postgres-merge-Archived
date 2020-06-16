@@ -132,8 +132,6 @@ DISTRIBUTED BY(a)
 PARTITION BY RANGE (b)
 ( START (1) END (2) EVERY (1),
     DEFAULT PARTITION other_b);
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_other_b" for table "test_part_col"
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_2" for table "test_part_col"
 ALTER TABLE ONLY test_part_col ADD COLUMN f int; --error
 ERROR:  column must be added to child tables too
 ALTER TABLE test_part_col ADD COLUMN f int;
@@ -173,8 +171,6 @@ DISTRIBUTED BY(a)
 PARTITION BY RANGE (b)
 ( START (1) END (2) EVERY (1),
     DEFAULT PARTITION other_b);
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_other_b" for table "test_part_col"
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_2" for table "test_part_col"
 ALTER TABLE ONLY test_part_col ADD COLUMN f int; --error
 ERROR:  column must be added to child tables too
 ALTER TABLE test_part_col ADD COLUMN f int;
@@ -215,8 +211,6 @@ DISTRIBUTED BY(a)
 PARTITION BY RANGE (b)
 ( START (1) END (2) EVERY (1),
     DEFAULT PARTITION other_b);
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_other_b" for table "test_part_col"
-NOTICE:  CREATE TABLE will create partition "test_part_col_1_prt_2" for table "test_part_col"
 ALTER TABLE ONLY test_part_col ADD COLUMN f int; --error
 ERROR:  column must be added to child tables too
 ALTER TABLE test_part_col ADD COLUMN f int;

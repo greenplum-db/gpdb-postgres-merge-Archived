@@ -228,7 +228,6 @@ select verify('oid_check_co_pt1');
 
 alter table oid_check_ao_pt1 add default partition other_regions,
       	    	   alter column amt set not null;
-NOTICE:  CREATE TABLE will create partition "oid_check_ao_pt1_1_prt_other_regions" for table "oid_check_ao_pt1"
 select verify('oid_check_ao_pt1');
  verify 
 --------

@@ -8504,24 +8504,6 @@ DEFAULT SUBPARTITION other_regions)
 END (date '2011-06-01') EXCLUSIVE
 EVERY (INTERVAL '1 month'),
 DEFAULT PARTITION outlying_dates );
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_outlying_dates" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_outlying_dates_2_prt_usa" for table "window_part_sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_outlying_dates_2_prt_other_regions" for table "window_part_sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_2" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_2_2_prt_usa" for table "window_part_sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_2_2_prt_other_regions" for table "window_part_sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_3" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_3_2_prt_usa" for table "window_part_sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_3_2_prt_other_regions" for table "window_part_sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_4" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_4_2_prt_usa" for table "window_part_sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_4_2_prt_other_regions" for table "window_part_sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_5" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_5_2_prt_usa" for table "window_part_sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_5_2_prt_other_regions" for table "window_part_sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_6" for table "window_part_sales"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_6_2_prt_usa" for table "window_part_sales_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "window_part_sales_1_prt_6_2_prt_other_regions" for table "window_part_sales_1_prt_6"
 -- When there is no PARTITION BY in the window function, we do not want to push down any of the filter predicates.
 EXPLAIN WITH cte as (SELECT *, row_number() over () FROM window_part_sales) SELECT * FROM cte WHERE date > '2011-03-01' AND region = 'usa';
                                                          QUERY PLAN                                                          

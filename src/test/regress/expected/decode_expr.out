@@ -109,13 +109,6 @@ distributed by (distcol) partition by range (ptcol)
   end (501) exclusive
   every (100)
 );
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_defaultpart" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_2" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_3" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_4" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_5" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_6" for table "decodenum1"
-NOTICE:  CREATE TABLE will create partition "decodenum1_1_prt_7" for table "decodenum1"
 insert into decodenum1 values
   (1.1, 100, 0, 'part0'),
   (10.10, 100, 10, 'part1'),
@@ -155,13 +148,6 @@ start (0) inclusive
 end (501) exclusive
 every (100)
 );
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_defaultpart" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_2" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_3" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_4" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_5" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_6" for table "decodenum2"
-NOTICE:  CREATE TABLE will create partition "decodenum2_1_prt_7" for table "decodenum2"
 insert into decodenum2 values
   (1.1, 100, 0, 'part0'),
   (2.2, 200, 0, 'part0'),
@@ -297,9 +283,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -414,9 +397,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -481,9 +461,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -527,9 +504,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -675,9 +649,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -751,9 +722,6 @@ partition women values ('F'),
 partition men values ('M'),
 default partition other
 );
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
-NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
 CREATE TABLE emp_start_dates
 (
    empid integer,

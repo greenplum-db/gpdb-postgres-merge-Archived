@@ -367,18 +367,6 @@ CREATE TABLE mpp17980 (id int, date date, amt decimal(10,2))
 DISTRIBUTED randomly PARTITION BY RANGE (date)
 ( START (date '2008-01-01') INCLUSIVE  END (date '2009-01-01') EXCLUSIVE
 EVERY (INTERVAL '1 month') );
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_1" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_2" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_3" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_4" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_5" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_6" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_7" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_8" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_9" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_10" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_11" for table "mpp17980"
-NOTICE:  CREATE TABLE will create partition "mpp17980_1_prt_12" for table "mpp17980"
 INSERT INTO mpp17980 VALUES ( 1,'2008-02-20',122.11);
 SELECT COUNT(*) FROM ext_mpp17980 WHERE id IN ( 1 ) ;  -- This returns 18 tuples
  count 

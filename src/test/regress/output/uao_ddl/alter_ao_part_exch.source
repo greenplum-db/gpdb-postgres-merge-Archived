@@ -16,31 +16,6 @@ Create table ao_part
    subpartition sub2 values ('heap') with (appendonly=false),
    subpartition sub3 values ('ao_col') with (appendonly=true, orientation=column))
  (default partition others, start(date '2008-01-01') end(date '2008-04-30') every(interval '1 month'));
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_others" for table "ao_part"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_others_2_prt_subothers" for table "ao_part_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_others_2_prt_sub1" for table "ao_part_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_others_2_prt_sub2" for table "ao_part_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_others_2_prt_sub3" for table "ao_part_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_2" for table "ao_part"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_2_2_prt_subothers" for table "ao_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_2_2_prt_sub1" for table "ao_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_2_2_prt_sub2" for table "ao_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_2_2_prt_sub3" for table "ao_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_3" for table "ao_part"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_3_2_prt_subothers" for table "ao_part_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_3_2_prt_sub1" for table "ao_part_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_3_2_prt_sub2" for table "ao_part_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_3_2_prt_sub3" for table "ao_part_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_4" for table "ao_part"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_4_2_prt_subothers" for table "ao_part_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_4_2_prt_sub1" for table "ao_part_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_4_2_prt_sub2" for table "ao_part_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_4_2_prt_sub3" for table "ao_part_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_5" for table "ao_part"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_5_2_prt_subothers" for table "ao_part_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_5_2_prt_sub1" for table "ao_part_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_5_2_prt_sub2" for table "ao_part_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "ao_part_1_prt_5_2_prt_sub3" for table "ao_part_1_prt_5"
 insert into ao_part(col1, col2, col3) values
  (1, '2008-01-02', 'ao_row'), (1, '2008-01-02', 'heap'), (1, '2008-01-02', 'ao_col'),
  (1, '2008-02-03', 'ao_row'), (1, '2008-02-03', 'heap'), (1, '2008-02-03', 'ao_col'),

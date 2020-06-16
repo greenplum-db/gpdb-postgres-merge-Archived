@@ -12,8 +12,6 @@ SELECT relpersistence, relname FROM pg_class WHERE relname like 'unlogged_pt1%';
 
 -- When I split the first partition
 ALTER TABLE unlogged_pt1 SPLIT PARTITION FOR(2) AT(2) INTO (PARTITION p1, PARTITION p2);
-NOTICE:  CREATE TABLE will create partition "unlogged_pt1_1_prt_p1" for table "unlogged_pt1"
-NOTICE:  CREATE TABLE will create partition "unlogged_pt1_1_prt_p2" for table "unlogged_pt1"
 -- Then the resulting two new relations have relation persistence type 'u' for unlogged
 SELECT relpersistence, relname FROM pg_class WHERE relname like 'unlogged_pt1%';
  relpersistence |        relname        

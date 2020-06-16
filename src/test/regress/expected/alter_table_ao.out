@@ -372,9 +372,6 @@ PARTITION part201203 VALUES('201203') WITH (APPENDONLY=true, COMPRESSLEVEL=5, OR
 PARTITION part201204 VALUES('201204') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),
 PARTITION part201205 VALUES('201205')
 );
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201203" for table "testbug_char5"
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201204" for table "testbug_char5"
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201205" for table "testbug_char5"
 create index testbug_char5_tag1 on testbug_char5 using btree(tag1);
 NOTICE:  building index for child partition "testbug_char5_1_prt_part201203"
 NOTICE:  building index for child partition "testbug_char5_1_prt_part201204"
@@ -415,11 +412,8 @@ select * from testbug_char5 order by 1,2;
 (6 rows)
 
 alter table testbug_char5 add PARTITION part201206 VALUES('201206') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column);
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201206" for table "testbug_char5"
 alter table testbug_char5 add PARTITION part201207 VALUES('201207') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row);
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201207" for table "testbug_char5"
 alter table testbug_char5 add PARTITION part201208 VALUES('201208');
-NOTICE:  CREATE TABLE will create partition "testbug_char5_1_prt_part201208" for table "testbug_char5"
 insert into testbug_char5 select '201206',3333,'1','2';
 insert into testbug_char5 select '201207',3333,'1','2';
 insert into testbug_char5 select '201208',3333,'1','2';
@@ -694,7 +688,6 @@ PARTITION BY LIST(ym)
 (
 	DEFAULT PARTITION p_split_tupdesc_leak_ym  WITH (appendonly=true, orientation=row, compresstype=zlib)
 );
-NOTICE:  CREATE TABLE will create partition "split_tupdesc_leak_1_prt_p_split_tupdesc_leak_ym" for table "split_tupdesc_leak"
 INSERT INTO split_tupdesc_leak VALUES ('201412','0001EC1TPEvT5SaJKIR5yYXlFQ7tS','{0}');
 ALTER TABLE split_tupdesc_leak SPLIT DEFAULT PARTITION AT ('201412')
 	INTO (PARTITION p_split_tupdesc_leak_ym, PARTITION p_split_tupdesc_leak_ym_201412);

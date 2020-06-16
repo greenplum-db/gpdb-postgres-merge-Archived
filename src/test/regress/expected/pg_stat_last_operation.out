@@ -34,13 +34,7 @@ PARTITION BY list (gender)
 SUBPARTITION BY range (year)
 SUBPARTITION TEMPLATE (start (date '2001-01-01'))
 (VALUES ('M'), VALUES ('F'));
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_1" for table "mdt_test_part1"
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_1_2_prt_1" for table "mdt_test_part1_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_2" for table "mdt_test_part1"
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_2_2_prt_1" for table "mdt_test_part1_1_prt_2"
 ALTER TABLE mdt_test_part1 ADD DEFAULT PARTITION default_part;
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_default_part" for table "mdt_test_part1"
-NOTICE:  CREATE TABLE will create partition "mdt_test_part1_1_prt_default_part_2_prt_1" for table "mdt_test_part1_1_prt_default_part"
 CREATE TABLE mdt_all_types (
   a int,
   col001 char DEFAULT 'z',

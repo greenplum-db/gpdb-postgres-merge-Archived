@@ -1099,8 +1099,6 @@ execute ccddlcheck;
 (8 rows)
 
 alter table ccddl add partition p3 start(20) end(30);
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3_2_prt_sp1" for table "ccddl_1_prt_p3"
 execute ccddlcheck;
          relname          | attnum |                       attoptions                        
 --------------------------+--------+---------------------------------------------------------
@@ -1134,8 +1132,6 @@ execute ccddlcheck;
 (0 rows)
 
 alter table ccddl add partition p3 start(20) end(30);
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_p3_2_prt_sp1" for table "ccddl_1_prt_p3"
 execute ccddlcheck;
  relname | attnum | attoptions 
 ---------+--------+------------
@@ -1496,8 +1492,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 alter table ccddl add partition newp 
 	start('2010-01-06') end('2010-01-07')
 	with (appendonly=true, orientation=column, compresstype=RLE_TYPE); 
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_newp" for table "ccddl"
-NOTICE:  CREATE TABLE will create partition "ccddl_1_prt_newp_2_prt_sp1" for table "ccddl_1_prt_newp"
 execute ccddlcheck;
           relname           | attnum |                       attoptions                        
 ----------------------------+--------+---------------------------------------------------------
@@ -1562,7 +1556,6 @@ create table a (i int, j int) with (appendonly=true, orientation=column)
 (partition p1 start(1) end(10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "a_1_prt_p1" for table "a"
 ERROR:  partition specific ENCODING clause not supported in SUBPARTITION TEMPLATE
 LINE 3:       subpartition template(start(1) end(10) default column ...
                                     ^

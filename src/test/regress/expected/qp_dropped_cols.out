@@ -12,9 +12,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_char
     col4 char,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_char_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_char_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_char_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_char"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_char VALUES('g','g','a','g',0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -68,9 +65,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_decimal
     col4 decimal,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_decimal_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_decimal_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_decimal_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_decimal"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_decimal VALUES(2.00,2.00,'a',2.00,0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -124,9 +118,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_int4
     col4 int4,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int4_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int4_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int4_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_int4"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_int4 VALUES(20000000,20000000,'a',20000000,0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -180,9 +171,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_int8
     col4 int8,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int8_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int8_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_int8_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_int8"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_int8 VALUES(200000000000000000,200000000000000000,'a',200000000000000000,0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_int8 ORDER BY 1,2,3,4;
         col1        |        col2        | col3 |        col4        | col5 
@@ -236,9 +224,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_interval
     col4 interval,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_interval_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_interval_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_interval_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_interval"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_interval VALUES('10 secs','10 secs','a','10 secs',0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -292,9 +277,6 @@ CREATE TABLE mpp21090_changedistpolicy_dml_pttab_numeric
     col4 numeric,
     col5 int
 ) DISTRIBUTED BY (col1) PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_numeric_1_prt_partone" for table "mpp21090_changedistpolicy_dml_pttab_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_numeric_1_prt_parttwo" for table "mpp21090_changedistpolicy_dml_pttab_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_changedistpolicy_dml_pttab_numeric_1_prt_partthree" for table "mpp21090_changedistpolicy_dml_pttab_numeric"
 INSERT INTO mpp21090_changedistpolicy_dml_pttab_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 SELECT * FROM mpp21090_changedistpolicy_dml_pttab_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -352,7 +334,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_char_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_char"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_char VALUES('x','x','a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_char DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_char SELECT 'z','z','b';
@@ -415,7 +396,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_decimal_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_decimal"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_decimal DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_decimal SELECT 35.00,35.00,'b';
@@ -478,7 +458,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_int4_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_int4"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_int4 DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_int4 SELECT 35000000,35000000,'b';
@@ -541,7 +520,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_int8_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_int8"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_int8 DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_int8 SELECT 3500000000000000000,3500000000000000000,'b';
@@ -604,7 +582,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_interval_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_interval"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_interval VALUES('1 hour','1 hour','a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_interval DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_interval SELECT '14 hours','14 hours','b';
@@ -667,7 +644,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_numeric_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_numeric"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_numeric DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_numeric SELECT 35.000000,35.000000,'b';
@@ -730,7 +706,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_defpt_dropcol_addcol_dml_text_1_prt_def" for table "mpp21090_defpt_dropcol_addcol_dml_text"
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0);
 ALTER TABLE mpp21090_defpt_dropcol_addcol_dml_text DROP COLUMN col4;
 INSERT INTO mpp21090_defpt_dropcol_addcol_dml_text SELECT 'xyz','xyz','b';
@@ -824,7 +799,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_char_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_char"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_char VALUES('x','x','a','x');
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -908,7 +882,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_decimal_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_decimal VALUES(2.00,2.00,'a',2.00);
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -992,7 +965,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int4_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int4"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_int4 VALUES(20000000,20000000,'a',20000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1076,7 +1048,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_int8_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_int8"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_int8 ORDER BY 1,2,3,4;
         col1         |        col2         | col3 |        col4         
@@ -1160,7 +1131,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_interval_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_interval"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_interval VALUES('1 hour','1 hour','a','1 hour');
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1244,7 +1214,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitdefpt_dml_numeric_1_prt_def" for table "mpp21090_dropcol_addcol_splitdefpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_addcol_splitdefpt_dml_numeric VALUES(2.000000,2.000000,'a',2.000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitdefpt_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1325,9 +1294,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_char_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_char"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_char VALUES('x','x','a','x');
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -1408,9 +1374,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_decimal_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_decimal_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_decimal_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_decimal VALUES(2.00,2.00,'a',2.00);
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -1491,9 +1454,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int4_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int4_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int4_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_int4"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_int4 VALUES(20000000,20000000,'a',20000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1574,9 +1534,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_int8_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_int8"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_int8 ORDER BY 1,2,3,4;
         col1         |        col2         | col3 |        col4         
@@ -1657,9 +1614,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_interval_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_interval"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_interval VALUES('1 hour','1 hour','a','1 hour');
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1740,9 +1694,6 @@ CREATE TABLE mpp21090_dropcol_addcol_splitpt_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_numeric_1_prt_partone" for table "mpp21090_dropcol_addcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_numeric_1_prt_parttwo" for table "mpp21090_dropcol_addcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_addcol_splitpt_dml_numeric_1_prt_partthree" for table "mpp21090_dropcol_addcol_splitpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_addcol_splitpt_dml_numeric VALUES(2.000000,2.000000,'a',2.000000);
 SELECT * FROM mpp21090_dropcol_addcol_splitpt_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -1826,7 +1777,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_char_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_char"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_char VALUES('x','x','a','x');
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -1910,7 +1860,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_decimal_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_decimal VALUES(2.00,2.00,'a',2.00);
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 
@@ -1994,7 +1943,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int4_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int4"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_int4 VALUES(20000000,20000000,'a',20000000);
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -2078,7 +2026,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_int8_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_int8"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000);
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_int8 ORDER BY 1,2,3,4;
         col1         |        col2         | col3 |        col4         
@@ -2162,7 +2109,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_interval_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_interval"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_interval VALUES('1 hour','1 hour','a','1 hour');
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -2246,7 +2192,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdefpt_addcol_dml_numeric_1_prt_def" for table "mpp21090_dropcol_splitdefpt_addcol_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitdefpt_addcol_dml_numeric VALUES(2.000000,2.000000,'a',2.000000);
 SELECT * FROM mpp21090_dropcol_splitdefpt_addcol_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   
@@ -2331,7 +2276,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_char_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_char"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_char VALUES('x','x','a','x',0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -2390,7 +2334,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_decimal_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_decimal VALUES(2.00,2.00,'a',2.00,0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -2449,7 +2392,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int4_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_int4"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_int4 VALUES(20000000,20000000,'a',20000000,0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -2508,7 +2450,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_int8_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_int8"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000,0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_int8 ORDER BY 1,2,3,4;
         col1         |        col2         | col3 |        col4         | col5 
@@ -2567,7 +2508,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_interval_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_interval"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_interval VALUES('1 hour','1 hour','a','1 hour',0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -2626,7 +2566,6 @@ PARTITION BY LIST(col2)
 (
 default partition def
 );
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitdfpt_dml_numeric_1_prt_def" for table "mpp21090_dropcol_splitdfpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitdfpt_dml_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 SELECT * FROM mpp21090_dropcol_splitdfpt_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -2682,9 +2621,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_char_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_char_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_char"
 INSERT INTO mpp21090_dropcol_splitpt_dml_char VALUES('x','x','a','x',0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -2740,9 +2676,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_decimal_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_decimal_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_decimal_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_decimal"
 INSERT INTO mpp21090_dropcol_splitpt_dml_decimal VALUES(2.00,2.00,'a',2.00,0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -2798,9 +2731,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int4_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int4_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int4_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_int4"
 INSERT INTO mpp21090_dropcol_splitpt_dml_int4 VALUES(20000000,20000000,'a',20000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -2856,9 +2786,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_int8_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_int8"
 INSERT INTO mpp21090_dropcol_splitpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_int8 ORDER BY 1,2,3,4;
         col1         |        col2         | col3 |        col4         | col5 
@@ -2914,9 +2841,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_interval_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_interval"
 INSERT INTO mpp21090_dropcol_splitpt_dml_interval VALUES('1 hour','1 hour','a','1 hour',0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -2972,9 +2896,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_numeric_1_prt_partone" for table "mpp21090_dropcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_numeric_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_dml_numeric_1_prt_partthree" for table "mpp21090_dropcol_splitpt_dml_numeric"
 INSERT INTO mpp21090_dropcol_splitpt_dml_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -3030,9 +2951,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_char"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_char;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_char" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_char on mpp21090_dropcol_splitpt_idx_dml_char(col2);
@@ -3094,9 +3012,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_decimal"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_decimal;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_decimal" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_decimal on mpp21090_dropcol_splitpt_idx_dml_decimal(col2);
@@ -3158,9 +3073,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_int4"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_int4;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_int4" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_int4 on mpp21090_dropcol_splitpt_idx_dml_int4(col2);
@@ -3222,9 +3134,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_int8"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_int8;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_int8" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_int8 on mpp21090_dropcol_splitpt_idx_dml_int8(col2);
@@ -3286,9 +3195,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_interval"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_interval;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_interval" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_interval on mpp21090_dropcol_splitpt_idx_dml_interval(col2);
@@ -3350,9 +3256,6 @@ CREATE TABLE mpp21090_dropcol_splitpt_idx_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partone" for table "mpp21090_dropcol_splitpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_parttwo" for table "mpp21090_dropcol_splitpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partthree" for table "mpp21090_dropcol_splitpt_idx_dml_numeric"
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_numeric;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_numeric" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_numeric on mpp21090_dropcol_splitpt_idx_dml_numeric(col2);
@@ -8937,13 +8840,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_char_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_char_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_char_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_char"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_char VALUES('x','x','a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_char ADD COLUMN col5 char DEFAULT 'x';
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_char_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_char"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_char SELECT 'z','z','b',1, 'z';
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col4 | col5 
@@ -9006,13 +8905,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_decimal"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_decimal ADD COLUMN col5 decimal DEFAULT 2.00;
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_decimal_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_decimal"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_decimal SELECT 35.00,35.00,'b',1, 35.00;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col4 | col5  
@@ -9075,13 +8970,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int4_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int4_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int4_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_int4"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_int4 ADD COLUMN col5 int4 DEFAULT 20000000;
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int4_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_int4"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_int4 SELECT 35000000,35000000,'b',1, 35000000;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 |   col5   
@@ -9144,13 +9035,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_int8"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_int8 VALUES(2000000000000000000,2000000000000000000,'a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_int8 ADD COLUMN col5 int8 DEFAULT 2000000000000000000;
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_int8_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_int8"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_int8 SELECT 3500000000000000000,3500000000000000000,'b',1, 3500000000000000000;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 |        col5         
@@ -9213,13 +9100,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_interval_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_interval_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_interval_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_interval"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_interval VALUES('1 hour','1 hour','a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_interval ADD COLUMN col5 interval DEFAULT '1 hour';
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_interval_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_interval"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_interval SELECT '14 hours','14 hours','b',1, '14 hours';
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 |   col5   
@@ -9282,13 +9165,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_numeric"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_numeric ADD COLUMN col5 numeric DEFAULT 2.000000;
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_numeric_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_numeric"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_numeric SELECT 35.000000,35.000000,'b',1, 35.000000;
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 | col4 |   col5    
@@ -9351,13 +9230,9 @@ CREATE TABLE mpp21090_pttab_addcol_addpt_dropcol_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_partone" for table "mpp21090_pttab_addcol_addpt_dropcol_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_parttwo" for table "mpp21090_pttab_addcol_addpt_dropcol_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_partthree" for table "mpp21090_pttab_addcol_addpt_dropcol_text"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0);
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_text ADD COLUMN col5 text DEFAULT 'abcdefghijklmnop';
 ALTER TABLE mpp21090_pttab_addcol_addpt_dropcol_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addcol_addpt_dropcol_text_1_prt_partfour" for table "mpp21090_pttab_addcol_addpt_dropcol_text"
 INSERT INTO mpp21090_pttab_addcol_addpt_dropcol_text SELECT 'xyz','xyz','b',1, 'xyz';
 SELECT * FROM mpp21090_pttab_addcol_addpt_dropcol_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 |       col5       
@@ -9420,12 +9295,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_char_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_char_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_char_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_char"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_char VALUES('x','x','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_char_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_char"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_char SELECT 'z','z','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col4 
@@ -9500,12 +9371,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_decimal"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_decimal SELECT 35.00,35.00,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col4 
@@ -9580,12 +9447,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int4_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int4_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int4_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int4"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int4_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int4"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_int4 SELECT 35000000,35000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -9660,12 +9523,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int8"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_int8_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_int8"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_int8 SELECT 3500000000000000000,3500000000000000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 
@@ -9740,12 +9599,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_interval_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_interval_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_interva_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_interval"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_interval VALUES('1 hour','1 hour','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_interval_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_interval"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_interval SELECT '14 hours','14 hours','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -9820,12 +9675,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_numeric"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_numeric SELECT 35.000000,35.000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 | col4 
@@ -9900,12 +9751,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_text"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_addcol_dml_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_addcol_dml_text_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_addcol_dml_text"
 INSERT INTO mpp21090_pttab_addpt_dropcol_addcol_dml_text SELECT 'xyz','xyz','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_addcol_dml_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 
@@ -9980,12 +9827,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_char_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_char_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_char_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_char"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_char VALUES('x','x','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_char_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_char"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_char SELECT 'z','z','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col4 
@@ -10047,12 +9890,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_decimal"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_decimal_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_decimal"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_decimal SELECT 35.00,35.00,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col4 
@@ -10114,12 +9953,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int4_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int4_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int4_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_int4"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int4_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_int4"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_int4 SELECT 35000000,35000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -10181,12 +10016,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_int8"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_int8_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_int8"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_int8 SELECT 3500000000000000000,3500000000000000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 
@@ -10248,12 +10079,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_interval_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_interval_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_interval_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_interval"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_interval VALUES('1 hour','1 hour','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_interval_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_interval"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_interval SELECT '14 hours','14 hours','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -10315,12 +10142,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_numeric"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_numeric_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_numeric"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_numeric SELECT 35.000000,35.000000,'b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 | col4 
@@ -10382,12 +10205,8 @@ CREATE TABLE mpp21090_pttab_addpt_dropcol_dml_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_partone" for table "mpp21090_pttab_addpt_dropcol_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_parttwo" for table "mpp21090_pttab_addpt_dropcol_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_partthree" for table "mpp21090_pttab_addpt_dropcol_dml_text"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0);
 ALTER TABLE mpp21090_pttab_addpt_dropcol_dml_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_addpt_dropcol_dml_text_1_prt_partfour" for table "mpp21090_pttab_addpt_dropcol_dml_text"
 INSERT INTO mpp21090_pttab_addpt_dropcol_dml_text SELECT 'xyz','xyz','b',1;
 SELECT * FROM mpp21090_pttab_addpt_dropcol_dml_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 
@@ -10449,9 +10268,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_char_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_char_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_char_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_char"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_char VALUES('x','x','a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_char DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_char VALUES('x','x','b');
@@ -10481,9 +10297,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_char ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_char_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_char"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_char ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_char_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_char"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_char SELECT 'z','z','d','z';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -10524,9 +10338,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_decimal DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_decimal VALUES(2.00,2.00,'b');
@@ -10556,9 +10367,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_decimal"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_decimal SELECT 35.00,35.00,'d',35.00;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col5  
@@ -10599,9 +10408,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int4_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int4_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int4_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int4"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int4 DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int4 VALUES(20000000,20000000,'b');
@@ -10631,9 +10437,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int4 ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int4_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int4"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int4 ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int4_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int4"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int4 SELECT 35000000,35000000,'d',35000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -10674,9 +10478,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int8"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int8 DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int8 VALUES(2000000000000000000,2000000000000000000,'b');
@@ -10706,9 +10507,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int8"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_int8_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_int8"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_int8 SELECT 3500000000000000000,3500000000000000000,'d',3500000000000000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 |        col5         
@@ -10749,9 +10548,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_interval_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_interval_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_interva_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_interval"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_interval VALUES('1 hour','1 hour','a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_interval DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_interval VALUES('1 hour','1 hour','b');
@@ -10781,9 +10577,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_interval ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_interval_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_interval"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_interval ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_interval_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_interval"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_interval SELECT '14 hours','14 hours','d','14 hours';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -10824,9 +10618,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_numeric DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_numeric VALUES(2.000000,2.000000,'b');
@@ -10856,9 +10647,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_numeric"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_numeric SELECT 35.000000,35.000000,'d',35.000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 |   col5    
@@ -10899,9 +10688,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_text"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_text DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_text VALUES('abcdefghijklmnop','abcdefghijklmnop','b');
@@ -10931,9 +10717,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_text ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_text"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_dml_text ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_dml_text_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_dml_text"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_dml_text SELECT 'xyz','xyz','d','xyz';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_dml_text ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -10974,9 +10758,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_cha_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char VALUES('g','g','a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char VALUES('g','g','b');
@@ -11012,9 +10793,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char SELECT 'z','z','d','z';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -11055,9 +10834,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decim_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decim_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_dec_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal VALUES(2.00,2.00,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal VALUES(2.00,2.00,'b');
@@ -11093,9 +10869,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_deci_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal SELECT 35.00,35.00,'d',35.00;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col5  
@@ -11136,9 +10910,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 VALUES(20000000,20000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 VALUES(20000000,20000000,'b');
@@ -11174,9 +10945,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SELECT 350000000,350000000,'d',350000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
    col1    |   col2    | col3 |   col5    
@@ -11217,9 +10986,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_in_1_prt_partthree1" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'b');
@@ -11255,9 +11021,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SELECT 3500000000000000000,3500000000000000000,'d',3500000000000000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 |        col5         
@@ -11298,9 +11062,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inter_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inter_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_in_1_prt_partthree2" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval VALUES('10 secs','10 secs','a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval VALUES('10 secs','10 secs','b');
@@ -11336,9 +11097,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ORDER BY 1,2,
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inte_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval SELECT '14 hours','14 hours','d','14 hours';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -11379,9 +11138,6 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numer_1_prt_partone" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numer_1_prt_parttwo" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_num_1_prt_partthree" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric VALUES(2.000000,2.000000,'a',0);
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric DROP COLUMN col4;
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric VALUES(2.000000,2.000000,'b');
@@ -11417,9 +11173,7 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ORDER BY 1,2,3
 (0 rows)
 
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_nume_1_prt_partfour" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric"
 ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ADD DEFAULT partition def;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric_1_prt_def" for table "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric SELECT 35.000000,35.000000,'d',35.000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 |   col5    
@@ -11461,9 +11215,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_char_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_char_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_char_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_char"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_char VALUES('x','x','a','x',0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_char DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11471,7 +11222,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_char_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_char"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_char SELECT 'z','b','z', 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
@@ -11517,9 +11267,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_decimal VALUES(2.00,2.00,'a',2.00,0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_decimal DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11527,7 +11274,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_decimal_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_decimal SELECT 35.00,'b',35.00, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_decimal ORDER BY 1,2,3;
  col2  | col3 | col4  | col5 
@@ -11573,9 +11319,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_char"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_char VALUES('g','g','a','g',0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_char;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_char" does not exist, skipping
@@ -11589,7 +11332,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_char"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_char SELECT 'z','b','z', 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
@@ -11635,9 +11377,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_decimal"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_decimal VALUES(2.00,2.00,'a',2.00,0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_decimal;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_decimal" does not exist, skipping
@@ -11651,7 +11390,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_decimal"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_decimal SELECT 35.00,'b',35.00, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_decimal ORDER BY 1,2,3;
  col2  | col3 | col4  | col5 
@@ -11697,9 +11435,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_int4"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int4 VALUES(20000000,20000000,'a',20000000,0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_int4;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_int4" does not exist, skipping
@@ -11713,7 +11448,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_int4"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int4 SELECT 350000000,'b',350000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int4 ORDER BY 1,2,3;
    col2    | col3 |   col4    | col5 
@@ -11759,9 +11493,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_int8"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int8 VALUES(200000000000000000,200000000000000000,'a',200000000000000000,0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_int8;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_int8" does not exist, skipping
@@ -11775,7 +11506,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_int8"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int8 SELECT 3500000000000000000,'b',3500000000000000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_int8 ORDER BY 1,2,3;
         col2         | col3 |        col4         | col5 
@@ -11821,9 +11551,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_interva_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_interval"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_interval VALUES('10 secs','10 secs','a','10 secs',0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_interval;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_interval" does not exist, skipping
@@ -11837,7 +11564,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_interval"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_interval SELECT '14 hours','b','14 hours', 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_interval ORDER BY 1,2,3;
    col2   | col3 |   col4   | col5 
@@ -11883,9 +11609,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_index_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_index_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_index_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_index_numeric"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_numeric;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_numeric" does not exist, skipping
@@ -11899,7 +11622,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_index_numeric"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_numeric SELECT 35.000000,'b',35.000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_index_numeric ORDER BY 1,2,3;
    col2    | col3 |   col4    | col5 
@@ -11945,9 +11667,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int4_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int4_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int4_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_int4"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_int4 VALUES(20000000,20000000,'a',20000000,0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_int4 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11955,7 +11674,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int4_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_int4"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_int4 SELECT 35000000,'b',35000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_int4 ORDER BY 1,2,3;
    col2   | col3 |   col4   | col5 
@@ -12001,9 +11719,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_int8"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000,0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_int8 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -12011,7 +11726,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_int8_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_int8"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_int8 SELECT 3500000000000000000,'b',3500000000000000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_int8 ORDER BY 1,2,3;
         col2         | col3 |        col4         | col5 
@@ -12057,9 +11771,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_interval_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_interval_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_interval_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_interval"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_interval VALUES('1 hour','1 hour','a','1 hour',0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_interval DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -12067,7 +11778,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_interval_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_interval"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_interval SELECT '14 hours','b','14 hours', 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_interval ORDER BY 1,2,3;
    col2   | col3 |   col4   | col5 
@@ -12113,9 +11823,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_numeric DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -12123,7 +11830,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_numeric_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_numeric SELECT 35.000000,'b',35.000000, 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_numeric ORDER BY 1,2,3;
    col2    | col3 |   col4    | col5 
@@ -12169,9 +11875,6 @@ CREATE TABLE mpp21090_pttab_dropfirstcol_addpt_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_partone" for table "mpp21090_pttab_dropfirstcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_parttwo" for table "mpp21090_pttab_dropfirstcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_partthree" for table "mpp21090_pttab_dropfirstcol_addpt_text"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a','abcdefghijklmnop',0);
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_text DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -12179,7 +11882,6 @@ NOTICE:  dropping a column that is part of the distribution policy forces a NULL
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropfirstcol_addpt_text_1_prt_partfour" for table "mpp21090_pttab_dropfirstcol_addpt_text"
 INSERT INTO mpp21090_pttab_dropfirstcol_addpt_text SELECT 'xyz','b','xyz', 1;
 SELECT * FROM mpp21090_pttab_dropfirstcol_addpt_text ORDER BY 1,2,3;
        col2       | col3 |       col4       | col5 
@@ -12226,13 +11928,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_char_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_char_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_char_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_char"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_char VALUES('x','x','a',0,'x');
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_char DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_char_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_char"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_char SELECT 'z','z','b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col4 
@@ -12280,13 +11978,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_decimal VALUES(2.00,2.00,'a',0,2.00);
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_decimal DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_decimal_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_decimal SELECT 35.00,35.00,'b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col4 
@@ -12334,13 +12028,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int4_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int4_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int4_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_int4"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_int4 VALUES(20000000,20000000,'a',0,20000000);
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_int4 DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int4_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_int4"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_int4 SELECT 35000000,35000000,'b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -12388,13 +12078,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_int8"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_int8 VALUES(2000000000000000000,2000000000000000000,'a',0,2000000000000000000);
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_int8 DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_int8_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_int8"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_int8 SELECT 3500000000000000000,3500000000000000000,'b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col4 
@@ -12442,13 +12128,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_interval_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_interval_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_interval_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_interval"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_interval VALUES('1 hour','1 hour','a',0,'1 hour');
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_interval DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_interval_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_interval"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_interval SELECT '14 hours','14 hours','b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col4 
@@ -12496,13 +12178,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_numeric VALUES(2.000000,2.000000,'a',0,2.000000);
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_numeric DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_numeric_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_numeric SELECT 35.000000,35.000000,'b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 | col4 
@@ -12550,13 +12228,9 @@ CREATE TABLE mpp21090_pttab_droplastcol_addpt_text
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_partone" for table "mpp21090_pttab_droplastcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_parttwo" for table "mpp21090_pttab_droplastcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_partthree" for table "mpp21090_pttab_droplastcol_addpt_text"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a',0,'abcdefghijklmnop');
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_text DROP COLUMN col5;
 ALTER TABLE mpp21090_pttab_droplastcol_addpt_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_droplastcol_addpt_text_1_prt_partfour" for table "mpp21090_pttab_droplastcol_addpt_text"
 INSERT INTO mpp21090_pttab_droplastcol_addpt_text SELECT 'xyz','xyz','b',1;
 SELECT * FROM mpp21090_pttab_droplastcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col4 
@@ -12603,13 +12277,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_char
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_char_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_char_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_char_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_char"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_char VALUES('x','x','a','x',0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_char DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_char ADD PARTITION partfour VALUES('y','z','-');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_char_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_char"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_char SELECT 'z', 'z','b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -12656,13 +12326,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_decimal
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_decimal VALUES(2.00,2.00,'a',2.00,0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_decimal DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_decimal ADD PARTITION partfour start(30.00) end(40.00) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_decimal_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_decimal"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_decimal SELECT 35.00, 35.00,'b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_decimal ORDER BY 1,2,3;
  col1  | col2  | col3 | col5 
@@ -12709,13 +12375,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_int4
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int4_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int4_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int4_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_int4"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_int4 VALUES(20000000,20000000,'a',20000000,0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_int4 DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_int4 ADD PARTITION partfour start(300000001) end(400000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int4_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_int4"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_int4 SELECT 35000000, 35000000,'b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -12762,13 +12424,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_int8
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_int8"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_int8 VALUES(2000000000000000000,2000000000000000000,'a',2000000000000000000,0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_int8 DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_int8_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_int8"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_int8 SELECT 3500000000000000000, 3500000000000000000,'b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_int8 ORDER BY 1,2,3;
         col1         |        col2         | col3 | col5 
@@ -12815,13 +12473,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_interval
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_interval_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_interval_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_interval_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_interval"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_interval VALUES('1 hour','1 hour','a','1 hour',0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_interval DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_interval ADD PARTITION partfour start('12 hours') end('1 day') inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_interval_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_interval"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_interval SELECT '14 hours', '14 hours','b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 | col5 
@@ -12868,13 +12522,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_numeric
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_numeric DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_numeric ADD PARTITION partfour start(30.000000) end(40.000000) inclusive;
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_numeric_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_numeric"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_numeric SELECT 35.000000, 35.000000,'b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_numeric ORDER BY 1,2,3;
    col1    |   col2    | col3 | col5 
@@ -12921,13 +12571,9 @@ CREATE TABLE mpp21090_pttab_dropmidcol_addpt_text
 ) 
 DISTRIBUTED by (col1) 
 PARTITION BY LIST(col2)(partition partone VALUES('abcdefghijklmnop') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('qrstuvwxyz') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('ghi'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_partone" for table "mpp21090_pttab_dropmidcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_parttwo" for table "mpp21090_pttab_dropmidcol_addpt_text"
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_partthree" for table "mpp21090_pttab_dropmidcol_addpt_text"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_text VALUES('abcdefghijklmnop','abcdefghijklmnop','a','abcdefghijklmnop',0);
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_text DROP COLUMN col4;
 ALTER TABLE mpp21090_pttab_dropmidcol_addpt_text ADD PARTITION partfour VALUES('xyz');
-NOTICE:  CREATE TABLE will create partition "mpp21090_pttab_dropmidcol_addpt_text_1_prt_partfour" for table "mpp21090_pttab_dropmidcol_addpt_text"
 INSERT INTO mpp21090_pttab_dropmidcol_addpt_text SELECT 'xyz', 'xyz','b', 1;
 SELECT * FROM mpp21090_pttab_dropmidcol_addpt_text ORDER BY 1,2,3;
        col1       |       col2       | col3 | col5 
@@ -12974,9 +12620,6 @@ CREATE TABLE mpp21090_reordered_col_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_char_1_prt_partone" for table "mpp21090_reordered_col_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_char_1_prt_parttwo" for table "mpp21090_reordered_col_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_char_1_prt_partthree" for table "mpp21090_reordered_col_dml_char"
 INSERT INTO mpp21090_reordered_col_dml_char(col2,col1,col3,col5,col4) SELECT 'g', 'g','a', 1,'g';
 INSERT INTO mpp21090_reordered_col_dml_char(col2,col3,col5,col4) SELECT 'g','b', 2, 'g'; 
 SELECT * FROM mpp21090_reordered_col_dml_char ORDER BY 1,2,3,4;
@@ -13025,9 +12668,6 @@ CREATE TABLE mpp21090_reordered_col_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_decimal_1_prt_partone" for table "mpp21090_reordered_col_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_decimal_1_prt_parttwo" for table "mpp21090_reordered_col_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_decimal_1_prt_partthree" for table "mpp21090_reordered_col_dml_decimal"
 INSERT INTO mpp21090_reordered_col_dml_decimal(col2,col1,col3,col5,col4) SELECT 2.00, 2.00,'a', 1,2.00;
 INSERT INTO mpp21090_reordered_col_dml_decimal(col2,col3,col5,col4) SELECT 2.00,'b', 2, 2.00; 
 SELECT * FROM mpp21090_reordered_col_dml_decimal ORDER BY 1,2,3,4;
@@ -13076,9 +12716,6 @@ CREATE TABLE mpp21090_reordered_col_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int4_1_prt_partone" for table "mpp21090_reordered_col_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int4_1_prt_parttwo" for table "mpp21090_reordered_col_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int4_1_prt_partthree" for table "mpp21090_reordered_col_dml_int4"
 INSERT INTO mpp21090_reordered_col_dml_int4(col2,col1,col3,col5,col4) SELECT 20000000, 20000000,'a', 1,20000000;
 INSERT INTO mpp21090_reordered_col_dml_int4(col2,col3,col5,col4) SELECT 20000000,'b', 2, 20000000; 
 SELECT * FROM mpp21090_reordered_col_dml_int4 ORDER BY 1,2,3,4;
@@ -13127,9 +12764,6 @@ CREATE TABLE mpp21090_reordered_col_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int8_1_prt_partone" for table "mpp21090_reordered_col_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int8_1_prt_parttwo" for table "mpp21090_reordered_col_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_int8_1_prt_partthree" for table "mpp21090_reordered_col_dml_int8"
 INSERT INTO mpp21090_reordered_col_dml_int8(col2,col1,col3,col5,col4) SELECT 200000000000000000, 200000000000000000,'a', 1,200000000000000000;
 INSERT INTO mpp21090_reordered_col_dml_int8(col2,col3,col5,col4) SELECT 200000000000000000,'b', 2, 200000000000000000; 
 SELECT * FROM mpp21090_reordered_col_dml_int8 ORDER BY 1,2,3,4;
@@ -13178,9 +12812,6 @@ CREATE TABLE mpp21090_reordered_col_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_interval_1_prt_partone" for table "mpp21090_reordered_col_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_interval_1_prt_parttwo" for table "mpp21090_reordered_col_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_interval_1_prt_partthree" for table "mpp21090_reordered_col_dml_interval"
 INSERT INTO mpp21090_reordered_col_dml_interval(col2,col1,col3,col5,col4) SELECT '10 secs', '10 secs','a', 1,'10 secs';
 INSERT INTO mpp21090_reordered_col_dml_interval(col2,col3,col5,col4) SELECT '10 secs','b', 2, '10 secs'; 
 SELECT * FROM mpp21090_reordered_col_dml_interval ORDER BY 1,2,3,4;
@@ -13229,9 +12860,6 @@ CREATE TABLE mpp21090_reordered_col_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_numeric_1_prt_partone" for table "mpp21090_reordered_col_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_numeric_1_prt_parttwo" for table "mpp21090_reordered_col_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_reordered_col_dml_numeric_1_prt_partthree" for table "mpp21090_reordered_col_dml_numeric"
 INSERT INTO mpp21090_reordered_col_dml_numeric(col2,col1,col3,col5,col4) SELECT 2.000000, 2.000000,'a', 1,2.000000;
 INSERT INTO mpp21090_reordered_col_dml_numeric(col2,col3,col5,col4) SELECT 2.000000,'b', 2, 2.000000; 
 SELECT * FROM mpp21090_reordered_col_dml_numeric ORDER BY 1,2,3,4;
@@ -13280,9 +12908,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_char_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_char_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_char_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_char"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_char VALUES('g','g','a',0, 'g');
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -13386,9 +13011,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_decim_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_decimal VALUES(2.00,2.00,'a',0, 2.00);
 ANALYZE mpp21090_xchange_pttab_dropcol_addcol_dml_decimal;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_decimal ORDER BY 1,2,3,4;
@@ -13492,9 +13114,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int4_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int4_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int4_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int4"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_int4 VALUES(20000000,20000000,'a',0, 20000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_addcol_dml_int4;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_int4 ORDER BY 1,2,3,4;
@@ -13598,9 +13217,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int8_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int8_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_int8_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_int8"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_int8 VALUES(200000000000000000,200000000000000000,'a',0, 200000000000000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_addcol_dml_int8;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_int8 ORDER BY 1,2,3,4;
@@ -13704,9 +13320,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_interva_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_interva_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_inter_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_interval"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_interval VALUES('10 secs','10 secs','a',0, '10 secs');
 ANALYZE mpp21090_xchange_pttab_dropcol_addcol_dml_interval;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_interval ORDER BY 1,2,3,4;
@@ -13810,9 +13423,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_addcol_dml_numer_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric"
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_numeric VALUES(2.000000,2.000000,'a',0, 2.000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_addcol_dml_numeric;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_numeric ORDER BY 1,2,3,4;
@@ -13916,9 +13526,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_char_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_char_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_char_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_char"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_char VALUES('g','g','a',0, 'g');
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_char;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_char ORDER BY 1,2,3,4;
@@ -14021,9 +13628,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_decimal_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_decimal_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_decimal_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_decimal"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_decimal VALUES(2.00,2.00,'a',0, 2.00);
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_decimal;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_decimal ORDER BY 1,2,3,4;
@@ -14126,9 +13730,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int4_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int4_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int4_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_int4"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_int4 VALUES(20000000,20000000,'a',0, 20000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_int4;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_int4 ORDER BY 1,2,3,4;
@@ -14231,9 +13832,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int8_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int8_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_int8_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_int8"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_int8 VALUES(200000000000000000,200000000000000000,'a',0, 200000000000000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_int8;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_int8 ORDER BY 1,2,3,4;
@@ -14336,9 +13934,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_interval_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_interval_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_interval_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_interval"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_interval VALUES('10 secs','10 secs','a',0, '10 secs');
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_interval;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_interval ORDER BY 1,2,3,4;
@@ -14441,9 +14036,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_numeric_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_numeric_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_dml_numeric_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_dml_numeric"
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_numeric VALUES(2.000000,2.000000,'a',0, 2.000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_dml_numeric;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_numeric ORDER BY 1,2,3,4;
@@ -14546,9 +14138,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_char
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo VALUES('i','j','k','l','m','n','o','p') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree VALUES('q','r','s','t','u','v','w','x'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_char"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_char"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_char VALUES('g','g','a',0, 'g');
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_char;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_char ORDER BY 1,2,3,4;
@@ -14657,9 +14246,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_decimal
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.00) end(20.00) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.00) end(30.00));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_decimal"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_decimal"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_decimal VALUES(2.00,2.00,'a',0, 2.00);
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_decimal;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_decimal ORDER BY 1,2,3,4;
@@ -14768,9 +14354,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int4
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int4"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int4"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_int4 VALUES(20000000,20000000,'a',0, 20000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_int4;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int4 ORDER BY 1,2,3,4;
@@ -14879,9 +14462,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int8
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int8"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_int8"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'a',0, 200000000000000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_int8;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int8 ORDER BY 1,2,3,4;
@@ -14990,9 +14570,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_interval
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start('1 min') end('1 hour') WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start('1 hour') end('12 hours'));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_interval"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_interval"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_interval VALUES('10 secs','10 secs','a',0, '10 secs');
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_interval;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_interval ORDER BY 1,2,3,4;
@@ -15101,9 +14678,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_numeric
 ) 
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(10.000000) end(20.000000) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(20.000000) end(30.000000));
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_partone" for table "mpp21090_xchange_pttab_dropcol_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_parttwo" for table "mpp21090_xchange_pttab_dropcol_idx_dml_numeric"
-NOTICE:  CREATE TABLE will create partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_partthree" for table "mpp21090_xchange_pttab_dropcol_idx_dml_numeric"
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_numeric VALUES(2.000000,2.000000,'a',0, 2.000000);
 ANALYZE mpp21090_xchange_pttab_dropcol_idx_dml_numeric;
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_numeric ORDER BY 1,2,3,4;

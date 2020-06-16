@@ -60,8 +60,6 @@ DROP TYPE table_collision_a_b_key;
 -- Exchange Partition Scenario
 -- Create a partition table with a primary key constraint
 CREATE TABLE part_table_for_upgrade (a INT, b INT) DISTRIBUTED BY (a) PARTITION BY RANGE(b) (PARTITION alpha  END (3), PARTITION beta START (3));
-NOTICE:  CREATE TABLE will create partition "part_table_for_upgrade_1_prt_alpha" for table "part_table_for_upgrade"
-NOTICE:  CREATE TABLE will create partition "part_table_for_upgrade_1_prt_beta" for table "part_table_for_upgrade"
 ALTER TABLE part_table_for_upgrade ADD PRIMARY KEY(a, b);
 -- Create a table to be used as a partition exchange.
 CREATE TABLE like_table (like part_table_for_upgrade INCLUDING CONSTRAINTS INCLUDING INDEXES) DISTRIBUTED BY (a) ;

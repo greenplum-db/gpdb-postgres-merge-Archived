@@ -382,14 +382,9 @@ Create table subt_alter_part_tab_ao1 (
  (partition p1 start(1) end(5),
   partition p2 start(5) end(8),
   partition p3 start(8) end(10));
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_p1" for table "subt_alter_part_tab_ao1"
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_p2" for table "subt_alter_part_tab_ao1"
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_p3" for table "subt_alter_part_tab_ao1"
 Savepoint sp1;
 Alter table subt_alter_part_tab_ao1 add partition p4 start(10) end(14);
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_p4" for table "subt_alter_part_tab_ao1"
 Alter table subt_alter_part_tab_ao1 add default partition def_part;
-NOTICE:  CREATE TABLE will create partition "subt_alter_part_tab_ao1_1_prt_def_part" for table "subt_alter_part_tab_ao1"
 Insert into subt_alter_part_tab_ao1 values(
  generate_series(1,15), 'create table with subtransactions', 's',
  'subtransaction table', '12-11-2012', 3, '2012-10-09 10:23:54',

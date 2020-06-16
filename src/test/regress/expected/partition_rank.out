@@ -199,8 +199,6 @@ create table mpp7164r (a int, b text, c int)
         end (2) exclusive
         every (1)
     );
-NOTICE:  CREATE TABLE will create partition "mpp7164r_1_prt_1" for table "mpp7164r"
-NOTICE:  CREATE TABLE will create partition "mpp7164r_1_prt_2" for table "mpp7164r"
 select * from partlist where ptable='mpp7164r'::regclass order by ptemplate, plevel, rrank;
   ptable  | plevel | ptemplate | pkind |      rchild      | rname | rrank | rparent 
 ----------+--------+-----------+-------+------------------+-------+-------+---------

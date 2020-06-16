@@ -8133,7 +8133,6 @@ having exists (select 1 from orca.onek b where sum(distinct a.four) = b.four);
 create table orca.pp(a int) partition by range(a)(partition pp1 start(1) end(10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pp_1_prt_pp1" for table "pp"
 create index pp_a on orca.pp(a);
 NOTICE:  building index for child partition "pp_1_prt_pp1"
 -- list partition tests
@@ -8143,8 +8142,6 @@ NOTICE:  table "t" does not exist, skipping
 create table orca.t ( a int, b char(2), to_be_drop int, c int, d char(2), e int)
 distributed by (a)
 partition by list(d) (partition part1 values('a'), partition part2 values('b'));
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part1" for table "t"
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part2" for table "t"
 insert into orca.t
 	select i, i::char(2), i, i, case when i%2 = 0 then 'a' else 'b' end, i
 	from generate_series(1,100) i;
@@ -8190,34 +8187,6 @@ subpartition sp2 start(10) end(200) every(50)
 partition bb start(100) end(200) every (50) );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1" for table "multilevel_p"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp1_1" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp1_2" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp2_1" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp2_2" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp2_3" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_1_2_prt_sp2_4" for table "multilevel_p_1_prt_aa_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2" for table "multilevel_p"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp1_1" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp1_2" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp2_1" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp2_2" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp2_3" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_aa_2_2_prt_sp2_4" for table "multilevel_p_1_prt_aa_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1" for table "multilevel_p"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp1_1" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp1_2" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp2_1" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp2_2" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp2_3" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_1_2_prt_sp2_4" for table "multilevel_p_1_prt_bb_1"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2" for table "multilevel_p"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp1_1" for table "multilevel_p_1_prt_bb_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp1_2" for table "multilevel_p_1_prt_bb_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp2_1" for table "multilevel_p_1_prt_bb_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp2_2" for table "multilevel_p_1_prt_bb_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp2_3" for table "multilevel_p_1_prt_bb_2"
-NOTICE:  CREATE TABLE will create partition "multilevel_p_1_prt_bb_2_2_prt_sp2_4" for table "multilevel_p_1_prt_bb_2"
 insert into orca.multilevel_p values (1,1), (100,200);
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  Feature not supported: Multi-level partitioned tables with non-uniform partitioning structure
@@ -8235,8 +8204,6 @@ drop table if exists orca.t;
 create table orca.t ( a int, b char(2), to_be_drop int, c int, d char(2), e int)
 distributed by (a)
 partition by list(d) (partition part1 values('a') with (appendonly=true, compresslevel=5, orientation=column), partition part2 values('b') with (appendonly=true, compresslevel=5, orientation=column));
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part1" for table "t"
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part2" for table "t"
 insert into orca.t
 	select i, i::char(2), i, i, case when i%2 = 0 then 'a' else 'b' end, i
 	from generate_series(1,100) i;
@@ -8276,17 +8243,11 @@ drop table if exists orca.t;
 create table orca.t ( timest character varying(6), user_id numeric(16,0) not null, to_be_drop char(5), tag1 char(5), tag2 char(5))
 distributed by (user_id)
 partition by list (timest) (partition part201203 values('201203') with (appendonly=true, compresslevel=5, orientation=column), partition part201204 values('201204') with (appendonly=true, compresslevel=5, orientation=row), partition part201205 values('201205'));
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201203" for table "t"
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201204" for table "t"
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201205" for table "t"
 insert into orca.t values('201203',0,'drop', 'tag1','tag2');
 alter table orca.t drop column to_be_drop;
 alter table orca.t add partition part201206 values('201206') with (appendonly=true, compresslevel=5, orientation=column);
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201206" for table "t"
 alter table orca.t add partition part201207 values('201207') with (appendonly=true, compresslevel=5, orientation=row);
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201207" for table "t"
 alter table orca.t add partition part201208 values('201208');
-NOTICE:  CREATE TABLE will create partition "t_1_prt_part201208" for table "t"
 insert into orca.t values('201203',1,'tag1','tag2');
 insert into orca.t values('201204',2,'tag1','tag2');
 insert into orca.t values('201205',1,'tag1','tag2');
@@ -8366,16 +8327,10 @@ NOTICE:  table "t_date" does not exist, skipping
 create table orca.t_date ( timest date, user_id numeric(16,0) not null, tag1 char(5), tag2 char(5))
 distributed by (user_id)
 partition by list (timest) (partition part201203 values('01-03-2012'::date), partition part201204 values('01-04-2012'::date), partition part201205 values('01-05-2012'::date));
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201203" for table "t_date"
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201204" for table "t_date"
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201205" for table "t_date"
 create index user_id_idx on orca.t_date_1_prt_part201203(user_id);
 alter table orca.t_date add partition part201206 values('01-06-2012'::date);
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201206" for table "t_date"
 alter table orca.t_date add partition part201207 values('01-07-2012'::date);
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201207" for table "t_date"
 alter table orca.t_date add partition part201208 values('01-08-2012'::date);
-NOTICE:  CREATE TABLE will create partition "t_date_1_prt_part201208" for table "t_date"
 insert into orca.t_date values('01-03-2012'::date,0,'tag1','tag2');
 insert into orca.t_date values('01-03-2012'::date,1,'tag1','tag2');
 insert into orca.t_date values('01-04-2012'::date,2,'tag1','tag2');
@@ -8426,9 +8381,6 @@ drop index if exists orca.user_id_idx;
 create table orca.t_text ( timest date, user_id numeric(16,0) not null, tag1 char(5), tag2 char(5))
 distributed by (user_id)
 partition by list(tag1) (partition partgood values('good'::text), partition partbad values('bad'::text), partition partugly values('ugly'::text));
-NOTICE:  CREATE TABLE will create partition "t_text_1_prt_partgood" for table "t_text"
-NOTICE:  CREATE TABLE will create partition "t_text_1_prt_partbad" for table "t_text"
-NOTICE:  CREATE TABLE will create partition "t_text_1_prt_partugly" for table "t_text"
 create index user_id_idx on orca.t_text_1_prt_partgood(user_id);
 insert into orca.t_text values('01-03-2012'::date,0,'good','tag2');
 insert into orca.t_text values('01-03-2012'::date,1,'bad','tag2');
@@ -8481,9 +8433,6 @@ create table orca.t_ceeval_ints(user_id numeric(16,0), category_id int, tag1 cha
 distributed by (user_id)
 partition by list (category_id)
 	(partition part100 values('100') , partition part101 values('101'), partition part103 values('102'));
-NOTICE:  CREATE TABLE will create partition "t_ceeval_ints_1_prt_part100" for table "t_ceeval_ints"
-NOTICE:  CREATE TABLE will create partition "t_ceeval_ints_1_prt_part101" for table "t_ceeval_ints"
-NOTICE:  CREATE TABLE will create partition "t_ceeval_ints_1_prt_part103" for table "t_ceeval_ints"
 create index user_id_ceeval_ints on orca.t_ceeval_ints_1_prt_part101(user_id);
 insert into orca.t_ceeval_ints values(1, 100, 'tag1', 'tag2');
 insert into orca.t_ceeval_ints values(2, 100, 'tag1', 'tag2');
@@ -9187,7 +9136,6 @@ reset optimizer_enable_tablescan;
 create table mpp22791(a int, b int) partition by range(b) (default partition d);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp22791_1_prt_d" for table "mpp22791"
 insert into mpp22791 values (1, 1), (2, 2), (3, 3);
 select * from mpp22791 where b > 1;
  a | b 
@@ -9214,8 +9162,6 @@ select 1 as x where 1 in (2, 3);
 create table orca.p1(a int) partition by range(a)(partition pp1 start(1) end(10), partition pp2 start(10) end(20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_pp1" for table "p1"
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_pp2" for table "p1"
 insert into orca.p1 select * from generate_series(2,15);
 select count(*) from (select gp_segment_id,ctid,tableoid from orca.p1 group by gp_segment_id,ctid,tableoid) as foo;
  count 
@@ -9973,11 +9919,6 @@ create table orca.bm_dyn_test (i int, to_be_dropped char(5), j int, t text) dist
    partition part1 values(1),
    partition part2 values(2) with (appendonly=true, compresslevel=5, orientation=row),
    partition part3 values(3), partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part0" for table "bm_dyn_test"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part1" for table "bm_dyn_test"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part2" for table "bm_dyn_test"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part3" for table "bm_dyn_test"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part4" for table "bm_dyn_test"
 insert into orca.bm_dyn_test select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index bm_dyn_test_idx on orca.bm_dyn_test using bitmap (i);
 NOTICE:  building index for child partition "bm_dyn_test_1_prt_part0"
@@ -9987,7 +9928,6 @@ NOTICE:  building index for child partition "bm_dyn_test_1_prt_part3"
 NOTICE:  building index for child partition "bm_dyn_test_1_prt_part4"
 alter table orca.bm_dyn_test drop column to_be_dropped;
 alter table orca.bm_dyn_test add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_1_prt_part5" for table "bm_dyn_test"
 insert into orca.bm_dyn_test values(2, 5, '2');
 set optimizer_enable_bitmapscan=on;
 -- gather on 1 segment because of direct dispatch
@@ -10033,16 +9973,10 @@ create table orca.bm_dyn_test_onepart (i int, to_be_dropped char(5), j int, t te
    partition part1 values(1),
    partition part2 values(2) with (appendonly=true, compresslevel=5, orientation=row),
    partition part3 values(3), partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part0" for table "bm_dyn_test_onepart"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part1" for table "bm_dyn_test_onepart"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part2" for table "bm_dyn_test_onepart"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part3" for table "bm_dyn_test_onepart"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part4" for table "bm_dyn_test_onepart"
 insert into orca.bm_dyn_test_onepart select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index bm_test_idx_part on orca.bm_dyn_test_onepart_1_prt_part2 using bitmap (i);
 alter table orca.bm_dyn_test_onepart drop column to_be_dropped;
 alter table orca.bm_dyn_test_onepart add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_onepart_1_prt_part5" for table "bm_dyn_test_onepart"
 insert into orca.bm_dyn_test_onepart values(2, 5, '2');
 set optimizer_enable_bitmapscan=on;
 set optimizer_enable_dynamictablescan = off;
@@ -10100,20 +10034,6 @@ distributed by (id) partition by range (year)
       subpartition usa values ('usa'),
       default subpartition other_regions )
   ( start (2018) end (2020) every (1) );
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1" for table "bm_dyn_test_multilvl_part"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_1" for table "bm_dyn_test_multilvl_part_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_1_3_prt_usa" for table "bm_dyn_test_multilvl_part_1_prt_1_2_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_1_3_prt_other_regions" for table "bm_dyn_test_multilvl_part_1_prt_1_2_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_2" for table "bm_dyn_test_multilvl_part_1_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_2_3_prt_usa" for table "bm_dyn_test_multilvl_part_1_prt_1_2_prt_2"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_1_2_prt_2_3_prt_other_regions" for table "bm_dyn_test_multilvl_part_1_prt_1_2_prt_2"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2" for table "bm_dyn_test_multilvl_part"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_1" for table "bm_dyn_test_multilvl_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_1_3_prt_usa" for table "bm_dyn_test_multilvl_part_1_prt_2_2_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_1_3_prt_other_regions" for table "bm_dyn_test_multilvl_part_1_prt_2_2_prt_1"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_2" for table "bm_dyn_test_multilvl_part_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_2_3_prt_usa" for table "bm_dyn_test_multilvl_part_1_prt_2_2_prt_2"
-NOTICE:  CREATE TABLE will create partition "bm_dyn_test_multilvl_part_1_prt_2_2_prt_2_3_prt_other_regions" for table "bm_dyn_test_multilvl_part_1_prt_2_2_prt_2"
 insert into orca.bm_dyn_test_multilvl_part select i, 2018 + (i%2), i%2 + 1, 'usa' from generate_series(1,100)i;
 create index bm_multi_test_idx_part on orca.bm_dyn_test_multilvl_part using bitmap(year);
 analyze orca.bm_dyn_test_multilvl_part;
@@ -10149,11 +10069,6 @@ create table bm.het_bm (i int, to_be_dropped char(5), j int, t text) distributed
    partition part1 values(1),
    partition part2 values(2) with (appendonly=true, compresslevel=5, orientation=row),
    partition part3 values(3), partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part0" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part1" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part2" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part3" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part4" for table "het_bm"
 insert into bm.het_bm select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index het_bm_idx on bm.het_bm using bitmap (i);
 NOTICE:  building index for child partition "het_bm_1_prt_part0"
@@ -10163,7 +10078,6 @@ NOTICE:  building index for child partition "het_bm_1_prt_part3"
 NOTICE:  building index for child partition "het_bm_1_prt_part4"
 alter table bm.het_bm drop column to_be_dropped;
 alter table bm.het_bm add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part5" for table "het_bm"
 insert into bm.het_bm values(2, 5, '2');
 select sum(i) i_sum, sum(j) j_sum, sum(t::integer) t_sum from bm.het_bm where i=2 and t='2';
  i_sum | j_sum | t_sum 
@@ -10180,11 +10094,6 @@ create table bm.hom_bm_heap (i int, to_be_dropped char(5), j int, t text) distri
    partition part2 values(2),
    partition part3 values(3),
    partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part0" for table "hom_bm_heap"
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part1" for table "hom_bm_heap"
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part2" for table "hom_bm_heap"
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part3" for table "hom_bm_heap"
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part4" for table "hom_bm_heap"
 insert into bm.hom_bm_heap select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index hom_bm_heap_idx on bm.hom_bm_heap using bitmap (i);
 NOTICE:  building index for child partition "hom_bm_heap_1_prt_part0"
@@ -10194,7 +10103,6 @@ NOTICE:  building index for child partition "hom_bm_heap_1_prt_part3"
 NOTICE:  building index for child partition "hom_bm_heap_1_prt_part4"
 alter table bm.hom_bm_heap drop column to_be_dropped;
 alter table bm.hom_bm_heap add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "hom_bm_heap_1_prt_part5" for table "hom_bm_heap"
 insert into bm.hom_bm_heap values(2, 5, '2');
 select sum(i) i_sum, sum(j) j_sum, sum(t::integer) t_sum from bm.hom_bm_heap where i=2 and t='2';
  i_sum | j_sum | t_sum 
@@ -10213,11 +10121,6 @@ distributed by (i) partition by list(j)
    partition part2 values(2),
    partition part3 values(3),
    partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part0" for table "hom_bm_ao"
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part1" for table "hom_bm_ao"
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part2" for table "hom_bm_ao"
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part3" for table "hom_bm_ao"
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part4" for table "hom_bm_ao"
 insert into bm.hom_bm_ao select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index hom_bm_ao_idx on bm.hom_bm_ao using bitmap (i);
 NOTICE:  building index for child partition "hom_bm_ao_1_prt_part0"
@@ -10227,7 +10130,6 @@ NOTICE:  building index for child partition "hom_bm_ao_1_prt_part3"
 NOTICE:  building index for child partition "hom_bm_ao_1_prt_part4"
 alter table bm.hom_bm_ao drop column to_be_dropped;
 alter table bm.hom_bm_ao add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "hom_bm_ao_1_prt_part5" for table "hom_bm_ao"
 insert into bm.hom_bm_ao values(2, 5, '2');
 select sum(i) i_sum, sum(j) j_sum, sum(t::integer) t_sum from bm.hom_bm_ao where i=2 and t='2';
  i_sum | j_sum | t_sum 
@@ -10246,11 +10148,6 @@ distributed by (i) partition by list(j)
    partition part2 values(2),
    partition part3 values(3),
    partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part0" for table "hom_bm_aoco"
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part1" for table "hom_bm_aoco"
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part2" for table "hom_bm_aoco"
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part3" for table "hom_bm_aoco"
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part4" for table "hom_bm_aoco"
 insert into bm.hom_bm_aoco select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 create index hom_bm_aoco_idx on bm.hom_bm_aoco using bitmap (i);
 NOTICE:  building index for child partition "hom_bm_aoco_1_prt_part0"
@@ -10260,7 +10157,6 @@ NOTICE:  building index for child partition "hom_bm_aoco_1_prt_part3"
 NOTICE:  building index for child partition "hom_bm_aoco_1_prt_part4"
 alter table bm.hom_bm_aoco drop column to_be_dropped;
 alter table bm.hom_bm_aoco add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "hom_bm_aoco_1_prt_part5" for table "hom_bm_aoco"
 insert into bm.hom_bm_aoco values(2, 5, '2');
 select sum(i) i_sum, sum(j) j_sum, sum(t::integer) t_sum from bm.hom_bm_aoco where i=2 and t='2';
  i_sum | j_sum | t_sum 
@@ -10275,11 +10171,6 @@ create table bm.het_bm (i int, to_be_dropped char(5), j int, t text) distributed
    partition part1 values(1),
    partition part2 values(2) with (appendonly=true, compresslevel=5, orientation=row),
    partition part3 values(3), partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part0" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part1" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part2" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part3" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part4" for table "het_bm"
 insert into bm.het_bm select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 -- Create index before dropping a column
 create index het_bm_i_idx on bm.het_bm using bitmap (i);
@@ -10296,7 +10187,6 @@ NOTICE:  building index for child partition "het_bm_1_prt_part3"
 NOTICE:  building index for child partition "het_bm_1_prt_part4"
 alter table bm.het_bm drop column to_be_dropped;
 alter table bm.het_bm add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part5" for table "het_bm"
 insert into bm.het_bm values(2, 5, '2');
 select sum(i) i_sum, sum(j) j_sum, sum(t::integer) t_sum from bm.het_bm where i=2 and j=2;
  i_sum | j_sum | t_sum 
@@ -10340,15 +10230,9 @@ create table bm.het_bm (i int, to_be_dropped char(5), j int, t text) distributed
    partition part1 values(1),
    partition part2 values(2) with (appendonly=true, compresslevel=5, orientation=row),
    partition part3 values(3), partition part4 values(4));
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part0" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part1" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part2" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part3" for table "het_bm"
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part4" for table "het_bm"
 insert into bm.het_bm select i % 10, 'drop', i % 5, (i % 10)::text  from generate_series(1, 100) i;
 alter table bm.het_bm drop column to_be_dropped;
 alter table bm.het_bm add partition part5 values(5);
-NOTICE:  CREATE TABLE will create partition "het_bm_1_prt_part5" for table "het_bm"
 -- Create index after dropping a column but before we insert into newly created part
 create index het_bm_i_idx on bm.het_bm using bitmap (i);
 NOTICE:  building index for child partition "het_bm_1_prt_part0"
@@ -10429,8 +10313,6 @@ CREATE TABLE my_tq_agg_opt_part (
 ) DISTRIBUTED BY (ets)
    PARTITION BY RANGE(bid_price)(PARTITION p1 START(0) END(200000),
                                  PARTITION p2 START(200000) END(900000));
-NOTICE:  CREATE TABLE will create partition "my_tq_agg_opt_part_1_prt_p1" for table "my_tq_agg_opt_part"
-NOTICE:  CREATE TABLE will create partition "my_tq_agg_opt_part_1_prt_p2" for table "my_tq_agg_opt_part"
 CREATE INDEX my_tq_agg_opt_part_ets_end_ts_ix_1 ON my_tq_agg_opt_part_1_prt_p1 USING btree (ets, end_ts);
 CREATE INDEX my_tq_agg_opt_part_ets_end_ts_ix_2 ON my_tq_agg_opt_part_1_prt_p2 USING btree (ets);
 CREATE FUNCTION plusone(numeric) RETURNS numeric AS $$
@@ -11554,11 +11436,7 @@ NOTICE:  table "touter" does not exist, skipping
 NOTICE:  table "tinner" does not exist, skipping
 CREATE TABLE touter(a int, b int) DISTRIBUTED BY (a);
 CREATE TABLE tinnerbitmap(a int, b int) DISTRIBUTED BY (a) PARTITION BY range(b) (start (0) end (6) every (3));
-NOTICE:  CREATE TABLE will create partition "tinnerbitmap_1_prt_1" for table "tinnerbitmap"
-NOTICE:  CREATE TABLE will create partition "tinnerbitmap_1_prt_2" for table "tinnerbitmap"
 CREATE TABLE tinnerbtree(a int, b int) DISTRIBUTED BY (a) PARTITION BY range(b) (start (0) end (6) every (3));
-NOTICE:  CREATE TABLE will create partition "tinnerbtree_1_prt_1" for table "tinnerbtree"
-NOTICE:  CREATE TABLE will create partition "tinnerbtree_1_prt_2" for table "tinnerbtree"
 INSERT INTO touter SELECT i, i%6 FROM generate_series(1,10) i;
 INSERT INTO tinnerbitmap select i, i%6 FROM generate_series(1,1000) i;
 INSERT INTO tinnerbtree select i, i%6 FROM generate_series(1,1000) i;
@@ -11628,12 +11506,6 @@ SELECT * FROM touter LEFT JOIN tinnerbtree ON touter.a = tinnerbtree.a AND tinne
 CREATE TABLE ds_part ( a INT, b INT, c INT) PARTITION BY RANGE(c)( START(1) END (10) EVERY (2), DEFAULT PARTITION deflt);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_deflt" for table "ds_part"
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_2" for table "ds_part"
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_3" for table "ds_part"
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_4" for table "ds_part"
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_5" for table "ds_part"
-NOTICE:  CREATE TABLE will create partition "ds_part_1_prt_6" for table "ds_part"
 CREATE TABLE non_part1 (c INT);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -12038,17 +11910,9 @@ DETAIL:  Unknown error: Partially Distributed Data
 create table part1(a int, b int) partition by range(b) (start(1) end(5) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "part1_1_prt_1" for table "part1"
-NOTICE:  CREATE TABLE will create partition "part1_1_prt_2" for table "part1"
-NOTICE:  CREATE TABLE will create partition "part1_1_prt_3" for table "part1"
-NOTICE:  CREATE TABLE will create partition "part1_1_prt_4" for table "part1"
 create table part2(a int, b int) partition by range(b) (start(1) end(5) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "part2_1_prt_1" for table "part2"
-NOTICE:  CREATE TABLE will create partition "part2_1_prt_2" for table "part2"
-NOTICE:  CREATE TABLE will create partition "part2_1_prt_3" for table "part2"
-NOTICE:  CREATE TABLE will create partition "part2_1_prt_4" for table "part2"
 insert into part1 select i, (i % 2) + 1 from generate_series(1, 1000) i;
 insert into part2 select i, (i % 2) + 1 from generate_series(1, 100) i;
 -- make sure some child partitions have not been analyzed. This just means that

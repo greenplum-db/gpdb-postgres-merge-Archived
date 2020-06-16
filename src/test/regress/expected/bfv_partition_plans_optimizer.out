@@ -37,10 +37,6 @@ language plpythonu;
 create table mpp3061 (i int) partition by range(i) (start(1) end(5) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp3061_1_prt_1" for table "mpp3061"
-NOTICE:  CREATE TABLE will create partition "mpp3061_1_prt_2" for table "mpp3061"
-NOTICE:  CREATE TABLE will create partition "mpp3061_1_prt_3" for table "mpp3061"
-NOTICE:  CREATE TABLE will create partition "mpp3061_1_prt_4" for table "mpp3061"
 insert into mpp3061 values(1);
 update mpp3061 set i = 2 where i = 1;
 drop table mpp3061;
@@ -63,12 +59,6 @@ distributed by (subscription_id, bill_stmt_id)
     (
     start ('2009-02-01'::date) end ('2009-08-01'::date)  exclusive EVERY (INTERVAL '1 month')
     );
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_1" for table "mpp7980"
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_2" for table "mpp7980"
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_3" for table "mpp7980"
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_4" for table "mpp7980"
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_5" for table "mpp7980"
-NOTICE:  CREATE TABLE will create partition "mpp7980_1_prt_6" for table "mpp7980"
     
 -- TEST
 select count_operator('select cust_type, subscription_status,count(distinct subscription_id),sum(voice_call_min),sum(minute_per_call) from mpp7980 where month_id =E''2009-04-01'' group by rollup(1,2);','SIGSEGV');
@@ -107,8 +97,6 @@ NOTICE:  table "mpp23195_t2" does not exist, skipping
 create table mpp23195_t1 (i int) partition by range(i) (partition pt1 start(1) end(10), partition pt2 start(10) end(20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp23195_t1_1_prt_pt1" for table "mpp23195_t1"
-NOTICE:  CREATE TABLE will create partition "mpp23195_t1_1_prt_pt2" for table "mpp23195_t1"
 create index index_mpp23195_t1_i on mpp23195_t1(i);
 NOTICE:  building index for child partition "mpp23195_t1_1_prt_pt1"
 NOTICE:  building index for child partition "mpp23195_t1_1_prt_pt2"
@@ -149,8 +137,6 @@ NOTICE:  table "mpp21834_t2" does not exist, skipping
 create table mpp21834_t1 (i int, j int) partition by range(i) (partition pp1 start(1) end(10), partition pp2 start(10) end(20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp21834_t1_1_prt_pp1" for table "mpp21834_t1"
-NOTICE:  CREATE TABLE will create partition "mpp21834_t1_1_prt_pp2" for table "mpp21834_t1"
 create index index_1 on mpp21834_t1(i);
 NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp1"
 NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp2"
@@ -198,9 +184,6 @@ create table mpp23288(a int, b int)
   );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp23288_1_prt_pfirst" for table "mpp23288"
-NOTICE:  CREATE TABLE will create partition "mpp23288_1_prt_pinter" for table "mpp23288"
-NOTICE:  CREATE TABLE will create partition "mpp23288_1_prt_plast" for table "mpp23288"
 insert into mpp23288(a) select generate_series(1,20);
 analyze mpp23288;
 -- TEST
@@ -476,12 +459,6 @@ PARTITION BY RANGE(ptid)
           DEFAULT PARTITION junk_data
           )
 ;
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_junk_data" for table "mpp24151_pt"
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_2" for table "mpp24151_pt"
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_3" for table "mpp24151_pt"
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_4" for table "mpp24151_pt"
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_5" for table "mpp24151_pt"
-NOTICE:  CREATE TABLE will create partition "mpp24151_pt_1_prt_6" for table "mpp24151_pt"
 create index pt1_idx on mpp24151_pt using btree (pt1);
 NOTICE:  building index for child partition "mpp24151_pt_1_prt_junk_data"
 NOTICE:  building index for child partition "mpp24151_pt_1_prt_2"
@@ -727,27 +704,12 @@ NOTICE:  table "p" does not exist, skipping
 create table p1 (a int, b int) partition by range(b) (start (1) end(100) every (20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_1" for table "p1"
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_2" for table "p1"
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_3" for table "p1"
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_4" for table "p1"
-NOTICE:  CREATE TABLE will create partition "p1_1_prt_5" for table "p1"
 create table p2 (a int, b int) partition by range(b) (start (1) end(100) every (20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "p2_1_prt_1" for table "p2"
-NOTICE:  CREATE TABLE will create partition "p2_1_prt_2" for table "p2"
-NOTICE:  CREATE TABLE will create partition "p2_1_prt_3" for table "p2"
-NOTICE:  CREATE TABLE will create partition "p2_1_prt_4" for table "p2"
-NOTICE:  CREATE TABLE will create partition "p2_1_prt_5" for table "p2"
 create table p3 (a int, b int) partition by range(b) (start (1) end(100) every (20));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "p3_1_prt_1" for table "p3"
-NOTICE:  CREATE TABLE will create partition "p3_1_prt_2" for table "p3"
-NOTICE:  CREATE TABLE will create partition "p3_1_prt_3" for table "p3"
-NOTICE:  CREATE TABLE will create partition "p3_1_prt_4" for table "p3"
-NOTICE:  CREATE TABLE will create partition "p3_1_prt_5" for table "p3"
 create table p (a int, b int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -848,29 +810,9 @@ NOTICE:  table "dbs" does not exist, skipping
 create table dts(c1 int, c2 int) partition by range(c2) (start(1) end(11) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_1" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_2" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_3" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_4" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_5" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_6" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_7" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_8" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_9" for table "dts"
-NOTICE:  CREATE TABLE will create partition "dts_1_prt_10" for table "dts"
 create table dis(c1 int, c2 int, c3 int) partition by range(c2) (start(1) end(11) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_1" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_2" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_3" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_4" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_5" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_6" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_7" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_8" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_9" for table "dis"
-NOTICE:  CREATE TABLE will create partition "dis_1_prt_10" for table "dis"
 create index dis_index on dis(c3);
 NOTICE:  building index for child partition "dis_1_prt_1"
 NOTICE:  building index for child partition "dis_1_prt_2"
@@ -885,16 +827,6 @@ NOTICE:  building index for child partition "dis_1_prt_10"
 CREATE TABLE dbs(c1 int, c2 int, c3 int) partition by range(c2) (start(1) end(11) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_1" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_2" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_3" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_4" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_5" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_6" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_7" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_8" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_9" for table "dbs"
-NOTICE:  CREATE TABLE will create partition "dbs_1_prt_10" for table "dbs"
 create index dbs_index on dbs using bitmap(c3);
 NOTICE:  building index for child partition "dbs_1_prt_1"
 NOTICE:  building index for child partition "dbs_1_prt_2"
@@ -985,9 +917,6 @@ set optimizer_partition_selection_log=on;
 create table pp(a int, b int, c int) partition by range(b) (start(1) end(15) every(5));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pp_1_prt_1" for table "pp"
-NOTICE:  CREATE TABLE will create partition "pp_1_prt_2" for table "pp"
-NOTICE:  CREATE TABLE will create partition "pp_1_prt_3" for table "pp"
 insert into pp values (1,1,2),(2,6,2), (3,11,2);
 -- Heterogeneous Index on the partition table
 create index pp_1_prt_1_idx on pp_1_prt_1(c);
@@ -1041,10 +970,6 @@ PARTITION BY LIST(month_id)
           PARTITION p200802 VALUES('200802'),
           PARTITION p200803 VALUES('200803')
 );
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200800" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200801" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200802" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200803" for table "ds_4"
 -- TEST
 select * from ds_4 where month_id = '200800';
  month_id | cust_group_acc | mobile_no 
@@ -1111,8 +1036,6 @@ PARTITION BY RANGE (b)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'b' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_1" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2" for table "bar"
 INSERT INTO bar SELECT g % 20, g % 20 from generate_series(1, 1000) g;
 ANALYZE bar;
 SELECT b FROM bar GROUP BY b;
@@ -1175,10 +1098,6 @@ EVERY ('2 mons'::interval)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'oid' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_foo" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_2" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_3" for table "mpp8031"
-NOTICE:  CREATE TABLE will create partition "mpp8031_1_prt_4" for table "mpp8031"
 explain analyze select a.* from mpp8031 a, mpp8031 b where a.oid = b.oid;
                                                                              QUERY PLAN                                                                             
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1225,9 +1144,6 @@ SUBPARTITION TEMPLATE
 	PARTITION p20151110 START (2015111000::numeric) 
 END (2015111100::numeric) WITH (appendonly=false)
 );
-NOTICE:  CREATE TABLE will create partition "part_tbl_1_prt_p20151110" for table "part_tbl"
-NOTICE:  CREATE TABLE will create partition "part_tbl_1_prt_p20151110_2_prt_package5" for table "part_tbl_1_prt_p20151110"
-NOTICE:  CREATE TABLE will create partition "part_tbl_1_prt_p20151110_2_prt_other_services" for table "part_tbl_1_prt_p20151110"
 INSERT INTO part_tbl VALUES (2015111000, 479534741, 99999999);
 INSERT INTO part_tbl VALUES (2015111000, 479534742, 99999999);
 CREATE INDEX part_tbl_idx 
@@ -1274,27 +1190,9 @@ ERROR:  prepared statement "f3" does not exist
 create table r_part(a int, b int) partition by range(a) (start (1) end(10) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_1" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_2" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_3" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_4" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_5" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_6" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_7" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_8" for table "r_part"
-NOTICE:  CREATE TABLE will create partition "r_part_1_prt_9" for table "r_part"
 create table r_co(a int, b int) with (orientation=column, appendonly=true) partition by range(a) (start (1) end(10) every(1)) ;
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_1" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_2" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_3" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_4" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_5" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_6" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_7" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_8" for table "r_co"
-NOTICE:  CREATE TABLE will create partition "r_co_1_prt_9" for table "r_co"
 insert into r_part values (1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8);
 -- following tests rely on the data distribution, verify them
 select gp_segment_id, * from r_part order by a,b;
@@ -1471,10 +1369,6 @@ NOTICE:  table "fact" does not exist, skipping
 deallocate f1;
 ERROR:  prepared statement "f1" does not exist
 create table fact(x int, dd date, dt text) distributed by (x) partition by range (dd) ( start('2008-01-01') end ('2320-01-01') every(interval '100 years'));
-NOTICE:  CREATE TABLE will create partition "fact_1_prt_1" for table "fact"
-NOTICE:  CREATE TABLE will create partition "fact_1_prt_2" for table "fact"
-NOTICE:  CREATE TABLE will create partition "fact_1_prt_3" for table "fact"
-NOTICE:  CREATE TABLE will create partition "fact_1_prt_4" for table "fact"
 -- end_ignore
 analyze fact;
 select '2009-01-02'::date = to_date('2009-01-02','YYYY-MM-DD'); -- ensure that both are in fact equal
@@ -1564,16 +1458,6 @@ deallocate f1;
 -- MPP-6247
 -- Delete Using on partitioned table causes repetitive scans on using table	
 create table mpp6247_foo ( c1 int, dt date ) distributed by ( c1 ) partition by range (dt) ( start ( date '2009-05-01' ) end ( date '2009-05-11' ) every ( interval '1 day' ) );
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_1" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_2" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_3" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_4" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_5" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_6" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_7" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_8" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_9" for table "mpp6247_foo"
-NOTICE:  CREATE TABLE will create partition "mpp6247_foo_1_prt_10" for table "mpp6247_foo"
 create table mpp6247_bar (like mpp6247_foo);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 -- EXPECT: Single HJ after partition elimination instead of sequence of HJ under Append

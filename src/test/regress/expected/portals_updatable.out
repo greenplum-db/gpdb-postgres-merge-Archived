@@ -303,17 +303,6 @@ CREATE TABLE portals_updatable_rank(id int, rank int, f int)
 	PARTITION BY RANGE (rank)
 		(START (0) END (10) EVERY (1),
 		 DEFAULT PARTITION extra );
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_extra" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_2" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_3" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_4" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_5" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_6" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_7" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_8" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_9" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_10" for table "portals_updatable_rank"
-NOTICE:  CREATE TABLE will create partition "portals_updatable_rank_1_prt_11" for table "portals_updatable_rank"
 INSERT INTO portals_updatable_rank (SELECT x, x, x FROM generate_series(0, 10) x);
 BEGIN;
 DECLARE c CURSOR FOR SELECT * FROM portals_updatable_rank WHERE id = 1;
@@ -513,34 +502,6 @@ CREATE TABLE bar (a int, b int, c int, d int)
             SUBPARTITION s2 VALUES(3,4,5)
         )
     ( DEFAULT PARTITION others, START(0) END(6) EVERY(1) );
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_others" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_others_2_prt_subothers" for table "bar_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_others_2_prt_s1" for table "bar_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_others_2_prt_s2" for table "bar_1_prt_others"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_subothers" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_s1" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_2_2_prt_s2" for table "bar_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_3" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_3_2_prt_subothers" for table "bar_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_3_2_prt_s1" for table "bar_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_3_2_prt_s2" for table "bar_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_4" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_4_2_prt_subothers" for table "bar_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_4_2_prt_s1" for table "bar_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_4_2_prt_s2" for table "bar_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_5" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_5_2_prt_subothers" for table "bar_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_5_2_prt_s1" for table "bar_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_5_2_prt_s2" for table "bar_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_6" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_6_2_prt_subothers" for table "bar_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_6_2_prt_s1" for table "bar_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_6_2_prt_s2" for table "bar_1_prt_6"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_7" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_7_2_prt_subothers" for table "bar_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_7_2_prt_s1" for table "bar_1_prt_7"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_7_2_prt_s2" for table "bar_1_prt_7"
 INSERT INTO bar (SELECT x, x % 6, x % 6, x FROM generate_series(0, 11) x);
 BEGIN;
 DECLARE a CURSOR FOR SELECT * FROM bar WHERE a = 0;

@@ -5929,8 +5929,6 @@ create table r6756 ( a int, b int, x int, y int )
         values (0), 
         values (1)
         );
-NOTICE:  CREATE TABLE will create partition "r6756_1_prt_1" for table "r6756"
-NOTICE:  CREATE TABLE will create partition "r6756_1_prt_2" for table "r6756"
 create table s6756 ( c int, d int, e int ) 
     distributed randomly;
 insert into s6756 values 

@@ -495,10 +495,6 @@ partition by range(b)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "tbl5028_part_test_1_prt_def_part" for table "tbl5028_part_test"
-NOTICE:  CREATE TABLE will create partition "tbl5028_part_test_1_prt_p1" for table "tbl5028_part_test"
-NOTICE:  CREATE TABLE will create partition "tbl5028_part_test_1_prt_p2" for table "tbl5028_part_test"
-NOTICE:  CREATE TABLE will create partition "tbl5028_part_test_1_prt_p3" for table "tbl5028_part_test"
 INSERT INTO qp_misc_jiras.tbl5028_part_test VALUES (1, '2006-1-01', 'Year 1');
 INSERT INTO qp_misc_jiras.tbl5028_part_test VALUES (1, '2007-1-01', 'Year 2');
 INSERT INTO qp_misc_jiras.tbl5028_part_test VALUES (1, '2008-1-01', 'Year 3');
@@ -625,27 +621,6 @@ partition p1 start('0') end('25') every (12)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c_custkey' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1" for table "tbl5151_customer"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_1" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_2" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_3" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_4" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_5" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_1_2_prt_6" for table "tbl5151_customer_1_prt_p1_1"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2" for table "tbl5151_customer"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_1" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_2" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_3" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_4" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_5" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_2_2_prt_6" for table "tbl5151_customer_1_prt_p1_2"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3" for table "tbl5151_customer"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_1" for table "tbl5151_customer_1_prt_p1_3"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_2" for table "tbl5151_customer_1_prt_p1_3"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_3" for table "tbl5151_customer_1_prt_p1_3"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_4" for table "tbl5151_customer_1_prt_p1_3"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_5" for table "tbl5151_customer_1_prt_p1_3"
-NOTICE:  CREATE TABLE will create partition "tbl5151_customer_1_prt_p1_3_2_prt_6" for table "tbl5151_customer_1_prt_p1_3"
 create table qp_misc_jiras.tbl5151_customer(C_CUSTKEY INTEGER, primary key(c_custkey));
 ERROR:  relation "tbl5151_customer" already exists
 drop table qp_misc_jiras.tbl5151_customer;
@@ -2976,8 +2951,6 @@ select x from qp_misc_jiras.tbl6448;
 
 drop table qp_misc_jiras.tbl6448;
 create table qp_misc_jiras.tbl6833_anl(a int, b int, c int) distributed by (a) partition by range (b) (partition bb start (0) end (2) every (1));
-NOTICE:  CREATE TABLE will create partition "tbl6833_anl_1_prt_bb_1" for table "tbl6833_anl"
-NOTICE:  CREATE TABLE will create partition "tbl6833_anl_1_prt_bb_2" for table "tbl6833_anl"
 analyze qp_misc_jiras.tbl6833_anl;
 explain select * from qp_misc_jiras.tbl6833_anl; -- should not hit cdbRelSize();
                                               QUERY PLAN                                               
@@ -2998,8 +2971,6 @@ select relname, reltuples, relpages from pg_class where relname like 'tbl6833_an
 (3 rows)
 
 create table qp_misc_jiras.tbl6833_vac(a int, b int, c int) distributed by (a) partition by range (b) (partition bb start (0) end (2) every (1));
-NOTICE:  CREATE TABLE will create partition "tbl6833_vac_1_prt_bb_1" for table "tbl6833_vac"
-NOTICE:  CREATE TABLE will create partition "tbl6833_vac_1_prt_bb_2" for table "tbl6833_vac"
 vacuum qp_misc_jiras.tbl6833_vac;
 explain select * from qp_misc_jiras.tbl6833_vac; -- should not hit cdbRelSize();
                                               QUERY PLAN                                               
@@ -3574,9 +3545,6 @@ CREATE TABLE qp_misc_jiras.tbl7740_rank (id int, gender char(1), count char(1) )
             ( PARTITION girls VALUES (('F','1')),
               PARTITION boys VALUES (('M','1')),
               DEFAULT PARTITION other );
-NOTICE:  CREATE TABLE will create partition "tbl7740_rank_1_prt_girls" for table "tbl7740_rank"
-NOTICE:  CREATE TABLE will create partition "tbl7740_rank_1_prt_boys" for table "tbl7740_rank"
-NOTICE:  CREATE TABLE will create partition "tbl7740_rank_1_prt_other" for table "tbl7740_rank"
 insert into qp_misc_jiras.tbl7740_rank values(1,'F','1');
 insert into qp_misc_jiras.tbl7740_rank values(1,'F','0');
 insert into qp_misc_jiras.tbl7740_rank values(1,'M','1');
@@ -4708,10 +4676,7 @@ DROP AGGREGATE median2(numeric);
 create table qp_misc_jiras.tbl7285_axg (id int, time timestamp) partition by range (time) (start ('2009-01-01 00:00:00'::timestamp without time zone) end ('2009-01-03 00:00:00'::timestamp without time zone) every ('1 day'::interval));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "tbl7285_axg_1_prt_1" for table "tbl7285_axg"
-NOTICE:  CREATE TABLE will create partition "tbl7285_axg_1_prt_2" for table "tbl7285_axg"
 alter table qp_misc_jiras.tbl7285_axg add partition p20090103 start ('2009-01-03 00:00:00'::timestamp without time zone) end ('2009-01-04 00:00:00'::timestamp without time zone);
-NOTICE:  CREATE TABLE will create partition "tbl7285_axg_1_prt_p20090103" for table "tbl7285_axg"
 select count(*) from qp_misc_jiras.tbl7285_axg;
  count 
 -------
@@ -4891,8 +4856,6 @@ partition by range (partition_key)
 default partition default_partition,
 partition d_2010_09_28 start (date '2010-09-28') end (date '2010-09-29')
 );
-NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_default_partition" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_d_2010_09_28" for table "tbl1_tbl_11257"
 select relname, distkey as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl1_tbl_11257%';
                 relname                 | distribution_attributes 
 ----------------------------------------+-------------------------
@@ -4928,8 +4891,6 @@ partition by range (b)
  default partition default_partition,
 partition p1 start (1) end (2)
  );
-NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_default_partition" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_p1" for table "tbl2_tbl_11257"
 insert into qp_misc_jiras.tbl2_tbl_11257 values(1,2,3);
 select * from qp_misc_jiras.tbl2_tbl_11257;
  a | b | c 

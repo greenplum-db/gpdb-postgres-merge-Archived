@@ -27,17 +27,6 @@ PARTITION BY range(d) (
         start(1) end(1001) every(100),
         default partition def
 );
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_def" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_2" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_3" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_4" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_5" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_6" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_7" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_8" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_9" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_10" for table "dml_union_s"
-NOTICE:  CREATE TABLE will create partition "dml_union_s_1_prt_11" for table "dml_union_s"
 INSERT INTO dml_union_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
 INSERT INTO dml_union_r VALUES(NULL,NULL,'text',NULL),(NULL,NULL,'text',NULL),(NULL,NULL,'text',NULL),(NULL,NULL,'text',NULL),(NULL,NULL,'text',NULL);
 INSERT INTO dml_union_r VALUES(1,1,'text',1),(2,2,'text',2),(3,3,'text',3),(4,4,'text',4),(5,5,'text',5);

@@ -9,8 +9,6 @@ partition by list (b)
 (partition b1 values ('f'),
  partition b2 values ('t')
 );
-NOTICE:  CREATE TABLE will create partition "ao_age_test_1_prt_b1" for table "ao_age_test"
-NOTICE:  CREATE TABLE will create partition "ao_age_test_1_prt_b2" for table "ao_age_test"
 insert into ao_age_test select i, (i%123 > 50), (i/11) || '',
 '2008/10/12'::date + (i || ' days')::interval
 from generate_series(0, 99) i;
@@ -124,8 +122,6 @@ partition by list (b)
 (partition b1 values ('f'),
  partition b2 values ('t')
 );
-NOTICE:  CREATE TABLE will create partition "vactst_1_prt_b1" for table "vactst"
-NOTICE:  CREATE TABLE will create partition "vactst_1_prt_b2" for table "vactst"
 insert into vactst select i, (i%123 > 50), (i/11) || '', '2008/10/12'::date + (i || ' days')::interval
 from generate_series(0, 99) i;
 vacuum analyze vactst;

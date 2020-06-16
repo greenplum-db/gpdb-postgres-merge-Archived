@@ -31,11 +31,6 @@ partition by list(col2)
   partition part4 values(31,32,33,34,35,36,37,38,39,40),
   partition part5 values(41,42,43,44,45,46,47,48,49,50)
 );
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_1_prt_part1" for table "pt_lt_tab"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_1_prt_part2" for table "pt_lt_tab"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_1_prt_part3" for table "pt_lt_tab"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_1_prt_part4" for table "pt_lt_tab"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_1_prt_part5" for table "pt_lt_tab"
 INSERT INTO pt_lt_tab SELECT i, i,'a',True FROM generate_series(1,3)i;
 INSERT INTO pt_lt_tab SELECT i, i,'b',True FROM generate_series(4,6)i;
 INSERT INTO pt_lt_tab SELECT i, i,'c',True FROM generate_series(7,10)i;
@@ -71,12 +66,6 @@ partition by list(col2)
   partition part5 VALUES(41,42,43,44,45,46,47,48,49,50),
   default partition def
 );
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_part1" for table "pt_lt_tab_df"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_part2" for table "pt_lt_tab_df"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_part3" for table "pt_lt_tab_df"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_part4" for table "pt_lt_tab_df"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_part5" for table "pt_lt_tab_df"
-NOTICE:  CREATE TABLE will create partition "pt_lt_tab_df_1_prt_def" for table "pt_lt_tab_df"
 INSERT INTO pt_lt_tab_df SELECT i, i,'a',True FROM generate_series(1,3)i;
 INSERT INTO pt_lt_tab_df SELECT i, i,'b',True FROM generate_series(4,6)i;
 INSERT INTO pt_lt_tab_df SELECT i, i,'c',True FROM generate_series(7,10)i;
@@ -1664,20 +1653,6 @@ PARTITION BY list(k)
   SUBPARTITION BY list(j) SUBPARTITION TEMPLATE (subpartition p11 values (1), subpartition p12 values(2))
   SUBPARTITION BY list(l, m) SUBPARTITION TEMPLATE (subpartition p11 values ((1,1)), subpartition p12 values((2,2)))
 ( partition p1 values(1), partition p2 values(2));
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1" for table "pt_complex"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p11" for table "pt_complex_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p11_3_prt_p11" for table "pt_complex_1_prt_p1_2_prt_p11"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p11_3_prt_p12" for table "pt_complex_1_prt_p1_2_prt_p11"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p12" for table "pt_complex_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p12_3_prt_p11" for table "pt_complex_1_prt_p1_2_prt_p12"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p1_2_prt_p12_3_prt_p12" for table "pt_complex_1_prt_p1_2_prt_p12"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2" for table "pt_complex"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p11" for table "pt_complex_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p11_3_prt_p11" for table "pt_complex_1_prt_p2_2_prt_p11"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p11_3_prt_p12" for table "pt_complex_1_prt_p2_2_prt_p11"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p12" for table "pt_complex_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p12_3_prt_p11" for table "pt_complex_1_prt_p2_2_prt_p12"
-NOTICE:  CREATE TABLE will create partition "pt_complex_1_prt_p2_2_prt_p12_3_prt_p12" for table "pt_complex_1_prt_p2_2_prt_p12"
 INSERT INTO pt_complex VALUES (1, 1, 1, 1, 1), (2, 2, 2, 2, 2);
 CREATE INDEX i_pt_complex ON pt_complex (i);
 NOTICE:  building index for child partition "pt_complex_1_prt_p1"
@@ -1755,10 +1730,6 @@ PARTITION BY LIST(month_id)
           PARTITION p200802 VALUES('200802'),
           PARTITION p200803 VALUES('200803')
 );
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200800" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200801" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200802" for table "ds_4"
-NOTICE:  CREATE TABLE will create partition "ds_4_1_prt_p200803" for table "ds_4"
 -- this is the case that worked before MPP-6861
 -- start_ignore
 -- Known_opt_diff: MPP-21316
@@ -1927,16 +1898,6 @@ PARTITION BY LIST(month_id)
           PARTITION p200808 VALUES('200808'),
           PARTITION p200809 VALUES('200809')
 );
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200800" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200801" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200802" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200803" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200804" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200805" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200806" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200807" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200808" for table "ds_2"
-NOTICE:  CREATE TABLE will create partition "ds_2_1_prt_p200809" for table "ds_2"
 insert into ds_2(month_id) values('200800');
 insert into ds_2(month_id) values('200801');
 insert into ds_2(month_id) values('200802');
@@ -2109,16 +2070,6 @@ drop table if exists partprune_foo;
 create table partprune_foo(a int, b int, c int) partition by range (b) (start (1) end (101) every (10));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_1" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_2" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_3" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_4" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_5" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_6" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_7" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_8" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_9" for table "partprune_foo"
-NOTICE:  CREATE TABLE will create partition "partprune_foo_1_prt_10" for table "partprune_foo"
 insert into partprune_foo select g % 5 + 1, g + 1, g % 10 + 1 from generate_series(0, 99) g;
 analyze partprune_foo;
 select get_selected_parts('explain select * from partprune_foo;');
@@ -2469,110 +2420,6 @@ PARTITION BY RANGE (year)
 		        DEFAULT SUBPARTITION other_days)
 ( START (2002) END (2012) EVERY (4), 
   DEFAULT PARTITION outlying_years );
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years" for table "date_parts"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q1" for table "date_parts_1_prt_outlying_years"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q1_3_prt_other_days" for table "date_parts_1_prt_outlying_years_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q1_3_prt_2" for table "date_parts_1_prt_outlying_years_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q1_3_prt_3" for table "date_parts_1_prt_outlying_years_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q1_3_prt_4" for table "date_parts_1_prt_outlying_years_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q2" for table "date_parts_1_prt_outlying_years"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q2_3_prt_other_days" for table "date_parts_1_prt_outlying_years_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q2_3_prt_2" for table "date_parts_1_prt_outlying_years_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q2_3_prt_3" for table "date_parts_1_prt_outlying_years_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q2_3_prt_4" for table "date_parts_1_prt_outlying_years_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q3" for table "date_parts_1_prt_outlying_years"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q3_3_prt_other_days" for table "date_parts_1_prt_outlying_years_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q3_3_prt_2" for table "date_parts_1_prt_outlying_years_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q3_3_prt_3" for table "date_parts_1_prt_outlying_years_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q3_3_prt_4" for table "date_parts_1_prt_outlying_years_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q4" for table "date_parts_1_prt_outlying_years"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q4_3_prt_other_days" for table "date_parts_1_prt_outlying_years_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q4_3_prt_2" for table "date_parts_1_prt_outlying_years_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q4_3_prt_3" for table "date_parts_1_prt_outlying_years_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_q4_3_prt_4" for table "date_parts_1_prt_outlying_years_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_other_months" for table "date_parts_1_prt_outlying_years"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_other_mo_3_prt_other_days" for table "date_parts_1_prt_outlying_years_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_other_months_3_prt_2" for table "date_parts_1_prt_outlying_years_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_other_months_3_prt_3" for table "date_parts_1_prt_outlying_years_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_outlying_years_2_prt_other_months_3_prt_4" for table "date_parts_1_prt_outlying_years_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2" for table "date_parts"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q1" for table "date_parts_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q1_3_prt_other_days" for table "date_parts_1_prt_2_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q1_3_prt_2" for table "date_parts_1_prt_2_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q1_3_prt_3" for table "date_parts_1_prt_2_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q1_3_prt_4" for table "date_parts_1_prt_2_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q2" for table "date_parts_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q2_3_prt_other_days" for table "date_parts_1_prt_2_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q2_3_prt_2" for table "date_parts_1_prt_2_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q2_3_prt_3" for table "date_parts_1_prt_2_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q2_3_prt_4" for table "date_parts_1_prt_2_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q3" for table "date_parts_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q3_3_prt_other_days" for table "date_parts_1_prt_2_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q3_3_prt_2" for table "date_parts_1_prt_2_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q3_3_prt_3" for table "date_parts_1_prt_2_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q3_3_prt_4" for table "date_parts_1_prt_2_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q4" for table "date_parts_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q4_3_prt_other_days" for table "date_parts_1_prt_2_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q4_3_prt_2" for table "date_parts_1_prt_2_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q4_3_prt_3" for table "date_parts_1_prt_2_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_q4_3_prt_4" for table "date_parts_1_prt_2_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_other_months" for table "date_parts_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_other_months_3_prt_other_days" for table "date_parts_1_prt_2_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_other_months_3_prt_2" for table "date_parts_1_prt_2_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_other_months_3_prt_3" for table "date_parts_1_prt_2_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_2_2_prt_other_months_3_prt_4" for table "date_parts_1_prt_2_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3" for table "date_parts"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q1" for table "date_parts_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q1_3_prt_other_days" for table "date_parts_1_prt_3_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q1_3_prt_2" for table "date_parts_1_prt_3_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q1_3_prt_3" for table "date_parts_1_prt_3_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q1_3_prt_4" for table "date_parts_1_prt_3_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q2" for table "date_parts_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q2_3_prt_other_days" for table "date_parts_1_prt_3_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q2_3_prt_2" for table "date_parts_1_prt_3_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q2_3_prt_3" for table "date_parts_1_prt_3_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q2_3_prt_4" for table "date_parts_1_prt_3_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q3" for table "date_parts_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q3_3_prt_other_days" for table "date_parts_1_prt_3_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q3_3_prt_2" for table "date_parts_1_prt_3_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q3_3_prt_3" for table "date_parts_1_prt_3_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q3_3_prt_4" for table "date_parts_1_prt_3_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q4" for table "date_parts_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q4_3_prt_other_days" for table "date_parts_1_prt_3_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q4_3_prt_2" for table "date_parts_1_prt_3_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q4_3_prt_3" for table "date_parts_1_prt_3_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_q4_3_prt_4" for table "date_parts_1_prt_3_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_other_months" for table "date_parts_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_other_months_3_prt_other_days" for table "date_parts_1_prt_3_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_other_months_3_prt_2" for table "date_parts_1_prt_3_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_other_months_3_prt_3" for table "date_parts_1_prt_3_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_3_2_prt_other_months_3_prt_4" for table "date_parts_1_prt_3_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4" for table "date_parts"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q1" for table "date_parts_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q1_3_prt_other_days" for table "date_parts_1_prt_4_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q1_3_prt_2" for table "date_parts_1_prt_4_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q1_3_prt_3" for table "date_parts_1_prt_4_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q1_3_prt_4" for table "date_parts_1_prt_4_2_prt_q1"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q2" for table "date_parts_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q2_3_prt_other_days" for table "date_parts_1_prt_4_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q2_3_prt_2" for table "date_parts_1_prt_4_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q2_3_prt_3" for table "date_parts_1_prt_4_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q2_3_prt_4" for table "date_parts_1_prt_4_2_prt_q2"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q3" for table "date_parts_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q3_3_prt_other_days" for table "date_parts_1_prt_4_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q3_3_prt_2" for table "date_parts_1_prt_4_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q3_3_prt_3" for table "date_parts_1_prt_4_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q3_3_prt_4" for table "date_parts_1_prt_4_2_prt_q3"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q4" for table "date_parts_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q4_3_prt_other_days" for table "date_parts_1_prt_4_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q4_3_prt_2" for table "date_parts_1_prt_4_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q4_3_prt_3" for table "date_parts_1_prt_4_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_q4_3_prt_4" for table "date_parts_1_prt_4_2_prt_q4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_other_months" for table "date_parts_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_other_months_3_prt_other_days" for table "date_parts_1_prt_4_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_other_months_3_prt_2" for table "date_parts_1_prt_4_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_other_months_3_prt_3" for table "date_parts_1_prt_4_2_prt_other_months"
-NOTICE:  CREATE TABLE will create partition "date_parts_1_prt_4_2_prt_other_months_3_prt_4" for table "date_parts_1_prt_4_2_prt_other_months"
 insert into DATE_PARTS select i, extract(year from dt), extract(month from dt), extract(day from dt), NULL from (select i, '2002-01-01'::date + i * interval '1 day' day as dt from generate_series(1, 3650) as i) as t;
 -- Expected total parts => 4 * 1 * 4 => 16: 
 -- TODO #141973839: we selected extra parts because of disjunction: 32 parts: 4 * 2 * 4
@@ -2649,9 +2496,6 @@ partition by list (b)
 (partition p1 values(1,3), partition p2 values(4,2), default partition other);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_p1" for table "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_p2" for table "foo"
-NOTICE:  CREATE TABLE will create partition "foo_1_prt_other" for table "foo"
 -- General predicate
 -- Total 6 parts. b = 1: 1 part, b > 3: 2 parts, b in (0, 1): 2 parts. b is null: 1 part
 select get_selected_parts('explain analyze select * from foo where b = 1 union all select * from foo where b > 3 union all select * from foo where b in (0,1) union all select * from foo where b is null;');
@@ -2668,9 +2512,6 @@ PARTITION BY LIST (gender)
 ( PARTITION girls VALUES ('F', NULL), 
   PARTITION boys VALUES ('M'), 
   DEFAULT PARTITION other );
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_girls" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_boys" for table "pt"
-NOTICE:  CREATE TABLE will create partition "pt_1_prt_other" for table "pt"
 -- General filter
 -- TODO #141916623. Expecting 6 parts, but optimizer plan selects 7 parts. The 6 parts breakdown is: gender = 'F': 1 part, gender < 'M': 2 parts (including default), gender in ('F', F'M'): 2 parts, gender is null => 1 part
 select get_selected_parts('explain analyze select * from pt where gender = ''F'' union all select * from pt where gender < ''M'' union all select * from pt where gender in (''F'', ''FM'') union all select * from pt where gender is null;');
@@ -2745,31 +2586,6 @@ SUBPARTITION TEMPLATE
    END (date '2012-01-01') EXCLUSIVE
    EVERY (INTERVAL '3 month'), 
    DEFAULT PARTITION outlying_dates );
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_outlying_dates" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_outlying_dates_2_prt_usa" for table "sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_outlying_dates_2_prt_asia" for table "sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_outlying_dates_2_prt_europe" for table "sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_outlying_dates_2_prt_other_regions" for table "sales_1_prt_outlying_dates"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_usa" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_asia" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_europe" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_2_2_prt_other_regions" for table "sales_1_prt_2"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_usa" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_asia" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_europe" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_3_2_prt_other_regions" for table "sales_1_prt_3"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_usa" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_asia" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_europe" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_4_2_prt_other_regions" for table "sales_1_prt_4"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5" for table "sales"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_usa" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_asia" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_europe" for table "sales_1_prt_5"
-NOTICE:  CREATE TABLE will create partition "sales_1_prt_5_2_prt_other_regions" for table "sales_1_prt_5"
 -- This will introduce different column numbers in subsequent part tables
 alter table sales drop column to_be_dropped1;
 alter table sales drop column to_be_dropped2;
@@ -2889,18 +2705,6 @@ subpartition by range (i) subpartition template (start(1) end(4) every(2))
 partition p3 values(5.6), default partition other);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p1" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p1_2_prt_1" for table "bar_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p1_2_prt_2" for table "bar_1_prt_p1"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p2" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p2_2_prt_1" for table "bar_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p2_2_prt_2" for table "bar_1_prt_p2"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p3" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p3_2_prt_1" for table "bar_1_prt_p3"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_p3_2_prt_2" for table "bar_1_prt_p3"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_other" for table "bar"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_other_2_prt_1" for table "bar_1_prt_other"
-NOTICE:  CREATE TABLE will create partition "bar_1_prt_other_2_prt_2" for table "bar_1_prt_other"
 insert into bar values(1, 0.2); --p1
 insert into bar values(1, 1.7); --p2
 insert into bar values(1, 2.1); --default

@@ -4,7 +4,6 @@
 CREATE TABLE returning_parttab (distkey int4, partkey int4, i int, t text)
 DISTRIBUTED BY (distkey)
 PARTITION BY RANGE (partkey) (START (1) END (10));
-NOTICE:  CREATE TABLE will create partition "returning_parttab_1_prt_1" for table "returning_parttab"
 --
 -- Test INSERT RETURNING with partitioning
 --
@@ -31,7 +30,6 @@ returning distkey, partkey, i, t;
 -- just marked as dropped. Make sure the executor maps the columns correctly.
 ALTER TABLE returning_parttab DROP COLUMN i;
 alter table returning_parttab add partition newpart start (10) end (20);
-NOTICE:  CREATE TABLE will create partition "returning_parttab_1_prt_newpart" for table "returning_parttab"
 insert into returning_parttab values (1, 10, 'single2 insert') returning *;
  distkey | partkey |       t        
 ---------+---------+----------------

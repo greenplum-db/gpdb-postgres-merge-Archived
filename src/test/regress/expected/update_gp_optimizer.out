@@ -39,11 +39,6 @@ create table todelete (a int, b int) distributed by (a);
 create table target (a int, b int, c int)
         distributed by (a)
         partition by range (c) (start(1) end(5) every(1), default partition extra);
-NOTICE:  CREATE TABLE will create partition "target_1_prt_extra" for table "target"
-NOTICE:  CREATE TABLE will create partition "target_1_prt_2" for table "target"
-NOTICE:  CREATE TABLE will create partition "target_1_prt_3" for table "target"
-NOTICE:  CREATE TABLE will create partition "target_1_prt_4" for table "target"
-NOTICE:  CREATE TABLE will create partition "target_1_prt_5" for table "target"
 insert into todelete select g, g % 4 from generate_series(1, 10) g;
 insert into target select g, 0, 3 from generate_series(1, 5) g;
 insert into target select g, 0, 1 from generate_series(1, 5) g;
@@ -734,7 +729,6 @@ WITH (appendonly=false) DISTRIBUTED BY (a_dist) PARTITION BY RANGE(c_part)
           (
           PARTITION p20190305 START (1) END (2) WITH (tablename='update_gp_foo_1_prt_p20190305', appendonly=false)
           );
-NOTICE:  CREATE TABLE will create partition "update_gp_foo_1_prt_p20190305" for table "update_gp_foo"
 CREATE TABLE update_gp_foo1 (
         a_dist int,
         b int,
@@ -745,7 +739,6 @@ WITH (appendonly=false) DISTRIBUTED BY (a_dist) PARTITION BY RANGE(c_part)
           (
           PARTITION p20190305 START (1) END (2) WITH (tablename='update_gp_foo1_1_prt_p20190305', appendonly=false)
           );
-NOTICE:  CREATE TABLE will create partition "update_gp_foo1_1_prt_p20190305" for table "update_gp_foo1"
 INSERT INTO update_gp_foo VALUES (12, 40, 1, 50);
 INSERT INTO update_gp_foo1 VALUES (12, 3, 1, 50);
 UPDATE update_gp_foo

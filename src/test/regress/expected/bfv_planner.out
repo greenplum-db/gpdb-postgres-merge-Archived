@@ -353,7 +353,6 @@ CREATE TABLE bfv_planner_t2 (f int,g int) DISTRIBUTED BY (f) PARTITION BY RANGE(
 (
 PARTITION "201612" START (1) END (10)
 );
-NOTICE:  CREATE TABLE will create partition "bfv_planner_t2_1_prt_201612" for table "bfv_planner_t2"
 insert into bfv_planner_t1 values(1,2,3), (2,3,4), (3,4,5);
 insert into bfv_planner_t2 values(3,1), (4,2), (5,2);
 select count(*) from

@@ -8,11 +8,6 @@ create table pt_range (aa int, bb int) partition by range (bb)
  partition foo5 start(15) inclusive end(18) exclusive);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo2" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo3" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo4" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo5" for table "pt_range"
 alter table pt_range drop partition foo2;
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
@@ -28,7 +23,6 @@ select parchildrelid::regclass, parname, parruleord
 
 -- Add partition before first, without start
 alter table pt_range add partition foo6 end (0) inclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -45,7 +39,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo6;
 -- Add partition before first, end = first start.
 alter table pt_range add partition foo7 start(1) inclusive end(3) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo7" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -62,7 +55,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo1;
 -- Add partition before first, end < first start.
 alter table pt_range add partition foo8 start (-100) end (-50);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo8" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -80,7 +72,6 @@ alter table pt_range drop partition foo8;
 -- Add in-between, new start = existing end, new end < existing start
 alter table pt_range drop partition foo4;
 alter table pt_range add partition foo10 start (12) inclusive end (14) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo10" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -96,7 +87,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo10;
 -- Add in-between, new start = existing end, new end = existing start
 alter table pt_range add partition foo4 start (12) inclusive end (15) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo4" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -112,7 +102,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo4;
 -- Add in-between, new start > existing end, new end = existing start
 alter table pt_range add partition foo11 start (13) end (15) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo11" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -128,7 +117,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo11;
 -- Add in-between, new start > existing end, new end < existing start
 alter table pt_range add partition foo9 start (4) end (5);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo9" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -153,13 +141,6 @@ create table pt_range (aa int, bb int) partition by range (bb)
  partition foo7 start(21) inclusive end(25) exclusive);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo2" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo3" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo4" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo5" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo7" for table "pt_range"
 alter table pt_range drop partition foo3;
 alter table pt_range drop partition foo5;
 alter table pt_range drop partition foo6;
@@ -177,7 +158,6 @@ select parchildrelid::regclass, parname, parruleord
 
 -- Add before first, only start specified
 alter table pt_range add partition foo8 start(1);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo8" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -209,7 +189,6 @@ select parchildrelid::regclass, parname, parruleord
 -- Add after last, start and end specified, new start > last end
 alter table pt_range add partition foo9
    start(26) inclusive end(30) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo9" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -226,7 +205,6 @@ select parchildrelid::regclass, parname, parruleord
 -- Add after last, new start = last end
 alter table pt_range add partition foo10
    start(30) inclusive end(35) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo10" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -243,7 +221,6 @@ select parchildrelid::regclass, parname, parruleord
 
 -- this should plug the hole created by dropping foo2.
 alter table pt_range add partition foo11 start(35) end(40);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo11" for table "pt_range"
 -- ensure that we handle the case when first parruleord is
 -- greater than 1.
 alter table pt_range drop partition foo8;
@@ -263,11 +240,8 @@ select parchildrelid::regclass, parname, parruleord
 
 -- Add after last, new first = last end
 alter table pt_range add partition foo12 start(40) end(45);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo12" for table "pt_range"
 alter table pt_range add partition foo13 start(45) end(50);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo13" for table "pt_range"
 alter table pt_range add partition foo14 start(50) end(55);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo14" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -296,19 +270,11 @@ create table pt_range (aa int, bb int) partition by range (bb)
  partition foo7 start(21) inclusive end(25) exclusive);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo2" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo3" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo4" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo5" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo7" for table "pt_range"
 alter table pt_range drop partition foo3;
 alter table pt_range drop partition foo5;
 alter table pt_range drop partition foo6;
 -- Add after last, only end specified
 alter table pt_range add partition foo8 end(30);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo8" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -324,7 +290,6 @@ select parchildrelid::regclass, parname, parruleord
 
 -- Add after last, only start specified, new start > last end
 alter table pt_range add partition foo9 start(31);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo9" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -350,18 +315,10 @@ create table pt_range (aa int, bb int) partition by range (bb)
  partition foo7 start(35) inclusive end(38) exclusive);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'aa' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo1" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo2" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo3" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo4" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo5" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo6" for table "pt_range"
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo7" for table "pt_range"
 alter table pt_range drop partition foo5;
 -- New partition falls after foo1, hole exists beyond (after foo4).
 alter table pt_range add partition foo8
    start(6) inclusive end(9) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo8" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -380,7 +337,6 @@ select parchildrelid::regclass, parname, parruleord
 alter table pt_range drop partition foo8;
 -- New partition falls after foo6, hole exists before foo3.
 alter table pt_range add partition foo9 start(29) end (31);
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo9" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -400,7 +356,6 @@ alter table pt_range drop partition foo1;
 -- Hole before first, new partition falls in the middle.
 alter table pt_range add partition foo10
    start(21) inclusive end(25) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo10" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -419,7 +374,6 @@ select parchildrelid::regclass, parname, parruleord
 -- New partition falls in the middle, no hole exists.
 alter table pt_range add partition foo11
    start(32) inclusive end(34) exclusive;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_foo11" for table "pt_range"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_range'::regclass
@@ -472,7 +426,6 @@ select parchildrelid::regclass, parname, parruleord
 (9 rows)
 
 alter table pt_range add default partition def;
-NOTICE:  CREATE TABLE will create partition "pt_range_1_prt_def" for table "pt_range"
 insert into pt_range select i, i from generate_series(1, 40)i;
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
@@ -579,10 +532,6 @@ partition by list (b) (partition aa values('1'),
 	     	       partition bb values('2'),
 		       partition cc values('3'),
 		       partition dd values('4'));
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_aa" for table "pt_list"
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_bb" for table "pt_list"
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_cc" for table "pt_list"
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_dd" for table "pt_list"
 alter table pt_list drop partition cc;
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
@@ -596,7 +545,6 @@ select parchildrelid::regclass, parname, parruleord
 (3 rows)
 
 alter table pt_list add partition cc values('5');
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_cc" for table "pt_list"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_list'::regclass
@@ -611,7 +559,6 @@ select parchildrelid::regclass, parname, parruleord
 
 alter table pt_list drop partition aa;
 alter table pt_list add partition aa values('1');
-NOTICE:  CREATE TABLE will create partition "pt_list_1_prt_aa" for table "pt_list"
 select parchildrelid::regclass, parname, parruleord
    from pg_partition_rule r left join pg_partition p
    on p.oid = r.paroid where p.parrelid = 'pt_list'::regclass
@@ -646,16 +593,9 @@ PARTITION BY RANGE(a)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleor_1_prt_starter" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleord__1_prt_part0" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleord__1_prt_part1" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleord__1_prt_part4" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleord__1_prt_part5" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
 -- create gap such that parruleord sequence is [1,4,5,6,7]
 ALTER TABLE test_partitioned_table_never_decrements_parruleord_to_zero ADD PARTITION partnew3 START(3) END(4);
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleo_1_prt_partnew3" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
 ALTER TABLE test_partitioned_table_never_decrements_parruleord_to_zero ADD PARTITION partnew4 START(4) END(5);
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleo_1_prt_partnew4" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
 ALTER TABLE test_partitioned_table_never_decrements_parruleord_to_zero DROP PARTITION FOR (RANK(2));
 NOTICE:  dropped partition "part0" for relation "test_partitioned_table_never_decrements_parruleord_to_zero"
 ALTER TABLE test_partitioned_table_never_decrements_parruleord_to_zero DROP PARTITION FOR (RANK(2));
@@ -677,7 +617,6 @@ SELECT parchildrelid::regclass, parname, parruleord
 -- insert a partition that will take existing parruleord 4
 -- partition partnew4 should decrement to 3 to close gap and partition starter should stay at 1
 ALTER TABLE test_partitioned_table_never_decrements_parruleord_to_zero ADD PARTITION partnew5 START(5) END(6);
-NOTICE:  CREATE TABLE will create partition "test_partitioned_table_never_decrements_parruleo_1_prt_partnew5" for table "test_partitioned_table_never_decrements_parruleord_to_zero"
 SELECT parchildrelid::regclass, parname, parruleord
    FROM pg_partition_rule r LEFT JOIN pg_partition p
    ON p.oid = r.paroid
