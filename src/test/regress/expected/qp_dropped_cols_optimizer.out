@@ -12874,7 +12874,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_char_candidate( like mpp2
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_char_candidate VALUES('g','z',1,'g','g');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_char EXCHANGE PARTITION FOR('d') WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_char_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_char" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_char_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 | col1 
 ------+------+------+------+------
@@ -12978,7 +12977,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_candidate( like m
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_candidate VALUES(2.00,'z',1,2.00,2.00);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_decimal EXCHANGE PARTITION FOR(5.00) WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_decimal_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_decimal ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 | col1 
 ------+------+------+------+------
@@ -13081,7 +13079,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int4_candidate( like mpp2
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_int4_candidate VALUES(20000000,'z',1,20000000,20000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int4 EXCHANGE PARTITION FOR(50000000) WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int4_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_int4" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_int4_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_int4 ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   |   col1   
 ----------+------+------+----------+----------
@@ -13184,7 +13181,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int8_candidate( like mpp2
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_int8_candidate VALUES(200000000000000000,'z',1,200000000000000000,200000000000000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int8 EXCHANGE PARTITION FOR(500000000000000000) WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_int8_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_int8" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_int8_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_int8 ORDER BY 1,2,3;
         col2        | col3 | col4 |        col5        |        col1        
 --------------------+------+------+--------------------+--------------------
@@ -13287,7 +13283,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_interval_candidate( like 
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_interval_candidate VALUES('10 secs','z',1,'10 secs','10 secs');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_interval EXCHANGE PARTITION FOR('30 secs') WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_interval_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_interval" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_interval_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_interval ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   |   col1   
 ----------+------+------+----------+----------
@@ -13390,7 +13385,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_candidate( like m
 INSERT INTO mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_candidate VALUES(2.000000,'z',1,2.000000,2.000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_numeric EXCHANGE PARTITION FOR(5.000000) WITH TABLE mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric" with relation "mpp21090_xchange_pttab_dropcol_addcol_dml_numeric_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_addcol_dml_numeric ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   |   col1   
 ----------+------+------+----------+----------
@@ -13492,7 +13486,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_char_candidate( like mpp21090_xc
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_char_candidate VALUES('g','z',1,'g');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_char EXCHANGE PARTITION FOR('d') WITH TABLE mpp21090_xchange_pttab_dropcol_dml_char_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_char" with relation "mpp21090_xchange_pttab_dropcol_dml_char_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
@@ -13594,7 +13587,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_decimal_candidate( like mpp21090
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_decimal_candidate VALUES(2.00,'z',1,2.00);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_decimal EXCHANGE PARTITION FOR(5.00) WITH TABLE mpp21090_xchange_pttab_dropcol_dml_decimal_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_decimal" with relation "mpp21090_xchange_pttab_dropcol_dml_decimal_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_decimal ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
@@ -13696,7 +13688,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_int4_candidate( like mpp21090_xc
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_int4_candidate VALUES(20000000,'z',1,20000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_int4 EXCHANGE PARTITION FOR(50000000) WITH TABLE mpp21090_xchange_pttab_dropcol_dml_int4_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_int4" with relation "mpp21090_xchange_pttab_dropcol_dml_int4_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_int4 ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------
@@ -13798,7 +13789,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_int8_candidate( like mpp21090_xc
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_int8_candidate VALUES(200000000000000000,'z',1,200000000000000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_int8 EXCHANGE PARTITION FOR(500000000000000000) WITH TABLE mpp21090_xchange_pttab_dropcol_dml_int8_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_int8" with relation "mpp21090_xchange_pttab_dropcol_dml_int8_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_int8 ORDER BY 1,2,3;
         col2        | col3 | col4 |        col5        
 --------------------+------+------+--------------------
@@ -13900,7 +13890,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_interval_candidate( like mpp2109
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_interval_candidate VALUES('10 secs','z',1,'10 secs');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_interval EXCHANGE PARTITION FOR('30 secs') WITH TABLE mpp21090_xchange_pttab_dropcol_dml_interval_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_interval" with relation "mpp21090_xchange_pttab_dropcol_dml_interval_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_interval ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------
@@ -14002,7 +13991,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_dml_numeric_candidate( like mpp21090
 INSERT INTO mpp21090_xchange_pttab_dropcol_dml_numeric_candidate VALUES(2.000000,'z',1,2.000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_dml_numeric EXCHANGE PARTITION FOR(5.000000) WITH TABLE mpp21090_xchange_pttab_dropcol_dml_numeric_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_dml_numeric" with relation "mpp21090_xchange_pttab_dropcol_dml_numeric_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_dml_numeric ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------
@@ -14107,7 +14095,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_char_candidate( like mpp2109
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_char_candidate VALUES('g','z',1,'g');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_char EXCHANGE PARTITION FOR('d') WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_char_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_char" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_char_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_char ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
@@ -14212,7 +14199,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_decimal_candidate( like mpp2
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_decimal_candidate VALUES(2.00,'z',1,2.00);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_decimal EXCHANGE PARTITION FOR(5.00) WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_decimal_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_decimal" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_decimal ORDER BY 1,2,3;
  col2 | col3 | col4 | col5 
 ------+------+------+------
@@ -14317,7 +14303,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int4_candidate( like mpp2109
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_int4_candidate VALUES(20000000,'z',1,20000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int4 EXCHANGE PARTITION FOR(50000000) WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int4_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_int4" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_int4_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int4 ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------
@@ -14422,7 +14407,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int8_candidate( like mpp2109
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_int8_candidate VALUES(200000000000000000,'z',1,200000000000000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int8 EXCHANGE PARTITION FOR(500000000000000000) WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int8_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_int8" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_int8_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int8 ORDER BY 1,2,3;
         col2        | col3 | col4 |        col5        
 --------------------+------+------+--------------------
@@ -14527,7 +14511,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_interval_candidate( like mpp
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_interval_candidate VALUES('10 secs','z',1,'10 secs');
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_interval EXCHANGE PARTITION FOR('30 secs') WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_interval_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_interval" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_interval_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_interval ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------
@@ -14632,7 +14615,6 @@ CREATE TABLE mpp21090_xchange_pttab_dropcol_idx_dml_numeric_candidate( like mpp2
 INSERT INTO mpp21090_xchange_pttab_dropcol_idx_dml_numeric_candidate VALUES(2.000000,'z',1,2.000000);
 -- Exchange 
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_numeric EXCHANGE PARTITION FOR(5.000000) WITH TABLE mpp21090_xchange_pttab_dropcol_idx_dml_numeric_candidate;
-NOTICE:  exchanged partition "partone" of relation "mpp21090_xchange_pttab_dropcol_idx_dml_numeric" with relation "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_candidate"
 SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_numeric ORDER BY 1,2,3;
    col2   | col3 | col4 |   col5   
 ----------+------+------+----------

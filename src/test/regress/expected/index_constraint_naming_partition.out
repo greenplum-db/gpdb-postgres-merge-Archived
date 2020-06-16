@@ -1392,7 +1392,6 @@ SELECT * FROM partition_tables_show_all();
 (7 rows)
 
 ALTER TABLE r ALTER PARTITION r1 EXCHANGE PARTITION a WITH TABLE e2;
-NOTICE:  exchanged partition "a" of partition "r1" of relation "r" with relation "e2"
 SELECT * FROM dependencies_show_for_cons_idx();
                depname               | classtype |               refname               | refclasstype |    classid    | objsubid |  refclassid   | refobjsubid | deptype 
 -------------------------------------+-----------+-------------------------------------+--------------+---------------+----------+---------------+-------------+---------

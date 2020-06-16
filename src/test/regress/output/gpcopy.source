@@ -1440,7 +1440,6 @@ COPY 26
 COPY 26
 CREATE EXTERNAL WEB TABLE ext_dec17(LIKE sales_1_prt_dec17) EXECUTE 'printf "12\t2017-12-01\t20.00\n"' ON MASTER FORMAT 'text';
 ALTER TABLE sales ALTER PARTITION dec17 EXCHANGE PARTITION dec17 WITH TABLE ext_dec17;
-NOTICE:  exchanged partition "dec17" of partition "dec17" of relation "sales" with relation "ext_dec17"
 DROP TABLE ext_dec17;
 COPY sales TO PROGRAM 'cat > /dev/null' IGNORE EXTERNAL PARTITIONS;
 NOTICE:  COPY ignores external partition(s)

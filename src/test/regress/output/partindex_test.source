@@ -126,7 +126,6 @@ create index e1 on exchange_tab(lower(content));
 -- exchanging with part2
 -- the 3 indexs on exchange_tab is retained
 alter table part_table1 exchange partition for ('11') with table exchange_tab;
-NOTICE:  exchanged partition "part2" of relation "part_table1" with relation "exchange_tab"
 -- output of the function shows the index on expression on just the exchanged part.
 select indKey, pg_get_expr(indExprs, 'part_table1'::regclass), partCons from gp_build_logical_index('part_table1'::regclass)
 where indExprs is NOT NULL;

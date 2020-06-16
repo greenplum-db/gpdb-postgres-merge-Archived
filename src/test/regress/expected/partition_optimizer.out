@@ -516,7 +516,6 @@ ERROR:  cannot exchange DEFAULT partition
 set gp_enable_exchange_default_partition = on;
 alter table dex exchange default partition with table exh_abc;
 WARNING:  Exchanging default partition may result in unexpected query results if the data being exchanged should have been inserted into a different partition
-NOTICE:  exchanged partition "abc" of relation "dex" with relation "exh_abc"
 reset gp_enable_exchange_default_partition;
 drop table dex;
 drop table exh_abc;
@@ -659,7 +658,6 @@ ERROR:  cannot exchange DEFAULT partition
 set gp_enable_exchange_default_partition = on;
 alter table sto_ao_ao alter partition for (rank(3)) exchange default partition with table exh_ao_ao;
 WARNING:  Exchanging default partition may result in unexpected query results if the data being exchanged should have been inserted into a different partition
-NOTICE:  exchanged partition "subothers" of partition for rank 3 of relation "sto_ao_ao" with relation "exh_ao_ao"
 reset gp_enable_exchange_default_partition;
 -- Exchange a non-default sub-partition of a default partition, should fail
 alter table sto_ao_ao alter default partition exchange partition for ('one') with table exh_ao_ao;
@@ -2375,7 +2373,6 @@ NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
 insert into rank_exc values(3, 3, 2004, 'F', 100);
 insert into r values(3, 3, 2004, 'F', 100000);
 alter table rank_exc alter partition girls exchange partition year4 with table r;
-NOTICE:  exchanged partition "year4" of partition "girls" of relation "rank_exc" with relation "r"
 select * from rank_exc_1_prt_girls_2_prt_year4;
  id | rank | year | gender | count  
 ----+------+------+--------+--------
@@ -2389,7 +2386,6 @@ select * from r;
 (1 row)
 
 alter table rank_exc alter partition girls exchange partition year4 with table r;
-NOTICE:  exchanged partition "year4" of partition "girls" of relation "rank_exc" with relation "r"
 select * from rank_exc_1_prt_girls_2_prt_year4;
  id | rank | year | gender | count 
 ----+------+------+--------+-------
