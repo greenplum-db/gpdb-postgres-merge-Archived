@@ -877,24 +877,6 @@ Distributed by: (id)
  value2 | double precision      |           |          |         | 
 FDW options: (formatter 'formatter_import_s', format 'custom', format_type 'b', location_uris 'demoprot://exttabtest_test63', execute_on 'ALL_SEGMENTS', log_errors 'f', encoding '6', is_writable 'false')
 
-    -- Checking pg_exttable 
-    select pg_class.relname, fmttype,
-       fmtopts, encoding, writable
-    from pg_class, pg_exttable
-    where pg_class.oid = pg_exttable.reloid
-    and (pg_class.relname='format_w'
-    or
-    pg_class.relname='format_r'
-    or
-    pg_class.relname='format_text'
-    or
-    pg_class.relname='format_csv');
- relname  | fmttype |             fmtopts             | encoding | writable 
-----------+---------+---------------------------------+----------+----------
- format_w | b       | formatter 'formatter_export_s'  |        6 | t
- format_r | b       | formatter 'formatter_import_s'  |        6 | f
-(2 rows)
-
     -- Write to WET
     SELECT * FROM clean_exttabtest_files;
  stdout 
