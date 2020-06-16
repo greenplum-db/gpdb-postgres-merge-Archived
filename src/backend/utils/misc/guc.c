@@ -8475,7 +8475,8 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			{
 				ListCell   *head;
 
-				WarnNoTransactionBlock(isTopLevel, "SET TRANSACTION");
+				if (Gp_role != GP_ROLE_EXECUTE)
+					WarnNoTransactionBlock(isTopLevel, "SET TRANSACTION");
 
 				foreach(head, stmt->args)
 				{
@@ -8539,7 +8540,8 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
 			/* fall through */
 		case VAR_RESET:
-			if (strcmp(stmt->name, "transaction_isolation") == 0)
+			if (strcmp(stmt->name, "transaction_isolation") == 0 &&
+				Gp_role != GP_ROLE_EXECUTE)
 				WarnNoTransactionBlock(isTopLevel, "RESET TRANSACTION");
 
 			(void) set_config_option(stmt->name,
