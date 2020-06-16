@@ -98,8 +98,6 @@ create table mpp23195_t1 (i int) partition by range(i) (partition pt1 start(1) e
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index index_mpp23195_t1_i on mpp23195_t1(i);
-NOTICE:  building index for child partition "mpp23195_t1_1_prt_pt1"
-NOTICE:  building index for child partition "mpp23195_t1_1_prt_pt2"
 create table mpp23195_t2(i int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -138,11 +136,7 @@ create table mpp21834_t1 (i int, j int) partition by range(i) (partition pp1 sta
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index index_1 on mpp21834_t1(i);
-NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp1"
-NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp2"
 create index index_2 on mpp21834_t1(j);
-NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp1"
-NOTICE:  building index for child partition "mpp21834_t1_1_prt_pp2"
 create table mpp21834_t2(i int, j int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -460,19 +454,7 @@ PARTITION BY RANGE(ptid)
           )
 ;
 create index pt1_idx on mpp24151_pt using btree (pt1);
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_junk_data"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_2"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_3"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_4"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_5"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_6"
 create index ptid_idx on mpp24151_pt using btree (ptid);
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_junk_data"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_2"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_3"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_4"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_5"
-NOTICE:  building index for child partition "mpp24151_pt_1_prt_6"
 insert into mpp24151_pt select i, 'hello' || 0, 'world', 'drop this', i % 6 from generate_series(0,100)i;
 insert into mpp24151_pt select i, 'hello' || i, 'world', 'drop this', i % 6 from generate_series(0,200000)i;
 insert into mpp24151_t select i, i % 6, 'hello' || i, 'bar' from generate_series(0,10)i;
@@ -814,30 +796,10 @@ create table dis(c1 int, c2 int, c3 int) partition by range(c2) (start(1) end(11
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index dis_index on dis(c3);
-NOTICE:  building index for child partition "dis_1_prt_1"
-NOTICE:  building index for child partition "dis_1_prt_2"
-NOTICE:  building index for child partition "dis_1_prt_3"
-NOTICE:  building index for child partition "dis_1_prt_4"
-NOTICE:  building index for child partition "dis_1_prt_5"
-NOTICE:  building index for child partition "dis_1_prt_6"
-NOTICE:  building index for child partition "dis_1_prt_7"
-NOTICE:  building index for child partition "dis_1_prt_8"
-NOTICE:  building index for child partition "dis_1_prt_9"
-NOTICE:  building index for child partition "dis_1_prt_10"
 CREATE TABLE dbs(c1 int, c2 int, c3 int) partition by range(c2) (start(1) end(11) every(1));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index dbs_index on dbs using bitmap(c3);
-NOTICE:  building index for child partition "dbs_1_prt_1"
-NOTICE:  building index for child partition "dbs_1_prt_2"
-NOTICE:  building index for child partition "dbs_1_prt_3"
-NOTICE:  building index for child partition "dbs_1_prt_4"
-NOTICE:  building index for child partition "dbs_1_prt_5"
-NOTICE:  building index for child partition "dbs_1_prt_6"
-NOTICE:  building index for child partition "dbs_1_prt_7"
-NOTICE:  building index for child partition "dbs_1_prt_8"
-NOTICE:  building index for child partition "dbs_1_prt_9"
-NOTICE:  building index for child partition "dbs_1_prt_10"
 -- TEST
 select find_operator('(select * from dts where c2 = 1) union (select * from dts where c2 = 2) union (select * from dts where c2 = 3) union (select * from dts where c2 = 4) union (select * from dts where c2 = 5) union (select * from dts where c2 = 6) union (select * from dts where c2 = 7) union (select * from dts where c2 = 8) union (select * from dts where c2 = 9) union (select * from dts where c2 = 10);', 'Dynamic Seq Scan');
  find_operator 
@@ -1148,9 +1110,6 @@ INSERT INTO part_tbl VALUES (2015111000, 479534741, 99999999);
 INSERT INTO part_tbl VALUES (2015111000, 479534742, 99999999);
 CREATE INDEX part_tbl_idx 
 ON part_tbl(profile_key);
-NOTICE:  building index for child partition "part_tbl_1_prt_p20151110"
-NOTICE:  building index for child partition "part_tbl_1_prt_p20151110_2_prt_package5"
-NOTICE:  building index for child partition "part_tbl_1_prt_p20151110_2_prt_other_services"
 EXPLAIN SELECT * FROM part_tbl WHERE profile_key = 99999999;
                                                QUERY PLAN                                               
 --------------------------------------------------------------------------------------------------------

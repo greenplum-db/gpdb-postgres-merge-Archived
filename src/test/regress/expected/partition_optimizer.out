@@ -3090,8 +3090,6 @@ select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
 (3 rows)
 
 create index ti_j_idx on ti using bitmap(j);
-NOTICE:  building index for child partition "ti_1_prt_1"
-NOTICE:  building index for child partition "ti_1_prt_2"
 select * from pg_indexes where schemaname = 'public' and tablename like 'ti%';
  schemaname | tablename  |     indexname      | tablespace |                                    indexdef                                    
 ------------+------------+--------------------+------------+--------------------------------------------------------------------------------
@@ -4998,13 +4996,10 @@ PARTITION BY RANGE (date)
 create index s_i on s(amt) 
   where (id > 1)
   ;
-NOTICE:  building index for child partition "s_1_prt_1"
 create index s_j on s(units)
   where (id <= 1)
   ;
-NOTICE:  building index for child partition "s_1_prt_1"
 create index s_i_expr on s(log(units));
-NOTICE:  building index for child partition "s_1_prt_1"
 alter table s add partition s_test 
     start(date '2008-01-03') end (date '2008-01-05');
 alter table s split partition for (date '2008-01-03') at (date '2008-01-04')
@@ -5122,8 +5117,6 @@ partition by range (p)
 (start (0) end (3) every (2));
 -- Create a expression index on the partitioned table
 create index idx_abc on mpp17707(upper(x));
-NOTICE:  building index for child partition "mpp17707_1_prt_1"
-NOTICE:  building index for child partition "mpp17707_1_prt_2"
 -- split partition 1 of table
 alter table mpp17707 split partition for (0) at (1)
 	into (partition x1, partition x2);
@@ -5237,7 +5230,6 @@ insert into s_heap(t1, i1, i2, i3, n1, b1)
     select 'def0', 1, 1, 1, 2.3 , true from generate_series(1, 5);
 alter table s_heap drop column i3;
 create index s_heap_index on s_heap (i2);
-NOTICE:  building index for child partition "s_heap_1_prt_def"
 alter table s_heap split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
 select * from s_heap_1_prt_def0;
@@ -5265,7 +5257,6 @@ insert into s_heap_ao(t1, i1, i2, i3, n1, b1)
     select 'def5', 1, 1, 1, 2.3, true from generate_series(1, 2);
 alter table s_heap_ao drop column i3;
 create index s_heap_ao_index on s_heap_ao (i2);
-NOTICE:  building index for child partition "s_heap_ao_1_prt_def"
 alter table s_heap_ao split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
 select * from s_heap_ao_1_prt_def0;
@@ -5290,7 +5281,6 @@ insert into s_heap_co(t1, i1, i2, i3, n1, b1)
     select 'def5', 1,1, 1, 2.3, true from generate_series(1, 2);
 alter table s_heap_co drop column i3;
 create index s_heap_co_index on s_heap_co (i2);
-NOTICE:  building index for child partition "s_heap_co_1_prt_def"
 alter table s_heap_co split partition def
     at ('def0', 'def1', 'def2', 'def3', 'def4') into (partition def5, partition def0);
 select * from s_heap_co_1_prt_def0;

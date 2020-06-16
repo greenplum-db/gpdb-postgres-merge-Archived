@@ -42,8 +42,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 -- physical index on all parts
 -- output show 1 logical index 
 create index rp_i1 on part_table1(part_key);
-NOTICE:  building index for child partition "part_table1_1_prt_part1"
-NOTICE:  building index for child partition "part_table1_1_prt_part2"
 select nColumns, indKey, indUnique, indPred, indExprs, partCons, defaultLevels, indType from gp_build_logical_index('part_table1'::regclass);
  ncolumns | indkey | indunique | indpred | indexprs | partcons | defaultlevels | indtype 
 ----------+--------+-----------+---------+----------+----------+---------------+---------
@@ -54,8 +52,6 @@ select nColumns, indKey, indUnique, indPred, indExprs, partCons, defaultLevels, 
 -- output shows 1 logical index with partial predicate 
 create index parent_partial_ind1 on part_table1(part_key)
 where part_key >=1 and part_key < 10;
-NOTICE:  building index for child partition "part_table1_1_prt_part1"
-NOTICE:  building index for child partition "part_table1_1_prt_part2"
 select indKey, pg_get_expr(indpred, 'part_table1'::regclass), partCons from gp_build_logical_index('part_table1'::regclass)
 where indpred is NOT NULL;
  indkey |           pg_get_expr            | partcons 
@@ -162,71 +158,6 @@ subpartition template
  default partition outlying_years);
 -- create indexes (will be created on all parts/subparts)
 create index first_index on part_table2(trans_id);
-NOTICE:  building index for child partition "part_table2_1_prt_7"
-NOTICE:  building index for child partition "part_table2_1_prt_4"
-NOTICE:  building index for child partition "part_table2_1_prt_11"
-NOTICE:  building index for child partition "part_table2_1_prt_9"
-NOTICE:  building index for child partition "part_table2_1_prt_6"
-NOTICE:  building index for child partition "part_table2_1_prt_5"
-NOTICE:  building index for child partition "part_table2_1_prt_2"
-NOTICE:  building index for child partition "part_table2_1_prt_12"
-NOTICE:  building index for child partition "part_table2_1_prt_8"
-NOTICE:  building index for child partition "part_table2_1_prt_10"
-NOTICE:  building index for child partition "part_table2_1_prt_3"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years"
-NOTICE:  building index for child partition "part_table2_1_prt_13"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_other_regions"
 -- output will show 1 row returned -- pulled up to root
 select indKey, defaultLevels, partCons from gp_build_logical_index('part_table2'::regclass);
  indkey | defaultlevels | partcons 
@@ -237,71 +168,6 @@ select indKey, defaultLevels, partCons from gp_build_logical_index('part_table2'
 -- create a partial index on part_table2 (will be created on all parts/subparts)
 create index second_index on part_table2(trans_id)  
 where trans_id >=1000 and trans_id < 2000;  
-NOTICE:  building index for child partition "part_table2_1_prt_7"
-NOTICE:  building index for child partition "part_table2_1_prt_4"
-NOTICE:  building index for child partition "part_table2_1_prt_11"
-NOTICE:  building index for child partition "part_table2_1_prt_9"
-NOTICE:  building index for child partition "part_table2_1_prt_6"
-NOTICE:  building index for child partition "part_table2_1_prt_5"
-NOTICE:  building index for child partition "part_table2_1_prt_2"
-NOTICE:  building index for child partition "part_table2_1_prt_12"
-NOTICE:  building index for child partition "part_table2_1_prt_8"
-NOTICE:  building index for child partition "part_table2_1_prt_10"
-NOTICE:  building index for child partition "part_table2_1_prt_3"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years"
-NOTICE:  building index for child partition "part_table2_1_prt_13"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_other_regions"
 -- output will show 1 index with partial pred
 select indKey, pg_get_expr(indPred, 'part_table2'::regclass), defaultLevels, partCons from gp_build_logical_index('part_table2'::regclass)
 where indPred is NOT NULL;
@@ -312,71 +178,6 @@ where indPred is NOT NULL;
 
 -- create index on expression on all parts
 create index third_index on part_table2(lower(region));
-NOTICE:  building index for child partition "part_table2_1_prt_7"
-NOTICE:  building index for child partition "part_table2_1_prt_4"
-NOTICE:  building index for child partition "part_table2_1_prt_11"
-NOTICE:  building index for child partition "part_table2_1_prt_9"
-NOTICE:  building index for child partition "part_table2_1_prt_6"
-NOTICE:  building index for child partition "part_table2_1_prt_5"
-NOTICE:  building index for child partition "part_table2_1_prt_2"
-NOTICE:  building index for child partition "part_table2_1_prt_12"
-NOTICE:  building index for child partition "part_table2_1_prt_8"
-NOTICE:  building index for child partition "part_table2_1_prt_10"
-NOTICE:  building index for child partition "part_table2_1_prt_3"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years"
-NOTICE:  building index for child partition "part_table2_1_prt_13"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_7_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_4_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_11_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_9_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_6_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_5_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_2_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_12_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_8_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_10_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_3_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_outlying_years_2_prt_other_regions"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_usa"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_asia"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_europe"
-NOTICE:  building index for child partition "part_table2_1_prt_13_2_prt_other_regions"
 -- output will show 1 index on expression
 select indKey, indPred, pg_get_expr(indExprs, 'part_table2'::regclass), partCons from gp_build_logical_index('part_table2'::regclass)
 where indExprs is NOT NULL;
@@ -500,13 +301,6 @@ insert into part_table3 values ('2008-02-02', 'usa', 'Texas', 10.05), ('2008-03-
 insert into part_table3 values ('2009-02-02', 'usa', 'Texas', 10.05), ('2009-03-03', 'asia', 'China', 1.01);
 -- index on atts 1, 4
 create index i1 on part_table3(date, amount); 
-NOTICE:  building index for child partition "part_table3_1_prt_part1"
-NOTICE:  building index for child partition "part_table3_1_prt_part2"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_def"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_usa"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_asia"
-NOTICE:  building index for child partition "part_table3_1_prt_part2_2_prt_usa"
-NOTICE:  building index for child partition "part_table3_1_prt_part2_2_prt_asia"
 select indKey, defaultLevels, partCons from gp_build_logical_index('part_table3'::regclass);
  indkey | defaultlevels | partcons 
 --------+---------------+----------
@@ -576,15 +370,6 @@ select indKey, defaultLevels, partCons from gp_build_logical_index('part_table3'
 
 -- extra row just on the default part show up
 create index i2 on part_table3(region);
-NOTICE:  building index for child partition "part_table3_1_prt_part1"
-NOTICE:  building index for child partition "part_table3_1_prt_part2"
-NOTICE:  building index for child partition "part_table3_1_prt_part3"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_def"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_usa"
-NOTICE:  building index for child partition "part_table3_1_prt_part1_2_prt_asia"
-NOTICE:  building index for child partition "part_table3_1_prt_part2_2_prt_usa"
-NOTICE:  building index for child partition "part_table3_1_prt_part2_2_prt_asia"
-NOTICE:  building index for child partition "part_table3_1_prt_part3_2_prt_usa"
 select indKey, defaultLevels, partCons from gp_build_logical_index('part_table3'::regclass)
 order by nColumns;
  indkey | defaultlevels | partcons 
@@ -718,18 +503,6 @@ create table part_table4
 );
 -- create an index on all parts
 create index id_index on part_table4(id);
-NOTICE:  building index for child partition "part_table4_1_prt_boys"
-NOTICE:  building index for child partition "part_table4_1_prt_girls"
-NOTICE:  building index for child partition "part_table4_1_prt_boys_2_prt_3"
-NOTICE:  building index for child partition "part_table4_1_prt_boys_2_prt_4"
-NOTICE:  building index for child partition "part_table4_1_prt_boys_2_prt_5"
-NOTICE:  building index for child partition "part_table4_1_prt_boys_2_prt_1"
-NOTICE:  building index for child partition "part_table4_1_prt_boys_2_prt_2"
-NOTICE:  building index for child partition "part_table4_1_prt_girls_2_prt_2"
-NOTICE:  building index for child partition "part_table4_1_prt_girls_2_prt_3"
-NOTICE:  building index for child partition "part_table4_1_prt_girls_2_prt_4"
-NOTICE:  building index for child partition "part_table4_1_prt_girls_2_prt_5"
-NOTICE:  building index for child partition "part_table4_1_prt_girls_2_prt_1"
 -- create 2 indexes on part_table4_1_prt_girls_2_prt_1
 create unique index id_index_unique on part_table4_1_prt_girls_2_prt_1(id);
 NOTICE:  updating distribution policy to match new UNIQUE index
@@ -778,8 +551,6 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' a
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index part_table5_i1 on part_table5_1_prt_part1(c1);
 create index part_table5_i2 on part_table5(c1) where c1 < 100;
-NOTICE:  building index for child partition "part_table5_1_prt_part1"
-NOTICE:  building index for child partition "part_table5_1_prt_def"
 create index part_table5_i3 on part_table5_1_prt_def(abs(c1));
 -- returns 1 row with index on part_table5_1_prt_part1
 select pg_get_expr(indPred, 'part_table5'::regclass), indExprs, partCons from gp_build_logical_index('part_table5'::regclass)
@@ -866,11 +637,6 @@ PARTITION p5 START (4) EXCLUSIVE
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index part_table8_ind on part_table8(a); 
-NOTICE:  building index for child partition "part_table8_1_prt_p1"
-NOTICE:  building index for child partition "part_table8_1_prt_p2"
-NOTICE:  building index for child partition "part_table8_1_prt_p3"
-NOTICE:  building index for child partition "part_table8_1_prt_p4"
-NOTICE:  building index for child partition "part_table8_1_prt_p5"
 -- non-contiguous indexes
 create table part_table9(a int, b int) 
 PARTITION BY RANGE(a)
@@ -933,8 +699,6 @@ create table part_table11(a int, b int, c int) with (appendonly=true) partition 
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index part_table11_idx on part_table11(c);
-NOTICE:  building index for child partition "part_table11_1_prt_p1"
-NOTICE:  building index for child partition "part_table11_1_prt_p2"
 select 'part_table11', partCons, defaultLevels from gp_build_logical_index('part_table11'::regclass);
    ?column?   | partcons | defaultlevels 
 --------------+----------+---------------
@@ -951,10 +715,6 @@ partition p4 values(4)
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create index part_table12_idx on part_table12(c);
-NOTICE:  building index for child partition "part_table12_1_prt_p1"
-NOTICE:  building index for child partition "part_table12_1_prt_p2"
-NOTICE:  building index for child partition "part_table12_1_prt_p3"
-NOTICE:  building index for child partition "part_table12_1_prt_p4"
 select 'part_table12', partCons, defaultLevels, indType from gp_build_logical_index('part_table12'::regclass);
    ?column?   |       partcons       | defaultlevels | indtype 
 --------------+----------------------+---------------+---------
@@ -1042,8 +802,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 -- physical unnamed index on all parts
 -- output shows indexes created on all parts
 create index on unnamed_index_part_table(index_key);
-NOTICE:  building index for child partition "unnamed_index_part_table_1_prt_part1"
-NOTICE:  building index for child partition "unnamed_index_part_table_1_prt_part2"
 SELECT n.nspname as "Schema", c.relname as "Name", c.relkind, c2.relname as "Table"
 FROM pg_catalog.pg_class c
      LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
@@ -1089,13 +847,6 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'date'
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 -- create unnamed indexe (will be created on all parts/subparts)
 create index on unnamed_index_multi_part_table(date, amount);
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part1"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part1_2_prt_usa"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part1_2_prt_asia"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part1_2_prt_def"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part2"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part2_2_prt_usa"
-NOTICE:  building index for child partition "unnamed_index_multi_part_table_1_prt_part2_2_prt_asia"
 SELECT n.nspname as "Schema", c.relname as "Name", c.relkind, c2.relname as "Table"
 FROM pg_catalog.pg_class c
      LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace

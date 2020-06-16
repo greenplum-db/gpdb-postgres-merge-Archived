@@ -131,11 +131,6 @@ EXPLAIN EXECUTE prep_prune_param(10);
 
 -- @description B-tree single index key = non-partitioning key
 CREATE INDEX idx1 on pt_lt_tab(col1);
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part1"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part2"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part3"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part4"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part5"
 SELECT * FROM pt_lt_tab WHERE col1 < 10 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
 ------+------+------+------
@@ -324,11 +319,6 @@ EXPLAIN SELECT * FROM pt_lt_tab WHERE col1 between 10 AND 25 ORDER BY col2,col3 
 DROP INDEX idx1;
 -- @description B-tree single index key = partitioning key
 CREATE INDEX idx1 on pt_lt_tab(col2);
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part1"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part2"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part3"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part4"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part5"
 SELECT * FROM pt_lt_tab WHERE col2 < 10 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
 ------+------+------+------
@@ -524,11 +514,6 @@ EXPLAIN SELECT * FROM pt_lt_tab WHERE col2 between 10 AND 50 ORDER BY col2,col3 
 DROP INDEX idx1;
 -- @description multiple column b-tree index
 CREATE INDEX idx1 on pt_lt_tab(col1,col2);
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part1"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part2"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part3"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part4"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part5"
 SELECT * FROM pt_lt_tab WHERE col1 < 10 ORDER BY col2,col3 LIMIT 5;
  col1 | col2 | col3 | col4 
 ------+------+------+------
@@ -1518,11 +1503,6 @@ DROP INDEX idx6;
 -- partition pruning still works after dropping a column
 --
 CREATE INDEX idx1 on pt_lt_tab(col4);
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part1"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part2"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part3"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part4"
-NOTICE:  building index for child partition "pt_lt_tab_1_prt_part5"
 ALTER TABLE pt_lt_tab DROP column col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -1655,20 +1635,6 @@ PARTITION BY list(k)
 ( partition p1 values(1), partition p2 values(2));
 INSERT INTO pt_complex VALUES (1, 1, 1, 1, 1), (2, 2, 2, 2, 2);
 CREATE INDEX i_pt_complex ON pt_complex (i);
-NOTICE:  building index for child partition "pt_complex_1_prt_p1"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p11_3_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p11_3_prt_p12"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p12"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p12_3_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p1_2_prt_p12_3_prt_p12"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p11_3_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p11_3_prt_p12"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p12"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p12_3_prt_p11"
-NOTICE:  building index for child partition "pt_complex_1_prt_p2_2_prt_p12_3_prt_p12"
 SELECT * FROM pt_complex WHERE i = 1 AND j = 1;
  i | j | k | l | m 
 ---+---+---+---+---
@@ -2619,31 +2585,6 @@ select * from sales where region = 'usa' or region = 'asia';
 
 -- Test DynamicIndexScan with extra filter
 create index idx_sales_date on sales(date);
-NOTICE:  building index for child partition "sales_1_prt_outlying_dates"
-NOTICE:  building index for child partition "sales_1_prt_outlying_dates_2_prt_usa"
-NOTICE:  building index for child partition "sales_1_prt_outlying_dates_2_prt_asia"
-NOTICE:  building index for child partition "sales_1_prt_outlying_dates_2_prt_europe"
-NOTICE:  building index for child partition "sales_1_prt_outlying_dates_2_prt_other_regions"
-NOTICE:  building index for child partition "sales_1_prt_2"
-NOTICE:  building index for child partition "sales_1_prt_2_2_prt_asia"
-NOTICE:  building index for child partition "sales_1_prt_2_2_prt_europe"
-NOTICE:  building index for child partition "sales_1_prt_2_2_prt_other_regions"
-NOTICE:  building index for child partition "sales_1_prt_2_2_prt_usa"
-NOTICE:  building index for child partition "sales_1_prt_3"
-NOTICE:  building index for child partition "sales_1_prt_3_2_prt_usa"
-NOTICE:  building index for child partition "sales_1_prt_3_2_prt_asia"
-NOTICE:  building index for child partition "sales_1_prt_3_2_prt_europe"
-NOTICE:  building index for child partition "sales_1_prt_3_2_prt_other_regions"
-NOTICE:  building index for child partition "sales_1_prt_4"
-NOTICE:  building index for child partition "sales_1_prt_4_2_prt_usa"
-NOTICE:  building index for child partition "sales_1_prt_4_2_prt_asia"
-NOTICE:  building index for child partition "sales_1_prt_4_2_prt_europe"
-NOTICE:  building index for child partition "sales_1_prt_4_2_prt_other_regions"
-NOTICE:  building index for child partition "sales_1_prt_5"
-NOTICE:  building index for child partition "sales_1_prt_5_2_prt_usa"
-NOTICE:  building index for child partition "sales_1_prt_5_2_prt_asia"
-NOTICE:  building index for child partition "sales_1_prt_5_2_prt_europe"
-NOTICE:  building index for child partition "sales_1_prt_5_2_prt_other_regions"
 explain select * from sales where date = '2011-01-01' and region = 'usa';
                                              QUERY PLAN                                              
 -----------------------------------------------------------------------------------------------------

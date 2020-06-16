@@ -94,18 +94,6 @@ subpartition sub2 values(4,5,6)
 (default partition others, start (0) inclusive end (10) exclusive every (5) );
 Insert into stat_part_ao_t1 values(generate_series(1,10),generate_series(1,5),'table statistics should be kept after alter','s', 'regular table','12-11-2012',3,'2012-10-09 10:23:54', '2011-08-19 10:23:54+02');
 Create index stat_part_idx_ao_t1 on stat_part_ao_t1(d);
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_2"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_others"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_3"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_2_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_2_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_2_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_others_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_others_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_others_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_3_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_3_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_ao_t1_1_prt_3_2_prt_sub2"
 Analyze stat_part_ao_t1;
 select  count(*) from pg_class where relname like 'stat_part_ao_t1';
  count 
@@ -329,18 +317,6 @@ subpartition sub2 values(4,5,6)
 (default partition others, start (0) inclusive end (10) exclusive every (5) );
 Insert into stat_part_heap_t3 values(generate_series(1,10),generate_series(1,5),'table statistics should be kept after alter','s', 'regular table','12-11-2012',3,'2012-10-09 10:23:54', '2011-08-19 10:23:54+02');
 Create index stat_part_idx_heap_t3 on stat_part_heap_t3(d);
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_2"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_others"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_3"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_2_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_2_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_2_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_others_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_others_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_others_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_3_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_3_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t3_1_prt_3_2_prt_sub2"
 Analyze stat_part_heap_t3;
 select  count(*) from pg_class where relname like 'stat_part_heap_t3';
  count 
@@ -791,18 +767,6 @@ subpartition sub2 values(4,5,6)
 (default partition others, start (0) inclusive end (10) exclusive every (5) );
 Insert into stat_part_heap_t6 values(generate_series(1,10),generate_series(1,5),'table statistics should be kept after alter','s', 'regular table','12-11-2012',3,'2012-10-09 10:23:54', '2011-08-19 10:23:54+02');
 Create index stat_part_idx_heap_t6 on stat_part_heap_t6(d);
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_2"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_others"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_3"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_2_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_2_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_2_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_others_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_others_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_others_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_3_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_3_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t6_1_prt_3_2_prt_sub2"
 Analyze stat_part_heap_t6;
 select  count(*) from pg_class where relname like 'stat_part_heap_t6';
  count 
@@ -1121,18 +1085,6 @@ select  count(*) from pg_class where relname like 'stat_part_heap_t8';
 
 -- Create Index
 Create index stat_part_idx_heap_t8 on stat_part_heap_t8(d);
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_2"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_others"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_2_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_2_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_2_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_others_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_others_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_others_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t8_1_prt_3_2_prt_sub2"
 -- Cluster on index
 Cluster stat_part_idx_heap_t8 on stat_part_heap_t8;
 ERROR:  cannot cluster a partitioned table
@@ -1191,18 +1143,6 @@ select  count(*) from pg_class where relname like 'stat_part_heap_t9';
 
 -- Create Index
 Create index stat_part_idx_heap_t9 on stat_part_heap_t9(j);
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_2"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_others"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_2_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_2_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_2_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_others_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_others_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_others_2_prt_sub2"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3_2_prt_subothers"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3_2_prt_sub1"
-NOTICE:  building index for child partition "stat_part_heap_t9_1_prt_3_2_prt_sub2"
 -- Cluster on index
 Cluster stat_part_idx_heap_t9 on stat_part_heap_t9;
 ERROR:  cannot cluster a partitioned table

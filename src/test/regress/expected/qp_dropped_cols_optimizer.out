@@ -2954,9 +2954,6 @@ PARTITION BY LIST(col2)(partition partone VALUES('a','b','c','d','e','f','g','h'
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_char;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_char" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_char on mpp21090_dropcol_splitpt_idx_dml_char(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_char_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_char VALUES('g','g','a','g',0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_char ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -3015,9 +3012,6 @@ PARTITION BY RANGE(col2)(partition partone start(1.00) end(10.00)  WITH (APPENDO
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_decimal;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_decimal" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_decimal on mpp21090_dropcol_splitpt_idx_dml_decimal(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_decimal_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_decimal VALUES(2.00,2.00,'a',2.00,0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_decimal ORDER BY 1,2,3,4;
  col1 | col2 | col3 | col4 | col5 
@@ -3076,9 +3070,6 @@ PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPEND
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_int4;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_int4" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_int4 on mpp21090_dropcol_splitpt_idx_dml_int4(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int4_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_int4 VALUES(20000000,20000000,'a',20000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int4 ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -3137,9 +3128,6 @@ PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WI
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_int8;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_int8" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_int8 on mpp21090_dropcol_splitpt_idx_dml_int8(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_int8_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'a',200000000000000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_int8 ORDER BY 1,2,3,4;
         col1        |        col2        | col3 |        col4        | col5 
@@ -3198,9 +3186,6 @@ PARTITION BY RANGE(col2)(partition partone start('1 sec') end('1 min')  WITH (AP
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_interval;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_interval" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_interval on mpp21090_dropcol_splitpt_idx_dml_interval(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_interval_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_interval VALUES('10 secs','10 secs','a','10 secs',0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_interval ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -3259,9 +3244,6 @@ PARTITION BY RANGE(col2)(partition partone start(1.000000) end(10.000000)  WITH 
 DROP INDEX IF EXISTS mpp21090_dropcol_splitpt_idx_dml_idx_numeric;
 NOTICE:  index "mpp21090_dropcol_splitpt_idx_dml_idx_numeric" does not exist, skipping
 CREATE INDEX mpp21090_dropcol_splitpt_idx_dml_idx_numeric on mpp21090_dropcol_splitpt_idx_dml_numeric(col2);
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_dropcol_splitpt_idx_dml_numeric_1_prt_partthree"
 INSERT INTO mpp21090_dropcol_splitpt_idx_dml_numeric VALUES(2.000000,2.000000,'a',2.000000,0);
 SELECT * FROM mpp21090_dropcol_splitpt_idx_dml_numeric ORDER BY 1,2,3,4;
    col1   |   col2   | col3 |   col4   | col5 
@@ -10765,9 +10747,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ADD COLUMN col5 cha
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_char;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_char" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_char on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_cha_1_prt_partthree"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char SELECT 'g','g','c','g';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_char ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -10841,9 +10820,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ADD COLUMN col5 
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_decimal;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_decimal" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_decimal on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decim_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decim_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_dec_1_prt_partthree"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal SELECT 2.00,2.00,'c',2.00;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3;
  col1 | col2 | col3 | col5 
@@ -10917,9 +10893,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD COLUMN col5 int
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int4;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int4" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int4 on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int_1_prt_partthree"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SELECT 20000000,20000000,'c',20000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -10993,9 +10966,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD COLUMN col5 int
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int8;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int8" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int8 on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_in_1_prt_partthree1"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SELECT 200000000000000000,200000000000000000,'c',200000000000000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
         col1        |        col2        | col3 |        col5        
@@ -11069,9 +11039,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ADD COLUMN col5
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_interval;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_interval" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_interval on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inter_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_inter_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_in_1_prt_partthree2"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval SELECT '10 secs','10 secs','c','10 secs';
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_interval ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -11145,9 +11112,6 @@ ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ADD COLUMN col5 
 DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_numeric;
 NOTICE:  index "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_numeric" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_numeric on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric(col5);
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numer_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numer_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropcol_addcol_addpt_idx_dml_num_1_prt_partthree"
 INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric SELECT 2.000000,2.000000,'c',2.000000;
 SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_numeric ORDER BY 1,2,3;
    col1   |   col2   | col3 |   col5   
@@ -11323,9 +11287,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_char VALUES('g','g','a','g',
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_char;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_char" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_char on mpp21090_pttab_dropfirstcol_addpt_index_char(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_char_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_char DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11381,9 +11342,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_decimal VALUES(2.00,2.00,'a'
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_decimal;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_decimal" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_decimal on mpp21090_pttab_dropfirstcol_addpt_index_decimal(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_decimal_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_decimal DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11439,9 +11397,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int4 VALUES(20000000,2000000
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_int4;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_int4" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_int4 on mpp21090_pttab_dropfirstcol_addpt_index_int4(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int4_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_int4 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11497,9 +11452,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_int8 VALUES(2000000000000000
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_int8;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_int8" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_int8 on mpp21090_pttab_dropfirstcol_addpt_index_int8(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_int8_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_int8 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11555,9 +11507,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_interval VALUES('10 secs','1
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_interval;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_interval" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_interval on mpp21090_pttab_dropfirstcol_addpt_index_interval(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_interval_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_interva_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_interval DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -11613,9 +11562,6 @@ INSERT INTO mpp21090_pttab_dropfirstcol_addpt_index_numeric VALUES(2.000000,2.00
 DROP INDEX IF EXISTS mpp21090_pttab_dropfirstcol_addpt_index_idx_numeric;
 NOTICE:  index "mpp21090_pttab_dropfirstcol_addpt_index_idx_numeric" does not exist, skipping
 CREATE INDEX mpp21090_pttab_dropfirstcol_addpt_index_idx_numeric on mpp21090_pttab_dropfirstcol_addpt_index_numeric(col2);
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_pttab_dropfirstcol_addpt_index_numeric_1_prt_partthree"
 ALTER TABLE mpp21090_pttab_dropfirstcol_addpt_index_numeric DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14149,9 +14095,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_char ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_char;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_char" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_char on mpp21090_xchange_pttab_dropcol_idx_dml_char(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_char_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_char DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14257,9 +14200,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_decimal ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_decimal;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_decimal" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_decimal on mpp21090_xchange_pttab_dropcol_idx_dml_decimal(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_decimal_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_decimal DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14365,9 +14305,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int4 ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_int4;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_int4" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_int4 on mpp21090_xchange_pttab_dropcol_idx_dml_int4(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int4_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int4 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14473,9 +14410,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_int8 ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_int8;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_int8" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_int8 on mpp21090_xchange_pttab_dropcol_idx_dml_int8(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_int8_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_int8 DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14581,9 +14515,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_interval ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_interval;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_interval" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_interval on mpp21090_xchange_pttab_dropcol_idx_dml_interval(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_interval_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_interval DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
@@ -14689,9 +14620,6 @@ SELECT * FROM mpp21090_xchange_pttab_dropcol_idx_dml_numeric ORDER BY 1,2,3,4;
 DROP INDEX IF EXISTS mpp21090_xchange_pttab_dropcol_idx_dml_idx_numeric;
 NOTICE:  index "mpp21090_xchange_pttab_dropcol_idx_dml_idx_numeric" does not exist, skipping
 CREATE INDEX mpp21090_xchange_pttab_dropcol_idx_dml_idx_numeric on mpp21090_xchange_pttab_dropcol_idx_dml_numeric(col2);
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_partone"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_parttwo"
-NOTICE:  building index for child partition "mpp21090_xchange_pttab_dropcol_idx_dml_numeric_1_prt_partthree"
 ALTER TABLE mpp21090_xchange_pttab_dropcol_idx_dml_numeric DROP COLUMN col1;
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy

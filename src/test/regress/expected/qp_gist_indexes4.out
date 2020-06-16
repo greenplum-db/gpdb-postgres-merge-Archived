@@ -763,8 +763,6 @@ INSERT INTO geometricTypesPartition (seed, c, b, p)
   FROM generate_series(1, 3000)x
  ;
 CREATE INDEX gt_index_c_part ON geometricTypesPartition USING GIST (c);
-NOTICE:  building index for child partition "geometrictypespartition_1_prt_1"
-NOTICE:  building index for child partition "geometrictypespartition_1_prt_2"
 SET enable_seqscan = False;
 SET optimizer_enable_tablescan = False;
 SELECT * FROM geometricTypesPartition 

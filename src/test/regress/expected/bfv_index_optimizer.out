@@ -92,26 +92,6 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' a
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into bfv_tab2_dimtabl1 select col1, col1 from (select generate_series(1,20,3) col1)a;
 CREATE INDEX idx_bfv_tab2_facttable1 on bfv_tab2_facttable1 (id); 
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_dflt"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_2"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_3"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_4"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_5"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_6"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_7"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_8"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_9"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_10"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_11"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_12"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_13"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_14"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_15"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_16"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_17"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_18"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_19"
-NOTICE:  building index for child partition "bfv_tab2_facttable1_1_prt_20"
 --start_ignore
 set optimizer_analyze_root_partition to on;
 --end_ignore
@@ -321,8 +301,6 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into Tbl23383_partitioned select g,g,g,g from generate_series(1,1000) g;
 create index idx23383_b on Tbl23383_partitioned(b);
-NOTICE:  building index for child partition "tbl23383_partitioned_1_prt_p1"
-NOTICE:  building index for child partition "tbl23383_partitioned_1_prt_p2"
 -- heterogenous indexes
 create index idx23383_c on Tbl23383_partitioned_1_prt_p1(c);
 create index idx23383_cd on Tbl23383_partitioned_1_prt_p2(c,d);

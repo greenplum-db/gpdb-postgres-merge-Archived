@@ -373,9 +373,6 @@ PARTITION part201204 VALUES('201204') WITH (APPENDONLY=true, COMPRESSLEVEL=5, OR
 PARTITION part201205 VALUES('201205')
 );
 create index testbug_char5_tag1 on testbug_char5 using btree(tag1);
-NOTICE:  building index for child partition "testbug_char5_1_prt_part201203"
-NOTICE:  building index for child partition "testbug_char5_1_prt_part201204"
-NOTICE:  building index for child partition "testbug_char5_1_prt_part201205"
 insert into testbug_char5 (timest,user_id,to_be_drop) select '201203',1111,'10000';
 insert into testbug_char5 (timest,user_id,to_be_drop) select '201204',1111,'10000';
 insert into testbug_char5 (timest,user_id,to_be_drop) select '201205',1111,'10000';
