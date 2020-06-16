@@ -377,9 +377,9 @@ select autnspname,autrelname,autrelkind from gp_toolkit.__gp_user_tables where a
  tktest     | gptoolkit_user_table_ao_1_prt_p1_2_prt_2 | r
  tktest     | gptoolkit_user_table_ao_1_prt_p2_2_prt_1 | r
  tktest     | gptoolkit_user_table_ao_1_prt_p2_2_prt_2 | r
- tktest     | gptoolkit_user_table_ao                  | r
- tktest     | gptoolkit_user_table_ao_1_prt_p1         | r
- tktest     | gptoolkit_user_table_ao_1_prt_p2         | r
+ tktest     | gptoolkit_user_table_ao                  | p
+ tktest     | gptoolkit_user_table_ao_1_prt_p1         | p
+ tktest     | gptoolkit_user_table_ao_1_prt_p2         | p
  tktest     | gptoolkit_user_table_co                  | r
 (9 rows)
 

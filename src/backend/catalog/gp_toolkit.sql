@@ -114,7 +114,7 @@ AS
         SELECT aunoid
         FROM gp_toolkit.__gp_user_namespaces
     )
-    AND (pgc.relkind = 'r' OR pgc.relkind = 'm')
+    AND pgc.relkind IN ('r', 'p', 'm')
     AND pgc.relispopulated = 't'
     AND pgc.oid = fn.fnoid;
 
@@ -947,6 +947,7 @@ AS
                     FROM gp_toolkit.__gp_is_append_only
                     WHERE iaooid = pgc.oid AND iaotype = 't'
                 )
+                AND pgc.relkind not in ('p') -- partitioned tables have no data
             )
             AS pgc
         LEFT OUTER JOIN
