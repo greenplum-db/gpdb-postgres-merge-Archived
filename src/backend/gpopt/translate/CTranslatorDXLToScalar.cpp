@@ -1346,15 +1346,15 @@ CTranslatorDXLToScalar::TranslateDXLScalarArrayCoerceExprToScalar
 		func_expr->funcresulttype = gpdb::GetFuncRetType(elemfuncid);
 		// FIXME: wrapper for get_element_type
 		func_expr->args = gpdb::LPrepend(case_test_expr, ListMake2((void*)dxlop->TypeModifier(), (void*)BoolGetDatum(true)));
-		coerce->elemexpr = castNode(Expr, func_expr);
+		coerce->elemexpr = (Expr *) func_expr;
 	}
 	else
 	{
 		RelabelType *rt = MakeNode(RelabelType);
 		rt->resulttypmod = dxlop->TypeModifier();
 		rt->resulttype = gpdb::GetElementType(coerce->resulttype);
-		rt->arg = castNode(Expr, case_test_expr);
-		coerce->elemexpr = castNode(Expr, rt);
+		rt->arg = (Expr *) case_test_expr;
+		coerce->elemexpr = (Expr *) rt;
 	}
 
 	return (Expr *) coerce;
