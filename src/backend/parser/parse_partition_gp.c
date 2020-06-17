@@ -893,14 +893,20 @@ generateRangePartitions(ParseState *pstate,
 	if (boundspec->partStart)
 	{
 		if (list_length(boundspec->partStart->val) != partkey->partnatts)
-			elog(ERROR, "invalid number of start values"); // GPDB_12_MERGE_FIXME: improve message
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("invalid number of START values"),
+					 parser_errposition(pstate, boundspec->partStart->location)));
 		start = linitial(boundspec->partStart->val);
 	}
 
 	if (boundspec->partEnd)
 	{
 		if (list_length(boundspec->partEnd->val) != partkey->partnatts)
-			elog(ERROR, "invalid number of end values"); // GPDB_12_MERGE_FIXME: improve message
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("invalid number of END values"),
+					 parser_errposition(pstate, boundspec->partEnd->location)));
 		end = linitial(boundspec->partEnd->val);
 		endIncl = (boundspec->partEnd->edge == PART_EDGE_INCLUSIVE) ? true : false;
 	}

@@ -54,14 +54,27 @@ partition bb start (date '2008-01-01') end (date '2009-01-01')
 
 drop table ggg cascade;
 
--- don't allow nonconstant expressions, even simple ones...
+-- Expressions are allowed
 create table ggg (a char(1), b numeric, d numeric)
 distributed by (a)
-partition by range (b,d)
+partition by range (b)
 (
-partition aa start (2007,1) end (2008,2+2),
-partition bb start (2008,2) end (2009,3)
+partition aa start (2007) end (2007+1),
+partition bb start (2008) end (2009)
 );
+
+drop table ggg cascade;
+
+-- Even volatile expressions are OK. They are evaluted immediately.
+create table ggg (a char(1), b numeric, d numeric)
+distributed by (a)
+partition by range (b)
+(
+partition aa start (2007) end (2008+(random()*9)::integer),
+partition bb start (2018) end (2019)
+);
+
+drop table ggg cascade;
 
 -- too many columns for RANGE partition
 create table ggg (a char(1), b numeric, d numeric)
@@ -72,8 +85,24 @@ partition aa start (2007,1) end (2008,2),
 partition bb start (2008,2) end (2009,3)
 );
 
-
 drop table ggg cascade;
+
+-- Mismatch between number of columns in PARTITION BY and in the START/END clauses
+create table pby_mismatch (a char(1), b numeric, d numeric)
+distributed by (a)
+partition by range (b)
+(
+  partition aa start (2007,1) end (2008),
+  partition bb start (2008,2) end (2009)
+);
+
+create table pby_mismatch (a char(1), b numeric, d numeric)
+distributed by (a)
+partition by range (b)
+(
+  partition aa start (2007) end (2008,1),
+  partition bb start (2008) end (2009,1)
+);
 
 -- basic list partition
 create table ggg (a char(1), b char(2), d char(3))

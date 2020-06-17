@@ -5605,6 +5605,7 @@ TabPartitionBoundarySpecEnd:
 						n->edge = $5;
 					else
 						n->edge = PART_EDGE_EXCLUSIVE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			;
