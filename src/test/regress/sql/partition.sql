@@ -3589,7 +3589,9 @@ subpartition by range (k) subpartition template (start(1)  end(10) every(2))
 (partition female values('F'), partition male values('M'))
 ;
 
--- Intermediate partition insert is not allowed
+-- Intermediate partition insert is allowed
+insert into deep_part_1_prt_male_2_prt_2 values(1,3,1,'M');
+-- but only if it's the right partition.
 insert into deep_part_1_prt_male_2_prt_2 values(1,1,1,'M');
 
 -- Wrong sub-partition (inserting a female value in male partition)

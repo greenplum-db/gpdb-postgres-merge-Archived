@@ -5899,18 +5899,21 @@ subpartition by range (j) subpartition template (start(1)  end(10) every(2))
 subpartition by range (k) subpartition template (start(1)  end(10) every(2))
 (partition female values('F'), partition male values('M'))
 ;
--- Intermediate partition insert is not allowed
+-- Intermediate partition insert is allowed
+insert into deep_part_1_prt_male_2_prt_2 values(1,3,1,'M');
+-- but only if it's the right partition.
 insert into deep_part_1_prt_male_2_prt_2 values(1,1,1,'M');
-ERROR:  directly modifying intermediate part of a partitioned table is disallowed
-HINT:  Modify either the root or a leaf partition instead.
+ERROR:  new row for relation "deep_part_1_prt_male_2_prt_2" violates partition constraint  (seg1 127.0.1.1:7003 pid=6171)
+DETAIL:  Failing row contains (1, 1, 1, M    ).
 -- Wrong sub-partition (inserting a female value in male partition)
 insert into deep_part_1_prt_male_2_prt_2_3_prt_2 values (1, 1, 1, 'F');
-ERROR:  trying to insert row into wrong partition  (seg0 slarimac:40000 pid=97899)
-DETAIL:  Expected partition: deep_part_1_prt_female_2_prt_1_3_prt_1, provided partition: deep_part_1_prt_male_2_prt_2_3_prt_2.
+ERROR:  new row for relation "deep_part_1_prt_male_2_prt_2_3_prt_2" violates partition constraint  (seg1 127.0.1.1:7003 pid=6171)
+DETAIL:  Failing row contains (1, 1, 1, F    ).
 select * from deep_part;
- i | j | k | s 
----+---+---+---
-(0 rows)
+ i | j | k |   s   
+---+---+---+-------
+ 1 | 3 | 1 | M    
+(1 row)
 
 -- Correct leaf part
 insert into deep_part_1_prt_male_2_prt_1_3_prt_1 values (1, 1, 1, 'M');
@@ -5919,7 +5922,8 @@ select * from deep_part;
  i | j | k |   s   
 ---+---+---+-------
  1 | 1 | 1 | M    
-(1 row)
+ 1 | 3 | 1 | M    
+(2 rows)
 
 select * from deep_part_1_prt_male_2_prt_1_3_prt_1;
  i | j | k |   s   
@@ -5934,7 +5938,8 @@ select * from deep_part;
 ---+---+---+-------
  1 | 1 | 1 | M    
  1 | 1 | 1 | M    
-(2 rows)
+ 1 | 3 | 1 | M    
+(3 rows)
 
 select * from deep_part_1_prt_male_2_prt_1_3_prt_1;
  i | j | k |   s   
@@ -5950,7 +5955,8 @@ select * from deep_part;
  1 | 1 | 1 | F    
  1 | 1 | 1 | M    
  1 | 1 | 1 | M    
-(3 rows)
+ 1 | 3 | 1 | M    
+(4 rows)
 
 select * from deep_part_1_prt_female_2_prt_1_3_prt_1;
  i | j | k |   s   
@@ -5965,8 +5971,9 @@ select * from deep_part;
  1 | 1 | 1 | F    
  1 | 1 | 1 | M    
  1 | 1 | 1 | M    
+ 1 | 3 | 1 | M    
  5 | 5 | 5 | M    
-(4 rows)
+(5 rows)
 
 select * from deep_part_1_prt_male_2_prt_3_3_prt_3;
  i | j | k |   s   
@@ -5982,8 +5989,9 @@ select * from deep_part;
  9 | 9 | 9 | F    
  1 | 1 | 1 | M    
  1 | 1 | 1 | M    
+ 1 | 3 | 1 | M    
  5 | 5 | 5 | M    
-(5 rows)
+(6 rows)
 
 select * from deep_part_1_prt_female_2_prt_5_3_prt_5;
  i | j | k |   s   
@@ -6001,8 +6009,9 @@ select * from deep_part;
  9 | 9 | 9 | F    
  1 | 1 | 1 | M    
  1 | 1 | 1 | M    
+ 1 | 3 | 1 | M    
  5 | 5 | 5 | M    
-(5 rows)
+(6 rows)
 
 drop table input2;
 drop table input1;
