@@ -728,6 +728,16 @@ CTranslatorRelcacheToDXL::RetrieveRelColumns
 {
 	CMDColumnArray *mdcol_array = GPOS_NEW(mp) CMDColumnArray(mp);
 
+	for (ULONG ul = 0; ul < (ULONG) rel->rd_att->natts; ul++)
+	{
+		// GPDB_12_MERGE_FIXME: need to add support in ORCA to support GENERATED columns in DML
+		// FIXME: XXX in hindsight, we can fallback less often.
+		//  We _really_ should only fallback on DML, not *all the time*
+		if (rel->rd_att->attrs[ul].attgenerated)
+			GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported,
+					   GPOS_WSZ_LIT("column has GENERATED default value"));
+	}
+
 	for (ULONG ul = 0;  ul < (ULONG) rel->rd_att->natts; ul++)
 	{
 		Form_pg_attribute att = &rel->rd_att->attrs[ul];
