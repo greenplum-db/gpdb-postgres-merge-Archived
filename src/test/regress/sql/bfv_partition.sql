@@ -328,7 +328,7 @@ alter table mpp3542_0000000000111111111122222222223333333333444444444455555 rena
 alter table  mpp3542_0000000000111111111122222222223333333333444444444455555 rename to m; 
 
 create table mpp3466 (i int) partition by range(i) (start(1) end(10) every(2), default partition f);
-alter table mpp3466 split partition f at (3) into (partition f, partition new);
+alter table mpp3466 split partition f at (3) into (partition f, partition new1);
 drop table mpp3466;
 create table mpp3058 (a char(1), b date, d char(3))       
  distributed by (a)         

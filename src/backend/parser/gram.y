@@ -18216,6 +18216,10 @@ PartitionColId: PartitionIdentKeyword { $$ = pstrdup($1); }
 			| IDENT { $$ = pstrdup($1); }
 			;
 
+/*
+ * GPDB_12_MERGE_FIXME: need to update this list to reflect new keywords added
+ * as part of merge like NEW, OLD,.....
+ */
 PartitionIdentKeyword: ABORT_P
 			| ABSOLUTE_P
 			| ACCESS
