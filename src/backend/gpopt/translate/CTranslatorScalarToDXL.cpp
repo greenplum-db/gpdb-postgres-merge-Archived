@@ -1479,8 +1479,18 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 
 	if ((frame_options & FRAMEOPTION_ROWS) != 0)
 		frame_spec = EdxlfsRow;
-	else
+	else if ((frame_options & FRAMEOPTION_RANGE) != 0)
 		frame_spec = EdxlfsRange;
+	else if ((frame_options & FRAMEOPTION_GROUPS) != 0)
+		// GPDB_12_MERGE_FIXME: there's no reason the optimizer would care too
+		// much about this. As long as we recognize and roundtrip this, I think
+		// the executor will take care of it
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			GPOS_WSZ_LIT("Unsupported window frame option: GROUPS"));
+	else
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			GPOS_WSZ_LIT("Unrecognized window frame option"));
+
 
 	EdxlFrameBoundary leading_boundary;
 	if ((frame_options & FRAMEOPTION_END_UNBOUNDED_PRECEDING) != 0)
@@ -1494,7 +1504,7 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 	else if ((frame_options & FRAMEOPTION_END_UNBOUNDED_FOLLOWING) != 0)
 		leading_boundary = EdxlfbUnboundedFollowing;
 	else
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiPlStmt2DXLConversion,
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 			   GPOS_WSZ_LIT("Unrecognized window frame option"));
 
 	EdxlFrameBoundary trailing_boundary;
