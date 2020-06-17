@@ -217,7 +217,7 @@ TruncateAOSegmentFile(File fd, Relation rel, int32 segFileNum, int64 offset)
 
 struct mdunlink_ao_callback_ctx
 {
-	RelFileNode rnode;/* used to register forget request */
+	RelFileNode rnode; /* used to register forget request */
 	char *segPath;
 	char *segpathSuffixPosition;
 	bool isRedo;
@@ -279,39 +279,22 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	char *segPath = unlinkFiles->segPath;
 	char *segPathSuffixPosition = unlinkFiles->segpathSuffixPosition;
 
-	if( segno == 0)
+	/*
+	 * Delete or truncate the first segment.
+	 */
+	if (segno == 0)
 	{
+		FileTag tag;
 		*segPathSuffixPosition = '\0';
 
-		/* truncate(2) would be easier here, but Windows hasn't got it */
-		int			fd;
-		int			ret;
-
-		fd = OpenTransientFile(segPath, O_RDWR | PG_BINARY);
-		if (fd >= 0)
-		{
-			int			save_errno;
-
-			ret = ftruncate(fd, 0);
-			save_errno = errno;
-			CloseTransientFile(fd);
-			errno = save_errno;
-		}
-		else
-			ret = -1;
-
-		if (ret < 0 && errno != ENOENT)
-		{
-			ereport(WARNING,
-			        (errcode_for_file_access(),
-				        errmsg("could not truncate file \"%s\": %m", segPath)));
-
-		}
-
-		/* Register request to unlink first segment later */
-		/* copy code from register_forget_request */
 		if (unlinkFiles->isRedo)
 		{
+			/* First, forget any pending sync requests for the first segment */
+			INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
+						 SYNC_HANDLER_AO);
+			RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+
+			/* Next unlink the file */
 			if (unlink(segPath) != 0)
 			{
 				/* ENOENT is expected after the end of the extensions */
@@ -326,8 +309,32 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 		}
 		else
 		{
+			/* truncate(2) would be easier here, but Windows hasn't got it */
+			int			fd;
+			int			ret;
 
-			FileTag		tag;
+			fd = OpenTransientFile(segPath, O_RDWR | PG_BINARY);
+			if (fd >= 0)
+			{
+				int			save_errno;
+
+				ret = ftruncate(fd, 0);
+				save_errno = errno;
+				CloseTransientFile(fd);
+				errno = save_errno;
+			}
+			else
+				ret = -1;
+
+			if (ret < 0 && errno != ENOENT)
+			{
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not truncate file \"%s\": %m", segPath)));
+
+			}
+
+			/* Register request to unlink first segment later */
 			INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
 			             SYNC_HANDLER_AO);
 			RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
@@ -337,14 +344,6 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	}
 	else
 		sprintf(segPathSuffixPosition, ".%u", segno);
-
-	if (unlinkFiles->isRedo)
-	{
-		FileTag tag;
-		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
-					 SYNC_HANDLER_AO);
-		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
-	}
 
 	if (unlink(segPath) != 0)
 	{
