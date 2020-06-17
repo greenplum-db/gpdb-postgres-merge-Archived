@@ -1480,7 +1480,16 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 	if ((frame_options & FRAMEOPTION_ROWS) != 0)
 		frame_spec = EdxlfsRow;
 	else if ((frame_options & FRAMEOPTION_RANGE) != 0)
+	{
 		frame_spec = EdxlfsRange;
+		// GPDB_12_MERGE_FIXME: as soon as we can pass WindowClause::startInRangeFunc
+		// and friends to ORCA and get them back, we can support stuff like
+		// RANGE 1 PRECEDING
+		if ((frame_options & (FRAMEOPTION_START_OFFSET | FRAMEOPTION_END_OFFSET)))
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+					   GPOS_WSZ_LIT("Unsupported window frame option: RANGE "
+									"BETWEEN OFFSET PRECEDING / FOLLOWING"));
+	}
 	else if ((frame_options & FRAMEOPTION_GROUPS) != 0)
 		// GPDB_12_MERGE_FIXME: there's no reason the optimizer would care too
 		// much about this. As long as we recognize and roundtrip this, I think
