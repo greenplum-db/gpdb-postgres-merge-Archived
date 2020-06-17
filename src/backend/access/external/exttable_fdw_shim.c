@@ -932,7 +932,7 @@ exttable_EndForeignScan(ForeignScanState *node)
 {
 	exttable_fdw_state *fdw_state = (exttable_fdw_state *) node->fdw_state;
 
-	if (node->is_squelched)
+	if (node->ss.ps.squelched)
 		external_stopscan(fdw_state->ess_ScanDesc);
 
 	external_endscan(fdw_state->ess_ScanDesc);

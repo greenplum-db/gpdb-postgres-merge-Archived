@@ -2209,8 +2209,6 @@ typedef struct ForeignScanState
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_state;		/* foreign-data wrapper can keep state here */
-
-	bool		is_squelched;
 } ForeignScanState;
 
 /*

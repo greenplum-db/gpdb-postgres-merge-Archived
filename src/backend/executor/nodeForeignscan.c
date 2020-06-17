@@ -381,8 +381,6 @@ ExecShutdownForeignScan(ForeignScanState *node)
 {
 	FdwRoutine *fdwroutine = node->fdwroutine;
 
-	node->is_squelched = true;
-
 	if (fdwroutine->ShutdownForeignScan)
 		fdwroutine->ShutdownForeignScan(node);
 }
