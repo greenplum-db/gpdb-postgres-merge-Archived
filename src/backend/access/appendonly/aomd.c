@@ -274,6 +274,7 @@ mdunlink_ao(RelFileNodeBackend rnode, ForkNumber forkNumber, bool isRedo)
 static bool
 mdunlink_ao_perFile(const int segno, void *ctx)
 {
+	FileTag tag;
 	const struct mdunlink_ao_callback_ctx *unlinkFiles = ctx;
 
 	char *segPath = unlinkFiles->segPath;
@@ -284,7 +285,6 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	 */
 	if (segno == 0)
 	{
-		FileTag tag;
 		*segPathSuffixPosition = '\0';
 
 		if (unlinkFiles->isRedo)
@@ -339,21 +339,27 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 			             SYNC_HANDLER_AO);
 			RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
 		}
-
-		return true;
 	}
 	else
+	{
 		sprintf(segPathSuffixPosition, ".%u", segno);
 
-	if (unlink(segPath) != 0)
-	{
-		/* ENOENT is expected after the end of the extensions */
-		if (errno != ENOENT)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-							errmsg("could not remove file \"%s\": %m", segPath)));
-		else
-			return false;
+		/* First, forget any pending sync requests for the first segment */
+		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
+					 SYNC_HANDLER_AO);
+		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+
+		/* Next unlink the file */
+		if (unlink(segPath) != 0)
+		{
+			/* ENOENT is expected after the end of the extensions */
+			if (errno != ENOENT)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove file \"%s\": %m", segPath)));
+			else
+				return false;
+		}
 	}
 
 	return true;
