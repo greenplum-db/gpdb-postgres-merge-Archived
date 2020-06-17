@@ -27,11 +27,7 @@ step "s1i"	{
 		CREATE INDEX CONCURRENTLY mcic_one_pkey ON mcic_one (id)
 		WHERE lck_shr(281457);
 	}
-<<<<<<< HEAD
-teardown	{ SELECT pg_advisory_unlock_all() AS "s1"; }
-=======
 teardown	{ SELECT unlck(); }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 session "s2"
