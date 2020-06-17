@@ -727,10 +727,8 @@ DETAIL:  Specified lower bound ('01-01-2010') is greater than or equal to upper 
 -- works
 --alter table hhh add partition cc start ('2009-01-01') end ('2010-01-01');
 alter table hhh add partition cc end ('2010-01-01');
-ERROR:  partition "hhh_1_prt_cc" would overlap partition "hhh_1_prt_aa"
 -- works - anonymous partition MPP-3350
 alter table hhh add partition end ('2010-02-01');
-ERROR:  partition "hhh_1_prt_1" would overlap partition "hhh_1_prt_aa"
 -- MPP-3607 - ADD PARTITION with open intervals
 create table no_end1 (aa int, bb int) partition by range (bb)
 (partition foo start(3));
@@ -744,7 +742,6 @@ alter table no_end1 add partition baz start (5);
 ERROR:  partition "no_end1_1_prt_baz" would overlap partition "no_end1_1_prt_foo"
 -- ok (terminates on foo start)
 alter table no_end1 add partition baz start (2);
-ERROR:  partition "no_end1_1_prt_baz" would overlap partition "no_end1_1_prt_foo"
 -- ok (because ends before baz start)
 alter table no_end1 add partition baz2 end (1);
 create table no_start1 (aa int, bb int) partition by range (bb)
@@ -759,7 +756,6 @@ alter table no_start1 add partition baz end (1);
 ERROR:  partition "no_start1_1_prt_baz" would overlap partition "no_start1_1_prt_foo"
 -- ok (starts on foo end)
 alter table no_start1 add partition baz end (4);
-ERROR:  partition "no_start1_1_prt_baz" would overlap partition "no_start1_1_prt_foo"
 -- ok (because starts after baz end)
 alter table no_start1 add partition baz2 start (5);
 select tablename, partitionlevel, parentpartitiontablename,
@@ -867,7 +863,6 @@ alter table hhh_r1 add partition zaa start ('2007-07-01');
 ERROR:  partition "hhh_r1_1_prt_zaa" would overlap partition "hhh_r1_1_prt_aa_7"
 -- start before first partition (ok)
 alter table hhh_r1 add partition zaa start ('2007-06-01');
-ERROR:  partition "hhh_r1_1_prt_zaa" would overlap partition "hhh_r1_1_prt_aa_7"
 -- start > last (fail because start equal end)
 alter table hhh_r1 add partition bb start ('2008-01-01') end ('2008-01-01') ;
 ERROR:  empty range bound specified for partition "hhh_r1_1_prt_bb"
