@@ -83,7 +83,7 @@ SELECT sum((3 = ANY(SELECT lag(x) over(order by x)
 SELECT min(generate_series(1, 3)) OVER() FROM few;
 
 -- SRFs are normally computed after window functions
-SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
+SELECT id,lag(id) OVER(order by id), count(*) OVER(), generate_series(1,3) FROM few;
 -- unless referencing SRFs
 SELECT SUM(count(*)) OVER(PARTITION BY generate_series(1,3) ORDER BY generate_series(1,3)), generate_series(1,3) g FROM few GROUP BY g;
 
@@ -150,6 +150,10 @@ FROM (VALUES (3, 2), (3,1), (1,1), (1,4), (5,3), (5,1)) AS t(a, b)
 ORDER BY a, b DESC, g DESC;
 
 -- only SRF mentioned in DISTINCT ON
+-- GPDB: the result is not well-defined, because for rows with same 'g',
+-- any row can legally be returned. GPDB chooses a different plan than
+-- upstream, one that redistributes the data. (That's probably not a
+-- good plan in this simple case, but it's not incorrect.)
 SELECT DISTINCT ON (g) a, b, generate_series(1,3) g
 FROM (VALUES (3, 2), (3,1), (1,1), (1,4), (5,3), (5,1)) AS t(a, b);
 
