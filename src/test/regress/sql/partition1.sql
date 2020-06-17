@@ -1264,9 +1264,6 @@ create table mpp14613_range(
      start(1) end(5) every(1)
  );
 
--- Check the partition and subpartition details
-select tablename,partitiontablename, partitionname from pg_partitions where tablename in ('mpp14613_list','mpp14613_range');
-
 -- SPLIT partition
 alter table mpp14613_list alter partition others split partition subothers at (10) into (partition b1, partition b2);
 alter table mpp14613_range alter partition others split partition subothers at (10) into (partition b1, partition b2);
@@ -1294,10 +1291,6 @@ alter table foo alter partition others split partition subothers at (10) into (p
 alter table foo alter partition others split partition subothers at (10) into (partition b1, default partition);
 alter table foo alter partition others split default partition at (10) into (partition b1, default partition);
 drop table foo;
-
--- Drop table as gpcheckcat will complaint of not having constraint for newly
--- created tables due to split.
-drop table mpp14613_list;
 
 --
 -- Drop index on a partitioned table. The indexes on the partitions are removed.
