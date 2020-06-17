@@ -2644,7 +2644,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 							   ancestors, es);
 			break;
 		case T_Sequence:
-			ExplainMemberNodes(((SequenceState *) plan)->subplans,
+			ExplainMemberNodes(((SequenceState *) planstate)->subplans,
 							   ((SequenceState *) planstate)->numSubplans,
 							   list_length(((Sequence *) plan)->subplans),
 										   ancestors, es);

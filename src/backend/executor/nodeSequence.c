@@ -38,6 +38,7 @@ ExecInitSequence(Sequence *node, EState *estate, int eflags)
 	sequenceState = makeNode(SequenceState);
 	sequenceState->ps.plan = (Plan *)node;
 	sequenceState->ps.state = estate;
+	sequenceState->ps.ExecProcNode = ExecSequence;
 
 	int numSubplans = list_length(node->subplans);
 	Assert(numSubplans >= 1);
@@ -89,8 +90,9 @@ completeSubplan(PlanState *subplan)
 }
 
 TupleTableSlot *
-ExecSequence(SequenceState *node)
+ExecSequence(PlanState *pstate)
 {
+	SequenceState *node = castNode(SequenceState, pstate);
 	/*
 	 * If no subplan has been executed yet, execute them here, except for
 	 * the last subplan.
