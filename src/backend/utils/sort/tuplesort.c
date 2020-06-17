@@ -3163,6 +3163,9 @@ tuplesort_get_stats(Tuplesortstate *state,
 	 * rely on availMem in a disk sort.  This does not seem worth the overhead
 	 * to fix.  Is it worth creating an API for the memory context code to
 	 * tell us how much is actually used in sortcontext?
+	 *
+	 * GPDB: we have such accounting in memory contexts, so we store the
+	 * memory usage in 'workmemused'.
 	 */
 	if (state->tapeset)
 	{
@@ -3174,6 +3177,7 @@ tuplesort_get_stats(Tuplesortstate *state,
 		stats->spaceType = SORT_SPACE_TYPE_MEMORY;
 		stats->spaceUsed = (state->allowedMem - state->availMem + 1023) / 1024;
 	}
+	stats->workmemused = MemoryContextGetPeakSpace(state->sortcontext);
 
 	switch (state->status)
 	{

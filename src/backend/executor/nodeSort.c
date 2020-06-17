@@ -465,8 +465,13 @@ ExecSortExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 	SortState *sortstate = (SortState *) planstate;
 
 	if (sortstate->tuplesortstate)
+	{
 		tuplesort_get_stats(sortstate->tuplesortstate,
 							&sortstate->sortstats);
+
+		planstate->instrument->workfileCreated = (sortstate->sortstats.spaceType == SORT_SPACE_TYPE_DISK);
+		planstate->instrument->workmemused = sortstate->sortstats.workmemused;
+	}
 }                               /* ExecSortExplainEnd */
 
 static void
@@ -480,9 +485,14 @@ ExecEagerFreeSort(SortState *node)
 
 	if (node->tuplesortstate != NULL)
 	{
-		/* Save stats, so that we can display them later in EXPLAIN ANALYZE */
+		/*
+		 * Save stats like in ExecSortExplainEnd, so that we can display
+		 * them later in EXPLAIN ANALYZE.
+		 */
 		tuplesort_get_stats(node->tuplesortstate,
 							&node->sortstats);
+		node->ss.ps.instrument->workfileCreated = (node->sortstats.spaceType == SORT_SPACE_TYPE_DISK);
+		node->ss.ps.instrument->workmemused = node->sortstats.workmemused;
 
 		tuplesort_end((Tuplesortstate *) node->tuplesortstate);
 		node->tuplesortstate = NULL;
