@@ -851,15 +851,15 @@ FROM pg_catalog.pg_class c
      LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
      LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
      LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid
-WHERE c.relkind IN ('i','') AND c2.relname like 'unnamed_index_multi_part_table%';
+WHERE c.relkind IN ('i','I') AND c2.relname like 'unnamed_index_multi_part_table%';
  Schema |                              Name                               | relkind |                         Table                         
 --------+-----------------------------------------------------------------+---------+-------------------------------------------------------
- public | unnamed_index_multi_part_table_date_amount_idx                  | i       | unnamed_index_multi_part_table
- public | unnamed_index_multi_part_table_1_prt_part1_date_amount_idx      | i       | unnamed_index_multi_part_table_1_prt_part1
+ public | unnamed_index_multi_part_table_date_amount_idx                  | I       | unnamed_index_multi_part_table
+ public | unnamed_index_multi_part_table_1_prt_part1_date_amount_idx      | I       | unnamed_index_multi_part_table_1_prt_part1
  public | unnamed_index_multi_part_table_1_prt_part1_2_pr_date_amount_idx | i       | unnamed_index_multi_part_table_1_prt_part1_2_prt_usa
  public | unnamed_index_multi_part_table_1_prt_part1_2_p_date_amount_idx1 | i       | unnamed_index_multi_part_table_1_prt_part1_2_prt_asia
  public | unnamed_index_multi_part_table_1_prt_part1_2_p_date_amount_idx2 | i       | unnamed_index_multi_part_table_1_prt_part1_2_prt_def
- public | unnamed_index_multi_part_table_1_prt_part2_date_amount_idx      | i       | unnamed_index_multi_part_table_1_prt_part2
+ public | unnamed_index_multi_part_table_1_prt_part2_date_amount_idx      | I       | unnamed_index_multi_part_table_1_prt_part2
  public | unnamed_index_multi_part_table_1_prt_part2_2_pr_date_amount_idx | i       | unnamed_index_multi_part_table_1_prt_part2_2_prt_usa
  public | unnamed_index_multi_part_table_1_prt_part2_2_p_date_amount_idx1 | i       | unnamed_index_multi_part_table_1_prt_part2_2_prt_asia
 (8 rows)
