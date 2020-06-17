@@ -1914,13 +1914,14 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 
 	/*
 	 * Check that it's of a vacuumable relkind.
-	 *
-	 * GPDB_12_MERGE_FIXME: Should AO aux rels be included here?
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
 		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
 		onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
-		onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+		onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
+		onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
+		onerel->rd_rel->relkind != RELKIND_AOVISIMAP)
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables or special system tables",
@@ -2233,6 +2234,18 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	/*
+	 * In an append-only table, the auxiliary tables are cleaned up in
+	 * the POST_CLEANUP phase. Ignore them in other phases.
+	 */
+	if (is_appendoptimized && ao_vacuum_phase != VACOPT_AO_POST_CLEANUP_PHASE)
+	{
+		toast_relid = InvalidOid;
+		aoseg_relid = InvalidOid;
+		aoblkdir_relid = InvalidOid;
+		aovisimap_relid = InvalidOid;
+	}
+
+	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
 	 * still hold the session lock on the master table.  Note however that
 	 * "analyze" will not get done on the toast table.  This is good, because
@@ -2241,6 +2254,30 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (toast_relid != InvalidOid)
 		vacuum_rel(toast_relid, NULL, params, false);
+
+   /*
+    * If an AO/CO table is empty on a segment,
+    *
+    * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
+    * constructed and dispatched separately by the QD, when vacuuming the
+    * base AO relation.  A backend executing dispatched VacuumStmt
+    * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
+    */
+
+	int orig_option = params->options;
+	params->options = params->options & (~VACUUM_AO_PHASE_MASK);
+	/* do the same for an AO segments table, if any */
+	if (aoseg_relid != InvalidOid)
+		vacuum_rel(aoseg_relid, NULL , params, true);
+
+	/* do the same for an AO block directory table, if any */
+	if (aoblkdir_relid != InvalidOid)
+		vacuum_rel(aoblkdir_relid, NULL, params, true);
+
+	/* do the same for an AO visimap, if any */
+	if (aovisimap_relid != InvalidOid)
+		vacuum_rel(aovisimap_relid, NULL, params, true);
+	params->options = orig_option;
 
 	if (Gp_role == GP_ROLE_DISPATCH && !recursing &&
 		(!is_appendoptimized || ao_vacuum_phase))
