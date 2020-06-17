@@ -696,8 +696,6 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot, int elevel,
 	BlockNumber nblocks;
 	char	   *relname;
 	double		num_tuples;
-	double		totalbytes;
-	double		eof;
 	int64       hidden_tupcount;
 	AppendOnlyVisimap visimap;
 	Oid			visimaprelid;
@@ -719,10 +717,8 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot, int elevel,
 	}
 
 	/* calculate the values we care about */
-	eof = (double)fstotal->totalbytes;
 	num_tuples = (double)fstotal->totaltuples;
-	totalbytes = eof;
-	nblocks = (uint32)RelationGuessNumberOfBlocks(totalbytes);
+	nblocks = (uint32)RelationGetNumberOfBlocks(aorel);
 
 	GetAppendOnlyEntryAuxOids(aorel->rd_id,
 							  snapshot, 

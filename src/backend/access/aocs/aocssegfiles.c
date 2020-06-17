@@ -504,55 +504,6 @@ GetAOCSSSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 }
 
 /*
- * GetAOCSTotalBytes
- *
- * Get the total bytes for a specific AOCS table from the pg_aocsseg table on
- * this local segdb.
- */
-int64
-GetAOCSTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot,
-				  bool compressed)
-{
-	AOCSFileSegInfo	  **allseg;
-	int64				result;
-	int					totalseg;
-	int					s;
-	int					e;
-
-	result = 0;
-	allseg = GetAllAOCSFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, &totalseg);
-	for (s = 0; s < totalseg; s++)
-	{
-		for (e = 0; e < RelationGetNumberOfAttributes(parentrel); e++)
-		{
-			AOCSVPInfoEntry		*entry;
-
-			/*
-			 * AWAITING_DROP segments might be missing information for some
-			 * (newly-added) columns.
-			 */
-			if (e < allseg[s]->vpinfo.nEntry)
-			{
-				entry = getAOCSVPEntry(allseg[s], e);
-
-				if (compressed)
-					result += entry->eof;
-				else
-					result += entry->eof_uncompressed;
-			}
-		}
-	}
-
-	if (allseg)
-	{
-		FreeAllAOCSSegFileInfo(allseg, totalseg);
-		pfree(allseg);
-	}
-
-	return result;
-}
-
-/*
  * Change an pg_aoseg row from DEFAULT to AWAITING_DROP to DEFAULT.
  */
 void

@@ -2685,21 +2685,7 @@ index_update_stats(Relation rel,
 		BlockNumber relpages;
 		BlockNumber relallvisible;
 
-		if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
-		{
-			int64           totalbytes;
-			Snapshot snapshot = RegisterSnapshot(GetLatestSnapshot());
-
-			if (RelationIsAoRows(rel))
-				totalbytes = GetAOTotalBytes(rel, snapshot);
-			else
-				totalbytes = GetAOCSTotalBytes(rel, snapshot, true);
-			UnregisterSnapshot(snapshot);
-
-			relpages = RelationGuessNumberOfBlocks(totalbytes);
-		}
-		else
-			relpages = RelationGetNumberOfBlocks(rel);
+		relpages = RelationGetNumberOfBlocks(rel);
 
 		/*
 		 * GPDB: In theory, it is possible to support index only scans with AO

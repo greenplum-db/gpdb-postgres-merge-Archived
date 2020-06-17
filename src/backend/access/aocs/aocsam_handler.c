@@ -1482,11 +1482,50 @@ aoco_index_validate_scan(Relation heapRelation,
 
 /*
  * This pretends that the all the space is taken by the main fork.
+ * Returns the compressed size.
  */
 static uint64
 aoco_relation_size(Relation rel, ForkNumber forkNumber)
 {
-	return BLCKSZ;
+	AOCSFileSegInfo	  **allseg;
+	Snapshot			snapshot;
+	uint64				totalbytes	= 0;
+	int					totalseg;
+
+	if (forkNumber != MAIN_FORKNUM)
+		return totalbytes;
+
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	allseg = GetAllAOCSFileSegInfo(rel, snapshot, &totalseg);
+	for (int seg = 0; seg < totalseg; seg++)
+	{
+		for (int attr = 0; attr < RelationGetNumberOfAttributes(rel); attr++)
+		{
+			AOCSVPInfoEntry		*entry;
+
+			/*
+			 * AWAITING_DROP segments might be missing information for some
+			 * (newly-added) columns.
+			 */
+			if (attr < allseg[seg]->vpinfo.nEntry)
+			{
+				entry = getAOCSVPEntry(allseg[seg], attr);
+				/* Always return the compressed size */
+				totalbytes += entry->eof;
+			}
+
+			CHECK_FOR_INTERRUPTS();
+		}
+	}
+
+	if (allseg)
+	{
+		FreeAllAOCSSegFileInfo(allseg, totalseg);
+		pfree(allseg);
+	}
+	UnregisterSnapshot(snapshot);
+
+	return totalbytes;
 }
 
 static bool

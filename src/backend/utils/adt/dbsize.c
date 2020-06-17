@@ -389,20 +389,11 @@ calculate_relation_size(Relation rel, ForkNumber forknum)
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	relationpath = relpathbackend(rel->rd_node, rel->rd_backend, forknum);
+	/* Call into the tableam api for AO/AOCO relations */
+	if (RelationIsAppendOptimized(rel))
+		return table_relation_size(rel, forknum);
 
-	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
-	{
-		/* AO tables don't have any extra forks. */
-		if (forknum == MAIN_FORKNUM)
-		{
-			if (RelationIsAoRows(rel))
-				totalsize = GetAOTotalBytes(rel, GetActiveSnapshot());
-			else
-				totalsize = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
-		}
-		return totalsize;
-	}
+	relationpath = relpathbackend(rel->rd_node, rel->rd_backend, forknum);
 
 	/* Ordinary relation, including heap and index.
 	 * They take form of relationpath, or relationpath.%d
@@ -587,30 +578,21 @@ calculate_table_size(Relation rel)
 
 	if (RelationIsAppendOptimized(rel))
 	{
-		Relation ao_rel;
-		Oid segrelid;
-		Oid blkdirrelid;
-		Oid visimaprelid;
+		Oid	auxRelIds[3];
+		GetAppendOnlyEntryAuxOids(rel->rd_id, NULL, &auxRelIds[0],
+								 &auxRelIds[1], NULL,
+								 &auxRelIds[2], NULL);
 
-		GetAppendOnlyEntryAuxOids(rel->rd_id, NULL, &segrelid, &blkdirrelid, NULL, &visimaprelid, NULL);
-
-		Assert(OidIsValid(segrelid));
-		ao_rel = try_relation_open(segrelid, AccessShareLock, false);
-		size += calculate_total_relation_size(ao_rel);
-		relation_close(ao_rel, AccessShareLock);
-
-        /* block directory may not exist, post upgrade or new table that never has indexes */
-		if (OidIsValid(blkdirrelid))
-        {
-			ao_rel = try_relation_open(blkdirrelid, AccessShareLock, false);
-     		size += calculate_total_relation_size(ao_rel);
-			relation_close(ao_rel, AccessShareLock);
-        }
-		if (OidIsValid(visimaprelid))
+		for (int i = 0; i < 3; i++)
 		{
-			ao_rel = try_relation_open(visimaprelid, AccessShareLock, false);
-			size += calculate_total_relation_size(ao_rel);
-			relation_close(ao_rel, AccessShareLock);
+			Relation auxRel;
+
+			if (!OidIsValid(auxRelIds[i]))
+				continue;
+
+			auxRel = try_relation_open(auxRelIds[i], AccessShareLock, false);
+			size += calculate_total_relation_size(auxRel);
+			relation_close(auxRel, AccessShareLock);
 		}
 	}
 
