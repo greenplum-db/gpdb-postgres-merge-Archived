@@ -582,10 +582,7 @@ alter table no_start1 add partition baz end (4);
 -- ok (because starts after baz end)
 alter table no_start1 add partition baz2 start (5);
 
-select tablename, partitionlevel, parentpartitiontablename,
-partitionname, partitionrank, partitionboundary from pg_partitions
-where tablename = 'no_start1' or tablename = 'no_end1'
-order by tablename, partitionrank;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'no_start%' or relname like 'no_end%';
 
 drop table no_end1;
 drop table no_start1;
@@ -1210,18 +1207,18 @@ PARTITION BY RANGE (date)
 
 -- Add unbound partition right before the start succeeds
 alter table mpp13806 add partition test end (date '2008-01-01') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
 
 -- Drop the partition
 alter TABLE mpp13806 drop partition test;
 
 -- Add unbound partition with a gap succeeds
 alter table mpp13806 add partition test end (date '2007-12-31') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
 
 -- Fill the gap succeeds/adding immediately before the first partition succeeds
 alter table mpp13806 add partition test1 start (date '2007-12-31') inclusive end (date '2008-01-01') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
 
 
 --

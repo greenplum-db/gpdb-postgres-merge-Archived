@@ -758,19 +758,18 @@ ERROR:  partition "no_start1_1_prt_baz" would overlap partition "no_start1_1_prt
 alter table no_start1 add partition baz end (4);
 -- ok (because starts after baz end)
 alter table no_start1 add partition baz2 start (5);
-select tablename, partitionlevel, parentpartitiontablename,
-partitionname, partitionrank, partitionboundary from pg_partitions
-where tablename = 'no_start1' or tablename = 'no_end1'
-order by tablename, partitionrank;
- tablename | partitionlevel | parentpartitiontablename | partitionname | partitionrank |        partitionboundary        
------------+----------------+--------------------------+---------------+---------------+---------------------------------
- no_end1   |              0 |                          | baz2          |             1 | PARTITION baz2  END (1)
- no_end1   |              0 |                          | baz           |             2 | PARTITION baz START (2) END (3)
- no_end1   |              0 |                          | foo           |             3 | PARTITION foo START (3)
- no_start1 |              0 |                          | foo           |             1 | PARTITION foo  END (3)
- no_start1 |              0 |                          | baz           |             2 | PARTITION baz START (3) END (4)
- no_start1 |              0 |                          | baz2          |             3 | PARTITION baz2 START (5)
-(6 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'no_start%' or relname like 'no_end%';
+       relname        |            pg_get_expr            
+----------------------+-----------------------------------
+ no_end1              | 
+ no_end1_1_prt_foo    | FOR VALUES FROM (3) TO (MAXVALUE)
+ no_end1_1_prt_baz    | FOR VALUES FROM (2) TO (3)
+ no_end1_1_prt_baz2   | FOR VALUES FROM (MINVALUE) TO (1)
+ no_start1            | 
+ no_start1_1_prt_foo  | FOR VALUES FROM (MINVALUE) TO (3)
+ no_start1_1_prt_baz  | FOR VALUES FROM (3) TO (4)
+ no_start1_1_prt_baz2 | FOR VALUES FROM (5) TO (MAXVALUE)
+(8 rows)
 
 drop table no_end1;
 drop table no_start1;
@@ -2013,42 +2012,45 @@ PARTITION BY RANGE (date)
  EVERY (INTERVAL '1 day') );
 -- Add unbound partition right before the start succeeds
 alter table mpp13806 add partition test end (date '2008-01-01') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
- partitiontablename  | partitionrangestart | partitionstartinclusive | partitionrangeend  | partitionendinclusive 
----------------------+---------------------+-------------------------+--------------------+-----------------------
- mpp13806_1_prt_test |                     | f                       | '01-01-2008'::date | f
- mpp13806_1_prt_1    | '01-01-2008'::date  | t                       | '01-02-2008'::date | f
- mpp13806_1_prt_2    | '01-02-2008'::date  | t                       | '01-03-2008'::date | f
- mpp13806_1_prt_3    | '01-03-2008'::date  | t                       | '01-04-2008'::date | f
- mpp13806_1_prt_4    | '01-04-2008'::date  | t                       | '01-05-2008'::date | f
-(5 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
+       relname       |                   pg_get_expr                    
+---------------------+--------------------------------------------------
+ mpp13806            | 
+ mpp13806_1_prt_1    | FOR VALUES FROM ('01-01-2008') TO ('01-02-2008')
+ mpp13806_1_prt_2    | FOR VALUES FROM ('01-02-2008') TO ('01-03-2008')
+ mpp13806_1_prt_3    | FOR VALUES FROM ('01-03-2008') TO ('01-04-2008')
+ mpp13806_1_prt_4    | FOR VALUES FROM ('01-04-2008') TO ('01-05-2008')
+ mpp13806_1_prt_test | FOR VALUES FROM (MINVALUE) TO ('01-01-2008')
+(6 rows)
 
 -- Drop the partition
 alter TABLE mpp13806 drop partition test;
 -- Add unbound partition with a gap succeeds
 alter table mpp13806 add partition test end (date '2007-12-31') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
- partitiontablename  | partitionrangestart | partitionstartinclusive | partitionrangeend  | partitionendinclusive 
----------------------+---------------------+-------------------------+--------------------+-----------------------
- mpp13806_1_prt_test |                     | f                       | '12-31-2007'::date | f
- mpp13806_1_prt_1    | '01-01-2008'::date  | t                       | '01-02-2008'::date | f
- mpp13806_1_prt_2    | '01-02-2008'::date  | t                       | '01-03-2008'::date | f
- mpp13806_1_prt_3    | '01-03-2008'::date  | t                       | '01-04-2008'::date | f
- mpp13806_1_prt_4    | '01-04-2008'::date  | t                       | '01-05-2008'::date | f
-(5 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
+       relname       |                   pg_get_expr                    
+---------------------+--------------------------------------------------
+ mpp13806            | 
+ mpp13806_1_prt_1    | FOR VALUES FROM ('01-01-2008') TO ('01-02-2008')
+ mpp13806_1_prt_2    | FOR VALUES FROM ('01-02-2008') TO ('01-03-2008')
+ mpp13806_1_prt_3    | FOR VALUES FROM ('01-03-2008') TO ('01-04-2008')
+ mpp13806_1_prt_4    | FOR VALUES FROM ('01-04-2008') TO ('01-05-2008')
+ mpp13806_1_prt_test | FOR VALUES FROM (MINVALUE) TO ('12-31-2007')
+(6 rows)
 
 -- Fill the gap succeeds/adding immediately before the first partition succeeds
 alter table mpp13806 add partition test1 start (date '2007-12-31') inclusive end (date '2008-01-01') exclusive;
-select partitiontablename, partitionrangestart, partitionstartinclusive, partitionrangeend, partitionendinclusive from pg_partitions where tablename like 'mpp13806%' order by partitionrank;
-  partitiontablename  | partitionrangestart | partitionstartinclusive | partitionrangeend  | partitionendinclusive 
-----------------------+---------------------+-------------------------+--------------------+-----------------------
- mpp13806_1_prt_test  |                     | f                       | '12-31-2007'::date | f
- mpp13806_1_prt_test1 | '12-31-2007'::date  | t                       | '01-01-2008'::date | f
- mpp13806_1_prt_1     | '01-01-2008'::date  | t                       | '01-02-2008'::date | f
- mpp13806_1_prt_2     | '01-02-2008'::date  | t                       | '01-03-2008'::date | f
- mpp13806_1_prt_3     | '01-03-2008'::date  | t                       | '01-04-2008'::date | f
- mpp13806_1_prt_4     | '01-04-2008'::date  | t                       | '01-05-2008'::date | f
-(6 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp13806%';
+       relname        |                   pg_get_expr                    
+----------------------+--------------------------------------------------
+ mpp13806             | 
+ mpp13806_1_prt_1     | FOR VALUES FROM ('01-01-2008') TO ('01-02-2008')
+ mpp13806_1_prt_2     | FOR VALUES FROM ('01-02-2008') TO ('01-03-2008')
+ mpp13806_1_prt_3     | FOR VALUES FROM ('01-03-2008') TO ('01-04-2008')
+ mpp13806_1_prt_4     | FOR VALUES FROM ('01-04-2008') TO ('01-05-2008')
+ mpp13806_1_prt_test  | FOR VALUES FROM (MINVALUE) TO ('12-31-2007')
+ mpp13806_1_prt_test1 | FOR VALUES FROM ('12-31-2007') TO ('01-01-2008')
+(7 rows)
 
 --
 -- Create two tables mpp14613_range (range partitioned) and
