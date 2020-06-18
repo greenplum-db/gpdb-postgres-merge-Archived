@@ -201,9 +201,6 @@ TupleMatchesHashFilter(ResultState *node, TupleTableSlot *resultSlot)
 		int targetSeg = cdbhashreduce(node->hashFilter);
 
 		res = (targetSeg == GpIdentity.segindex);
-
-		/* form the result tuple using ExecProject(), and return it */
-		return ExecProject(node->ps.ps_ProjInfo);
 	}
 
 	return res;
