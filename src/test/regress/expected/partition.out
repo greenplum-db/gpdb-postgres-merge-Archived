@@ -5958,21 +5958,23 @@ partition by range(e)
     partition mpp17740_20120523 start ('2012-05-23'::date) inclusive end ('2012-05-24'::date) exclusive with (tablename = 'mpp17740_20120523', appendonly = true),
     partition mpp17740_20120524 start ('2012-05-24'::date) inclusive end ('2012-05-25'::date) exclusive with (tablename = 'mpp17740_20120524', appendonly = true)
 );
-select partitiontablename, partitionrangestart, partitionrangeend from pg_partitions where tablename = 'mpp17740' order by partitiontablename;
- partitiontablename | partitionrangestart | partitionrangeend  
---------------------+---------------------+--------------------
- mpp17740_20120523  | '05-23-2012'::date  | '05-24-2012'::date
- mpp17740_20120524  | '05-24-2012'::date  | '05-25-2012'::date
-(2 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp17740%';
+      relname      |                   pg_get_expr                    
+-------------------+--------------------------------------------------
+ mpp17740          | 
+ mpp17740_20120523 | FOR VALUES FROM ('05-23-2012') TO ('05-24-2012')
+ mpp17740_20120524 | FOR VALUES FROM ('05-24-2012') TO ('05-25-2012')
+(3 rows)
 
 alter table mpp17740 add partition mpp17740_20120520 start ('2012-05-20'::date) inclusive end ('2012-05-21'::date) exclusive with (tablename = 'mpp17740_20120520', appendonly=true);
-select partitiontablename, partitionrangestart, partitionrangeend from pg_partitions where tablename = 'mpp17740' order by partitiontablename;
- partitiontablename | partitionrangestart | partitionrangeend  
---------------------+---------------------+--------------------
- mpp17740_20120520  | '05-20-2012'::date  | '05-21-2012'::date
- mpp17740_20120523  | '05-23-2012'::date  | '05-24-2012'::date
- mpp17740_20120524  | '05-24-2012'::date  | '05-25-2012'::date
-(3 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp17740%';
+      relname      |                   pg_get_expr                    
+-------------------+--------------------------------------------------
+ mpp17740          | 
+ mpp17740_20120520 | FOR VALUES FROM ('05-20-2012') TO ('05-21-2012')
+ mpp17740_20120523 | FOR VALUES FROM ('05-23-2012') TO ('05-24-2012')
+ mpp17740_20120524 | FOR VALUES FROM ('05-24-2012') TO ('05-25-2012')
+(4 rows)
 
 -- Test mix of add and drop various column before split, and exchange partition at the end
 create table sales (pkid serial, option1 int, option2 int, option3 int, constraint partable_pkey primary key(pkid, option3))
@@ -6093,12 +6095,13 @@ with (appendonly=true, orientation=column, compresstype=zlib, compresslevel=1)
 distributed by (a)
 partition by list(b) (partition s_abc values ('abc') with (appendonly=true, orientation=column, compresstype=zlib, compresslevel=1));
 alter table pt_tab_encode add partition "s_xyz" values ('xyz') WITH (appendonly=true, orientation=column, compresstype=zlib, compresslevel=1);
-select tablename, partitiontablename from pg_partitions where tablename = 'pt_tab_encode';
-   tablename   |    partitiontablename     
----------------+---------------------------
- pt_tab_encode | pt_tab_encode_1_prt_s_abc
- pt_tab_encode | pt_tab_encode_1_prt_s_xyz
-(2 rows)
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'pt_tab_encode%';
+          relname          |      pg_get_expr      
+---------------------------+-----------------------
+ pt_tab_encode             | 
+ pt_tab_encode_1_prt_s_abc | FOR VALUES IN ('abc')
+ pt_tab_encode_1_prt_s_xyz | FOR VALUES IN ('xyz')
+(3 rows)
 
 select gp_segment_id, attrelid::regclass, attnum, attoptions from pg_attribute_encoding where attrelid = 'pt_tab_encode_1_prt_s_abc'::regclass;
  gp_segment_id |         attrelid          | attnum |                     attoptions                      

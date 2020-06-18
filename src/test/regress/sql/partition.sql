@@ -3738,11 +3738,10 @@ partition by range(e)
     partition mpp17740_20120523 start ('2012-05-23'::date) inclusive end ('2012-05-24'::date) exclusive with (tablename = 'mpp17740_20120523', appendonly = true),
     partition mpp17740_20120524 start ('2012-05-24'::date) inclusive end ('2012-05-25'::date) exclusive with (tablename = 'mpp17740_20120524', appendonly = true)
 );
-
-select partitiontablename, partitionrangestart, partitionrangeend from pg_partitions where tablename = 'mpp17740' order by partitiontablename;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp17740%';
 
 alter table mpp17740 add partition mpp17740_20120520 start ('2012-05-20'::date) inclusive end ('2012-05-21'::date) exclusive with (tablename = 'mpp17740_20120520', appendonly=true);
-select partitiontablename, partitionrangestart, partitionrangeend from pg_partitions where tablename = 'mpp17740' order by partitiontablename;
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp17740%';
 
 -- Test mix of add and drop various column before split, and exchange partition at the end
 create table sales (pkid serial, option1 int, option2 int, option3 int, constraint partable_pkey primary key(pkid, option3))
@@ -3831,7 +3830,7 @@ partition by list(b) (partition s_abc values ('abc') with (appendonly=true, orie
 
 alter table pt_tab_encode add partition "s_xyz" values ('xyz') WITH (appendonly=true, orientation=column, compresstype=zlib, compresslevel=1);
 
-select tablename, partitiontablename from pg_partitions where tablename = 'pt_tab_encode';
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'pt_tab_encode%';
 
 select gp_segment_id, attrelid::regclass, attnum, attoptions from pg_attribute_encoding where attrelid = 'pt_tab_encode_1_prt_s_abc'::regclass;
 select gp_segment_id, attrelid::regclass, attnum, attoptions from gp_dist_random('pg_attribute_encoding') where attrelid = 'pt_tab_encode_1_prt_s_abc'::regclass order by 1,3 limit 5;
