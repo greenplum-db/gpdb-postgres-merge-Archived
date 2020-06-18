@@ -478,11 +478,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			 * This is our last opportunity to verify that the physical table given
 			 * by tableoid is, indeed, simply updatable.
 			 */
-			if (!isSimplyUpdatableRelation(*current_table_oid, true /* noerror */))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("%s is not updatable",
-								get_rel_name(*current_table_oid))));
+			(void) isSimplyUpdatableRelation(*current_table_oid, false /* noerror */);
 		}
 
 		if (p_cursor_name)
