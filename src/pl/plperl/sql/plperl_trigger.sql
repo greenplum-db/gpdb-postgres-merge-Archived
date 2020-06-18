@@ -222,6 +222,8 @@ $$
     return undef;
 $$;
 
+-- GPDB: this test doesn't work properly on GPDB, because statement triggers
+-- are not fired.
 CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
   REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
   FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();

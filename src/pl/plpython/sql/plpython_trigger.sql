@@ -123,7 +123,10 @@ AFTER INSERT OR UPDATE OR DELETE ON trigger_test_generated
 FOR EACH ROW EXECUTE PROCEDURE trigger_data();
 
 insert into trigger_test_generated (i) values (1);
+-- GPDB: Fails, updating the distribution key with triggers is not allowed.
 update trigger_test_generated set i = 11 where i = 1;
+-- try this instead:
+update trigger_test_generated set j = default where i = 1;
 delete from trigger_test_generated;
 
 DROP TRIGGER show_trigger_data_trig_before ON trigger_test_generated;
@@ -447,6 +450,8 @@ $$
     return None
 $$;
 
+-- GPDB: this test doesn't work properly on GPDB, because statement triggers
+-- are not fired.
 CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
   REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
   FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();
