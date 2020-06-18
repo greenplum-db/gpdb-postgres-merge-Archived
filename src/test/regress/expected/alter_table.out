@@ -445,13 +445,13 @@ ERROR:  column "c" referenced in foreign key constraint does not exist
 ALTER TABLE attmp3 add constraint attmpconstr foreign key(a) references attmp2(b) match full;
 ERROR:  column "b" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalid data
+-- (passes on GPDB, because GPDB doesn't enforce foreign keys)
 ALTER TABLE attmp3 add constraint attmpconstr foreign key (a) references attmp2 match full;
-ERROR:  insert or update on table "attmp3" violates foreign key constraint "attmpconstr"
-DETAIL:  Key (a)=(5) is not present in table "attmp2".
 -- Delete failing row
 DELETE FROM attmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE attmp3 add constraint attmpconstr foreign key (a) references attmp2 match full;
+ERROR:  constraint "attmpconstr" for relation "attmp3" already exists
 ALTER TABLE attmp3 drop constraint attmpconstr;
 INSERT INTO attmp3 values (5,50);
 -- Try NOT VALID and then VALIDATE CONSTRAINT, but fails. Delete failure then re-validate
@@ -4184,6 +4184,8 @@ drop table perm_part_parent cascade;
 drop table temp_part_parent cascade;
 -- check that attaching partitions to a table while it is being used is
 -- prevented
+-- GPDB: doesn't do what it's supposed to in GPDB, because statement triggers
+-- are not fired.
 create table tab_part_attach (a int) partition by list (a);
 create or replace function func_part_attach() returns trigger
   language plpgsql as $$
@@ -4195,9 +4197,8 @@ create or replace function func_part_attach() returns trigger
 create trigger trig_part_attach before insert on tab_part_attach
   for each statement execute procedure func_part_attach();
 insert into tab_part_attach values (1);
-ERROR:  cannot ALTER TABLE "tab_part_attach" because it is being used by active queries in this session
-CONTEXT:  SQL statement "alter table tab_part_attach attach partition tab_part_attach_1 for values in (1)"
-PL/pgSQL function func_part_attach() line 4 at EXECUTE
+DETAIL:  Partition key of the failing row contains (a) = (1).
+ERROR:  no partition of relation "tab_part_attach" found for row
 drop table tab_part_attach;
 drop function func_part_attach();
 -- test case where the partitioning operator is a SQL function whose
