@@ -327,6 +327,7 @@ make_sirvf_subquery(FuncExpr *fe)
 	funcclass = get_expr_result_type((Node *) fe, &resultTypeId, &resultTupleDesc);
 
 	if (funcclass == TYPEFUNC_COMPOSITE ||
+		funcclass == TYPEFUNC_COMPOSITE_DOMAIN ||
 		funcclass == TYPEFUNC_RECORD)
 	{
 		Query	   *sub_sq = sq;
