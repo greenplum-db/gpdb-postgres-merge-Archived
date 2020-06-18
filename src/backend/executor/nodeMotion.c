@@ -664,7 +664,8 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 			{
 				motionstate->mstype = MOTIONSTATE_RECV;
 				Assert(recvSlice->gangType == GANGTYPE_UNALLOCATED ||
-					   recvSlice->gangType == GANGTYPE_PRIMARY_WRITER);
+					   recvSlice->gangType == GANGTYPE_PRIMARY_WRITER ||
+					   recvSlice->gangType == GANGTYPE_PRIMARY_READER);
 			}
 			else
 			{

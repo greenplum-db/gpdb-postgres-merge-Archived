@@ -2779,7 +2779,10 @@ create table parttab (a int4, b int4) distributed by (a) partition by range (a) 
 create table parttab_x (a int4, b int4) distributed by (b);
 alter table parttab exchange partition for (1) with table parttab_x;
 ERROR:  distribution policy for "parttab_x" must be the same as that for "parttab"
-alter table parttab alter partition for (1) exchange partition for (1) with table parttab_x;
+-- This used to work on GPDB 6 and below, but it is now rejected. ALTER
+-- PARTITION is used to address subpartitions, it is not needed otherwise.
+create table parttab_y (a int4, b int4) distributed by (a);
+alter table parttab alter partition for (1) exchange partition for (1) with table parttab_y;
 ERROR:  table "parttab_1_prt_1" is not partitioned
 -- add constraint using index is forbidden on root and interior partitioned tables
 create table root_part(a int, b int)
