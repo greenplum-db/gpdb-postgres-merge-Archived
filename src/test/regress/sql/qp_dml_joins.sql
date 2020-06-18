@@ -1495,7 +1495,10 @@ rollback;
 
 --Negative test update partition key (no default partition)
 SELECT SUM(b) FROM dml_heap_pt_r;
+-- it's arbitary which row throws the error first, so omit the error DETAIL
+\set VERBOSITY terse
 UPDATE dml_heap_pt_r SET b = dml_heap_pt_r.a + 3000000 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.a;
+\set VERBOSITY default
 SELECT SUM(b) FROM dml_heap_pt_r;
 
 --Insert with generate_series
