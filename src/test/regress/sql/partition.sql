@@ -2597,14 +2597,10 @@ subpartition by range (d)
 
 -- MPP-10421: allow re-use sp2 for non-DEFAULT partition
 alter table mpp10223b alter partition p1 
-split partition for (1) at (25)
+split partition for (20) at (25)
 into (partition sp2, partition sp3);
 
-select partitiontablename,partitionposition,partitionrangestart,
-       partitionrangeend from pg_partitions where tablename = 'mpp10223b'
-           order by partitionposition;
-
-select pg_get_partition_def('mpp10223b'::regclass,true);
+select relname, pg_get_expr(relpartbound, oid) from pg_class where relname like 'mpp10223b%';
 
 -- MPP-10480: dump templates (but don't use "foo")
 create table MPP10480 (a int, b int, d int)
