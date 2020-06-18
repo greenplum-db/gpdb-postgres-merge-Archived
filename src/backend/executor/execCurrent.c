@@ -22,6 +22,7 @@
 #include "utils/portal.h"
 #include "utils/rel.h"
 
+#include "access/table.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h"
@@ -188,13 +189,14 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 * gpdb partition table routine is different with upstream
 	 * so we hold private updatable check method.
 	 */
-	if(
-		/* GPDB_12_MERGE_FIXME: how to do this now that we use upstream partitioning? */
-#if 0
-		rel_is_partitioned(table_oid)
-	|| rel_is_leaf_partition(table_oid)
-	||
-#endif
+	/* better hold a lock already since we're scanning it */
+	Relation	rel = table_open(table_oid, NoLock);
+	char		relkind = rel->rd_rel->relkind;
+	bool		relispartition = rel->rd_rel->relispartition;
+	table_close(rel, NoLock);
+
+	if (relkind == RELKIND_PARTITIONED_TABLE ||
+		relispartition ||
 		get_rel_persistence(table_oid) == RELPERSISTENCE_TEMP)
 	{
 		/*
@@ -203,7 +205,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		 * cursor. This flag assures us that gp_segment_id, ctid, and tableoid (if necessary)
 		 * will be available as junk metadata, courtesy of preprocess_targetlist.
 		 */
-		if (!queryDesc->plannedstmt->simplyUpdatable)
+		if (!OidIsValid(queryDesc->plannedstmt->simplyUpdatableRel))
 			ereport(ERROR,
 			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
 					        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
@@ -216,9 +218,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		 * Y inherits from X. While such cases could be implemented, it seems wiser to
 		 * simply error out cleanly.
 		 */
-		Index varno = extractSimplyUpdatableRTEIndex(queryDesc->plannedstmt->rtable);
-		Oid cursor_relid = rt_fetch(varno, queryDesc->plannedstmt->rtable)->relid;
-		if (table_oid != cursor_relid)
+		if (table_oid != queryDesc->plannedstmt->simplyUpdatableRel)
 			ereport(ERROR,
 			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
 					        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",

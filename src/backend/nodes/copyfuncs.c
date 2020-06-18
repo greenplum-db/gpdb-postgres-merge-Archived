@@ -107,7 +107,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
 	COPY_SCALAR_FIELD(oneoffPlan);
-	COPY_SCALAR_FIELD(simplyUpdatable);
+	COPY_SCALAR_FIELD(simplyUpdatableRel);
 	COPY_SCALAR_FIELD(dependsOnRole);
 	COPY_SCALAR_FIELD(parallelModeNeeded);
 	COPY_SCALAR_FIELD(jitFlags);

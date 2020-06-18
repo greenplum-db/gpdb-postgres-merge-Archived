@@ -2403,7 +2403,7 @@ _readPlannedStmt(void)
 	READ_BOOL_FIELD(canSetTag);
 	READ_BOOL_FIELD(transientPlan);
 	READ_BOOL_FIELD(oneoffPlan);
-	READ_BOOL_FIELD(simplyUpdatable);
+	READ_OID_FIELD(simplyUpdatableRel);
 	READ_BOOL_FIELD(dependsOnRole);
 	READ_BOOL_FIELD(parallelModeNeeded);
 	READ_INT_FIELD(jitFlags);

@@ -346,7 +346,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_BOOL_FIELD(oneoffPlan);
-	WRITE_BOOL_FIELD(simplyUpdatable);
+	WRITE_OID_FIELD(simplyUpdatableRel);
 	WRITE_BOOL_FIELD(dependsOnRole);
 	WRITE_BOOL_FIELD(parallelModeNeeded);
 	WRITE_INT_FIELD(jitFlags);

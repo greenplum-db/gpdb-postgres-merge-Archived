@@ -277,7 +277,7 @@ static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
 										   int64 offset_est, int64 count_est);
 static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path);
 
-static bool isSimplyUpdatableQuery(Query *query);
+static Oid getSimplyUpdatableRel(Query *query);
 
 static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
 											WindowClause *wc,
@@ -410,9 +410,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->share.qdShares = NULL;
 
 	if ((cursorOptions & CURSOR_OPT_UPDATABLE) != 0)
-		glob->simplyUpdatable = isSimplyUpdatableQuery(parse);
+		glob->simplyUpdatableRel = getSimplyUpdatableRel(parse);
 	else
-		glob->simplyUpdatable = false;
+		glob->simplyUpdatableRel = InvalidOid;
 	glob->dependsOnRole = false;
 
 	/*
@@ -746,7 +746,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		DestroyPartitionDirectory(glob->partition_directory);
 
 	result->intoPolicy = GpPolicyCopy(parse->intoPolicy);
-	result->simplyUpdatable = glob->simplyUpdatable;
+	result->simplyUpdatableRel = glob->simplyUpdatableRel;
 
 	Assert(result->utilityStmt == NULL || IsA(result->utilityStmt, DeclareCursorStmt));
 
@@ -7284,7 +7284,7 @@ create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
 
 
 /*
- * isSimplyUpdatableQuery -
+ * getSimplyUpdatableRel -
  *  determine whether a query is a simply updatable scan of a relation
  *
  * A query is simply updatable if, and only if, it...
@@ -7296,8 +7296,8 @@ create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
  * - references only one range table (i.e. no joins, self-joins)
  *   - this range table must itself be updatable
  */
-static bool
-isSimplyUpdatableQuery(Query *query)
+static Oid
+getSimplyUpdatableRel(Query *query)
 {
 	if (query->commandType == CMD_SELECT &&
 		query->windowClause == NIL &&
@@ -7312,10 +7312,11 @@ isSimplyUpdatableQuery(Query *query)
 		list_length(query->rtable) == 1)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) linitial(query->rtable);
+
 		if (isSimplyUpdatableRelation(rte->relid, true))
-			return true;
+			return rte->relid;
 	}
-	return false;
+	return InvalidOid;
 }
 
 /*

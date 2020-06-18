@@ -194,7 +194,7 @@ typedef struct PlannerGlobal
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 	bool		oneoffPlan;		/* redo plan on every execution? */
-	bool		simplyUpdatable; /* can be used with CURRENT OF? */
+	Oid			simplyUpdatableRel; /* if valid, query can be used with CURRENT OF for this rel */
 
 	ApplyShareInputContext share;	/* workspace for GPDB plan sharing */
 

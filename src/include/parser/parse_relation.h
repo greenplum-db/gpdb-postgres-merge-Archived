@@ -134,6 +134,5 @@ extern Oid	attnumCollationId(Relation rd, int attid);
 extern bool isQueryUsingTempRelation(Query *query);
 
 extern bool isSimplyUpdatableRelation(Oid relid, bool noerror);
-extern Index extractSimplyUpdatableRTEIndex(List *rtable);
 
 #endif							/* PARSE_RELATION_H */

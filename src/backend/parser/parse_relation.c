@@ -2415,7 +2415,8 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 			break;
 		}
 
-		if (rel->rd_rel->relkind != RELKIND_RELATION)
+		if (rel->rd_rel->relkind != RELKIND_RELATION &&
+			rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		{
 			if (!noerror)
 				ereport(ERROR,
@@ -2426,7 +2427,8 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 			break;
 		}
 
-		if (!RelationIsHeap(rel))
+		if (!RelationIsHeap(rel) &&
+			rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		{
 			if (!noerror)
 				ereport(ERROR,
@@ -2457,47 +2459,6 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 
 	relation_close(rel, NoLock);
 	return return_value;
-}
-
-/*
- * extractSimplyUpdatableRTEIndex
- *  given a range table associated with a simply updatable range table,
- *    return the desired RangeTblEntry
- *
- * NOTE: The range table *MUST* belong to a simply updatable query.
- * 
- * The semantics of a simply updatable query demand a range table consisting
- * of exactly one logical table. Thus, for the simple case of a one-element
- * range table, we quickly return the index for the lone RTE.
- * However, we must also cope with inheritance, where an RTE requesting 
- * inheritance may have been expanded out into its child relations. In this
- * case, we seek to return the parent RTE.
- */
-Index
-extractSimplyUpdatableRTEIndex(List *rtable) 
-{
-	Assert(list_length(rtable) > 0);
-	if (list_length(rtable) == 1)
-		return 1;
-
-	/* 
-	 * This better be an inheritance case. 
-	 * Find the RTE with inh = true. 
-	 * Furthermore, we Insist that no other RTEs have inh = true. 
-	 */
-	Index 			temp, ret = 0;
-	ListCell        *lc;
-	foreach_with_count (lc, rtable, temp)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		if (rte->inh)
-		{
-			Insist(ret == 0);	/* to be simply updatable, there cannot be more than 1 parent table */
-			ret = temp + 1;		/* the temp counter is zero indexed */
-		}
-	}
-	Insist(ret != 0);
-	return ret;
 }
 
 /*

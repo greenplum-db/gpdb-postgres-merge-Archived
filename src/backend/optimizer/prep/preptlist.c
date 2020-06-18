@@ -62,7 +62,8 @@
 
 static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 							   Index result_relation, Relation rel);
-static List *supplement_simply_updatable_targetlist(List *range_table,
+static List *supplement_simply_updatable_targetlist(PlannerInfo *root,
+													List *range_table,
 													List *tlist);
 
 
@@ -128,8 +129,8 @@ preprocess_targetlist(PlannerInfo *root)
 								  result_relation, target_relation);
 
 	/* simply updatable cursors */
-	if (root->glob->simplyUpdatable)
-		tlist = supplement_simply_updatable_targetlist(range_table, tlist);
+	if (root->glob->simplyUpdatableRel != InvalidOid)
+		tlist = supplement_simply_updatable_targetlist(root, range_table, tlist);
 
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
@@ -537,9 +538,20 @@ get_plan_rowmark(List *rowmarks, Index rtindex)
  * available in the tuple itself.
  */
 static List *
-supplement_simply_updatable_targetlist(List *range_table, List *tlist)
+supplement_simply_updatable_targetlist(PlannerInfo *root, List *range_table, List *tlist)
 {
-	Index varno = extractSimplyUpdatableRTEIndex(range_table);
+	/*
+	 * We determined that this is simply updatable earlier already. Simply
+	 * updatable implies that there is exactly one range table entry.
+	 * (More might be added later by expanding partitioned tables, but not
+	 * yet.) So we should not get here.
+	 */
+	if (list_length(range_table) != 1)
+	{
+		Assert(false);
+		root->glob->simplyUpdatableRel = InvalidOid;
+	}
+	Index varno = 1;
 
 	/* ctid */
 	Var         *varCtid = makeVar(varno,
