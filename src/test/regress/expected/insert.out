@@ -576,18 +576,11 @@ alter table mlparted4 drop a;
 alter table mlparted4 add a int not null;
 alter table mlparted4 set distributed by (a);
 alter table mlparted attach partition mlparted4 for values from (1, 30) to (1, 40);
+-- this upstream query doesn't work on GPDB at the moment.
 with ins (a, b, c) as
   (insert into mlparted (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
   select a, b, min(c), max(c) from ins group by a, b order by 1;
-     a      | b | min | max 
-------------+---+-----+-----
- mlparted11 | 1 |   2 |   4
- mlparted12 | 1 |   5 |   9
- mlparted2  | 1 |  10 |  19
- mlparted3  | 1 |  20 |  29
- mlparted4  | 1 |  30 |  39
-(5 rows)
-
+ERROR:  INSERT/UPDATE/DELETE must be executed by a writer segworker group
 alter table mlparted add c text;
 create table mlparted5 (c text, a int not null, b int not null) partition by list (c);
 alter table mlparted5 set distributed by (a);
@@ -777,12 +770,12 @@ select tableoid::regclass::text, * from mcrparted order by 1;
 ------------+----+------+------
  mcrparted0 |  0 |    1 |    1
  mcrparted0 |  0 |    1 |    1
+ mcrparted1 |  2 |    1 |    0
+ mcrparted1 |  2 |    1 |    0
  mcrparted1 |  9 | 1000 |    1
  mcrparted1 |  9 | 1000 |    1
  mcrparted1 | 10 |    5 |   -1
  mcrparted1 | 10 |    5 |   -1
- mcrparted1 |  2 |    1 |    0
- mcrparted1 |  2 |    1 |    0
  mcrparted2 | 10 |    6 | 1000
  mcrparted2 | 10 |    6 | 1000
  mcrparted2 | 10 | 1000 | 1000
@@ -814,8 +807,9 @@ revoke select on brtrigpartcon from regress_coldesc_role;
 set role regress_coldesc_role;
 with result as (insert into brtrigpartcon values (1, 'hi there') returning 1)
   insert into inserttest3 (f3) select * from result;
-ERROR:  new row for relation "brtrigpartcon1" violates partition constraint
-DETAIL:  Failing row contains (a, b) = (2, hi there).
+ERROR:  writable CTE queries cannot be themselves writable
+DETAIL:  Greenplum Database currently only support CTEs with one writable clause, called in a non-writable context.
+HINT:  Rewrite the query to only include one writable clause.
 reset role;
 -- cleanup
 revoke all on inserttest3 from regress_coldesc_role;

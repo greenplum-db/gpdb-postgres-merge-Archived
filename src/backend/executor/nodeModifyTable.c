@@ -2323,7 +2323,20 @@ ExecModifyTable(PlanState *pstate)
 
 	if (Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer)
 	{
-		elog(ERROR, "INSERT/UPDATE/DELETE must be executed by a writer segworker group");
+		/* GPDB_12_MERGE_FIXME: This error message isn't very user-friendly. We can
+		 * get here e.g. with this query (from the 'insert' regression test):
+		 *
+		 * create table mlparted (a int4, b int4);
+		 * with ins (a, b, c) as
+		 *   (insert into mlparted (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
+		 *   select a, b, min(c), max(c) from ins group by a, b order by 1;
+		 *
+		 * That test query is new with the merge, but it produced the same error
+		 * on master before the merge, too.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INSERT/UPDATE/DELETE must be executed by a writer segworker group")));
 	}
 
 	/*
