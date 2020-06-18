@@ -21,7 +21,7 @@
 
 #ifdef USE_ORCA
 
-extern PlannedStmt * optimize_query(Query *parse, ParamListInfo boundParams);
+extern PlannedStmt * optimize_query(Query *parse, int cursorOptions, ParamListInfo boundParams);
 
 #else
 
