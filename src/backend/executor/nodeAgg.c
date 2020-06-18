@@ -3927,6 +3927,26 @@ ExecEagerFreeAgg(AggState *node)
 void
 ExecSquelchAgg(AggState *node)
 {
-	ExecEagerFreeAgg(node);
+	/*
+	 * GPDB_12_MERGE_FIXME: Sometimes, ExecSquelchAgg() is called, but then
+	 * the node is rescanned anyway. If we destroy the hash table here,
+	 * then we need to rebuild it later. I saw this happen with this test
+	 * query from the 'eagerfree' test:
+	 *
+	 *   with my_group_sum(d, total) as (select d, sum(i) from smallt group by d)
+	 *   select smallt2.* from smallt2
+	 *   where 0 < all (select total from my_group_sum, smallt, smallt2 as tmp where my_group_sum.d = smallt.d and smallt.d = tmp.d and my_group_sum.d = smallt2.d)
+	 *   and i = 0 ;
+	 *
+	 * That was broken, because ExecEagerFreeAgg() currently doesn't set
+	 * table_filled=false, even though it destroys the 'hashcontext'.
+	 * But it also doesn't destroy the hash table itself (or does go away
+	 * along with 'hashcontext'?) Freeing stuff aggressively here seems like
+	 * a premature optimization to me, so instead of trying to fix all that
+	 * I just disabled this attempt at eagerly freeing stuff. Revisit later?
+	 * I've got a feeling that Squelch is being called when it shouldn't, in
+	 * queries like above that involve a SubPlan.
+	 */
+	//ExecEagerFreeAgg(node);
 	ExecSquelchNode(outerPlanState(node));
 }
