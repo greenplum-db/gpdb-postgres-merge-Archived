@@ -342,7 +342,13 @@ ExecFindPartition(ModifyTableState *mtstate,
 															values, isnull, 64);
 			Assert(OidIsValid(RelationGetRelid(rel)));
 			ereport(ERROR,
-					(errcode(ERRCODE_CHECK_VIOLATION),
+					/*
+					 * GPDB: use dedicated error code for this, not the generic
+					 * ERRCODE_CHECK_VIOLATION as in upstream. The SREH stuff
+					 * only catches errors in the ERRCODE_DATA_EXCEPTION class,
+					 * so without this, this error would not be caught by SREH.
+					 */
+					(errcode(ERRCODE_NO_PARTITION_FOR_PARTITIONING_KEY),
 					 errmsg("no partition of relation \"%s\" found for row",
 							RelationGetRelationName(rel)),
 					 val_desc ?

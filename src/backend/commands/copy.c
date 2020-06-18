@@ -4411,14 +4411,29 @@ CopyFrom(CopyState cstate)
 		if (proute && cstate->dispatch_mode != COPY_DISPATCH)
 		{
 			TupleConversionMap *map;
+			bool		got_error = false;
 
 			/*
 			 * Attempt to find a partition suitable for this tuple.
 			 * ExecFindPartition() will raise an error if none can be found or
 			 * if the found partition is not suitable for INSERTs.
 			 */
-			resultRelInfo = ExecFindPartition(mtstate, target_resultRelInfo,
-											  proute, myslot, estate);
+			PG_TRY();
+			{
+				resultRelInfo = ExecFindPartition(mtstate, target_resultRelInfo,
+												  proute, myslot, estate);
+			}
+			PG_CATCH();
+			{
+				/* after all the prep work let cdbsreh do the real work */
+				HandleCopyError(cstate);
+				got_error = true;
+				MemoryContextSwitchTo(oldcontext);
+			}
+			PG_END_TRY();
+
+			if (got_error)
+				continue;
 
 			if (prevResultRelInfo != resultRelInfo)
 			{
