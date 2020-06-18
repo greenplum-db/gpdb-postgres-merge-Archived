@@ -746,9 +746,9 @@ alter table mpp3607 add partition aa end (2); -- OK as of 4.2.0.0 (RIO)
 alter table mpp3607 add partition bb end (1); -- Expected Overlaps
 ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition baz end (3); -- Expected Overlaps
-ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition baz end (4); -- Expected Overlaps
-ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
+ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_foo"
 alter table mpp3607 add partition baz end (2); -- Expected Overlaps
 ERROR:  partition "mpp3607_1_prt_baz" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 add partition bb end (0); -- Expected Overlaps
