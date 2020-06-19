@@ -2539,14 +2539,8 @@ StartTransaction(void)
 							  " (shared timeStamp = " INT64_FORMAT " -> "
 							  INT64_FORMAT ")",
 							  QEDtxContextInfo.distributedXid,
-<<<<<<< HEAD
 							  U64FromFullTransactionId(SharedLocalSnapshotSlot->fullXid),
 							  U64FromFullTransactionId(s->fullTransactionId),
-=======
-							  SharedLocalSnapshotSlot->distributedXid,
-							  SharedLocalSnapshotSlot->xid,
-							  s->transactionId,
->>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 							  SharedLocalSnapshotSlot->ready ? "true" : "false",
 							  SharedLocalSnapshotSlot->startTimestamp,
 							  xactStartTimestamp)));
