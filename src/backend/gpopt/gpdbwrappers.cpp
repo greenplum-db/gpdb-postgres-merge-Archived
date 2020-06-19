@@ -32,6 +32,7 @@
 #include "catalog/pg_collation.h"
 extern "C" {
 	#include "access/exttable_fdw_shim.h"
+	#include "nodes/nodeFuncs.h"
 	#include "optimizer/clauses.h"
 	#include "optimizer/optimizer.h"
 	#include "optimizer/plancat.h"
@@ -3387,6 +3388,16 @@ gpdb::GPDBAllocSetContextCreate()
 	}
 	GP_WRAP_END;
 	return NULL;
+}
+
+bool
+gpdb::ExpressionReturnsSet(Node *clause)
+{
+	GP_WRAP_START;
+	{
+		return expression_returns_set(clause);
+	}
+	GP_WRAP_END;
 }
 
 // EOF

@@ -2806,6 +2806,148 @@ CTranslatorDXLToPlStmt::TranslateDXLSubQueryScan
 	return (Plan *) subquery_scan;
 }
 
+static bool
+ContainsSetReturningFuncOrOp(const CDXLNode *project_list_dxlnode,
+						 CMDAccessor *md_accessor)
+{
+	const ULONG arity = project_list_dxlnode->Arity();
+	for (ULONG ul = 0; ul < arity; ++ul)
+	{
+		CDXLNode *proj_elem_dxlnode = (*project_list_dxlnode)[ul];
+		GPOS_ASSERT(EdxlopScalarProjectElem ==
+					proj_elem_dxlnode->GetOperator()->GetDXLOperator());
+		GPOS_ASSERT(1 == proj_elem_dxlnode->Arity());
+
+		// translate proj element expression
+		CDXLNode *expr_dxlnode = (*proj_elem_dxlnode)[0];
+
+		CDXLOperator *op = expr_dxlnode->GetOperator();
+		switch (op->GetDXLOperator())
+		{
+			case EdxlopScalarFuncExpr:
+				if (CDXLScalarFuncExpr::Cast(op)->ReturnsSet())
+					return true;
+				break;
+			case EdxlopScalarOpExpr:
+			{
+				const IMDScalarOp *md_sclar_op =
+					md_accessor->RetrieveScOp(CDXLScalarOpExpr::Cast(op)->MDId());
+				const IMDFunction *md_func =
+					md_accessor->RetrieveFunc(md_sclar_op->FuncMdId());
+				if (md_func->ReturnsSet())
+					return true;
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	return false;
+}
+
+// GPDB_12_MERGE_FIXME: this duplicates a check in ExecInitProjectSet
+static bool SanityCheckProjectSetTargetList(List *targetlist)
+{
+	ListCell *lc;
+	ForEach (lc, targetlist)
+	{
+		TargetEntry *te = (TargetEntry *) lfirst(lc);
+		Expr *expr = te->expr;
+		if ((IsA(expr, FuncExpr) && ((FuncExpr *)expr)->funcretset) ||
+				(IsA(expr, OpExpr) && ((OpExpr *)expr)->opretset))
+			continue;
+
+		if (gpdb::ExpressionReturnsSet((Node *)expr))
+			return false;
+	}
+	return true;
+}
+
+// XXX: this is a copy-pasta of TranslateDXLResult
+// Is there a way to reduce the duplication?
+Plan *
+CTranslatorDXLToPlStmt::TranslateDXLProjectSet
+	(
+	const CDXLNode *result_dxlnode,
+	CDXLTranslateContext *output_context,
+	CDXLTranslationContextArray *ctxt_translation_prev_siblings
+	)
+{
+	// GPDB_12_MERGE_FIXME: had we generated a DXLProjectSet in ORCA we wouldn't
+	// have needed to be defensive here...
+	if ((*result_dxlnode)[EdxlresultIndexFilter]->Arity() > 0)
+		GPOS_RAISE(
+			gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			GPOS_WSZ_LIT("Unsupported one-time filter in ProjectSet node"));
+
+	// create project set (nee result) plan node
+	ProjectSet *project_set = MakeNode(ProjectSet);
+
+	Plan *plan = &(project_set->plan);
+	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
+
+	// translate operator costs
+	TranslatePlanCosts
+		(
+			CDXLPhysicalProperties::PdxlpropConvert(result_dxlnode->GetProperties())->GetDXLOperatorCost(),
+			&(plan->startup_cost),
+			&(plan->total_cost),
+			&(plan->plan_rows),
+			&(plan->plan_width)
+		);
+
+	CDXLNode *child_dxlnode = NULL;
+	CDXLTranslateContext child_context(m_mp, false, output_context->GetColIdToParamIdMap());
+
+	if (result_dxlnode->Arity() - 1 == EdxlresultIndexChild)
+	{
+		// translate child plan
+		child_dxlnode = (*result_dxlnode)[EdxlresultIndexChild];
+
+		Plan *child_plan = TranslateDXLOperatorToPlan(child_dxlnode, &child_context, ctxt_translation_prev_siblings);
+
+		GPOS_ASSERT(NULL != child_plan && "child plan cannot be NULL");
+
+		project_set->plan.lefttree = child_plan;
+	}
+
+	CDXLNode *project_list_dxlnode = (*result_dxlnode)[EdxlresultIndexProjList];
+	CDXLNode *filter_dxlnode = (*result_dxlnode)[EdxlresultIndexFilter];
+
+	List *quals_list = NULL;
+
+	CDXLTranslationContextArray *child_contexts = GPOS_NEW(m_mp) CDXLTranslationContextArray(m_mp);
+	child_contexts->Append(const_cast<CDXLTranslateContext*>(&child_context));
+
+	// translate proj list and filter
+	TranslateProjListAndFilter
+		(
+			project_list_dxlnode,
+			filter_dxlnode,
+			NULL,		// translate context for the base table
+			child_contexts,
+			&plan->targetlist,
+			&quals_list,
+			output_context
+		);
+
+
+	plan->qual = quals_list;
+
+	SetParamIds(plan);
+
+	// cleanup
+	child_contexts->Release();
+
+	// double check the targetlist is kosher
+	// we are only doing this because ORCA didn't do it...
+	if (!SanityCheckProjectSetTargetList(plan->targetlist))
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			GPOS_WSZ_LIT("Unexpected target list entries in ProjectSet node"));
+
+	return (Plan *) project_set;
+}
+
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToPlStmt::TranslateDXLResult
@@ -2822,6 +2964,14 @@ CTranslatorDXLToPlStmt::TranslateDXLResult
 	CDXLTranslationContextArray *ctxt_translation_prev_siblings
 	)
 {
+	// GPDB_12_MERGE_FIXME: this *really* should be done inside ORCA
+	// at the latest during CTranslatorExprToDXL, to create a DXLProjectSet
+	// that way we don't have to "frisk" the DXLResult to distinguish it from an
+	// actual result node
+	if (ContainsSetReturningFuncOrOp((*result_dxlnode)[EdxlresultIndexProjList],
+								 m_md_accessor))
+		return TranslateDXLProjectSet(result_dxlnode, output_context, ctxt_translation_prev_siblings);
+
 	// create result plan node
 	Result *result = MakeNode(Result);
 

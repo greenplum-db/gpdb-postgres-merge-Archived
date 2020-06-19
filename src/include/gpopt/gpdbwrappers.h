@@ -146,6 +146,8 @@ namespace gpdb {
 	// datum size
 	Size DatumSize(Datum value, bool type_by_val, int type_len);
 
+	bool ExpressionReturnsSet(Node *clause);
+
 	// expression type
 	Oid ExprType(Node *expr);
 
