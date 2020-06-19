@@ -2951,7 +2951,8 @@ CTranslatorDXLToPlStmt::TranslateDXLProjectSet
 	// double check the targetlist is kosher
 	// we are only doing this because ORCA didn't do it...
 	if (!SanityCheckProjectSetTargetList(plan->targetlist))
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+		GPOS_RAISE(
+			gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
 			GPOS_WSZ_LIT("Unexpected target list entries in ProjectSet node"));
 
 	return (Plan *) project_set;
@@ -2978,8 +2979,9 @@ CTranslatorDXLToPlStmt::TranslateDXLResult
 	// that way we don't have to "frisk" the DXLResult to distinguish it from an
 	// actual result node
 	if (ContainsSetReturningFuncOrOp((*result_dxlnode)[EdxlresultIndexProjList],
-								 m_md_accessor))
-		return TranslateDXLProjectSet(result_dxlnode, output_context, ctxt_translation_prev_siblings);
+									 m_md_accessor))
+		return TranslateDXLProjectSet(result_dxlnode, output_context,
+									  ctxt_translation_prev_siblings);
 
 	// create result plan node
 	Result *result = MakeNode(Result);
@@ -3050,6 +3052,13 @@ CTranslatorDXLToPlStmt::TranslateDXLResult
 
 	// cleanup
 	child_contexts->Release();
+
+	// double check the targetlist is kosher
+	// we are only doing this because ORCA didn't do it...
+	if (!SanityCheckProjectSetTargetList(plan->targetlist))
+		GPOS_RAISE(
+			gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			GPOS_WSZ_LIT("Unexpected target list entries in ProjectSet node"));
 
 	return (Plan *) result;
 }
