@@ -2853,9 +2853,18 @@ static bool SanityCheckProjectSetTargetList(List *targetlist)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);
 		Expr *expr = te->expr;
+		List *args;
 		if ((IsA(expr, FuncExpr) && ((FuncExpr *)expr)->funcretset) ||
 				(IsA(expr, OpExpr) && ((OpExpr *)expr)->opretset))
+		{
+			if (IsA(expr, FuncExpr))
+				args = ((FuncExpr *)expr)->args;
+			else
+				args = ((OpExpr *)expr)->args;
+			if (gpdb::ExpressionReturnsSet((Node *)args))
+				return false;
 			continue;
+		}
 
 		if (gpdb::ExpressionReturnsSet((Node *)expr))
 			return false;
