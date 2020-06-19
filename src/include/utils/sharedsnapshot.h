@@ -21,6 +21,10 @@ typedef struct SnapshotDump
 {
 	uint32 segmateSync;
 	DistributedTransactionId distributedXid;
+<<<<<<< HEAD
+=======
+	TransactionId localXid;
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 	dsm_handle  handle;
 	dsm_segment *segment;
 } SnapshotDump;
@@ -34,7 +38,14 @@ typedef struct SharedSnapshotSlot
 	int32	 		slotid;
 	PGPROC			*writer_proc;
 	PGXACT			*writer_xact;
+<<<<<<< HEAD
 	volatile DistributedTransactionId distributedXid;
+=======
+
+	/* only used by cursor dump identification, dose not always set */
+	volatile DistributedTransactionId distributedXid;
+
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 	volatile bool			ready;
 	volatile uint32			segmateSync;
 	SnapshotData	snapshot;

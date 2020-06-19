@@ -347,7 +347,11 @@ SharedSnapshotDump(void)
 
 		if (testSlot->slotid != -1)
 		{
+<<<<<<< HEAD
 			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %d pid: %u)",
+=======
+			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %u pid: %u)",
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 							 testSlot->slotindex, testSlot->slotid, testSlot->distributedXid,
 							 testSlot->writer_proc ? testSlot->writer_proc->pid : 0);
 		}
@@ -460,7 +464,11 @@ retry:
 	slot->slotid = slotId;
 	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
+<<<<<<< HEAD
 	slot->distributedXid = InvalidDistributedTransactionId;
+=======
+	slot->distributedXid = 0;
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 	slot->segmateSync = 0;
 	/* Remember the writer proc for IsCurrentTransactionIdForReader */
 	slot->writer_proc = MyProc;
@@ -571,7 +579,11 @@ SharedSnapshotRemove(volatile SharedSnapshotSlot *slot, char *creatorDescription
 	slot->slotid = -1;
 	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
+<<<<<<< HEAD
 	slot->distributedXid = InvalidDistributedTransactionId;
+=======
+	slot->distributedXid = 0;
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 	slot->segmateSync = 0;
 
 	sharedSnapshotArray->numSlots -= 1;
@@ -671,6 +683,10 @@ dumpSharedLocalSnapshot_forCursor(void)
 	pDump->handle = dsm_segment_handle(segment);
 	pDump->segmateSync = src->segmateSync;
 	pDump->distributedXid = src->distributedXid;
+<<<<<<< HEAD
+=======
+	pDump->localXid = src->xid;
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 
 	elog(LOG, "Dump syncmate : %u snapshot to slot %d", src->segmateSync, id);
 
@@ -722,7 +738,11 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTrans
 			if (search_iter < 0)
 				search_iter = SNAPSHOTDUMPARRAYSZ - 1;
 
+<<<<<<< HEAD
 			if (src->dump[search_iter].segmateSync == QEDtxContextInfo.segmateSync &&
+=======
+			if(src->dump[search_iter].segmateSync == QEDtxContextInfo.segmateSync &&
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 				src->dump[search_iter].distributedXid == QEDtxContextInfo.distributedXid)
 			{
 				pDump = &src->dump[search_iter];
@@ -749,12 +769,17 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTrans
 		char *ptr = dsm_segment_address(segment);
 
 		entry->snapshot = RestoreSnapshot(ptr);
+<<<<<<< HEAD
 		/*
 		 * GPDB_12_MERGE_FIXME: why do we store a distributedXid into a localXid field?
 		 * Surely that's wrong. But that's what we're doing on master branch too, just
 		 * with different field names. Unless I messed up something.
 		 */
 		entry->localXid.value = pDump->distributedXid;
+=======
+		entry->localXid = pDump->localXid;
+
+>>>>>>> 32a3a4dba6... Fix cursor snapshot dump xid issue
 
 		dsm_detach(segment);
 
