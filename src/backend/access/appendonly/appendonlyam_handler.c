@@ -1809,12 +1809,6 @@ appendonly_relation_needs_toast_table(Relation rel)
 	int32		tuple_length;
 	int			i;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: does the AO relation really needs a toast table?
-	 * Deactivate for now.
-	 */
-	return false;
-
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);

@@ -2097,8 +2097,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	is_appendoptimized = RelationIsAppendOptimized(onerel);
+	bool is_toast = onerel->rd_rel->relkind == RELKIND_TOASTVALUE;
 
-	if (ao_vacuum_phase && !is_appendoptimized)
+	if (ao_vacuum_phase && !(is_appendoptimized || is_toast))
 	{
 		/* We were asked to some phase of AO vacuum, but it's not an AO table. Huh? */
 		elog(ERROR, "AO vacuum phase was invoked on a non-AO table");
@@ -2245,6 +2246,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		aovisimap_relid = InvalidOid;
 	}
 
+	int orig_option = params->options;
+	params->options = params->options & (~VACUUM_AO_PHASE_MASK);
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
 	 * still hold the session lock on the master table.  Note however that
@@ -2264,8 +2267,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
     * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
     */
 
-	int orig_option = params->options;
-	params->options = params->options & (~VACUUM_AO_PHASE_MASK);
 	/* do the same for an AO segments table, if any */
 	if (aoseg_relid != InvalidOid)
 		vacuum_rel(aoseg_relid, NULL , params, true);
