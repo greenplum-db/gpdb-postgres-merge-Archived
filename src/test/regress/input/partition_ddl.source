@@ -138,7 +138,7 @@ partition by range (s_nationkey)
 partition p1 start(0) , 
 partition p2 start(12) end(13), 
 partition p3 end(20) inclusive, 
-partition p4 start(20) exclusive , 
+partition p4 start(21),
 partition p5 start(22) end(25)
 );
 insert into mpp3238_supplier values(1,'Supplier#000000001',' N kD4on9OM Ipw3,gf0JBoQDd7tgrzrddZ',17,'27-918-335-1736',5755.94,'each slyly above the careful');
@@ -190,8 +190,8 @@ subpartition template (start('0') end('25') every(5))
 (
 partition p1 start('1') end('150001') every(50000)
 );
-Alter table mpp3304_customer alter partition for (rank(2)) rename partition for (rank(1)) to newname;
-
+Alter table mpp3304_customer alter partition for (6) rename partition for ('-999.99') to newname;
+select * from pg_partition_tree('mpp3304_customer');
 create table mpp3045_hhh (a char(1), b date, d char(3)) with (appendonly=true)
 distributed by (a) 
 partition by range (b) 
@@ -211,7 +211,7 @@ partition by range (n_nationkey)
 (
 partition p1 start('0')  WITH (appendonly=true,checksum=true,blocksize=1998848,compresslevel=4), 
 partition p2 start('11') end('15') inclusive WITH (checksum=false,appendonly=true,blocksize=655360,compresslevel=4), 
-partition p3 start('15') exclusive end('19'), partition p4 start('19')  WITH (compresslevel=8,appendonly=true,checksum=false,blocksize=884736), 
+partition p3 start('16') end('19'), partition p4 start('19')  WITH (compresslevel=8,appendonly=true,checksum=false,blocksize=884736), 
 partition p5 start('20')
 );
 delete from mpp3287_nation;
