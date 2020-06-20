@@ -3931,21 +3931,16 @@ alter_table_partition_cmd:
 			| RENAME 
             alter_table_partition_id_spec_with_opt_default TO IDENT	
 				{
-					/* GDPB_12_MERGE_FIXME: need to re-implement this */
-					elog(ERROR, "not implemented");
-#if 0
-					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
+					GpAlterPartitionCmd *pc = makeNode(GpAlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
-                    pc->partid = (Node *)$2;
-                    pc->arg1 = (Node *)makeString($4);
-                    pc->arg2 = NULL;
+                    pc->partid = (GpAlterPartitionId *) $2;
+                    pc->arg = (Node *)makeString($4);
                     pc->location = @4;
 
 					n->subtype = AT_PartRename;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
-#endif
 				}
 			| SET TabSubPartitionTemplate
 				{

@@ -3810,6 +3810,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 	HeapTuple	reltup;
 	Form_pg_class relform;
 	Oid			namespaceId;
+	char *oldrelname;
 
 	/*
 	 * In Postgres:
@@ -3848,6 +3849,8 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists",
 						newrelname)));
+
+	oldrelname = pstrdup(NameStr(relform->relname));
 
 	/*
 	 * Update pg_class tuple with new relname.  (Scribbling on reltup is OK
@@ -3898,6 +3901,9 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
+
+	if (targetrelation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		GpRenameChildPartitions(targetrelation, oldrelname, newrelname);
 
 	/*
 	 * Close rel, but keep lock!
@@ -4114,6 +4120,7 @@ strip_gpdb_part_commands(List *cmds)
 			case AT_PartDrop:
 			case AT_PartAlter:
 			case AT_PartSplit:
+			case AT_PartRename:
 			case AT_PartTruncate:
 			case AT_PartExchange:
 			case AT_PartSetTemplate:
@@ -4447,6 +4454,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_PartAdd:
 			case AT_PartDrop:
 			case AT_PartSplit:
+			case AT_PartRename:
 			case AT_PartExchange:
 			case AT_PartSetTemplate:
 				cmd_lockmode = AccessExclusiveLock;
@@ -4915,6 +4923,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_PartDrop:
 		case AT_PartAlter:
 		case AT_PartSplit:
+		case AT_PartRename:
 		case AT_PartTruncate:
 		case AT_PartExchange:
 		case AT_PartSetTemplate:
@@ -5287,6 +5296,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_PartDrop:
 		case AT_PartAlter:
 		case AT_PartSplit:
+		case AT_PartRename:
 		case AT_PartTruncate:
 		case AT_PartExchange:
 		case AT_PartSetTemplate:

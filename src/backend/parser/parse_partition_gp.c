@@ -59,9 +59,6 @@ typedef struct
 	int			every_location;
 } PartEveryIterator;
 
-static char *ChoosePartitionName(Relation parentrel, const char *levelstr,
-								 const char *partname, int partnum);
-
 static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
 									 GpPartDefElem *elem,
@@ -769,26 +766,24 @@ nextPartBound(PartEveryIterator *iter)
 	}
 }
 
-static char *
-ChoosePartitionName(Relation parentrel, const char *levelstr,
+char *
+ChoosePartitionName(const char *parentname, int level, Oid naemspaceId,
 					const char *partname, int partnum)
 {
 	char partsubstring[NAMEDATALEN];
+	char levelstr[NAMEDATALEN];
+
+	snprintf(levelstr, NAMEDATALEN, "%d", level);
 
 	if (partname)
 	{
 		snprintf(partsubstring, NAMEDATALEN, "prt_%s", partname);
-		return makeObjectName(RelationGetRelationName(parentrel),
-							  levelstr,
-							  partsubstring);
+		return makeObjectName(parentname, levelstr, partsubstring);
 	}
 
 	Assert(partnum > 0);
 	snprintf(partsubstring, NAMEDATALEN, "prt_%d", partnum);
-	return ChooseRelationName(RelationGetRelationName(parentrel),
-							  levelstr,
-							  partsubstring,
-							  RelationGetNamespace(parentrel),
+	return ChooseRelationName(parentname, levelstr, partsubstring, naemspaceId,
 							  false);
 }
 
@@ -802,13 +797,14 @@ makePartitionCreateStmt(Relation parentrel, char *partname, PartitionBoundSpec *
 	RangeVar   *childrv;
 	char	   *schemaname;
 	const char *final_part_name;
-	char levelStr[NAMEDATALEN];
 
-	snprintf(levelStr, NAMEDATALEN, "%d", partnamecomp->level);
 	if (partnamecomp->tablename)
 		final_part_name = partnamecomp->tablename;
 	else
-		final_part_name = ChoosePartitionName(parentrel, levelStr, partname,
+		final_part_name = ChoosePartitionName(RelationGetRelationName(parentrel),
+											  partnamecomp->level,
+											  RelationGetNamespace(parentrel),
+											  partname,
 											  ++partnamecomp->partnum);
 
 	schemaname = get_namespace_name(parentrel->rd_rel->relnamespace);

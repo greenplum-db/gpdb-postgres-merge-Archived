@@ -372,7 +372,7 @@ subpartition by range (z) subpartition template ( start (1) end (2) every (1))
 ( start (1) end (2) every (1));
 alter table multi_part2 rename to multi_part2_0000000;
 alter table multi_part2 rename to m_0000000;
-select relid,parentrelid,isleaf,level, pg_catalog.pg_get_expr(relpartbound, oid) from pg_partition_tree('multi_part2_0000000'), pg_class where relid = oid;
+select relid,parentrelid,isleaf,level, pg_catalog.pg_get_expr(relpartbound, oid) from pg_partition_tree('m_0000000'), pg_class where relid = oid;
 drop table m_0000000;
 
 drop  TABLE IF EXISTS INT_P1A CASCADE;

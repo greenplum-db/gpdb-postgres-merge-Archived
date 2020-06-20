@@ -119,5 +119,8 @@ extern List * rel_get_column_encodings(Relation rel);
 
 /* GPDB specific functions */
 extern void ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd);
+extern void GpRenameChildPartitions(Relation targetrelation,
+									const char *oldparentrelname,
+									const char *newparentrelname);
 
 #endif							/* TABLECMDS_H */

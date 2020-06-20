@@ -61,5 +61,8 @@ extern CreateStmt *makePartitionCreateStmt(Relation parentrel, char *partname,
 										   PartitionSpec *subPart,
 										   GpPartDefElem *elem,
 										   partname_comp *partnamecomp);
+extern char *ChoosePartitionName(const char *parentname, int level,
+								 Oid naemspaceId, const char *partname,
+								 int partnum);
 
 #endif							/* PARSE_UTILCMD_H */

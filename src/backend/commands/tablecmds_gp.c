@@ -47,6 +47,7 @@
 #include "utils/partcache.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/relcache.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -1278,6 +1279,54 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		}
 		break;
 
+		case AT_PartRename:
+		{
+			GpAlterPartitionCmd *pc = castNode(GpAlterPartitionCmd, cmd->def);
+			GpAlterPartitionId *pid = (GpAlterPartitionId *) pc->partid;
+			char *newpartname = strVal(pc->arg);
+			RenameStmt *renStmt = makeNode(RenameStmt);
+			Oid namespaceId;
+			char *newrelname;
+			char targetrelname[NAMEDATALEN];
+			List *ancestors = get_partition_ancestors(RelationGetRelid(rel));
+			int level = list_length(ancestors) + 1;
+			Oid partrelid;
+			Relation targetrelation;
+
+			partrelid = GpFindTargetPartition(rel, pid, false);
+			targetrelation = table_open(partrelid, AccessExclusiveLock);
+			StrNCpy(targetrelname, RelationGetRelationName(targetrelation),
+					NAMEDATALEN);
+			namespaceId = RelationGetNamespace(targetrelation);
+			table_close(targetrelation, AccessExclusiveLock);
+
+			/* the "label" portion of the new relation is prt_`newpartname',
+			 * and makeObjectName won't truncate this portion of the partition
+			 * name -- it will assert instead.
+			 */
+			if (strlen(newpartname) > (NAMEDATALEN - 8))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("name \"%s\" for child partition is too long",
+								newpartname)));
+
+			newrelname = ChoosePartitionName(RelationGetRelationName(rel), level, namespaceId,
+											 newpartname, 0);
+
+			renStmt->renameType = OBJECT_TABLE;
+			renStmt->relation = makeRangeVar(get_namespace_name(namespaceId),
+											 pstrdup(targetrelname), -1);
+			renStmt->newname = newrelname;
+
+			/*
+			 * rename stmt is only constructed for specified table here. If it
+			 * happens to be Partitioned Table, then RenameRelationInternal()
+			 * will recurse to its child partitions and perform renames.
+			 */
+			stmts = lappend(stmts, renStmt);
+		}
+		break;
+
 		default:
 			elog(ERROR, "Not implemented");
 			break;
@@ -1304,4 +1353,67 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 					   None_Receiver,
 					   NULL);
 	}
+}
+
+/*
+ * This function calls RenameRelationInternal() for all child partitions of
+ * the targetrelation. This function should only be called for
+ * RELKIND_PARTITIONED_TABLE. Rename is performed only if child partition name
+ * contains oldparentrelname as prefix else skipped.
+ *
+ * This function is called on QD and QE to recurse and perform renamaes,
+ * instead of constructing RenameStmt on QD and dispatching stmt via
+ * ProcessUtility().
+ */
+void
+GpRenameChildPartitions(Relation targetrelation,
+						const char *oldparentrelname,
+						const char *newparentrelname)
+{
+	PartitionDesc partdesc = RelationGetPartitionDesc(targetrelation);
+	int skipped = 0;
+	Assert(partdesc != NULL);
+
+	for (int i = 0; i < partdesc->nparts; i++)
+	{
+		char newpartname[NAMEDATALEN * 2];
+		Relation partrel = table_open(partdesc->oids[i], AccessExclusiveLock);
+		char *relname = pstrdup(RelationGetRelationName(partrel));
+		/* don't release the lock till end of transaction */
+		table_close(partrel, NoLock);
+
+		/*
+		 * The child name should contain the old parent name as a prefix - check
+		 * the length and compare to make sure.
+		 *
+		 * To build the new child name, just use the new name as a prefix, and use
+		 * the remainder of the child name (the part after the old parent name
+		 * prefix) as the suffix.
+		 */
+		if ((strlen(oldparentrelname) <= strlen(relname))
+			&& (strncmp(oldparentrelname, relname, strlen(oldparentrelname)) == 0))
+		{
+			snprintf(newpartname, sizeof(newpartname), "%s%s",
+					 newparentrelname, relname + strlen(oldparentrelname));
+			if (strlen(newpartname) > NAMEDATALEN)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("relation name \"%s\" for child partition is too long",
+								newpartname)));
+
+			RenameRelationInternal(partdesc->oids[i], newpartname, false, false);
+		}
+		else
+			skipped++;
+	}
+
+	/*
+	 * GPDB_12_MERGE_FIXME: not sure we wish to emit this WARNING or not. It's
+	 * good to notify users some child partitions didn't rename. But upstream
+	 * tests may fail due to it as well. Plus, this message may be printed
+	 * multiple times based on which level partition names are getting
+	 * truncated.
+	 */
+//	if (skipped && Gp_role != GP_ROLE_EXECUTE)
+//		elog(WARNING, "skipped renaming some child partitions due to name truncation");
 }
