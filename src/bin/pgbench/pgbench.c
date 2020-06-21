@@ -3676,12 +3676,12 @@ initCreateTables(PGconn *con)
 		opts[0] = '\0';
 		if (ddl->declare_fillfactor)
 			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-					 " with (fillfactor=%d, %s)", fillfactor, storage_clause);
+					 " with (fillfactor=%d, %s)",
+					 fillfactor, storage_clause);
 		else
 			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-					 " with (%s)", storage_clause);
-		snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-				 " DISTRIBUTED BY (%s)", ddl->distributed_col);
+					 " with (%s)",
+					 storage_clause);
 		if (tablespace != NULL)
 		{
 			char	   *escape_tablespace;
@@ -3692,6 +3692,9 @@ initCreateTables(PGconn *con)
 					 " tablespace %s", escape_tablespace);
 			PQfreemem(escape_tablespace);
 		}
+		snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
+				 " distributed by (%s)",
+				 ddl->distributed_col);
 
 		cols = (scale >= SCALE_32BIT_THRESHOLD) ? ddl->bigcols : ddl->smcols;
 
