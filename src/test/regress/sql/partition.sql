@@ -1713,7 +1713,6 @@ create table rank2_damage(like rank_damage);
 alter table rank_damage_1_prt_1 inherit rank2_damage;
 alter table rank_damage_1_prt_1 alter column i type bigint;
 alter table rank_damage_1_prt_1 set without oids; -- no-op
-alter table rank_damage_1_prt_1 drop constraint rank_damage_1_prt_1_check;
 alter table rank_damage add partition ppo end (22) with (oids = true);
 drop table rank_damage, rank2_damage;
 

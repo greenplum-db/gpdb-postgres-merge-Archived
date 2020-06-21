@@ -2616,9 +2616,6 @@ alter table rank_damage_1_prt_1 alter column i type bigint;
 ERROR:  can't alter a column datatype of "rank_damage_1_prt_1"; it is part of a partitioned table
 HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table rank_damage_1_prt_1 set without oids; -- no-op
-alter table rank_damage_1_prt_1 drop constraint rank_damage_1_prt_1_check;
-ERROR:  can't drop a constraint from "rank_damage_1_prt_1"; it is part of a partitioned table
-HINT:  You may be able to perform the operation on the partitioned table as a whole.
 alter table rank_damage add partition ppo end (22) with (oids = true);
 ERROR:  tables declared WITH OIDS are not supported
 drop table rank_damage, rank2_damage;
