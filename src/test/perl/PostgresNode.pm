@@ -783,7 +783,7 @@ sub start
 	}
 
 	$self->_update_pid(1);
-	$ENV{PGOPTIONS}      = '-c gp_session_role=utility';
+	$ENV{PGOPTIONS}      = '-c gp_role=utility';
 	return 1;
 }
 
