@@ -191,12 +191,15 @@ subpartition template (start('0') end('25') every(5))
 partition p1 start('1') end('150001') every(50000)
 );
 Alter table mpp3304_customer alter partition for (rank(2)) rename partition for (rank(1)) to newname;
+
 create table mpp3045_hhh (a char(1), b date, d char(3)) with (appendonly=true)
 distributed by (a) 
 partition by range (b) 
  (partition aa start (date '2007-01-01') end (date '2008-01-01'),
  partition bb start (date '2008-01-01') end (date '2009-01-01'));
-alter table mpp3045_hhh add partition aa;
+alter table mpp3045_hhh add partition aa; -- missing range
+alter table mpp3045_hhh add partition aa start(date '2012-01-01') end (date '2013-01-01'); -- duplicate partition name
+
 drop table if exists mpp3287_nation;
 CREATE TABLE mpp3287_NATION (
             N_NATIONKEY INTEGER,

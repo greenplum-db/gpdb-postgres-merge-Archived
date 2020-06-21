@@ -237,8 +237,10 @@ distributed by (a)
 partition by range (b) 
  (partition aa start (date '2007-01-01') end (date '2008-01-01'),
  partition bb start (date '2008-01-01') end (date '2009-01-01'));
-alter table mpp3045_hhh add partition aa;
-ERROR:  partition "aa" of relation "mpp3045_hhh" already exists
+alter table mpp3045_hhh add partition aa; -- missing range
+ERROR:  missing boundary specification in partition "aa" of type RANGE
+alter table mpp3045_hhh add partition aa start(date '2012-01-01') end (date '2013-01-01'); -- duplicate partition name
+ERROR:  relation "mpp3045_hhh_1_prt_aa" already exists
 drop table if exists mpp3287_nation;
 CREATE TABLE mpp3287_NATION (
             N_NATIONKEY INTEGER,
