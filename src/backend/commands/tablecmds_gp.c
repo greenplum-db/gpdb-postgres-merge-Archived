@@ -1046,10 +1046,11 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 	/*
 	 * Most ALTER PARTITION commands are to ADD/DROP subpartitions, and don't
 	 * make sense unless the partition itself is a partitioned table. SET
-	 * DISTRIBUTED BY is an exception.
+	 * DISTRIBUTED BY and SET TABLESPACE are exceptions.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
-		cmd->subtype != AT_SetDistributedBy)
+		cmd->subtype != AT_SetDistributedBy &&
+		cmd->subtype != AT_SetTableSpace)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1208,6 +1209,7 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 		break;
 
 		case AT_SetDistributedBy:
+		case AT_SetTableSpace:
 		{
 			AlterTableStmt *newstmt = makeNode(AlterTableStmt);
 
