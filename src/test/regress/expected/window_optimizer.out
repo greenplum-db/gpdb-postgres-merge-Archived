@@ -2919,8 +2919,8 @@ from t1 where f1 = f2;
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  WindowAgg
-         Partition By: depname
-         Order By: salary, enroll_date, empno
+         Partition By: f1
+         Order By: f2
          ->  Sort
                Sort Key: f1
                ->  Seq Scan on t1
@@ -3096,18 +3096,20 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales' OR RANDOM() > 0.5;
-                                                        QUERY PLAN                                                         
----------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
-   ->  WindowAgg
-         Partition By: (((depname)::text || 'A'::text)), depname
-         ->  Sort
-               Sort Key: (((depname)::text || 'A'::text)), depname
-               ->  WindowAgg
-                     Partition By: depname
-                     ->  Result
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Subquery Scan on emp
+   Filter: (((emp.depname)::text = 'sales'::text) OR (random() > '0.5'::double precision))
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: empsalary.depname
+         ->  WindowAgg
+               Partition By: empsalary.depname
+               ->  Sort
+                     Sort Key: empsalary.depname
+                     ->  WindowAgg
+                           Partition By: (((empsalary.depname)::text || 'A'::text)), empsalary.depname
                            ->  Sort
-                                 Sort Key: depname
+                                 Sort Key: (((empsalary.depname)::text || 'A'::text)), empsalary.depname
                                  ->  Seq Scan on empsalary
  Optimizer: Postgres query optimizer
 (14 rows)

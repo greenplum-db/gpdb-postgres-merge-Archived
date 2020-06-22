@@ -1676,10 +1676,10 @@ CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a > 0;
 CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
   WITH CHECK OPTION; -- implicitly cascaded
 \d+ rw_view2
-                View "public.rw_view2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
+                          View "public.rw_view2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
 View definition:
  SELECT rw_view1.a
    FROM rw_view1
