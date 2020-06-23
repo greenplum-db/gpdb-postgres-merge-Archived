@@ -201,9 +201,7 @@ static void analyze_rel_internal(Oid relid, RangeVar *relation,
 								 VacuumParams *params, List *va_cols,
 								 bool in_outer_xact, BufferAccessStrategy bstrategy,
 								 gp_acquire_sample_rows_context *ctx);
-#if 0
 static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
-#endif
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -645,20 +643,16 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 */
 	colLargeRowIndexes = (Bitmapset **) palloc0(sizeof(Bitmapset *) * onerel->rd_att->natts);
 
-	/* GPDB_12_MERGE_FIXME: How to check the option now? How to check 'partitioned' status now?
-	 * Do we still need any of this? */
-#if 0
-	if ((options & VACOPT_FULLSCAN) != 0)
+	if ((params->options & VACOPT_FULLSCAN) != 0)
 	{
-		if(rel_part_status(RelationGetRelid(onerel)) != PART_STATUS_ROOT)
+		if (onerel->rd_rel->relispartition)
 		{
 			acquire_hll_by_query(onerel, attr_cnt, vacattrstats, elevel);
 
 			ereport(elevel, (errmsg("HLL FULL SCAN")));
 		}
 	}
-#endif
-	
+
 	sample_needed = needs_sample(vacattrstats, attr_cnt);
 	if (sample_needed)
 	{
@@ -783,8 +777,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 				 * the stats object
 				 */
 				/* GPDB_12_MERGE_FIXME: how to do this with new partitioning implementation? */
-#if 0
-				if (rel_part_status(stats->attr->attrelid) == PART_STATUS_LEAF)
+				if (onerel->rd_rel->relkind == RELKIND_RELATION)
 				{
 					MemoryContext old_context;
 					Datum *hll_values;
@@ -817,7 +810,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 						stats->statyplen[STATISTIC_NUM_SLOTS-1] = hll_length;
 					}
 				}
-#endif
 			}
 			else
 			{
@@ -1952,7 +1944,6 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
  * distinguish it from the HLL for sampled data. This functions scans
  * the full table only once.
  */
-#if 0
 static void
 acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel)
 {
@@ -2035,7 +2026,6 @@ acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int 
 
 	SPI_finish();
 }
-#endif
 
 /*
  * Compute relation size.
@@ -2780,12 +2770,10 @@ static void compute_scalar_stats(VacAttrStatsP stats,
 								 AnalyzeAttrFetchFunc fetchfunc,
 								 int samplerows,
 								 double totalrows);
-#if 0
 static void merge_leaf_stats(VacAttrStatsP stats,
 								 AnalyzeAttrFetchFunc fetchfunc,
 								 int samplerows,
 								 double totalrows);
-#endif
 static int	compare_scalars(const void *a, const void *b, void *arg);
 static int	compare_mcvs(const void *a, const void *b);
 static int	analyze_mcv_list(int *mcv_counts,
@@ -2830,9 +2818,9 @@ std_typanalyze(VacAttrStats *stats)
 	 * Determine which standard statistics algorithm to use
 	 */
 	List *va_cols = list_make1_int(stats->attr->attnum);
-	/* GPDB_12_MERGE_FIXME: mergings stats not yet implemented with new partitioning implementation */
-#if 0
-	if (rel_part_status(attr->attrelid) == PART_STATUS_ROOT &&
+	/* GPDB_12_MERGE_FIXME: merging stats not yet implemented with new partitioning implementation */
+	if (get_rel_relkind(attr->attrelid) == RELKIND_PARTITIONED_TABLE &&
+		!get_rel_relispartition(attr->attrelid) &&
 		leaf_parts_analyzed(stats->attr->attrelid, InvalidOid, va_cols, stats->elevel) &&
 		op_hashjoinable(eqopr, stats->attrtypid))
 	{
@@ -2841,7 +2829,6 @@ std_typanalyze(VacAttrStats *stats)
 		stats->minrows = 300 * attr->attstattarget;
 	}
 	else
-#endif
 		if (OidIsValid(eqopr) && OidIsValid(ltopr))
 	{
 		/* Seems to be a scalar datatype */
@@ -3920,30 +3907,22 @@ compute_scalar_stats(VacAttrStatsP stats,
  *	most common values, the (estimated) number of distinct values, the
  *	distribution histogram.
  */
-#if 0
 static void
 merge_leaf_stats(VacAttrStatsP stats,
 				 AnalyzeAttrFetchFunc fetchfunc,
 				 int samplerows,
 				 double totalrows)
 {
-	PartitionNode *pn =
-		get_parts(stats->attr->attrelid, 0 /*level*/, 0 /*parent*/,
-				  false /* inctemplate */, true /*includesubparts*/);
-	Assert(pn);
-	ereport(DEBUG2,
-			(errmsg("Merging leaf partition stats to calculate root partition stats : column %s",
-					get_attname(stats->attr->attrelid, stats->attr->attnum, false))));
-
-	List *oid_list = all_leaf_partition_relids(pn); /* all leaves */
+	List *all_children_list;
+	List *oid_list;
 	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
-	int numPartitions = list_length(oid_list);
+	int numPartitions;
 
 	ListCell *lc;
-	float *relTuples = (float *) palloc0(sizeof(float) * numPartitions);
-	float *nDistincts = (float *) palloc0(sizeof(float) * numPartitions);
-	float *nMultiples = (float *) palloc0(sizeof(float) * numPartitions);
-	int relNum = 0;
+	float *relTuples;
+	float *nDistincts;
+	float *nMultiples;
+	int relNum;
 	float totalTuples = 0;
 	float nmultiple = 0; // number of values that appeared more than once
 	bool allDistinct = false;
@@ -3952,9 +3931,36 @@ merge_leaf_stats(VacAttrStatsP stats,
 	Oid ltopr = mystats->ltopr;
 	Oid eqopr = mystats->eqopr;
 
+	ereport(DEBUG2,
+			(errmsg("Merging leaf partition stats to calculate root partition stats : column %s",
+					get_attname(stats->attr->attrelid, stats->attr->attnum, false))));
+
+	/* GPDB_12_MERGE_FIXME: what's the appropriate lock level? AccessShareLock
+	 * is enough to scan the table, but are we updating them, too? If not,
+	 * NoLock might be enough?
+	 */
+	all_children_list = find_all_inheritors(stats->attr->attrelid, AccessShareLock, NULL);
+	oid_list = NIL;
+	foreach (lc, all_children_list)
+	{
+		Oid			pkrelid = lfirst_oid(lc);
+
+		/* skip intermediate partitions, we're only interested in leaves */
+		if (get_rel_relkind(pkrelid) != RELKIND_RELATION)
+			continue;
+
+		oid_list = lappend_oid(oid_list, pkrelid);
+	}
+	numPartitions = list_length(oid_list);
+
+	relTuples = (float *) palloc0(sizeof(float) * numPartitions);
+	nDistincts = (float *) palloc0(sizeof(float) * numPartitions);
+	nMultiples = (float *) palloc0(sizeof(float) * numPartitions);
+
+	relNum = 0;
 	foreach (lc, oid_list)
 	{
-		Oid pkrelid = lfirst_oid(lc);
+		Oid			pkrelid = lfirst_oid(lc);
 
 		relTuples[relNum] = get_rel_reltuples(pkrelid);
 		totalTuples = totalTuples + relTuples[relNum];
@@ -4316,7 +4322,8 @@ merge_leaf_stats(VacAttrStatsP stats,
 		void *resultMCV[2];
 
 		mcvpairArray = aggregate_leaf_partition_MCVs(
-			stats->attr->attrelid, stats->attr->attnum, heaptupleStats,
+			stats->attr->attrelid, stats->attr->attnum,
+			numPartitions, heaptupleStats,
 			relTuples, default_statistics_target, ndistinct, &num_mcv, &rem_mcv,
 			resultMCV);
 		MemoryContextSwitchTo(old_context);
@@ -4340,7 +4347,8 @@ merge_leaf_stats(VacAttrStatsP stats,
 
 		void *resultHistogram[1];
 		int num_hist = aggregate_leaf_partition_histograms(
-			stats->attr->attrelid, stats->attr->attnum, heaptupleStats,
+			stats->attr->attrelid, stats->attr->attnum,
+			numPartitions, heaptupleStats,
 			relTuples, default_statistics_target, mcvpairArray + num_mcv,
 			rem_mcv, resultHistogram);
 		MemoryContextSwitchTo(old_context);
@@ -4363,7 +4371,6 @@ merge_leaf_stats(VacAttrStatsP stats,
 	pfree(heaptupleStats);
 	pfree(relTuples);
 }
-#endif
 
 /*
  * qsort_arg comparator for sorting ScalarItems

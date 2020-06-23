@@ -754,6 +754,8 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		Form_pg_class classForm;
 		bool		include_parts;
 		int			rvr_opts;
+		bool		skip_this = false;
+		bool		skip_children = false;
 
 		/*
 		 * Since autovacuum workers supply OIDs when calling vacuum(), no
@@ -800,11 +802,39 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 			elog(ERROR, "cache lookup failed for relation %u", relid);
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 
+		if ((options & VACOPT_ROOTONLY) != 0)
+		{
+			if (classForm->relkind != RELKIND_PARTITIONED_TABLE ||
+				classForm->relispartition)
+			{
+				ereport(WARNING,
+						(errmsg("skipping \"%s\" --- cannot analyze a non-root partition using ANALYZE ROOTPARTITION",
+								NameStr(classForm->relname))));
+				skip_this = true;
+			}
+			skip_children = true;
+		}
+		else
+		{
+			/*
+			 * If optimizer_analyze_root_partition is 'off' and ROOTPARTITION option was
+			 * not explicitly specified, analyze all the children, but skip the partitioned
+			 * table itself.
+			 *
+			 * Analyzing the children will update the root table's statistics too, by merging
+			 * the stats of the children. (GPDB_12_MERGE_FIXME: I think that's the idea
+			 * here?)
+			 */
+			if (classForm->relkind == RELKIND_PARTITIONED_TABLE &&
+				!optimizer_analyze_root_partition)
+				skip_this = true;
+		}
+
 		/*
 		 * Make a returnable VacuumRelation for this rel if user is a proper
 		 * owner.
 		 */
-		if (vacuum_is_relation_owner(relid, classForm, options))
+		if (vacuum_is_relation_owner(relid, classForm, options) && !skip_this)
 		{
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			vacrels = lappend(vacrels, makeVacuumRelation(vrel->relation,
@@ -812,7 +842,6 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 														  vrel->va_cols));
 			MemoryContextSwitchTo(oldcontext);
 		}
-
 
 		include_parts = (classForm->relkind == RELKIND_PARTITIONED_TABLE);
 		ReleaseSysCache(tuple);
@@ -826,7 +855,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		 * yet the ownership of the partitions, which get added to the list to
 		 * process.  Ownership will be checked later on anyway.
 		 */
-		if (include_parts)
+		if (include_parts && !skip_children)
 		{
 			List	   *part_oids = find_all_inheritors(relid, NoLock, NULL);
 			ListCell   *part_lc;

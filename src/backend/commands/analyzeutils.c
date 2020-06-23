@@ -12,6 +12,7 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_statistic.h"
 #include "cdb/cdbhash.h"
 #include "commands/analyzeutils.h"
@@ -148,10 +149,10 @@ addLeafPartitionMCVsToHashTable (HTAB *datumHash, HeapTuple heaptupleStats,
  * Output:
  * 	- result: two dimensional arrays of MCVs and Freqs
  */
-#if 0
 MCVFreqPair **
 aggregate_leaf_partition_MCVs(Oid relationOid,
 							  AttrNumber attnum,
+							  int numPartitions,
 							  HeapTuple *heaptupleStats,
 							  float4 *relTuples,
 							  unsigned int nEntries,
@@ -160,8 +161,6 @@ aggregate_leaf_partition_MCVs(Oid relationOid,
 							  int *rem_mcv,
 							  void **result)
 {
-	List	   *lRelOids = rel_get_leaf_children_relids(relationOid);	/* list of OIDs of leaf
-																		 * partitions */
 	Oid			typoid = get_atttype(relationOid, attnum);
 	TypInfo    *typInfo = (TypInfo *) palloc(sizeof(TypInfo));
 
@@ -170,8 +169,6 @@ aggregate_leaf_partition_MCVs(Oid relationOid,
 	/* Hash table for storing combined MCVs */
 	HTAB	   *datumHash = createDatumHashTable(nEntries);
 	float4		sumReltuples = 0;
-
-	int			numPartitions = list_length(lRelOids);
 
 	for (int i = 0; i < numPartitions; i++)
 	{
@@ -229,7 +226,6 @@ aggregate_leaf_partition_MCVs(Oid relationOid,
 	*rem_mcv -= *num_mcv;
 	return mcvpairArray;
 }
-#endif
 
 /*
  * Return an array of MCVs from the resultant MCVFreqPair array
@@ -817,10 +813,10 @@ datumCompare(Datum d1, Datum d2, Oid opFuncOid)
 	hist(agg) = {0,22,40,62}
  *
  */
-#if 0
 int
 aggregate_leaf_partition_histograms(Oid relationOid,
 									AttrNumber attnum,
+									int nParts,
 									HeapTuple *heaptupleStats,
 									float4 *relTuples,
 									unsigned int nEntries,
@@ -829,11 +825,6 @@ aggregate_leaf_partition_histograms(Oid relationOid,
 									void **result)
 {
 	AssertImply(rem_mcv != 0, mcvpairArray != NULL);
-
-	List	   *lRelOids = rel_get_leaf_children_relids(relationOid);
-	int			nParts = list_length(lRelOids);
-
-	Assert(nParts > 0);
 
 	/* get type information */
 	TypInfo		typInfo;
@@ -961,7 +952,6 @@ aggregate_leaf_partition_histograms(Oid relationOid,
 
 	return num_hist;
 }
-#endif
 
 static float4
 getBucketSizes(const HeapTuple *heaptupleStats, const float4 *relTuples, int nParts,
@@ -1068,29 +1058,28 @@ needs_sample(VacAttrStats **vacattrstats, int attr_cnt)
  *  for different columns might be different due to the dropped columns and
  *  split partitions.
  */
-/* GPDB_12_MERGE_FIXME */
-#if 0
 bool
 leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 {
-	PartitionNode *pn = get_parts(attrelid,
-								  0 /* level */ ,
-								  0 /* parent */ ,
-								  false /* inctemplate */ ,
-								  true /* includesubparts */ );
-
-	Assert(pn);
-
-	List	   *oid_list = all_leaf_partition_relids(pn);	/* all leaves */
+	List	   *oid_list;
 	bool		all_parts_empty = true;
 	ListCell   *lc,
 			   *lc_col;
 
+	/* GPDB_12_MERGE_FIXME: what's the appropriate lock level? AccessShareLock
+	 * is enough to scan the table, but are we updating them, too? If not,
+	 * NoLock might be enough?
+	 */
+	oid_list = find_all_inheritors(attrelid, AccessShareLock, NULL);
 	foreach(lc, oid_list)
 	{
 		Oid			partRelid = lfirst_oid(lc);
 
 		if (partRelid == relid_exclude)
+			continue;
+
+		/* Ignore all but leaf partition */
+		if (get_rel_relkind(partRelid) == RELKIND_PARTITIONED_TABLE)
 			continue;
 
 		float4		relTuples = get_rel_reltuples(partRelid);
@@ -1133,4 +1122,3 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 
 	return !all_parts_empty;
 }
-#endif
