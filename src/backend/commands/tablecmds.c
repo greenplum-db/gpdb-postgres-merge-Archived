@@ -4753,7 +4753,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_SetTableSpace:	/* SET TABLESPACE */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX |
 								ATT_PARTITIONED_INDEX);
-			/* This command never recurses */
+			/*
+			 * GPDB: This command never recurses in upstream Postgres, however,
+			 * it recurses in Greenplum.
+			 */
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;

@@ -86,6 +86,12 @@ CREATE TABLE testschema.part_4 PARTITION OF testschema.part FOR VALUES IN (4)
 CREATE TABLE testschema.part_56 PARTITION OF testschema.part FOR VALUES IN (5, 6)
   PARTITION BY LIST (a);
 ALTER TABLE testschema.part SET TABLESPACE pg_default;
+-- GPDB: Greenplum's ALTER TABLE .. SET TABLESPACE command recurses, hence need
+-- to add the following ALTER TABLE commands on the partitions to achieve the
+-- same results for SELECT.
+ALTER TABLE testschema.part_2 SET TABLESPACE regress_tblspace;
+ALTER TABLE testschema.part_3 SET TABLESPACE regress_tblspace;
+ALTER TABLE testschema.part_56 SET TABLESPACE regress_tblspace;
 CREATE TABLE testschema.part_78 PARTITION OF testschema.part FOR VALUES IN (7, 8)
   PARTITION BY LIST (a);
 ERROR:  only shared relations can be placed in pg_global tablespace
