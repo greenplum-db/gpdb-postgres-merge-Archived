@@ -1424,8 +1424,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (target_gp_dbid < 1)
 		{
-			fprintf(stderr, _("%s: cannot restore user-defined tablespaces without the --target-gp-dbid option\n"),
-					progname);
+			pg_log_error("cannot restore user-defined tablespaces without the --target-gp-dbid option");
 			exit(1);
 		}
 		
@@ -1742,8 +1741,8 @@ add_to_exclude_list(PQExpBufferData *buf, const char *exclude)
 	len = PQescapeStringConn(conn, quoted, exclude, MAXPGPATH, &error);
 	if (len == 0 || error != 0)
 	{
-		fprintf(stderr, _("%s: could not process exclude \"%s\": %s\n"),
-				progname, exclude, PQerrorMessage(conn));
+		pg_log_error("could not process exclude \"%s\": %s",
+					 exclude, PQerrorMessage(conn));
 		exit(1);
 	}
 	appendPQExpBuffer(buf, " EXCLUDE '%s'", quoted);
@@ -1771,8 +1770,8 @@ build_exclude_list(void)
 
 		if (file == NULL)
 		{
-			fprintf(stderr, _("%s: could not open exclude-from file \"%s\": %m\n"),
-					progname, filename);
+			pg_log_error("could not open exclude-from file \"%s\": %m",
+						 filename);
 			exit(1);
 		}
 
@@ -1798,7 +1797,7 @@ build_exclude_list(void)
 
 	if (PQExpBufferDataBroken(buf))
 	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
+		pg_log_error("out of memory\n");
 		exit(1);
 	}
 
@@ -2428,9 +2427,9 @@ main(int argc, char **argv)
 			case 'E':
 				if (num_exclude >= MAX_EXCLUDE)
 				{
-					fprintf(stderr, _("%s: too many elements in exclude list: max is %d"),
-							progname, MAX_EXCLUDE);
-					fprintf(stderr, _("hint: use --exclude-from to load a large exclude list from a file"));
+					pg_log_error("too many elements in exclude list: max is %d",
+								 MAX_EXCLUDE);
+					pg_log_error("HINT: use --exclude-from to load a large exclude list from a file");
 					exit(1);
 				}
 
@@ -2445,8 +2444,8 @@ main(int argc, char **argv)
 			case 130:			/* --exclude-from=FILE */
 				if (num_exclude_from >= MAX_EXCLUDE)
 				{
-					fprintf(stderr, _("%s: too many elements in exclude-from list: max is %d"),
-							progname, MAX_EXCLUDE);
+					pg_log_error("too many elements in exclude-from list: max is %d",
+								 MAX_EXCLUDE);
 					exit(1);
 				}
 
@@ -2488,7 +2487,8 @@ main(int argc, char **argv)
 
 	if (target_gp_dbid <= 0)
 	{
-		fprintf(stderr, _("%s: no target dbid specified, --target-gp-dbid is required.\n"),
+		pg_log_error("no target dbid specified, --target-gp-dbid is required");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
 	}
@@ -2616,7 +2616,7 @@ main(int argc, char **argv)
 	 * when extracting the backups.
 	 */
 	if (format == 't')
-		pg_log_error("WARNING: tar backups are not supported on GPDB\n");
+		pg_log_error("WARNING: tar backups are not supported on GPDB");
 
 	/* determine remote server's xlog segment size */
 	if (!RetrieveWalSegSize(conn))
@@ -2669,7 +2669,7 @@ WriteInternalConfFile(void)
 	cf = fopen(filename, "w");
 	if (cf == NULL)
 	{
-		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
+		pg_log_error("could not create file \"%s\": %m", filename);
 		exit(1);
 	}
 
@@ -2677,9 +2677,7 @@ WriteInternalConfFile(void)
 
 	if (fwrite(line_to_write, length, 1, cf) != 1)
 	{
-		fprintf(stderr,
-				_("%s: could not write to file \"%s\": %s\n"),
-				progname, filename, strerror(errno));
+		pg_log_error("could not write to file \"%s\": %m", filename);
 		exit(1);
 	}
 
