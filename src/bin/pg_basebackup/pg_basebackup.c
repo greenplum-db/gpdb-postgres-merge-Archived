@@ -1871,8 +1871,11 @@ BaseBackup(void)
 	/*
 	 * Greenplum only: create replication slot.  This replication slot is used
 	 * for primary/mirror and master/standby WAL replication.
+	 *
+	 * GPDB_12_MERGE_FIXME: Is this needed? Can't we expect the user/calling
+	 * program to use the --create-slot option?
 	 */
-	if (replication_slot)
+	if (replication_slot && !create_slot)
 	{
 		CreateReplicationSlot(conn, replication_slot, NULL, false, true, false, false);
 	}

@@ -480,22 +480,6 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 }
 
 /*
- * Redefine error code from backend
- */
-#define ERRCODE_DUPLICATE_OBJECT "42710"
-
-static bool
-replication_slot_already_exists_error(PGresult *result)
-{
-	const char *sqlstate;
-	sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
-
-	return sqlstate && strncmp(sqlstate,
-								ERRCODE_DUPLICATE_OBJECT,
-								strlen(ERRCODE_DUPLICATE_OBJECT)) == 0;
-}
-
-/*
  * Create a replication slot for the given connection. This function
  * returns true in case of success.
  */
@@ -532,12 +516,6 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	}
 
 	res = PQexec(conn, query->data);
-
-	if (replication_slot_already_exists_error(res))
-	{
-		PQclear(res);
-		return true;
-	}
 	
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
