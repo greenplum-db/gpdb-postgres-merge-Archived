@@ -197,6 +197,7 @@ where c.oid = a.segrelid and
 (2 rows)
 
 -- Verify that age of toast table is updated by vacuum.
+-- AOCS doesn't have a valid reltoastrelid from Greenplum 7.
 select 0 < age(relfrozenxid) as age_positive,
        age(relfrozenxid) < 100 as age_within_limit
 from pg_class where oid in (select reltoastrelid from pg_class
@@ -204,8 +205,7 @@ from pg_class where oid in (select reltoastrelid from pg_class
  age_positive | age_within_limit 
 --------------+------------------
  t            | t
- t            | t
-(2 rows)
+(1 row)
 
 -- Verify that index is displayed by \d after vacuum.
 \d ao_empty;

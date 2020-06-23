@@ -1844,12 +1844,10 @@ appendonly_relation_needs_toast_table(Relation rel)
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
 
-
 /* ------------------------------------------------------------------------
  * Planner related callbacks for the appendonly AM
  * ------------------------------------------------------------------------
  */
-
 static void
 appendonly_estimate_rel_size(Relation rel, int32 *attr_widths,
 						 BlockNumber *pages, double *tuples,
@@ -1872,7 +1870,6 @@ appendonly_estimate_rel_size(Relation rel, int32 *attr_widths,
 	*tuples = 1;
 	*allvisfrac = 0;
 }
-
 
 
 /* ------------------------------------------------------------------------

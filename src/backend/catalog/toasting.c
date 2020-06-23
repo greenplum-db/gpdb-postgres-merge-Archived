@@ -303,7 +303,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   toast_typid,
 										   InvalidOid,
 										   rel->rd_rel->relowner,
-										   RelationIsAppendOptimized(rel) ?
+										   RelationIsAoRows(rel) ?
 										   HEAP_TABLE_AM_OID :rel->rd_rel->relam,
 										   tupdesc,
 										   NIL,

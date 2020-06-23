@@ -1837,6 +1837,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	int			save_sec_context;
 	int			save_nestlevel;
 	bool		is_appendoptimized;
+	bool		is_toast;
 
 	Assert(params != NULL);
 
@@ -2126,7 +2127,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	is_appendoptimized = RelationIsAppendOptimized(onerel);
-	bool is_toast = onerel->rd_rel->relkind == RELKIND_TOASTVALUE;
+	is_toast = (onerel->rd_rel->relkind == RELKIND_TOASTVALUE);
 
 	if (ao_vacuum_phase && !(is_appendoptimized || is_toast))
 	{
@@ -2277,6 +2278,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 
 	int orig_option = params->options;
 	params->options = params->options & (~VACUUM_AO_PHASE_MASK);
+
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
 	 * still hold the session lock on the master table.  Note however that
@@ -2287,14 +2289,14 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	if (toast_relid != InvalidOid)
 		vacuum_rel(toast_relid, NULL, params, false);
 
-   /*
-    * If an AO/CO table is empty on a segment,
-    *
-    * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
-    * constructed and dispatched separately by the QD, when vacuuming the
-    * base AO relation.  A backend executing dispatched VacuumStmt
-    * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
-    */
+	/*
+	 * If an AO/CO table is empty on a segment,
+	 *
+	 * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
+	 * constructed and dispatched separately by the QD, when vacuuming the
+	 * base AO relation.  A backend executing dispatched VacuumStmt
+	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
+	 */
 
 	/* do the same for an AO segments table, if any */
 	if (aoseg_relid != InvalidOid)
