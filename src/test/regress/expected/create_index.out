@@ -2312,11 +2312,9 @@ ERROR:  REINDEX CONCURRENTLY is not supported
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  c1     | integer |           |          | 
-Indexes:
-    "concur_reindex_ind5" UNIQUE, btree (c1) INVALID
-    "concur_reindex_ind5_ccnew" UNIQUE, btree (c1) INVALID
 
 DROP INDEX concur_reindex_ind5_ccnew;
+ERROR:  index "concur_reindex_ind5_ccnew" does not exist
 -- This makes the previous failure go away, so the index can become valid.
 DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
 -- The invalid index is not processed when running REINDEX TABLE.
@@ -2327,8 +2325,6 @@ ERROR:  REINDEX CONCURRENTLY is not supported
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  c1     | integer |           |          | 
-Indexes:
-    "concur_reindex_ind5" UNIQUE, btree (c1) INVALID
 
 -- But it is fixed with REINDEX INDEX.
 REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
@@ -2338,8 +2334,6 @@ ERROR:  REINDEX CONCURRENTLY is not supported
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  c1     | integer |           |          | 
-Indexes:
-    "concur_reindex_ind5" UNIQUE, btree (c1)
 
 DROP TABLE concur_reindex_tab4;
 --
