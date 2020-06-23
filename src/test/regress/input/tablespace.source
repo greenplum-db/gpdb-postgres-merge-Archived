@@ -119,6 +119,9 @@ ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index4 UNIQUE (id) U
 SET default_tablespace TO regress_tblspace;
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+-- start_ignore
+ANALYZE testschema.test_default_tab;
+-- end_ignore
 \d testschema.test_index1
 \d testschema.test_index2
 \d testschema.test_index3
@@ -126,6 +129,9 @@ ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 SELECT * FROM testschema.test_default_tab;
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+-- start_ignore
+ANALYZE testschema.test_default_tab;
+-- end_ignore
 \d testschema.test_index1
 \d testschema.test_index2
 \d testschema.test_index3
