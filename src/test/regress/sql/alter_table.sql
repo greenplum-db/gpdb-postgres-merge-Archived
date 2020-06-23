@@ -186,7 +186,7 @@ CREATE TABLE part_attmp1 PARTITION OF part_attmp FOR VALUES FROM (0) TO (100);
 ALTER INDEX part_attmp_pkey RENAME TO part_attmp_index;
 ALTER INDEX part_attmp1_pkey RENAME TO part_attmp1_index;
 ALTER TABLE part_attmp RENAME TO part_at2tmp;
-ALTER TABLE part_attmp1 RENAME TO part_at2tmp1;
+-- ALTER TABLE part_attmp1 RENAME TO part_at2tmp1; -- GPDB cascades parent rename to child partition
 SET ROLE regress_alter_table_user1;
 ALTER INDEX part_attmp_index RENAME TO fail;
 ALTER INDEX part_attmp1_index RENAME TO fail;
