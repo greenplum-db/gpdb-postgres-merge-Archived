@@ -4369,6 +4369,18 @@ _readGpPartitionListSpec(void)
 	READ_DONE();
 }
 
+static ColumnReferenceStorageDirective *
+_readColumnReferenceStorageDirective(void)
+{
+	READ_LOCALS(ColumnReferenceStorageDirective);
+
+	READ_STRING_FIELD(column);
+	READ_BOOL_FIELD(deflt);
+	READ_NODE_FIELD(encoding);
+
+	READ_DONE();
+}
+
 /*
  * parseNodeString
  *
@@ -4836,6 +4848,8 @@ parseNodeString(void)
 		return_value = _readGpPartitionRangeSpec();
 	else if (MATCHX("GPPARTITIONLISTSPEC"))
 		return_value = _readGpPartitionListSpec();
+	else if (MATCHX("COLUMNREFERENCESTORAGEDIRECTIVE"))
+		return_value = _readColumnReferenceStorageDirective();
 	else
 	{
         ereport(ERROR,
