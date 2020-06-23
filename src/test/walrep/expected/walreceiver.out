@@ -87,9 +87,9 @@ SELECT check_and_wait_for_replication(10);
  t
 (1 row)
 
--- remember current_xlog_location.
+-- remember current_wal_lsn.
 -- start_ignore
-select pg_current_xlog_location() as lsn;
+select pg_current_wal_lsn() as lsn;
     lsn    
 -----------
  0/D24F4F0
@@ -110,7 +110,7 @@ SELECT test_connect('');
  t
 (1 row)
 
-SELECT test_receive_and_verify(:'lsn', pg_current_xlog_location());
+SELECT test_receive_and_verify(:'lsn', pg_current_wal_lsn());
  test_receive_and_verify 
 -------------------------
  t

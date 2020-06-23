@@ -45,9 +45,9 @@ SELECT count(*) FROM pg_stat_replication where application_name = 'walreceiver_t
 SELECT test_disconnect();
 SELECT check_and_wait_for_replication(10);
 
--- remember current_xlog_location.
+-- remember current_wal_lsn.
 -- start_ignore
-select pg_current_xlog_location() as lsn;
+select pg_current_wal_lsn() as lsn;
 -- end_ignore
 \gset
 
@@ -58,7 +58,7 @@ insert into testwalreceiver select * from generate_series(0, 9);
 -- Connect and receive the xlogs, validate everything was received from start to
 -- end
 SELECT test_connect('');
-SELECT test_receive_and_verify(:'lsn', pg_current_xlog_location());
+SELECT test_receive_and_verify(:'lsn', pg_current_wal_lsn());
 SELECT test_send();
 SELECT test_receive();
 SELECT test_disconnect();
