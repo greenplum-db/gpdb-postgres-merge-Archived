@@ -1997,50 +1997,94 @@ explain (costs off)
  Optimizer: Postgres query optimizer
 (6 rows)
 
+-- In PostgreSQL, this uses an Index Scan. In GPDB, the logic to deduce
+-- which path keys are useful for ordering miss this case. That's because
+-- we build a path key to also represent the DISTRIBUTED BY key, which is 'b'
+-- for this table, and the index is deemed not useful for that path key.
+-- We can live with that. But to cover the same codepaths as in upstream,
+-- run the test again with different distribution key so that index scans
+-- are used.
 explain (costs off)
   select * from boolindex where b order by i limit 10;
-                      QUERY PLAN                       
--------------------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Limit
-   ->  Index Scan using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Sort
+                     Sort Key: i
+                     ->  Seq Scan on boolindex
+                           Filter: b
+ Optimizer: Postgres query optimizer
+(9 rows)
+
+-- Repeate with different distribution key
+alter table boolindex set distributed by (i);
+explain (costs off)
+  select * from boolindex where b order by i limit 10;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Limit
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan Backward using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
   select * from boolindex where not b order by i limit 10;
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Limit
-   ->  Index Scan using boolindex_b_i_key on boolindex
-         Index Cond: (b = false)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = false)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
   select * from boolindex where b is true order by i desc limit 10;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan Backward using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
   select * from boolindex where b is false order by i desc limit 10;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = false)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan Backward using boolindex_b_i_key on boolindex
+                     Index Cond: (b = false)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 --
 -- REINDEX (VERBOSE)

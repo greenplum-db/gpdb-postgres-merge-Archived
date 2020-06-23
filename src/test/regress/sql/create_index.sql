@@ -736,8 +736,21 @@ create temp table boolindex (b bool, i int, unique(b, i), junk float);
 
 explain (costs off)
   select * from boolindex order by b, i limit 10;
+
+-- In PostgreSQL, this uses an Index Scan. In GPDB, the logic to deduce
+-- which path keys are useful for ordering miss this case. That's because
+-- we build a path key to also represent the DISTRIBUTED BY key, which is 'b'
+-- for this table, and the index is deemed not useful for that path key.
+-- We can live with that. But to cover the same codepaths as in upstream,
+-- run the test again with different distribution key so that index scans
+-- are used.
 explain (costs off)
   select * from boolindex where b order by i limit 10;
+-- Repeate with different distribution key
+alter table boolindex set distributed by (i);
+explain (costs off)
+  select * from boolindex where b order by i limit 10;
+
 explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
 explain (costs off)
