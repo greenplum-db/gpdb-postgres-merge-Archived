@@ -807,6 +807,10 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 		ispartition = classForm->relispartition;
 
+		/*
+		 * Handle GPDB's extra options and GUCs that affect how we recurse
+		 * into partitions.
+		 */
 		if ((options & VACOPT_ROOTONLY) != 0)
 		{
 			if (classForm->relkind != RELKIND_PARTITIONED_TABLE ||
@@ -817,6 +821,28 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 								NameStr(classForm->relname))));
 				skip_this = true;
 			}
+			skip_children = true;
+		}
+		/*
+		 * disable analyzing mid-level partitions directly since the users are encouraged
+		 * to work with the root partition only. To gather stats on mid-level partitions
+		 * (for Orca's use), the user should run ANALYZE or ANALYZE ROOTPARTITION on the
+		 * root level with optimizer_analyze_midlevel_partition GUC set to ON.
+		 * Planner uses the stats on leaf partitions, so it's unnecessary to collect stats on
+		 * midlevel partitions.
+		 *
+		 * GPDB_12_MERGE_FIXME: Does this still make sense?
+		 */
+		else if (classForm->relkind == RELKIND_PARTITIONED_TABLE &&
+				 classForm->relispartition &&
+				 !optimizer_analyze_midlevel_partition)
+		{
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot analyze a mid-level partition. "
+							"Please run ANALYZE on the root partition table.",
+							NameStr(classForm->relname))));
+			/* do nothing at all */
+			skip_this = true;
 			skip_children = true;
 		}
 		else
