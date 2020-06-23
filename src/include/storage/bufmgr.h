@@ -195,6 +195,8 @@ extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,
 extern void DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes);
 extern void DropDatabaseBuffers(Oid dbid);
 
+extern BlockNumber RelationGuessNumberOfBlocksFromSize(uint64 szbytes);
+
 #define RelationGetNumberOfBlocks(reln) \
 	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
 

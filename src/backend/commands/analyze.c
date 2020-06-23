@@ -7,17 +7,6 @@
  * There are a few things in Greenplum that make this more complicated
  * than in upstream:
  *
- * AO tables
- * ---------
- *
- * To work with AO tables, there is a new function, acquire_sample_rows_ao(),
- * which return a set of sample rows, just like the upstream
- * acquire_sample_rows() function. The upstream acquire_sample_rows()
- * function has been renamed to acquire_sample_rows_heap(), and
- * acquire_sample_rows() is now a wrapper that calls either
- * acquire_sample_rows_heap() or acquire_sample_rows_ao(), depending on
- * the table type.
- *
  * Dispatching
  * -----------
  *
@@ -1346,11 +1335,14 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr, int elevel)
  *
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
+ *
+ * GPDB: If we are the dispatcher, then issue analyze on the segments and
+ * collect the statistics from them.
  */
-static int
-acquire_sample_rows_heap(Relation onerel, int elevel,
-						 HeapTuple *rows, int targrows,
-						 double *totalrows, double *totaldeadrows)
+int
+acquire_sample_rows(Relation onerel, int elevel,
+					HeapTuple *rows, int targrows,
+					double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
 	double		samplerows = 0; /* total # rows collected */
@@ -1366,133 +1358,6 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 
 	Assert(targrows > 0);
 
-	totalblocks = RelationGetNumberOfBlocks(onerel);
-
-	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
-	OldestXmin = GetOldestXmin(onerel, PROCARRAY_FLAGS_VACUUM);
-
-	/* Prepare for sampling block numbers */
-	BlockSampler_Init(&bs, totalblocks, targrows, random());
-	/* Prepare for sampling rows */
-	reservoir_init_selection_state(&rstate, targrows);
-
-	scan = table_beginscan_analyze(onerel);
-	slot = table_slot_create(onerel, NULL);
-
-	/* Outer loop over blocks to sample */
-	while (BlockSampler_HasMore(&bs))
-	{
-		BlockNumber targblock = BlockSampler_Next(&bs);
-
-		vacuum_delay_point();
-
-		if (!table_scan_analyze_next_block(scan, targblock, vac_strategy))
-			continue;
-
-		while (table_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
-		{
-			/*
-			 * The first targrows sample rows are simply copied into the
-			 * reservoir. Then we start replacing tuples in the sample until
-			 * we reach the end of the relation.  This algorithm is from Jeff
-			 * Vitter's paper (see full citation in utils/misc/sampling.c). It
-			 * works by repeatedly computing the number of tuples to skip
-			 * before selecting a tuple, which replaces a randomly chosen
-			 * element of the reservoir (current set of tuples).  At all times
-			 * the reservoir is a true random sample of the tuples we've
-			 * passed over so far, so when we fall off the end of the relation
-			 * we're done.
-			 */
-			if (numrows < targrows)
-				rows[numrows++] = ExecCopySlotHeapTuple(slot);
-			else
-			{
-				/*
-				 * t in Vitter's paper is the number of records already
-				 * processed.  If we need to compute a new S value, we must
-				 * use the not-yet-incremented value of samplerows as t.
-				 */
-				if (rowstoskip < 0)
-					rowstoskip = reservoir_get_next_S(&rstate, samplerows, targrows);
-
-				if (rowstoskip <= 0)
-				{
-					/*
-					 * Found a suitable tuple, so save it, replacing one old
-					 * tuple at random
-					 */
-					int			k = (int) (targrows * sampler_random_fract(rstate.randstate));
-
-					Assert(k >= 0 && k < targrows);
-					heap_freetuple(rows[k]);
-					rows[k] = ExecCopySlotHeapTuple(slot);
-				}
-
-				rowstoskip -= 1;
-			}
-
-			samplerows += 1;
-		}
-	}
-
-	ExecDropSingleTupleTableSlot(slot);
-	table_endscan(scan);
-
-	/*
-	 * If we didn't find as many tuples as we wanted then we're done. No sort
-	 * is needed, since they're already in order.
-	 *
-	 * Otherwise we need to sort the collected tuples by position
-	 * (itempointer). It's not worth worrying about corner cases where the
-	 * tuples are already sorted.
-	 */
-	if (numrows == targrows)
-		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
-
-	/*
-	 * Estimate total numbers of live and dead rows in relation, extrapolating
-	 * on the assumption that the average tuple density in pages we didn't
-	 * scan is the same as in the pages we did scan.  Since what we scanned is
-	 * a random sample of the pages in the relation, this should be a good
-	 * assumption.
-	 */
-	if (bs.m > 0)
-	{
-		*totalrows = floor((liverows / bs.m) * totalblocks + 0.5);
-		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
-	}
-	else
-	{
-		*totalrows = 0.0;
-		*totaldeadrows = 0.0;
-	}
-
-	/*
-	 * Emit some interesting relation info
-	 */
-	ereport(elevel,
-			(errmsg("\"%s\": scanned %d of %u pages, "
-					"containing %.0f live rows and %.0f dead rows; "
-					"%d rows in sample, %.0f estimated total rows",
-					RelationGetRelationName(onerel),
-					bs.m, totalblocks,
-					liverows, deadrows,
-					numrows, *totalrows)));
-
-	return numrows;
-}
-
-/*
- * Acquire a sample of rows.
- *
- * In GPDB, this is just a thin wrapper to route to the appropriate
- * subroutine, depending on the table type.
- */
-int
-acquire_sample_rows(Relation onerel, int elevel,
-					HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows)
-{
 	if (Gp_role == GP_ROLE_DISPATCH &&
 		onerel->rd_cdbpolicy && !GpPolicyIsEntry(onerel->rd_cdbpolicy))
 	{
@@ -1502,43 +1367,35 @@ acquire_sample_rows(Relation onerel, int elevel,
 											  totalrows, totaldeadrows);
 	}
 
-	int			numrows = 0;	/* # rows now in reservoir */
-	double		samplerows = 0; /* total # rows collected */
-	double		liverows = 0;	/* # live rows seen */
-	double		deadrows = 0;	/* # dead rows seen */
-	double		rowstoskip = -1;	/* -1 means not set yet */
-	BlockNumber totalblocks;
-	TransactionId OldestXmin;
-	BlockSamplerData bs;
-	ReservoirStateData rstate;
-	TupleTableSlot *slot;
-	TableScanDesc scan;
+	/*
+	 * GPDB: Analyze does make a lot of assumptions regarding the file layout of a
+	 * relation. These assumptions are heap specific and do not hold for AO/AOCO
+	 * relations. In the case of AO/AOCO, what is actually needed and used instead
+	 * of number of blocks, is number of tuples.
+	 *
+	 * GPDB_12_MERGE_FIXME: BlockNumber is uint32 and Number of tuples is uint64.
+	 * That means that after row number UINT_MAX we will never analyze the table.
+	 */
+	if (RelationIsAppendOptimized(onerel))
+	{
+		BlockNumber pages;
+		double		tuples;
+		double		allvisfrac;
+		int32		attr_widths;
 
-	Assert(targrows > 0);
+		table_relation_estimate_size(onerel,	&attr_widths, &pages,
+									&tuples, &allvisfrac);
 
-	totalblocks = RelationGetNumberOfBlocks(onerel);
+		if (tuples > UINT_MAX)
+			tuples = UINT_MAX;
+
+		totalblocks = (BlockNumber)tuples;
+	}
+	else
+		totalblocks = RelationGetNumberOfBlocks(onerel);
 
 	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
 	OldestXmin = GetOldestXmin(onerel, PROCARRAY_FLAGS_VACUUM);
-
-	/*
-	 * For AO and AOCO we directly give tuple number as block number
-	 */
-	if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)
-	{
-		FileSegTotals * segTotals = GetSegFilesTotals(onerel, GetTransactionSnapshot());
-
-		totalblocks = segTotals->totaltuples > UINT_MAX ?
-		              UINT_MAX : segTotals->totaltuples;
-	}
-	else if (onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
-	{
-		FileSegTotals * segTotals =
-		GetAOCSSSegFilesTotals(onerel, GetTransactionSnapshot());
-
-		totalblocks = segTotals->totaltuples > UINT_MAX ?
-		              UINT_MAX : segTotals->totaltuples;
-	}
 
 	/* Prepare for sampling block numbers */
 	BlockSampler_Init(&bs, totalblocks, targrows, random());
@@ -1573,17 +1430,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 			 * we're done.
 			 */
 			if (numrows < targrows)
-			{
 				rows[numrows++] = ExecCopySlotHeapTuple(slot);
-				/* virtual tuple does not have block information, so just use
-				 * row number as block id. */
-				if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-					onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
-				{
-					BlockIdSet(&(rows[numrows - 1]->t_self.ip_blkid), targrows);
-					rows[numrows - 1]->t_self.ip_posid = 1;
-				}
-			}
 			else
 			{
 				/*
@@ -1605,15 +1452,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 					Assert(k >= 0 && k < targrows);
 					heap_freetuple(rows[k]);
 					rows[k] = ExecCopySlotHeapTuple(slot);
-
-					/* virtual tuple does not have block information, so just use
-					 * row number as block id. */
-					if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-						onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
-					{
-						BlockIdSet(&(rows[k]->t_self.ip_blkid), targrows);
-						rows[k]->t_self.ip_posid = 1;
-					}
 				}
 
 				rowstoskip -= 1;
@@ -1678,6 +1516,23 @@ compare_rows(const void *a, const void *b)
 {
 	HeapTuple	ha = *(const HeapTuple *) a;
 	HeapTuple	hb = *(const HeapTuple *) b;
+
+	/*
+	 * GPDB_12_MERGE_FIXME: For AO/AOCO tables, blocknumber does not have a
+	 * meaning and is not set. The current implementation of analyze makes
+	 * assumptions about the file layout which do not hold for these two cases.
+	 * The compare function should maintain the row order as consrtucted, hence
+	 * return 0;
+	 *
+	 * There should be no apparent and measurable perfomance hit from calling
+	 * this function.
+	 *
+	 * One possible proper fix is to refactor analyze to use the tableam api and
+	 * this sorting should move to the specific implementation.
+	 */
+	if (!BlockNumberIsValid(ItemPointerGetBlockNumberNoCheck(&ha->t_self)))
+		return 0;
+
 	BlockNumber ba = ItemPointerGetBlockNumber(&ha->t_self);
 	OffsetNumber oa = ItemPointerGetOffsetNumber(&ha->t_self);
 	BlockNumber bb = ItemPointerGetBlockNumber(&hb->t_self);
@@ -2030,9 +1885,9 @@ acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int 
 /*
  * Compute relation size.
  *
- * In upstream, this is a simple RelationGetNumberOfBlocks() call. But in
- * GPDB, we need to deal with AO and AOCS tables, and if we're in the
- * dispatcher, need to get the size from the segments.
+ * In upstream, this is a simple RelationGetNumberOfBlocks() call.
+ * In GPDB if we're in the dispatcher, we need to get the size from the
+ * segments.
  */
 BlockNumber
 AcquireNumberOfBlocks(Relation onerel)
@@ -2059,7 +1914,7 @@ AcquireNumberOfBlocks(Relation onerel)
 			totalbytes = totalbytes / onerel->rd_cdbpolicy->numsegments;
 		}
 
-		return RelationGuessNumberOfBlocks(totalbytes);
+		return RelationGuessNumberOfBlocksFromSize(totalbytes);
 	}
 	/* Check size on this server. */
 	else
@@ -2101,7 +1956,7 @@ acquire_index_number_of_blocks(Relation indexrel, Relation tablerel)
 			totalbytes = totalbytes / tablerel->rd_cdbpolicy->numsegments;
 		}
 
-		return RelationGuessNumberOfBlocks(totalbytes);
+		return RelationGuessNumberOfBlocksFromSize(totalbytes);
 	}
 	/* Check size on this server. */
 	else

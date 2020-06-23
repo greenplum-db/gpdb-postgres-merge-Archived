@@ -1548,22 +1548,34 @@ aoco_estimate_rel_size(Relation rel, int32 *attr_widths,
                              BlockNumber *pages, double *tuples,
                              double *allvisfrac)
 {
-	/*
-	 * GPDB_12_MERGE_FIXME
-	 *
-	 * GetAllFileSegInfo()
-	 *    sum up eof values
-	 *    sum up tuple counts
-	 *
-	 * Find a suitable visimap interface to compute allvisfrac
-	 *
-	 * QD has no content, so the above information needs to be obtained from
-	 * QEs.  Obtaining from only one QE should be ok, given that this is an
-	 * estimate.
-	 */
+	FileSegTotals	*fileSegTotals;
+
 	*pages = 1;
 	*tuples = 1;
 	*allvisfrac = 0;
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		return;
+
+	fileSegTotals = GetAOCSSSegFilesTotals(rel, NULL);
+
+	*tuples = (double)fileSegTotals->totaltuples;
+
+	/* Quick exit if empty */
+	if (*tuples == 0)
+	{
+		*pages = 0;
+		return;
+	}
+
+	Assert(fileSegTotals->totalbytesuncompressed > 0);
+	*pages = RelationGuessNumberOfBlocksFromSize(
+					(uint64)fileSegTotals->totalbytesuncompressed);
+
+	/*
+	 * GPDB_12_MERGE_FIXME: Do not bother scanning the visimap aux table.
+	 * Investigate if really needed
+	 */
 }
 
 /* ------------------------------------------------------------------------

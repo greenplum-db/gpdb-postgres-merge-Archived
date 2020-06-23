@@ -383,16 +383,11 @@ extern void appendonly_insert(
 		AOTupleId *aoTupleId);
 extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
 extern void appendonly_dml_finish(Relation relation, CmdType operation);
-extern BlockNumber RelationGuessNumberOfBlocks(double totalbytes);
 
 extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel);
 extern TM_Result appendonly_delete(
 		AppendOnlyDeleteDesc aoDeleteDesc,
 		AOTupleId* aoTupleId);
 extern void appendonly_delete_finish(AppendOnlyDeleteDesc aoDeleteDesc);
-
-extern int acquire_sample_rows_ao(Relation onerel, int elevel,
-								  HeapTuple *rows, int targrows,
-								  double *totalrows, double *totaldeadrows);
 
 #endif   /* CDBAPPENDONLYAM_H */
