@@ -96,6 +96,7 @@ CREATE INDEX ggpolygonind ON gpolygon_tbl USING gist (f1);
 
 CREATE INDEX ggcircleind ON gcircle_tbl USING gist (f1);
 
+SET optimizer_enable_tablescan = OFF;
 --
 -- Test GiST indexes
 --
