@@ -1,8 +1,3 @@
--- negative cases
-SELECT test_receive();
-SELECT test_send();
-SELECT test_disconnect();
-
 -- Wait until number of replication sessions drop to 0 or timeout
 -- occurs. Returns false if timeout occurred.
 create function check_and_wait_for_replication(

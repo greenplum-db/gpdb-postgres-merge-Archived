@@ -1,14 +1,3 @@
--- negative cases
-SELECT test_receive();
-ERROR:  could not receive data from WAL stream: connection pointer is NULL (libpqwalreceiver.c:631)
-SELECT test_send();
-ERROR:  could not send data to WAL stream: connection pointer is NULL (libpqwalreceiver.c:650)
-SELECT test_disconnect();
- test_disconnect 
------------------
- t
-(1 row)
-
 -- Wait until number of replication sessions drop to 0 or timeout
 -- occurs. Returns false if timeout occurred.
 create function check_and_wait_for_replication(
