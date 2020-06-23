@@ -1184,15 +1184,17 @@ select c.relname, am.amname, c.relkind, c.reloptions
 
 -- Split partition
 alter table dsp_partition1 split partition for (6) at (7) into (partition split_p1, partition split_p2);
-select relname, relkind, relstorage, reloptions from pg_class where relname like 'dsp_partition1%' order by relname;
-            relname            | relkind | relstorage |              reloptions              
--------------------------------+---------+------------+--------------------------------------
- dsp_partition1                | r       | a          | {appendonly=true}
- dsp_partition1_1_prt_1        | r       | a          | {appendonly=true}
- dsp_partition1_1_prt_p3       | r       | c          | {appendonly=true,orientation=column}
- dsp_partition1_1_prt_p4       | r       | h          | {appendonly=false}
- dsp_partition1_1_prt_split_p1 | r       | c          | {appendonly=true,orientation=column}
- dsp_partition1_1_prt_split_p2 | r       | c          | {appendonly=true,orientation=column}
+select c.relname, am.amname, c.relkind, c.reloptions
+	from pg_class c left join pg_am am on (c.relam = am.oid)
+    where c.relname like 'dsp_partition1%' order by relname;
+            relname            |     amname      | relkind | reloptions 
+-------------------------------+-----------------+---------+------------
+ dsp_partition1                |                 | p       | 
+ dsp_partition1_1_prt_1        | appendoptimized | r       | 
+ dsp_partition1_1_prt_p3       | aoco            | r       | 
+ dsp_partition1_1_prt_p4       | heap            | r       | 
+ dsp_partition1_1_prt_split_p1 | appendoptimized | r       | 
+ dsp_partition1_1_prt_split_p2 | appendoptimized | r       | 
 (6 rows)
 
 RESET gp_default_storage_options;
