@@ -2212,10 +2212,9 @@ REINDEX INDEX concur_reindex_part_index_10;
 ERROR:  REINDEX is not yet implemented for partitioned indexes
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_10;
 ERROR:  REINDEX CONCURRENTLY is not supported
--- REINDEX is a no-op for partitioned tables
+-- REINDEX is a no-op for partitioned tables in PostgreSQL, but in GPDB it
+-- recurses to reindex all partitions.
 REINDEX TABLE concur_reindex_part_10;
-WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "concur_reindex_part_10"
-NOTICE:  table "concur_reindex_part_10" has no indexes to reindex
 REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
 ERROR:  REINDEX CONCURRENTLY is not supported
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')

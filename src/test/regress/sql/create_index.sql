@@ -847,7 +847,8 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 -- REINDEX fails for partitioned indexes
 REINDEX INDEX concur_reindex_part_index_10;
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_10;
--- REINDEX is a no-op for partitioned tables
+-- REINDEX is a no-op for partitioned tables in PostgreSQL, but in GPDB it
+-- recurses to reindex all partitions.
 REINDEX TABLE concur_reindex_part_10;
 REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
