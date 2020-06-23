@@ -1442,9 +1442,7 @@ CREATE EXTERNAL WEB TABLE ext_dec17(LIKE sales_1_prt_dec17) EXECUTE 'printf "12\
 ALTER TABLE sales EXCHANGE PARTITION dec17 WITH TABLE ext_dec17;
 DROP TABLE ext_dec17;
 COPY sales TO PROGRAM 'cat > /dev/null' IGNORE EXTERNAL PARTITIONS;
-NOTICE:  COPY ignores external partition(s)
 COPY sales TO PROGRAM 'printf <SEGID> && cat > /dev/null' ON SEGMENT IGNORE EXTERNAL PARTITIONS;
-NOTICE:  COPY ignores external partition(s)
 DROP TABLE sales;
 CREATE TABLE ao_copy(c int) WITH (appendonly=true);
 COPY ao_copy TO '/tmp/ao<SEGID>.txt' ON SEGMENT;
