@@ -756,6 +756,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		int			rvr_opts;
 		bool		skip_this = false;
 		bool		skip_children = false;
+		bool		skip_midlevel = false;
 
 		/*
 		 * Since autovacuum workers supply OIDs when calling vacuum(), no
@@ -817,17 +818,20 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		else
 		{
 			/*
-			 * If optimizer_analyze_root_partition is 'off' and ROOTPARTITION option was
-			 * not explicitly specified, analyze all the children, but skip the partitioned
-			 * table itself.
+			 * If optimizer_analyze_root_partition is 'off' and ROOTPARTITION
+			 * option was not explicitly specified, analyze all the children,
+			 * but skip the partitioned table itself.
 			 *
-			 * Analyzing the children will update the root table's statistics too, by merging
-			 * the stats of the children. (GPDB_12_MERGE_FIXME: I think that's the idea
-			 * here?)
+			 * Analyzing the children will update the root table's statistics
+			 * too, by merging the stats of the children. (GPDB_12_MERGE_FIXME:
+			 * I think that's the idea here?)
 			 */
 			if (classForm->relkind == RELKIND_PARTITIONED_TABLE &&
 				!optimizer_analyze_root_partition)
 				skip_this = true;
+
+			if (!optimizer_analyze_midlevel_partition)
+				skip_midlevel = true;
 		}
 
 		/*
@@ -867,6 +871,10 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 				if (part_oid == relid)
 					continue;	/* ignore original table */
 
+				if (skip_midlevel &&
+					get_rel_relkind(part_oid) == RELKIND_PARTITIONED_TABLE)
+					continue;
+
 				/*
 				 * We omit a RangeVar since it wouldn't be appropriate to
 				 * complain about failure to open one of these relations
@@ -892,6 +900,26 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		 * of deadlock.
 		 */
 		UnlockRelationOid(relid, AccessShareLock);
+	}
+
+	/*
+	 * GPDB: The above code builds the list so that the partitions of a table
+	 * come after the parent. In GPDB, we have code to build the stats of a parent
+	 * table by merge the stats of leaf partitions, but that obviously won't work
+	 * if the leaf partition stats haven't been built yet. Reverse the list
+	 * so that the partitions are always analyzed before the parent table, so
+	 * the partition stats merging code can kick in.
+	 */
+	{
+		ListCell   *lc;
+		List	   *reverse_vacrels = NIL;
+
+		foreach (lc, vacrels)
+		{
+			reverse_vacrels = lcons(lfirst(lc), reverse_vacrels);
+		}
+
+		vacrels = reverse_vacrels;
 	}
 
 	return vacrels;
