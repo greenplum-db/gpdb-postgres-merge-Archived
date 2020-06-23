@@ -1058,10 +1058,8 @@ needs_sample(VacAttrStats **vacattrstats, int attr_cnt)
  *  It is used when we are asked to auto merge statistics when analyzing a
  *  single leaf partition. As we are going to produce stats for that
  *  specific leaf partition, we should not check its stats availability.
- *  va_cols - column attnum list to be analyzed from root table's perspective.
- *  These attnum's needs to be translated for each leaf table as the attnums
- *  for different columns might be different due to the dropped columns and
- *  split partitions.
+ *  va_cols - list of column names to be analyzed. (The corresponding attnums
+ *             in partitions might differ.)
  */
 bool
 leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
@@ -1070,6 +1068,27 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 	bool		all_parts_empty = true;
 	ListCell   *lc,
 			   *lc_col;
+
+	/* empty list means "all columns" */
+	if (va_cols == NIL)
+	{
+		Relation	parentrel = table_open(attrelid, AccessShareLock);
+		TupleDesc	tupdesc = RelationGetDescr(parentrel);
+
+		for (int i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+			char	   *attname;
+
+			if (att->attisdropped)
+				continue;
+
+			attname = pstrdup(NameStr(att->attname));
+
+			va_cols = lappend(va_cols, makeString(attname));
+		}
+		table_close(parentrel, NoLock);
+	}
 
 	/* GPDB_12_MERGE_FIXME: what's the appropriate lock level? AccessShareLock
 	 * is enough to scan the table, but are we updating them, too? If not,
@@ -1102,8 +1121,7 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 			 * Check stats availability for each column that asked to be
 			 * analyzed.
 			 */
-			AttrNumber	attnum = lfirst_int(lc_col);
-			const char *attname = get_attname(attrelid, attnum, false);
+			const char *attname = strVal(lfirst(lc_col));
 			AttrNumber	child_attno = get_attnum(partRelid, attname);
 
 			HeapTuple	heaptupleStats = get_att_stats(partRelid, child_attno);

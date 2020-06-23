@@ -36,6 +36,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
+#include "catalog/partition.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
@@ -64,6 +65,7 @@
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
+#include "commands/analyzeutils.h"
 #include "libpq-int.h"
 #include "libpq/pqformat.h"
 #include "utils/faultinjector.h"
@@ -752,6 +754,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		Oid			relid;
 		HeapTuple	tuple;
 		Form_pg_class classForm;
+		bool		ispartition;
 		bool		include_parts;
 		int			rvr_opts;
 		bool		skip_this = false;
@@ -802,6 +805,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", relid);
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
+		ispartition = classForm->relispartition;
 
 		if ((options & VACOPT_ROOTONLY) != 0)
 		{
@@ -900,26 +904,61 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		 * of deadlock.
 		 */
 		UnlockRelationOid(relid, AccessShareLock);
-	}
 
-	/*
-	 * GPDB: The above code builds the list so that the partitions of a table
-	 * come after the parent. In GPDB, we have code to build the stats of a parent
-	 * table by merge the stats of leaf partitions, but that obviously won't work
-	 * if the leaf partition stats haven't been built yet. Reverse the list
-	 * so that the partitions are always analyzed before the parent table, so
-	 * the partition stats merging code can kick in.
-	 */
-	{
-		ListCell   *lc;
-		List	   *reverse_vacrels = NIL;
-
-		foreach (lc, vacrels)
+		/*
+		 * GPDB: The above code builds the list so that the partitions of a table
+		 * come after the parent. In GPDB, we have code to build the stats of a parent
+		 * table by merge the stats of leaf partitions, but that obviously won't work
+		 * if the leaf partition stats haven't been built yet. Reverse the list
+		 * so that the partitions are always analyzed before the parent table, so
+		 * the partition stats merging code can kick in.
+		 */
 		{
-			reverse_vacrels = lcons(lfirst(lc), reverse_vacrels);
+			ListCell   *lc;
+			List	   *reverse_vacrels = NIL;
+
+			foreach (lc, vacrels)
+			{
+				reverse_vacrels = lcons(lfirst(lc), reverse_vacrels);
+			}
+
+			vacrels = reverse_vacrels;
 		}
 
-		vacrels = reverse_vacrels;
+		/*
+		 * GPDB: If you explicitly ANALYZE a partition, also update the
+		 * parent's stats after the partition has been ANALYZEd. (Thanks to
+		 * the code to merge leaf statistics, it should be fast.)
+		 */
+		if (optimizer_analyze_root_partition || (options & VACOPT_ROOTONLY))
+		{
+			Oid			child_relid = relid;
+
+			while (ispartition)
+			{
+				Oid			parent_relid;
+				int			elevel = ((options & VACOPT_VERBOSE) ? LOG : DEBUG2);
+
+				parent_relid = get_partition_parent(child_relid);
+
+				/*
+				 * Only ANALYZE the parent if the stats can be updated by merging
+				 * child stats.
+				 */
+				if (!leaf_parts_analyzed(parent_relid, child_relid, vrel->va_cols, elevel))
+					break;
+
+				oldcontext = MemoryContextSwitchTo(vac_context);
+				vacrels = lappend(vacrels, makeVacuumRelation(vrel->relation,
+															  parent_relid,
+															  vrel->va_cols));
+				MemoryContextSwitchTo(oldcontext);
+
+				/* If the parent is also a partition, update its parent too. */
+				ispartition = get_rel_relispartition(parent_relid);
+				child_relid = parent_relid;
+			}
+		}
 	}
 
 	return vacrels;

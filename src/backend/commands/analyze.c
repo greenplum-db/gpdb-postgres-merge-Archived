@@ -2672,7 +2672,7 @@ std_typanalyze(VacAttrStats *stats)
 	/*
 	 * Determine which standard statistics algorithm to use
 	 */
-	List *va_cols = list_make1_int(stats->attr->attnum);
+	List *va_cols = list_make1(makeString(NameStr(stats->attr->attname)));
 	/* GPDB_12_MERGE_FIXME: merging stats not yet implemented with new partitioning implementation */
 	if (get_rel_relkind(attr->attrelid) == RELKIND_PARTITIONED_TABLE &&
 		!get_rel_relispartition(attr->attrelid) &&
