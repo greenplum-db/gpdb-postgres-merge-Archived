@@ -1,4 +1,5 @@
 -- Two helper functions used to insert data to the test tables we will create.
+\set HIDE_TABLEAM off
 create function data1(
   out a1 int,
   out a2 char(5),
@@ -343,6 +344,7 @@ Indexes:
     "co_crtb_with_strg_dir_and_col_ref_1_idx_bitmap" bitmap (a1)
     "co_crtb_with_strg_dir_and_col_ref_1_idx_btree" btree (a9)
 Distributed randomly
+Access method: aoco
 
 --Select from pg_attribute_encoding to see the table entry 
 select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_attribute_encoding e  where c.relname = 'co_crtb_with_strg_dir_and_col_ref_1' and c.oid=e.attrelid  order by relname, attnum limit 3; 
@@ -533,6 +535,7 @@ Indexes:
     "co_cr_sub_partzlib8192_1_1_prt_1_2_prt_sp2_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_1_prt_1_2_prt_sp2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 
 --
 -- Compare data with uncompressed table
@@ -586,124 +589,121 @@ Select count(*) as count_join from co_cr_sub_partzlib8192_1 t1 full outer join c
 (1 row)
 
 --Alter table Add Partition 
-alter table co_cr_sub_partzlib8192_1 add partition new_p start(5050) end (6051);
+alter table co_cr_sub_partzlib8192_1 add partition new_p start(5050) end (6051) with (appendonly=true, orientation=column);
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1
-                                                            Append-Only Columnar Table "public.co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1"
- Column |            Type             |                               Modifiers                               | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
---------+-----------------------------+-----------------------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
- id     | integer                     | not null default nextval('co_cr_sub_partzlib8192_1_id_seq'::regclass) | plain    |              | none             | 0                 | 32768      | 
- a1     | integer                     |                                                                       | plain    |              | zlib             | 1                 | 32768      | 
- a2     | character(5)                |                                                                       | extended |              | zlib             | 1                 | 8192       | 
- a3     | numeric                     |                                                                       | main     |              | none             | 0                 | 32768      | 
- a4     | boolean                     | default false                                                         | plain    |              | none             | 0                 | 32768      | 
- a5     | character(1)                | default 'd'::bpchar                                                   | extended |              | zlib             | 1                 | 8192       | 
- a6     | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a7     | timestamp without time zone |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a8     | character varying(705)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a9     | bigint                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a10    | date                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a11    | character varying(600)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a12    | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a13    | numeric                     |                                                                       | main     |              | none             | 0                 | 32768      | 
- a14    | real                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a15    | bigint                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a16    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a17    | bytea                       |                                                                       | extended |              | none             | 0                 | 32768      | 
- a18    | timestamp with time zone    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a19    | time with time zone         |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a20    | path                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a21    | box                         |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a22    | macaddr                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a23    | interval                    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a24    | character varying(800)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a25    | lseg                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a26    | point                       |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a27    | double precision            |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a28    | circle                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a29    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a30    | numeric(8,0)                |                                                                       | main     |              | none             | 0                 | 32768      | 
- a31    | polygon                     |                                                                       | extended |              | none             | 0                 | 32768      | 
- a32    | date                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a33    | real                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a34    | money                       |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a35    | cidr                        |                                                                       | main     |              | none             | 0                 | 32768      | 
- a36    | inet                        |                                                                       | main     |              | none             | 0                 | 32768      | 
- a37    | time without time zone      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a38    | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a39    | bit(1)                      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a40    | bit varying(5)              |                                                                       | extended |              | none             | 0                 | 32768      | 
- a41    | smallint                    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a42    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
+                                                                         Table "public.co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1"
+ Column |            Type             | Collation | Nullable |                       Default                        | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
+--------+-----------------------------+-----------+----------+------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
+ id     | integer                     |           | not null | nextval('co_cr_sub_partzlib8192_1_id_seq'::regclass) | plain    |              | zlib             | 1                 | 8192       | 
+ a1     | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 32768      | 
+ a2     | character(5)                |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a3     | numeric                     |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a4     | boolean                     |           |          | false                                                | plain    |              | zlib             | 1                 | 8192       | 
+ a5     | character(1)                |           |          | 'd'::bpchar                                          | extended |              | zlib             | 1                 | 8192       | 
+ a6     | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a7     | timestamp without time zone |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a8     | character varying(705)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a9     | bigint                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a10    | date                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a11    | character varying(600)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a12    | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a13    | numeric                     |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a14    | real                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a15    | bigint                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a16    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a17    | bytea                       |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a18    | timestamp with time zone    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a19    | time with time zone         |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a20    | path                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a21    | box                         |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a22    | macaddr                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a23    | interval                    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a24    | character varying(800)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a25    | lseg                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a26    | point                       |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a27    | double precision            |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a28    | circle                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a29    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a30    | numeric(8,0)                |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a31    | polygon                     |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a32    | date                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a33    | real                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a34    | money                       |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a35    | cidr                        |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a36    | inet                        |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a37    | time without time zone      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a38    | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a39    | bit(1)                      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a40    | bit varying(5)              |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a41    | smallint                    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a42    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+Partition of: co_cr_sub_partzlib8192_1_1_prt_new_p FOR VALUES IN ('M    ')
+Partition constraint: ((a1 IS NOT NULL) AND (a1 >= 5050) AND (a1 < 6051) AND (a2 IS NOT NULL) AND (a2 = 'M    '::character(5)))
 Checksum: t
 Indexes:
     "co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1_a9_idx" btree (a9)
-Check constraints:
-    "co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1_check" CHECK (a2 = 'M    '::bpchar)
-    "co_cr_sub_partzlib8192_1_1_prt_new_p_check" CHECK (a1 >= 5050 AND a1 < 6051)
-Inherits: co_cr_sub_partzlib8192_1_1_prt_new_p
 Distributed randomly
-Options: appendonly=true, orientation=column
+Access method: aoco
 
-alter table co_cr_sub_partzlib8192_1 add default partition df_p ;
+alter table co_cr_sub_partzlib8192_1 add default partition df_p with (appendonly=true, orientation=column);
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2
-                                                            Append-Only Columnar Table "public.co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2"
- Column |            Type             |                               Modifiers                               | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
---------+-----------------------------+-----------------------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
- id     | integer                     | not null default nextval('co_cr_sub_partzlib8192_1_id_seq'::regclass) | plain    |              | none             | 0                 | 32768      | 
- a1     | integer                     |                                                                       | plain    |              | zlib             | 1                 | 32768      | 
- a2     | character(5)                |                                                                       | extended |              | zlib             | 1                 | 8192       | 
- a3     | numeric                     |                                                                       | main     |              | none             | 0                 | 32768      | 
- a4     | boolean                     | default false                                                         | plain    |              | none             | 0                 | 32768      | 
- a5     | character(1)                | default 'd'::bpchar                                                   | extended |              | zlib             | 1                 | 8192       | 
- a6     | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a7     | timestamp without time zone |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a8     | character varying(705)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a9     | bigint                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a10    | date                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a11    | character varying(600)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a12    | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a13    | numeric                     |                                                                       | main     |              | none             | 0                 | 32768      | 
- a14    | real                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a15    | bigint                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a16    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a17    | bytea                       |                                                                       | extended |              | none             | 0                 | 32768      | 
- a18    | timestamp with time zone    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a19    | time with time zone         |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a20    | path                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a21    | box                         |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a22    | macaddr                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a23    | interval                    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a24    | character varying(800)      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a25    | lseg                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a26    | point                       |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a27    | double precision            |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a28    | circle                      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a29    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a30    | numeric(8,0)                |                                                                       | main     |              | none             | 0                 | 32768      | 
- a31    | polygon                     |                                                                       | extended |              | none             | 0                 | 32768      | 
- a32    | date                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a33    | real                        |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a34    | money                       |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a35    | cidr                        |                                                                       | main     |              | none             | 0                 | 32768      | 
- a36    | inet                        |                                                                       | main     |              | none             | 0                 | 32768      | 
- a37    | time without time zone      |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a38    | text                        |                                                                       | extended |              | none             | 0                 | 32768      | 
- a39    | bit(1)                      |                                                                       | extended |              | none             | 0                 | 32768      | 
- a40    | bit varying(5)              |                                                                       | extended |              | none             | 0                 | 32768      | 
- a41    | smallint                    |                                                                       | plain    |              | none             | 0                 | 32768      | 
- a42    | integer                     |                                                                       | plain    |              | none             | 0                 | 32768      | 
+                                                                          Table "public.co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2"
+ Column |            Type             | Collation | Nullable |                       Default                        | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
+--------+-----------------------------+-----------+----------+------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
+ id     | integer                     |           | not null | nextval('co_cr_sub_partzlib8192_1_id_seq'::regclass) | plain    |              | zlib             | 1                 | 8192       | 
+ a1     | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 32768      | 
+ a2     | character(5)                |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a3     | numeric                     |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a4     | boolean                     |           |          | false                                                | plain    |              | zlib             | 1                 | 8192       | 
+ a5     | character(1)                |           |          | 'd'::bpchar                                          | extended |              | zlib             | 1                 | 8192       | 
+ a6     | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a7     | timestamp without time zone |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a8     | character varying(705)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a9     | bigint                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a10    | date                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a11    | character varying(600)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a12    | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a13    | numeric                     |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a14    | real                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a15    | bigint                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a16    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a17    | bytea                       |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a18    | timestamp with time zone    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a19    | time with time zone         |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a20    | path                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a21    | box                         |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a22    | macaddr                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a23    | interval                    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a24    | character varying(800)      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a25    | lseg                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a26    | point                       |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a27    | double precision            |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a28    | circle                      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a29    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a30    | numeric(8,0)                |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a31    | polygon                     |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a32    | date                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a33    | real                        |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a34    | money                       |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a35    | cidr                        |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a36    | inet                        |           |          |                                                      | main     |              | zlib             | 1                 | 8192       | 
+ a37    | time without time zone      |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a38    | text                        |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a39    | bit(1)                      |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a40    | bit varying(5)              |           |          |                                                      | extended |              | zlib             | 1                 | 8192       | 
+ a41    | smallint                    |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+ a42    | integer                     |           |          |                                                      | plain    |              | zlib             | 1                 | 8192       | 
+Partition of: co_cr_sub_partzlib8192_1_1_prt_df_p FOR VALUES IN ('F    ')
+Partition constraint: ((NOT ((a1 IS NOT NULL) AND (((a1 >= 1) AND (a1 < 1001)) OR ((a1 >= 1001) AND (a1 < 2001)) OR ((a1 >= 2001) AND (a1 < 3001)) OR ((a1 >= 3001) AND (a1 < 4001)) OR ((a1 >= 4001) AND (a1 < 5000)) OR ((a1 >= 5050) AND (a1 < 6051))))) AND (a2 IS NOT NULL) AND (a2 = 'F    '::character(5)))
 Checksum: t
 Indexes:
     "co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2_a9_idx" btree (a9)
-Check constraints:
-    "co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2_check" CHECK (a2 = 'F    '::bpchar)
-Inherits: co_cr_sub_partzlib8192_1_1_prt_df_p
 Distributed randomly
-Options: appendonly=true, orientation=column
+Access method: aoco
 
 -- Insert data 
 Insert into co_cr_sub_partzlib8192_1(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) values(generate_series(1,5000),'C',2011,'t','a','dfjjjjjj','2001-12-24 02:26:11','hghgh',333,'2011-10-11','Tddd','sss','1234.56',323453,4454,7845,'0011','2005-07-16 01:51:15+1359','2001-12-13 01:51:15','((1,2),(0,3),(2,1))','((2,3)(4,5))','08:00:2b:01:02:03','1-2','dfdf','((2,3)(4,5))','(6,7)',11.222,'((4,5),7)',32,3214,'(1,0,2,3)','2010-02-21',43564,'$1,000.00','192.168.1','126.1.3.4','12:30:45','ggg','1','0',12,23) ; 
@@ -776,6 +776,7 @@ Indexes:
     "co_cr_sub_partzlib8192_1_exch_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib
 
 Select count(*) from co_cr_sub_partzlib8192_1; 
@@ -918,6 +919,7 @@ Indexes:
     "co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_2_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 
 --
 -- Compare data with uncompressed table
@@ -971,124 +973,121 @@ Select count(*) as count_join from co_cr_sub_partzlib8192_1_2 t1 full outer join
 (1 row)
 
 --Alter table Add Partition 
-alter table co_cr_sub_partzlib8192_1_2 add partition new_p values('C') ;
+alter table co_cr_sub_partzlib8192_1_2 add partition new_p values('C') with (appendonly=true, orientation=column);
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3
-                                                             Append-Only Columnar Table "public.co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3"
- Column |            Type             |                                Modifiers                                | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
---------+-----------------------------+-------------------------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
- id     | integer                     | not null default nextval('co_cr_sub_partzlib8192_1_2_id_seq'::regclass) | plain    |              | none             | 0                 | 32768      | 
- a1     | integer                     |                                                                         | plain    |              | zlib             | 1                 | 32768      | 
- a2     | character(5)                |                                                                         | extended |              | zlib             | 1                 | 8192       | 
- a3     | numeric                     |                                                                         | main     |              | none             | 0                 | 32768      | 
- a4     | boolean                     | default false                                                           | plain    |              | none             | 0                 | 32768      | 
- a5     | character(1)                | default 'd'::bpchar                                                     | extended |              | zlib             | 1                 | 8192       | 
- a6     | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a7     | timestamp without time zone |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a8     | character varying(705)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a9     | bigint                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a10    | date                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a11    | character varying(600)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a12    | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a13    | numeric                     |                                                                         | main     |              | none             | 0                 | 32768      | 
- a14    | real                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a15    | bigint                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a16    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a17    | bytea                       |                                                                         | extended |              | none             | 0                 | 32768      | 
- a18    | timestamp with time zone    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a19    | time with time zone         |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a20    | path                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a21    | box                         |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a22    | macaddr                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a23    | interval                    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a24    | character varying(800)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a25    | lseg                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a26    | point                       |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a27    | double precision            |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a28    | circle                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a29    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a30    | numeric(8,0)                |                                                                         | main     |              | none             | 0                 | 32768      | 
- a31    | polygon                     |                                                                         | extended |              | none             | 0                 | 32768      | 
- a32    | date                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a33    | real                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a34    | money                       |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a35    | cidr                        |                                                                         | main     |              | none             | 0                 | 32768      | 
- a36    | inet                        |                                                                         | main     |              | none             | 0                 | 32768      | 
- a37    | time without time zone      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a38    | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a39    | bit(1)                      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a40    | bit varying(5)              |                                                                         | extended |              | none             | 0                 | 32768      | 
- a41    | smallint                    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a42    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
+                                                                          Table "public.co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3"
+ Column |            Type             | Collation | Nullable |                        Default                         | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
+--------+-----------------------------+-----------+----------+--------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
+ id     | integer                     |           | not null | nextval('co_cr_sub_partzlib8192_1_2_id_seq'::regclass) | plain    |              | zlib             | 1                 | 8192       | 
+ a1     | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 32768      | 
+ a2     | character(5)                |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a3     | numeric                     |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a4     | boolean                     |           |          | false                                                  | plain    |              | zlib             | 1                 | 8192       | 
+ a5     | character(1)                |           |          | 'd'::bpchar                                            | extended |              | zlib             | 1                 | 8192       | 
+ a6     | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a7     | timestamp without time zone |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a8     | character varying(705)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a9     | bigint                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a10    | date                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a11    | character varying(600)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a12    | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a13    | numeric                     |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a14    | real                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a15    | bigint                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a16    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a17    | bytea                       |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a18    | timestamp with time zone    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a19    | time with time zone         |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a20    | path                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a21    | box                         |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a22    | macaddr                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a23    | interval                    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a24    | character varying(800)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a25    | lseg                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a26    | point                       |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a27    | double precision            |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a28    | circle                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a29    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a30    | numeric(8,0)                |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a31    | polygon                     |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a32    | date                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a33    | real                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a34    | money                       |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a35    | cidr                        |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a36    | inet                        |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a37    | time without time zone      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a38    | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a39    | bit(1)                      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a40    | bit varying(5)              |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a41    | smallint                    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a42    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+Partition of: co_cr_sub_partzlib8192_1_2_1_prt_new_p FOR VALUES FROM (1001) TO (2001)
+Partition constraint: ((a2 IS NOT NULL) AND (a2 = 'C    '::character(5)) AND (a1 IS NOT NULL) AND (a1 >= 1001) AND (a1 < 2001))
 Checksum: t
 Indexes:
     "co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3_a9_idx" btree (a9)
-Check constraints:
-    "co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3_check" CHECK (a1 >= 1001 AND a1 < 2001)
-    "co_cr_sub_partzlib8192_1_2_1_prt_new_p_check" CHECK (a2 = 'C    '::bpchar)
-Inherits: co_cr_sub_partzlib8192_1_2_1_prt_new_p
 Distributed randomly
-Options: appendonly=true, orientation=column
+Access method: aoco
 
-alter table co_cr_sub_partzlib8192_1_2 add default partition df_p ;
+alter table co_cr_sub_partzlib8192_1_2 add default partition df_p with (appendonly=true, orientation=column);
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2
-                                                             Append-Only Columnar Table "public.co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2"
- Column |            Type             |                                Modifiers                                | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
---------+-----------------------------+-------------------------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
- id     | integer                     | not null default nextval('co_cr_sub_partzlib8192_1_2_id_seq'::regclass) | plain    |              | none             | 0                 | 32768      | 
- a1     | integer                     |                                                                         | plain    |              | zlib             | 1                 | 32768      | 
- a2     | character(5)                |                                                                         | extended |              | zlib             | 1                 | 8192       | 
- a3     | numeric                     |                                                                         | main     |              | none             | 0                 | 32768      | 
- a4     | boolean                     | default false                                                           | plain    |              | none             | 0                 | 32768      | 
- a5     | character(1)                | default 'd'::bpchar                                                     | extended |              | zlib             | 1                 | 8192       | 
- a6     | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a7     | timestamp without time zone |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a8     | character varying(705)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a9     | bigint                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a10    | date                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a11    | character varying(600)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a12    | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a13    | numeric                     |                                                                         | main     |              | none             | 0                 | 32768      | 
- a14    | real                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a15    | bigint                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a16    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a17    | bytea                       |                                                                         | extended |              | none             | 0                 | 32768      | 
- a18    | timestamp with time zone    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a19    | time with time zone         |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a20    | path                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a21    | box                         |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a22    | macaddr                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a23    | interval                    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a24    | character varying(800)      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a25    | lseg                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a26    | point                       |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a27    | double precision            |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a28    | circle                      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a29    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a30    | numeric(8,0)                |                                                                         | main     |              | none             | 0                 | 32768      | 
- a31    | polygon                     |                                                                         | extended |              | none             | 0                 | 32768      | 
- a32    | date                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a33    | real                        |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a34    | money                       |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a35    | cidr                        |                                                                         | main     |              | none             | 0                 | 32768      | 
- a36    | inet                        |                                                                         | main     |              | none             | 0                 | 32768      | 
- a37    | time without time zone      |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a38    | text                        |                                                                         | extended |              | none             | 0                 | 32768      | 
- a39    | bit(1)                      |                                                                         | extended |              | none             | 0                 | 32768      | 
- a40    | bit varying(5)              |                                                                         | extended |              | none             | 0                 | 32768      | 
- a41    | smallint                    |                                                                         | plain    |              | none             | 0                 | 32768      | 
- a42    | integer                     |                                                                         | plain    |              | none             | 0                 | 32768      | 
+                                                                           Table "public.co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2"
+ Column |            Type             | Collation | Nullable |                        Default                         | Storage  | Stats target | Compression Type | Compression Level | Block Size | Description 
+--------+-----------------------------+-----------+----------+--------------------------------------------------------+----------+--------------+------------------+-------------------+------------+-------------
+ id     | integer                     |           | not null | nextval('co_cr_sub_partzlib8192_1_2_id_seq'::regclass) | plain    |              | zlib             | 1                 | 8192       | 
+ a1     | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 32768      | 
+ a2     | character(5)                |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a3     | numeric                     |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a4     | boolean                     |           |          | false                                                  | plain    |              | zlib             | 1                 | 8192       | 
+ a5     | character(1)                |           |          | 'd'::bpchar                                            | extended |              | zlib             | 1                 | 8192       | 
+ a6     | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a7     | timestamp without time zone |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a8     | character varying(705)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a9     | bigint                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a10    | date                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a11    | character varying(600)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a12    | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a13    | numeric                     |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a14    | real                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a15    | bigint                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a16    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a17    | bytea                       |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a18    | timestamp with time zone    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a19    | time with time zone         |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a20    | path                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a21    | box                         |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a22    | macaddr                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a23    | interval                    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a24    | character varying(800)      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a25    | lseg                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a26    | point                       |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a27    | double precision            |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a28    | circle                      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a29    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a30    | numeric(8,0)                |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a31    | polygon                     |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a32    | date                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a33    | real                        |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a34    | money                       |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a35    | cidr                        |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a36    | inet                        |           |          |                                                        | main     |              | zlib             | 1                 | 8192       | 
+ a37    | time without time zone      |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a38    | text                        |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a39    | bit(1)                      |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a40    | bit varying(5)              |           |          |                                                        | extended |              | zlib             | 1                 | 8192       | 
+ a41    | smallint                    |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+ a42    | integer                     |           |          |                                                        | plain    |              | zlib             | 1                 | 8192       | 
+Partition of: co_cr_sub_partzlib8192_1_2_1_prt_df_p FOR VALUES FROM (1) TO (1001)
+Partition constraint: ((NOT ((a2 IS NOT NULL) AND (a2 = ANY (ARRAY['C    '::character(5), 'F    '::character(5), 'M    '::character(5)])))) AND (a1 IS NOT NULL) AND (a1 >= 1) AND (a1 < 1001))
 Checksum: t
 Indexes:
     "co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2_a9_idx" btree (a9)
-Check constraints:
-    "co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2_check" CHECK (a1 >= 1 AND a1 < 1001)
-Inherits: co_cr_sub_partzlib8192_1_2_1_prt_df_p
 Distributed randomly
-Options: appendonly=true, orientation=column
+Access method: aoco
 
 -- Insert data 
 Insert into co_cr_sub_partzlib8192_1_2(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) values(generate_series(1,5000),'C',2011,'t','a','dfjjjjjj','2001-12-24 02:26:11','hghgh',333,'2011-10-11','Tddd','sss','1234.56',323453,4454,7845,'0011','2005-07-16 01:51:15+1359','2001-12-13 01:51:15','((1,2),(0,3),(2,1))','((2,3)(4,5))','08:00:2b:01:02:03','1-2','dfdf','((2,3)(4,5))','(6,7)',11.222,'((4,5),7)',32,3214,'(1,0,2,3)','2010-02-21',43564,'$1,000.00','192.168.1','126.1.3.4','12:30:45','ggg','1','0',12,23) ; 
@@ -1161,6 +1160,7 @@ Indexes:
     "co_cr_sub_partzlib8192_1_2_exch_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_2_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib
 
 --Alter table Split Partition 
@@ -1219,6 +1219,7 @@ Indexes:
     "co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_splita_a1_idx" bitmap (a1)
     "co_cr_sub_partzlib8192_1_2_1_prt_p1_2_prt_splita_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 
 Select count(*) from co_cr_sub_partzlib8192_1_2; 
  count 
@@ -1358,6 +1359,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_1_prt_1_2_prt_sp2_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_1_prt_1_2_prt_sp2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 --
@@ -1468,6 +1470,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_1_prt_new_p_2_prt_sp1_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_1_prt_new_p_2_prt_sp1_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib, compresslevel=1
 
 alter table co_wt_sub_partrle_type8192_1 add default partition df_p ;
@@ -1526,6 +1529,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_1_prt_df_p_2_prt_sp2_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_1_prt_df_p_2_prt_sp2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 -- Insert data 
@@ -1599,6 +1603,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_exch_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib
 
 Select count(*) from co_wt_sub_partrle_type8192_1; 
@@ -1738,6 +1743,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_2_1_prt_p1_2_prt_2_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_2_1_prt_p1_2_prt_2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 --
@@ -1848,6 +1854,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_2_1_prt_new_p_2_prt_3_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_2_1_prt_new_p_2_prt_3_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 alter table co_wt_sub_partrle_type8192_1_2 add default partition df_p ;
@@ -1906,6 +1913,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_2_1_prt_df_p_2_prt_2_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_2_1_prt_df_p_2_prt_2_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 -- Insert data 
@@ -1979,6 +1987,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_2_exch_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_2_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib
 
 --Alter table Split Partition 
@@ -2037,6 +2046,7 @@ Indexes:
     "co_wt_sub_partrle_type8192_1_2_1_prt_p2_2_prt_splita_a1_idx" bitmap (a1)
     "co_wt_sub_partrle_type8192_1_2_1_prt_p2_2_prt_splita_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192
 
 Select count(*) from co_wt_sub_partrle_type8192_1_2; 
@@ -2180,6 +2190,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_1_prt_1_2_prt_sp2_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_1_prt_1_2_prt_sp2_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 --
@@ -2427,6 +2438,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_exch_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib
 
 Select count(*) from ao_wt_sub_partzlib8192_5; 
@@ -2569,6 +2581,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_2_1_prt_p1_2_prt_2_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_2_1_prt_p1_2_prt_2_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 --
@@ -2819,6 +2832,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_2_exch_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_2_exch_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib
 
 --Alter table Split Partition 
@@ -3019,6 +3033,7 @@ Indexes:
     "ao_crtb_with_row_zlib_8192_1_idx_bitmap" bitmap (a1)
     "ao_crtb_with_row_zlib_8192_1_idx_btree" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=1, blocksize=8192
 
 --
@@ -3457,6 +3472,7 @@ CREATE TABLE co_create_type_rle_type_8192_4
  a6     | timestamp_rle_type |           |          |                                                            | plain   |              | rle_type         | 4                 | 8192       | 
 Checksum: t
 Distributed randomly
+Access method: aoco
 
 INSERT into co_create_type_rle_type_8192_4 DEFAULT VALUES ; 
 --Select * from co_create_type_rle_type_8192_4;
@@ -3510,6 +3526,7 @@ Alter type int_rle_type set default encoding (compresstype=zlib,compresslevel=1)
  new_cl          | int_rle_type       |           |          | '5'::int_rle_type                                          | plain   |              | zlib             | 1                 | 32768      | 
 Checksum: t
 Distributed randomly
+Access method: aoco
 
 Insert into co_create_type_rle_type_8192_4(a1,after_rename_a3,a4,a5,a6)  select a1,after_rename_a3,a4,a5,a6 from co_create_type_rle_type_8192_4 ;
 Select count(*) from co_create_type_rle_type_8192_4; 
@@ -3547,6 +3564,7 @@ get_ao_compression_ratio('mpp17012_compress_test2');
  col4   | character(44)     |           |          |         | extended |              | zlib             | 5                 | 32768      | 
 Checksum: t
 Distributed by: (col1)
+Access method: aoco
 
 -- When I insert data
 insert into mpp17012_compress_test2 values('a',generate_series(1,250),'ksjdhfksdhfksdhfksjhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');

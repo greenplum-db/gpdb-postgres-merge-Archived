@@ -1,4 +1,5 @@
 -- Two helper functions used to insert data to the test tables we will create.
+\set HIDE_TABLEAM off
 create function data1(
   out a1 int,
   out a2 char(5),
@@ -451,12 +452,12 @@ insert into co_cr_sub_partzlib8192_1 select * from co_cr_sub_partzlib8192_1_unco
 Select count(*) as count_join from co_cr_sub_partzlib8192_1 t1 full outer join co_cr_sub_partzlib8192_1_uncompr t2 on t1.id=t2.id and t1.a1=t2.a1 and t1.a2=t2.a2 and t1.a3=t2.a3 and t1.a4=t2.a4 and t1.a5=t2.a5 and t1.a6=t2.a6 and t1.a7=t2.a7 and t1.a8=t2.a8 and t1.a9=t2.a9 and t1.a10=t2.a10 and t1.a11=t2.a11 and t1.a12=t2.a12 and t1.a13=t2.a13 and t1.a14=t2.a14 and t1.a15=t2.a15 and t1.a16=t2.a16 and t1.a17=t2.a17 and t1.a18=t2.a18 and t1.a19=t2.a19 and t1.a22=t2.a22 and t1.a23=t2.a23 and t1.a24=t2.a24 and t1.a27=t2.a27 and t1.a29=t2.a29 and t1.a30=t2.a30 and t1.a32=t2.a32 and t1.a33=t2.a33 and t1.a34=t2.a34 and t1.a35=t2.a35 and t1.a36=t2.a36 and t1.a37=t2.a37 and t1.a38=t2.a38 and t1.a39=t2.a39 and t1.a40=t2.a40 and t1.a41=t2.a41 and t1.a42=t2.a42 ;
 
 --Alter table Add Partition 
-alter table co_cr_sub_partzlib8192_1 add partition new_p start(5050) end (6051);
+alter table co_cr_sub_partzlib8192_1 add partition new_p start(5050) end (6051) with (appendonly=true, orientation=column);
 
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_1_prt_new_p_2_prt_sp1
 
-alter table co_cr_sub_partzlib8192_1 add default partition df_p ;
+alter table co_cr_sub_partzlib8192_1 add default partition df_p with (appendonly=true, orientation=column);
 
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_1_prt_df_p_2_prt_sp2
@@ -600,12 +601,12 @@ insert into co_cr_sub_partzlib8192_1_2 select * from co_cr_sub_partzlib8192_1_2_
 Select count(*) as count_join from co_cr_sub_partzlib8192_1_2 t1 full outer join co_cr_sub_partzlib8192_1_2_uncompr t2 on t1.id=t2.id and t1.a1=t2.a1 and t1.a2=t2.a2 and t1.a3=t2.a3 and t1.a4=t2.a4 and t1.a5=t2.a5 and t1.a6=t2.a6 and t1.a7=t2.a7 and t1.a8=t2.a8 and t1.a9=t2.a9 and t1.a10=t2.a10 and t1.a11=t2.a11 and t1.a12=t2.a12 and t1.a13=t2.a13 and t1.a14=t2.a14 and t1.a15=t2.a15 and t1.a16=t2.a16 and t1.a17=t2.a17 and t1.a18=t2.a18 and t1.a19=t2.a19 and t1.a22=t2.a22 and t1.a23=t2.a23 and t1.a24=t2.a24 and t1.a27=t2.a27 and t1.a29=t2.a29 and t1.a30=t2.a30 and t1.a32=t2.a32 and t1.a33=t2.a33 and t1.a34=t2.a34 and t1.a35=t2.a35 and t1.a36=t2.a36 and t1.a37=t2.a37 and t1.a38=t2.a38 and t1.a39=t2.a39 and t1.a40=t2.a40 and t1.a41=t2.a41 and t1.a42=t2.a42 ;
 
 --Alter table Add Partition 
-alter table co_cr_sub_partzlib8192_1_2 add partition new_p values('C') ;
+alter table co_cr_sub_partzlib8192_1_2 add partition new_p values('C') with (appendonly=true, orientation=column);
 
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_2_1_prt_new_p_2_prt_3
 
-alter table co_cr_sub_partzlib8192_1_2 add default partition df_p ;
+alter table co_cr_sub_partzlib8192_1_2 add default partition df_p with (appendonly=true, orientation=column);
 
 --Validation with psql utility 
   \d+ co_cr_sub_partzlib8192_1_2_1_prt_df_p_2_prt_2
