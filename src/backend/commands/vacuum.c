@@ -999,6 +999,23 @@ get_all_vacuum_rels(int options)
 			classForm->relkind != RELKIND_PARTITIONED_TABLE)
 			continue;
 
+		/* skip mid-level partition tables if we have disabled collecting statistics for them */
+		if (!optimizer_analyze_midlevel_partition &&
+			classForm->relkind == RELKIND_PARTITIONED_TABLE &&
+			classForm->relispartition)
+		{
+			continue;
+		}
+
+		/* Likewise, skip root partition, if disabled. */
+		if (!optimizer_analyze_root_partition &&
+			(options & VACOPT_ROOTONLY) == 0 &&
+			classForm->relkind == RELKIND_PARTITIONED_TABLE &&
+			!classForm->relispartition)
+		{
+			continue;
+		}
+
 		/*
 		 * Build VacuumRelation(s) specifying the table OIDs to be processed.
 		 * We omit a RangeVar since it wouldn't be appropriate to complain
