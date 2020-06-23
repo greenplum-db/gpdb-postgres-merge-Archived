@@ -17,7 +17,7 @@ partition by range (f2)
 CREATE TABLE TIMESTAMP_MONTH_rangep_STARTEXCL (i1 int, f2 timestamp)
 partition by range (f2)
 (
-  start ('2000-01-01'::timestamp) EXCLUSIVE
+  start ('2000-01-02'::timestamp)
   end (date '2001-01-01'::timestamp) INCLUSIVE
   every ('1 month'::interval)
 );
@@ -107,11 +107,11 @@ SELECT * FROM TIMESTAMP_MONTH_listp WHERE f2 = TO_DATE('2000-01-03', 'YYYY-MM-DD
 CREATE TABLE T26002_T1 (empid int, departmentid int, year int, region varchar(20))
 DISTRIBUTED BY (empid)
   PARTITION BY RANGE (year)
-  SUBPARTITION BY LIST (region, departmentid)
+  SUBPARTITION BY LIST (region)
     SUBPARTITION TEMPLATE (
-       SUBPARTITION usa VALUES (('usa', 1)),
-       SUBPARTITION europe VALUES (('europe', 2)),
-       SUBPARTITION asia VALUES (('asia', 3)),
+       SUBPARTITION usa VALUES (('usa')),
+       SUBPARTITION europe VALUES (('europe')),
+       SUBPARTITION asia VALUES (('asia')),
        DEFAULT SUBPARTITION other_regions)
 ( START (2012) END (2015) EVERY (3),
   DEFAULT PARTITION outlying_years);
@@ -429,9 +429,10 @@ alter table mpp3607 add partition bb end (0); -- Expected Overlaps
 alter table mpp3607 drop partition aa;
 
 alter table mpp3607 add partition aa end (-4); -- partition rule aa < -4, foo >=2
-alter table mpp3607 add partition bb end (-3); -- Overlaps
+alter table mpp3607 add partition bb end (-3); -- will not overlap
 
 alter table mpp3607 drop partition aa;
+alter table mpp3607 drop partition bb;
 
 alter table mpp3607 add partition aa end (0); -- partition rule aa < 0, foo >=2
 alter table mpp3607 drop partition aa;
@@ -539,7 +540,7 @@ create table mpp3512a (like mpp3512_part);
 
 \d mpp3512
 \d mpp3512a
-select * from pg_partitions where tablename='mpp3512_part';
+select relid,parentrelid,isleaf,level, pg_catalog.pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3512_part'), pg_class where relid = oid;
 
 drop table mpp3512;
 drop table mpp3512_part;
@@ -1617,8 +1618,6 @@ drop table partition_cleanup1;
 drop schema partition_999 cascade;
 
 -- These should be empty
-select 'pg_partition_columns', count(*) from pg_partition_columns where tablename='partition_cleanup%';
-select 'pg_partitions', count(*) from pg_partitions where tablename='partition_cleanup%';
 select relid, level, template from gp_partition_template where not exists (select oid from pg_class where oid = relid);
 
 

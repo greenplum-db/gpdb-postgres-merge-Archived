@@ -16,7 +16,7 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 CREATE TABLE TIMESTAMP_MONTH_rangep_STARTEXCL (i1 int, f2 timestamp)
 partition by range (f2)
 (
-  start ('2000-01-01'::timestamp) EXCLUSIVE
+  start ('2000-01-02'::timestamp)
   end (date '2001-01-01'::timestamp) INCLUSIVE
   every ('1 month'::interval)
 );
@@ -154,7 +154,8 @@ SELECT * FROM TIMESTAMP_MONTH_rangep_STARTEXCL WHERE f2 = TO_DATE('2000-07-16', 
 
 -- Beginning of the first range
 INSERT INTO TIMESTAMP_MONTH_rangep_STARTEXCL values (2, '2000-01-01'); -- should fail, no such partition
-ERROR:  no partition for partitioning key  (seg0 office-4-160.pa.pivotal.io:25432 pid=9456)
+ERROR:  no partition of relation "timestamp_month_rangep_startexcl" found for row  (seg0 127.0.1.1:7002 pid=19596)
+DETAIL:  Partition key of the failing row contains (f2) = (Sat Jan 01 00:00:00 2000).
 SELECT * FROM TIMESTAMP_MONTH_rangep_STARTEXCL WHERE f2 = '2000-01-01';
  i1 | f2 
 ----+----
@@ -255,100 +256,92 @@ SELECT * FROM TIMESTAMP_MONTH_listp WHERE f2 = TO_DATE('2000-01-03', 'YYYY-MM-DD
 CREATE TABLE T26002_T1 (empid int, departmentid int, year int, region varchar(20))
 DISTRIBUTED BY (empid)
   PARTITION BY RANGE (year)
-  SUBPARTITION BY LIST (region, departmentid)
+  SUBPARTITION BY LIST (region)
     SUBPARTITION TEMPLATE (
-       SUBPARTITION usa VALUES (('usa', 1)),
-       SUBPARTITION europe VALUES (('europe', 2)),
-       SUBPARTITION asia VALUES (('asia', 3)),
+       SUBPARTITION usa VALUES (('usa')),
+       SUBPARTITION europe VALUES (('europe')),
+       SUBPARTITION asia VALUES (('asia')),
        DEFAULT SUBPARTITION other_regions)
 ( START (2012) END (2015) EVERY (3),
   DEFAULT PARTITION outlying_years);
 -- TEST
 -- expected to see the partition key
 \d T26002_T1;
-         Table "bfv_partition.t26002_t1"
-    Column    |         Type          | Modifiers 
---------------+-----------------------+-----------
- empid        | integer               | 
- departmentid | integer               | 
- year         | integer               | 
- region       | character varying(20) | 
-Number of child tables: 2 (Use \d+ to list them.)
+              Partitioned table "bfv_partition.t26002_t1"
+    Column    |         Type          | Collation | Nullable | Default 
+--------------+-----------------------+-----------+----------+---------
+ empid        | integer               |           |          | 
+ departmentid | integer               |           |          | 
+ year         | integer               |           |          | 
+ region       | character varying(20) |           |          | 
+Partition key: RANGE (year)
+Number of partitions: 2 (Use \d+ to list them.)
 Distributed by: (empid)
-Partition by: (year)
 
 \d t26002_t1_1_prt_2;
-     Table "bfv_partition.t26002_t1_1_prt_2"
-    Column    |         Type          | Modifiers 
---------------+-----------------------+-----------
- empid        | integer               | 
- departmentid | integer               | 
- year         | integer               | 
- region       | character varying(20) | 
-Check constraints:
-    "t26002_t1_1_prt_2_check" CHECK (year >= 2012 AND year < 2015)
-Inherits: t26002_t1
-Number of child tables: 4 (Use \d+ to list them.)
+          Partitioned table "bfv_partition.t26002_t1_1_prt_2"
+    Column    |         Type          | Collation | Nullable | Default 
+--------------+-----------------------+-----------+----------+---------
+ empid        | integer               |           |          | 
+ departmentid | integer               |           |          | 
+ year         | integer               |           |          | 
+ region       | character varying(20) |           |          | 
+Partition of: t26002_t1 FOR VALUES FROM (2012) TO (2015)
+Partition key: LIST (region)
+Number of partitions: 4 (Use \d+ to list them.)
 Distributed by: (empid)
-Partition by: (region, departmentid)
 
 \d t26002_t1_1_prt_2_2_prt_asia;
-Table "bfv_partition.t26002_t1_1_prt_2_2_prt_asia"
-    Column    |         Type          | Modifiers 
---------------+-----------------------+-----------
- empid        | integer               | 
- departmentid | integer               | 
- year         | integer               | 
- region       | character varying(20) | 
-Check constraints:
-    "t26002_t1_1_prt_2_2_prt_asia_check" CHECK (region::text = 'asia'::text AND departmentid = 3)
-    "t26002_t1_1_prt_2_check" CHECK (year >= 2012 AND year < 2015)
-Inherits: t26002_t1_1_prt_2
+          Table "bfv_partition.t26002_t1_1_prt_2_2_prt_asia"
+    Column    |         Type          | Collation | Nullable | Default 
+--------------+-----------------------+-----------+----------+---------
+ empid        | integer               |           |          | 
+ departmentid | integer               |           |          | 
+ year         | integer               |           |          | 
+ region       | character varying(20) |           |          | 
+Partition of: t26002_t1_1_prt_2 FOR VALUES IN ('asia')
 Distributed by: (empid)
 
 \d+ T26002_T1;
-                             Table "bfv_partition.t26002_t1"
-    Column    |         Type          | Modifiers | Storage  | Stats target | Description 
---------------+-----------------------+-----------+----------+--------------+-------------
- empid        | integer               |           | plain    |              | 
- departmentid | integer               |           | plain    |              | 
- year         | integer               |           | plain    |              | 
- region       | character varying(20) |           | extended |              | 
-Child tables: t26002_t1_1_prt_2,
-              t26002_t1_1_prt_outlying_years
+                                  Partitioned table "bfv_partition.t26002_t1"
+    Column    |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ empid        | integer               |           |          |         | plain    |              | 
+ departmentid | integer               |           |          |         | plain    |              | 
+ year         | integer               |           |          |         | plain    |              | 
+ region       | character varying(20) |           |          |         | extended |              | 
+Partition key: RANGE (year)
+Partitions: t26002_t1_1_prt_2 FOR VALUES FROM (2012) TO (2015), PARTITIONED,
+            t26002_t1_1_prt_outlying_years DEFAULT, PARTITIONED
 Distributed by: (empid)
-Partition by: (year)
 
 \d+ t26002_t1_1_prt_2;
-                         Table "bfv_partition.t26002_t1_1_prt_2"
-    Column    |         Type          | Modifiers | Storage  | Stats target | Description 
---------------+-----------------------+-----------+----------+--------------+-------------
- empid        | integer               |           | plain    |              | 
- departmentid | integer               |           | plain    |              | 
- year         | integer               |           | plain    |              | 
- region       | character varying(20) |           | extended |              | 
-Check constraints:
-    "t26002_t1_1_prt_2_check" CHECK (year >= 2012 AND year < 2015)
-Inherits: t26002_t1
-Child tables: t26002_t1_1_prt_2_2_prt_asia,
-              t26002_t1_1_prt_2_2_prt_europe,
-              t26002_t1_1_prt_2_2_prt_other_regions,
-              t26002_t1_1_prt_2_2_prt_usa
+                              Partitioned table "bfv_partition.t26002_t1_1_prt_2"
+    Column    |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ empid        | integer               |           |          |         | plain    |              | 
+ departmentid | integer               |           |          |         | plain    |              | 
+ year         | integer               |           |          |         | plain    |              | 
+ region       | character varying(20) |           |          |         | extended |              | 
+Partition of: t26002_t1 FOR VALUES FROM (2012) TO (2015)
+Partition constraint: ((year IS NOT NULL) AND (year >= 2012) AND (year < 2015))
+Partition key: LIST (region)
+Partitions: t26002_t1_1_prt_2_2_prt_asia FOR VALUES IN ('asia'),
+            t26002_t1_1_prt_2_2_prt_europe FOR VALUES IN ('europe'),
+            t26002_t1_1_prt_2_2_prt_usa FOR VALUES IN ('usa'),
+            t26002_t1_1_prt_2_2_prt_other_regions DEFAULT
 Distributed by: (empid)
-Partition by: (region, departmentid)
 
 \d+ t26002_t1_1_prt_2_2_prt_asia;
-                    Table "bfv_partition.t26002_t1_1_prt_2_2_prt_asia"
-    Column    |         Type          | Modifiers | Storage  | Stats target | Description 
---------------+-----------------------+-----------+----------+--------------+-------------
- empid        | integer               |           | plain    |              | 
- departmentid | integer               |           | plain    |              | 
- year         | integer               |           | plain    |              | 
- region       | character varying(20) |           | extended |              | 
-Check constraints:
-    "t26002_t1_1_prt_2_2_prt_asia_check" CHECK (region::text = 'asia'::text AND departmentid = 3)
-    "t26002_t1_1_prt_2_check" CHECK (year >= 2012 AND year < 2015)
-Inherits: t26002_t1_1_prt_2
+                              Table "bfv_partition.t26002_t1_1_prt_2_2_prt_asia"
+    Column    |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ empid        | integer               |           |          |         | plain    |              | 
+ departmentid | integer               |           |          |         | plain    |              | 
+ year         | integer               |           |          |         | plain    |              | 
+ region       | character varying(20) |           |          |         | extended |              | 
+Partition of: t26002_t1_1_prt_2 FOR VALUES IN ('asia')
+Partition constraint: ((year IS NOT NULL) AND (year >= 2012) AND (year < 2015) AND (region IS NOT NULL) AND ((region)::text = 'asia'::character varying(20)))
 Distributed by: (empid)
 
 /*
@@ -705,9 +698,8 @@ create table mpp3058 (a char(1), b date, d char(3))
   (           
     partition aa start ('2008-01-01') end ('2009-01-01') every( '1 day')  
      );
-ERROR:  invalid input syntax for integer: "1 day"
-LINE 5: ...aa start ('2008-01-01') end ('2009-01-01') every( '1 day')  
-                                                             ^
+ERROR:  operator is not unique: date pg_catalog.+ unknown
+HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
 drop table mpp3058;
 ERROR:  table "mpp3058" does not exist
 -- Expected Error
@@ -755,9 +747,9 @@ alter table mpp3607 add partition bb end (0); -- Expected Overlaps
 ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa end (-4); -- partition rule aa < -4, foo >=2
-alter table mpp3607 add partition bb end (-3); -- Overlaps
-ERROR:  partition "mpp3607_1_prt_bb" would overlap partition "mpp3607_1_prt_aa"
+alter table mpp3607 add partition bb end (-3); -- will not overlap
 alter table mpp3607 drop partition aa;
+alter table mpp3607 drop partition bb;
 alter table mpp3607 add partition aa end (0); -- partition rule aa < 0, foo >=2
 alter table mpp3607 drop partition aa;
 alter table mpp3607 add partition aa start (4); -- Overlaps
@@ -1203,15 +1195,16 @@ Distributed by: (id)
  count  | integer      |           |          | 
 Distributed by: (id)
 
-select * from pg_partitions where tablename='mpp3512_part';
-  schemaname   |  tablename   | partitionschemaname |  partitiontablename  | partitionname | parentpartitiontablename | parentpartitionname | partitiontype | partitionlevel | partitionrank | partitionposition | partitionlistvalues | partitionrangestart | partitionstartinclusive | partitionrangeend | partitionendinclusive | partitioneveryclause | partitionisdefault |         partitionboundary         | parenttablespace | partitiontablespace 
----------------+--------------+---------------------+----------------------+---------------+--------------------------+---------------------+---------------+----------------+---------------+-------------------+---------------------+---------------------+-------------------------+-------------------+-----------------------+----------------------+--------------------+-----------------------------------+------------------+---------------------
- bfv_partition | mpp3512_part | bfv_partition       | mpp3512_part_1_prt_1 |               |                          |                     | range         |              0 |             1 |                 1 |                     | 2001                | t                       | 2002              | f                     | 1                    | f                  | START (2001) END (2002) EVERY (1) | pg_default       | pg_default
- bfv_partition | mpp3512_part | bfv_partition       | mpp3512_part_1_prt_2 |               |                          |                     | range         |              0 |             2 |                 2 |                     | 2002                | t                       | 2003              | f                     | 1                    | f                  | START (2002) END (2003) EVERY (1) | pg_default       | pg_default
- bfv_partition | mpp3512_part | bfv_partition       | mpp3512_part_1_prt_3 |               |                          |                     | range         |              0 |             3 |                 3 |                     | 2003                | t                       | 2004              | f                     | 1                    | f                  | START (2003) END (2004) EVERY (1) | pg_default       | pg_default
- bfv_partition | mpp3512_part | bfv_partition       | mpp3512_part_1_prt_4 |               |                          |                     | range         |              0 |             4 |                 4 |                     | 2004                | t                       | 2005              | f                     | 1                    | f                  | START (2004) END (2005) EVERY (1) | pg_default       | pg_default
- bfv_partition | mpp3512_part | bfv_partition       | mpp3512_part_1_prt_5 |               |                          |                     | range         |              0 |             5 |                 5 |                     | 2005                | t                       | 2006              | f                     | 1                    | f                  | START (2005) END (2006) EVERY (1) | pg_default       | pg_default
-(5 rows)
+select relid,parentrelid,isleaf,level, pg_catalog.pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3512_part'), pg_class where relid = oid;
+        relid         | parentrelid  | isleaf | level |           pg_get_expr            
+----------------------+--------------+--------+-------+----------------------------------
+ mpp3512_part         |              | f      |     0 | 
+ mpp3512_part_1_prt_1 | mpp3512_part | t      |     1 | FOR VALUES FROM (2001) TO (2002)
+ mpp3512_part_1_prt_2 | mpp3512_part | t      |     1 | FOR VALUES FROM (2002) TO (2003)
+ mpp3512_part_1_prt_3 | mpp3512_part | t      |     1 | FOR VALUES FROM (2003) TO (2004)
+ mpp3512_part_1_prt_4 | mpp3512_part | t      |     1 | FOR VALUES FROM (2004) TO (2005)
+ mpp3512_part_1_prt_5 | mpp3512_part | t      |     1 | FOR VALUES FROM (2005) TO (2006)
+(6 rows)
 
 drop table mpp3512;
 drop table mpp3512_part;
@@ -2650,11 +2643,7 @@ ERROR:  table "fff_main_1_prt_1" is not partitioned
 alter table fff_main_1_prt_1 exchange partition aa  with table fff_main_1_prt_2;
 ERROR:  table "fff_main_1_prt_1" is not partitioned
 alter table fff_main add partition aa start ('2008') end ('2009');
-ERROR:  cannot add RANGE partition "aa" to relation "fff_main" with DEFAULT partition "def"
-HINT:  need to SPLIT partition "def"
 alter table fff_main add partition bb start ('2009') end ('2010');
-ERROR:  cannot add RANGE partition "bb" to relation "fff_main" with DEFAULT partition "def"
-HINT:  need to SPLIT partition "def"
 alter table fff_main_1_prt_1 add partition cc start ('2010') end ('2011');
 ERROR:  table "fff_main_1_prt_1" is not partitioned
 drop table fff_main, fff_main2;
@@ -2685,7 +2674,9 @@ select relid::regclass, level, template from gp_partition_template where relid =
 (1 row)
 
 alter table partsup_def add partition f1 start(0) end (300) every(100);
-ERROR:  relation "partsup_def" does not exist
+ERROR:  syntax error at or near "every"
+LINE 1: ...e partsup_def add partition f1 start(0) end (300) every(100)...
+                                                             ^
 -- This works adding subpartition template with parent default partition
 CREATE TABLE partsupp_def2 ( ps_partkey int,
 ps_suppkey integer, ps_availqty integer,
@@ -2950,16 +2941,16 @@ alter table mpp6724 add partition start ( date '2009-01-03' ) inclusive end ( da
 insert into mpp6724 values ( 4,'2009-01-03','Four');
 -- Should fail because violates the primary key
 insert into mpp6724 values ( 4,'2009-01-03','Four');
-ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_r1600720188_pkey"  (seg1 127.0.0.1:40001 pid=32489)
+ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_11_pkey"  (seg0 127.0.1.1:7002 pid=19596)
 DETAIL:  Key (c1, dt)=(4, 01-03-2009) already exists.
 insert into mpp6724 values ( 4,'2009-01-03','Four');
-ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_r1600720188_pkey"  (seg1 127.0.0.1:40001 pid=32489)
+ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_11_pkey"  (seg0 127.0.1.1:7002 pid=19596)
 DETAIL:  Key (c1, dt)=(4, 01-03-2009) already exists.
 insert into mpp6724 values ( 4,'2009-01-03','Four');
-ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_r1600720188_pkey"  (seg1 127.0.0.1:40001 pid=32489)
+ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_11_pkey"  (seg0 127.0.1.1:7002 pid=19596)
 DETAIL:  Key (c1, dt)=(4, 01-03-2009) already exists.
 insert into mpp6724 values ( 4,'2009-01-03','Four');
-ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_r1600720188_pkey"  (seg1 127.0.0.1:40001 pid=32489)
+ERROR:  duplicate key value violates unique constraint "mpp6724_1_prt_11_pkey"  (seg0 127.0.1.1:7002 pid=19596)
 DETAIL:  Key (c1, dt)=(4, 01-03-2009) already exists.
 select c1, dt, count(*) from mpp6724 group by 1,2 having count(*) > 1;
  c1 | dt | count 
@@ -2985,18 +2976,6 @@ drop table partition_cleanup1;
 drop schema partition_999 cascade;
 NOTICE:  drop cascades to table partition_cleanup2
 -- These should be empty
-select 'pg_partition_columns', count(*) from pg_partition_columns where tablename='partition_cleanup%';
-       ?column?       | count 
-----------------------+-------
- pg_partition_columns |     0
-(1 row)
-
-select 'pg_partitions', count(*) from pg_partitions where tablename='partition_cleanup%';
-   ?column?    | count 
----------------+-------
- pg_partitions |     0
-(1 row)
-
 select relid, level, template from gp_partition_template where not exists (select oid from pg_class where oid = relid);
  relid | level | template 
 -------+-------+----------
