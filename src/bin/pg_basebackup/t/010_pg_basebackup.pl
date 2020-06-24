@@ -509,12 +509,12 @@ my $pageheader_size = 24;
 my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 
 # induce corruption
-system_or_bail 'pg_ctl', '-D', $pgdata, '-w', 'stop';
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt1";
 seek($file, $pageheader_size, 0);
 syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
-system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, '-w', 'start';
+system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt" ],
@@ -525,7 +525,7 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt");
 
 # induce further corruption in 5 more blocks
-system_or_bail 'pg_ctl', '-D', $pgdata, '-w', 'stop';
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt1";
 for my $i (1 .. 5)
 {
@@ -534,7 +534,7 @@ for my $i (1 .. 5)
 	syswrite($file, "\0\0\0\0\0\0\0\0\0");
 }
 close $file;
-system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, '-w', 'start';
+system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt2" ],
@@ -545,12 +545,12 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
-system_or_bail 'pg_ctl', '-D', $pgdata, '-w', 'stop';
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt2";
 seek($file, $pageheader_size, 0);
 syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
-system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, '-w', 'start';
+system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt3" ],

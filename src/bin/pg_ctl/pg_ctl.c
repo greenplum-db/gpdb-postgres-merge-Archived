@@ -79,7 +79,7 @@ typedef enum
 
 #define WAITS_PER_SEC	10		/* should divide USEC_PER_SEC evenly */
 
-static bool do_wait = false;
+static bool do_wait = true;
 static int	wait_seconds = DEFAULT_WAIT;
 static bool wait_seconds_arg = false;
 static bool silent_mode = false;
