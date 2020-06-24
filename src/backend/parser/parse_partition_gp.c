@@ -974,7 +974,7 @@ generateRangePartitions(ParseState *pstate,
 			partname = elem->partName;
 
 		childstmt = makePartitionCreateStmt(parentrel, partname, boundspec,
-											subPart, elem, partnamecomp);
+											copyObject(subPart), elem, partnamecomp);
 		result = lappend(result, childstmt);
 	}
 
@@ -1522,6 +1522,19 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 								parser_errposition(pstate, subPartSpec->location)));
 				}
 			}
+
+			/*
+			 * This was not allowed pre-GPDB7, so keeping the same
+			 * restriction. Ideally, we can easily support it now based on how
+			 * template is stored. I wish to not open up new cases with legacy
+			 * syntax than we supported in past, hence keeping the restriction
+			 * in-place.
+			 */
+			if (gpPartSpec->istemplate && elem->colencs)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("partition specific ENCODING clause not supported in SUBPARTITION TEMPLATE"),
+						 parser_errposition(pstate, elem->location)));
 
 			/* if WITH has "tablename" then it will be used as name for partition */
 			partcomp.tablename = extract_tablename_from_options(&elem->options);
