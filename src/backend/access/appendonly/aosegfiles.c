@@ -976,15 +976,34 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 				varblockcount,
 				state;
 	bool		isNull;
-	Oid segrelid;
+	Oid			segrelid;
+
+	Assert(RelationIsAoRows(parentrel));
+
+	result = (FileSegTotals *) palloc0(sizeof(FileSegTotals));
 
 	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
-	Assert(RelationIsAoRows(parentrel));	/* doesn't fit for AO column
-											 * store. should implement same
-											 * for CO */
+	/*
+	 * It the table is still in progress of being created, it's possible that
+	 * the aux tables haven't been created yet. Table creation builds the
+	 * indexes, which will try to scan the table, before creating the aux
+	 * (and toast) tables. If we can't find the pg_appendonly entry, and the
+	 * relation has been created in the same transaction, assume that that's
+	 * what's going on. The table is certainly empty in that case.
+	 */
+	if (segrelid == InvalidOid)
+	{
+		if (parentrel->rd_createSubid != InvalidSubTransactionId &&
+			parentrel->rd_createSubid == GetCurrentSubTransactionId())
+		{
+			/* 'result' is all zeros already */
+			return result;
+		}
 
-	result = (FileSegTotals *) palloc0(sizeof(FileSegTotals));
+		elog(ERROR, "could not find pg_aoseg aux table for AO table \"%s\"",
+			 RelationGetRelationName(parentrel));
+	}
 
 	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
