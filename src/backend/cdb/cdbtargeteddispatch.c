@@ -527,17 +527,16 @@ DirectDispatchUpdateContentIdsFromPlan(PlannerInfo *root, Plan *plan)
 	}
 }
 
-bool
+void
 DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
 										GpPolicy *targetPolicy, Oid *hashfuncs)
 {
 	DirectDispatchInfo dispatchInfo;
 	int			i;
 	ListCell   *cell = NULL;
+	bool		isDirectDispatch;
 	Datum	   *values;
 	bool	   *nulls;
-	uint32		hashcode;
-	CdbHash    *h;
 
 	InitDirectDispatchCalculationInfo(&dispatchInfo);
 
@@ -550,6 +549,7 @@ DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
 	 * not be in the same order. (also typically we don't distribute by more
 	 * than a handful of attributes).
 	 */
+	isDirectDispatch = true;
 	for (i = 0; i < targetPolicy->nattrs; i++)
 	{
 		foreach(cell, plan->targetlist)
@@ -562,14 +562,11 @@ DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
 			if (tle->resno != targetPolicy->attrs[i])
 				continue;
 
-			/* spotted the target target */
-
 			if (!IsA(tle->expr, Const))
 			{
 				/* the planner could not simplify this */
-				pfree(values);
-				pfree(nulls);
-				return false;
+				isDirectDispatch = false;
+				break;
 			}
 
 			c = (Const *) tle->expr;
@@ -578,29 +575,35 @@ DirectDispatchUpdateContentIdsForInsert(PlannerInfo *root, Plan *plan,
 			nulls[i] = c->constisnull;
 			break;
 		}
+
+		if (!isDirectDispatch)
+			break;
 	}
 
-	h = makeCdbHash(targetPolicy->numsegments, targetPolicy->nattrs, hashfuncs);
-
-	cdbhashinit(h);
-	for (i = 0; i < targetPolicy->nattrs; i++)
+	if (isDirectDispatch)
 	{
-		cdbhash(h, i + 1, values[i], nulls[i]);
+		uint32		hashcode;
+		CdbHash    *h;
+
+		h = makeCdbHash(targetPolicy->numsegments, targetPolicy->nattrs, hashfuncs);
+
+		cdbhashinit(h);
+		for (i = 0; i < targetPolicy->nattrs; i++)
+		{
+			cdbhash(h, i + 1, values[i], nulls[i]);
+		}
+
+		/* We now have the hash-partition that this row belong to */
+		hashcode = cdbhashreduce(h);
+		dispatchInfo.isDirectDispatch = true;
+		dispatchInfo.contentIds = list_make1_int(hashcode);
+		dispatchInfo.haveProcessedAnyCalculations = true;
+
+		/* learned new info: merge it in */
+		MergeDirectDispatchCalculationInfo(&root->curSlice->directDispatch, &dispatchInfo);
+
+		elog(DEBUG1, "sending single row constant insert to content %d", hashcode);
 	}
-
-	/* We now have the hash-partition that this row belong to */
-	hashcode = cdbhashreduce(h);
-	dispatchInfo.isDirectDispatch = true;
-	dispatchInfo.contentIds = list_make1_int(hashcode);
-	dispatchInfo.haveProcessedAnyCalculations = true;
-
-	/* learned new info: merge it in */
-	MergeDirectDispatchCalculationInfo(&root->curSlice->directDispatch, &dispatchInfo);
-
-	elog(DEBUG1, "sending single row constant insert to content %d", hashcode);
-
 	pfree(values);
 	pfree(nulls);
-
-	return true;
 }
