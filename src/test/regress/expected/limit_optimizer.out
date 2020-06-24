@@ -247,7 +247,7 @@ select unique1, unique2, generate_series(1,10)
          Merge Key: unique2
          ->  Limit
                Output: unique1, unique2, (generate_series(1, 10))
-               ->  Result
+               ->  ProjectSet
                      Output: unique1, unique2, generate_series(1, 10)
                      ->  Sort
                            Output: unique1, unique2
@@ -285,7 +285,7 @@ select unique1, unique2, generate_series(1,10)
                Merge Key: tenthous
                ->  Limit
                      Output: unique1, unique2, (generate_series(1, 10)), tenthous
-                     ->  Result
+                     ->  ProjectSet
                            Output: unique1, unique2, generate_series(1, 10), tenthous
                            ->  Sort
                                  Output: unique1, unique2, tenthous
@@ -314,8 +314,9 @@ explain (verbose, costs off)
 select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
                                               QUERY PLAN                                              
 ------------------------------------------------------------------------------------------------------
- Result
+ ProjectSet
    Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
+   ->  Result
  Optimizer: Postgres query optimizer
 (3 rows)
 
@@ -335,8 +336,9 @@ order by s2 desc;
  Sort
    Output: (generate_series(0, 2)), (generate_series(((random() * '0.1'::double precision))::integer, 2))
    Sort Key: (generate_series(((random() * '0.1'::double precision))::integer, 2)) DESC
-   ->  Result
+   ->  ProjectSet
          Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
+         ->  Result
  Optimizer: Postgres query optimizer
 (6 rows)
 

@@ -52,9 +52,9 @@ CREATE UNIQUE INDEX mvtest_tm_type ON mvtest_tm (type);
 SELECT * FROM mvtest_tm ORDER BY type;
  type | totamt 
 ------+--------
+ x    |      5
  y    |     12
  z    |     11
- x    |      5
 (3 rows)
 
 -- create various views
@@ -128,7 +128,7 @@ View definition:
     mvtest_tv.totamt
    FROM mvtest_tv
   ORDER BY mvtest_tv.type;
-Distributed by: (type)
+Distributed randomly
 
 \d+ mvtest_tvm
                            Materialized view "public.mvtest_tvm"
@@ -141,7 +141,7 @@ View definition:
     mvtest_tv.totamt
    FROM mvtest_tv
   ORDER BY mvtest_tv.type;
-Distributed by: (type)
+Distributed randomly
 
 \d+ mvtest_tvvm
                            Materialized view "public.mvtest_tvvm"
@@ -151,7 +151,7 @@ Distributed by: (type)
 View definition:
  SELECT mvtest_tvv.grandtot
    FROM mvtest_tvv;
-Distributed by: (grandtot)
+Distributed randomly
 
 \d+ mvtest_bb
                             Materialized view "public.mvtest_bb"
@@ -163,7 +163,7 @@ Indexes:
 View definition:
  SELECT mvtest_tvvmv.grandtot
    FROM mvtest_tvvmv;
-Distributed by: (grandtot)
+Distributed randomly
 
 -- test schema behavior
 CREATE SCHEMA mvtest_mvschema;
@@ -193,7 +193,7 @@ View definition:
     mvtest_tv.totamt
    FROM mvtest_tv
   ORDER BY mvtest_tv.type;
-Distributed by: (type)
+Distributed randomly
 
 -- modify the underlying table data
 INSERT INTO mvtest_t VALUES (6, 'z', 13);
@@ -412,7 +412,7 @@ UNION ALL
  SELECT mvtest_vt2.moo,
     3 * mvtest_vt2.moo
    FROM mvtest_vt2;
-Distributed by: (moo)
+Distributed randomly
 
 CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;
@@ -549,6 +549,7 @@ View definition:
     'foo'::text AS u,
     'foo'::text AS u2,
     NULL::text AS n;
+Distributed randomly
 
 SELECT * FROM mv_unspecified_types;
  i  | num  |  u  | u2  | n 

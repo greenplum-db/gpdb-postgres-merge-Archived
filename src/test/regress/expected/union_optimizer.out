@@ -350,23 +350,23 @@ set enable_hashagg to on;
 explain (costs off)
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Subquery Scan on ss
-                     ->  HashSetOp Intersect
-                           ->  Append
+               ->  Hash Join
+                     Hash Cond: (NOT (tenk1.unique1 IS DISTINCT FROM tenk1_1.fivethous))
+                     ->  HashAggregate
+                           Group Key: tenk1.unique1
+                           ->  Seq Scan on tenk1
+                     ->  Hash
+                           ->  HashAggregate
+                                 Group Key: tenk1_1.fivethous
                                  ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                                       Hash Key: "*SELECT* 2".fivethous
-                                       ->  Subquery Scan on "*SELECT* 2"
-                                             ->  Seq Scan on tenk1
-                                 ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                                       Hash Key: "*SELECT* 1".unique1
-                                       ->  Subquery Scan on "*SELECT* 1"
-                                             ->  Seq Scan on tenk1 tenk1_1
- Optimizer: Postgres query optimizer
+                                       Hash Key: tenk1_1.fivethous
+                                       ->  Seq Scan on tenk1 tenk1_1
+ Optimizer: Pivotal Optimizer (GPORCA)
 (15 rows)
 
 select count(*) from
@@ -378,22 +378,21 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  HashSetOp Except
-         ->  Append
-               ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                     Hash Key: "*SELECT* 1".unique1
-                     ->  Subquery Scan on "*SELECT* 1"
-                           ->  Seq Scan on tenk1
-               ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                     Hash Key: "*SELECT* 2".unique2
-                     ->  Subquery Scan on "*SELECT* 2"
+   ->  HashAggregate
+         Group Key: tenk1.unique1
+         ->  Hash Anti Join
+               Hash Cond: (NOT (tenk1.unique1 IS DISTINCT FROM tenk1_1.unique2))
+               ->  Seq Scan on tenk1
+               ->  Hash
+                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                           Hash Key: tenk1_1.unique2
                            ->  Seq Scan on tenk1 tenk1_1
                                  Filter: (unique2 <> 10)
- Optimizer: Postgres query optimizer
-(13 rows)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(12 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
@@ -405,26 +404,24 @@ set enable_hashagg to off;
 explain (costs off)
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
-                                        QUERY PLAN                                        
-------------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Subquery Scan on ss
-                     ->  SetOp Intersect
-                           ->  Sort
-                                 Sort Key: "*SELECT* 2".fivethous
-                                 ->  Append
-                                       ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                                             Hash Key: "*SELECT* 2".fivethous
-                                             ->  Subquery Scan on "*SELECT* 2"
-                                                   ->  Seq Scan on tenk1
-                                       ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                                             Hash Key: "*SELECT* 1".unique1
-                                             ->  Subquery Scan on "*SELECT* 1"
-                                                   ->  Seq Scan on tenk1 tenk1_1
- Optimizer: Postgres query optimizer
-(17 rows)
+               ->  Hash Join
+                     Hash Cond: (NOT (tenk1.unique1 IS DISTINCT FROM tenk1_1.fivethous))
+                     ->  HashAggregate
+                           Group Key: tenk1.unique1
+                           ->  Seq Scan on tenk1
+                     ->  Hash
+                           ->  HashAggregate
+                                 Group Key: tenk1_1.fivethous
+                                 ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                                       Hash Key: tenk1_1.fivethous
+                                       ->  Seq Scan on tenk1 tenk1_1
+ Optimizer: Pivotal Optimizer (GPORCA)
+(15 rows)
 
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
@@ -435,24 +432,21 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  SetOp Except
-         ->  Sort
-               Sort Key: "*SELECT* 1".unique1
-               ->  Append
+   ->  HashAggregate
+         Group Key: tenk1.unique1
+         ->  Hash Anti Join
+               Hash Cond: (NOT (tenk1.unique1 IS DISTINCT FROM tenk1_1.unique2))
+               ->  Seq Scan on tenk1
+               ->  Hash
                      ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                           Hash Key: "*SELECT* 1".unique1
-                           ->  Subquery Scan on "*SELECT* 1"
-                                 ->  Seq Scan on tenk1
-                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                           Hash Key: "*SELECT* 2".unique2
-                           ->  Subquery Scan on "*SELECT* 2"
-                                 ->  Seq Scan on tenk1 tenk1_1
-                                       Filter: (unique2 <> 10)
- Optimizer: Postgres query optimizer
-(15 rows)
+                           Hash Key: tenk1_1.unique2
+                           ->  Seq Scan on tenk1 tenk1_1
+                                 Filter: (unique2 <> 10)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(12 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
@@ -857,17 +851,12 @@ explain (costs off)
    UNION ALL
    SELECT 2 AS t, * FROM tenk1 b) c
  WHERE t = 2;
-                      QUERY PLAN                      
-------------------------------------------------------
- Append
-   ->  Result
-         One-Time Filter: false
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Result
-               Filter: ((2) = 2)
-               ->  Seq Scan on tenk1
- Optimizer: Pivotal Optimizer (GPORCA) version 3.83.0
-(8 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on tenk1 b
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 -- Test that we push quals into UNION sub-selects only when it's safe
 explain (costs off)
@@ -877,17 +866,17 @@ SELECT * FROM
    SELECT 2 AS t, 4 AS x) ss
 WHERE x < 4
 ORDER BY x;
-                 QUERY PLAN                 
---------------------------------------------
+              QUERY PLAN               
+---------------------------------------
  Sort
    Sort Key: (2)
-   ->  HashAggregate
-         Group Key: (1), (2)
-         ->  Append
+   ->  Append
+         ->  Result
+               Filter: ((2) < 4)
                ->  Result
-               ->  Result
-                     One-Time Filter: false
- Optimizer: Postgres query optimizer
+         ->  Result
+               One-Time Filter: false
+ Optimizer: Pivotal Optimizer (GPORCA)
 (9 rows)
 
 SELECT * FROM
@@ -919,7 +908,7 @@ ORDER BY x;
                ->  Append
                      ->  Result
                            Filter: ((generate_series(1, 10)) < 4)
-                           ->  Result
+                           ->  ProjectSet
                                  ->  Result
                      ->  Result
                            One-Time Filter: false
@@ -981,25 +970,35 @@ select distinct q1 from
    union all
    select distinct * from int8_tbl i82) ss
 where q2 = q2;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  GroupAggregate
-         Group Key: ss.q1
+         Group Key: int8_tbl.q1
          ->  Sort
-               Sort Key: ss.q1
-               ->  Subquery Scan on ss
-                     ->  Append
-                           ->  HashAggregate
-                                 Group Key: i81.q1, i81.q2
-                                 ->  Seq Scan on int8_tbl i81
-                                       Filter: (q2 IS NOT NULL)
-                           ->  HashAggregate
-                                 Group Key: i82.q1, i82.q2
-                                 ->  Seq Scan on int8_tbl i82
-                                       Filter: (q2 IS NOT NULL)
- Optimizer: Postgres query optimizer
-(16 rows)
+               Sort Key: int8_tbl.q1
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                     Hash Key: int8_tbl.q1
+                     ->  GroupAggregate
+                           Group Key: int8_tbl.q1
+                           ->  Sort
+                                 Sort Key: int8_tbl.q1
+                                 ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                       ->  Append
+                                             ->  GroupAggregate
+                                                   Group Key: int8_tbl.q1
+                                                   ->  Sort
+                                                         Sort Key: int8_tbl.q1
+                                                         ->  Seq Scan on int8_tbl
+                                                               Filter: (q2 = q2)
+                                             ->  GroupAggregate
+                                                   Group Key: int8_tbl_1.q1
+                                                   ->  Sort
+                                                         Sort Key: int8_tbl_1.q1
+                                                         ->  Seq Scan on int8_tbl int8_tbl_1
+                                                               Filter: (q2 = q2)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(26 rows)
 
 select distinct q1 from
   (select distinct * from int8_tbl i81
@@ -1018,25 +1017,35 @@ select distinct q1 from
    union all
    select distinct * from int8_tbl i82) ss
 where -q1 = q2;
-                          QUERY PLAN                          
---------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  GroupAggregate
-         Group Key: ss.q1
+         Group Key: int8_tbl.q1
          ->  Sort
-               Sort Key: ss.q1
-               ->  Subquery Scan on ss
-                     ->  Append
-                           ->  HashAggregate
-                                 Group Key: i81.q1, i81.q2
-                                 ->  Seq Scan on int8_tbl i81
-                                       Filter: ((- q1) = q2)
-                           ->  HashAggregate
-                                 Group Key: i82.q1, i82.q2
-                                 ->  Seq Scan on int8_tbl i82
-                                       Filter: ((- q1) = q2)
- Optimizer: Postgres query optimizer
-(16 rows)
+               Sort Key: int8_tbl.q1
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                     Hash Key: int8_tbl.q1
+                     ->  GroupAggregate
+                           Group Key: int8_tbl.q1
+                           ->  Sort
+                                 Sort Key: int8_tbl.q1
+                                 ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                       ->  Append
+                                             ->  GroupAggregate
+                                                   Group Key: int8_tbl.q1
+                                                   ->  Sort
+                                                         Sort Key: int8_tbl.q1
+                                                         ->  Seq Scan on int8_tbl
+                                                               Filter: ((- q1) = q2)
+                                             ->  GroupAggregate
+                                                   Group Key: int8_tbl_1.q1
+                                                   ->  Sort
+                                                         Sort Key: int8_tbl_1.q1
+                                                         ->  Seq Scan on int8_tbl int8_tbl_1
+                                                               Filter: ((- q1) = q2)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(26 rows)
 
 select distinct q1 from
   (select distinct * from int8_tbl i81
@@ -1092,15 +1101,18 @@ select * from
    union all
    select *, 1 as x from int8_tbl b) ss
 where (x = 0) or (q1 >= q2 and q1 <= q2);
-                    QUERY PLAN                     
----------------------------------------------------
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
-         ->  Seq Scan on int8_tbl a
-         ->  Seq Scan on int8_tbl b
-               Filter: ((q1 >= q2) AND (q1 <= q2))
- Optimizer: Postgres query optimizer
-(6 rows)
+         ->  Result
+               Filter: (((0) = 0) OR ((int8_tbl.q1 >= int8_tbl.q2) AND (int8_tbl.q1 <= int8_tbl.q2)))
+               ->  Seq Scan on int8_tbl
+         ->  Result
+               Filter: (((1) = 0) OR ((int8_tbl_1.q1 >= int8_tbl_1.q2) AND (int8_tbl_1.q1 <= int8_tbl_1.q2)))
+               ->  Seq Scan on int8_tbl int8_tbl_1
+ Optimizer: Pivotal Optimizer (GPORCA)
+(9 rows)
 
 select * from
   (select *, 0 as x from int8_tbl a
