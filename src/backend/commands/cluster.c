@@ -62,9 +62,7 @@
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
+#include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
@@ -844,12 +842,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 
 		ReleaseSysCache(tuple);
 	}
-	/* GPDB_94_MERGE_FIXME: should we have NewHeap* versions of these functions, too? */
-	AlterTableCreateAoSegTable(OIDNewHeap);
-	AlterTableCreateAoVisimapTable(OIDNewHeap);
 
-    if (createAoBlockDirectory)
-		AlterTableCreateAoBlkdirTable(OIDNewHeap);
+	if (RelationIsAppendOptimized(OldHeap))
+		NewRelationCreateAOAuxTables(OIDNewHeap, createAoBlockDirectory);
 
 	CacheInvalidateRelcacheByRelid(OIDNewHeap);
 

@@ -357,26 +357,9 @@ GetAllFileSegInfo(Relation parentrel,
 
 	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
-	/*
-	 * It the table is still in progress of being created, it's possible that
-	 * the aux tables haven't been created yet. Table creation builds the
-	 * indexes, which will try to scan the table, before creating the aux
-	 * (and toast) tables. If we can't find the pg_appendonly entry, and the
-	 * relation has been created in the same transaction, assume that that's
-	 * what's going on. The table is certainly empty in that case.
-	 */
 	if (segrelid == InvalidOid)
-	{
-		if (parentrel->rd_createSubid != InvalidSubTransactionId &&
-			parentrel->rd_createSubid == GetCurrentSubTransactionId())
-		{
-			*totalsegs = 0;
-			return (FileSegInfo **) palloc0(0);
-		}
-
 		elog(ERROR, "could not find pg_aoseg aux table for AO table \"%s\"",
 			 RelationGetRelationName(parentrel));
-	}	
 
 	Assert(RelationIsAoRows(parentrel));
 
@@ -984,26 +967,9 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 
 	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
-	/*
-	 * It the table is still in progress of being created, it's possible that
-	 * the aux tables haven't been created yet. Table creation builds the
-	 * indexes, which will try to scan the table, before creating the aux
-	 * (and toast) tables. If we can't find the pg_appendonly entry, and the
-	 * relation has been created in the same transaction, assume that that's
-	 * what's going on. The table is certainly empty in that case.
-	 */
 	if (segrelid == InvalidOid)
-	{
-		if (parentrel->rd_createSubid != InvalidSubTransactionId &&
-			parentrel->rd_createSubid == GetCurrentSubTransactionId())
-		{
-			/* 'result' is all zeros already */
-			return result;
-		}
-
 		elog(ERROR, "could not find pg_aoseg aux table for AO table \"%s\"",
 			 RelationGetRelationName(parentrel));
-	}
 
 	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);

@@ -282,26 +282,9 @@ GetAllAOCSFileSegInfo(Relation prel,
 							  &segrelid, NULL, NULL,
 							  NULL, NULL);
 
-	/*
-	 * It the table is still in progress of being created, it's possible that
-	 * the aux tables haven't been created yet. Table creation builds the
-	 * indexes, which will try to scan the table, before creating the aux
-	 * (and toast) tables. If we can't find the pg_appendonly entry, and the
-	 * relation has been created in the same transaction, assume that that's
-	 * what's going on. The table is certainly empty in that case.
-	 */
 	if (segrelid == InvalidOid)
-	{
-		if (prel->rd_createSubid != InvalidSubTransactionId &&
-			prel->rd_createSubid == GetCurrentSubTransactionId())
-		{
-			*totalseg = 0;
-			return (AOCSFileSegInfo **) palloc0(0);
-		}
-
 		elog(ERROR, "could not find pg_aoseg aux table for AOCO table \"%s\"",
 			 RelationGetRelationName(prel));
-	}
 
 	pg_aocsseg_rel = relation_open(segrelid, AccessShareLock);
 

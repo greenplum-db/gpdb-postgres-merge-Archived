@@ -14,7 +14,10 @@
 
 #include "access/heapam.h"
 #include "access/xact.h"
+#include "catalog/aoblkdir.h"
 #include "catalog/aocatalog.h"
+#include "catalog/aoseg.h"
+#include "catalog/aovisimap.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -240,4 +243,14 @@ IsAppendonlyMetadataRelkind(const char relkind) {
 	return (relkind == RELKIND_AOSEGMENTS ||
 			relkind == RELKIND_AOBLOCKDIR ||
 			relkind == RELKIND_AOVISIMAP);
+}
+
+void
+NewRelationCreateAOAuxTables(Oid relOid, bool createBlkDir)
+{
+	AlterTableCreateAoSegTable(relOid);
+	AlterTableCreateAoVisimapTable(relOid);
+
+	if (createBlkDir)
+		AlterTableCreateAoBlkdirTable(relOid);
 }

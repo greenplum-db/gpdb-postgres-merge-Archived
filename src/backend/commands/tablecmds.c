@@ -1077,6 +1077,12 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	rel = relation_open(relationId, AccessExclusiveLock);
 
 	/*
+	 * If this is an append-only relation, create the auxliary tables necessary
+	 */
+	if (RelationIsAppendOptimized(rel))
+		NewRelationCreateAOAuxTables(RelationGetRelid(rel), stmt->buildAoBlkdir);
+
+	/*
 	 * Now add any newly specified column default and generation expressions
 	 * to the new relation.  These are passed to us in the form of raw
 	 * parsetrees; we need to transform them to executable expression trees

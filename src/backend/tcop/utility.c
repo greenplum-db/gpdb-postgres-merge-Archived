@@ -1275,36 +1275,6 @@ ProcessUtilitySlow(ParseState *pstate,
 													   toast_options,
 													   true);
 
-								/*
-								 * If the master relation is a non-leaf relation in
-								 * a partition hierarchy, then this auxiliary
-								 * relation, like its master relation, will not
-								 * contain any data.  Therefore, like the master
-								 * relation, exclude this auxiliary table from
-								 * database age calculation, by passing master
-								 * relation's is_part_parent flag.
-								 */
-								AlterTableCreateAoSegTable(address.objectId);
-
-								if (cstmt->buildAoBlkdir)
-									AlterTableCreateAoBlkdirTable(address.objectId);
-
-								AlterTableCreateAoVisimapTable(address.objectId);
-
-								/*
-								 * parse and validate reloptions for the toast
-								 * table
-								 */
-								toast_options = transformRelOptions((Datum) 0,
-																	((CreateStmt *) stmt)->options,
-																	"toast",
-																	validnsps,
-																	true,
-																	false);
-								(void) heap_reloptions(RELKIND_TOASTVALUE,
-													   toast_options,
-													   true);
-
 								NewRelationCreateToastTable(address.objectId,
 															toast_options);
 							}
