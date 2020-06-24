@@ -1399,18 +1399,18 @@ select a, b, sum(c), sum(sum(c)) over (order by a,b) as rsum
 explain (costs off)
   select a, b, sum(c), sum(sum(c)) over (order by a,b) as rsum
     from gstest2 group by cube (a,b) order by rsum, a, b;
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Sort
-   Sort Key: (sum((sum(gstest2.c))) OVER (?)), gstest2.a, gstest2.b
+   Sort Key: (sum((sum(c))) OVER (?)), a, b
    ->  WindowAgg
-         Order By: gstest2.a, gstest2.b
+         Order By: a, b
          ->  Sort
-               Sort Key: gstest2.a, gstest2.b
+               Sort Key: a, b
                ->  MixedAggregate
-                     Hash Key: gstest2.a, gstest2.b
-                     Hash Key: gstest2.a
-                     Hash Key: gstest2.b
+                     Hash Key: a, b
+                     Hash Key: a
+                     Hash Key: b
                      Group Key: ()
                      ->  Gather Motion 3:1  (slice1; segments: 3)
                            ->  Seq Scan on gstest2
