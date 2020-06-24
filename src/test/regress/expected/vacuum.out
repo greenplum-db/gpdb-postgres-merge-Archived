@@ -158,9 +158,9 @@ VACUUM (FULL) vacparted;
 VACUUM (FREEZE) vacparted;
 -- check behavior with duplicate column mentions
 VACUUM ANALYZE vacparted(a,b,a);
-ERROR:  column "a" of relation "vacparted" appears more than once
+ERROR:  column "a" of relation "vacparted1" appears more than once
 ANALYZE vacparted(a,b,b);
-ERROR:  column "b" of relation "vacparted" appears more than once
+ERROR:  column "b" of relation "vacparted1" appears more than once
 -- multiple tables specified
 VACUUM vaccluster, vactst;
 VACUUM vacparted, does_not_exist;
@@ -179,7 +179,7 @@ ANALYZE vacparted (b), vactst;
 ANALYZE vactst, does_not_exist, vacparted;
 ERROR:  relation "does_not_exist" does not exist
 ANALYZE vactst (i), vacparted (does_not_exist);
-ERROR:  column "does_not_exist" of relation "vacparted" does not exist
+ERROR:  column "does_not_exist" of relation "vacparted1" does not exist
 -- parenthesized syntax for ANALYZE
 ANALYZE (VERBOSE) does_not_exist;
 ERROR:  relation "does_not_exist" does not exist
