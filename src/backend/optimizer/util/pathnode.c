@@ -2034,7 +2034,8 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 					subpath->parent,
 					subpath,
 					subpath->pathtarget,
-					list_make1(restrict_info));
+					list_make1(restrict_info),
+					false);
 
 				/*
 				 * We use the skill of Result plannode with one time filter
@@ -2578,6 +2579,8 @@ create_unique_rowid_path(PlannerInfo *root,
 										list_make1_int(0),
 										numsegments);
 		subpath = cdbpath_create_motion_path(root, subpath, NIL, false, locus);
+		if (!subpath)
+			return NULL;
 
 		/*
 		 * The motion path has been created correctly, but there's a little
@@ -4139,15 +4142,18 @@ create_projection_path(PlannerInfo *root,
 					   Path *subpath,
 					   PathTarget *target)
 {
-	return create_projection_path_with_quals(root, rel, subpath, target, NIL);
+	return create_projection_path_with_quals(root, rel,
+											 subpath, target,
+											 NIL, false);
 }
 
 ProjectionPath *
 create_projection_path_with_quals(PlannerInfo *root,
-					   RelOptInfo *rel,
-					   Path *subpath,
-					   PathTarget *target,
-					   List *restrict_clauses)
+								  RelOptInfo *rel,
+								  Path *subpath,
+								  PathTarget *target,
+								  List *restrict_clauses,
+								  bool need_param)
 {
 	ProjectionPath *pathnode = makeNode(ProjectionPath);
 	PathTarget *oldtarget = subpath->pathtarget;
@@ -4155,8 +4161,7 @@ create_projection_path_with_quals(PlannerInfo *root,
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = target;
-	/* For now, assume we are above any joins, so no parameterization */
-	pathnode->path.param_info = NULL;
+	pathnode->path.param_info = need_param ? subpath->param_info : NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe &&

@@ -37,8 +37,8 @@ extern "C" {
 #include "parser/parse_oper.h"
 
 #include "catalog/namespace.h"
-#include "catalog/pg_exttable.h"
 #if 0
+#include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
 #endif
 #include "cdb/cdbhash.h"

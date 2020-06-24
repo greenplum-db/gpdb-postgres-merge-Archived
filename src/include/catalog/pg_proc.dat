@@ -909,9 +909,9 @@
   prosrc => 'brinhandler' },
 { oid => '3952', descr => 'brin: standalone scan new table pages',
   proexeclocation => 's',
-  proname => 'brin_summarize_new_values', provolatile => 'v',
+  proname => 'brin_summarize_new_values_internal', provolatile => 'v',
   proparallel => 'u', prorettype => 'int4', proargtypes => 'regclass',
-  prosrc => 'brin_summarize_new_values' },
+  prosrc => 'brin_summarize_new_values_internal' },
 { oid => '3999', descr => 'brin: standalone scan new table pages',
   proexeclocation => 's',
   proname => 'brin_summarize_range', provolatile => 'v', proparallel => 'u',
@@ -11004,13 +11004,6 @@
 { oid => 5042, descr => 'list priorities of backends',
    proname => 'gp_list_backend_priorities', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '', prosrc => 'gp_list_backend_priorities' },
 
-{ oid => 7061, descr => 'original pg_exttable catalog info',
-   proname => 'pg_exttable', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => '',
-   proallargtypes => '{oid,_text,_text,char,text,_text,text,int4,char,char,int4,bool}',
-   proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o}',
-   proargnames => '{reloid,urilocation,execlocation,fmttype,fmtopts,options,command,rejectlimit,rejectlimittype,logerrors,encoding,writable}',
-   prosrc => 'pg_exttable' },
-
 # Functions to deal with SREH error logs
 { oid => 7076, descr => 'read the error log for the specified external table',
    proname => 'gp_read_error_log', prorows => '1000', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => 'text', proallargtypes => '{text,timestamptz,text,text,int4,int4,text,text,bytea}', proargmodes => '{i,o,o,o,o,o,o,o,o}', proargnames => '{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}', prosrc => 'gp_read_error_log', proexeclocation => 's' },
@@ -11448,13 +11441,6 @@
 
 { oid => 6998, descr => 'Create a named restore point on all segments',
    proname => 'gp_create_restore_point', prorows => '1000', proretset => 't', proparallel => 'u', provolatile => 'v', prorettype => 'record', proargtypes => 'text', prosrc => 'gp_create_restore_point' },
-
-{ oid => 5107, descr => 'handler for internal external table FDW',
-   proname => 'gp_exttable_fdw_handler', prorettype => 'internal', proargtypes => 'internal', prosrc => 'exttable_fdw_handler' },
-
-{ oid => 7070, descr => 'handler for internal external table FDW',
-   proname => 'gp_exttable_permission_check', prorettype => 'void', proargtypes => 'internal', prosrc => 'gp_exttable_permission_check' },
-
 
 { oid => 7057, descr => 'compare two complex numbers',
    proname => 'complex_cmp', prorettype => 'int4', proargtypes => 'complex complex', prosrc => 'complex_cmp' },

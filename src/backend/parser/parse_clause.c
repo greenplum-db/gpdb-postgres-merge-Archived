@@ -54,7 +54,6 @@
 #include "utils/syscache.h"
 #include "utils/rel.h"
 
-#include "catalog/pg_exttable.h"
 #include "catalog/pg_operator.h"
 #include "cdb/cdbvars.h"
 #include "utils/builtins.h"

@@ -31,7 +31,7 @@
 #include "gpopt/gpdbwrappers.h"
 #include "catalog/pg_collation.h"
 extern "C" {
-	#include "access/exttable_fdw_shim.h"
+	#include "access/external.h"
 	#include "nodes/nodeFuncs.h"
 	#include "optimizer/clauses.h"
 	#include "optimizer/optimizer.h"
@@ -2287,22 +2287,6 @@ gpdb::MutateQueryTree
 	return NULL;
 }
 
-List *
-gpdb::MutateRangeTable
-	(
-	List *rtable,
-	Node *(*mutator) (),
-	void *context,
-	int flags
-	)
-{
-	GP_WRAP_START;
-	{
-		return range_table_mutator(rtable, mutator, context, flags);
-	}
-	GP_WRAP_END;
-	return NIL;
-}
 #if 0
 bool
 gpdb::RelPartIsRoot
@@ -2556,8 +2540,8 @@ gpdb::CreateForeignScanForExternalTable
 {
 	GP_WRAP_START;
 	{
-		return create_foreignscan_for_external_table(rel_oid, scanrelid,
-							     qual, targetlist);
+		return BuildForeignScanForExternalTable(rel_oid, scanrelid,
+												qual, targetlist);
 	}
 	GP_WRAP_END;
 	return NULL;

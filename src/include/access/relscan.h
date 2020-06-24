@@ -176,44 +176,4 @@ typedef struct SysScanDescData
 	struct TupleTableSlot *slot;
 }			SysScanDescData;
 
-/*
- * used for scan of external relations with the file protocol
- */
-typedef struct FileScanDescData
-{
-	/* scan parameters */
-	Relation	fs_rd;			/* target relation descriptor */
-	struct URL_FILE *fs_file;	/* the file pointer to our URI */
-	char	   *fs_uri;			/* the URI string */
-	bool		fs_noop;		/* no op. this segdb has no file to scan */
-	uint32      fs_scancounter;	/* copied from struct ExternalScan in plan */
-	
-	/* current file parse state */
-	struct CopyStateData *fs_pstate;
-
-	AttrNumber	num_phys_attrs;
-	Datum	   *values;
-	bool	   *nulls;
-	FmgrInfo   *in_functions;
-	Oid		   *typioparams;
-	Oid			in_func_oid;
-	
-	/* current file scan state */
-	TupleDesc	fs_tupDesc;
-	HeapTupleData fs_ctup;		/* current tuple in scan, if any */
-
-	/* custom data formatter */
-	FmgrInfo   *fs_custom_formatter_func; /* function to convert to custom format */
-	List	   *fs_custom_formatter_params; /* list of defelems that hold user's format parameters */
-	FormatterData *fs_formatter;
-
-	/* CHECK constraints and partition check quals, if any */
-	bool		fs_hasConstraints;
-	struct ExprState **fs_constraintExprs;
-	bool		fs_isPartition;
-	struct ExprState *fs_partitionCheckExpr;
-}	FileScanDescData;
-
-typedef FileScanDescData *FileScanDesc;
-
 #endif							/* RELSCAN_H */

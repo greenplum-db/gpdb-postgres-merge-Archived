@@ -144,11 +144,16 @@ addLeafPartitionMCVsToHashTable (HTAB *datumHash, HeapTuple heaptupleStats,
 /*
  * Main function for aggregating leaf partition MCV/Freq to compute
  * root or interior partition MCV/Freq
+ *
  * Input:
  * 	- relationOid: Oid of root or interior partition
  * 	- attnum: column number
+ *  - numPartitions: # of elements in heaptupleStats and relTuples arrays
+ *  - heaptupleStats: pg_statistics tuples for each partition
+ *  - relTuples: number of tuples in each partition (pg_class.reltuples)
  * 	- nEntries: target number of MCVs/Freqs to be collected, the real number of
  * 	MCVs/Freqs returned may be less
+ *
  * Output:
  * 	- result: two dimensional arrays of MCVs and Freqs
  */
@@ -761,6 +766,8 @@ initDatumHeap(binaryheap *hp, AttStatsSlot * *histSlots, int *cursors, int nPart
  * Input:
  * 	- relationOid: Oid of root or interior partition
  * 	- attnum: column number
+ *  - nParts: # of elements in heaptupleStats and relTuples arrays
+ *  - heaptupleStats: pg_statistics tuples for each partition
  * 	- nEntries: target number of histogram bounds to be collected, the real number of
  * 	histogram bounds returned may be less
  * Output:
@@ -830,6 +837,7 @@ aggregate_leaf_partition_histograms(Oid relationOid,
 									void **result)
 {
 	AssertImply(rem_mcv != 0, mcvpairArray != NULL);
+	Assert(nParts > 0);
 
 	/* get type information */
 	TypInfo		typInfo;

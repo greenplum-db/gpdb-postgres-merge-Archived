@@ -84,7 +84,6 @@
 
 #include "access/aosegfiles.h"
 #include "access/appendonlywriter.h"
-#include "access/fileam.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/aoseg.h"
 #include "catalog/aoblkdir.h"

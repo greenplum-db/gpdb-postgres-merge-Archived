@@ -1,3 +1,4 @@
+set optimizer to off;
 CREATE TABLE brintest (byteacol bytea,
 	charcol "char",
 	namecol name,
@@ -515,3 +516,4 @@ EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;
  Optimizer: Postgres query optimizer
 (4 rows)
 
+reset optimizer;

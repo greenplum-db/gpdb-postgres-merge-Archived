@@ -76,8 +76,14 @@ set allow_system_table_mods to false;
 -- at here
 !\retcode gprecoverseg -a;
 
+-- loop while segments come in sync
+select wait_until_all_segments_synchronized();
+
 -- rebalance the cluster
 !\retcode gprecoverseg -ar;
+
+-- loop while segments come in sync
+select wait_until_all_segments_synchronized();
 
 -- recheck gp_segment_configuration after rebalance
 SELECT dbid, role, preferred_role, content, mode, status FROM gp_segment_configuration order by dbid;

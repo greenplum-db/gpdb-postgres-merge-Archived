@@ -21,7 +21,6 @@
 #include "nodes/primnodes.h"
 #include "catalog/gp_distribution_policy.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_exttable.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #if 0

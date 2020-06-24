@@ -21,7 +21,6 @@ from gppylib.db import dbconn
 from gppylib import gparray
 from gppylib.commands.base import *
 from unix import *
-import pg
 from gppylib import pgconf
 from gppylib.utils import writeLinesToFile, createFromSingleHostFile, shellEscape
 
@@ -1208,7 +1207,8 @@ class _GpExpandStatus(object):
         try:
             dburl = dbconn.DbURL(dbname=self.dbname)
             with dbconn.connect(dburl, encoding='UTF8') as conn:
-                status = dbconn.execSQLForSingleton(conn, sql)
+                status = dbconn.querySingleton(conn, sql)
+            conn.close()
         except Exception:
             # schema table not found
             return False
@@ -1234,8 +1234,9 @@ class _GpExpandStatus(object):
         try:
             dburl = dbconn.DbURL(dbname=self.dbname)
             with dbconn.connect(dburl, encoding='UTF8') as conn:
-                cursor = dbconn.execSQL(conn, sql)
+                cursor = dbconn.query(conn, sql)
                 rows = cursor.fetchall()
+            conn.close()
         except Exception:
             return False
 

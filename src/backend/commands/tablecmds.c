@@ -44,7 +44,6 @@
 #include "catalog/pg_compression.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
-#include "catalog/pg_exttable.h"
 #include "catalog/pg_foreign_table.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
@@ -125,6 +124,7 @@
 #include "access/appendonlywriter.h"
 #include "access/appendonly_compaction.h"
 #include "access/bitmap_private.h"
+#include "access/external.h"
 #include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
 #include "nodes/altertablenodes.h"
@@ -4805,6 +4805,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 											RelationGetRelationName(rel)),
 									 errhint("Distribution policy can be set for an entire partitioned table, not for one of its leaf parts or an interior branch.")));
 						}
+
+						if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
+							ldistro && ldistro->ptype == POLICYTYPE_REPLICATED)
+							ereport(ERROR,
+									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+									 errmsg("can't set the distribution policy of a partition table to REPLICATED")));
 
 						if (!recurse)
 						{

@@ -55,11 +55,11 @@ SERVER_SBIN=$(SERVER_SRC)/../sbin
 LIB_DIR=$(SRC)/lib
 PYLIB_DIR=$(SRC)/ext
 
-core: pygresql subprocess32
+core: subprocess32
 	python gpconfig_modules/parse_guc_metadata.py $(DESTDIR)$(prefix)
 
 ifneq "$(wildcard $(CURDIR)/pythonSrc/ext/*.tar.gz)" ""
-install: installdirs installprograms core lockfile psutil
+install: installdirs installprograms core psutil pygresql
 else
 install: installdirs installprograms core
 endif
@@ -71,54 +71,17 @@ endif
 #
 # PyGreSQL
 #
-PYGRESQL_VERSION=4.0
+PYGRESQL_VERSION=5.2
 PYGRESQL_DIR=PyGreSQL-$(PYGRESQL_VERSION)
-
 pygresql:
 	@echo "--- PyGreSQL"
-	if [ ! -f $(DESTDIR)$(prefix)/greenplum_path.sh ]; then \
-		unset LIBPATH; \
-		./generate-greenplum-path.sh $(prefix) > $(DESTDIR)$(prefix)/greenplum_path.sh ; \
-	fi
-	. $(DESTDIR)$(prefix)/greenplum_path.sh && \
-	if [ "$(BLD_ARCH)" = 'aix7_ppc_64' ]; then \
-	    unset PYTHONPATH && cd $(PYLIB_SRC)/$(PYGRESQL_DIR) && DESTDIR="$(DESTDIR)" CC="$(CC)" python_64 setup.py build; \
-	elif [ `uname -s` = 'OpenBSD' ]; then \
-	    cd $(PYLIB_SRC)/$(PYGRESQL_DIR) && DESTDIR="$(DESTDIR)" CC=cc python setup.py build; \
-	else \
-	    cd $(PYLIB_SRC)/$(PYGRESQL_DIR) && DESTDIR="$(DESTDIR)" env -u CC python setup.py build; \
-	fi
-	mkdir -p $(PYLIB_DIR)/pygresql
-	if [ `uname -s` = 'Darwin' ]; then \
-	  cp -r $(PYLIB_SRC)/$(PYGRESQL_DIR)/build/lib.macosx*/* $(PYLIB_DIR)/pygresql; \
-	elif [ `uname -s` = 'AIX' ]; then \
-	  cp -r $(PYLIB_SRC)/$(PYGRESQL_DIR)/build/lib.aix*/* $(PYLIB_DIR)/pygresql; \
-	elif [ `uname -s` = 'OpenBSD' ]; then \
-	  cp -r $(PYLIB_SRC)/$(PYGRESQL_DIR)/build/lib.openbsd*/* $(PYLIB_DIR)/pygresql; \
-	else \
-	  cp -r $(PYLIB_SRC)/$(PYGRESQL_DIR)/build/lib.linux*/* $(PYLIB_DIR)/pygresql; \
-	fi
-	touch $(PYLIB_DIR)/__init__.py
+	cd $(PYLIB_SRC_EXT)/ && $(TAR) xzf $(PYGRESQL_DIR).tar.gz
+	cd $(PYLIB_SRC_EXT)/$(PYGRESQL_DIR)/ && PATH=$(bindir):$$PATH python setup.py build
+	cp -r $(PYLIB_SRC_EXT)/$(PYGRESQL_DIR)/build/lib*/* $(PYLIB_DIR)/
 
 #
-# LOCKFILE
+# subprocess32
 #
-# note the awk commands are used to eliminate references to code in __init__.py
-# that we don't use and also to insert a comment to tell pylint not to complain
-# about these files since we are not in a position to correct those warnings.
-#
-LOCKFILE_VERSION=0.9.1
-LOCKFILE_DIR=lockfile-$(LOCKFILE_VERSION)
-LOCKFILE_SRC=$(PYLIB_SRC_EXT)/$(LOCKFILE_DIR)/build/lib*/lockfile
-LOCKFILE_DST=$(PYLIB_DIR)/lockfile
-lockfile:
-	@echo "--- lockfile"
-	cd $(PYLIB_SRC_EXT)/ && $(TAR) xzf $(LOCKFILE_DIR).tar.gz
-	cd $(PYLIB_SRC_EXT)/$(LOCKFILE_DIR)/ && python setup.py build
-	mkdir -p $(LOCKFILE_DST)
-	awk 'BEGIN{print "# pylint: disable-all"} /^if hasattr/ {exit} { print }' < `echo $(LOCKFILE_SRC)/__init__.py`    > $(LOCKFILE_DST)/__init__.py
-	awk 'BEGIN{print "# pylint: disable-all"} { print }'                      < `echo $(LOCKFILE_SRC)/pidlockfile.py` > $(LOCKFILE_DST)/pidlockfile.py
-
 subprocess32:
 	@echo "--- subprocess32, Linux only"
 	@if [ `uname -s` = 'Linux' ]; then \
@@ -130,7 +93,7 @@ subprocess32:
 #
 # PSUTIL
 #
-PSUTIL_VERSION=4.0.0
+PSUTIL_VERSION=5.7.0
 PSUTIL_DIR=psutil-$(PSUTIL_VERSION)
 
 psutil:

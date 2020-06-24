@@ -1089,8 +1089,6 @@ CREATE VIEW pg_resqueue_status AS
 			ON (s.queueid = q.oid);
 			
 -- External table views
-CREATE VIEW pg_exttable AS
-    SELECT * FROM pg_exttable();
 
 CREATE VIEW pg_max_external_files AS
     SELECT   address::name as hostname, count(*) as maxfiles
@@ -1749,3 +1747,10 @@ GRANT EXECUTE ON FUNCTION pg_ls_tmpdir(oid) TO pg_monitor;
 GRANT pg_read_all_settings TO pg_monitor;
 GRANT pg_read_all_stats TO pg_monitor;
 GRANT pg_stat_scan_tables TO pg_monitor;
+
+-- GPDB_12_MERGE_FIXME: This seems out of place..
+create or replace function brin_summarize_new_values(t regclass) returns bigint as
+$$
+select sum(t.n) from (select brin_summarize_new_values_internal(t) as n from gp_dist_random('gp_id')) t;
+$$
+LANGUAGE sql READS SQL DATA EXECUTE ON MASTER;

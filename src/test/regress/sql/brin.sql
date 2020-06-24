@@ -1,3 +1,5 @@
+set optimizer to off;
+
 CREATE TABLE brintest (byteacol bytea,
 	charcol "char",
 	namecol name,
@@ -465,3 +467,5 @@ VACUUM ANALYZE brin_test;
 EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE a = 1;
 -- Ensure brin index is not used when values are not correlated
 EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;
+
+reset optimizer;

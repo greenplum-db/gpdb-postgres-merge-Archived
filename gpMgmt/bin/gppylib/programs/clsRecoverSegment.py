@@ -21,7 +21,6 @@ from gppylib.mainUtils import *
 from optparse import OptionGroup
 import os, sys, signal, time
 
-from pygresql import pg
 
 from gppylib import gparray, gplog, userinput, utils
 from gppylib.util import gp_utils
@@ -113,9 +112,8 @@ class RemoteQueryCommand(Command):
             self.qname, self.query, self.hostname, self.port, self.dbname))
         with dbconn.connect(dbconn.DbURL(hostname=self.hostname, port=self.port, dbname=self.dbname),
                             utility=True) as conn:
-            res = dbconn.execSQL(conn, self.query)
-            self.res = res.fetchall()
-
+            self.res = dbconn.query(conn, self.query).fetchall()
+        conn.close()
 
 # -------------------------------------------------------------------------
 
@@ -552,7 +550,8 @@ class GpRecoverSegmentProgram:
     def _get_dblist(self):
         # template0 does not accept any connections so we exclude it
         with dbconn.connect(dbconn.DbURL()) as conn:
-            res = dbconn.execSQL(conn, "SELECT datname FROM PG_DATABASE WHERE datname != 'template0'")
+            res = dbconn.query(conn, "SELECT datname FROM PG_DATABASE WHERE datname != 'template0'")
+        conn.close()
         return res.fetchall()
 
     def run(self):
@@ -681,14 +680,14 @@ class GpRecoverSegmentProgram:
 
     def trigger_fts_probe(self, port=0):
         self.logger.info('Triggering FTS probe')
-        with dbconn.connect(dbconn.DbURL(port=port)) as conn:
-            db = pg.DB(conn)
+        conn = dbconn.connect(dbconn.DbURL(port=port))
 
-            # XXX Perform two probe scans in a row, to work around a known
-            # race where gp_request_fts_probe_scan() can return early during the
-            # first call. Remove this duplication once that race is fixed.
-            for _ in range(2):
-                db.query("SELECT gp_request_fts_probe_scan()")
+        # XXX Perform two probe scans in a row, to work around a known
+        # race where gp_request_fts_probe_scan() can return early during the
+        # first call. Remove this duplication once that race is fixed.
+        for _ in range(2):
+            dbconn.execSQL(conn,"SELECT gp_request_fts_probe_scan()")
+        conn.close()
 
     def validate_heap_checksum_consistency(self, gpArray, mirrorBuilder):
         live_segments = [target.getLiveSegment() for target in mirrorBuilder.getMirrorsToBuild()]
@@ -790,8 +789,8 @@ class GpRecoverSegmentProgram:
     def mainOptions():
         """
         The dictionary this method returns instructs the simple_main framework
-        to check for a gprecoverseg.pid file under MASTER_DATA_DIRECTORY to
+        to check for a gprecoverseg.lock file under MASTER_DATA_DIRECTORY to
         prevent the customer from trying to run more than one instance of
         gprecoverseg at the same time.
         """
-        return {'pidfilename': 'gprecoverseg.pid', 'parentpidvar': 'GPRECOVERPID'}
+        return {'pidlockpath': 'gprecoverseg.lock', 'parentpidvar': 'GPRECOVERPID'}

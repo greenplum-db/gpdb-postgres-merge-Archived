@@ -63,11 +63,11 @@
 #include "utils/snapmgr.h"
 
 #include "access/appendonlywriter.h"
-#include "access/fileam.h"
+#include "access/external.h"
+#include "access/url.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_extprotocol.h"
-#include "catalog/pg_exttable.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbconn.h"
@@ -1422,7 +1422,11 @@ ProcessCopyOptions(ParseState *pstate,
 	cstate->file_encoding = -1;
 
 	if (cstate->rel && rel_is_external_table(cstate->rel->rd_id))
+	{
+		is_copy = false;
+		num_columns = cstate->rel->rd_att->natts;
 		exttbl = GetExtTableEntry(cstate->rel->rd_id);
+	}
 
 	if (exttbl && exttbl->urilocations)
 	{
@@ -1636,7 +1640,7 @@ ProcessCopyOptions(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->fill_missing = intVal(defel->arg);
+			cstate->fill_missing = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "newline") == 0)
 		{
@@ -1991,7 +1995,6 @@ BeginCopy(ParseState *pstate,
 	CopyState	cstate;
 	int			num_phys_attrs;
 	MemoryContext oldcontext;
-	bool is_copy = true;
 	int num_columns = 0;
 
 	/* Allocate workspace and zero all fields */
@@ -2009,16 +2012,6 @@ BeginCopy(ParseState *pstate,
 
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
-	/*
-	 * Since external scan calls BeginCopyFrom to init CopyStateData.
-	 * Current relation may be an external relation.
-	 */
-	if (rel != NULL && rel_is_external_table(RelationGetRelid(rel)))
-	{
-		is_copy = false;
-		num_columns = rel->rd_att->natts;
-	}
-
 	/* Greenplum needs this to detect custom protocol */
 	if (rel)
 		cstate->rel = rel;
@@ -2026,7 +2019,7 @@ BeginCopy(ParseState *pstate,
 	/* Extract options from the statement node tree */
 	ProcessCopyOptions(pstate, cstate, is_from, options,
 					   num_columns, /* pass correct value when COPY supports no delim */
-					   is_copy);
+					   true);
 
 	/* Process the source/target relation or query */
 	if (rel)
@@ -2793,8 +2786,7 @@ BeginCopyToForeignTable(Relation forrel, List *options)
 {
 	CopyState	cstate;
 
-	Assert(rel_is_external_table(RelationGetRelid(forrel)) ||
-		   forrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE);
+	Assert(forrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE);
 
 	cstate = BeginCopy(NULL, false, forrel,
 					   NULL, /* raw_query */

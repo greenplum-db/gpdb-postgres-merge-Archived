@@ -572,6 +572,7 @@
 		"wal_writer_delay",
 		"wal_writer_flush_after",
 		"writable_external_table_bufsize",
+		"write_to_gpfdist_timeout",
 		"xid_stop_limit",
 		"xid_warn_limit",
 		"xmlbinary",

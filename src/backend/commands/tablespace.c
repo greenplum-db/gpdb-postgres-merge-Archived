@@ -1105,7 +1105,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 
 		/* remove empty directory */
 		if (rmdir(subfile) < 0)
-			ereport(redo ? LOG : ERROR,
+			ereport(redo ? LOG : WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
 							subfile)));
@@ -1118,7 +1118,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	/* remove version directory */
 	if (rmdir(linkloc_with_version_dir) < 0)
 	{
-		ereport(redo ? LOG : ERROR,
+		ereport(redo ? LOG : WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not remove directory \"%s\": %m",
 						linkloc_with_version_dir)));
@@ -1147,14 +1147,14 @@ remove_symlink:
 	rllen = readlink(linkloc, link_target_dir, sizeof(link_target_dir));
 	if(rllen < 0)
 	{
-		ereport(redo ? LOG : ERROR,
+		ereport(redo ? LOG : WARNING,
 				(errcode_for_file_access(),
 					errmsg("could not read symbolic link \"%s\": %m",
 						   linkloc)));
 	}
 	else if(rllen >= sizeof(link_target_dir))
 	{
-		ereport(redo ? LOG : ERROR,
+		ereport(redo ? LOG : WARNING,
 				(errcode_for_file_access(),
 					errmsg("symbolic link \"%s\" target is too long",
 						   linkloc)));
@@ -1162,11 +1162,21 @@ remove_symlink:
 	else
 	{
 		link_target_dir[rllen] = '\0';
-		if(directory_is_empty(link_target_dir) && rmdir(link_target_dir) < 0)
-			ereport(redo ? LOG : ERROR,
-				(errcode_for_file_access(),
-					errmsg("could not remove directory \"%s\": %m",
-						link_target_dir)));
+		if (access(link_target_dir, F_OK) != 0)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+							errmsg("could not open directory \"%s\": %m",
+								   link_target_dir)));
+		}
+		else
+		{
+			if(directory_is_empty(link_target_dir) && rmdir(link_target_dir) < 0)
+				ereport(redo ? LOG : WARNING,
+						(errcode_for_file_access(),
+								errmsg("could not remove directory \"%s\": %m",
+									   link_target_dir)));
+		}
 	}
 
 
@@ -1174,7 +1184,7 @@ remove_symlink:
 	{
 		int			saved_errno = errno;
 
-		ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
+		ereport(redo ? LOG : WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not stat file \"%s\": %m",
 						linkloc)));
@@ -1185,7 +1195,7 @@ remove_symlink:
 		{
 			int			saved_errno = errno;
 
-			ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
+			ereport(redo ? LOG : WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
 							linkloc)));
@@ -1198,7 +1208,7 @@ remove_symlink:
 		{
 			int			saved_errno = errno;
 
-			ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
+			ereport(redo ? LOG : WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
@@ -1208,7 +1218,7 @@ remove_symlink:
 	else
 	{
 		/* Refuse to remove anything that's not a directory or symlink */
-		ereport(redo ? LOG : ERROR,
+		ereport(redo ? LOG : WARNING,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("\"%s\" is not a directory or symbolic link",
 						linkloc)));

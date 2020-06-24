@@ -115,11 +115,25 @@ SET
 -- end_ignore
 (exited with code 0)
 
+-- loop while segments come in sync
+select wait_until_all_segments_synchronized();
+ wait_until_all_segments_synchronized 
+--------------------------------------
+ OK                                   
+(1 row)
+
 -- rebalance the cluster
 !\retcode gprecoverseg -ar;
 -- start_ignore
 -- end_ignore
 (exited with code 0)
+
+-- loop while segments come in sync
+select wait_until_all_segments_synchronized();
+ wait_until_all_segments_synchronized 
+--------------------------------------
+ OK                                   
+(1 row)
 
 -- recheck gp_segment_configuration after rebalance
 SELECT dbid, role, preferred_role, content, mode, status FROM gp_segment_configuration order by dbid;

@@ -1252,6 +1252,7 @@ aocs_fetch_init(Relation relation,
 	char	   *basePath = relpathbackend(relation->rd_node, relation->rd_backend, MAIN_FORKNUM);
 	TupleDesc	tupleDesc = RelationGetDescr(relation);
 	StdRdOptions **opts = RelationGetAttributeOptions(relation);
+	int			segno;
 
 	/*
 	 * increment relation ref count while scanning relation
@@ -1296,6 +1297,13 @@ aocs_fetch_init(Relation relation,
 
 	aocsFetchDesc->segmentFileInfo =
 		GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &aocsFetchDesc->totalSegfiles);
+
+	/* Init the biggest row number of each aoseg */
+	for (segno = 0; segno < AOTupleId_MultiplierSegmentFileNum; ++segno)
+	{
+		aocsFetchDesc->lastSequence[segno] =
+			ReadLastSequence(aocsFetchDesc->segrelid, segno);
+	}
 
 	AppendOnlyBlockDirectory_Init_forSearch(
 											&aocsFetchDesc->blockDirectory,
@@ -1391,6 +1399,16 @@ aocs_fetch(AOCSFetchDesc aocsFetchDesc,
 	bool		isSnapshotAny = (aocsFetchDesc->snapshot == SnapshotAny);
 
 	Assert(numCols > 0);
+
+	/*
+	 * if the rowNum is bigger than lastsequence, skip it.
+	 */
+	if (rowNum > aocsFetchDesc->lastSequence[segmentFileNum])
+	{
+		if (slot != NULL)
+			slot = ExecClearTuple(slot);
+		return false;
+	}
 
 	/*
 	 * Go through columns one by one. Check if the current block has the

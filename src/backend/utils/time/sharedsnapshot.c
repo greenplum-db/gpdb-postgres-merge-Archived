@@ -347,7 +347,7 @@ SharedSnapshotDump(void)
 
 		if (testSlot->slotid != -1)
 		{
-			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %d pid: %u)",
+			appendStringInfo(&str, "(SLOT index: %d slotid: %d QDxid: %u pid: %u)",
 							 testSlot->slotindex, testSlot->slotid, testSlot->distributedXid,
 							 testSlot->writer_proc ? testSlot->writer_proc->pid : 0);
 		}

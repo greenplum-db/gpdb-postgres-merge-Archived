@@ -18,6 +18,8 @@ from datetime import date
 import copy
 import traceback
 
+from contextlib import closing
+
 from gppylib.utils import checkNotNone, checkIsInt
 from gppylib    import gplog
 from gppylib.db import dbconn
@@ -758,12 +760,6 @@ def createSegmentRowsFromSegmentList( newHostlist
     return rows
 
 #========================================================================
-def parseTrueFalse(value):
-    if value.lower() == 'f':
-        return False
-    elif value.lower() == 't':
-        return True
-    raise Exception('Invalid true/false value')
 
 # TODO: Destroy this  (MPP-7686)
 #   Now that "hostname" is a distinct field in gp_segment_configuration
@@ -955,44 +951,42 @@ class GpArray:
         """
 
         hasMirrors = False
-        conn = dbconn.connect(dbURL, utility)
+        with closing(dbconn.connect(dbURL, utility)) as conn:
+            # Get the version from the database:
+            version_str = dbconn.querySingleton(conn, "SELECT version()")
+            version = GpVersion(version_str)
+            if not version.isVersionCurrentRelease():
+                raise Exception("Cannot connect to GPDB version %s from installed version %s"%(version.getVersionRelease(), MAIN_VERSION[0]))
 
-        # Get the version from the database:
-        version_str = None
-        for row in dbconn.execSQL(conn, "SELECT version()"):
-            version_str = row[0]
-        version = GpVersion(version_str)
-        if not version.isVersionCurrentRelease():
-            raise Exception("Cannot connect to GPDB version %s from installed version %s"%(version.getVersionRelease(), MAIN_VERSION[0]))
+            config_rows = dbconn.query(conn, '''
+            SELECT dbid, content, role, preferred_role, mode, status,
+            hostname, address, port, datadir
+            FROM pg_catalog.gp_segment_configuration
+            ORDER BY content, preferred_role DESC
+            ''')
 
-        config_rows = dbconn.execSQL(conn, '''
-        SELECT dbid, content, role, preferred_role, mode, status,
-        hostname, address, port, datadir
-        FROM pg_catalog.gp_segment_configuration
-        ORDER BY content, preferred_role DESC
-        ''')
+            recoveredSegmentDbids = []
+            segments = []
+            seg = None
+            for row in config_rows:
 
-        recoveredSegmentDbids = []
-        segments = []
-        seg = None
-        for row in config_rows:
+                # Extract fields from the row
+                (dbid, content, role, preferred_role, mode, status, hostname,
+                 address, port, datadir) = row
 
-            # Extract fields from the row
-            (dbid, content, role, preferred_role, mode, status, hostname,
-             address, port, datadir) = row
+                # Check if segment mirrors exist
+                if preferred_role == ROLE_MIRROR and content != -1:
+                    hasMirrors = True
 
-            # Check if segment mirrors exist
-            if preferred_role == ROLE_MIRROR and content != -1:
-                hasMirrors = True
+                # If we have segments which have recovered, record them.
+                if preferred_role != role and content >= 0:
+                    if mode == MODE_SYNCHRONIZED and status == STATUS_UP:
+                        recoveredSegmentDbids.append(dbid)
 
-            # If we have segments which have recovered, record them.
-            if preferred_role != role and content >= 0:
-                if mode == MODE_SYNCHRONIZED and status == STATUS_UP:
-                    recoveredSegmentDbids.append(dbid)
+                seg = Segment(content, preferred_role, dbid, role, mode, status,
+                                  hostname, address, port, datadir)
+                segments.append(seg)
 
-            seg = Segment(content, preferred_role, dbid, role, mode, status,
-                              hostname, address, port, datadir)
-            segments.append(seg)
 
         origSegments = [seg.copy() for seg in segments]
 
@@ -1433,22 +1427,21 @@ class GpArray:
                     if segPair.mirrorDB and segPair.mirrorDB.dbid in self.recoveredSegmentDbids:
                         recovered_contents.append((segPair.primaryDB.content, segPair.primaryDB.dbid, segPair.mirrorDB.dbid))
 
-        conn = dbconn.connect(dbURL, True, allowSystemTableMods = True)
-        for (content_id, primary_dbid, mirror_dbid) in recovered_contents:
-            sql = "UPDATE gp_segment_configuration SET role=preferred_role where content = %d" % content_id
-            dbconn.executeUpdateOrInsert(conn, sql, 2)
+        with dbconn.connect(dbURL, True, allowSystemTableMods = True) as conn:
+            for (content_id, primary_dbid, mirror_dbid) in recovered_contents:
+                sql = "UPDATE gp_segment_configuration SET role=preferred_role where content = %d" % content_id
+                dbconn.executeUpdateOrInsert(conn, sql, 2)
 
-            # NOTE: primary-dbid (right now) is the mirror.
-            sql = "INSERT INTO gp_configuration_history VALUES (now(), %d, 'Reassigned role for content %d to MIRROR')" % (primary_dbid, content_id)
-            dbconn.executeUpdateOrInsert(conn, sql, 1)
+                # NOTE: primary-dbid (right now) is the mirror.
+                sql = "INSERT INTO gp_configuration_history VALUES (now(), %d, 'Reassigned role for content %d to MIRROR')" % (primary_dbid, content_id)
+                dbconn.executeUpdateOrInsert(conn, sql, 1)
 
-            # NOTE: mirror-dbid (right now) is the primary.
-            sql = "INSERT INTO gp_configuration_history VALUES (now(), %d, 'Reassigned role for content %d to PRIMARY')" % (mirror_dbid, content_id)
-            dbconn.executeUpdateOrInsert(conn, sql, 1)
+                # NOTE: mirror-dbid (right now) is the primary.
+                sql = "INSERT INTO gp_configuration_history VALUES (now(), %d, 'Reassigned role for content %d to PRIMARY')" % (mirror_dbid, content_id)
+                dbconn.executeUpdateOrInsert(conn, sql, 1)
 
-            # We could attempt to update the segments-array.
-            # But the caller will re-read the configuration from the catalog.
-        dbconn.execSQL(conn, "COMMIT")
+                # We could attempt to update the segments-array.
+                # But the caller will re-read the configuration from the catalog.
         conn.close()
 
     # --------------------------------------------------------------------
@@ -1827,7 +1820,7 @@ def get_session_ids(master_port):
     """
     conn = dbconn.connect( dbconn.DbURL(port=master_port), utility=True )
     try:
-        rows = dbconn.execSQL(conn, "SELECT sess_id from pg_stat_activity where sess_id > 0;")
+        rows = dbconn.query(conn, "SELECT sess_id from pg_stat_activity where sess_id > 0;")
         ids  = set(row[0] for row in rows)
         return ids
     finally:

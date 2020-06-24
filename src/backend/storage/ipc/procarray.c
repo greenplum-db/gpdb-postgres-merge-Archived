@@ -514,8 +514,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 	Assert(pgxact->nxids == 0);
 	Assert(pgxact->overflowed == false);
 
-	proc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-
 	resetGxact();
 }
 

@@ -9,9 +9,8 @@ from gppylib.mainUtils import *
 from optparse import OptionGroup
 import sys
 import collections
+import pgdb
 from contextlib import closing
-
-from pygresql import pgdb
 
 from gppylib import gparray, gplog
 from gppylib.commands import base, gp
@@ -848,8 +847,8 @@ class GpSystemStateProgram:
 
         dbUrl = dbconn.DbURL(port=gpEnv.getMasterPort(), dbname='template1' )
         conn = dbconn.connect(dbUrl, utility=True)
-        initDbVersion = dbconn.execSQLForSingletonRow(conn, "select productversion from gp_version_at_initdb limit 1;")[0]
-        pgVersion = dbconn.execSQLForSingletonRow(conn, "show server_version;")[0]
+        initDbVersion = dbconn.queryRow(conn, "select productversion from gp_version_at_initdb limit 1;")[0]
+        pgVersion = dbconn.queryRow(conn, "show server_version;")[0]
         conn.close()
 
         try:
@@ -955,7 +954,7 @@ class GpSystemStateProgram:
             conn = dbconn.connect(url, utility=True)
 
             with closing(conn) as conn:
-                cursor = dbconn.execSQL(conn,
+                cursor = dbconn.query(conn,
                     "SELECT application_name, state, sent_location, "
                            "flush_location, "
                            "sent_location - flush_location AS flush_left, "
@@ -969,7 +968,7 @@ class GpSystemStateProgram:
                 cursor.close()
 
                 if mirror.isSegmentDown():
-                    cursor = dbconn.execSQL(conn,
+                    cursor = dbconn.query(conn,
                         "SELECT backend_start "
                         "FROM pg_stat_activity "
                         "WHERE application_name = '%s'" % gp.RECOVERY_REWIND_APPNAME
@@ -1281,7 +1280,7 @@ class GpSystemStateProgram:
         dbUrl = dbconn.DbURL(port=gpEnv.getMasterPort(), dbname='template1')
         conn = dbconn.connect(dbUrl, utility=True)
         sql = "SELECT state, sync_state, sent_location, flush_location, replay_location FROM pg_stat_replication"
-        cur = dbconn.execSQL(conn, sql)
+        cur = dbconn.query(conn, sql)
         if cur.rowcount == 1:
             row = cur.fetchall()[0]
             logger.info("-WAL Sender State: %s" % row[0])

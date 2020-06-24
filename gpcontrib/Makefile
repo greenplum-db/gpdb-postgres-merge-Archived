@@ -17,12 +17,14 @@ ifeq "$(enable_debug_extensions)" "yes"
                gp_distribution_policy \
                gp_internal_tools \
                gp_debug_numsegments \
-               gp_inject_fault
+               gp_inject_fault \
+               gp_exttable_fdw
                #gp_replica_check GPDB_12_MERGE_FIXME
 else
 	recurse_targets = gp_sparse_vector \
                gp_distribution_policy \
-               gp_internal_tools
+               gp_internal_tools \
+               gp_exttable_fdw
 endif
 
 ifeq "$(with_zstd)" "yes"

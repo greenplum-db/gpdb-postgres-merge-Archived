@@ -28,7 +28,8 @@ test: packcore
 # Tests on global deadlock detector
 test: gdd/prepare
 test: gdd/concurrent_update
-test: gdd/dist-deadlock-01 gdd/dist-deadlock-04 gdd/dist-deadlock-05 gdd/dist-deadlock-06 gdd/dist-deadlock-07 gdd/dist-deadlock-102 gdd/dist-deadlock-103 gdd/dist-deadlock-104 gdd/dist-deadlock-106 gdd/dist-deadlock-upsert gdd/non-lock-105
+test: gdd/dist-deadlock-01 gdd/dist-deadlock-04 gdd/dist-deadlock-05 gdd/dist-deadlock-06 gdd/dist-deadlock-07 gdd/dist-deadlock-102 gdd/dist-deadlock-103 gdd/dist-deadlock-104 gdd/dist-deadlock-106 gdd/non-lock-105
+test: gdd/dist-deadlock-upsert
 # until we can improve below flaky case please keep it disabled
 ignore: gdd/non-lock-107
 # keep this in a separate group
@@ -237,3 +238,5 @@ ignore: restore_memory_accounting_default
 test: setup_startup_memory_accounting
 test: oom_startup_memory
 test: restore_memory_accounting_default
+
+test: distributed_transactions
