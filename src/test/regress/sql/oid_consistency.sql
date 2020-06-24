@@ -191,7 +191,8 @@ select verify('constraint_t2');
 SELECT * FROM constraint_pt2 ORDER BY date, id;
 SELECT * FROM constraint_t2 ORDER BY date, id;
 
-CREATE TABLE constraint_t3 (id int, date date, amt decimal(10,2))
+CREATE TABLE constraint_t3 (id int, date date, amt decimal(10,2)
+       CONSTRAINT amt_check CHECK (amt > 0))
        WITH (appendonly=true, orientation=column) DISTRIBUTED BY (id);
 INSERT INTO constraint_t3 SELECT i, '2008-03-02', i FROM generate_series(11,15)i;
 

@@ -2431,6 +2431,49 @@ CREATE UNIQUE INDEX uidx_t_idx_col_contain_partkey on t_idx_col_contain_partkey(
 DROP INDEX uidx_t_idx_col_contain_partkey;
 DROP TABLE t_idx_col_contain_partkey;
 --
+-- Test EXCHANGE PARTITION, when the new table has different CHECK constraints
+--
+CREATE TABLE constraint_mismatch_tbl (
+    id int,
+    date date,
+    amt decimal(10,2)
+    CONSTRAINT amt_check CHECK (amt > 0)
+) DISTRIBUTED BY (id)
+PARTITION BY RANGE (date)
+   (PARTITION Jan08 START (date '2008-01-01'),
+    PARTITION Feb08 START (date '2008-02-01'),
+    PARTITION Mar08 START (date '2008-03-01') END (date '2008-04-01'));
+-- fail: new table doesn't have 'amt_check' constraint
+CREATE TABLE mismatch_exchange_tbl (
+    id int,
+    date date,
+    amt decimal(10,2)
+) DISTRIBUTED BY (id);
+INSERT INTO mismatch_exchange_tbl SELECT i, '2008-03-02', i FROM generate_series(11,15)i;
+ALTER TABLE constraint_mismatch_tbl EXCHANGE PARTITION mar08 WITH TABLE mismatch_exchange_tbl;
+ERROR:  child table is missing constraint "amt_check"
+-- fail: new table has a constraint called 'amt_check', but it's different from the parent's
+DROP TABLE mismatch_exchange_tbl;
+CREATE TABLE mismatch_exchange_tbl (
+    id int,
+    date date,
+    amt decimal(10,2)
+    CONSTRAINT amt_check CHECK (amt <> 0)
+) DISTRIBUTED BY (id);
+INSERT INTO mismatch_exchange_tbl SELECT i, '2008-03-02', i FROM generate_series(11,15)i;
+ALTER TABLE constraint_mismatch_tbl EXCHANGE PARTITION mar08 WITH TABLE mismatch_exchange_tbl;
+ERROR:  child table "mismatch_exchange_tbl" has different definition for check constraint "amt_check"
+-- success: new table has compatible 'amt_check' constraint
+DROP TABLE mismatch_exchange_tbl;
+CREATE TABLE mismatch_exchange_tbl (
+    id int,
+    date date,
+    amt decimal(10,2)
+    CONSTRAINT amt_check CHECK (amt > 0)
+) DISTRIBUTED BY (id);
+INSERT INTO mismatch_exchange_tbl SELECT i, '2008-03-02', i FROM generate_series(11,15)i;
+ALTER TABLE constraint_mismatch_tbl EXCHANGE PARTITION mar08 WITH TABLE mismatch_exchange_tbl;
+--
 -- END INCLUSIVE should work for CREATE, ADD PARTITION, and SPLIT PARTITION for
 -- the following data types. The INCLUSIVE END value will be converted to an
 -- EXCLUSIVE upper bound during transformation. If the INCLUSIVE END value is
