@@ -1555,7 +1555,8 @@ aoco_estimate_rel_size(Relation rel, int32 *attr_widths,
                              BlockNumber *pages, double *tuples,
                              double *allvisfrac)
 {
-	FileSegTotals	*fileSegTotals;
+	FileSegTotals  *fileSegTotals;
+	Snapshot		snapshot;
 
 	*pages = 1;
 	*tuples = 1;
@@ -1564,13 +1565,15 @@ aoco_estimate_rel_size(Relation rel, int32 *attr_widths,
 	if (Gp_role == GP_ROLE_DISPATCH)
 		return;
 
-	fileSegTotals = GetAOCSSSegFilesTotals(rel, NULL);
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	fileSegTotals = GetAOCSSSegFilesTotals(rel, snapshot);
 
 	*tuples = (double)fileSegTotals->totaltuples;
 
 	/* Quick exit if empty */
 	if (*tuples == 0)
 	{
+		UnregisterSnapshot(snapshot);
 		*pages = 0;
 		return;
 	}
@@ -1579,10 +1582,12 @@ aoco_estimate_rel_size(Relation rel, int32 *attr_widths,
 	*pages = RelationGuessNumberOfBlocksFromSize(
 					(uint64)fileSegTotals->totalbytesuncompressed);
 
+	UnregisterSnapshot(snapshot);
 	/*
 	 * GPDB_12_MERGE_FIXME: Do not bother scanning the visimap aux table.
 	 * Investigate if really needed
 	 */
+	return;
 }
 
 /* ------------------------------------------------------------------------

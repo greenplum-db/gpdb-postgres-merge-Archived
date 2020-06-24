@@ -484,7 +484,7 @@ GetAOCSSSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 		for (e = 0; e < nEntry; e++)
 		{
 			totals->totalbytes += vpinfo->entry[e].eof;
-			totals->totalbytesuncompressed = vpinfo->entry[e].eof_uncompressed;
+			totals->totalbytesuncompressed += vpinfo->entry[e].eof_uncompressed;
 		}
 		if (allseg[s]->state != AOSEG_STATE_AWAITING_DROP)
 		{
