@@ -6998,7 +6998,7 @@ getTables(Archive *fout, int *numTables)
 
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relstorage, "
+						  "'' AS relstorage, "
 						  "%s AS relacl, %s as rrelacl, "
 						  "%s AS initrelacl, %s as initrrelacl, "
 						  "c.relkind, c.relnamespace, "
@@ -7019,8 +7019,8 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-						  "p.parrelid as parrelid, "
-						  "pl.parlevel as parlevel, "
+						  "0 as parrelid, "
+						  "0 as parlevel, "
 						  "c.relkind = '%c' AND EXISTS (SELECT 1 FROM pg_depend WHERE classid = 'pg_class'::regclass AND objid = c.oid AND objsubid = 0 AND refclassid = 'pg_class'::regclass AND deptype = 'i') AS is_identity_sequence, "
 						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
@@ -7048,13 +7048,8 @@ getTables(Archive *fout, int *numTables)
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
 						  "AND pip.objsubid = 0) "
-						  "LEFT JOIN pg_partition_rule pr ON c.oid = pr.parchildrelid "
-						  "LEFT JOIN pg_partition p ON pr.paroid = p.oid "
-						  "LEFT JOIN pg_partition pl ON (c.oid = pl.parrelid AND pl.parlevel = 0)"
 						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c', '%c') "
 						  "AND c.relnamespace <> 7012 " /* BM_BITMAPINDEX_NAMESPACE */
-						  "AND c.oid NOT IN (SELECT p.parchildrelid FROM pg_partition_rule p LEFT "
-						  "JOIN pg_foreign_table e ON p.parchildrelid=e.ftrelid WHERE e.ftrelid IS NULL)"
 						  "ORDER BY c.oid",
 						  acl_subquery->data,
 						  racl_subquery->data,
@@ -12947,7 +12942,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "prokind, provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, "
 						  "prosupport, proparallel, "
+						  "prodataaccess, proexeclocation, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  ",(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
@@ -12966,7 +12963,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "prokind, provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, "
 						  "'-' AS prosupport, proparallel, "
+						  "prodataaccess, proexeclocation, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  ",(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
@@ -12988,7 +12987,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "'-' AS prosupport, proparallel, "
 						  "prodataaccess, proexeclocation, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
-						  "(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
+						  ",(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
