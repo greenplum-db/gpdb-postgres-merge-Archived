@@ -1584,6 +1584,12 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
+			case EEOP_PARTSELECTEDEXPR:
+				build_EvalXFunc(b, mod, "ExecEvalPartSelectedExpr",
+								v_state, v_econtext, op);
+				LLVMBuildBr(b, opblocks[i + 1]);
+				break;
+
 			case EEOP_ARRAYEXPR:
 				build_EvalXFunc(b, mod, "ExecEvalArrayExpr",
 								v_state, v_econtext, op);
@@ -1917,6 +1923,25 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
+			case EEOP_GROUP_ID:
+				{
+					AggState *aggstate = op->d.group_id.parent;
+					LLVMValueRef v_group_id_p;
+					LLVMValueRef v_group_id;
+
+					/* Copy aggstate->group_id to the result */
+					v_group_id_p = l_ptr_const(&aggstate->group_id,
+											  l_ptr(LLVMInt32Type()));
+					v_group_id = LLVMBuildLoad(b, v_group_id_p, "v_group_id");
+
+					/* and store result */
+					LLVMBuildStore(b, v_group_id, v_resvaluep);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
+
+					LLVMBuildBr(b, opblocks[i + 1]);
+					break;
+				}
+
 			case EEOP_GROUPING_SET_ID:
 				{
 					AggState *aggstate = op->d.grouping_set_id.parent;
@@ -1945,10 +1970,34 @@ llvm_compile_expr(ExprState *state)
 					/* Copy tsstate->currentExprId to the result */
 					v_currentExprId_p = l_ptr_const(&tsstate->currentExprId,
 											  l_ptr(LLVMInt32Type()));
-					v_currentExprId = LLVMBuildLoad(b, v_gset_id_p, "v_currentExprId");
+					v_currentExprId = LLVMBuildLoad(b, v_currentExprId_p, "v_currentExprId");
 
 					/* and store result */
 					LLVMBuildStore(b, v_currentExprId, v_resvaluep);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
+
+					LLVMBuildBr(b, opblocks[i + 1]);
+					break;
+				}
+
+			case EEOP_ROWIDEXPR:
+				{
+					int64		*rowcounter_p = &op->d.rowidexpr.rowcounter;
+					LLVMValueRef v_rowcounter_p;
+					LLVMValueRef v_rowcounter;
+					LLVMValueRef v_rowcounter_new;
+
+					/* Fetch and increment rowcounter */
+					v_rowcounter_p = l_ptr_const(rowcounter_p,
+												 l_ptr(LLVMInt64Type()));
+					v_rowcounter = LLVMBuildLoad(b, v_rowcounter_p, "v_rowcounter");
+					v_rowcounter_new = LLVMBuildAdd(b, v_rowcounter, l_int64_const(1), "v_rowcounter_new");
+
+					/* Store the new value back */
+					LLVMBuildStore(b, v_rowcounter_new, v_rowcounter_p);
+
+					/* and store result */
+					LLVMBuildStore(b, v_rowcounter_new, v_resvaluep);
 					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 
 					LLVMBuildBr(b, opblocks[i + 1]);
