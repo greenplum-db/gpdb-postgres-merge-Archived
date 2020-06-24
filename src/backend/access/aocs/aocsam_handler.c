@@ -940,6 +940,13 @@ static void
 aoco_vacuum_rel(Relation onerel, VacuumParams *params,
                       BufferAccessStrategy bstrategy)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME: This is a dummy function in order to proceed with
+	 * the implementation of the aocsam_handler.
+	 *
+	 * It's not invoked ever, we do the AO different phases vacuuming in
+	 * vacuum_rel() directly for now.
+	 */
 	elog(ERROR, "not implemented yet");
 }
 

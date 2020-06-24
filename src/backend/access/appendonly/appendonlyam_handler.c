@@ -949,10 +949,14 @@ appendonly_vacuum_rel(Relation onerel, VacuumParams *params,
 					  BufferAccessStrategy bstrategy)
 {
 	/*
-	 * GPDB_12_MERGE_FIXME: This is a dummy function in order to proceed with the
-	 * implementation of the appendonlyam_handler.
-	 * A snipped implementation exists in appendonly_vacuum.c which would need to
-	 * get revived here.
+	 * GPDB_12_MERGE_FIXME: This is a dummy function in order to proceed with
+	 * the implementation of the appendonlyam_handler.
+	 *
+	 * It's not invoked ever, we do the AO different phases vacuuming in
+	 * vacuum_rel() directly for now.
+	 *
+	 * A snipped implementation exists in appendonly_vacuum.c which would need
+	 * to get revived here.
 	 */
 	return;
 }

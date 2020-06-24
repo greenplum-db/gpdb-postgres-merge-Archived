@@ -1,6 +1,8 @@
-// GPDB_12_MERGE_FIXME This file contains snippets of code that used to be in
-// src/backend/commands/vacuum.c. AO vacuum needs to be re-implemented using
-// the new table AM.
+/*
+ * GPDB_12_MERGE_FIXME This file is not compiled, it contains snippets of code
+ * that used to be in src/backend/commands/vacuum.c. AO vacuum needs to be
+ * re-implemented using the new table AM.
+ */
 
 typedef struct VacuumStatsContext
 {
@@ -18,16 +20,6 @@ typedef struct AppendOnlyIndexVacuumState
 	AppendOnlyBlockDirectory blockDirectory;
 	AppendOnlyBlockDirectoryEntry blockDirectoryEntry;
 } AppendOnlyIndexVacuumState;
-
-
-
-
-
-
-
-
-
-
 
 /*
  *	appendonly_vacuum_rel() -- perform VACUUM for one appendonly relation
@@ -434,17 +426,6 @@ lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_p
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
 /*
  * Assigns the compaction segment information.
  *
@@ -516,9 +497,6 @@ vacuum_assign_compaction_segno(Relation onerel,
 		return false;
 	}
 }
-
-
-
 
 /*
  * Processing of the vacuumStatement for given relid.
@@ -646,7 +624,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 	}
 
 
-		 * We allow the user to vacuum a table if he is superuser, the table
+	/*
+	 * We allow the user to vacuum a table if he is superuser, the table
 	 * owner, or the database owner (but in the latter case, only if it's not
 	 * a shared relation).	pg_class_ownercheck includes the superuser case.
 	 *
@@ -1892,10 +1871,6 @@ lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_p
 							 0 /* num_dead_tuples */);
 	}
 }
-
-
-
-
 
 /*
  * Fills in the relation statistics for an append-only relation.
