@@ -2301,6 +2301,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_1_prt_new_p_2_prt_sp1_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_1_prt_new_p_2_prt_sp1_a9_idx" btree (a9)
 Distributed randomly
+Access method: aoco
 Options: compresstype=zlib, compresslevel=1
 
 alter table ao_wt_sub_partzlib8192_5 add default partition df_p ;
@@ -2362,6 +2363,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_1_prt_df_p_2_prt_sp2_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_1_prt_df_p_2_prt_sp2_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 -- Insert data 
@@ -2695,6 +2697,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_2_1_prt_new_p_2_prt_3_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_2_1_prt_new_p_2_prt_3_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 alter table ao_wt_sub_partzlib8192_5_2 add default partition df_p ;
@@ -2756,6 +2759,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_2_1_prt_df_p_2_prt_2_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_2_1_prt_df_p_2_prt_2_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 -- Insert data 
@@ -2894,6 +2898,7 @@ Indexes:
     "ao_wt_sub_partzlib8192_5_2_1_prt_p2_2_prt_splita_a1_idx" bitmap (a1)
     "ao_wt_sub_partzlib8192_5_2_1_prt_p2_2_prt_splita_a9_idx" btree (a9)
 Distributed randomly
+Access method: appendoptimized
 Options: compresstype=zlib, compresslevel=5, blocksize=8192
 
 Select count(*) from ao_wt_sub_partzlib8192_5_2; 
