@@ -413,9 +413,7 @@ SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
  brin_summarize_new_values 
 ---------------------------
                          0
-                         0
-                         0
-(3 rows)
+(1 row)
 
 -- Tests for brin_desummarize_range
 SELECT brin_desummarize_range('brinidx', -1); -- error, invalid range

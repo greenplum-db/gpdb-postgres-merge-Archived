@@ -1749,8 +1749,11 @@ GRANT pg_read_all_stats TO pg_monitor;
 GRANT pg_stat_scan_tables TO pg_monitor;
 
 -- GPDB_12_MERGE_FIXME: This seems out of place..
+-- GPDB_12_MERGE_FIXME: Shouldn't we have a wrapper like this for
+-- brin_summarize_range(), too?
 create or replace function brin_summarize_new_values(t regclass) returns bigint as
 $$
-select sum(t.n) from (select brin_summarize_new_values_internal(t) as n from gp_dist_random('gp_id')) t;
+  -- brin_summarize_new_values_internal is marked as EXECUTE ON ALL SEGMENTS.
+  select sum(n) from brin_summarize_new_values_internal(t) as n;
 $$
 LANGUAGE sql READS SQL DATA EXECUTE ON MASTER;
