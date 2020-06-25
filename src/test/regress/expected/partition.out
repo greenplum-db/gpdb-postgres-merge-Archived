@@ -3407,18 +3407,15 @@ select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relnam
 
 -- should fail (overlap)
 ALTER TABLE mpp6589i ADD PARTITION start (2);
-ERROR:  new partition overlaps existing partition
--- should fail (overlap) (not a real overlap, but a "point" hole)
+ERROR:  partition "mpp6589i_1_prt_11" would overlap partition "mpp6589i_1_prt_1"
+-- should work (there's a "point" hole at value 2)
 ALTER TABLE mpp6589i ADD PARTITION start (3) exclusive;
-ERROR:  new partition overlaps existing partition
--- should work - make sure can add an open-ended final partition
-ALTER TABLE mpp6589i ADD PARTITION start (3);
 select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589i%';
       relname      |            pg_get_expr            
 -------------------+-----------------------------------
  mpp6589i          | 
  mpp6589i_1_prt_1  | FOR VALUES FROM (1) TO (3)
- mpp6589i_1_prt_11 | FOR VALUES FROM (3) TO (MAXVALUE)
+ mpp6589i_1_prt_11 | FOR VALUES FROM (4) TO (MAXVALUE)
 (3 rows)
 
 -- test open-ended SPLIT

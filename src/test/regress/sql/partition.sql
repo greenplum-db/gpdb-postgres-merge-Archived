@@ -2392,11 +2392,8 @@ select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relnam
 
 -- should fail (overlap)
 ALTER TABLE mpp6589i ADD PARTITION start (2);
--- should fail (overlap) (not a real overlap, but a "point" hole)
+-- should work (there's a "point" hole at value 2)
 ALTER TABLE mpp6589i ADD PARTITION start (3) exclusive;
-
--- should work - make sure can add an open-ended final partition
-ALTER TABLE mpp6589i ADD PARTITION start (3);
 select relname, pg_get_expr(relpartbound, oid, false) from pg_class where relname like 'mpp6589i%';
 
 -- test open-ended SPLIT
