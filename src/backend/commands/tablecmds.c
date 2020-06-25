@@ -863,6 +863,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	else
 		policy = getPolicyForDistributedBy(stmt->distributedBy, descriptor);
 
+	if (partitioned && GpPolicyIsReplicated(policy))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("PARTITION BY clause cannot be used with DISTRIBUTED REPLICATED clause")));
+
 	/*
 	 * Find columns with default values and prepare for insertion of the
 	 * defaults.  Pre-cooked (that is, inherited) defaults go into a list of

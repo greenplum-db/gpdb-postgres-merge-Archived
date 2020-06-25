@@ -418,13 +418,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 														 likeDistributedBy, bQuiet);
 	}
 
-	if (stmt->partitionBy != NULL &&
-		stmt->distributedBy &&
-		stmt->distributedBy->ptype == POLICYTYPE_REPLICATED)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("PARTITION BY clause cannot be used with DISTRIBUTED REPLICATED clause")));
-
 	/*
 	 * Save the alist for root partitions before transformPartitionBy adds the
 	 * child create statements.
