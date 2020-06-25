@@ -509,13 +509,7 @@ create table foo_p (i int) partition by range (i)
  partition p4 start('5981976') end('5994376') inclusive,
  partition p5 end('6000001')
 );
-
-select parname, parruleord, pg_get_expr(parrangestart, parchildrelid, false) as
- start, pg_get_expr(parrangeend, parchildrelid, false) as end,
- pg_get_expr(parlistvalues, parchildrelid, false) as list from 
- pg_partition_rule
- r, pg_partition p where r.paroid = p.oid and p.parlevel = 0 and 
- p.parrelid = 'foo_p'::regclass order by 1;
+\d+ foo_p
 
 insert into foo_p values(5994400);
 insert into foo_p values(1);
@@ -528,12 +522,7 @@ partition by range(i)
 (partition p1 start(1) end(5),
  partition p2 start(10),
  partition p3 end(10) exclusive);
-select parname, parruleord, pg_get_expr(parrangestart, parchildrelid, false) as
- start, pg_get_expr(parrangeend, parchildrelid, false) as end,
-  pg_get_expr(parlistvalues, parchildrelid, false) as list from
-   pg_partition_rule
-    r, pg_partition p where r.paroid = p.oid and p.parlevel = 0 and
-	 p.parrelid = 'foo_p'::regclass order by 1;
+\d+ foo_p
 
 drop table foo_p;
 create table foo_p (i int) 
@@ -541,14 +530,7 @@ partition by range(i)
 (partition p1 start(1) end(5),
  partition p2 start(10) exclusive,
  partition p3 end(10) inclusive);
-select parname, parruleord, pg_get_expr(parrangestart, parchildrelid, false) as
- start, parrangestartincl,
- pg_get_expr(parrangeend, parchildrelid, false) as end,
- parrangeendincl,
-  pg_get_expr(parlistvalues, parchildrelid, false) as list from
-   pg_partition_rule
-    r, pg_partition p where r.paroid = p.oid and p.parlevel = 0 and
-	 p.parrelid = 'foo_p'::regclass order by 1;
+\d+ foo_p
 
 insert into foo_p values(1), (5), (10);
 drop table foo_p;
@@ -669,14 +651,7 @@ copy partlineitem from stdin with delimiter '|';
 18182|5794|3295|4|9|15298.11|0.04|0.01|N|O|1995-07-04|1995-05-30|1995-08-03|DELIVER IN PERSON|RAIL|y special platelets
 \.
 
-select parname, parruleord, pg_get_expr(parrangestart, parchildrelid, false) as
- start, parrangestartincl,
- pg_get_expr(parrangeend, parchildrelid, false) as end,
- parrangeendincl,
-  pg_get_expr(parlistvalues, parchildrelid, false) as list from
-   pg_partition_rule
-    r, pg_partition p where r.paroid = p.oid and p.parlevel = 0 and
-	 p.parrelid = 'partlineitem'::regclass order by 1;
+\d+ partlineitem
 
 drop table partlineitem;
 
