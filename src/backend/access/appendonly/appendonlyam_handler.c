@@ -358,33 +358,13 @@ get_delete_descriptor(const Relation relation, bool forUpdate)
  * ------------------------------------------------------------------------
  */
 
-static Datum
-tts_aovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
-{
-	Datum result;
-
-	if (attnum == GpSegmentIdAttributeNumber)
-	{
-		*isnull = false;
-		result = Int32GetDatum(GpIdentity.segindex);
-	}
-	else
-		result = TTSOpsVirtual.getsysattr(slot, attnum, isnull);
-
-	return result;
-}
-
 /*
- * Appendonly access method uses virtual tuples with some minor modifications.
+ * Appendonly access method uses virtual tuples
  */
 static const TupleTableSlotOps *
 appendonly_slot_callbacks(Relation relation)
 {
-	TupleTableSlotOps *aoSlotOps = palloc(sizeof(TupleTableSlotOps));
-
-	*aoSlotOps = TTSOpsVirtual;
-	aoSlotOps->getsysattr = tts_aovirtual_getsysattr;
-	return (const TupleTableSlotOps*) aoSlotOps;
+	return &TTSOpsVirtual;
 }
 
 MemTuple

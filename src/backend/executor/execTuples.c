@@ -68,6 +68,7 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
+#include "cdb/cdbvars.h"
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 										bool skipjunk);
@@ -135,6 +136,18 @@ tts_virtual_getsomeattrs(TupleTableSlot *slot, int natts)
 static Datum
 tts_virtual_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
+	/*
+	 * GPDB: AppendOptimized relations do need to get sysattrs AND use virtual
+	 * tuples to pass around data. It is assumed that the caller knows what is
+	 * doing, if the attribute is gp_segment_id. Otherwise, error out.
+	 */
+	if (attnum == GpSegmentIdAttributeNumber)
+	{
+		*isnull = false;
+
+		return Int32GetDatum(GpIdentity.segindex);
+	}
+
 	elog(ERROR, "virtual tuple table slot does not have system attributes");
 
 	return 0;					/* silence compiler warnings */

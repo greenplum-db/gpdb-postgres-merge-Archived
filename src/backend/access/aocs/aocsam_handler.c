@@ -329,43 +329,13 @@ get_delete_descriptor(const Relation relation, bool forUpdate)
 	return state->deleteDesc;
 }
 
-static Datum
-tts_aocovirtual_getsysattr (TupleTableSlot *slot, int attnum, bool *isnull)
-{
-	Datum result;
-
-	if (attnum == GpSegmentIdAttributeNumber)
-	{
-		*isnull = false;
-		result = Int32GetDatum(GpIdentity.segindex);
-	}
-	else
-		result = TTSOpsVirtual.getsysattr(slot, attnum, isnull);
-
-	return result;
-}
-
-/* tuple deform callback, for aoco, it is always a virtual tuple
- * just keep a dummy callback
- */
-static void
-tts_aocovirtual_getsomeattrs(TupleTableSlot *slot, int natts)
-{
-}
-
 /*
- * AOCO access method uses virtual tuples with some minor modifications.
+ * AOCO access method uses virtual tuples
  */
 static const TupleTableSlotOps *
 aoco_slot_callbacks(Relation relation)
 {
-	TupleTableSlotOps *aoSlotOps = palloc(sizeof(TupleTableSlotOps));
-
-	*aoSlotOps = TTSOpsVirtual;
-	aoSlotOps->getsysattr = tts_aocovirtual_getsysattr;
-	aoSlotOps->getsomeattrs = tts_aocovirtual_getsomeattrs;
-
-	return (const TupleTableSlotOps*) aoSlotOps;
+	return &TTSOpsVirtual;
 }
 
 static TableScanDesc
