@@ -5950,8 +5950,8 @@ SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_decimal ORDER BY 1,2,3
 
 
 -- TEST
-DROP TABLE IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4;
-CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4
+DROP TABLE IF EXISTS mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml;
+CREATE TABLE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml
 (
     col1 int4,
     col2 int4,
@@ -5961,45 +5961,45 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(100000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(100000001) end(200000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(200000001) end(300000001));
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 VALUES(20000000,20000000,'a',0);
+INSERT INTO mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml VALUES(20000000,20000000,'a',0);
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 DROP COLUMN col4;
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 VALUES(20000000,20000000,'b');
+ALTER TABLE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml DROP COLUMN col4;
+INSERT INTO mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml VALUES(20000000,20000000,'b');
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD COLUMN col5 int4 DEFAULT 20000000;
+ALTER TABLE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ADD COLUMN col5 int4 DEFAULT 20000000;
 
-DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int4;
-CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int4 on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4(col5);
+DROP INDEX IF EXISTS mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml_idx;
+CREATE INDEX mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml_idx on mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml(col5);
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SELECT 20000000,20000000,'c',20000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+INSERT INTO mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml SELECT 20000000,20000000,'c',20000000;
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SET col5 = 10000000 WHERE col2 = 20000000 AND col1 = 20000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+UPDATE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml SET col5 = 10000000 WHERE col2 = 20000000 AND col1 = 20000000;
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 WHERE col5 = 10000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+DELETE FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml WHERE col5 = 10000000;
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD PARTITION partfour start(300000001) end(400000001);
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ADD DEFAULT partition def;
+ALTER TABLE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ADD PARTITION partfour start(300000001) end(400000001);
+ALTER TABLE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ADD DEFAULT partition def;
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SELECT 350000000,350000000,'d',350000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+INSERT INTO mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml SELECT 350000000,350000000,'d',350000000;
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SET col5 = 10000000 WHERE col2 = 350000000 AND col3 ='d';
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+UPDATE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml SET col5 = 10000000 WHERE col2 = 350000000 AND col3 ='d';
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
 -- Update partition key
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 SET col2 = 10000000 WHERE col2 = 350000000 AND col3 ='d';
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+UPDATE mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml SET col2 = 10000000 WHERE col2 = 350000000 AND col3 ='d';
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 WHERE col5 = 10000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int4 ORDER BY 1,2,3;
+DELETE FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml WHERE col5 = 10000000;
+SELECT * FROM mpp21090_int4_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
 
 -- TEST
-DROP TABLE IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8;
-CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8
+DROP TABLE IF EXISTS mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml;
+CREATE TABLE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml
 (
     col1 int8,
     col2 int8,
@@ -6009,40 +6009,40 @@ CREATE TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8
 DISTRIBUTED by (col1)
 PARTITION BY RANGE(col2)(partition partone start(1) end(1000000000000000001)  WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=column),partition parttwo start(1000000000000000001) end(2000000000000000001) WITH (APPENDONLY=true, COMPRESSLEVEL=5, ORIENTATION=row),partition partthree start(2000000000000000001) end(3000000000000000001));
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'a',0);
+INSERT INTO mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml VALUES(200000000000000000,200000000000000000,'a',0);
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 DROP COLUMN col4;
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 VALUES(200000000000000000,200000000000000000,'b');
+ALTER TABLE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml DROP COLUMN col4;
+INSERT INTO mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml VALUES(200000000000000000,200000000000000000,'b');
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD COLUMN col5 int8 DEFAULT 200000000000000000;
+ALTER TABLE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ADD COLUMN col5 int8 DEFAULT 200000000000000000;
 
-DROP INDEX IF EXISTS mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int8;
-CREATE INDEX mpp21090_pttab_dropcol_addcol_addpt_idx_dml_idx_int8 on mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8(col5);
+DROP INDEX IF EXISTS mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml_idx;
+CREATE INDEX mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml_idx on mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml(col5);
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SELECT 200000000000000000,200000000000000000,'c',200000000000000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+INSERT INTO mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml SELECT 200000000000000000,200000000000000000,'c',200000000000000000;
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SET col5 = 1000000000000000000 WHERE col2 = 200000000000000000 AND col1 = 200000000000000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+UPDATE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml SET col5 = 1000000000000000000 WHERE col2 = 200000000000000000 AND col1 = 200000000000000000;
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 WHERE col5 = 1000000000000000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+DELETE FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml WHERE col5 = 1000000000000000000;
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
-ALTER TABLE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ADD DEFAULT partition def;
+ALTER TABLE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ADD PARTITION partfour start(3000000000000000001) end(4000000000000000001);
+ALTER TABLE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ADD DEFAULT partition def;
 
-INSERT INTO mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SELECT 3500000000000000000,3500000000000000000,'d',3500000000000000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+INSERT INTO mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml SELECT 3500000000000000000,3500000000000000000,'d',3500000000000000000;
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SET col5 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+UPDATE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml SET col5 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
 -- Update partition key
-UPDATE mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+UPDATE mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml SET col2 = 1000000000000000000 WHERE col2 = 3500000000000000000 AND col3 ='d';
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
-DELETE FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 WHERE col5 = 1000000000000000000;
-SELECT * FROM mpp21090_pttab_dropcol_addcol_addpt_idx_dml_int8 ORDER BY 1,2,3;
+DELETE FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml WHERE col5 = 1000000000000000000;
+SELECT * FROM mpp21090_int8_pttab_dropcol_addcol_addpt_idx_dml ORDER BY 1,2,3;
 
 
 -- TEST

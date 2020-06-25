@@ -1729,3 +1729,36 @@ ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl 
 ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl WITHOUT VALIDATION;
 DROP TABLE exchange_tbl;
 DROP TABLE validation_syntax_tbl;
+
+
+--
+-- Test a case where the automatically created partition name clashes with
+-- another table or partition.
+-- Before GDPB 7, the automatic table name generation used check if the name is
+-- in use, and pick another name to avoid the clash. It's not as smart anymore.
+-- It's more tricky now, because e.g. the ALTER TABLE ALTER/DROP/ADD PARTITION
+-- commands rely on the deterministic naming of the partitions. If a user runs
+-- into this, the work around is to use different table/partition names, or
+-- use the upstream syntax and name each partition explicitly.
+--
+CREATE TABLE partitioned_table_with_very_long_name_123456789x
+(
+    col1 int4,
+    col2 int4
+)
+DISTRIBUTED by (col1)
+PARTITION BY RANGE(col2)
+  (partition partone start(1) end(100000001),
+   partition parttwo start(100000001) end(200000001),
+   partition partthree start(200000001) end(300000001));
+
+CREATE TABLE partitioned_table_with_very_long_name_123456789y
+(
+    col1 int4,
+    col2 int4
+)
+DISTRIBUTED by (col1)
+PARTITION BY RANGE(col2)
+  (partition partone start(1) end(100000001),
+   partition parttwo start(100000001) end(200000001),
+   partition partthree start(200000001) end(300000001));
