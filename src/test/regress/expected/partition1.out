@@ -80,8 +80,6 @@ partition aa start (2007,1) end (2008,2),
 partition bb start (2008,2) end (2009,3)
 );
 ERROR:  too many columns for RANGE partition -- only one column is allowed
-LINE 3: partition by range (b,d)
-                     ^
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 -- Mismatch between number of columns in PARTITION BY and in the START/END clauses
@@ -279,9 +277,7 @@ partition by list (gender)
   partition girls values ('e'),
   partition bob values ('M')
 );
-ERROR:  duplicate partition name for partition "girls"
-LINE 7:   partition girls values ('b'),
-          ^
+ERROR:  relation "rank_1_prt_girls" already exists
 -- duplicate values
 CREATE TABLE rank (id int, rank int, year date, gender
 char(1)) DISTRIBUTED BY (id, gender, year)
@@ -315,9 +311,7 @@ partition by range (b)
 partition aa start (date '2007-01-01') end (date '2008-01-01') inclusive,
 partition bb start (date '2008-01-01') end (date '2009-01-01')
 every (interval '10 days'));
-ERROR:  starting value of partition "bb_1" overlaps previous range
-LINE 6: partition bb start (date '2008-01-01') end (date '2009-01-01...
-                     ^
+ERROR:  partition "ggg_1_prt_bb_1" would overlap partition "ggg_1_prt_aa"
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 -- legal because start of bb not inclusive
@@ -346,9 +340,7 @@ partition by range (b)
 partition bb start (date '2008-01-01') end (date '2009-01-01'),
 partition aa start (date '2007-01-01') end (date '2008-01-01') inclusive
 );
-ERROR:  starting value of partition "bb" overlaps previous range
-LINE 5: partition bb start (date '2008-01-01') end (date '2009-01-01...
-                     ^
+ERROR:  partition "ggg_1_prt_bb" would overlap partition "ggg_1_prt_aa"
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 -- legal because start of bb not inclusive
@@ -533,8 +525,6 @@ partition aa start (2007,1) end (2008,2),
 partition bb start (2008,2) end (2009,3)
 );
 ERROR:  too many columns for RANGE partition -- only one column is allowed
-LINE 3: partition by range (b,d)
-                     ^
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 create table ggg (a char(1), b date, d char(3))
@@ -710,8 +700,8 @@ partition bb start (date '2008-01-01') end (date '2009-01-01')
     with (appendonly=false)
 );
 -- already exists
-alter table hhh add partition aa;
-ERROR:  partition "aa" of relation "hhh" already exists
+alter table hhh add partition aa start ('2010-01-01') end ('2011-01-01');
+ERROR:  relation "hhh_1_prt_aa" already exists
 -- no partition spec
 alter table hhh add partition cc;
 ERROR:  missing boundary specification in partition "cc" of type RANGE
@@ -815,9 +805,9 @@ alter table hhh alter partition aa set tablespace foo_p;
 ERROR:  tablespace "foo_p" does not exist
 alter table hhh drop partition cc;
 alter table hhh drop partition cc cascade;
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh drop partition cc restrict;
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh drop partition if exists cc;
 NOTICE:  partition "cc" of relation "hhh" does not exist, skipping
 -- fail (mpp-3265)
@@ -871,28 +861,28 @@ alter table hhh_r1 add partition bb start ('2008-01-01')
 end ('2008-02-01') inclusive;
 -- start > last (fail because start == last end inclusive)
 alter table hhh_r1 add partition cc start ('2008-02-01') end ('2008-03-01') ;
-ERROR:  new partition overlaps existing partition "bb"
+ERROR:  partition "hhh_r1_1_prt_cc" would overlap partition "hhh_r1_1_prt_bb"
 -- start > last (ok [and leave a gap])
 alter table hhh_r1 add partition cc start ('2008-04-01') end ('2008-05-01') ;
 -- overlap (fail)
 alter table hhh_r1 add partition dd start ('2008-01-01') end ('2008-05-01') ;
-ERROR:  partition "hhh_r1_1_prt_dd" would overlap partition "hhh_r1_1_prt_cc"
+ERROR:  partition "hhh_r1_1_prt_dd" would overlap partition "hhh_r1_1_prt_bb"
 -- new partition in "gap" (ok)
 alter table hhh_r1 add partition dd start ('2008-03-01') end ('2008-04-01') ;
 -- overlap all partitions (fail)
 alter table hhh_r1 add partition ee start ('2006-01-01') end ('2009-01-01') ;
-ERROR:  new partition overlaps existing partition
+ERROR:  partition "hhh_r1_1_prt_ee" would overlap partition "hhh_r1_1_prt_zaa"
 -- start before first partition (fail because end in "gap" [and overlaps])
 alter table hhh_r1 add partition yaa start ('2007-05-01') end ('2007-07-01');
-ERROR:  new partition overlaps existing partition "aa_7"
+ERROR:  partition "hhh_r1_1_prt_yaa" would overlap partition "hhh_r1_1_prt_zaa"
 -- start before first partition (fail )
 alter table hhh_r1 add partition yaa start ('2007-05-01')
 end ('2007-10-01') inclusive;
-ERROR:  new partition overlaps existing partition "aa_10"
+ERROR:  partition "hhh_r1_1_prt_yaa" would overlap partition "hhh_r1_1_prt_zaa"
 -- start before first partition (fail because end overlaps)
 alter table hhh_r1 add partition yaa start ('2007-05-01')
 end ('2007-10-01') exclusive;
-ERROR:  new partition overlaps existing partition "aa_10"
+ERROR:  partition "hhh_r1_1_prt_yaa" would overlap partition "hhh_r1_1_prt_zaa"
 drop table hhh_r1 cascade;
 drop table hhh_l1 cascade;
 --  the documentation example, rewritten with EVERY in a template
@@ -958,48 +948,41 @@ HINT:  FOR expression may only specify a non-default partition in this context.
 alter table rank DROP default partition if exists ;
 -- can't drop the final partition - must drop the table
 alter table rank DROP partition girls;
-ERROR:  cannot drop partition "girls" of relation "rank" -- only one remains
+ERROR:  cannot drop partition "rank_1_prt_girls" of "rank" -- only one remains
 HINT:  Use DROP TABLE "rank" to remove the table and the final partition
 -- MPP-4011: make FOR(value) work
 alter table rank alter partition for ('F') add default partition def1;
 alter table rank alter partition for ('F')
 truncate partition for ('2010-10-10');
-ERROR:  FOR expression matches DEFAULT partition "def1" of partition "girls" of relation "rank"
+ERROR:  FOR expression matches DEFAULT partition for specified value of relation "rank_1_prt_girls"
 HINT:  FOR expression may only specify a non-default partition in this context.
 alter table rank truncate partition for ('F');
-NOTICE:  truncated partition "girls" for relation "rank" and its children
 drop table rank cascade;
-alter table hhh exchange partition cc with table nosuchtable with validation;
+alter table hhh exchange partition cc with table nosuchtable;
 ERROR:  partition "cc" of relation "hhh" does not exist
-alter table hhh exchange partition cc with table nosuchtable without validation;
-ERROR:  partition "cc" of relation "hhh" does not exist
-alter table hhh exchange partition aa with table nosuchtable with validation;
-ERROR:  relation "nosuchtable" does not exist
-alter table hhh exchange partition aa with table nosuchtable without validation;
+alter table hhh exchange partition aa with table nosuchtable;
 ERROR:  relation "nosuchtable" does not exist
 alter table hhh rename partition cc to aa;
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh rename partition bb to aa;
-ERROR:  partition "aa" of relation "hhh" already exists
+ERROR:  relation "hhh_1_prt_aa" already exists
 alter table hhh rename partition aa to aa;
-ERROR:  partition "aa" of relation "hhh" already exists
+ERROR:  relation "hhh_1_prt_aa" already exists
 alter table hhh rename partition aa to "funky fresh";
 alter table hhh rename partition "funky fresh" to aa;
 -- use FOR PARTITION VALUE (with implicate date conversion)
 alter table hhh rename partition for ('2007-01-01') to "funky fresh";
-NOTICE:  renamed partition "aa" to "funky fresh" for relation "hhh"
 alter table hhh rename partition for ('2007-01-01') to aa;
-NOTICE:  renamed partition "funky fresh" to "aa" for relation "hhh"
 alter table hhh set subpartition template ();
 ERROR:  relation "hhh" does not have a level 1 subpartition template specification
 alter table hhh split partition cc at ('a');
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh split partition cc at ('a') into (partition gg, partition hh);
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh split partition aa at ('a');
 ERROR:  invalid input syntax for type date: "a"
 alter table hhh truncate partition cc;
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh truncate partition aa;
 insert into hhh values('a', date '2007-01-02', 'b');
 insert into hhh values('a', date '2007-02-01', 'b');
@@ -1327,8 +1310,6 @@ partition by range (i, j)
  start(1, '2011-01-01') end (100, '2012-01-01')
 );
 ERROR:  too many columns for RANGE partition -- only one column is allowed
-LINE 2: partition by range (i, j)
-                     ^
 -- should work
 insert into b values(1, '2008-06-11');
 ERROR:  relation "b" does not exist
@@ -1386,8 +1367,6 @@ start(4000.95, '2007-01-01 00:00:00', 'AAA')
   end (7000.95, '2007-02-02 15:00:00', 'BBB')
 );
 ERROR:  too many columns for RANGE partition -- only one column is allowed
-LINE 3: partition by range(n, t, s)
-                     ^
 -- should work
 insert into b values(1, 2000.99, '2007-01-01 00:00:00', 'AAA');
 ERROR:  relation "b" does not exist
@@ -2751,3 +2730,23 @@ CREATE TABLE end_inclusive_numeric (a int, b numeric)
         );
 ERROR:  END INCLUSIVE not supported for partition key data type: numeric
 HINT:  Specify an exclusive END value and remove the INCLUSIVE keyword
+-- Test for ALTER TABLE WITH/WITHOUT VALIDATION.
+-- It doesn't do anything anymore, but check that the syntax is accepted.
+CREATE TABLE validation_syntax_tbl (a int)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (a)
+        (
+        PARTITION p1 START (1) END (3)
+        );
+CREATE TABLE exchange_tbl (a int4);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+INSERT INTO exchange_tbl VALUES (100);
+ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl WITH VALIDATION;
+NOTICE:  specifying "WITH VALIDATION" acts as no operation. If the new partition is a regular table, validation is performed to make sure all the rows obey partition constraint. If the new partition is external or foreign table, no validation is performed.
+ERROR:  partition constraint is violated by some row  (seg2 127.0.0.1:40002 pid=26267)
+ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl WITHOUT VALIDATION;
+NOTICE:  specifying "WITHOUT VALIDATION" acts as no operation. If the new partition is a regular table, validation is performed to make sure all the rows obey partition constraint. If the new partition is external or foreign table, no validation is performed.
+ERROR:  partition constraint is violated by some row  (seg2 127.0.0.1:40002 pid=26267)
+DROP TABLE exchange_tbl;
+DROP TABLE validation_syntax_tbl;

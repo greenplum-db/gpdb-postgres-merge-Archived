@@ -532,7 +532,7 @@ partition bb start (date '2008-01-01') end (date '2009-01-01')
 );
 
 -- already exists
-alter table hhh add partition aa;
+alter table hhh add partition aa start ('2010-01-01') end ('2011-01-01');
 
 -- no partition spec
 alter table hhh add partition cc;
@@ -1713,3 +1713,19 @@ CREATE TABLE end_inclusive_numeric (a int, b numeric)
         (
         PARTITION p1 START (1) END (3) INCLUSIVE
         );
+
+
+-- Test for ALTER TABLE WITH/WITHOUT VALIDATION.
+-- It doesn't do anything anymore, but check that the syntax is accepted.
+CREATE TABLE validation_syntax_tbl (a int)
+    DISTRIBUTED BY (a)
+    PARTITION BY RANGE (a)
+        (
+        PARTITION p1 START (1) END (3)
+        );
+CREATE TABLE exchange_tbl (a int4);
+INSERT INTO exchange_tbl VALUES (100);
+ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl WITH VALIDATION;
+ALTER TABLE validation_syntax_tbl EXCHANGE PARTITION p1 WITH TABLE exchange_tbl WITHOUT VALIDATION;
+DROP TABLE exchange_tbl;
+DROP TABLE validation_syntax_tbl;
