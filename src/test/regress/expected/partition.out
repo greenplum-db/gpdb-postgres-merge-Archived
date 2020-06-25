@@ -1214,22 +1214,20 @@ alter table ataprank alter partition girls drop partition if exists for ('2004-0
 -- ok
 alter table ataprank alter partition girls rename partition jan05 
 to "funky fresh";
-NOTICE:  renamed partition "jan05" to "funky fresh" for partition "girls" of relation "ataprank"
 alter table ataprank alter partition girls rename partition "funky fresh"
 to jan05;
-NOTICE:  renamed partition "funky fresh" to "jan05" for partition "girls" of relation "ataprank"
 -- fail , not exist
 alter table ataprank alter partition girls alter partition jan05 rename
 partition jan01 to foo;
-ERROR:  partition "jan01" of partition "jan05" of partition "girls" of relation "ataprank" does not exist
+ERROR:  relation "public.ataprank_1_prt_girls_2_prt_jan05_3_prt_jan01" does not exist
 -- fail not exist
 alter table ataprank alter partition girls alter partition jan05 alter
 partition cali rename partition foo to bar;
-ERROR:  partition "foo" of partition "cali" of partition "jan05" of partition "girls" of relation "ataprank" does not exist
+ERROR:  table "ataprank_1_prt_girls_2_prt_jan05_3_prt_cali" is not partitioned
 -- fail not partitioned
 alter table ataprank alter partition girls alter partition jan05 alter
 partition cali alter partition foo drop partition bar;
-ERROR:  partition "cali" of partition "jan05" of partition "girls" of relation "ataprank" is not partitioned
+ERROR:  table "ataprank_1_prt_girls_2_prt_jan05_3_prt_cali" is not partitioned
 -- ADD PARTITION, with and without templates
 -- fails for ataprank (due to template), works for ataprank2
 alter table ataprank
@@ -1267,7 +1265,7 @@ alter table ataprank2 alter partition boys
 alter partition jan00 
 add partition haw values ('HI');
 alter table ataprank drop partition neuter;
-ERROR:  partition "neuter" of relation "ataprank" does not exist
+ERROR:  relation "public.ataprank_1_prt_neuter" does not exist
 alter table ataprank2 drop partition neuter;
 -- fail , no subpartition spec for ataprank2, work for ataprank
 alter table ataprank
@@ -1297,7 +1295,7 @@ ERROR:  subpartition configuration conflicts with subpartition template
 alter table ataprank
 alter default partition alter default partition 
 add default partition def2;
-ERROR:  DEFAULT partition of partition "neuter" of relation "ataprank" does not exist
+ERROR:  DEFAULT partition of relation "ataprank_1_prt_neuter" does not exist
 -- work
 alter table ataprank
 alter default partition add default partition def1;
