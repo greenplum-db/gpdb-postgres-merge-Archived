@@ -5577,11 +5577,8 @@ TabPartitionBoundarySpecStart:
 				{
 					GpPartitionRangeItem *n = makeNode(GpPartitionRangeItem);
 					n->val = $3;
-					/* GPDB_12_MERGE_FIXME */
-					if (($5) && ($5) != PART_EDGE_INCLUSIVE)
-						ereport(ERROR,
-								(errmsg("exclusive START partition boundary is no longer supported"),
-								 parser_errposition(@5)));
+					if (($5))
+						n->edge = $5;
 					else
 						n->edge = PART_EDGE_INCLUSIVE;
 					n->location = @1;

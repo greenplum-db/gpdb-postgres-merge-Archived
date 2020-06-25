@@ -47,7 +47,8 @@ extern List *generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSp
 								const char *queryString, List *parentoptions,
 								const char *parentaccessmethod,
 								List *parentattenc, bool forvalidationonly);
-extern void convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod);
+extern void convert_exclusive_start_inclusive_end(Const *constval, Oid part_col_typid,
+												  int32 part_col_typmod, bool is_exclusive_start);
 
 typedef struct partname_comp
 {

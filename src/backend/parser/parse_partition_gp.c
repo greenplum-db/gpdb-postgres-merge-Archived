@@ -491,7 +491,9 @@ deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmt
  */
 static PartEveryIterator *
 initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char *part_col_name,
-					  Node *start, Node *end, bool endIncl, Node *every)
+					  Node *start, bool startExclusive,
+					  Node *end, bool endInclusive,
+					  Node *every)
 {
 	PartEveryIterator *iter;
 	Datum		startVal = 0;
@@ -527,6 +529,13 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 				 errmsg("cannot use NULL with range partition specification"),
 				 parser_errposition(pstate, exprLocation(start))));
 
+		if (startExclusive)
+			convert_exclusive_start_inclusive_end(startConst,
+												  part_col_typid, part_col_typmod,
+												  true);
+		if (startConst->constisnull)
+			elog(ERROR, "START EXCLUSIVE is out of range"); /* GPDB_12_MERGE_FIXME: better message */
+
 		startVal = startConst->constvalue;
 	}
 
@@ -546,9 +555,10 @@ initPartEveryIterator(ParseState *pstate, PartitionKeyData *partkey, const char 
 				 errmsg("cannot use NULL with range partition specification"),
 				 parser_errposition(pstate, exprLocation(end))));
 
-		if (endIncl)
-			convert_inclusive_end(endConst, part_col_typid, part_col_typmod);
-
+		if (endInclusive)
+			convert_exclusive_start_inclusive_end(endConst,
+												  part_col_typid, part_col_typmod,
+												  false);
 		if (endConst->constisnull)
 			isEndValMaxValue = true;
 
@@ -850,8 +860,9 @@ generateRangePartitions(ParseState *pstate,
 	char				 *partcolname;
 	PartEveryIterator	 *boundIter;
 	Node				 *start = NULL;
+	bool				 startExclusive = false;
 	Node				 *end = NULL;
-	bool				 endIncl = false;
+	bool				 endInclusive = false;
 	Node				 *every = NULL;
 	int					 i;
 
@@ -894,6 +905,7 @@ generateRangePartitions(ParseState *pstate,
 					 errmsg("invalid number of START values"),
 					 parser_errposition(pstate, boundspec->partStart->location)));
 		start = linitial(boundspec->partStart->val);
+		startExclusive = (boundspec->partStart->edge == PART_EDGE_EXCLUSIVE) ? true : false;
 	}
 
 	if (boundspec->partEnd)
@@ -904,7 +916,7 @@ generateRangePartitions(ParseState *pstate,
 					 errmsg("invalid number of END values"),
 					 parser_errposition(pstate, boundspec->partEnd->location)));
 		end = linitial(boundspec->partEnd->val);
-		endIncl = (boundspec->partEnd->edge == PART_EDGE_INCLUSIVE) ? true : false;
+		endInclusive = (boundspec->partEnd->edge == PART_EDGE_INCLUSIVE) ? true : false;
 	}
 
 	/*
@@ -924,7 +936,9 @@ generateRangePartitions(ParseState *pstate,
 
 	partkey = RelationGetPartitionKey(parentrel);
 
-	boundIter = initPartEveryIterator(pstate, partkey, partcolname, start, end, endIncl, every);
+	boundIter = initPartEveryIterator(pstate, partkey, partcolname,
+									  start, startExclusive,
+									  end, endInclusive, every);
 
 	i = 0;
 	while (nextPartBound(boundIter))
@@ -1187,21 +1201,26 @@ merge_partition_encoding(ParseState *pstate, List *elem_colencs, List *penc)
 }
 
 /*
- * Convert an inclusive end value from the legacy END..INCLUSIVE syntax into an
- * exclusive end value. This is required because the upper range bound that we
- * store in the catalog (i.e. PartitionBoundSpec->upperdatums) is always
- * exclusive.
+ * Convert an exclusive start (or inclusive end) value from the legacy
+ * START..EXCLUSIVE (END..INCLUSIVE) syntax into an inclusive start (exclusive
+ * end) value. This is required because the range bounds that we store in
+ * the catalog (i.e. PartitionBoundSpec->lower/upperdatums) are always in
+ * inclusive start and exclusive end format.
  *
- * We only support END..INCLUSIVE for limited data types. For the supported data
- * types, we perform a '+1' operation on the end datum, except for the case when
- * the end datum is already the maximum value of the data type, in which case we
- * mark endCosnt->constisnull as true and preserve the original
- * endConst->constvalue. The caller is responsible for checking
- * endCosnt->constisnull and if that is true constructing an upperdatum of
- * MAXVALUE.
+ * We only support this for limited data types. For the supported data
+ * types, we perform a '+1' operation on the datum, except for the case when
+ * the datum is already the maximum value of the data type, in which case we
+ * mark constval->constisnull as true and preserve the original
+ * constval->constvalue. The caller is responsible for checking
+ * constval->constisnull and if that is true constructing an upperdatum of
+ * MAXVALUE (or throwing an error if it's START EXCLUSIVE).
+ *
+ * If 'is_exclusive_start' is true, this is a START EXCLUSIVE value.
+ * Otherwise it is an END INCLUSIVE value. That affects the error messages.
  */
 void
-convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod)
+convert_exclusive_start_inclusive_end(Const *constval, Oid part_col_typid, int32 part_col_typmod,
+									  bool is_exclusive_start)
 {
 	if (part_col_typmod != -1 &&
 		(part_col_typid == TIMEOID ||
@@ -1209,67 +1228,80 @@ convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod
 		 part_col_typid == TIMESTAMPOID ||
 		 part_col_typid == TIMESTAMPTZOID ||
 		 part_col_typid == INTERVALOID))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("END INCLUSIVE not supported when partition key has precision specification: %s",
-						   format_type_with_typemod(part_col_typid, part_col_typmod)),
-					errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
+	{
+		if (is_exclusive_start)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("START EXCLUSIVE not supported when partition key has precision specification: %s",
+							format_type_with_typemod(part_col_typid, part_col_typmod)),
+					 errhint("Specify an inclusive START value and remove the EXCLUSIVE keyword")));
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("END INCLUSIVE not supported when partition key has precision specification: %s",
+							format_type_with_typemod(part_col_typid, part_col_typmod)),
+					 errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
+		}
+	}
 
 	switch (part_col_typid)
 	{
 		case INT2OID:
 		{
-			int16 value = DatumGetInt16(endConst->constvalue);
+			int16 value = DatumGetInt16(constval->constvalue);
 			if (value < PG_INT16_MAX)
-				endConst->constvalue = Int16GetDatum(value + 1);
+				constval->constvalue = Int16GetDatum(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case INT4OID:
 		{
-			int32 value = DatumGetInt32(endConst->constvalue);
+			int32 value = DatumGetInt32(constval->constvalue);
 			if (value < PG_INT32_MAX)
-				endConst->constvalue = Int32GetDatum(value + 1);
+				constval->constvalue = Int32GetDatum(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case INT8OID:
 		{
-			int64 value = DatumGetInt64(endConst->constvalue);
+			int64 value = DatumGetInt64(constval->constvalue);
 			if (value < PG_INT64_MAX)
-				endConst->constvalue = Int64GetDatum(value + 1);
+				constval->constvalue = Int64GetDatum(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case DATEOID:
 		{
-			DateADT value = DatumGetDateADT(endConst->constvalue);
+			DateADT value = DatumGetDateADT(constval->constvalue);
 			if (!DATE_IS_NOEND(value))
-				endConst->constvalue = DatumGetDateADT(value + 1);
+				constval->constvalue = DatumGetDateADT(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case TIMEOID:
 		{
-			TimeADT value = DatumGetTimeADT(endConst->constvalue);
+			TimeADT value = DatumGetTimeADT(constval->constvalue);
 			struct pg_tm tt,
 						*tm = &tt;
 			fsec_t		fsec;
 
 			time2tm(value, tm, &fsec);
 			if (tm->tm_hour != HOURS_PER_DAY)
-				endConst->constvalue += 1;
+				constval->constvalue += 1;
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case TIMETZOID:
 		{
-			TimeTzADT *valueptr = DatumGetTimeTzADTP(endConst->constvalue);
+			TimeTzADT *valueptr = DatumGetTimeTzADTP(constval->constvalue);
 			struct pg_tm tt,
 						 *tm = &tt;
 			fsec_t		fsec;
@@ -1279,34 +1311,34 @@ convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod
 			if (tm->tm_hour != HOURS_PER_DAY)
 				valueptr->time += 1;
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case TIMESTAMPOID:
 		{
-			Timestamp value = DatumGetTimestamp(endConst->constvalue);
+			Timestamp value = DatumGetTimestamp(constval->constvalue);
 			if (!TIMESTAMP_IS_NOEND(value))
-				endConst->constvalue = TimestampGetDatum(value + 1);
+				constval->constvalue = TimestampGetDatum(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case TIMESTAMPTZOID:
 		{
-			TimestampTz value = DatumGetTimestampTz(endConst->constvalue);
+			TimestampTz value = DatumGetTimestampTz(constval->constvalue);
 			if (!TIMESTAMP_IS_NOEND(value))
-				endConst->constvalue = TimestampTzGetDatum(value + 1);
+				constval->constvalue = TimestampTzGetDatum(value + 1);
 			else
-				endConst->constisnull = true;
+				constval->constisnull = true;
 		}
 		break;
 		case INTERVALOID:
 		{
-			Interval *intervalp = DatumGetIntervalP(endConst->constvalue);
+			Interval *intervalp = DatumGetIntervalP(constval->constvalue);
 			if ((intervalp->month == PG_INT32_MAX &&
 				intervalp->day == PG_INT32_MAX &&
 				intervalp->time == PG_INT64_MAX))
-					endConst->constisnull = true;
+					constval->constisnull = true;
 			else if (intervalp->time < PG_INT64_MAX)
 				intervalp->time += 1;
 			else if (intervalp->day < PG_INT32_MAX)
@@ -1316,11 +1348,22 @@ convert_inclusive_end(Const *endConst, Oid part_col_typid, int32 part_col_typmod
 		}
 		break;
 		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("END INCLUSIVE not supported for partition key data type: %s",
-							   format_type_be(part_col_typid)),
-						errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
+			if (is_exclusive_start)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("START EXCLUSIVE not supported for partition key data type: %s",
+								format_type_be(part_col_typid)),
+						 errhint("Specify an inclusive START value and remove the EXCLUSIVE keyword")));
+			}
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("END INCLUSIVE not supported for partition key data type: %s",
+								format_type_be(part_col_typid)),
+						 errhint("Specify an exclusive END value and remove the INCLUSIVE keyword")));
+			}
 			break;
 	}
 }

@@ -764,15 +764,17 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 				GpPartitionRangeItem *endItem 	= pc->end;
 				List 				 *at = pc->at;
 				List 				 *start;
+				bool				 startExclusive;
 				List 				 *end;
-				bool				 endIncl;
+				bool				 endInclusive;
 
 				Assert((startItem == NULL && endItem == NULL && at != NULL) ||
 					   (startItem != NULL && endItem != NULL && at == NULL));
 
 				start = startItem ? startItem->val : NULL;
 				end = endItem ? endItem->val : at;
-				endIncl = (endItem && endItem->edge == PART_EDGE_INCLUSIVE) ? true : false;
+				startExclusive = (startItem && startItem->edge == PART_EDGE_EXCLUSIVE) ? true : false;
+				endInclusive = (endItem && endItem->edge == PART_EDGE_INCLUSIVE) ? true : false;
 
 				if (end)
 				{
@@ -793,8 +795,8 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 								 errmsg("cannot use NULL with range partition specification"),
 								 parser_errposition(pstate,	pc->location)));
 
-					if (endIncl)
-						convert_inclusive_end(endConst, part_col_typid, part_col_typmod);
+					if (endInclusive)
+						convert_exclusive_start_inclusive_end(endConst, part_col_typid, part_col_typmod, false);
 
 					if (!endConst->constisnull)
 						boundspec1->upperdatums =
@@ -809,7 +811,7 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 												 partkey->parttypbyval[0]));
 					else
 					{
-						Assert(endIncl == true);
+						Assert(endInclusive == true);
 						ColumnRef  *maxvalue = makeNode(ColumnRef);
 						maxvalue->fields = list_make1(makeString("maxvalue"));
 						boundspec1->upperdatums = list_make1(maxvalue);
@@ -834,6 +836,13 @@ AtExecGPSplitPartition(Relation rel, AlterTableCmd *cmd)
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 								 errmsg("cannot use NULL with range partition specification"),
 								 parser_errposition(pstate, pc->location)));
+
+					if (startExclusive)
+						convert_exclusive_start_inclusive_end(startConst,
+															  part_col_typid, part_col_typmod,
+															  true);
+					if (startConst->constisnull)
+						elog(ERROR, "START EXCLUSIVE is out of range"); /* GPDB_12_MERGE_FIXME: better message */
 
 					boundspec1->lowerdatums =
 						list_make1(makeConst(partkey->parttypid[0],
