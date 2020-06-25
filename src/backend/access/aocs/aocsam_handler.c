@@ -1652,31 +1652,18 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 
 		ExecClearTuple(slot);
 
-		if (tbmres->recheck)
+		if (aocs_fetch(aocoscan->aocolossyfetch, &aoTid, slot))
 		{
-			if (aocs_fetch(aocoscan->aocolossyfetch, &aoTid, slot))
-				ExecStoreVirtualTuple(slot);
-			else
-			{
-				if (slot)
-					ExecClearTuple(slot);
-			}
+			ExecStoreVirtualTuple(slot);
 
-			aocoscan->exprContext_ref->ecxt_scantuple = slot;
-			ResetExprContext(aocoscan->exprContext_ref);
-
-			/* Fails recheck, so drop it and loop back for another */
-			if (!ExecQual(aocoscan->bitmapqualorig_ref,
-				aocoscan->exprContext_ref))
-				ExecClearTuple(slot);
-		}
-		else
-		{
-			if(aocs_fetch(aocoscan->aocofetch, &aoTid, slot))
-				ExecStoreVirtualTuple(slot);
-			else
+			if (tbmres->recheck)
 			{
-				if (slot)
+				aocoscan->exprContext_ref->ecxt_scantuple = slot;
+				ResetExprContext(aocoscan->exprContext_ref);
+
+				/* Fails recheck, so drop it and loop back for another */
+				if (!ExecQual(aocoscan->bitmapqualorig_ref,
+					aocoscan->exprContext_ref))
 					ExecClearTuple(slot);
 			}
 		}
@@ -1690,6 +1677,7 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 		return true;
 	}
 
+	return false;	/* Should not be reached, keep compiler happy */
 }
 
 static bool
