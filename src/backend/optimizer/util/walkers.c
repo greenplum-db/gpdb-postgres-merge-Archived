@@ -948,19 +948,6 @@ check_collation_walker(Node *node, check_collation_context *context)
 			/* unsupported */
 			context->foundNonDefaultCollation = 1;
 			break;
-		case T_ColumnDef:
-			collation = ((ColumnDef *) node)->collOid;
-			if (InvalidOid != collation && DEFAULT_COLLATION_OID != collation)
-			{
-				context->foundNonDefaultCollation = 1;
-			}
-			break;
-		case T_IndexElem:
-			if (NIL != ((IndexElem *) node)->collation)
-			{
-				context->foundNonDefaultCollation = 1;
-			}
-			break;
 		case T_RangeTblEntry:
 			check_collation_in_list(((RangeTblEntry *) node)->colcollations, context);
 			break;
