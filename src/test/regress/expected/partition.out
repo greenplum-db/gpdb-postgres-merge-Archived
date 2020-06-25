@@ -2256,9 +2256,7 @@ partition b start(5) end(15)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 't' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "b" overlaps previous range
-LINE 4: partition b start(5) end(15)
-                    ^
+ERROR:  partition "ttt_1_prt_b" would overlap partition "ttt_1_prt_a"
 -- should fail, this time it's ordered
 create table ttt (t int) partition by range(t) (
 partition a start (1) end(10) inclusive,
@@ -2267,9 +2265,7 @@ partition c start(11) end(14)
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 't' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "b" overlaps previous range
-LINE 3: partition b start(5) end(15),
-                    ^
+ERROR:  partition "ttt_1_prt_b" would overlap partition "ttt_1_prt_a"
 -- should fail
 create table ttt (t date) partition by range(t) (
 partition a start ('2005-01-01') end('2006-01-01') inclusive,
@@ -2278,9 +2274,7 @@ partition c start('2006-01-01') exclusive end('2006-01-10')
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 't' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "b" overlaps previous range
-LINE 3: partition b start('2005-05-01') end('2005-06-11'),
-                    ^
+ERROR:  partition "ttt_1_prt_b" would overlap partition "ttt_1_prt_a"
 -- should fail
 create table ttt (t char) partition by range(t) (
 partition a start('a') end('f'),
@@ -2288,9 +2282,7 @@ partition b start('e') end('g')
 );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 't' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-ERROR:  starting value of partition "b" overlaps previous range
-LINE 3: partition b start('e') end('g')
-                    ^
+ERROR:  partition "ttt_1_prt_b" would overlap partition "ttt_1_prt_a"
 -- MPP-5159 MPP-26829
 -- Should fail -- missing partition spec and subpartition template follows the
 -- partition declaration.
@@ -2622,7 +2614,7 @@ select relid::regclass, level from gp_partition_template where relid = 'mpp5941'
 alter table mpp5941 set subpartition template (
 subpartition l1 values (1,2,3,4,5), 
 subpartition l2 values (6,7,8,9,10) );
-ERROR:  can't add partition at level 1 since next level template doesn't exist (tablecmds_gp.c:1247)
+ERROR:  can't add partition at level 1 since next level template doesn't exist (tablecmds_gp.c:1263)
 -- MPP-5992 - add deep templates correctly
 -- Note: need to re-add the templates from deepest to shallowest,
 -- because adding a template has a dependency on the existence of the
