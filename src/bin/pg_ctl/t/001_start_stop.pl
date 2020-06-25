@@ -40,6 +40,7 @@ close $conf;
 my $ctlcmd = [
 	'pg_ctl', 'start', '-D', "$tempdir/data", '-l',
 	"$TestLib::log_path/001_start_stop_server.log"
+	,'-o', '-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1',
 ];
 if ($Config{osname} ne 'msys')
 {
@@ -51,9 +52,6 @@ else
 	# use the version of command_like that doesn't hang on Msys here
 	command_like_safe($ctlcmd, qr/done.*server started/s, 'pg_ctl start');
 }
-close CONF;
-command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w', '-o', '-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1'],
-	'pg_ctl start -w');
 
 # sleep here is because Windows builds can't check postmaster.pid exactly,
 # so they may mistake a pre-existing postmaster.pid for one created by the
@@ -97,7 +95,9 @@ SKIP:
 	chmod_recursive("$tempdir/data", 0750, 0640);
 
 	command_ok(
-		[ 'pg_ctl', 'start', '-D', "$tempdir/data", '-l', $logFileName ],
+		[ 'pg_ctl', 'start', '-D', "$tempdir/data", '-l', $logFileName,
+		  '-o', '-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1 -c log_file_mode=0640',
+		],
 		'start server to check group permissions');
 
 	ok(-f $logFileName);
