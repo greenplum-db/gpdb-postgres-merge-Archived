@@ -509,7 +509,7 @@ create table ccddl (i int, d date, j int)
 
 alter table ccddl add partition newp 
 	start('2010-01-06') end('2010-01-07')
-	with (appendonly=true, orientation=column, compresstype=RLE_TYPE); 
+	with (appendonly=true, orientation=column);
 
 execute ccddlcheck;
 drop table ccddl;
