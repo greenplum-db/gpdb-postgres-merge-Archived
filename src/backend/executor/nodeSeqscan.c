@@ -35,11 +35,8 @@
 #include "nodes/nodeFuncs.h"
 
 #include "cdb/cdbaocsam.h"
-static void InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation);
+
 static TupleTableSlot *SeqNext(SeqScanState *node);
-
-
-
 
 /* ----------------------------------------------------------------
  *						Scan Support
