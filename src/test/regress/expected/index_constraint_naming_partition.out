@@ -900,13 +900,6 @@ SELECT * FROM partition_tables_show_all();
 -- UNIQUE constraint: validate we correctly add it and can only drop from root
 SELECT recreate_three_level_table();
 NOTICE:  table "r" does not exist, skipping
-CONTEXT:  SQL function "recreate_three_level_table" statement 1
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1019,12 +1012,6 @@ SELECT * FROM partition_tables_show_all();
 
 --PRIMARY KEY constraint: validate we correctly add it and can only drop from root
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1137,12 +1124,6 @@ SELECT * FROM partition_tables_show_all();
 
 --New partition table 'C' should be created with constraints.
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1266,12 +1247,6 @@ SELECT * FROM partition_tables_show_all();
 
 -- EXCHANGE... prepare table e2 and swap with partition
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1636,8 +1611,6 @@ SELECT * FROM partition_tables_show_all();
 -- You should not be able to add a constraint to partition leaves
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
  
@@ -1663,12 +1636,6 @@ SELECT * FROM dependencies_show_for_cons_idx();
 -- Cannot add a dangling constraint to a leaf partition of a multi-level table
 ---------------------------------------------------------------------
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1696,8 +1663,6 @@ SELECT * FROM dependencies_show_for_cons_idx();
 -- exchange partition should fail with dangling constraint ONLY on new table
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
  
@@ -1741,8 +1706,6 @@ SELECT * FROM partition_tables_show_all();
 -- exchange partition: constraint on root should be added to old partition before exchange
 ---------------------------------------------------------------------
 SELECT recreate_two_level_table();
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
-CONTEXT:  SQL function "recreate_two_level_table" statement 2
  recreate_two_level_table 
 --------------------------
  
@@ -1789,12 +1752,6 @@ SELECT * FROM partition_tables_show_all();
 --  node.
 --create the index at the root; should only be able to drop it from root
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1890,12 +1847,6 @@ SELECT * FROM dependencies_show_for_idx();
 
 --create the index starting at mid-level; should only be able to drop it from mid-level
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -1935,12 +1886,6 @@ SELECT * FROM dependencies_show_for_idx();
 --yes, this is inconsistent with index subsumption but upstream does it this way
 --in particular, there's no subsumption going on here.
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -2020,12 +1965,6 @@ SELECT * FROM dependencies_show_for_idx();
 
 --test subsumption of lower-level index from upper-level one
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -2075,12 +2014,6 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show subsumption works across rename
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -2141,12 +2074,6 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show that renaming still does not allow a name conflict
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
@@ -2188,12 +2115,6 @@ SELECT * FROM dependencies_show_for_idx();
 
 --show that renaming a mid-level index still prevents it from being dropped.
 SELECT recreate_three_level_table();
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
-CONTEXT:  SQL function "recreate_three_level_table" statement 2
  recreate_three_level_table 
 ----------------------------
  
