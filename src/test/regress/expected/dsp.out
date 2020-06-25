@@ -1200,18 +1200,22 @@ select c.relname, am.amname, c.relkind, c.reloptions
 RESET gp_default_storage_options;
 -- cleanup
 \c postgres
+-- Test that gp_default_storage_options option must be the same on all nodes
+-- GPDB_12_MERGE_FIXME: Is this really strictly necessary? There's code in
+-- gpconfig to verify this specifically for gp_default_storage_options. Can
+-- we remove it?
 -- start_matchsubs
 -- m/.*\[ERROR\]*/
 -- s/.*\[ERROR\]/[ERROR]/gm
 -- end_matchsubs
-\!gpconfig -c default_table_access_method -v 'appendoptimized' --masteronly
-20200625:08:50:10:028815 gpconfig:f94535b6-65d2-4bed-6e2e-72e7d7f1e3e3:gpadmin-[INFO]:-completed successfully with parameters '-c default_table_access_method -v appendoptimized --masteronly'
-\!gpconfig -c default_table_access_method -v 'appendoptimized' --masteronly
-20200625:08:50:10:028867 gpconfig:f94535b6-65d2-4bed-6e2e-72e7d7f1e3e3:gpadmin-[INFO]:-completed successfully with parameters '-c default_table_access_method -v appendoptimized --masteronly'
-\!gpconfig -c default_table_access_method -v 'appendoptimized' -m 'heap'
-20200625:08:50:11:028919 gpconfig:f94535b6-65d2-4bed-6e2e-72e7d7f1e3e3:gpadmin-[INFO]:-completed successfully with parameters '-c default_table_access_method -v appendoptimized -m heap'
-\!gpconfig -s default_table_access_method
+\!gpconfig -c gp_default_storage_options -v 'checksum=false' --masteronly
+[ERROR]:-gp_default_storage_options value cannot be different on master and segments
+gp_default_storage_options value cannot be different on master and segments
+\!gpconfig -c gp_default_storage_options -v 'checksum=false' -m 'checksum=true'
+[ERROR]:-gp_default_storage_options value cannot be different on master and segments
+gp_default_storage_options value cannot be different on master and segments
+\!gpconfig -s gp_default_storage_options
 Values on all segments are consistent
-GUC          : default_table_access_method
-Master  value: heap
-Segment value: heap
+GUC          : gp_default_storage_options
+Master  value: blocksize=32768,compresstype=none,checksum=true
+Segment value: blocksize=32768,compresstype=none,checksum=true

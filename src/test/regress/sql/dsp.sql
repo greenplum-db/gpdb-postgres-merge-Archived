@@ -481,12 +481,17 @@ RESET gp_default_storage_options;
 -- cleanup
 \c postgres
 
+-- Test that gp_default_storage_options option must be the same on all nodes
+
+-- GPDB_12_MERGE_FIXME: Is this really strictly necessary? There's code in
+-- gpconfig to verify this specifically for gp_default_storage_options. Can
+-- we remove it?
+
 -- start_matchsubs
 -- m/.*\[ERROR\]*/
 -- s/.*\[ERROR\]/[ERROR]/gm
 -- end_matchsubs
-\!gpconfig -c default_table_access_method -v 'appendoptimized' --masteronly
-\!gpconfig -c default_table_access_method -v 'appendoptimized' --masteronly
-\!gpconfig -c default_table_access_method -v 'appendoptimized' -m 'heap'
+\!gpconfig -c gp_default_storage_options -v 'checksum=false' --masteronly
+\!gpconfig -c gp_default_storage_options -v 'checksum=false' -m 'checksum=true'
 
-\!gpconfig -s default_table_access_method
+\!gpconfig -s gp_default_storage_options
