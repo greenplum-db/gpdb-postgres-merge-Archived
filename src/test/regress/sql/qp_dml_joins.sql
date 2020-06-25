@@ -1428,7 +1428,6 @@ rollback;
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
 SELECT dml_heap_pt_s.a ,dml_heap_pt_s.b,'z' FROM dml_heap_pt_r,dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b ORDER BY 1,2 LIMIT 1;
 ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
-begin;
 UPDATE dml_heap_pt_r SET (a,b,c) = (dml_heap_pt_s.a ,dml_heap_pt_s.b,'z') FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 1= dml_heap_pt_s.b;
 SELECT * FROM dml_heap_pt_r WHERE c='z' ORDER BY 1 LIMIT 1;
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
