@@ -1972,16 +1972,26 @@ appendonly_scan_bitmap_next_tuple(TableScanDesc scan,
 static bool
 appendonly_scan_sample_next_block(TableScanDesc scan, SampleScanState *scanstate)
 {
-	// GPDB_12_MERGE_FIXME: re-implement this
-	elog(ERROR, "sample scan on AO table not yet implemented");
+	/*
+	 * GPDB_95_MERGE_FIXME: Add support for AO tables
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("invalid relation type"),
+			 errhint("Sampling is only supported in heap tables.")));
 }
 
 static bool
 appendonly_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 							  TupleTableSlot *slot)
 {
-	// GPDB_12_MERGE_FIXME: re-implement this
-	elog(ERROR, "sample scan on AO table not yet implemented");
+	/*
+	 * GPDB_95_MERGE_FIXME: Add support for AO tables
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("invalid relation type"),
+			 errhint("Sampling is only supported in heap tables.")));
 }
 
 
