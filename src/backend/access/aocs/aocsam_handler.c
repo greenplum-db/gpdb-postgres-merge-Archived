@@ -1319,7 +1319,8 @@ aoco_index_build_range_scan(Relation heapRelation,
 
 	/* set our scan endpoints */
 	if (!allow_sync)
-		heap_setscanlimits(scan, start_blockno, numblocks);
+	{
+	}
 	else
 	{
 		/* syncscan can only be requested on whole relation */
@@ -1337,6 +1338,15 @@ aoco_index_build_range_scan(Relation heapRelation,
 		bool		tupleIsAlive;
 
 		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * GPDB_12_MERGE_FIXME: How to properly do a partial scan? Currently,
+		 * we scan the whole table, and throw away tuples that are not in the
+		 * range. That's clearly very inefficient.
+		 */
+		if (ItemPointerGetBlockNumber(&slot->tts_tid) < start_blockno ||
+			(numblocks != InvalidBlockNumber && ItemPointerGetBlockNumber(&slot->tts_tid) >= numblocks))
+			continue;
 
 		/* GPDB_12_MERGE_FIXME */
 #if 0
