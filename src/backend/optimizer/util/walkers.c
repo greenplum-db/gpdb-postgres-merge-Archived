@@ -8,6 +8,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_collation.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/walkers.h"
@@ -879,7 +880,7 @@ check_collation_in_list(List *colllist, check_collation_context *context)
 static bool
 check_collation_walker(Node *node, check_collation_context *context)
 {
-	Oid collation, inputCollation;
+	Oid collation, inputCollation, type;
 
 	if (NULL == node)
 	{
@@ -895,6 +896,18 @@ check_collation_walker(Node *node, check_collation_context *context)
 	switch (nodeTag(node))
 	{
 		case T_Var:
+			type = (castNode(Var, node))->vartype;
+			collation = exprCollation(node);
+			if (type == NAMEOID)
+			{
+				if (collation != C_COLLATION_OID)
+					context->foundNonDefaultCollation = 1;
+			}
+			else if (InvalidOid != collation && DEFAULT_COLLATION_OID != collation)
+			{
+				context->foundNonDefaultCollation = 1;
+			}
+			break;
 		case T_Const:
 		case T_OpExpr:
 		case T_ScalarArrayOpExpr:

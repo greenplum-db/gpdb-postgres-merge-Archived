@@ -572,9 +572,16 @@ gpdb::TypeCollation
 	GP_WRAP_START;
 	{
 		Oid collation = InvalidOid;
-		if (type_is_collatable(type))
+		Oid typcollation = get_typcollation(type);
+		// GPDB_12_MERGE_FIXME: brittle assumption: we only let in NAME,
+		// default-collated non-name, or non-collatable expressions
+		// This and a lot of other hacks can go away if only collation on
+		// expressions just roundtrips through ORCA
+		if (OidIsValid(typcollation))
 		{
-			collation = DEFAULT_COLLATION_OID;
+			if (type == NAMEOID)
+				return typcollation; // As of v12, this is C_COLLATION_OID
+			return DEFAULT_COLLATION_OID;
 		}
 		return collation;
 	}
