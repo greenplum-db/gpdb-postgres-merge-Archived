@@ -170,9 +170,9 @@ select array(select b from t_limit_all order by b asc limit all) t;
  Result
    InitPlan 1 (returns $0)  (slice1)
      ->  Gather Motion 3:1  (slice2; segments: 3)
-           Merge Key: b
+           Merge Key: t_limit_all.b
            ->  Sort
-                 Sort Key: b
+                 Sort Key: t_limit_all.b
                  ->  Seq Scan on t_limit_all
  Optimizer: Postgres query optimizer
 (8 rows)

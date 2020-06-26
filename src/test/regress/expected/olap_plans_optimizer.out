@@ -255,18 +255,14 @@ reset enable_hashagg;
 -- If the query produces a relatively large number of groups in comparison to
 -- the number of input rows, one-stage aggregation will be picked.
 explain select a, b, d, sum(d) from olap_test group by grouping sets((a, b), (a), (b, d));
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
- GroupAggregate  (cost=780.39..2045.49 rows=20072 width=20)
-   Group Key: a, b
-   Group Key: a
-   Sort Key: b, d
-     Group Key: b, d
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=780.39..1005.39 rows=10000 width=12)
-         Merge Key: a, b
-         ->  Sort  (cost=780.39..805.39 rows=3334 width=12)
-               Sort Key: a, b
-               ->  Seq Scan on olap_test  (cost=0.00..116.00 rows=3334 width=12)
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ HashAggregate  (cost=392.00..617.36 rows=10036 width=20)
+   Hash Key: a, b
+   Hash Key: a
+   Hash Key: b, d
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..317.00 rows=10000 width=12)
+         ->  Seq Scan on olap_test  (cost=0.00..117.00 rows=3334 width=12)
  Optimizer: Postgres query optimizer
 (11 rows)
 
