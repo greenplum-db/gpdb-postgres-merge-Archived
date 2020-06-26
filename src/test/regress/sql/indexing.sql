@@ -556,13 +556,10 @@ ALTER TABLE idxpart ATTACH PARTITION idxpart1 FOR VALUES FROM (100) TO (200);
 DROP TABLE idxpart, idxpart1;
 
 -- Ditto if there is some distance between the PKs (subpartitioning)
+-- GPDB: distribution keys must be the same in all parts of the partition hierarchy
 create table idxpart (a int, b int, primary key (a)) partition by range (a);
 create table idxpart1 (a int not null, b int) partition by range (a);
-create table idxpart11 (a int not null, b int primary key);
--- GPDB: distribution keys must in all parts of the partition hierarchy
-alter table idxpart set distributed replicated;
-alter table idxpart1 set distributed replicated;
-alter table idxpart11 set distributed replicated;
+create table idxpart11 (a int not null, b int, primary key (b, a)) distributed by (a);
 alter table idxpart1 attach partition idxpart11 for values from (0) to (1000);
 alter table idxpart attach partition idxpart1 for values from (0) to (10000);
 drop table idxpart, idxpart1, idxpart11;
