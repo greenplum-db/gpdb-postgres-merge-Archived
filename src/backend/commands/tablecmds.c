@@ -11414,7 +11414,6 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 					 Oid constraintOid, Oid indexOid, bool on_insert)
 {
 	CreateTrigStmt *fk_trigger;
-	ObjectAddress objAddr;
 
 	/*
 	 * Note: for a self-referential FK (referencing and referenced tables are
@@ -11436,13 +11435,11 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 	{
 		fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
 		fk_trigger->events = TRIGGER_TYPE_INSERT;
-		fk_trigger->trigOid = fkconstraint->trig1Oid;
 	}
 	else
 	{
 		fk_trigger->funcname = SystemFuncName("RI_FKey_check_upd");
 		fk_trigger->events = TRIGGER_TYPE_UPDATE;
-		fk_trigger->trigOid = fkconstraint->trig2Oid;
 	}
 
 	fk_trigger->columns = NIL;
@@ -11454,13 +11451,8 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 	fk_trigger->constrrel = NULL;
 	fk_trigger->args = NIL;
 
-	objAddr = CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
+	(void) CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
 						 indexOid, InvalidOid, InvalidOid, NULL, true, false);
-
-	if (on_insert)
-		fkconstraint->trig1Oid = objAddr.objectId;
-	else
-		fkconstraint->trig2Oid = objAddr.objectId;
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -11476,7 +11468,6 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 							   Oid constraintOid, Oid indexOid)
 {
 	CreateTrigStmt *fk_trigger;
-	ObjectAddress objAddr;
 
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now, with warning
@@ -11536,12 +11527,10 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 			break;
 	}
 	fk_trigger->args = NIL;
-	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-	objAddr = CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
+	(void) CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
 						 constraintOid,
 						 indexOid, InvalidOid, InvalidOid, NULL, true, false);
-	fkconstraint->trig3Oid = objAddr.objectId;
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -11595,12 +11584,9 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 	}
 	fk_trigger->args = NIL;
 
-	fk_trigger->trigOid = fkconstraint->trig4Oid;
-
-	objAddr = CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
+	(void) CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
 						 constraintOid,
 						 indexOid, InvalidOid, InvalidOid, NULL, true, false);
-	fkconstraint->trig4Oid = objAddr.objectId;
 }
 
 /*

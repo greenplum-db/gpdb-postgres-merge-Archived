@@ -1868,7 +1868,6 @@ ProcessUtilitySlow(ParseState *pstate,
 										InvalidOid, NULL, false, false);
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
-					((CreateTrigStmt *) parsetree)->trigOid = address.objectId;
 					CdbDispatchUtilityStatement((Node *) parsetree,
 												DF_CANCEL_ON_ERROR|
 												DF_WITH_SNAPSHOT|

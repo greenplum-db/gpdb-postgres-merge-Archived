@@ -82,6 +82,8 @@ extern Oid GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oid
 								  char *spcname);
 extern Oid GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								 Oid trftype, Oid trflang);
+extern Oid GetNewOidForTrigger(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							   Oid tgrelid, char *tgname, Oid tgconstraint, Oid tgfid);
 extern Oid GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								char *prsname, Oid prsnamespace);
 extern Oid GetNewOidForTSDictionary(Relation relation, Oid indexId, AttrNumber oidcolumn,

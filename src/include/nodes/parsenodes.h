@@ -2503,10 +2503,6 @@ typedef struct Constraint
 	/* Fields used for constraints that allow a NOT VALID specification */
 	bool		skip_validation;	/* skip validation of existing rows? */
 	bool		initially_valid;	/* start the new constraint as valid */
-	Oid			trig1Oid;
-	Oid			trig2Oid;
-	Oid			trig3Oid;
-	Oid			trig4Oid;
 } Constraint;
 
 /* ----------
@@ -2835,7 +2831,6 @@ typedef struct CreateTrigStmt
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
 	RangeVar   *constrrel;		/* opposite relation, if RI trigger */
-	Oid			trigOid;
 } CreateTrigStmt;
 
 /* ----------------------

@@ -754,10 +754,6 @@ _readConstraint(void)
 
 	READ_BOOL_FIELD(skip_validation);
 	READ_BOOL_FIELD(initially_valid);
-	READ_OID_FIELD(trig1Oid);
-	READ_OID_FIELD(trig2Oid);
-	READ_OID_FIELD(trig3Oid);
-	READ_OID_FIELD(trig4Oid);
 
 	READ_DONE();
 }

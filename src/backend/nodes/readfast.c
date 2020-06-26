@@ -1240,7 +1240,6 @@ _readCreateTrigStmt(void)
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
 	READ_NODE_FIELD(constrrel);
-	READ_OID_FIELD(trigOid);
 
 	READ_DONE();
 }

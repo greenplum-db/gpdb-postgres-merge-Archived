@@ -4951,10 +4951,6 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 	WRITE_BOOL_FIELD(skip_validation);
 	WRITE_BOOL_FIELD(initially_valid);
-	WRITE_OID_FIELD(trig1Oid);
-	WRITE_OID_FIELD(trig2Oid);
-	WRITE_OID_FIELD(trig3Oid);
-	WRITE_OID_FIELD(trig4Oid);
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -5167,7 +5163,6 @@ _outCreateTrigStmt(StringInfo str, const CreateTrigStmt *node)
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_NODE_FIELD(constrrel);
-	WRITE_OID_FIELD(trigOid);
 }
 
 static void

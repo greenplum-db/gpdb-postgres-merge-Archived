@@ -923,6 +923,25 @@ GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
 }
 
 Oid
+GetNewOidForTrigger(Relation relation, Oid indexId, AttrNumber oidcolumn,
+					Oid tgrelid, char *tgname, Oid tgconstraint, Oid tgfid)
+{
+	OidAssignment key;
+
+	Assert(RelationGetRelid(relation) == TriggerRelationId);
+	Assert(indexId == TriggerOidIndexId);
+	Assert(oidcolumn == Anum_pg_trigger_oid);
+
+	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
+	key.keyOid1 = tgrelid;
+	key.objname = tgname;
+	key.keyOid2 = tgconstraint;
+	key.keyOid3 = tgfid;
+	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
+}
+
+Oid
 GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *prsname, Oid prsnamespace)
 {

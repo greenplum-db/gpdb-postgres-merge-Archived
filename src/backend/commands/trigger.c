@@ -63,6 +63,7 @@
 #include "utils/syscache.h"
 #include "utils/tuplestore.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
@@ -818,14 +819,19 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * trigger OID. That creates a chicken-and-egg problem with the usual
 	 * GPDB OID dispatching mechanism. In a QE, we cannot look up the
 	 * trigger OID to use by trigger name, because the trigger name is
-	 * derived from the OID. To work around that, the trigger OID is
-	 * included directly in the CreateTrigStmt struct.
+	 * derived from the OID. To work around that, we use more fields as
+	 * the key. For a user-defined trigger, tgrelid and the trigger name
+	 * should be enough. For internal triggers, we use the name prefix
+	 * together with constraint OID and function OID. That should be
+	 * unique: there should be no need to have more than one internal trigger
+	 * with same function for one constraint.
 	 */
-	if (OidIsValid(stmt->trigOid))
-		trigoid = stmt->trigOid;
-	else
-		trigoid = GetNewOidWithIndex(tgrel, TriggerOidIndexId,
-									 Anum_pg_trigger_oid);
+	trigoid = GetNewOidForTrigger(tgrel, TriggerOidIndexId,
+								  Anum_pg_trigger_oid,
+								  RelationGetRelid(rel),
+								  stmt->trigname,
+								  constraintOid,
+								  funcoid);
 
 	/*
 	 * If trigger is internally generated, modify the provided trigger name to
