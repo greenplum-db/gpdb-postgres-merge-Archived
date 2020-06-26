@@ -1327,8 +1327,7 @@ drop table ao_p;
 -- MPP-3591: make sure we get inclusive/exclusive right with every().
 create table k (i int) partition by range(i)
 (start(0) exclusive end(100) inclusive every(25));
-select partitiontablename, partitionboundary from pg_partitions
-where tablename = 'k' order by 1;
+\d+ k
 insert into k select i from generate_series(1, 100) i;
 drop table k;
 

@@ -1881,15 +1881,17 @@ create table k (i int) partition by range(i)
 (start(0) exclusive end(100) inclusive every(25));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-select partitiontablename, partitionboundary from pg_partitions
-where tablename = 'k' order by 1;
- partitiontablename |             partitionboundary             
---------------------+-------------------------------------------
- k_1_prt_1          | START (0) EXCLUSIVE END (25) EVERY (25)
- k_1_prt_2          | START (25) END (50) EVERY (25)
- k_1_prt_3          | START (50) END (75) EVERY (25)
- k_1_prt_4          | START (75) END (100) INCLUSIVE EVERY (25)
-(4 rows)
+\d+ k
+                               Partitioned table "public.k"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (i)
+Partitions: k_1_prt_1 FOR VALUES FROM (1) TO (26),
+            k_1_prt_2 FOR VALUES FROM (26) TO (51),
+            k_1_prt_3 FOR VALUES FROM (51) TO (76),
+            k_1_prt_4 FOR VALUES FROM (76) TO (101)
+Distributed by: (i)
 
 insert into k select i from generate_series(1, 100) i;
 drop table k;
