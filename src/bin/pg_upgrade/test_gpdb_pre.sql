@@ -38,7 +38,3 @@ DROP PROTOCOL IF EXISTS demoprot_untrusted2;
 -- we need to drop this view.
 DROP VIEW IF EXISTS nums CASCADE;
 DROP VIEW IF EXISTS sums_1_100 CASCADE;
-
--- Cannot currently handle partitioned table with a composite type as
--- partitioning key (see https://github.com/greenplum-db/gpdb/issues/9405).
-drop table public.employee_table;
