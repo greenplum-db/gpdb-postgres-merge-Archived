@@ -1344,8 +1344,12 @@ CTranslatorDXLToScalar::TranslateDXLScalarArrayCoerceExprToScalar
 		func_expr->funcformat = COERCE_EXPLICIT_CAST;
 		// GPDB_12_MERGE_FIXME: shouldn't this come from the DXL as well?
 		func_expr->funcresulttype = gpdb::GetFuncRetType(elemfuncid);
-		// FIXME: wrapper for get_element_type
-		func_expr->args = gpdb::LPrepend(case_test_expr, ListMake2((void*)dxlop->TypeModifier(), (void*)BoolGetDatum(true)));
+		// FIXME: this is a giant hack. We really should know the arity of the
+		//   function we're calling. Instead, we're jamming three arguments,
+		//   _always_
+		func_expr->args = gpdb::LPrepend(
+			case_test_expr, ListMake2(gpdb::MakeIntConst(dxlop->TypeModifier()),
+									  gpdb::MakeBoolConst(true, false)));
 		coerce->elemexpr = (Expr *) func_expr;
 	}
 	else

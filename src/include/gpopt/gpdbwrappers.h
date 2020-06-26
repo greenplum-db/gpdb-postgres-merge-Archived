@@ -433,6 +433,9 @@ namespace gpdb {
 	// create a value node for an integer
 	Value *MakeIntegerValue(long i);
 
+	// create a constant of type int4
+	Node *MakeIntConst(int32 intValue);
+
 	// create a bool constant
 	Node *MakeBoolConst(bool value, bool isnull);
 

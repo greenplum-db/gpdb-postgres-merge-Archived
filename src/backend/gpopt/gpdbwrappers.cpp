@@ -1848,6 +1848,17 @@ gpdb::MakeIntegerValue
 }
 
 Node *
+gpdb::MakeIntConst(int32 intValue)
+{
+	GP_WRAP_START;
+	{
+		return (Node *) makeConst(INT4OID, -1, InvalidOid, sizeof(int32),
+								  Int32GetDatum(intValue), false, true);
+	}
+	GP_WRAP_END;
+}
+
+Node *
 gpdb::MakeBoolConst
 	(
 	bool value,
