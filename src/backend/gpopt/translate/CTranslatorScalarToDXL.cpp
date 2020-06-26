@@ -1277,6 +1277,12 @@ CTranslatorScalarToDXL::TranslateArrayCoerceExprToDXL
 
 	if (IsA(array_coerce_expr->elemexpr, FuncExpr))
 		elemfuncid = ((FuncExpr *)array_coerce_expr->elemexpr)->funcid;
+	else if (IsA(array_coerce_expr->elemexpr, RelabelType))
+		;
+	else
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				   GPOS_WSZ_LIT("ArrayCoerceExpr with elemexpr that is neither "
+								"FuncExpr or RelabelType"));
 
 	// GPDB_12_MERGE_FIXME: faking an explicit cast is wrong
 	// This _will_ lead to wrong behavior, e.g.
