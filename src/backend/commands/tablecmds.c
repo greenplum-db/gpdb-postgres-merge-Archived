@@ -3794,10 +3794,13 @@ RenameRelation(RenameStmt *stmt)
 		targetrelation = fake_relation_open(relid);
 	else
 		targetrelation = relation_open(relid, AccessExclusiveLock);
-	oldrelname = RelationGetRelationName(targetrelation);
+	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 
 	/* Do the work */
 	RenameRelationInternal(relid, stmt->newname, false, is_index);
+
+	if (targetrelation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		GpRenameChildPartitions(targetrelation, oldrelname, stmt->newname);
 
 	/*
 	 * Close rel, but keep exclusive lock!
@@ -3821,7 +3824,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 	HeapTuple	reltup;
 	Form_pg_class relform;
 	Oid			namespaceId;
-	char *oldrelname;
 
 	/*
 	 * In Postgres:
@@ -3860,8 +3862,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists",
 						newrelname)));
-
-	oldrelname = pstrdup(NameStr(relform->relname));
 
 	/*
 	 * Update pg_class tuple with new relname.  (Scribbling on reltup is OK
@@ -3912,9 +3912,6 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
-
-	if (targetrelation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		GpRenameChildPartitions(targetrelation, oldrelname, newrelname);
 
 	/*
 	 * Close rel, but keep lock!

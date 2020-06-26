@@ -1383,12 +1383,19 @@ GpRenameChildPartitions(Relation targetrelation,
 {
 	PartitionDesc partdesc = RelationGetPartitionDesc(targetrelation);
 	int skipped = 0;
+	int renamed = 1;
+	ListCell *lc;
 	Assert(partdesc != NULL);
 
-	for (int i = 0; i < partdesc->nparts; i++)
+	List *oids = find_all_inheritors(RelationGetRelid(targetrelation), AccessExclusiveLock, NULL);
+	/* remove parent from the list */
+	oids = list_delete_first(oids);
+
+	foreach(lc, oids)
 	{
+		Oid part_oid = lfirst_oid(lc);
 		char newpartname[NAMEDATALEN * 2];
-		Relation partrel = table_open(partdesc->oids[i], AccessExclusiveLock);
+		Relation partrel = table_open(part_oid, NoLock);
 		char *relname = pstrdup(RelationGetRelationName(partrel));
 		/* don't release the lock till end of transaction */
 		table_close(partrel, NoLock);
@@ -1406,25 +1413,19 @@ GpRenameChildPartitions(Relation targetrelation,
 		{
 			snprintf(newpartname, sizeof(newpartname), "%s%s",
 					 newparentrelname, relname + strlen(oldparentrelname));
-			if (strlen(newpartname) > NAMEDATALEN)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("relation name \"%s\" for child partition is too long",
-								newpartname)));
 
-			RenameRelationInternal(partdesc->oids[i], newpartname, false, false);
+			if (strlen(newpartname) < NAMEDATALEN)
+			{
+				RenameRelationInternal(part_oid, newpartname, false, false);
+				renamed++;
+				continue;
+			}
 		}
-		else
-			skipped++;
+
+		skipped++;
 	}
 
-	/*
-	 * GPDB_12_MERGE_FIXME: not sure we wish to emit this WARNING or not. It's
-	 * good to notify users some child partitions didn't rename. But upstream
-	 * tests may fail due to it as well. Plus, this message may be printed
-	 * multiple times based on which level partition names are getting
-	 * truncated.
-	 */
-//	if (skipped && Gp_role != GP_ROLE_EXECUTE)
-//		elog(WARNING, "skipped renaming some child partitions due to name truncation");
+	if (skipped && Gp_role != GP_ROLE_EXECUTE)
+		elog(WARNING, "renamed %d relations, skipped %d child partitions as old parent name is not part of partition name",
+			 renamed, skipped);
 }
