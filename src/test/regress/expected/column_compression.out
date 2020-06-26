@@ -1831,58 +1831,6 @@ SELECT owner, property FROM ccddl
 (1 row)
 
 drop table ccddl;
------------------------------------------------------------------------
--- Dump / restore
------------------------------------------------------------------------
--- We can only test partition dumping here, since pg_dump does table level
--- dump/restore
-create table ccddl (i int, j int)
-with (appendonly=true, orientation=column)
-partition by range(i) subpartition by range(j)
-	subpartition template
-		( subpartition sp1 start(1) end(2),
-		  subpartition sp2 start(2) end (3),
-		  column i encoding (compresstype=zlib),
-		  column j encoding (blocksize=65536)
-		)
-	(partition p1 start(1) end (2));
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-select pg_get_partition_def('ccddl'::regclass, true);
-                                         pg_get_partition_def                                          
--------------------------------------------------------------------------------------------------------
- PARTITION BY RANGE(i)                                                                                +
-           SUBPARTITION BY RANGE(j)                                                                   +
-           (                                                                                          +
-           PARTITION p1 START (1) END (2) WITH (appendonly='true', orientation='column')              +
-                     COLUMN i ENCODING (compresstype=none, blocksize=32768, compresslevel=0)          +
-                     COLUMN j ENCODING (compresstype=none, blocksize=32768, compresslevel=0)          +
-                   (                                                                                  +
-                   SUBPARTITION sp1 START (1) END (2) WITH (appendonly='true', orientation='column')  +
-                             COLUMN i ENCODING (compresstype=zlib, compresslevel=1, blocksize=32768)  +
-                             COLUMN j ENCODING (blocksize=65536, compresstype=none, compresslevel=0), +
-                   SUBPARTITION sp2 START (2) END (3) WITH (appendonly='true', orientation='column')  +
-                             COLUMN i ENCODING (compresstype=zlib, compresslevel=1, blocksize=32768)  +
-                             COLUMN j ENCODING (blocksize=65536, compresstype=none, compresslevel=0)  +
-                   )                                                                                  +
-           )
-(1 row)
-
-select pg_get_partition_template_def('ccddl'::regclass, true, false);
-                            pg_get_partition_template_def                            
--------------------------------------------------------------------------------------
- ALTER TABLE ccddl                                                                  +
- SET SUBPARTITION TEMPLATE                                                          +
-           (                                                                        +
-           SUBPARTITION sp1 START (1) END (2),                                      +
-           SUBPARTITION sp2 START (2) END (3),                                      +
-           COLUMN i ENCODING (compresstype=zlib, compresslevel=1, blocksize=32768), +
-           COLUMN j ENCODING (blocksize=65536, compresstype=none, compresslevel=0)  +
-           )                                                                        +
- 
-(1 row)
-
-drop table ccddl;
 \c regression
 drop database column_compression;
 ------------------------------------------------------------------------------
