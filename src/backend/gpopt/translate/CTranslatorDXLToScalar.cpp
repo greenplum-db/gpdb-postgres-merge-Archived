@@ -422,8 +422,6 @@ CTranslatorDXLToScalar::TranslateDXLScalarDistinctToScalar
 
 	dist_expr->opfuncid = CMDIdGPDB::CastMdid(md_scalar_op->FuncMdId())->Oid();
 	dist_expr->opresulttype = GetFunctionReturnTypeOid(md_scalar_op->FuncMdId());
-	// GPDB_91_MERGE_FIXME: collation
-	dist_expr->opcollid = gpdb::TypeCollation(dist_expr->opresulttype);
 
 	// translate left and right child
 	GPOS_ASSERT(2 == scalar_distinct_cmp_node->Arity());
@@ -434,6 +432,9 @@ CTranslatorDXLToScalar::TranslateDXLScalarDistinctToScalar
 	Expr *right_expr = TranslateDXLToScalar(right_node, colid_var);
 
 	dist_expr->args = ListMake2(left_expr, right_expr);
+	// GPDB_91_MERGE_FIXME: collation
+	dist_expr->opcollid = gpdb::TypeCollation(dist_expr->opresulttype);
+	dist_expr->inputcollid = gpdb::ExprCollation((Node *)dist_expr->args);
 
 	return (Expr *)dist_expr;
 }
