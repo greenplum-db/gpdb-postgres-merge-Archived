@@ -31,7 +31,6 @@
 #include "pgstat.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/regproc.h"
