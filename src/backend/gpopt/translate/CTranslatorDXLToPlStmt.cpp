@@ -2359,7 +2359,7 @@ CTranslatorDXLToPlStmt::TranslateDXLAgg
 		Assert(agg->grpOperators[ul] != 0);
 	}
 
-	agg->numGroups = (long) std::min(agg->plan.plan_rows, (double) LONG_MAX);
+	agg->numGroups = std::max(1L, (long)std::min(agg->plan.plan_rows, (double) LONG_MAX));
 	SetParamIds(plan);
 
 	// cleanup
