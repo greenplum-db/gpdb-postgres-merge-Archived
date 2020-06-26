@@ -1275,10 +1275,12 @@ select * from k_1_prt_foo;
 alter table k split default partition start(22) exclusive end(25) inclusive
 into (partition bar, partition mydef);
 select * from k_1_prt_bar;
+
+-- This fails, because it would create a partition with an empty range. Before
+-- GPDB 7, this passed, because a partition like "start (22) exclusive end (23)
+-- exclusive" was considered valid.
 alter table k split partition bar at (23) into (partition baz, partition foz);
-select partitiontablename,partitionposition,partitionrangestart,
-       partitionrangeend from pg_partitions where tablename = 'k'
-	   order by partitionposition;
+\d+ k
 drop table k;
 -- Add CO partition and split, reported in MPP-17761
 create table k (i int) with (appendonly = true, orientation = column) distributed by (i) partition by range(i) (start(1) end(10) every(5));
