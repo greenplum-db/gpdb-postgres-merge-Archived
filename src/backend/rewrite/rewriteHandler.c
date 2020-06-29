@@ -184,10 +184,15 @@ AcquireRewriteLocks(Query *parsetree,
 				needLockUpgrade = false;
 				if (!forExecute)
 					lockmode = AccessShareLock;
-				else if (forUpdatePushedDown)
+				else if (rt_index == parsetree->resultRelation)
 				{
-#if 0
-					/* GPDB_12_MERGE_FIXME: Where should this go now? */
+					lockmode = RowExclusiveLock;
+					needLockUpgrade = (parsetree->commandType == CMD_UPDATE ||
+						parsetree->commandType == CMD_DELETE);
+				}
+				else if (forUpdatePushedDown ||
+						 get_parse_rowmark(parsetree, rt_index) != NULL)
+				{
 					/*
 					 * Greenplum specific behavior:
 					 * The implementation of select statement with locking clause
@@ -202,10 +207,9 @@ AcquireRewriteLocks(Query *parsetree,
 					 * sure that there are no motions. For such simple cases, we could
 					 * make the behavior just the same as Postgres.
 					 */
-					lockmode = parsetree->canOptSelectLockingClause ? RowShareLock : ExclusiveLock;
+					if (!parsetree->canOptSelectLockingClause)
+						rte->rellockmode = ExclusiveLock;
 
-
-#endif
 					/* Upgrade RTE's lock mode to reflect pushed-down lock */
 					if (rte->rellockmode == AccessShareLock)
 						rte->rellockmode = RowShareLock;
@@ -214,11 +218,6 @@ AcquireRewriteLocks(Query *parsetree,
 				else
 					lockmode = rte->rellockmode;
 
-#if 0
-				/* GPDB_12_MERGE_FIXME: Where should this go now? */
-					needLockUpgrade = (parsetree->commandType == CMD_UPDATE ||
-									   parsetree->commandType == CMD_DELETE);
-#endif
 
 				/* Take a lock either using CDB lock promotion or not */
 				if (needLockUpgrade)

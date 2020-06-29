@@ -1792,6 +1792,7 @@ static void
 ScanQueryForLocks(Query *parsetree, bool acquire)
 {
 	ListCell   *lc;
+	int			rt_index;
 
 	/* Shouldn't get called on utility commands */
 	Assert(parsetree->commandType != CMD_UTILITY);
@@ -1799,16 +1800,17 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 	/*
 	 * First, process RTEs of the current query level.
 	 */
+	rt_index = 0;
 	foreach(lc, parsetree->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		LOCKMODE	lockmode;
 
+		rt_index++;
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
 				/* Acquire or release the appropriate type of lock */
-/* GPDB_12_MERGE_FIXME: Where does this GPDB-specific logic belong now? */
-#if 0
 				if (rt_index == parsetree->resultRelation)
 				{
 					/*
@@ -1851,11 +1853,10 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 					else
 						lockmode = AccessShareLock;
 				}
-#endif
 				if (acquire)
-					LockRelationOid(rte->relid, rte->rellockmode);
+					LockRelationOid(rte->relid, lockmode);
 				else
-					UnlockRelationOid(rte->relid, rte->rellockmode);
+					UnlockRelationOid(rte->relid, lockmode);
 				break;
 
 			case RTE_SUBQUERY:

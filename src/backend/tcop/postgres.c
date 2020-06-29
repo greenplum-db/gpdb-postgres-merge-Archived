@@ -2094,7 +2094,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 		raw_parse_tree = linitial_node(RawStmt, parsetree_list);
 
-		if (IsA(raw_parse_tree, SelectStmt))
+		if (IsA(raw_parse_tree->stmt, SelectStmt))
 		{
 			/*
 			 * For extended query protocol, we cannot optimize to avoid
@@ -2106,7 +2106,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			 * For details please refer the mailing list:
 			 * https://groups.google.com/a/greenplum.org/forum/#!msg/gpdb-dev/ugsZca1qLXU/CtUmzEa7CAAJ
 			 */
-			((SelectStmt *)raw_parse_tree)->disableLockingOptimization = true;
+			((SelectStmt *)raw_parse_tree->stmt)->disableLockingOptimization = true;
 		}
 
 		/*
