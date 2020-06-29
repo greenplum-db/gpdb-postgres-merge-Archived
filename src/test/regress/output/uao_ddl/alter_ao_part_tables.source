@@ -247,6 +247,7 @@ Alter table sto_alt_ao_part alter partition p1 split partition
 -- partition ... to partition ... is not supported".  Enable the
 -- update statement after this bug is fixed.
 -- Update sto_alt_ao_part set d = 0 where b = 10;
+-- GPDB_12_MERGE_FIXME: does this bug still exist?
 select * from sto_alt_ao_part;
  a | b  | c | d  
 ---+----+---+----
@@ -330,8 +331,29 @@ select distinct a.visimaprelid is NULL, a.visimapidxid is NULL
 -- Validate that the state needed by appendoptimized AM is correctly
 -- initialized when the query involves partitioned tables with a
 -- subplan.
-update sto_alt_ao_part set c = -c where b in (select c from sto_alt_ao_part_1_prt_3);
-UPDATE 10
+insert into sto_alt_ao_part values (1,4,4,4);
+select * from sto_alt_ao_part;
+ a | b  | c | d  
+---+----+---+----
+ 1 |  4 | 3 | -1
+ 1 |  4 | 4 |  4
+ 1 |  7 | 3 | -1
+ 1 | 10 | 3 | -1
+ 1 | 15 | 3 | -1
+ 1 | 25 | 3 | -1
+(6 rows)
+
+update sto_alt_ao_part set c = c - 1 where b in (select c from sto_alt_ao_part_1_prt_3);
+select * from sto_alt_ao_part;
+ a | b  | c | d  
+---+----+---+----
+ 1 |  4 | 2 | -1
+ 1 |  4 | 3 |  4
+ 1 |  7 | 3 | -1
+ 1 | 10 | 3 | -1
+ 1 | 15 | 3 | -1
+ 1 | 25 | 3 | -1
+(6 rows)
 
 COMMIT;
 -- Vacuum full to test compaction
@@ -339,7 +361,7 @@ set gp_select_invisible=true;
 select count(*) as all_tuples_before_vacuum from sto_altap3;
  all_tuples_before_vacuum 
 --------------------------
-                       19
+                       21
 (1 row)
 
 set gp_select_invisible=false;
