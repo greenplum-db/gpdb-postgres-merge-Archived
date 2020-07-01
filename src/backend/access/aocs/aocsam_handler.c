@@ -598,24 +598,18 @@ aoco_rescan(TableScanDesc scan, ScanKey key,
 static bool
 aoco_getnextslot(TableScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
-	AOCSScanDesc  aoscan = (AOCSScanDesc) scan;
+	AOCSScanDesc  aoscan = (AOCSScanDesc)scan;
 
 	ExecClearTuple(slot);
-	if (aocs_getnext(aoscan,direction,slot))
+	if (aocs_getnext(aoscan, direction, slot))
 	{
 		ExecStoreVirtualTuple(slot);
 		pgstat_count_heap_getnext(aoscan->aos_rel);
 
 		return true;
 	}
-	else
-	{
-		if (slot)
-			ExecClearTuple(slot);
 
-		return false;
-	}
-
+	return false;
 }
 
 static Size
@@ -721,13 +715,8 @@ aoco_index_fetch_tuple(struct IndexFetchTableData *scan,
 		ExecStoreVirtualTuple(slot);
 		return true;
 	}
-	else
-	{
-		if (slot)
-			ExecClearTuple(slot);
 
-		return false;
-	}
+	return false;
 }
 
 static void
