@@ -1635,9 +1635,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		int			numResultRelations = list_length(resultRelations);
 		ResultRelInfo *resultRelInfos;
 		ResultRelInfo *resultRelInfo;
-		bool        is_conflict_update;
-
-		is_conflict_update = IsOnConflictUpdate(plannedstmt);
 
 		/*
 		 * MPP-2879: The QEs don't pass their MPPEXEC statements through

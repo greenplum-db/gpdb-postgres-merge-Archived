@@ -829,35 +829,6 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 	Assert(rti > 0 && rti <= estate->es_range_table_size);
 
 
-	/* GPDB_12_MERGE_FIXME: I think this belongs somewhere around here now.
-	 * Or can we remove this logic completely? */
-#if 0
-			if (operation == CMD_UPDATE || operation == CMD_DELETE ||
-				(operation == CMD_INSERT && is_conflict_update)) /* conflictUpdate should be treated as update */
-			{
-				/*
-				 * On QD, the lock on the table has already been taken during parsing, so if it's a child
-				 * partition, we don't need to take a lock. If there a a deadlock GDD will come in place
-				 * and resolve the deadlock. ORCA Update / Delete plans only contains the root relation, so
-				 * no locks on leaf partition are taken here. The below changes makes planner as well to not
-				 * take locks on leaf partitions with GDD on.
-				 * Note: With GDD off, ORCA and planner both will acquire locks on the leaf partitions.
-				 */
-				if (Gp_role == GP_ROLE_DISPATCH && rel_is_child_partition(resultRelationOid) && gp_enable_global_deadlock_detector)
-				{
-					lockmode = NoLock;
-				}
-				resultRelation = CdbOpenRelation(resultRelationOid,
-													 lockmode,
-													 false, /* noWait */
-													 NULL); /* lockUpgraded */
-			}
-			else
-			{
-				resultRelation = heap_open(resultRelationOid, lockmode);
-			}
-#endif
-
 	rel = estate->es_relations[rti - 1];
 	if (rel == NULL)
 	{
