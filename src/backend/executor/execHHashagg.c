@@ -56,14 +56,8 @@ struct BatchFileInfo
  * Estimate per-file memory overhead. We assume that a BufFile consumed about
  * 64 bytes for various structs. It also keeps a buffer of size BLCKSZ. It
  * can be temporarily freed with BufFileSuspend().
- *
- * FIXME: This code used to use a different kind of abstraction for reading
- * files, called BFZ. That used a 16 kB buffer. To keep the calculations
- * unmodified, we claim the buffer size to still be 16 kB. I got assertion
- * failures in the regression tests when I tried changing this to BLCKSZ...
  */
-/* #define FREEABLE_BATCHFILE_METADATA (BLCKSZ) */
-#define FREEABLE_BATCHFILE_METADATA (16 * 1024)
+#define FREEABLE_BATCHFILE_METADATA (BLCKSZ)
 #define BATCHFILE_METADATA \
 	(sizeof(BatchFileInfo) + 64 + FREEABLE_BATCHFILE_METADATA)
 
@@ -1998,7 +1992,6 @@ agg_hash_reload(AggState *aggstate)
 			 BufFileGetFilename(hashtable->curr_spill_file->file_info->wfile));
         hashtable->curr_spill_file->respilled = true;
 	}
-
 	else
 	{
 		/*

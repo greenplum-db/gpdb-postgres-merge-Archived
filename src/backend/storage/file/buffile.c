@@ -66,6 +66,16 @@
 #define MAX_PHYSICAL_FILESIZE	0x40000000
 #define BUFFILE_SEG_SIZE		(MAX_PHYSICAL_FILESIZE / BLCKSZ)
 
+/* To align upstream's structure, minimize the code differences */
+typedef union FakeAlignedBlock
+{
+	/*
+	 * Greenplum uses char * so it could suspend and resume, to give the hash
+	 * table as much space as possible.
+	 */
+	char *data;
+} FakeAlignedBlock;
+
 /*
  * This data structure represents a buffered file that consists of one or
  * more physical files (each accessed through a virtual file descriptor
@@ -103,7 +113,7 @@ struct BufFile
 	off_t		curOffset;		/* offset part of current pos */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
-	PGAlignedBlock buffer;
+	FakeAlignedBlock buffer;  /* GPDB: PG upstream uses PGAlignedBlock */
 };
 
 static BufFile *makeBufFileCommon(int nfiles);
@@ -130,6 +140,7 @@ makeBufFileCommon(int nfiles)
 	file->curOffset = 0L;
 	file->pos = 0;
 	file->nbytes = 0;
+	file->buffer.data = palloc(BLCKSZ);
 
 	return file;
 }
@@ -453,6 +464,9 @@ BufFileClose(BufFile *file)
 
 	/* release the buffer space */
 	pfree(file->files);
+
+	if (file->buffer.data)
+		pfree(file->buffer.data);
 	pfree(file);
 }
 
@@ -496,7 +510,7 @@ BufFileLoadBuffer(BufFile *file)
 	thisfile = file->files[file->curFile];
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
-							sizeof(file->buffer),
+							BLCKSZ,
 							file->curOffset,
 							WAIT_EVENT_BUFFILE_READ);
 	if (file->nbytes < 0)
@@ -914,9 +928,6 @@ BufFileAppend(BufFile *target, BufFile *source)
 	return startBlock;
 }
 
-
-
-/* GPDB_12_MERGE_FIXME: These were lost in the merge. Re-implement. Or rewrite the callers. */
 void *
 BufFileReadFromBuffer(BufFile *file, size_t size)
 {
@@ -925,10 +936,19 @@ BufFileReadFromBuffer(BufFile *file, size_t size)
 void
 BufFileSuspend(BufFile *buffile)
 {
+	BufFileFlush(buffile);
+	pfree(buffile->buffer.data);
+	buffile->buffer.data = NULL;
+	buffile->nbytes = 0;
 }
+
 void
 BufFileResume(BufFile *buffile)
 {
+	Assert(buffile->buffer.data == NULL);
+	buffile->buffer.data = palloc(BLCKSZ);
+
+	BufFileSeek(buffile, 0, 0, SEEK_SET);
 }
 
 bool gp_workfile_compression;		/* GUC */
