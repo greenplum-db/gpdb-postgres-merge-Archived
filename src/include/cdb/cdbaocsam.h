@@ -311,8 +311,4 @@ extern void aocs_addcol_setfirstrownum(AOCSAddColumnDesc desc,
 extern void aoco_dml_init(Relation relation, CmdType operation);
 extern void aoco_dml_finish(Relation relation, CmdType operation);
 
-extern void
-InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj);
-extern void
-GetNeededColumnsForScan(Node *expr, bool *mask, int n);
 #endif   /* AOCSAM_H */

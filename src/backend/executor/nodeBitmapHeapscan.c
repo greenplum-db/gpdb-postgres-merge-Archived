@@ -60,8 +60,6 @@
 #include "utils/spccache.h"
 #include "utils/snapmgr.h"
 
-#include "cdb/cdbappendonlyam.h"
-#include "cdb/cdbaocsam.h"
 #include "cdb/cdbvars.h" /* gp_select_invisible */
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
@@ -870,60 +868,21 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 
 	scanstate->ss.ss_currentRelation = currentRelation;
 
-	if (RelationIsAoCols(scanstate->ss.ss_currentRelation))
-	{
-		Assert(currentRelation->rd_att != NULL);
-		int colnum = currentRelation->rd_att->natts;
-
-		/*
-		 * the first `colnum` bools for simple bitmap scan
-		 * the reset bools for lossy model
-		 */
-		bool *proj = (bool *) palloc0(colnum * sizeof(bool) * 2);
-		bool *lossyproj = proj + colnum;
-		GetNeededColumnsForScan((Node *) node->scan.plan.targetlist, proj, colnum);
-		GetNeededColumnsForScan((Node *) node->scan.plan.qual, proj, colnum);
-
-		memcpy(lossyproj,proj, currentRelation->rd_att->natts * sizeof(bool));
-		GetNeededColumnsForScan((Node *) node->bitmapqualorig, lossyproj, colnum);
-
-		int colid;
-
-		/*
-		 * At least project one column. Since the tids stored in the index may not have
-		 * a correponding tuple any more (because of previous crashes, for example), we
-		 * need to read the tuple to make sure.
-		 */
-		for (colid = 0; colid < colnum; colid++)
-			if (proj[colid]) break;
-
-		if (colid == colnum)
-			proj[0] = true;
-
-		/* Same as proj */
-		for (colid = 0; colid < colnum; colid++)
-			if (lossyproj[colid]) break;
-
-		if (colid == colnum)
-			lossyproj[0] = true;
-
-		scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
-		                                                      estate->es_snapshot,
-		                                                      0,
-		                                                      (struct ScanKeyData *)proj);
-
-		((AOCSScanDesc)scanstate->ss.ss_currentScanDesc)->exprContext_ref =
-			scanstate->ss.ps.ps_ExprContext;
-		((AOCSScanDesc)scanstate->ss.ss_currentScanDesc)->bitmapqualorig_ref =
-			scanstate->bitmapqualorig;
-	}
-	else
-	{
-		scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
-		                                                      estate->es_snapshot,
-		                                                      0,
-		                                                      NULL);
-	}
+	/*
+	 * GPDB_12_MERGE_FIXME: for AOCO relations, it is needed to both extract the
+	 * columns and construct the state used in case that the expression needs to
+	 * be rechecked.
+	 *
+	 * This call is equivalent to upstream's table_beginscan_bm() in all other
+	 * cases
+	 */
+	scanstate->ss.ss_currentScanDesc = table_beginscan_bm_ecs(currentRelation,
+															  estate->es_snapshot,
+															  node->scan.plan.targetlist,
+															  node->scan.plan.qual,
+															  node->bitmapqualorig,
+															  (Node *)scanstate->bitmapqualorig,
+															  (Node *)scanstate->ss.ps.ps_ExprContext);
 
 	/*
 	 * all done.

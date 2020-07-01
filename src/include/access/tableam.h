@@ -205,6 +205,25 @@ typedef struct TableAmRoutine
 								 uint32 flags);
 
 	/*
+	 * GPDB_12_MERGE_FIXME: Extract columns for scan from targetlist and quals.
+	 */
+	TableScanDesc	(*scan_begin_extractcolumns) (Relation rel,
+												  Snapshot snapshot,
+												  List *targetlist,
+												  List *qual,
+												  uint32 flags);
+
+	/*
+	 * GPDB_12_MERGE_FIXME: Extract columns for scan from targetlist and quals,
+	 * stored in key as struct ScanKeyData.
+	 */
+	TableScanDesc (*scan_begin_extractcolumns_bm) (Relation rel, Snapshot snapshot,
+												   List *targetList, List *quals,
+												   List *bitmapqualorig,
+												   Node *bitmapqualorigEs,
+												   Node *exprContext,
+												   uint32 flags);
+	/*
 	 * Release resources and deallocate scan. If TableScanDesc.temp_snap,
 	 * TableScanDesc.rs_snapshot needs to be unregistered.
 	 */
@@ -745,6 +764,29 @@ table_beginscan(Relation rel, Snapshot snapshot,
 }
 
 /*
+ * GPDB_12_MERGE_FIXME: Like table_beginscan(), but first attempt to create a
+ * scan key array from the targetList and the quals if the corresponding method
+ * is implemented.
+ * Otherwise, it is equivalent as passing the last two arguments as, 0, NULL.
+ */
+static inline TableScanDesc
+table_beginscan_es(Relation rel, Snapshot snapshot,
+				   List *targetList, List *qual)
+{
+	uint32		flags = SO_TYPE_SEQSCAN |
+	SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
+
+	if (rel->rd_tableam->scan_begin_extractcolumns)
+		return rel->rd_tableam->scan_begin_extractcolumns(rel, snapshot,
+														  targetList, qual,
+														  flags);
+
+	return rel->rd_tableam->scan_begin(rel, snapshot,
+									   0, NULL,
+									   NULL, flags);
+}
+
+/*
  * Like table_beginscan(), but for scanning catalog. It'll automatically use a
  * snapshot appropriate for scanning catalog relations.
  */
@@ -786,6 +828,31 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
 	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
 
 	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
+}
+
+/*
+ * GPDB_12_MERGE_FIXME: Like table_beginscan_bm but with extended information in
+ * order to extract columns and set up all the needed state for AOCO relations.
+ * In case that the access method does not implement the extract function, this
+ * defaults to table_beginscan_bm with nkeys and key set to 0 and NULL
+ * respectively.
+ */
+static inline TableScanDesc
+table_beginscan_bm_ecs(Relation rel, Snapshot snapshot,
+					   List *targetList, List *quals, List *bitmapqualorig,
+					   Node *bitmapqualorigEs, Node *exprContext)
+{
+	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
+
+	if (rel->rd_tableam->scan_begin_extractcolumns_bm)
+		return rel->rd_tableam->scan_begin_extractcolumns_bm(rel, snapshot,
+															 targetList, quals,
+															 bitmapqualorig,
+															 bitmapqualorigEs,
+															 exprContext,
+															 flags);
+
+	return rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, flags);
 }
 
 /*

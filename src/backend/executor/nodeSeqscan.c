@@ -71,19 +71,15 @@ SeqNext(SeqScanState *node)
 		 * We reach here if the scan is not parallel, or if we're serially
 		 * executing a scan that was planned to be parallel.
 		 */
-		if(RelationIsAoCols(node->ss.ss_currentRelation))
-		{
-			bool *proj;
-			InitAOCSScanOpaque(node, node->ss.ss_currentRelation, &proj);
-			scandesc = table_beginscan(node->ss.ss_currentRelation,
-			                           estate->es_snapshot,
-			                           0, (struct ScanKeyData *)proj);
-		}
-		else
-			scandesc = table_beginscan(node->ss.ss_currentRelation,
-			                           estate->es_snapshot,
-			                           0, NULL);
-
+		/*
+		 * GPDB: we are using table_beginscan_es in order to also initialize the
+		 * scan state with the column info needed for AOCO relations. Check the
+		 * comment in table_beginscan_es() for more info.
+		 */
+		scandesc = table_beginscan_es(node->ss.ss_currentRelation,
+									  estate->es_snapshot,
+									  node->ss.ps.plan->targetlist,
+									  node->ss.ps.plan->qual);
 		node->ss.ss_currentScanDesc = scandesc;
 	}
 

@@ -338,6 +338,182 @@ aoco_slot_callbacks(Relation relation)
 	return &TTSOpsVirtual;
 }
 
+struct ExtractcolumnContext
+{
+	bool	   *cols;
+	AttrNumber	natts;
+	bool		found;
+};
+
+static bool
+extractcolumns_walker(Node *node, struct ExtractcolumnContext *ecCtx)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Var))
+	{
+		Var *var = (Var *)node;
+
+		if (IS_SPECIAL_VARNO(var->varno))
+			return false;
+
+		if (var->varattno > 0 && var->varattno <= ecCtx->natts)
+		{
+			ecCtx->cols[var->varattno -1] = true;
+			ecCtx->found = true;
+		}
+		/*
+		 * If all attributes are included,
+		 * set all entries in mask to true.
+		 */
+		else if (var->varattno == 0)
+		{
+			for (AttrNumber attno = 0; attno < ecCtx->natts; attno++)
+				ecCtx->cols[attno] = true;
+			ecCtx->found = true;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	return expression_tree_walker(node, extractcolumns_walker, (void *)ecCtx);
+}
+
+static bool
+extractcolumns_from_node(Node *expr, bool *cols, AttrNumber natts)
+{
+	struct ExtractcolumnContext	ecCtx;
+
+	ecCtx.cols	= cols;
+	ecCtx.natts = natts;
+	ecCtx.found = false;
+
+	extractcolumns_walker(expr, &ecCtx);
+
+	return  ecCtx.found;
+}
+
+static TableScanDesc
+aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
+							  List *targetlist, List *qual,
+							  uint32 flags)
+{
+	AOCSScanDesc	aoscan;
+	Snapshot		aocsMetaDataSnapshot;
+	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
+	bool		   *cols;
+	bool			found = false;
+
+	cols = palloc0(natts * sizeof(*cols));
+
+	found |= extractcolumns_from_node((Node *)targetlist, cols, natts);
+	found |= extractcolumns_from_node((Node *)qual, cols, natts);
+
+	/*
+	 * GPDB_12_MERGE_FIXME: is this still true? varattno == 0 is checked inside
+	 * extractcolumns_from_node.
+	 *
+	 * In some cases (for example, count(*)), no columns are specified.
+	 * We always scan the first column.
+	 */
+	if (!found)
+		cols[0] = true;
+
+	aocsMetaDataSnapshot = snapshot;
+	if (aocsMetaDataSnapshot == SnapshotAny)
+	{
+		/*
+		 * the append-only meta data should never be fetched with
+		 * SnapshotAny as bogus results are returned.
+		 */
+		aocsMetaDataSnapshot = GetTransactionSnapshot();
+	}
+
+	aoscan = aocs_beginscan(rel,
+							snapshot,
+							aocsMetaDataSnapshot,
+							NULL,
+							cols);
+
+	aoscan->rs_base.rs_rd		= rel;
+	aoscan->rs_base.rs_snapshot = snapshot; /* XXX: why snapshot and not aocsMetaDataSnapshot? */
+	aoscan->rs_base.rs_nkeys	= natts;
+	aoscan->rs_base.rs_flags	= flags;
+	aoscan->rs_base.rs_parallel = NULL;
+	aoscan->proj				= cols;		/* XXX: why have two proj arrays???  */
+
+	return (TableScanDesc)aoscan;
+}
+
+static TableScanDesc
+aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
+								 List *targetlist, List *qual,
+								 List *bitmapqualorig,
+								 Node *bitmapqualorigEs,
+								 Node *exprContext,
+								 uint32 flags)
+{
+	AOCSScanDesc	aocsScan;
+	Snapshot		aocsMetaDataSnapshot;
+	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
+	bool		   *cols;
+	bool		   *colsLossy;
+	bool			found = false;
+
+	cols = palloc0(natts * sizeof(*cols));
+	colsLossy = palloc0(natts * sizeof(*colsLossy));
+
+	found |= extractcolumns_from_node((Node *)targetlist, cols, natts);
+	found |= extractcolumns_from_node((Node *)qual, cols, natts);
+
+	/*
+	 * GPDB_12_MERGE_FIXME: is this still true? varattno == 0 is checked inside
+	 * extractcolumns_from_node.
+	 *
+	 * In some cases (for example, count(*)), no columns are specified.
+	 * We always scan the first column.
+	 */
+	if (!found)
+		cols[0] = true;
+
+	memcpy(colsLossy, cols, natts * sizeof(*cols));
+	extractcolumns_from_node((Node *)bitmapqualorig, colsLossy, natts);
+
+	aocsMetaDataSnapshot = snapshot;
+	if (aocsMetaDataSnapshot == SnapshotAny)
+	{
+		/*
+		 * the append-only meta data should never be fetched with
+		 * SnapshotAny as bogus results are returned.
+		 */
+		aocsMetaDataSnapshot = GetTransactionSnapshot();
+	}
+
+	aocsScan = aocs_beginscan(rel,
+							  snapshot,
+							  aocsMetaDataSnapshot,
+							  NULL,
+							  cols);
+
+	aocsScan->rs_base.rs_rd	= rel;
+	aocsScan->rs_base.rs_snapshot = snapshot;
+	aocsScan->rs_base.rs_nkeys = natts;
+	aocsScan->rs_base.rs_flags = flags;
+	aocsScan->rs_base.rs_parallel = NULL;
+	aocsScan->proj = cols;
+	aocsScan->lossy_proj = colsLossy;
+	aocsScan->bitmapqualorig_ref = (ExprState *)bitmapqualorigEs;
+	aocsScan->exprContext_ref = (ExprContext *)exprContext;
+
+	return (TableScanDesc)aocsScan;
+}
+
+/*
+ * This function intentionally ignores key and nkeys
+ */
 static TableScanDesc
 aoco_beginscan(Relation relation,
                Snapshot snapshot,
@@ -345,10 +521,12 @@ aoco_beginscan(Relation relation,
                ParallelTableScanDesc pscan,
                uint32 flags)
 {
-	Snapshot	aocsMetaDataSnapshot;
-	AOCSScanDesc aoscan;
+	AOCSScanDesc	aoscan;
+	Snapshot		aocsMetaDataSnapshot;
+	bool		   *proj = NULL;
+
 	aocsMetaDataSnapshot = snapshot;
-	if (aocsMetaDataSnapshot== SnapshotAny)
+	if (aocsMetaDataSnapshot == SnapshotAny)
 	{
 		/*
 		 * the append-only meta data should never be fetched with
@@ -361,14 +539,14 @@ aoco_beginscan(Relation relation,
 	                        snapshot,
 	                        aocsMetaDataSnapshot,
 	                        NULL,
-	                        (bool *)key);
+							proj);
 
 	aoscan->rs_base.rs_rd = relation;
 	aoscan->rs_base.rs_snapshot = snapshot;
 	aoscan->rs_base.rs_nkeys = nkeys;
 	aoscan->rs_base.rs_flags = flags;
 	aoscan->rs_base.rs_parallel = pscan;
-	aoscan->proj = (bool *)key;
+	aoscan->proj = proj;
 
 	return (TableScanDesc) aoscan;
 }
@@ -384,11 +562,24 @@ aoco_endscan(TableScanDesc scan)
 		pfree(aocoscan->aocofetch);
 		aocoscan->aocofetch = NULL;
 	}
+
 	if (aocoscan->aocolossyfetch)
 	{
 		aocs_fetch_finish(aocoscan->aocolossyfetch);
 		pfree(aocoscan->aocolossyfetch);
 		aocoscan->aocolossyfetch = NULL;
+	}
+
+	if (aocoscan->proj)
+	{
+		pfree(aocoscan->proj);
+		aocoscan->proj = NULL;
+	}
+
+	if (aocoscan->lossy_proj)
+	{
+		pfree(aocoscan->lossy_proj);
+		aocoscan->lossy_proj = NULL;
 	}
 
 	aocs_endscan((AOCSScanDesc) scan);
@@ -474,6 +665,12 @@ aoco_index_fetch_end(IndexFetchTableData *scan)
 		pfree(aocoscan->aocofetch);
 		aocoscan->aocofetch = NULL;
 	}
+
+	if (aocoscan->proj)
+	{
+		pfree(aocoscan->proj);
+		aocoscan->proj = NULL;
+	}
 }
 
 static bool
@@ -488,6 +685,13 @@ aoco_index_fetch_tuple(struct IndexFetchTableData *scan,
 	if (!aocoscan->aocofetch)
 	{
 		Snapshot	appendOnlyMetaDataSnapshot;
+		int			natts;
+
+		/* Initiallize the projection info, assumes the whole row */
+		Assert(!aocoscan->proj);
+		natts = RelationGetNumberOfAttributes(scan->rel);
+		aocoscan->proj = palloc(natts * sizeof(*aocoscan->proj));
+		MemSet(aocoscan->proj, true, natts * sizeof(*aocoscan->proj));
 
 		appendOnlyMetaDataSnapshot = snapshot;
 		if (appendOnlyMetaDataSnapshot == SnapshotAny)
@@ -499,18 +703,10 @@ aoco_index_fetch_tuple(struct IndexFetchTableData *scan,
 			appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
 		}
 
-		if(aocoscan->proj == NULL)
-		{
-			int col_num = scan->rel->rd_att->natts;
-			aocoscan->proj = palloc0(sizeof(bool) * col_num);
-			MemSet(aocoscan->proj, true, sizeof(bool) * col_num);
-		}
-
-		aocoscan->aocofetch=
-			aocs_fetch_init(aocoscan->xs_base.rel,
-			                      snapshot,
-			                      appendOnlyMetaDataSnapshot,
-			                      aocoscan->proj);
+		aocoscan->aocofetch = aocs_fetch_init(aocoscan->xs_base.rel,
+											  snapshot,
+											  appendOnlyMetaDataSnapshot,
+											  aocoscan->proj);
 	}
 	else
 	{
@@ -1617,9 +1813,6 @@ aoco_scan_bitmap_next_tuple(TableScanDesc scan,
 
 	if (aocoscan->aocolossyfetch == NULL)
 	{
-		int numcol = aocoscan->rs_base.rs_rd->rd_att->natts;
-		aocoscan->lossy_proj = aocoscan->proj + numcol;
-
 		aocoscan->aocolossyfetch =
 			aocs_fetch_init(aocoscan->rs_base.rs_rd,
 			                aocoscan->snapshot,
@@ -1727,6 +1920,20 @@ static const TableAmRoutine aoco_methods = {
 	.type = T_TableAmRoutine,
 	.slot_callbacks = aoco_slot_callbacks,
 
+	/*
+	 * GPDB_12_MERGE_FIXME: it is needed to extract the column information for
+	 * scans before calling beginscan. This can not happen in beginscan because
+	 * the needed information is not available at that time. It is the caller's
+	 * responsibility to choose to call aoco_beginscan_extractcolumns or
+	 * aoco_beginscan.
+	 */
+	.scan_begin_extractcolumns = aoco_beginscan_extractcolumns,
+
+	/*
+	 * GPDB_12_MERGE_FIXME: Like above but for bitmap scans.
+	 */
+	.scan_begin_extractcolumns_bm = aoco_beginscan_extractcolumns_bm,
+
 	.scan_begin = aoco_beginscan,
 	.scan_end = aoco_endscan,
 	.scan_rescan = aoco_rescan,
@@ -1781,87 +1988,4 @@ Datum
 aoco_tableam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&aoco_methods);
-}
-
-typedef struct neededColumnContext
-{
-	bool *mask;
-	int n;
-} neededColumnContext;
-
-static bool
-neededColumnContextWalker(Node *node, neededColumnContext *c)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Var))
-	{
-		Var *var = (Var *)node;
-
-		if (IS_SPECIAL_VARNO(var->varno))
-			return false;
-
-		if (var->varattno > 0 && var->varattno <= c->n)
-			c->mask[var->varattno - 1] = true;
-
-			/*
-			 * If all attributes are included,
-			 * set all entries in mask to true.
-			 */
-		else if (var->varattno == 0)
-		{
-			int i;
-
-			for (i=0; i < c->n; i++)
-				c->mask[i] = true;
-		}
-
-		return false;
-	}
-	return expression_tree_walker(node, neededColumnContextWalker, (void * )c);
-}
-/*
- * n specifies the number of allowed entries in mask: we use
- * it for bounds-checking in the walker above.
- */
-/* GPDB_12_MERGE_FIXME: this used to be in execQual.c Where does it belong now? */
-void
-GetNeededColumnsForScan(Node *expr, bool *mask, int n)
-{
-	neededColumnContext c;
-
-	c.mask = mask;
-	c.n = n;
-
-	neededColumnContextWalker(expr, &c);
-}
-
-void
-InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation, bool **proj)
-{
-	/* Initialize AOCS projection info */
-	int			ncol = currentRelation->rd_att->natts;
-	int			i;
-
-	Assert(currentRelation != NULL);
-
-	*proj = palloc0(ncol * sizeof(bool));
-
-	ncol = currentRelation->rd_att->natts;
-	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->targetlist, *proj, ncol);
-	GetNeededColumnsForScan((Node *) scanstate->ss.ps.plan->qual, *proj, ncol);
-
-	for (i = 0; i < ncol; i++)
-	{
-		if ((*proj)[i])
-			break;
-	}
-
-	/*
-	 * In some cases (for example, count(*)), no columns are specified.
-	 * We always scan the first column.
-	 */
-	if (i == ncol)
-		(*proj)[0] = true;
 }
