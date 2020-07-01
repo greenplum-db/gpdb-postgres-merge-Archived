@@ -1230,8 +1230,8 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	/* Scan through old table to convert data into heap tuples for sorting */
 	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
 
-	proj = palloc(sizeof(bool) * natts);
-	memset(proj, true, natts);
+	proj = palloc(natts * sizeof(*proj));
+	MemSet(proj, true, natts * sizeof(*proj));
 
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
 							GetActiveSnapshot(),
@@ -1268,7 +1268,6 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	
 	write_seg_no = ChooseSegnoForWrite(NewHeap);
 
-	memset(proj, true, natts);
 	idesc = aocs_insert_init(NewHeap, write_seg_no);
 
 	/* Insert sorted heap tuples into new storage */
