@@ -8,7 +8,7 @@ CREATE
 select application_name, state, sync_state from pg_stat_replication;
  application_name | state     | sync_state 
 ------------------+-----------+------------
- gp_walreceiver   | streaming | sync       
+ gp_walreceiver   | streaming | potential  
 (1 row)
 
 -- Scenario1: standby broadcasts commit-prepared for a transaction
