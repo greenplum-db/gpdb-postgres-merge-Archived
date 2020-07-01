@@ -71,9 +71,10 @@ SELECT application_name, state FROM pg_stat_replication;
 ------------------+-----------
  gp_walreceiver   | streaming 
 (1 row)
-!\retcode ls /tmp/master_wal_switch_test/recovery.conf;
+!\retcode ls /tmp/master_wal_switch_test/postgresql.auto.conf /tmp/master_wal_switch_test/standby.signal;
 -- start_ignore
-/tmp/master_wal_switch_test/recovery.conf
+/tmp/master_wal_switch_test/postgresql.auto.conf
+/tmp/master_wal_switch_test/standby.signal
 
 -- end_ignore
 (exited with code 0)

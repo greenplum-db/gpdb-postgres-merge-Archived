@@ -42,4 +42,4 @@ FROM gp_segment_configuration WHERE content=-1 and role='p';
 -- Verify if basebackup completed successfully
 -- See if recovery.conf exists (Yes - Pass)
 SELECT application_name, state FROM pg_stat_replication;
-!\retcode ls /tmp/master_wal_switch_test/recovery.conf;
+!\retcode ls /tmp/master_wal_switch_test/postgresql.auto.conf /tmp/master_wal_switch_test/standby.signal;
