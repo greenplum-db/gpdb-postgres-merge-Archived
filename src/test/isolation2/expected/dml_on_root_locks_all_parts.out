@@ -62,17 +62,3 @@ SELECT relation::regclass, mode, granted FROM pg_locks WHERE gp_segment_id=-1 AN
 COMMIT
 2<:  <... completed>
 UPDATE 0
-
-1: BEGIN;
-BEGIN
-1: INSERT INTO part_tbl SELECT 1,1,1;
-INSERT 1
-SELECT GRANTED FROM pg_locks WHERE relation = 'part_tbl_1_prt_1'::regclass::oid AND mode='RowExclusiveLock' AND gp_segment_id=-1 AND locktype='relation';
- granted 
----------
- t       
-(1 row)
-1: COMMIT;
-COMMIT
-DROP TABLE part_tbl;
-DROP

@@ -35,9 +35,3 @@ SELECT relation::regclass, mode, granted FROM pg_locks WHERE gp_segment_id=-1 AN
 
 1: COMMIT;
 2<:
-
-1: BEGIN;
-1: INSERT INTO part_tbl SELECT 1,1,1;
-SELECT GRANTED FROM pg_locks WHERE relation = 'part_tbl_1_prt_1'::regclass::oid AND mode='RowExclusiveLock' AND gp_segment_id=-1 AND locktype='relation';
-1: COMMIT;
-DROP TABLE part_tbl;
