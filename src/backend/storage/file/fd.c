@@ -2155,7 +2155,7 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 	 *
 	 * Because we update the stats in workfile manager first, if the write
 	 * fails, the workfile manager's status will be out of sync with reality.
-	 * That's OK, the inaccuracy doens't accumulate, and it doesn't need to be
+	 * That's OK, the inaccuracy doesn't accumulate, and it doesn't need to be
 	 * totallyaccurate.
 	 */
 	if ((VfdCache[file].fdstate & FD_WORKFILE) != 0)
