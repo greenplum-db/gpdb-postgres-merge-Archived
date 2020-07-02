@@ -387,7 +387,6 @@ aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
 							  uint32 flags)
 {
 	AOCSScanDesc	aoscan;
-	Snapshot		aocsMetaDataSnapshot;
 	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
 	bool		   *cols;
 	bool			found = false;
@@ -407,19 +406,8 @@ aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
 	if (!found)
 		cols[0] = true;
 
-	aocsMetaDataSnapshot = snapshot;
-	if (aocsMetaDataSnapshot == SnapshotAny)
-	{
-		/*
-		 * the append-only meta data should never be fetched with
-		 * SnapshotAny as bogus results are returned.
-		 */
-		aocsMetaDataSnapshot = GetTransactionSnapshot();
-	}
-
 	aoscan = aocs_beginscan(rel,
 							snapshot,
-							aocsMetaDataSnapshot,
 							NULL,
 							cols);
 
@@ -442,7 +430,6 @@ aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 								 uint32 flags)
 {
 	AOCSScanDesc	aocsScan;
-	Snapshot		aocsMetaDataSnapshot;
 	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
 	bool		   *cols;
 	bool		   *colsLossy;
@@ -467,19 +454,8 @@ aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 	memcpy(colsLossy, cols, natts * sizeof(*cols));
 	extractcolumns_from_node((Node *)bitmapqualorig, colsLossy, natts);
 
-	aocsMetaDataSnapshot = snapshot;
-	if (aocsMetaDataSnapshot == SnapshotAny)
-	{
-		/*
-		 * the append-only meta data should never be fetched with
-		 * SnapshotAny as bogus results are returned.
-		 */
-		aocsMetaDataSnapshot = GetTransactionSnapshot();
-	}
-
 	aocsScan = aocs_beginscan(rel,
 							  snapshot,
-							  aocsMetaDataSnapshot,
 							  NULL,
 							  cols);
 
@@ -507,22 +483,10 @@ aoco_beginscan(Relation relation,
                uint32 flags)
 {
 	AOCSScanDesc	aoscan;
-	Snapshot		aocsMetaDataSnapshot;
 	bool		   *proj = NULL;
-
-	aocsMetaDataSnapshot = snapshot;
-	if (aocsMetaDataSnapshot == SnapshotAny)
-	{
-		/*
-		 * the append-only meta data should never be fetched with
-		 * SnapshotAny as bogus results are returned.
-		 */
-		aocsMetaDataSnapshot = GetTransactionSnapshot();
-	}
 
 	aoscan = aocs_beginscan(relation,
 	                        snapshot,
-	                        aocsMetaDataSnapshot,
 	                        NULL,
 							proj);
 
@@ -1208,7 +1172,6 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	MemSet(proj, true, natts * sizeof(*proj));
 
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
-							GetActiveSnapshot(),
 							NULL /* relationTupleDesc */, proj);
 
 	while (aocs_getnext(scan, ForwardScanDirection, slot))

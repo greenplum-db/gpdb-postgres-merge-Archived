@@ -452,21 +452,29 @@ aocs_beginrangescan(Relation relation,
 AOCSScanDesc
 aocs_beginscan(Relation relation,
 			   Snapshot snapshot,
-			   Snapshot appendOnlyMetaDataSnapshot,
 			   TupleDesc relationTupleDesc, bool *proj)
 {
 	AOCSFileSegInfo **seginfo;
+	Snapshot	aocsMetaDataSnapshot;
 	int			total_seg;
 
 	RelationIncrementReferenceCount(relation);
 
-	seginfo = GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &total_seg);
+	/*
+	 * the append-only meta data should never be fetched with
+	 * SnapshotAny as bogus results are returned.
+	 */
+	if (snapshot != SnapshotAny)
+		aocsMetaDataSnapshot = snapshot;
+	else
+		aocsMetaDataSnapshot = GetTransactionSnapshot();
 
+	seginfo = GetAllAOCSFileSegInfo(relation, aocsMetaDataSnapshot, &total_seg);
 	return aocs_beginscan_internal(relation,
 								   seginfo,
 								   total_seg,
 								   snapshot,
-								   appendOnlyMetaDataSnapshot,
+								   aocsMetaDataSnapshot,
 								   relationTupleDesc,
 								   proj);
 }
