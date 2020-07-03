@@ -5040,15 +5040,15 @@ explain (verbose, costs off)
 select i, a from
   (select returns_rw_array(1) as a offset 0) ss,
   lateral consumes_rw_array(a) i;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Nested Loop
-   Output: i.i, (returns_rw_array(1))
+   Output: i.i, ('{1,1}'::integer[])
    ->  Result
-         Output: returns_rw_array(1)
+         Output: '{1,1}'::integer[]
    ->  Function Scan on public.consumes_rw_array i
          Output: i.i
-         Function Call: consumes_rw_array((returns_rw_array(1)))
+         Function Call: consumes_rw_array(('{1,1}'::integer[]))
  Optimizer: Postgres query optimizer
 (8 rows)
 
@@ -5062,11 +5062,11 @@ select i, a from
 
 explain (verbose, costs off)
 select consumes_rw_array(a), a from returns_rw_array(1) a;
-                 QUERY PLAN                 
---------------------------------------------
- Function Scan on public.returns_rw_array a
+             QUERY PLAN              
+-------------------------------------
+ Function Scan on a
    Output: consumes_rw_array(a), a
-   Function Call: returns_rw_array(1)
+   Function Call: '{1,1}'::integer[]
  Optimizer: Postgres query optimizer
 (4 rows)
 
