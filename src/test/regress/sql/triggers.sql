@@ -383,7 +383,7 @@ ALTER TABLE main_table DROP COLUMN b;
 begin;
 DROP TRIGGER after_upd_a_b_row_trig ON main_table;
 DROP TRIGGER after_upd_b_row_trig ON main_table;
-DROP TRIGGER after_upd_b_stmt_trig ON main_table;
+-- DROP TRIGGER after_upd_b_stmt_trig ON main_table;
 ALTER TABLE main_table DROP COLUMN b;
 rollback;
 

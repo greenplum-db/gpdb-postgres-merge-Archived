@@ -2747,8 +2747,6 @@ drop table temp_part_parent cascade;
 
 -- check that attaching partitions to a table while it is being used is
 -- prevented
--- GPDB: doesn't do what it's supposed to in GPDB, because statement triggers
--- are not fired.
 create table tab_part_attach (a int) partition by list (a);
 create or replace function func_part_attach() returns trigger
   language plpgsql as $$

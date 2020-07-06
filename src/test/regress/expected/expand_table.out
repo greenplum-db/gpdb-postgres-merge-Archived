@@ -533,8 +533,10 @@ CREATE TRIGGER foo_ar_trigger AFTER INSERT OR UPDATE OR DELETE ON table_with_upd
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_stmt');
 CREATE TRIGGER foo_bs_trigger BEFORE INSERT OR UPDATE OR DELETE ON table_with_update_trigger 
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_stmt');
+ERROR:  Triggers for statements are not yet supported
 CREATE TRIGGER foo_as_trigger AFTER INSERT OR UPDATE OR DELETE ON table_with_update_trigger 
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_stmt');
+ERROR:  Triggers for statements are not yet supported
 -- update should fail
 update table_with_update_trigger set a = a + 1;
 ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
