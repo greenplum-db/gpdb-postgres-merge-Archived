@@ -927,7 +927,7 @@ CREATE TABLE mpp3080_numericbig (id int4, val numeric(1000,800))
 partition by range (val)
 (start (1) end (5) every (1));
 -- order 1,5
-select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3080_numericbig') as t, pg_class as c where relid = oid;
+select t.*, pg_get_expr(relpartbound, oid) from pg_partition_tree('mpp3080_numericbig') as t, pg_class as c where relid = oid order by 1,5;
 
 create temp TABLE temp_hour_range (f1 time(2))
 partition by range (f1)
