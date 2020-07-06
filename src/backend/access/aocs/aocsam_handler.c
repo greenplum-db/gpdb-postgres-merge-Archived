@@ -42,6 +42,43 @@
 
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 
+/*
+ * Used for bitmapHeapScan. Also look at the comment in cdbaocsam.h regarding
+ * AOCSScanDescIdentifier.
+ *
+ * In BitmapHeapScans, it is needed to keep track of two distict fetch
+ * descriptors. One for direct fetches, and another one for recheck fetches. The
+ * distinction allows for a different set of columns to be populated in each
+ * case. During initialiazation of this structure, it is required to populate
+ * the proj array accordingly. It is later, during the actual fetching of the
+ * tuple, that the corresponding fetch descriptor will be lazily initialized.
+ *
+ * Finally, in this struct, state between next_block and next_tuple calls is
+ * kept, in order to minimize the work that is done in the latter.
+ */
+typedef struct AOCSBitmapScanData
+{
+	TableScanDescData rs_base;	/* AM independent part of the descriptor */
+
+	enum AOCSScanDescIdentifier descIdentifier;
+
+	Snapshot	appendOnlyMetaDataSnapshot;
+
+	enum
+	{
+		NO_RECHECK,
+		RECHECK
+	} whichDesc;
+
+	struct {
+		struct AOCSFetchDescData   *bitmapFetch;
+		bool					   *proj;
+	} bitmapScanDesc[2];
+
+	int	rs_cindex;	/* current tuple's index tbmres->offset or -1 */
+	int	rs_ntuples; /* how many tuples should fetch on the current block */
+} *AOCSBitmapScan;
+
 typedef struct AOCODMLState
 {
 	Oid relationOid;
@@ -411,12 +448,7 @@ aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
 							NULL,
 							cols);
 
-	aoscan->rs_base.rs_rd		= rel;
-	aoscan->rs_base.rs_snapshot = snapshot; /* XXX: why snapshot and not aocsMetaDataSnapshot? */
-	aoscan->rs_base.rs_nkeys	= natts;
-	aoscan->rs_base.rs_flags	= flags;
-	aoscan->rs_base.rs_parallel = NULL;
-	aoscan->proj				= cols;		/* XXX: why have two proj arrays???  */
+	pfree(cols);
 
 	return (TableScanDesc)aoscan;
 }
@@ -425,51 +457,37 @@ static TableScanDesc
 aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 								 List *targetlist, List *qual,
 								 List *bitmapqualorig,
-								 Node *bitmapqualorigEs,
-								 Node *exprContext,
 								 uint32 flags)
 {
-	AOCSScanDesc	aocsScan;
+	AOCSBitmapScan 	aocsBitmapScan;
 	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
-	bool		   *cols;
-	bool		   *colsLossy;
-	bool			found = false;
+	bool		   *proj;
+	bool		   *projRecheck;
 
-	cols = palloc0(natts * sizeof(*cols));
-	colsLossy = palloc0(natts * sizeof(*colsLossy));
+	aocsBitmapScan = palloc0(sizeof(*aocsBitmapScan));
+	aocsBitmapScan->descIdentifier = AOCSBITMAPSCANDATA;
 
-	found |= extractcolumns_from_node((Node *)targetlist, cols, natts);
-	found |= extractcolumns_from_node((Node *)qual, cols, natts);
+	aocsBitmapScan->rs_base.rs_rd = rel;
+	aocsBitmapScan->rs_base.rs_snapshot = snapshot;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: is this still true? varattno == 0 is checked inside
-	 * extractcolumns_from_node.
-	 *
-	 * In some cases (for example, count(*)), no columns are specified.
-	 * We always scan the first column.
-	 */
-	if (!found)
-		cols[0] = true;
+	proj = palloc0(natts * sizeof(*proj));
+	projRecheck = palloc0(natts * sizeof(*projRecheck));
 
-	memcpy(colsLossy, cols, natts * sizeof(*cols));
-	extractcolumns_from_node((Node *)bitmapqualorig, colsLossy, natts);
+	if (snapshot == SnapshotAny)
+		aocsBitmapScan->appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
+	else
+		aocsBitmapScan->appendOnlyMetaDataSnapshot = snapshot;
 
-	aocsScan = aocs_beginscan(rel,
-							  snapshot,
-							  NULL,
-							  cols);
+	extractcolumns_from_node((Node *)targetlist, proj, natts);
+	extractcolumns_from_node((Node *)qual, proj, natts);
 
-	aocsScan->rs_base.rs_rd	= rel;
-	aocsScan->rs_base.rs_snapshot = snapshot;
-	aocsScan->rs_base.rs_nkeys = natts;
-	aocsScan->rs_base.rs_flags = flags;
-	aocsScan->rs_base.rs_parallel = NULL;
-	aocsScan->proj = cols;
-	aocsScan->lossy_proj = colsLossy;
-	aocsScan->bitmapqualorig_ref = (ExprState *)bitmapqualorigEs;
-	aocsScan->exprContext_ref = (ExprContext *)exprContext;
+	memcpy(projRecheck, proj, natts * sizeof(*projRecheck));
+	extractcolumns_from_node((Node *)bitmapqualorig, projRecheck, natts);
 
-	return (TableScanDesc)aocsScan;
+	aocsBitmapScan->bitmapScanDesc[NO_RECHECK].proj = proj;
+	aocsBitmapScan->bitmapScanDesc[RECHECK].proj = projRecheck;
+
+	return (TableScanDesc)aocsBitmapScan;
 }
 
 /*
@@ -483,19 +501,14 @@ aoco_beginscan(Relation relation,
                uint32 flags)
 {
 	AOCSScanDesc	aoscan;
-	bool		   *proj = NULL;
+
+	/* Parallel scan not supported for AOCO tables */
+	Assert(pscan == NULL);
 
 	aoscan = aocs_beginscan(relation,
 	                        snapshot,
 	                        NULL,
-							proj);
-
-	aoscan->rs_base.rs_rd = relation;
-	aoscan->rs_base.rs_snapshot = snapshot;
-	aoscan->rs_base.rs_nkeys = nkeys;
-	aoscan->rs_base.rs_flags = flags;
-	aoscan->rs_base.rs_parallel = pscan;
-	aoscan->proj = proj;
+							NULL);
 
 	return (TableScanDesc) aoscan;
 }
@@ -503,35 +516,26 @@ aoco_beginscan(Relation relation,
 static void
 aoco_endscan(TableScanDesc scan)
 {
-	AOCSScanDesc aocoscan = (AOCSScanDesc) scan;
+	AOCSScanDesc	aocsScanDesc;
+	AOCSBitmapScan  aocsBitmapScan;
 
-	if (aocoscan->aocofetch)
+	aocsScanDesc = (AOCSScanDesc) scan;
+	if (aocsScanDesc->descIdentifier == AOCSSCANDESCDATA)
 	{
-		aocs_fetch_finish(aocoscan->aocofetch);
-		pfree(aocoscan->aocofetch);
-		aocoscan->aocofetch = NULL;
+		aocs_endscan(aocsScanDesc);
+		return;
 	}
 
-	if (aocoscan->aocolossyfetch)
-	{
-		aocs_fetch_finish(aocoscan->aocolossyfetch);
-		pfree(aocoscan->aocolossyfetch);
-		aocoscan->aocolossyfetch = NULL;
-	}
+	Assert(aocsScanDesc->descIdentifier ==  AOCSBITMAPSCANDATA);
+	aocsBitmapScan = (AOCSBitmapScan) scan;
 
-	if (aocoscan->proj)
-	{
-		pfree(aocoscan->proj);
-		aocoscan->proj = NULL;
-	}
+	if (aocsBitmapScan->bitmapScanDesc[NO_RECHECK].bitmapFetch)
+		aocs_fetch_finish(aocsBitmapScan->bitmapScanDesc[NO_RECHECK].bitmapFetch);
+	if (aocsBitmapScan->bitmapScanDesc[RECHECK].bitmapFetch)
+		aocs_fetch_finish(aocsBitmapScan->bitmapScanDesc[RECHECK].bitmapFetch);
 
-	if (aocoscan->lossy_proj)
-	{
-		pfree(aocoscan->lossy_proj);
-		aocoscan->lossy_proj = NULL;
-	}
-
-	aocs_endscan((AOCSScanDesc) scan);
+	pfree(aocsBitmapScan->bitmapScanDesc[NO_RECHECK].proj);
+	pfree(aocsBitmapScan->bitmapScanDesc[RECHECK].proj);
 }
 
 static void
@@ -553,7 +557,7 @@ aoco_getnextslot(TableScanDesc scan, ScanDirection direction, TupleTableSlot *sl
 	if (aocs_getnext(aoscan, direction, slot))
 	{
 		ExecStoreVirtualTuple(slot);
-		pgstat_count_heap_getnext(aoscan->aos_rel);
+		pgstat_count_heap_getnext(aoscan->rs_base.rs_rd);
 
 		return true;
 	}
@@ -582,7 +586,7 @@ aoco_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
 static IndexFetchTableData *
 aoco_index_fetch_begin(Relation rel)
 {
-	IndexFetchAOCOData *aocoscan= palloc0(sizeof(IndexFetchAOCOData));
+	IndexFetchAOCOData *aocoscan = palloc0(sizeof(IndexFetchAOCOData));
 
 	aocoscan->xs_base.rel = rel;
 
@@ -1076,7 +1080,6 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	AOTupleId				aoTupleId;
 	AOCSInsertDesc			idesc = NULL;
-	bool				   *proj = NULL;
 	int						write_seg_no;
 	AOCSScanDesc			scan = NULL;
 	TupleTableSlot		   *slot;
@@ -1168,11 +1171,9 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	/* Scan through old table to convert data into heap tuples for sorting */
 	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
 
-	proj = palloc(natts * sizeof(*proj));
-	MemSet(proj, true, natts * sizeof(*proj));
-
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
-							NULL /* relationTupleDesc */, proj);
+						  NULL /* relationTupleDesc */,
+						  NULL /* proj */);
 
 	while (aocs_getnext(scan, ForwardScanDirection, slot))
 	{
@@ -1226,7 +1227,6 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Finish and deallocate insertion */
 	aocs_insert_finish(idesc);
-	pfree(proj);
 }
 
 static bool
@@ -1391,7 +1391,7 @@ aoco_index_build_range_scan(Relation heapRelation,
 	Oid blkdirrelid;
 	Oid blkidxrelid;
 
-	GetAppendOnlyEntryAuxOids(RelationGetRelid(aocoscan->aos_rel), NULL, NULL,
+	GetAppendOnlyEntryAuxOids(RelationGetRelid(aocoscan->rs_base.rs_rd), NULL, NULL,
 	                          &blkdirrelid, &blkidxrelid, NULL, NULL);
 	/*
 	 * Note that block directory is created during creation of the first
@@ -1710,7 +1710,7 @@ static bool
 aoco_scan_bitmap_next_block(TableScanDesc scan,
                                   TBMIterateResult *tbmres)
 {
-	AOCSScanDesc aoscan = (AOCSScanDesc) scan;
+	AOCSBitmapScan	aocsBitmapScan = (AOCSBitmapScan)scan;
 
 	/* If tbmres contains no tuples, continue. */
 	if (tbmres->ntuples == 0)
@@ -1723,100 +1723,90 @@ aoco_scan_bitmap_next_block(TableScanDesc scan,
 	 * Start scanning from the beginning of the offsets array (or
 	 * at first "offset number" if it's a lossy page).
 	 */
-	aoscan->rs_cindex = 0;
+	aocsBitmapScan->rs_cindex = 0;
+
+	/*
+	 * ntuples == -1 indicates a lossy page
+	 */
+	if (tbmres->ntuples == -1)
+	{
+		Assert(tbmres->recheck);
+		aocsBitmapScan->rs_ntuples = INT16_MAX + 1;
+	}
+	else
+	{
+		aocsBitmapScan->rs_ntuples = tbmres->ntuples;
+	}
+
+	/*
+	 * which descriptor to be used for fetching the data
+	 */
+	aocsBitmapScan->whichDesc = (tbmres->recheck) ? RECHECK : NO_RECHECK;
 
 	return true;
 }
 
 static bool
 aoco_scan_bitmap_next_tuple(TableScanDesc scan,
-                                  TBMIterateResult *tbmres,
-                                  TupleTableSlot *slot)
+							TBMIterateResult *tbmres,
+							TupleTableSlot *slot)
 {
-	AOCSScanDesc aocoscan = (AOCSScanDesc) scan;
-	OffsetNumber pseudoHeapOffset;
-	ItemPointerData pseudoHeapTid;
-	AOTupleId	aoTid;
+	AOCSBitmapScan	aocsBitmapScan = (AOCSBitmapScan)scan;
+	AOCSFetchDesc	aocoFetchDesc;
+	OffsetNumber	pseudoOffset;
+	ItemPointerData	pseudoTid;
+	AOTupleId		aoTid;
 
-	if (aocoscan->aocofetch == NULL)
+	aocoFetchDesc = aocsBitmapScan->bitmapScanDesc[aocsBitmapScan->whichDesc].bitmapFetch;
+	if (aocoFetchDesc == NULL)
 	{
-		aocoscan->aocofetch =
-			aocs_fetch_init(aocoscan->rs_base.rs_rd,
-			                aocoscan->snapshot,
-			                aocoscan->appendOnlyMetaDataSnapshot,
-			                aocoscan->proj);
+		aocoFetchDesc = aocs_fetch_init(aocsBitmapScan->rs_base.rs_rd,
+										aocsBitmapScan->rs_base.rs_snapshot,
+										aocsBitmapScan->appendOnlyMetaDataSnapshot,
+										aocsBitmapScan->bitmapScanDesc[aocsBitmapScan->whichDesc].proj);
+		aocsBitmapScan->bitmapScanDesc[aocsBitmapScan->whichDesc].bitmapFetch = aocoFetchDesc;
 	}
 
-	if (aocoscan->aocolossyfetch == NULL)
-	{
-		aocoscan->aocolossyfetch =
-			aocs_fetch_init(aocoscan->rs_base.rs_rd,
-			                aocoscan->snapshot,
-			                aocoscan->appendOnlyMetaDataSnapshot,
-			                aocoscan->lossy_proj);
-	}
 
-	for (;;)
+	ExecClearTuple(slot);
+
+	while (aocsBitmapScan->rs_cindex < aocsBitmapScan->rs_ntuples)
 	{
 		/*
-		 * If it's a lossy pase, iterate through all possible "offset numbers".
+		 * If it's a lossy page, iterate through all possible "offset numbers".
 		 * Otherwise iterate through the array of "offset numbers".
 		 */
 		if (tbmres->ntuples == -1)
 		{
-			if (aocoscan->rs_cindex == INT16_MAX + 1)
-				return false;
-
 			/*
 			 * +1 to convert index to offset, since TID offsets are not zero
 			 * based.
 			 */
-			pseudoHeapOffset = aocoscan->rs_cindex + 1;
+			pseudoOffset = aocsBitmapScan->rs_cindex + 1;
 		}
 		else
-		{
-			if (aocoscan->rs_cindex == tbmres->ntuples)
-				return false;
+			pseudoOffset = tbmres->offsets[aocsBitmapScan->rs_cindex];
 
-			pseudoHeapOffset = tbmres->offsets[aocoscan->rs_cindex];
-		}
-		aocoscan->rs_cindex++;
+		aocsBitmapScan->rs_cindex++;
 
 		/*
 		 * Okay to fetch the tuple
 		 */
-		ItemPointerSet(&pseudoHeapTid, tbmres->blockno, pseudoHeapOffset);
+		ItemPointerSet(&pseudoTid, tbmres->blockno, pseudoOffset);
+		tbm_convert_appendonly_tid_out(&pseudoTid, &aoTid);
 
-		tbm_convert_appendonly_tid_out(&pseudoHeapTid, &aoTid);
-
-		ExecClearTuple(slot);
-
-		if (aocs_fetch(aocoscan->aocolossyfetch, &aoTid, slot))
+		if (aocs_fetch(aocoFetchDesc, &aoTid, slot))
 		{
+			/* OK to return this tuple */
 			ExecStoreVirtualTuple(slot);
+			pgstat_count_heap_fetch(aocsBitmapScan->rs_base.rs_rd);
 
-			if (tbmres->recheck)
-			{
-				aocoscan->exprContext_ref->ecxt_scantuple = slot;
-				ResetExprContext(aocoscan->exprContext_ref);
-
-				/* Fails recheck, so drop it and loop back for another */
-				if (!ExecQual(aocoscan->bitmapqualorig_ref,
-					aocoscan->exprContext_ref))
-					ExecClearTuple(slot);
-			}
+			return true;
 		}
-
-		if (TupIsNull(slot))
-			continue;
-
-		pgstat_count_heap_fetch(aocoscan->aos_rel);
-
-		/* OK to return this tuple */
-		return true;
 	}
 
-	return false;	/* Should not be reached, keep compiler happy */
+	/* Done with this block */
+	return false;
 }
 
 static bool

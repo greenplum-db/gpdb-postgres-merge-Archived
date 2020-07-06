@@ -54,7 +54,8 @@ static AOCSScanDesc aocs_beginscan_internal(Relation relation,
 						int total_seg,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
-						TupleDesc relationTupleDesc, bool *proj);
+						TupleDesc relationTupleDesc,
+						bool *proj);
 
 /*
  * Open the segment file for a specified column associated with the datum
@@ -283,7 +284,10 @@ close_ds_write(DatumStreamWrite **ds, int nvp)
 	}
 }
 
-
+/*
+ * GPDB_12_MERGE_FIXME: Find a better name to match what this function is
+ * actually doing
+ */
 static void
 aocs_initscan(AOCSScanDesc scan)
 {
@@ -292,10 +296,10 @@ aocs_initscan(AOCSScanDesc scan)
 	ItemPointerSet(&scan->cdb_fake_ctid, 0, 0);
 	scan->cur_seg_row = 0;
 
-	open_ds_read(scan->aos_rel, scan->ds, scan->relationTupleDesc,
+	open_ds_read(scan->rs_base.rs_rd, scan->ds, scan->relationTupleDesc,
 				 scan->proj_atts, scan->num_proj_atts, scan->checksum);
 
-	pgstat_count_heap_scan(scan->aos_rel);
+	pgstat_count_heap_scan(scan->rs_base.rs_rd);
 }
 
 static int
@@ -357,7 +361,7 @@ open_next_scan_seg(AOCSScanDesc scan)
 					 */
 					int64		firstSequence;
 					Oid         segrelid;
-                    GetAppendOnlyEntryAuxOids(scan->aos_rel->rd_id,
+					GetAppendOnlyEntryAuxOids(RelationGetRelid(scan->rs_base.rs_rd),
                                               scan->appendOnlyMetaDataSnapshot,
                                               &segrelid, NULL, NULL,
                                               NULL, NULL);
@@ -372,7 +376,7 @@ open_next_scan_seg(AOCSScanDesc scan)
 															scan->appendOnlyMetaDataSnapshot,
 															(FileSegInfo *) curSegInfo,
 															0 /* lastSequence */ ,
-															scan->aos_rel,
+															scan->rs_base.rs_rd,
 															curSegInfo->segno,
 															nvp,
 															true);
@@ -382,7 +386,7 @@ open_next_scan_seg(AOCSScanDesc scan)
 											firstSequence);
 				}
 
-				open_all_datumstreamread_segfiles(scan->aos_rel,
+				open_all_datumstreamread_segfiles(scan->rs_base.rs_rd,
 												  curSegInfo,
 												  scan->ds,
 												  scan->proj_atts,
@@ -452,7 +456,8 @@ aocs_beginrangescan(Relation relation,
 AOCSScanDesc
 aocs_beginscan(Relation relation,
 			   Snapshot snapshot,
-			   TupleDesc relationTupleDesc, bool *proj)
+			   TupleDesc relationTupleDesc,
+			   bool *proj)
 {
 	AOCSFileSegInfo **seginfo;
 	Snapshot	aocsMetaDataSnapshot;
@@ -495,31 +500,30 @@ aocs_beginscan_internal(Relation relation,
 						int total_seg,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
-						TupleDesc relationTupleDesc, bool *proj)
+						TupleDesc relationTupleDesc,
+						bool *proj)
 {
 	AOCSScanDesc scan;
 	int			nvp;
 	int			i;
+	NameData    nd;
+	Oid         visimaprelid;
+	Oid         visimapidxid;
 
 	if (!relationTupleDesc)
-		relationTupleDesc = relation->rd_att;
+		relationTupleDesc = RelationGetDescr(relation);
 
 	nvp = relationTupleDesc->natts;
 
 	scan = (AOCSScanDesc) palloc0(sizeof(AOCSScanDescData));
-	scan->aos_rel = relation;
+	scan->rs_base.rs_rd = relation;
+	scan->rs_base.rs_snapshot = snapshot;
 	scan->appendOnlyMetaDataSnapshot = appendOnlyMetaDataSnapshot;
-	scan->snapshot = snapshot;
-
 	scan->seginfo = seginfo;
-
 	scan->total_seg = total_seg;
 	scan->relationTupleDesc = relationTupleDesc;
-	NameData    nd;
-    Oid         visimaprelid;
-    Oid         visimapidxid;
 
-    GetAppendOnlyEntryAttributes(relation->rd_id,
+    GetAppendOnlyEntryAttributes(RelationGetRelid(relation),
                                  &scan->blocksz,
                                  NULL,
                                  (int16 *)&scan->compLevel,
@@ -527,7 +531,7 @@ aocs_beginscan_internal(Relation relation,
                                  &nd);
     scan->compType = NameStr(nd);
 
-    GetAppendOnlyEntryAuxOids(relation->rd_id,
+	GetAppendOnlyEntryAuxOids(RelationGetRelid(relation),
                               scan->appendOnlyMetaDataSnapshot,
                               NULL, NULL, NULL,
                               &visimaprelid, &visimapidxid);
@@ -538,10 +542,10 @@ aocs_beginscan_internal(Relation relation,
 	 * needed can incur a noticeable overhead in aocs_getnext. So convert it
 	 * into an array of the attribute numbers of the required columns.
 	 */
-	scan->proj_atts = palloc(scan->relationTupleDesc->natts * sizeof(int));
-
+	scan->proj_atts = palloc(nvp * sizeof(*scan->proj_atts));
 	scan->num_proj_atts = 0;
-	for (i = 0; i < scan->relationTupleDesc->natts; i++)
+
+	for (i = 0; i < nvp; i++)
 	{
 		/* if proj is NULL,fetch all column */
 		if (proj == NULL || proj[i])
@@ -551,8 +555,6 @@ aocs_beginscan_internal(Relation relation,
 	scan->ds = (DatumStreamRead **) palloc0(sizeof(DatumStreamRead *) * nvp);
 
 	aocs_initscan(scan);
-
-	scan->blockDirectory = NULL;
 
 	if (scan->total_seg != 0)
 		AppendOnlyVisimap_Init(&scan->visibilityMap,
@@ -577,7 +579,7 @@ aocs_endscan(AOCSScanDesc scan)
 {
 	int			i;
 
-	RelationDecrementReferenceCount(scan->aos_rel);
+	RelationDecrementReferenceCount(scan->rs_base.rs_rd);
 
 	close_cur_scan_seg(scan);
 	close_ds_read(scan->ds, scan->relationTupleDesc->natts);
@@ -686,7 +688,7 @@ aocs_getnext(AOCSScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 	int64		rowNum = INT64CONST(-1);
 	int			err = 0;
 	int			i;
-	bool		isSnapshotAny = (scan->snapshot == SnapshotAny);
+	bool		isSnapshotAny = (scan->rs_base.rs_snapshot == SnapshotAny);
 
 	Assert(ScanDirectionIsForward(direction));
 

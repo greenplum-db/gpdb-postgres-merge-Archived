@@ -220,8 +220,6 @@ typedef struct TableAmRoutine
 	TableScanDesc (*scan_begin_extractcolumns_bm) (Relation rel, Snapshot snapshot,
 												   List *targetList, List *quals,
 												   List *bitmapqualorig,
-												   Node *bitmapqualorigEs,
-												   Node *exprContext,
 												   uint32 flags);
 	/*
 	 * Release resources and deallocate scan. If TableScanDesc.temp_snap,
@@ -848,8 +846,6 @@ table_beginscan_bm_ecs(Relation rel, Snapshot snapshot,
 		return rel->rd_tableam->scan_begin_extractcolumns_bm(rel, snapshot,
 															 targetList, quals,
 															 bitmapqualorig,
-															 bitmapqualorigEs,
-															 exprContext,
 															 flags);
 
 	return rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, flags);

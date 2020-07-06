@@ -72,29 +72,51 @@ typedef struct AOCSInsertDescData
 typedef AOCSInsertDescData *AOCSInsertDesc;
 
 /*
+ * Scan descriptors
+ */
+
+/*
+ * AOCS relations do not have a direct access to TID's. In order to scan via
+ * TID's the blockdirectory is used and a distinct scan descriptor that is
+ * closer to an index scan than a relation scan is needed. This is different
+ * from heap relations where the same descriptor is used for all scans.
+ *
+ * Likewise the tableam API always expects the same TableScanDescData extended
+ * structure to be used for all scans. However, for bitmapheapscans on AOCS
+ * relations, a distinct descriptor is needed and a different method to
+ * initialize it is used, (table_beginscan_bm_ecs).
+ *
+ * This enum is used by the aocsam_handler to distiguish between the different
+ * TableScanDescData structures internaly in the aocsam_handler.
+ */
+enum AOCSScanDescIdentifier
+{
+	AOCSSCANDESCDATA,		/* public */
+	AOCSBITMAPSCANDATA		/* am private */
+};
+
+/*
  * used for scan of append only relations using BufferedRead and VarBlocks
  */
 typedef struct AOCSScanDescData
 {
 	TableScanDescData rs_base;	/* AM independent part of the descriptor */
 
-	/* scan parameters */
-	Relation	aos_rel;			/* target relation descriptor */
-	Snapshot	appendOnlyMetaDataSnapshot;
+	enum AOCSScanDescIdentifier descIdentifier;
 
 	/*
-	 * Snapshot to use for non-metadata operations.
+	 * Snapshot to use for metadata operations.
 	 * Usually snapshot = appendOnlyMetaDataSnapshot, but they
 	 * differ e.g. if gp_select_invisible is set.
 	 */ 
-	Snapshot    snapshot;
+	Snapshot	appendOnlyMetaDataSnapshot;
 
 	/* tuple descriptor of table to scan.
-	 *  Code should use this rather than aos_rel->rd_att,
+	 *  Code should use this rather than ,
 	 *  as THEY MAY BE DIFFERENT.
 	 *  See code in aocsam.c's aocs_beginscan for more info
 	 */
-	TupleDesc   relationTupleDesc;	
+	TupleDesc   relationTupleDesc;
 
 	Index aos_scanrelid; /* index */
 
@@ -135,21 +157,7 @@ typedef struct AOCSScanDescData
 	int64		nextTupleId;
 	int64		targetTupleId;
 
-	/* For Bitmap scan */
-	int			rs_cindex;		/* current tuple's index in tbmres->offsets */
-	struct AOCSFetchDescData   *aocofetch;
-	bool                       *proj;
-
-	struct AOCSFetchDescData   *aocolossyfetch;
-	bool                       *lossy_proj;
-
-	/*
-	 * We only keep the reference expr context and state, do not worry about
-	 * the lifecycle.
-	 */
-	ExprContext                *exprContext_ref;
-	ExprState                  *bitmapqualorig_ref;
-}	AOCSScanDescData;
+} AOCSScanDescData;
 
 typedef AOCSScanDescData *AOCSScanDesc;
 
@@ -216,6 +224,17 @@ typedef struct IndexFetchAOCOData
 
 	bool                *proj;
 } IndexFetchAOCOData;
+
+/*
+ * GPDB_12_MERGE_FIXME:
+ * Descriptor for fetches from table via bitmap. In upstream the code goes
+ * through table_beginscan() and it should be the same struct in all cases.
+ * However in GPDB extra info is needed which should not be initialized or
+ * computed for all scan calls. A new method has been added (with a MERGE_FIXME)
+ * which is only used for bitmap scans. Take advantage of it and create a new
+ * struct to contain only the information needed. 
+ */
+
 
 typedef struct AOCSHeaderScanDescData
 {

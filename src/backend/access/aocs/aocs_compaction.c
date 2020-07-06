@@ -253,6 +253,7 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	{
 		proj[i] = true;
 	}
+
 	scanDesc = aocs_beginrangescan(aorel,
 								   snapshot, snapshot,
 								   &compact_segno, 1, NULL, proj);
