@@ -268,7 +268,7 @@ typedef AOCSAddColumnDescData *AOCSAddColumnDesc;
  */
 
 extern AOCSScanDesc aocs_beginscan(Relation relation, Snapshot snapshot,
-								   TupleDesc relationTupleDesc, bool *proj);
+								   TupleDesc relationTupleDesc, bool *proj, uint32 flags);
 extern AOCSScanDesc aocs_beginrangescan(Relation relation, Snapshot snapshot,
 		Snapshot appendOnlyMetaDataSnapshot, 
 		int *segfile_no_arr, int segfile_count,

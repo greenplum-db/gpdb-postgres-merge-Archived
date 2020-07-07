@@ -446,7 +446,8 @@ aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
 	aoscan = aocs_beginscan(rel,
 							snapshot,
 							NULL,
-							cols);
+							cols,
+							flags);
 
 	pfree(cols);
 
@@ -463,12 +464,14 @@ aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 	AttrNumber		natts = RelationGetNumberOfAttributes(rel);
 	bool		   *proj;
 	bool		   *projRecheck;
+	bool			found;
 
 	aocsBitmapScan = palloc0(sizeof(*aocsBitmapScan));
 	aocsBitmapScan->descIdentifier = AOCSBITMAPSCANDATA;
 
 	aocsBitmapScan->rs_base.rs_rd = rel;
 	aocsBitmapScan->rs_base.rs_snapshot = snapshot;
+	aocsBitmapScan->rs_base.rs_flags = flags;
 
 	proj = palloc0(natts * sizeof(*proj));
 	projRecheck = palloc0(natts * sizeof(*projRecheck));
@@ -478,11 +481,25 @@ aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 	else
 		aocsBitmapScan->appendOnlyMetaDataSnapshot = snapshot;
 
-	extractcolumns_from_node((Node *)targetlist, proj, natts);
-	extractcolumns_from_node((Node *)qual, proj, natts);
+	found = extractcolumns_from_node((Node *)targetlist, proj, natts);
+	found |= extractcolumns_from_node((Node *)qual, proj, natts);
 
 	memcpy(projRecheck, proj, natts * sizeof(*projRecheck));
-	extractcolumns_from_node((Node *)bitmapqualorig, projRecheck, natts);
+	if (extractcolumns_from_node((Node *)bitmapqualorig, projRecheck, natts))
+	{
+		/*
+		 * At least one column needs to be projected in non-recheck case.
+		 * Otherwise, the AOCO fetch code may skip visimap checking because
+		 * there are no columns to be scanned and we may get wrong results.
+		 */
+		if (!found)
+			proj[0] = true;
+	}
+	else if (!found)
+	{
+		/* XXX can we have no columns to project at all? */		
+		proj[0] = projRecheck[0] = true;
+	}
 
 	aocsBitmapScan->bitmapScanDesc[NO_RECHECK].proj = proj;
 	aocsBitmapScan->bitmapScanDesc[RECHECK].proj = projRecheck;
@@ -508,7 +525,8 @@ aoco_beginscan(Relation relation,
 	aoscan = aocs_beginscan(relation,
 	                        snapshot,
 	                        NULL,
-							NULL);
+							NULL,
+							flags);
 
 	return (TableScanDesc) aoscan;
 }
@@ -545,7 +563,8 @@ aoco_rescan(TableScanDesc scan, ScanKey key,
 {
 	AOCSScanDesc  aoscan = (AOCSScanDesc) scan;
 
-	aocs_rescan(aoscan);
+	if (aoscan->descIdentifier == AOCSSCANDESCDATA)
+		aocs_rescan(aoscan);
 }
 
 static bool
@@ -598,7 +617,11 @@ aoco_index_fetch_begin(Relation rel)
 static void
 aoco_index_fetch_reset(IndexFetchTableData *scan)
 {
-	// GPDB_12_MERGE_FIXME: Should we close the underlying AOCO fetch desc here?
+	/*
+	 * GPDB_12_MERGE_FIXME: Should we close the underlying AOCO fetch desc
+	 * here?  Remember to change the rescan case in aoco_rescan for bitmap
+	 * scan descriptor (AOCSBITMAPSCANDATA).
+	 */
 }
 
 static void
@@ -1173,7 +1196,8 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
 						  NULL /* relationTupleDesc */,
-						  NULL /* proj */);
+						  NULL /* proj */,
+						  0 /* flags */);
 
 	while (aocs_getnext(scan, ForwardScanDirection, slot))
 	{

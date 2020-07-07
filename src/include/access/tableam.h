@@ -837,8 +837,7 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
  */
 static inline TableScanDesc
 table_beginscan_bm_ecs(Relation rel, Snapshot snapshot,
-					   List *targetList, List *quals, List *bitmapqualorig,
-					   Node *bitmapqualorigEs, Node *exprContext)
+					   List *targetList, List *quals, List *bitmapqualorig)
 {
 	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
 

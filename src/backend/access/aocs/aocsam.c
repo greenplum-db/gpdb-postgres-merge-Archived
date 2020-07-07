@@ -55,7 +55,8 @@ static AOCSScanDesc aocs_beginscan_internal(Relation relation,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
 						TupleDesc relationTupleDesc,
-						bool *proj);
+						bool *proj,
+						uint32 flags);
 
 /*
  * Open the segment file for a specified column associated with the datum
@@ -450,14 +451,16 @@ aocs_beginrangescan(Relation relation,
 								   snapshot,
 								   appendOnlyMetaDataSnapshot,
 								   relationTupleDesc,
-								   proj);
+								   proj,
+								   0);
 }
 
 AOCSScanDesc
 aocs_beginscan(Relation relation,
 			   Snapshot snapshot,
 			   TupleDesc relationTupleDesc,
-			   bool *proj)
+			   bool *proj,
+			   uint32 flags)
 {
 	AOCSFileSegInfo **seginfo;
 	Snapshot	aocsMetaDataSnapshot;
@@ -481,7 +484,8 @@ aocs_beginscan(Relation relation,
 								   snapshot,
 								   aocsMetaDataSnapshot,
 								   relationTupleDesc,
-								   proj);
+								   proj,
+								   flags);
 }
 
 /*
@@ -501,7 +505,8 @@ aocs_beginscan_internal(Relation relation,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
 						TupleDesc relationTupleDesc,
-						bool *proj)
+						bool *proj,
+						uint32 flags)
 {
 	AOCSScanDesc scan;
 	int			nvp;
@@ -518,6 +523,7 @@ aocs_beginscan_internal(Relation relation,
 	scan = (AOCSScanDesc) palloc0(sizeof(AOCSScanDescData));
 	scan->rs_base.rs_rd = relation;
 	scan->rs_base.rs_snapshot = snapshot;
+	scan->rs_base.rs_flags = flags;
 	scan->appendOnlyMetaDataSnapshot = appendOnlyMetaDataSnapshot;
 	scan->seginfo = seginfo;
 	scan->total_seg = total_seg;

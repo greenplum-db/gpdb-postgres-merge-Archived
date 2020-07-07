@@ -869,9 +869,8 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/*
-	 * GPDB_12_MERGE_FIXME: for AOCO relations, it is needed to both extract the
-	 * columns and construct the state used in case that the expression needs to
-	 * be rechecked.
+	 * GPDB_12_MERGE_FIXME: for AOCO relations, it is needed to extract the
+	 * columns.
 	 *
 	 * This call is equivalent to upstream's table_beginscan_bm() in all other
 	 * cases
@@ -880,9 +879,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 															  estate->es_snapshot,
 															  node->scan.plan.targetlist,
 															  node->scan.plan.qual,
-															  node->bitmapqualorig,
-															  (Node *)scanstate->bitmapqualorig,
-															  (Node *)scanstate->ss.ps.ps_ExprContext);
+															  node->bitmapqualorig);
 
 	/*
 	 * all done.
