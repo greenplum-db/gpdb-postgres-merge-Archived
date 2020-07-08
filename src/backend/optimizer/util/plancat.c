@@ -155,7 +155,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
      * CDB: Get partitioning key info for distributed relation.
      */
     rel->cdbpolicy = RelationGetPartitioningKey(relation);
-	rel->relam = relation->rd_rel->relam;
+	rel->amhandler = relation->rd_amhandler;
 
 	/*
 	 * Estimate relation size --- unless it's an inheritance parent, in which

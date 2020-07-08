@@ -563,6 +563,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	LOCKMODE	parentLockmode;
 	const char *accessMethod = NULL;
 	Oid			accessMethodId = InvalidOid;
+	Oid			amHandlerOid = InvalidOid;
 	List	   *schema;
 	List	   *cooked_constraints;
 	bool		shouldDispatch = dispatch &&
@@ -766,7 +767,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	/* look up the access method, verify it is for a table */
 	if (accessMethod != NULL)
+	{
 		accessMethodId = get_table_am_oid(accessMethod, false);
+		amHandlerOid = get_table_am_handler_oid(accessMethod, false);
+	}
+
 
 	/*
 	 * Parse and validate reloptions, if any.
@@ -779,8 +784,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * appendonly relations. This check can not be performed earlier because it
 	 * is needed to know the access method.
 	 */
-	if ((accessMethodId == APPENDOPTIMIZED_TABLE_AM_OID ||
-			accessMethodId == AOCO_TABLE_AM_OID))
+	if ((amHandlerOid == APPENDONLY_TABLE_AM_HANDLER_OID ||
+			amHandlerOid == AOCO_TABLE_AM_HANDLER_OID))
 	{
 		Assert(relkind == RELKIND_MATVIEW || relkind == RELKIND_RELATION );
 
@@ -801,7 +806,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 									 stdRdOptions->compresslevel,
 									 stdRdOptions->compresstype,
 									 stdRdOptions->checksum,
-									 (accessMethodId == AOCO_TABLE_AM_OID));
+									 (amHandlerOid == AOCO_TABLE_AM_HANDLER_OID));
 
 		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
 	} else if (relkind == RELKIND_VIEW)
@@ -959,7 +964,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 														  stmt->options,
 														  relkind == RELKIND_PARTITIONED_TABLE,
 														  &found_enc);
-		if (accessMethodId != AOCO_TABLE_AM_OID)
+		if (amHandlerOid != AOCO_TABLE_AM_HANDLER_OID)
 		{
 			/*
 			 * ENCODING options were specified, but the table is not

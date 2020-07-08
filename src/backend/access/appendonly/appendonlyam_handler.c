@@ -30,6 +30,7 @@
 #include "access/tsmapi.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"

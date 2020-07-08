@@ -24,6 +24,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -814,8 +815,8 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * are no straight forward solutions though.
 		 */
 		if (index->amhasgettuple &&
-				(rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
-				 rel->relam != AOCO_TABLE_AM_OID))
+				(rel->amhandler != APPENDONLY_TABLE_AM_HANDLER_OID &&
+				 rel->amhandler != AOCO_TABLE_AM_HANDLER_OID))
 			add_path(rel, (Path *) ipath);
 
 		if (index->amhasgetbitmap &&
