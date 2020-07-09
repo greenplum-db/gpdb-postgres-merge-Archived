@@ -1903,6 +1903,11 @@ hash_agg_enter_spill_mode(AggState *aggstate)
 							   perhash->aggnode->numGroups,
 							   aggstate->hashentrysize);
 		}
+
+		if (aggstate->ss.ps.instrument)
+		{
+			aggstate->ss.ps.instrument->workfileCreated = true;
+		}
 	}
 }
 
