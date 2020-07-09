@@ -10978,7 +10978,7 @@
 { oid => 7171, descr => 'show append only table compression ratio',
    proname => 'get_ao_compression_ratio', provolatile => 'v', proparallel => 'u', prorettype => 'float8', proargtypes => 'regclass', prosrc => 'get_ao_compression_ratio', prodataaccess => 'r' },
 
-{ oid => 7050, descr => 'bitmap(internal)',
+{ oid => 7050, oid_symbol => 'BITMAP_INDEXAM_HANDLER_OID', descr => 'bitmap(internal)',
    proname => 'bmhandler', provolatile => 'v', prorettype => 'index_am_handler', proargtypes => 'internal', prosrc => 'bmhandler' },
 
 
