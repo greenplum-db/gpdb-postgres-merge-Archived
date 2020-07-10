@@ -41,6 +41,7 @@
 
 #define SEGNO_SUFFIX_LENGTH 12
 
+static void mdunlink_ao_base_relfile(void *ctx);
 static bool mdunlink_ao_perFile(const int segno, void *ctx);
 static bool copy_append_only_data_perFile(const int segno, void *ctx);
 static bool truncate_ao_perFile(const int segno, void *ctx);
@@ -264,11 +265,81 @@ mdunlink_ao(RelFileNodeBackend rnode, ForkNumber forkNumber, bool isRedo)
 		unlinkFiles.segPath = segPath;
 		unlinkFiles.segpathSuffixPosition = segPathSuffixPosition;
 
+		mdunlink_ao_base_relfile(&unlinkFiles);
+
 		ao_foreach_extent_file(mdunlink_ao_perFile, &unlinkFiles);
+
 		pfree(segPath);
 	}
 
 	pfree((void *) path);
+}
+
+/*
+ * Delete or truncate segfile 0.  Note: There is no <relfilenode>.0 file.  The
+ * segfile 0 is the same as base relfilenode for row-oriented AO.  For
+ * column-oriented AO, the segno 0 for the first column corresponds to base
+ * relfilenode.  See also: ao_foreach_extent_file.
+ */
+static void
+mdunlink_ao_base_relfile(void *ctx)
+{
+	FileTag tag;
+	struct mdunlink_ao_callback_ctx *unlinkFiles =
+		(struct mdunlink_ao_callback_ctx *)ctx;
+
+	const char *baserel = unlinkFiles->segPath;
+	
+	*unlinkFiles->segpathSuffixPosition = '\0';
+	if (unlinkFiles->isRedo)
+	{
+		/* First, forget any pending sync requests for the first segment */
+		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, 0,
+					 SYNC_HANDLER_AO);
+		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+
+		if (unlink(baserel) != 0)
+		{
+			/* ENOENT is expected after the end of the extensions */
+			if (errno != ENOENT)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove file \"%s\": %m",
+								baserel)));
+		}
+	}
+	else
+	{
+		int			fd;
+		int			ret;
+
+
+		/* Register request to unlink first segment later */
+		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, 0,
+					 SYNC_HANDLER_AO);
+		RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
+
+		fd = OpenTransientFile(baserel, O_RDWR | PG_BINARY);
+		if (fd >= 0)
+		{
+			int			save_errno;
+
+			ret = ftruncate(fd, 0);
+			save_errno = errno;
+			CloseTransientFile(fd);
+			errno = save_errno;
+		}
+		else
+			ret = -1;
+
+		if (ret < 0 && errno != ENOENT)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not truncate file \"%s\": %m", baserel)));
+
+		}
+	}
 }
 
 static bool
@@ -280,88 +351,25 @@ mdunlink_ao_perFile(const int segno, void *ctx)
 	char *segPath = unlinkFiles->segPath;
 	char *segPathSuffixPosition = unlinkFiles->segpathSuffixPosition;
 
-	/*
-	 * Delete or truncate the first segment.
-	 */
-	if (segno == 0)
+	Assert (segno > 0);
+	sprintf(segPathSuffixPosition, ".%u", segno);
+
+	/* First, forget any pending sync requests for the first segment */
+	INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
+				 SYNC_HANDLER_AO);
+	RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+
+	/* Next unlink the file */
+	if (unlink(segPath) != 0)
 	{
-		*segPathSuffixPosition = '\0';
-
-		if (unlinkFiles->isRedo)
-		{
-			/* First, forget any pending sync requests for the first segment */
-			INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
-						 SYNC_HANDLER_AO);
-			RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
-
-			/* Next unlink the file */
-			if (unlink(segPath) != 0)
-			{
-				/* ENOENT is expected after the end of the extensions */
-				if (errno != ENOENT)
-					ereport(WARNING,
-					        (errcode_for_file_access(),
-						        errmsg("could not remove file \"%s\": %m",
-						               segPath)));
-				else
-					return false;
-			}
-		}
+		/* ENOENT is expected after the end of the extensions */
+		if (errno != ENOENT)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m", segPath)));
 		else
-		{
-			/* truncate(2) would be easier here, but Windows hasn't got it */
-			int			fd;
-			int			ret;
-
-			fd = OpenTransientFile(segPath, O_RDWR | PG_BINARY);
-			if (fd >= 0)
-			{
-				int			save_errno;
-
-				ret = ftruncate(fd, 0);
-				save_errno = errno;
-				CloseTransientFile(fd);
-				errno = save_errno;
-			}
-			else
-				ret = -1;
-
-			if (ret < 0 && errno != ENOENT)
-			{
-				ereport(WARNING,
-						(errcode_for_file_access(),
-						 errmsg("could not truncate file \"%s\": %m", segPath)));
-
-			}
-
-			/* Register request to unlink first segment later */
-			INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
-			             SYNC_HANDLER_AO);
-			RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
-		}
+			return false;
 	}
-	else
-	{
-		sprintf(segPathSuffixPosition, ".%u", segno);
-
-		/* First, forget any pending sync requests for the first segment */
-		INIT_FILETAG(tag, unlinkFiles->rnode, MAIN_FORKNUM, segno,
-					 SYNC_HANDLER_AO);
-		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
-
-		/* Next unlink the file */
-		if (unlink(segPath) != 0)
-		{
-			/* ENOENT is expected after the end of the extensions */
-			if (errno != ENOENT)
-				ereport(WARNING,
-						(errcode_for_file_access(),
-						 errmsg("could not remove file \"%s\": %m", segPath)));
-			else
-				return false;
-		}
-	}
-
 	return true;
 }
 

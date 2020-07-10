@@ -881,14 +881,6 @@ appendonly_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	RelationOpenSmgr(rel);
 
 	/*
-	 * Since we copy the file directly without looking at the shared buffers,
-	 * we'd better first flush out any pages of the source relation that are
-	 * in shared buffers.  We assume no new changes will be made while we are
-	 * holding exclusive lock on the rel.
-	 */
-	FlushRelationBuffers(rel);
-
-	/*
 	 * Create and copy all forks of the relation, and schedule unlinking of
 	 * old physical files.
 	 *
@@ -899,25 +891,22 @@ appendonly_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 
 	copy_append_only_data(rel->rd_node, *newrnode, rel->rd_backend, rel->rd_rel->relpersistence);
 
-	/* copy those extra forks that exist */
-	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
-		 forkNum <= MAX_FORKNUM; forkNum++)
+	/*
+	 * For append-optimized tables, no forks other than the main fork should
+	 * exist with the exception of unlogged tables.  For unlogged AO tables,
+	 * INIT_FORK must exist.
+	 */
+	if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
-		if (smgrexists(rel->rd_smgr, forkNum))
-		{
-			smgrcreate(dstrel, forkNum, false);
+		Assert (smgrexists(rel->rd_smgr, INIT_FORKNUM));
 
-			/*
-			 * WAL log creation if the relation is persistent, or this is the
-			 * init fork of an unlogged relation.
-			 */
-			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
-				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
-				 forkNum == INIT_FORKNUM))
-				log_smgrcreate(newrnode, forkNum);
-			RelationCopyStorage(rel->rd_smgr, dstrel, forkNum,
-								rel->rd_rel->relpersistence);
-		}
+		/*
+		 * INIT_FORK is empty, creating it is sufficient, no need to copy
+		 * contents from source to destination.
+		 */
+		smgrcreate(dstrel, INIT_FORKNUM, false);
+		
+		log_smgrcreate(newrnode, INIT_FORKNUM);
 	}
 
 	/* drop old relation, and close new one */

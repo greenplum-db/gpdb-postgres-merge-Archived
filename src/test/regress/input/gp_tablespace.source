@@ -108,6 +108,20 @@ ALTER TABLE ao_ul_ts_table SET TABLESPACE ul_testspace;
 ALTER INDEX ao_ul_ts_index SET TABLESPACE ul_testspace;
 ALTER TABLE aoco_ul_ts_table SET TABLESPACE ul_testspace;
 
+-- Unlogged tables with .0 segfiles
+CREATE UNLOGGED TABLE ao_ul_ctas USING appendoptimized AS select * from ao_ul_ts_table;
+ALTER TABLE ao_ul_ctas SET TABLESPACE ul_testspace;
+
+CREATE UNLOGGED TABLE aoco_ul_ctas USING aoco AS select * from aoco_ul_ts_table;
+ALTER TABLE aoco_ul_ctas SET TABLESPACE ul_testspace;
+
+-- The .0 segfile should have been moved correctly, leading to
+-- non-zero tuple count
+select count(*) from ao_ul_ctas;
+select * from gp_toolkit.__gp_aoseg('ao_ul_ctas');
+select count(*) from aoco_ul_ctas;
+select * from gp_toolkit.__gp_aocsseg('aoco_ul_ctas');
+
 -- Check that init fork exists on master
 select has_init_file('ao_ul_ts_table', 'table');
 select has_init_file('ao_ul_ts_index', 'index');
@@ -175,6 +189,8 @@ drop table part_ts_table;
 drop tablespace testspace;
 drop table ao_ul_ts_table;
 drop table aoco_ul_ts_table;
+drop table ao_ul_ctas;
+drop table aoco_ul_ctas;
 drop tablespace ul_testspace;
 
 -- Greenplum tablespaces have the option to define tablespace location for specific segments
