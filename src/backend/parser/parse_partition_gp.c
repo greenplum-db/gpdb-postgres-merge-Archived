@@ -979,7 +979,7 @@ generateRangePartitions(ParseState *pstate,
 		else if (end)
 			boundspec->upperdatums = datums_to_consts(boundIter->partkey,
 													  &boundIter->currEnd);
-		boundspec->location = -1;
+		boundspec->location = elem->location;
 
 		if (every && elem->partName)
 		{
