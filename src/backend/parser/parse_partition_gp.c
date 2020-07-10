@@ -355,7 +355,15 @@ deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmt
 			if (!stmt->partbound->lowerdatums)
 			{
 				if (prevstmt)
-					stmt->partbound->lowerdatums = prevstmt->partbound->upperdatums;
+				{
+					if (prevstmt->partbound->upperdatums)
+						stmt->partbound->lowerdatums = prevstmt->partbound->upperdatums;
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("cannot derive starting value of partition based upon ending of previous partition"),
+								 parser_errposition(pstate, stmt->partbound->location)));
+				}
 				else
 				{
 					ColumnRef  *minvalue = makeNode(ColumnRef);
@@ -371,7 +379,15 @@ deduceImplicitRangeBounds(ParseState *pstate, Relation parentrel, List *origstmt
 				if (next)
 				{
 					CreateStmt *nextstmt = (CreateStmt *)next;
-					stmt->partbound->upperdatums = nextstmt->partbound->lowerdatums;
+					if (nextstmt->partbound->lowerdatums)
+						stmt->partbound->upperdatums = nextstmt->partbound->lowerdatums;
+					else
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("cannot derive ending value of partition based upon starting of next partition"),
+								 parser_errposition(pstate, stmt->partbound->location)));
+					}
 				}
 				else
 				{
