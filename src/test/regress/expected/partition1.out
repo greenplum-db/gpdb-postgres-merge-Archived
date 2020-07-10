@@ -31,18 +31,18 @@ partition by range (b)
 partition aa start ('2007'), end ('2008'),
 partition bb start ('2008'), end ('2009')
 );
-ERROR:  invalid use of mixed named and unnamed RANGE boundary specifications
+ERROR:  cannot derive ending value of partition based upon starting of next partition
 LINE 5: partition aa start ('2007'), end ('2008'),
-                                     ^
+        ^
 create table ggg (a char(1), b int)
 distributed by (a)
 partition by range(b)
 (
 partition aa start ('2007'), end ('2008')
 );
-ERROR:  invalid use of mixed named and unnamed RANGE boundary specifications
+ERROR:  cannot derive ending value of partition based upon starting of next partition
 LINE 5: partition aa start ('2007'), end ('2008')
-                                     ^
+        ^
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 create table ggg (a char(1), b date, d char(3))
@@ -279,20 +279,19 @@ partition by list (gender)
 );
 ERROR:  relation "rank_1_prt_girls" already exists
 -- duplicate values
-CREATE TABLE rank (id int, rank int, year date, gender
-char(1)) DISTRIBUTED BY (id, gender, year)
-partition by list (rank,gender)
+CREATE TYPE rank_partkey AS (rank int, gender char(1));
+CREATE TABLE rank (id int, rankgender rank_partkey, year date)
+DISTRIBUTED BY (id, year)
+partition by list (rankgender)
 (
- values ((1, 'M')),
- values ((2, 'M')),
- values ((3, 'M')),
- values ((1, 'F')),
- partition ff values ((4, 'M')),
- partition bb values ((1, 'M'))
+ values (CAST ('(1,M)' AS rank_partkey)),
+ values (CAST ('(2,M)' AS rank_partkey)),
+ values (CAST ('(3,M)' AS rank_partkey)),
+ values (CAST ('(1,F)' AS rank_partkey)),
+ partition ff values (CAST ('(4,M)' AS rank_partkey)),
+ partition bb values (CAST ('(1,M)' AS rank_partkey))
 );
-ERROR:  duplicate VALUES in partition "bb"
-LINE 10:  partition bb values ((1, 'M'))
-                       ^
+ERROR:  partition "rank_1_prt_bb" would overlap partition "rank_1_prt_1"
 -- RANGE validation
 -- legal if end of aa not inclusive
 create table ggg (a char(1), b date, d char(3))
@@ -795,9 +794,7 @@ alter table jjj add default partition j3 ;
 ERROR:  relation "jjj_1_prt_j3" already exists
 alter table jjj add default partition j4 ;
 ERROR:  partition "jjj_1_prt_j4" conflicts with existing default partition "jjj_1_prt_j3"
--- cannot add if have default, must split
 alter table jjj add partition j5 end (date '2010-01-01');
-ERROR:  partition "jjj_1_prt_j5" would overlap partition "jjj_1_prt_j1"
 drop table jjj cascade;
 alter table hhh alter partition cc set tablespace foo_p;
 ERROR:  tablespace "foo_p" does not exist
@@ -809,7 +806,6 @@ ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh drop partition cc restrict;
 ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh drop partition if exists cc;
-NOTICE:  partition "cc" of relation "hhh" does not exist, skipping
 -- fail (mpp-3265)
 alter table hhh drop partition for ('2001-01-01');
 ERROR:  partition for specified value of hhh does not exist
@@ -959,7 +955,7 @@ HINT:  FOR expression may only specify a non-default partition in this context.
 alter table rank truncate partition for ('F');
 drop table rank cascade;
 alter table hhh exchange partition cc with table nosuchtable;
-ERROR:  partition "cc" of relation "hhh" does not exist
+ERROR:  relation "public.hhh_1_prt_cc" does not exist
 alter table hhh exchange partition aa with table nosuchtable;
 ERROR:  relation "nosuchtable" does not exist
 alter table hhh rename partition cc to aa;
@@ -1179,6 +1175,18 @@ insert into d values(1, 55);
 insert into d values(1, 70);
 ERROR:  no partition of relation "d" found for row  (seg1 127.0.1.1:7003 pid=6502)
 DETAIL:  Partition key of the failing row contains (j) = (70).
+\d+ d
+                               Partitioned table "public.d"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+ j      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (j)
+Partitions: d_1_prt_1 FOR VALUES FROM (10) TO (50),
+            d_1_prt_2 FOR VALUES FROM (5) TO (10),
+            d_1_prt_3 FOR VALUES FROM (50) TO (60)
+Distributed by: (i)
+
 select * from d;
  i | j  
 ---+----
@@ -1189,17 +1197,17 @@ select * from d;
 (4 rows)
 
 select * from d_1_prt_1;
- i | j 
----+---
- 1 | 5
-(1 row)
-
-select * from d_1_prt_2;
  i | j  
 ---+----
  1 | 10
  1 | 11
 (2 rows)
+
+select * from d_1_prt_2;
+ i | j 
+---+---
+ 1 | 5
+(1 row)
 
 select * from d_1_prt_3;
  i | j  
@@ -1266,38 +1274,53 @@ select * from d_1_prt_abc;
 
 drop table  d cascade;
 -- multicolumn list support
-create table d (a int, b int, c int) distributed by (a)
-partition by list(b, c)
-(partition a values(('1', '2'), ('3', '4')),
- partition b values(('100', '20')),
- partition c values(('1000', '1001'), ('1001', '1002'), ('1003', '1004')));
-insert into d values(1, 1, 2);
-insert into d values(1, 3, 4);
-insert into d values(1, 100, 20);
-insert into d values(1, 100, 2000);
-ERROR:  no partition for partitioning key  (seg0 127.0.0.1:25432 pid=6803)
-insert into d values(1, '1000', '1001'), (1, '1001', '1002'), (1, '1003', '1004');
-insert into d values(1, 100, NULL);
-ERROR:  no partition for partitioning key  (seg0 127.0.0.1:25432 pid=6803)
+create type d_partkey as (b int, c int);
+create table d (a int, k d_partkey) distributed by (a)
+partition by list(k)
+(partition a values(CAST('(1,2)' as d_partkey), CAST('(3,4)' as d_partkey)),
+ partition b values(CAST('(100,20)' as d_partkey)),
+ partition c values(CAST('(1000,1001)' as d_partkey), CAST('(1001,1002)' as d_partkey), CAST('(1003,1004)' as d_partkey)));
+\d+ d
+                                Partitioned table "public.d"
+ Column |   Type    | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-----------+-----------+----------+---------+----------+--------------+-------------
+ a      | integer   |           |          |         | plain    |              | 
+ k      | d_partkey |           |          |         | extended |              | 
+Partition key: LIST (k)
+Partitions: d_1_prt_a FOR VALUES IN ('(1,2)', '(3,4)'),
+            d_1_prt_b FOR VALUES IN ('(100,20)'),
+            d_1_prt_c FOR VALUES IN ('(1000,1001)', '(1001,1002)', '(1003,1004)')
+Distributed by: (a)
+
+insert into d values(1, (1, 2));
+insert into d values(1, (3, 4));
+insert into d values(1, (100, 20));
+insert into d values(1, (100, 2000));
+ERROR:  no partition of relation "d" found for row  (seg1 127.0.1.1:7003 pid=10417)
+DETAIL:  Partition key of the failing row contains (k) = ((100,2000)).
+insert into d values(1, ('1000', '1001')), (1, ('1001', '1002')), (1, ('1003', '1004'));
+insert into d values(1, (100, NULL));
+ERROR:  no partition of relation "d" found for row  (seg1 127.0.1.1:7003 pid=10417)
+DETAIL:  Partition key of the failing row contains (k) = ((100,)).
 select * from d_1_prt_a;
- a | b | c 
----+---+---
- 1 | 1 | 2
- 1 | 3 | 4
+ a |   k   
+---+-------
+ 1 | (1,2)
+ 1 | (3,4)
 (2 rows)
 
 select * from d_1_prt_b;
- a |  b  | c  
----+-----+----
- 1 | 100 | 20
+ a |    k     
+---+----------
+ 1 | (100,20)
 (1 row)
 
 select * from d_1_prt_c;
- a |  b   |  c   
----+------+------
- 1 | 1000 | 1001
- 1 | 1001 | 1002
- 1 | 1003 | 1004
+ a |      k      
+---+-------------
+ 1 | (1000,1001)
+ 1 | (1001,1002)
+ 1 | (1003,1004)
 (3 rows)
 
 drop table d cascade;
@@ -1491,7 +1514,6 @@ set subpartition template
 (
    subpartition l1 values('l1')
 );
-NOTICE:  adding level 1 subpartition template specification for relation "test_part_relops_tmpl"
 -- previously, we do wrong in the function of `add_partition_rule`
 -- which invokes `transformRelOptions`, and transformRelOptions
 -- may return NULL in some cases. For example, the invokation of
@@ -2076,9 +2098,9 @@ create table mpp14613_range(
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 -- SPLIT partition
-alter table mpp14613_list alter partition others split partition subothers at (10) into (partition b1, partition b2);
+alter table mpp14613_list alter partition others split partition subothers at (10) into (partition b1, partition subothers);
 ERROR:  SPLIT PARTITION is not currently supported when leaf partition is list partitioned in multi level partition table
-alter table mpp14613_range alter partition others split partition subothers at (10) into (partition b1, partition b2);
+alter table mpp14613_range alter partition others split partition subothers at (10) into (partition b1, partition subothers);
 ERROR:  AT clause cannot be used when splitting a default RANGE partition
 -- ALTER TABLE ... ALTER PARTITION ... SPLIT DEFAULT PARTITION
 create table foo(
@@ -2100,7 +2122,7 @@ create table foo(
  );
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-alter table foo alter partition others split partition subothers at (10) into (partition b1, partition b2);
+alter table foo alter partition others split partition subothers at (10) into (partition b1, partition subothers);
 ERROR:  SPLIT PARTITION is not currently supported when leaf partition is list partitioned in multi level partition table
 alter table foo alter partition others split partition subothers at (10) into (partition b1, default partition);
 ERROR:  INTO can only have second partition by name
@@ -2142,69 +2164,18 @@ select count(*) from pg_index where indrelid='pt_indx_tab_1_prt_a_1'::regclass;
 (1 row)
 
 --
--- MPP-18162 CLONE (4.2.3) - List partitioning for multiple columns gives duplicate values error
---
-create table mpp18162a
-( i1 int, i2 int)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi0 values ( (1,1) ),
-  partition pi1 values ( (1,2) ),
-  partition pi2 values ( (2,1) )
-);
-create table mpp18162b
-( i1 int, i2 int)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (3,1), (1,3) ),
-  partition pi2 values ( (4,1), (1,4) )
-);
-create table mpp18162c
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi0 values ( ('1','1') ),
-  partition pi1 values ( ('1','2') ),
-  partition pi2 values ( ('2','1') )
-);
-create table mpp18162d
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( ('3','1'), ('1','3') ),
-  partition pi2 values ( ('4','1'), ('1','4') )
-);
-create table mpp18162e
-( i1 date, i2 date)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (date '2008-01-01',date '2008-02-01') ),
-  partition pi2 values ( (date '2008-02-01',date '2008-01-01') ),
-  partition pi3 values ( (date '2008-03-01',date '2008-04-01') ),
-  partition pi4 values ( (date '2008-04-01',date '2008-03-01') )
-);
-create table mpp18162f
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (date '2008-01-01',date '2008-02-01'), (date '2008-02-01',date '2008-01-01') ),
-  partition pi2 values ( (date '2008-03-01',date '2008-04-01'), (date '2008-04-01',date '2008-03-01') )
-);
---
 -- Test changing the datatype of a column in a partitioning key column.
 -- (Not supported, throws an error).
 --
 create table mpp18179 (a int, b int, i int)
 distributed by (a)
-partition by list (a,b)
-   ( PARTITION ab1 VALUES ((1,1)),
-     PARTITION ab2 values ((1,2)),
+partition by list (b)
+   ( PARTITION ab1 VALUES (1),
+     PARTITION ab2 values (2),
      default partition other
    );
-alter table mpp18179 alter column a type varchar(20);
-ERROR:  cannot alter type of a column used in a partitioning key
 alter table mpp18179 alter column b type varchar(20);
-ERROR:  cannot alter type of a column used in a partitioning key
+ERROR:  cannot alter type of column named in partition key
 --
 -- Drop index on partitioned table, and recreate it.
 --

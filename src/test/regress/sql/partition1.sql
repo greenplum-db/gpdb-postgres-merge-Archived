@@ -216,16 +216,17 @@ partition by list (gender)
 );
 
 -- duplicate values
-CREATE TABLE rank (id int, rank int, year date, gender
-char(1)) DISTRIBUTED BY (id, gender, year)
-partition by list (rank,gender)
+CREATE TYPE rank_partkey AS (rank int, gender char(1));
+CREATE TABLE rank (id int, rankgender rank_partkey, year date)
+DISTRIBUTED BY (id, year)
+partition by list (rankgender)
 (
- values ((1, 'M')),
- values ((2, 'M')),
- values ((3, 'M')),
- values ((1, 'F')),
- partition ff values ((4, 'M')),
- partition bb values ((1, 'M'))
+ values (CAST ('(1,M)' AS rank_partkey)),
+ values (CAST ('(2,M)' AS rank_partkey)),
+ values (CAST ('(3,M)' AS rank_partkey)),
+ values (CAST ('(1,F)' AS rank_partkey)),
+ partition ff values (CAST ('(4,M)' AS rank_partkey)),
+ partition bb values (CAST ('(1,M)' AS rank_partkey))
 );
 
 
@@ -611,7 +612,6 @@ default partition j3);
 alter table jjj add default partition j3 ;
 alter table jjj add default partition j4 ;
 
--- cannot add if have default, must split
 alter table jjj add partition j5 end (date '2010-01-01');
 
 drop table jjj cascade;
@@ -884,6 +884,7 @@ insert into d values(1, 10);
 insert into d values(1, 11);
 insert into d values(1, 55);
 insert into d values(1, 70);
+\d+ d
 select * from d;
 select * from d_1_prt_1;
 select * from d_1_prt_2;
@@ -923,18 +924,19 @@ select * from d_1_prt_abc;
 drop table  d cascade;
 
 -- multicolumn list support
-create table d (a int, b int, c int) distributed by (a)
-partition by list(b, c)
-(partition a values(('1', '2'), ('3', '4')),
- partition b values(('100', '20')),
- partition c values(('1000', '1001'), ('1001', '1002'), ('1003', '1004')));
-
-insert into d values(1, 1, 2);
-insert into d values(1, 3, 4);
-insert into d values(1, 100, 20);
-insert into d values(1, 100, 2000);
-insert into d values(1, '1000', '1001'), (1, '1001', '1002'), (1, '1003', '1004');
-insert into d values(1, 100, NULL);
+create type d_partkey as (b int, c int);
+create table d (a int, k d_partkey) distributed by (a)
+partition by list(k)
+(partition a values(CAST('(1,2)' as d_partkey), CAST('(3,4)' as d_partkey)),
+ partition b values(CAST('(100,20)' as d_partkey)),
+ partition c values(CAST('(1000,1001)' as d_partkey), CAST('(1001,1002)' as d_partkey), CAST('(1003,1004)' as d_partkey)));
+\d+ d
+insert into d values(1, (1, 2));
+insert into d values(1, (3, 4));
+insert into d values(1, (100, 20));
+insert into d values(1, (100, 2000));
+insert into d values(1, ('1000', '1001')), (1, ('1001', '1002')), (1, ('1003', '1004'));
+insert into d values(1, (100, NULL));
 select * from d_1_prt_a;
 select * from d_1_prt_b;
 select * from d_1_prt_c;
@@ -1262,8 +1264,8 @@ create table mpp14613_range(
  );
 
 -- SPLIT partition
-alter table mpp14613_list alter partition others split partition subothers at (10) into (partition b1, partition b2);
-alter table mpp14613_range alter partition others split partition subothers at (10) into (partition b1, partition b2);
+alter table mpp14613_list alter partition others split partition subothers at (10) into (partition b1, partition subothers);
+alter table mpp14613_range alter partition others split partition subothers at (10) into (partition b1, partition subothers);
 
 -- ALTER TABLE ... ALTER PARTITION ... SPLIT DEFAULT PARTITION
 create table foo(
@@ -1284,7 +1286,7 @@ create table foo(
     start(1) end(5) every(1)
  );
 
-alter table foo alter partition others split partition subothers at (10) into (partition b1, partition b2);
+alter table foo alter partition others split partition subothers at (10) into (partition b1, partition subothers);
 alter table foo alter partition others split partition subothers at (10) into (partition b1, default partition);
 alter table foo alter partition others split default partition at (10) into (partition b1, default partition);
 drop table foo;
@@ -1304,76 +1306,18 @@ drop index pt_indx_drop;
 select count(*) from pg_index where indrelid='pt_indx_tab'::regclass;
 select count(*) from pg_index where indrelid='pt_indx_tab_1_prt_a_1'::regclass;
 
-
---
--- MPP-18162 CLONE (4.2.3) - List partitioning for multiple columns gives duplicate values error
---
-create table mpp18162a
-( i1 int, i2 int)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi0 values ( (1,1) ),
-  partition pi1 values ( (1,2) ),
-  partition pi2 values ( (2,1) )
-);
-
-create table mpp18162b
-( i1 int, i2 int)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (3,1), (1,3) ),
-  partition pi2 values ( (4,1), (1,4) )
-);
-
-create table mpp18162c
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi0 values ( ('1','1') ),
-  partition pi1 values ( ('1','2') ),
-  partition pi2 values ( ('2','1') )
-);
-
-create table mpp18162d
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( ('3','1'), ('1','3') ),
-  partition pi2 values ( ('4','1'), ('1','4') )
-);
-
-create table mpp18162e
-( i1 date, i2 date)
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (date '2008-01-01',date '2008-02-01') ),
-  partition pi2 values ( (date '2008-02-01',date '2008-01-01') ),
-  partition pi3 values ( (date '2008-03-01',date '2008-04-01') ),
-  partition pi4 values ( (date '2008-04-01',date '2008-03-01') )
-);
-
-create table mpp18162f
-( i1 text, i2 varchar(10))
-distributed by (i1)
-partition by list (i1, i2) (
-  partition pi1 values ( (date '2008-01-01',date '2008-02-01'), (date '2008-02-01',date '2008-01-01') ),
-  partition pi2 values ( (date '2008-03-01',date '2008-04-01'), (date '2008-04-01',date '2008-03-01') )
-);
-
-
 --
 -- Test changing the datatype of a column in a partitioning key column.
 -- (Not supported, throws an error).
 --
 create table mpp18179 (a int, b int, i int)
 distributed by (a)
-partition by list (a,b)
-   ( PARTITION ab1 VALUES ((1,1)),
-     PARTITION ab2 values ((1,2)),
+partition by list (b)
+   ( PARTITION ab1 VALUES (1),
+     PARTITION ab2 values (2),
      default partition other
    );
 
-alter table mpp18179 alter column a type varchar(20);
 alter table mpp18179 alter column b type varchar(20);
 
 
