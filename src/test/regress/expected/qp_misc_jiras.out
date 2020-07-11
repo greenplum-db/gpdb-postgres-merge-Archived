@@ -3539,41 +3539,40 @@ drop index qp_misc_jiras.tbl6874_a;
 Distributed by: (a)
 
 drop table qp_misc_jiras.tbl6874;
-CREATE TABLE qp_misc_jiras.tbl7740_rank (id int, gender char(1), count char(1) )
+CREATE TYPE qp_misc_jiras.tbl7740_rank_partkey AS (gender char(1), count char(1));
+CREATE TABLE qp_misc_jiras.tbl7740_rank (id int, gender_count qp_misc_jiras.tbl7740_rank_partkey )
             DISTRIBUTED BY (id)
-            PARTITION BY LIST (gender,count)
-            ( PARTITION girls VALUES (('F','1')),
-              PARTITION boys VALUES (('M','1')),
+            PARTITION BY LIST (gender_count)
+            ( PARTITION girls VALUES (CAST('(F,1)' AS qp_misc_jiras.tbl7740_rank_partkey)),
+              PARTITION boys VALUES (CAST('(M,1)' AS qp_misc_jiras.tbl7740_rank_partkey)),
               DEFAULT PARTITION other );
-insert into qp_misc_jiras.tbl7740_rank values(1,'F','1');
-insert into qp_misc_jiras.tbl7740_rank values(1,'F','0');
-insert into qp_misc_jiras.tbl7740_rank values(1,'M','1');
-insert into qp_misc_jiras.tbl7740_rank values(1,'M','0');
--- start_ignore 
-alter table qp_misc_jiras.tbl7740_rank split default partition at (values(('F', '0'))) into (partition mother, partition other);
--- end_ignore
+insert into qp_misc_jiras.tbl7740_rank values(1,'(F,1)');
+insert into qp_misc_jiras.tbl7740_rank values(1,'(F,0)');
+insert into qp_misc_jiras.tbl7740_rank values(1,'(M,1)');
+insert into qp_misc_jiras.tbl7740_rank values(1,'(M,0)');
+alter table qp_misc_jiras.tbl7740_rank split default partition at ('(F,0)') into (partition mother, partition other);
 select * from qp_misc_jiras.tbl7740_rank_1_prt_girls;
- id | gender | count 
-----+--------+-------
-  1 | F      | 1
+ id | gender_count 
+----+--------------
+  1 | (F,1)
 (1 row)
 
 select * from qp_misc_jiras.tbl7740_rank_1_prt_boys;
- id | gender | count 
-----+--------+-------
-  1 | M      | 1
+ id | gender_count 
+----+--------------
+  1 | (M,1)
 (1 row)
 
 select * from qp_misc_jiras.tbl7740_rank_1_prt_mother;
- id | gender | count 
-----+--------+-------
-  1 | F      | 0
+ id | gender_count 
+----+--------------
+  1 | (F,0)
 (1 row)
 
 select * from qp_misc_jiras.tbl7740_rank_1_prt_other;
- id | gender | count 
-----+--------+-------
-  1 | M      | 0
+ id | gender_count 
+----+--------------
+  1 | (M,0)
 (1 row)
 
 drop table qp_misc_jiras.tbl7740_rank;
