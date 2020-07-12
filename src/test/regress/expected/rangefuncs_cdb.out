@@ -4,7 +4,9 @@ SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
  enable_bitmapscan              | on
  enable_gathermerge             | on
  enable_groupagg                | on
+ enable_groupingsets_hash_disk  | off
  enable_hashagg                 | on
+ enable_hashagg_disk            | on
  enable_hashjoin                | on
  enable_indexonlyscan           | on
  enable_indexscan               | on
@@ -19,8 +21,12 @@ SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on
-(18 rows)
+(20 rows)
 
+-- start_ignore
+create schema rangefuncs_cdb;
+set search_path to rangefuncs_cdb, public;
+-- end_ignore
 DROP TABLE IF EXISTS foo;
 NOTICE:  table "foo" does not exist, skipping
 CREATE TABLE foo(
