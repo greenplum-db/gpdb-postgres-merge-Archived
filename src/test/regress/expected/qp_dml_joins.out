@@ -58,21 +58,7 @@ DISTRIBUTED BY (b)
 partition by range(a) (
 	start(1) end(101) every(100),
 	default partition def);
-CREATE TABLE dml_ao_pt_p (
-	a int ,
-	b int,
-	c text ,
-	d numeric)
-WITH (appendonly = true)
-DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
-	default partition def);
 INSERT INTO dml_ao_pt_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
-INSERT INTO dml_ao_pt_p SELECT generate_series(1,100), generate_series(1,100) * 3,'p', generate_series(1,100) % 6;
-INSERT INTO dml_ao_pt_p VALUES(generate_series(1,10),NULL,'pn',NULL);
-INSERT INTO dml_ao_pt_p VALUES(NULL,1,'pn',NULL),(1,NULL,'pn',0),(NULL,NULL,'pn',0),(0,1,'pn',NULL),(NULL,NULL,'pn',NULL);
 INSERT INTO dml_ao_pt_s SELECT generate_series(1,100), generate_series(1,100) * 3,'s', generate_series(1,100) % 6;
 INSERT INTO dml_ao_pt_s VALUES(generate_series(1,10),NULL,'sn',NULL);
 INSERT INTO dml_ao_pt_s VALUES(NULL,1,'sn',NULL),(1,NULL,'sn',0),(NULL,NULL,'sn',0),(0,1,'sn',NULL),(NULL,NULL,'sn',NULL);
@@ -143,21 +129,7 @@ DISTRIBUTED BY (b)
 partition by range(a) (
 	start(1) end(100) every(10),
 	default partition def);
-CREATE TABLE dml_co_pt_p (
-	a int ,
-	b int,
-	c text ,
-	d numeric)
-WITH (appendonly = true, orientation = column)
-DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
-	default partition def);
 INSERT INTO dml_co_pt_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
-INSERT INTO dml_co_pt_p SELECT generate_series(1,100), generate_series(1,100) * 3,'p', generate_series(1,100) % 6;
-INSERT INTO dml_co_pt_p VALUES(generate_series(1,10),NULL,'pn',NULL);
-INSERT INTO dml_co_pt_p VALUES(NULL,1,'pn',NULL),(1,NULL,'pn',0),(NULL,NULL,'pn',0),(0,1,'pn',NULL),(NULL,NULL,'pn',NULL);
 INSERT INTO dml_co_pt_s SELECT generate_series(1,100), generate_series(1,100) * 3,'s', generate_series(1,100) % 6;
 INSERT INTO dml_co_pt_s VALUES(generate_series(1,10),NULL,'sn',NULL);
 INSERT INTO dml_co_pt_s VALUES(NULL,1,'sn',NULL),(1,NULL,'sn',0),(NULL,NULL,'sn',0),(0,1,'sn',NULL),(NULL,NULL,'sn',NULL);
@@ -248,9 +220,9 @@ CREATE TABLE dml_heap_pt_p (
 	c text ,
 	d numeric)
 DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
+partition by list(d) (
+	partition one VALUES (1, 2, 3),
+	partition two VALUES (4, 5),
 	default partition def);
 INSERT INTO dml_heap_pt_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
 INSERT INTO dml_heap_pt_p SELECT generate_series(1,100), generate_series(1,100) * 3,'p', generate_series(1,100) % 6;
@@ -3132,11 +3104,18 @@ ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
 -- processing.
 SAVEPOINT sp1;
 UPDATE dml_heap_pt_r SET a = DEFAULT, b = DEFAULT;
-ERROR:  cross-partition or multi-update to a row  (seg1 10.152.10.75:25433 pid=28939)
 SELECT SUM(a) FROM dml_heap_pt_r;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ sum 
+-----
+    
+(1 row)
+
 SELECT SUM(b) FROM dml_heap_pt_r;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ sum 
+-----
+    
+(1 row)
+
 rollback;
 --Update and reset the value
 begin;
@@ -3272,7 +3251,7 @@ ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
 -- processing.
 SAVEPOINT sp1;
 UPDATE dml_heap_pt_r SET a = dml_heap_pt_s.a + 10 ,b = NULL FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 2= dml_heap_pt_s.b;
-ERROR:  cross-partition or multi-update to a row  (seg2 10.152.10.75:25434 pid=14697)
+ERROR:  multiple updates to a row by the same query is not allowed  (seg0 127.0.1.1:7002 pid=14911)
 SELECT * FROM dml_heap_pt_r WHERE a = 11 ORDER BY 1,2;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE b is NULL;
@@ -3394,7 +3373,6 @@ rollback;
 -- produce plans that update distribution key columns.
 begin;
 UPDATE dml_heap_pt_p SET a = dml_heap_pt_p.b % 2 FROM dml_heap_pt_r WHERE dml_heap_pt_p.b::int = dml_heap_pt_r.b::int and dml_heap_pt_p.a = dml_heap_pt_r.a and dml_heap_pt_p.b = 63;
-ERROR:  cross-partition or multi-update to a row  (seg0 10.152.10.75:25432 pid=9661)
 rollback;
 --Update on table with composite distribution key
 begin;

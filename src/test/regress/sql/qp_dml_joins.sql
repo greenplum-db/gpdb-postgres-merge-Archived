@@ -69,22 +69,7 @@ partition by range(a) (
 	start(1) end(101) every(100),
 	default partition def);
 
-CREATE TABLE dml_ao_pt_p (
-	a int ,
-	b int,
-	c text ,
-	d numeric)
-WITH (appendonly = true)
-DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
-	default partition def);
-
 INSERT INTO dml_ao_pt_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
-INSERT INTO dml_ao_pt_p SELECT generate_series(1,100), generate_series(1,100) * 3,'p', generate_series(1,100) % 6;
-INSERT INTO dml_ao_pt_p VALUES(generate_series(1,10),NULL,'pn',NULL);
-INSERT INTO dml_ao_pt_p VALUES(NULL,1,'pn',NULL),(1,NULL,'pn',0),(NULL,NULL,'pn',0),(0,1,'pn',NULL),(NULL,NULL,'pn',NULL);
 INSERT INTO dml_ao_pt_s SELECT generate_series(1,100), generate_series(1,100) * 3,'s', generate_series(1,100) % 6;
 INSERT INTO dml_ao_pt_s VALUES(generate_series(1,10),NULL,'sn',NULL);
 INSERT INTO dml_ao_pt_s VALUES(NULL,1,'sn',NULL),(1,NULL,'sn',0),(NULL,NULL,'sn',0),(0,1,'sn',NULL),(NULL,NULL,'sn',NULL);
@@ -169,22 +154,7 @@ partition by range(a) (
 	start(1) end(100) every(10),
 	default partition def);
 
-CREATE TABLE dml_co_pt_p (
-	a int ,
-	b int,
-	c text ,
-	d numeric)
-WITH (appendonly = true, orientation = column)
-DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
-	default partition def);
-
 INSERT INTO dml_co_pt_r SELECT generate_series(1,100), generate_series(1,100) * 3,'r', generate_series(1,100) % 6;
-INSERT INTO dml_co_pt_p SELECT generate_series(1,100), generate_series(1,100) * 3,'p', generate_series(1,100) % 6;
-INSERT INTO dml_co_pt_p VALUES(generate_series(1,10),NULL,'pn',NULL);
-INSERT INTO dml_co_pt_p VALUES(NULL,1,'pn',NULL),(1,NULL,'pn',0),(NULL,NULL,'pn',0),(0,1,'pn',NULL),(NULL,NULL,'pn',NULL);
 INSERT INTO dml_co_pt_s SELECT generate_series(1,100), generate_series(1,100) * 3,'s', generate_series(1,100) % 6;
 INSERT INTO dml_co_pt_s VALUES(generate_series(1,10),NULL,'sn',NULL);
 INSERT INTO dml_co_pt_s VALUES(NULL,1,'sn',NULL),(1,NULL,'sn',0),(NULL,NULL,'sn',0),(0,1,'sn',NULL),(NULL,NULL,'sn',NULL);
@@ -293,9 +263,9 @@ CREATE TABLE dml_heap_pt_p (
 	c text ,
 	d numeric)
 DISTRIBUTED BY (a,b)
-partition by list(a,d) (
-	partition one VALUES ((1,1),(1,2),(1,3),(1,4),(1,5)),
-	partition two VALUES((2,1),(2,2),(2,3),(2,4),(2,5)),
+partition by list(d) (
+	partition one VALUES (1, 2, 3),
+	partition two VALUES (4, 5),
 	default partition def);
 
 
@@ -1431,7 +1401,6 @@ ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
 UPDATE dml_heap_pt_r SET (a,b,c) = (dml_heap_pt_s.a ,dml_heap_pt_s.b,'z') FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 1= dml_heap_pt_s.b;
 SELECT * FROM dml_heap_pt_r WHERE c='z' ORDER BY 1 LIMIT 1;
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE c='z';
-rollback;
 ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
 
 --Update with prepare plans
