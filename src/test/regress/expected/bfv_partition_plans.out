@@ -1328,15 +1328,13 @@ explain select * from fact where dd < '2009-01-02'::date; -- partitions eliminat
 (4 rows)
 
 explain select * from fact where dd < to_date('2009-01-02','YYYY-MM-DD'); -- partitions eliminated
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..4.10 rows=4 width=40)
-   ->  Append  (cost=0.00..4.02 rows=2 width=40)
-         Subplans Removed: 3
-         ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
-               Filter: (dd < to_date('2009-01-02'::text, 'YYYY-MM-DD'::text))
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.02 rows=1 width=40)
+   ->  Seq Scan on fact_1_prt_1  (cost=0.00..1.00 rows=1 width=40)
+         Filter: (dd < '01-02-2009'::date)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 explain select * from fact where dd < current_date; --partitions eliminated
                                  QUERY PLAN                                  
