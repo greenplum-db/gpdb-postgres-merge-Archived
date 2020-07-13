@@ -88,21 +88,19 @@ errdetail_internal_impl(const char* fmt, ...)
 
 /* Generates a version mismatch error message and sets the expectedErrorMsg to that value */
 static void
-SetExpectedErrorMessage(Pg_magic_struct module_magic, int expectedHeaderVersion)
+SetExpectedErrorMessage(Pg_magic_struct module_magic)
 {
 	const char *magic_product     = get_magic_product(&magic_data);
 	const char *mod_magic_product = get_magic_product(&module_magic);
 
 	/* Save the expected error message, as determined by the struct size mismatch */
-	snprintf(expectedErrorMsg, 255, "Server version is %s %d.%d (header version: %d), library is %s %d.%d (header version: %d).",
+	snprintf(expectedErrorMsg, 255, "Server version is %s %d.%d, library is %s %d.%d.",
 			magic_product,
 			magic_data.version / 100,
 			magic_data.version % 100,
-			magic_data.headerversion,
 			mod_magic_product,
 			module_magic.version / 100,
-			module_magic.version % 100,
-			expectedHeaderVersion);
+			module_magic.version % 100);
 }
 
 /*
@@ -115,9 +113,9 @@ test__incompatible_module_error__struct_size_mismatch(void **state)
 	Pg_magic_struct module_magic = PG_MODULE_MAGIC_DATA;
 
 	/* Simulate a smaller structure for the module's Pg_magic_struct */
-	module_magic.len = offsetof(Pg_magic_struct, headerversion);
+	module_magic.len = offsetof(Pg_magic_struct, version);
 
-	SetExpectedErrorMessage(module_magic, 0);
+	SetExpectedErrorMessage(module_magic);
 
 	EXPECT_EREPORT(ERROR);
 
@@ -141,9 +139,8 @@ test__incompatible_module_error__struct_size_mismatch(void **state)
 static void CheckHeaderVersionMismatch(int diffOffset)
 {
 	Pg_magic_struct module_magic = PG_MODULE_MAGIC_DATA;
-	module_magic.headerversion = magic_data.headerversion + diffOffset;
 
-	SetExpectedErrorMessage(module_magic, module_magic.headerversion);
+	SetExpectedErrorMessage(module_magic);
 
 	EXPECT_EREPORT(ERROR);
 

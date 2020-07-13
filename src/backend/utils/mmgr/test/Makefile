@@ -7,9 +7,11 @@ TARGETS=vmem_tracker redzone_handler runaway_cleaner idle_tracker event_version 
 include $(top_srcdir)/src/backend/mock.mk
 
 vmem_tracker.t: \
+	$(MOCK_DIR)/backend/access/hash/hashpage_mock.o \
 	$(MOCK_DIR)/backend/storage/ipc/shmem_mock.o \
 	$(MOCK_DIR)/backend/utils/error/assert_mock.o \
 	$(MOCK_DIR)/backend/utils/error/elog_mock.o \
+	$(MOCK_DIR)/backend/utils/fmgr/fmgr_mock.o \
 	$(MOCK_DIR)/backend/utils/mmgr/event_version_mock.o \
 	$(MOCK_DIR)/backend/utils/mmgr/idle_tracker_mock.o \
 	$(MOCK_DIR)/backend/utils/mmgr/mcxt_mock.o \
