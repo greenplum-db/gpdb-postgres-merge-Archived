@@ -32,6 +32,9 @@ insert into testsiscm select i, i % 1000, i % 100000, i % 75 from
 	(select generate_series(1, nsegments * 150000) as i from
 	(select count(*) as nsegments from gp_segment_configuration where role='p' and content >= 0) foo) bar;
 set statement_mem="3MB";
+-- GPDB_12_MERGE_FIXME hash agg should respect statement_mem, but it doesn't
+set work_mem="3MB";
+WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 set gp_resqueue_print_operator_memory_limits=on;
 set gp_cte_sharing=on;
 -- The expected output is very sensitive to the kind of plan this produces.

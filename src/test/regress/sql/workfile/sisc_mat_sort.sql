@@ -35,6 +35,8 @@ insert into testsiscm select i, i % 1000, i % 100000, i % 75 from
 
 
 set statement_mem="3MB";
+-- GPDB_12_MERGE_FIXME hash agg should respect statement_mem, but it doesn't
+set work_mem="3MB";
 set gp_resqueue_print_operator_memory_limits=on;
 set gp_cte_sharing=on;
 -- The expected output is very sensitive to the kind of plan this produces.
