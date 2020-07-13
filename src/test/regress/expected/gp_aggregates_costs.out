@@ -1,10 +1,5 @@
 set optimizer=off;
 set statement_mem="1800";
--- GPDB_12_MERGE_FIXME
--- The reason why we need a large size of work_mem is that `estimate_num_groups` function can not give a reasonable group number estimation. If the memory
--- size is smaller than hash table size, planner will give up generate a hash agg. Dose not understand formula yet, leave a fixme and let the case pass first.
-set work_mem to "128MB";
-WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 create table cost_agg_t1(a int, b int, c int);
 insert into cost_agg_t1 select i, random() * 99999, i % 2000 from generate_series(1, 1000000) i;
 create table cost_agg_t2 as select * from cost_agg_t1 with no data;
