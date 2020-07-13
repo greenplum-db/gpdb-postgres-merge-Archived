@@ -88,6 +88,7 @@ llvm_compile_expr(ExprState *state)
 	/* state itself */
 	LLVMValueRef v_state;
 	LLVMValueRef v_econtext;
+	LLVMValueRef v_parent;
 
 	/* returnvalue */
 	LLVMValueRef v_isnullp;
@@ -177,6 +178,9 @@ llvm_compile_expr(ExprState *state)
 	v_tmpisnullp = LLVMBuildStructGEP(b, v_state,
 									  FIELDNO_EXPRSTATE_RESNULL,
 									  "v.state.resnull");
+	v_parent = l_load_struct_gep(b, v_state,
+								 FIELDNO_EXPRSTATE_PARENT,
+								 "v.state.parent");
 
 	/* build global slots */
 	v_scanslot = l_load_struct_gep(b, v_econtext,
@@ -2352,7 +2356,7 @@ llvm_compile_expr(ExprState *state)
 										  b, v_pergroup_allaggs, TypeSizeT, ""),
 									  l_sizet_const(0), ""),
 						opblocks[jumpnull],
-						opblocks[opno + 1]);
+						opblocks[i + 1]);
 					break;
 				}
 
