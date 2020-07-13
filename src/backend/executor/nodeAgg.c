@@ -1963,6 +1963,13 @@ hash_agg_update_metrics(AggState *aggstate, bool from_tape, int npartitions)
 			sizeof(TupleHashEntryData) +
 			(hash_mem / (double)aggstate->hash_ngroups_current);
 	}
+
+	if (aggstate->ss.ps.instrument && aggstate->ss.ps.instrument->need_cdb)
+	{
+		Instrumentation    *instrument = aggstate->ss.ps.instrument;
+
+		instrument->workmemused = aggstate->hash_mem_peak;
+	}
 }
 
 /*
