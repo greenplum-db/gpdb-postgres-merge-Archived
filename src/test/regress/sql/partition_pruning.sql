@@ -390,7 +390,7 @@ EXPLAIN SELECT * FROM pt_lt_tab WHERE col2 > 41 ORDER BY col2,col3 LIMIT 5;
 CREATE TABLE pt_complex (i int, j int, k int, l int, m int) DISTRIBUTED BY (i)
 PARTITION BY list(k)
   SUBPARTITION BY list(j) SUBPARTITION TEMPLATE (subpartition p11 values (1), subpartition p12 values(2))
-  SUBPARTITION BY list(l, m) SUBPARTITION TEMPLATE (subpartition p11 values ((1,1)), subpartition p12 values((2,2)))
+  SUBPARTITION BY list(l) SUBPARTITION TEMPLATE (subpartition p11 values (1), subpartition p12 values(2))
 ( partition p1 values(1), partition p2 values(2));
 
 INSERT INTO pt_complex VALUES (1, 1, 1, 1, 1), (2, 2, 2, 2, 2);
