@@ -289,7 +289,7 @@ mdunlink_ao_base_relfile(void *ctx)
 		(struct mdunlink_ao_callback_ctx *)ctx;
 
 	const char *baserel = unlinkFiles->segPath;
-	
+
 	*unlinkFiles->segpathSuffixPosition = '\0';
 	if (unlinkFiles->isRedo)
 	{

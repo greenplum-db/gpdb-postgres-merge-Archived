@@ -905,7 +905,7 @@ appendonly_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 		 * contents from source to destination.
 		 */
 		smgrcreate(dstrel, INIT_FORKNUM, false);
-		
+
 		log_smgrcreate(newrnode, INIT_FORKNUM);
 	}
 
