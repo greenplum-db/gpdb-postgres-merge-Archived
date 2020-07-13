@@ -2904,7 +2904,22 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * qual expressions between multiple references, but
 	 * so far we don't support it.
 	 */
-	is_shared = root->config->gp_cte_sharing && cte->cterefcount > 1;
+
+	switch (cte->ctematerialized)
+	{
+		case CTEMaterializeNever:
+			is_shared = false;
+			break;
+		case CTEMaterializeAlways:
+			is_shared = true;
+			break;
+		case CTEMaterializeDefault:
+			is_shared = contain_volatile_functions(cte->ctequery)
+				|| cte->cterecursive
+				|| (root->config->gp_cte_sharing && cte->cterefcount > 1);
+
+	}
+
 	if (!is_shared)
 	{
 		PlannerConfig *config = CopyPlannerConfig(root->config);
