@@ -2913,9 +2913,8 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		case CTEMaterializeAlways:
 			is_shared = true;
 			break;
-		case CTEMaterializeDefault:
+		default:
 			is_shared = contain_volatile_functions(cte->ctequery)
-				|| cte->cterecursive
 				|| (root->config->gp_cte_sharing && cte->cterefcount > 1);
 
 	}
