@@ -406,28 +406,26 @@ partition by range(i)
 (start (1) end (20) every(0));
 
 -- Check for ambiguous EVERY parameters
+create table foo_p (i int) distributed by (i)
+partition by range(i)
+(start (1) end (3) every (0.6));
+\d+ foo_p
+drop table foo_p;
 -- should fail
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.6));
--- should fail
+(start (1) end (3) every (0.3));
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.3));
--- should fail
-create table foo_p (i int) distributed by (i)
-partition by range(i)
-(start (1) end (20) every (1.3));
+(start (1) end (3) every (1.3));
+\d+ foo_p
+drop table foo_p;
 
--- should fail
 create table foo_p (i int) distributed by (i)
 partition by range(i)
 (start (1) end (20) every (10.9));
-
--- should fail
-create table foo_p (i int, j date) distributed by (i)
-partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
+\d+ foo_p
+drop table foo_p;
 
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
@@ -439,16 +437,17 @@ create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '12 hours'));
 
--- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '1.2 days'));
+(start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
+\d+ foo_p
+drop table foo_p;
 
 -- should work
 create table foo_p (i int, j timestamp) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
-
+\d+ foo_p
 drop table foo_p;
 
 -- test inclusive/exclusive

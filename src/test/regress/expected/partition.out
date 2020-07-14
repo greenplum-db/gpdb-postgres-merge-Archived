@@ -563,66 +563,103 @@ ERROR:  EVERY parameter too small
 LINE 3: (start (1) end (20) every(0));
                                   ^
 -- Check for ambiguous EVERY parameters
+create table foo_p (i int) distributed by (i)
+partition by range(i)
+(start (1) end (3) every (0.6));
+\d+ foo_p
+                             Partitioned table "public.foo_p"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (i)
+Partitions: foo_p_1_prt_1 FOR VALUES FROM (1) TO (2),
+            foo_p_1_prt_2 FOR VALUES FROM (2) TO (3)
+Distributed by: (i)
+
+drop table foo_p;
 -- should fail
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.6));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start (1) end (20) every (0.6));
-                                   ^
--- should fail
+(start (1) end (3) every (0.3));
+ERROR:  EVERY parameter too small
+LINE 3: (start (1) end (3) every (0.3));
+                                  ^
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.3));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start (1) end (20) every (0.3));
-                                   ^
--- should fail
-create table foo_p (i int) distributed by (i)
-partition by range(i)
-(start (1) end (20) every (1.3));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start (1) end (20) every (1.3));
-                                   ^
--- should fail
+(start (1) end (3) every (1.3));
+\d+ foo_p
+                             Partitioned table "public.foo_p"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (i)
+Partitions: foo_p_1_prt_1 FOR VALUES FROM (1) TO (2),
+            foo_p_1_prt_2 FOR VALUES FROM (2) TO (3)
+Distributed by: (i)
+
+drop table foo_p;
 create table foo_p (i int) distributed by (i)
 partition by range(i)
 (start (1) end (20) every (10.9));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start (1) end (20) every (10.9));
-                                   ^
+\d+ foo_p
+                             Partitioned table "public.foo_p"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (i)
+Partitions: foo_p_1_prt_1 FOR VALUES FROM (1) TO (12),
+            foo_p_1_prt_2 FOR VALUES FROM (12) TO (20)
+Distributed by: (i)
+
+drop table foo_p;
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '0....
-                                                        ^
--- should fail
-create table foo_p (i int, j date) distributed by (i)
-partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
-ERROR:  EVERY parameter produces ambiguous partition rule
+ERROR:  EVERY parameter too small
 LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '0....
                                                         ^
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '12 hours'));
-ERROR:  EVERY parameter produces ambiguous partition rule
+ERROR:  EVERY parameter too small
 LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '12...
                                                         ^
--- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '1.2 days'));
-ERROR:  EVERY parameter produces ambiguous partition rule
-LINE 3: (start ('2007-01-01') end ('2008-01-01') every (interval '1....
-                                                        ^
+(start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
+\d+ foo_p
+                             Partitioned table "public.foo_p"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+ j      | date    |           |          |         | plain   |              | 
+Partition key: RANGE (j)
+Partitions: foo_p_1_prt_1 FOR VALUES FROM ('01-01-2007') TO ('01-02-2007'),
+            foo_p_1_prt_2 FOR VALUES FROM ('01-02-2007') TO ('01-03-2007'),
+            foo_p_1_prt_3 FOR VALUES FROM ('01-03-2007') TO ('01-04-2007'),
+            foo_p_1_prt_4 FOR VALUES FROM ('01-04-2007') TO ('01-05-2007')
+Distributed by: (i)
+
+drop table foo_p;
 -- should work
 create table foo_p (i int, j timestamp) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
+\d+ foo_p
+                                       Partitioned table "public.foo_p"
+ Column |            Type             | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+-----------------------------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer                     |           |          |         | plain   |              | 
+ j      | timestamp without time zone |           |          |         | plain   |              | 
+Partition key: RANGE (j)
+Partitions: foo_p_1_prt_1 FOR VALUES FROM ('Mon Jan 01 00:00:00 2007') TO ('Tue Jan 02 04:48:00 2007'),
+            foo_p_1_prt_2 FOR VALUES FROM ('Tue Jan 02 04:48:00 2007') TO ('Wed Jan 03 09:36:00 2007'),
+            foo_p_1_prt_3 FOR VALUES FROM ('Wed Jan 03 09:36:00 2007') TO ('Thu Jan 04 14:24:00 2007'),
+            foo_p_1_prt_4 FOR VALUES FROM ('Thu Jan 04 14:24:00 2007') TO ('Fri Jan 05 00:00:00 2007')
+Distributed by: (i)
+
 drop table foo_p;
 -- test inclusive/exclusive
 CREATE TABLE supplier2(
