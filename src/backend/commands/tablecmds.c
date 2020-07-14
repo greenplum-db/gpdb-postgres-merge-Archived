@@ -6137,24 +6137,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		}
 
 		/*
-		 * oldrel hold new tupledesc already, aoco need to initialize datumreader
-		 * by old tupledesc.
-		 */
-		TupleDesc tempTupDesc = oldrel->rd_att;
-		if(RelationIsAoCols(oldrel))
-			oldrel->rd_att = oldTupDesc;
-
-		/*
 		 * Scan through the rows, generating a new row if needed and then
 		 * checking all the constraints.
 		 */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
 		scan = table_beginscan(oldrel, snapshot, 0, NULL);
-
-
-		/* restore tupledesc after aoco scan initialization */
-		if(RelationIsAoCols(oldrel))
-			oldrel->rd_att = tempTupDesc;
 
 		if (newrel && RelationIsAoRows(newrel))
 		{

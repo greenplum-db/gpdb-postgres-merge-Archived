@@ -446,7 +446,6 @@ aoco_beginscan_extractcolumns(Relation rel, Snapshot snapshot,
 
 	aoscan = aocs_beginscan(rel,
 							snapshot,
-							NULL,
 							cols,
 							flags);
 
@@ -524,8 +523,7 @@ aoco_beginscan(Relation relation,
 	Assert(pscan == NULL);
 
 	aoscan = aocs_beginscan(relation,
-	                        snapshot,
-	                        NULL,
+							snapshot,
 							NULL,
 							flags);
 
@@ -1181,7 +1179,6 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
 
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
-						  NULL /* relationTupleDesc */,
 						  NULL /* proj */,
 						  0 /* flags */);
 

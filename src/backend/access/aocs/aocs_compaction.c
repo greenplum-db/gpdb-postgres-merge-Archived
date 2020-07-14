@@ -221,8 +221,6 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	ResultRelInfo *resultRelInfo;
 	MemTupleBinding *mt_bind;
 	EState	   *estate;
-	bool	   *proj;
-	int			i;
 	AOTupleId  *aoTupleId;
 	int64		tupleCount = 0;
 	int64		tuplePerPage = INT_MAX;
@@ -248,15 +246,9 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 		   LOG, "Compact AO segfile %d, relation %sd",
 		   compact_segno, relname);
 
-	proj = palloc0(sizeof(bool) * RelationGetNumberOfAttributes(aorel));
-	for (i = 0; i < RelationGetNumberOfAttributes(aorel); ++i)
-	{
-		proj[i] = true;
-	}
-
 	scanDesc = aocs_beginrangescan(aorel,
 								   snapshot, snapshot,
-								   &compact_segno, 1, NULL, proj);
+								   &compact_segno, 1);
 
 	tupDesc = RelationGetDescr(aorel);
 	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsVirtual);
@@ -335,7 +327,6 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	destroy_memtuple_binding(mt_bind);
 
 	aocs_endscan(scanDesc);
-	pfree(proj);
 
 	return true;
 }

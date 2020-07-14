@@ -54,7 +54,6 @@ static AOCSScanDesc aocs_beginscan_internal(Relation relation,
 						int total_seg,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
-						TupleDesc relationTupleDesc,
 						bool *proj,
 						uint32 flags);
 
@@ -96,18 +95,16 @@ static void
 open_all_datumstreamread_segfiles(Relation rel,
 								  AOCSFileSegInfo *segInfo,
 								  DatumStreamRead **ds,
-								  int *proj_atts,
-								  int num_proj_atts,
+								  AttrNumber *proj_atts,
+								  AttrNumber num_proj_atts,
 								  AppendOnlyBlockDirectory *blockDirectory)
 {
 	char	   *basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
-	int			i;
 
 	Assert(proj_atts);
-
-	for (i = 0; i < num_proj_atts; i++)
+	for (AttrNumber i = 0; i < num_proj_atts; i++)
 	{
-		int			attno = proj_atts[i];
+		AttrNumber	attno = proj_atts[i];
 
 		open_datumstreamread_segfile(basepath, rel->rd_node, segInfo, ds[attno], attno);
 		datumstreamread_block(ds[attno], blockDirectory, attno);
@@ -176,11 +173,8 @@ open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc, 
  */
 static void
 open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
-			 int *proj_atts, int num_proj_atts, bool checksum)
+			 AttrNumber *proj_atts, AttrNumber num_proj_atts, bool checksum)
 {
-	int			nvp = relationTupleDesc->natts;
-	int			i;
-
 	/*
 	 *  RelationGetAttributeOptions does not always success return opts. e.g.
 	 *  `ALTER TABLE ADD COLUMN` with an illegal option.
@@ -195,6 +189,7 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 	 *
 	 *  So, a fake TupleDesc temporary replace into Relation.
 	 */
+
 	TupleDesc orig_att = rel->rd_att;
 	if (orig_att->tdrefcount == -1)
 	{
@@ -210,19 +205,25 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 		rel->rd_att = orig_att;
 	}
 
-	/* Clear all the entries to NULL first. */
-	for (i = 0; i < nvp; ++i)
-		ds[i] = NULL;
+	/*
+	 * Clear all the entries to NULL first, as the NULL value is used during
+	 * closing
+	 */
+	for (AttrNumber attno = 0; attno < relationTupleDesc->natts; attno++)
+		ds[attno] = NULL;
 
 	/* And then initialize the data streams for those columns we need */
-	for (i = 0; i < num_proj_atts; i++)
+	for (AttrNumber i = 0; i < num_proj_atts; i++)
 	{
-		int			attno = proj_atts[i];
-		Form_pg_attribute attr = TupleDescAttr(relationTupleDesc, attno);
-		char	   *ct;
-		int32		clvl;
-		int32		blksz;
+		AttrNumber			attno = proj_atts[i];
+		Form_pg_attribute	attr;
+		char			   *ct;
+		int32				clvl;
+		int32				blksz;
 		StringInfoData titleBuf;
+
+		Assert(attno <= relationTupleDesc->natts);
+		attr = TupleDescAttr(relationTupleDesc, attno);
 
 		/*
 		 * We always record all the three column specific attributes for each
@@ -256,16 +257,14 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 }
 
 static void
-close_ds_read(DatumStreamRead **ds, int nvp)
+close_ds_read(DatumStreamRead **ds, AttrNumber natts)
 {
-	int			i;
-
-	for (i = 0; i < nvp; ++i)
+	for (AttrNumber attno = 0; attno < natts; attno++)
 	{
-		if (ds[i])
+		if (ds[attno])
 		{
-			destroy_datumstreamread(ds[i]);
-			ds[i] = NULL;
+			destroy_datumstreamread(ds[attno]);
+			ds[attno] = NULL;
 		}
 	}
 }
@@ -292,13 +291,39 @@ close_ds_write(DatumStreamWrite **ds, int nvp)
 static void
 aocs_initscan(AOCSScanDesc scan)
 {
-	scan->cur_seg = -1;
+	MemoryContext	oldCtx;
+	AttrNumber		natts;
 
-	ItemPointerSet(&scan->cdb_fake_ctid, 0, 0);
+	Assert(scan->columnScanInfo.relationTupleDesc);
+	natts = scan->columnScanInfo.relationTupleDesc->natts;
+
+	oldCtx = MemoryContextSwitchTo(scan->columnScanInfo.scanCtx);
+
+	if (scan->columnScanInfo.ds == NULL)
+		scan->columnScanInfo.ds = (DatumStreamRead **)
+								  palloc0(natts * sizeof(DatumStreamRead *));
+
+	if (scan->columnScanInfo.proj_atts == NULL)
+	{
+		scan->columnScanInfo.num_proj_atts = natts;
+		scan->columnScanInfo.proj_atts = (AttrNumber *)
+										 palloc0(natts * sizeof(AttrNumber *));
+
+		for (AttrNumber attno = 0; attno < natts; attno++)
+			scan->columnScanInfo.proj_atts[attno] = attno;
+	}
+
+	open_ds_read(scan->rs_base.rs_rd, scan->columnScanInfo.ds,
+				 scan->columnScanInfo.relationTupleDesc,
+				 scan->columnScanInfo.proj_atts, scan->columnScanInfo.num_proj_atts,
+				 scan->checksum);
+
+	MemoryContextSwitchTo(oldCtx);
+
+	scan->cur_seg = -1;
 	scan->cur_seg_row = 0;
 
-	open_ds_read(scan->rs_base.rs_rd, scan->ds, scan->relationTupleDesc,
-				 scan->proj_atts, scan->num_proj_atts, scan->checksum);
+	ItemPointerSet(&scan->cdb_fake_ctid, 0, 0);
 
 	pgstat_count_heap_scan(scan->rs_base.rs_rd);
 }
@@ -306,8 +331,6 @@ aocs_initscan(AOCSScanDesc scan)
 static int
 open_next_scan_seg(AOCSScanDesc scan)
 {
-	int			nvp = scan->relationTupleDesc->natts;
-
 	while (++scan->cur_seg < scan->total_seg)
 	{
 		AOCSFileSegInfo *curSegInfo = scan->seginfo[scan->cur_seg];
@@ -323,22 +346,23 @@ open_next_scan_seg(AOCSScanDesc scan)
 			 * the same state. So somewhat arbitrarily, we check the state of
 			 * the first column we'll be accessing.
 			 */
-			if (scan->num_proj_atts > 0)
-			{
-				/*
-				 * subtle: we must check for AWAITING_DROP before calling getAOCSVPEntry().
-				 * ALTER TABLE ADD COLUMN does not update vpinfos on AWAITING_DROP segments.
-				 */
-				if (curSegInfo->state == AOSEG_STATE_AWAITING_DROP)
-					emptySeg = true;
-				else
-				{
-					AOCSVPInfoEntry *e;
 
-					e = getAOCSVPEntry(curSegInfo, scan->proj_atts[0]);
-					if (e->eof == 0)
-						emptySeg = true;
-				}
+			/*
+			 * subtle: we must check for AWAITING_DROP before calling getAOCSVPEntry().
+			 * ALTER TABLE ADD COLUMN does not update vpinfos on AWAITING_DROP segments.
+			 */
+			if (curSegInfo->state == AOSEG_STATE_AWAITING_DROP)
+				emptySeg = true;
+			else
+			{
+				AOCSVPInfoEntry *e;
+
+				e = getAOCSVPEntry(curSegInfo, scan->columnScanInfo.proj_atts[0]);
+				if (e->eof == 0)
+					elog(ERROR, "inconsistent segment state for relation %s, segment %d, tuple count " INT64_FORMAT,
+						 RelationGetRelationName(scan->rs_base.rs_rd),
+						 curSegInfo->segno,
+						 curSegInfo->total_tupcount);
 			}
 
 			if (!emptySeg)
@@ -379,7 +403,7 @@ open_next_scan_seg(AOCSScanDesc scan)
 															0 /* lastSequence */ ,
 															scan->rs_base.rs_rd,
 															curSegInfo->segno,
-															nvp,
+															scan->columnScanInfo.relationTupleDesc->natts,
 															true);
 
 					InsertFastSequenceEntry(segrelid,
@@ -389,9 +413,9 @@ open_next_scan_seg(AOCSScanDesc scan)
 
 				open_all_datumstreamread_segfiles(scan->rs_base.rs_rd,
 												  curSegInfo,
-												  scan->ds,
-												  scan->proj_atts,
-												  scan->num_proj_atts,
+												  scan->columnScanInfo.ds,
+												  scan->columnScanInfo.proj_atts,
+												  scan->columnScanInfo.num_proj_atts,
 												  scan->blockDirectory);
 
 				return scan->cur_seg;
@@ -405,16 +429,22 @@ open_next_scan_seg(AOCSScanDesc scan)
 static void
 close_cur_scan_seg(AOCSScanDesc scan)
 {
-	int			nvp = scan->relationTupleDesc->natts;
-	int			i;
-
 	if (scan->cur_seg < 0)
 		return;
 
-	for (i = 0; i < nvp; ++i)
+	/*
+	 * If rescan is called before we lazily initialized then there is nothing to
+	 * do
+	 */
+	if (scan->columnScanInfo.relationTupleDesc == NULL)
+		return;
+
+	for (AttrNumber attno = 0;
+		 attno < scan->columnScanInfo.relationTupleDesc->natts;
+		 attno++)
 	{
-		if (scan->ds[i])
-			datumstreamread_close_file(scan->ds[i]);
+		if (scan->columnScanInfo.ds[attno])
+			datumstreamread_close_file(scan->columnScanInfo.ds[attno]);
 	}
 
 	if (scan->blockDirectory)
@@ -430,8 +460,7 @@ AOCSScanDesc
 aocs_beginrangescan(Relation relation,
 					Snapshot snapshot,
 					Snapshot appendOnlyMetaDataSnapshot,
-					int *segfile_no_arr, int segfile_count,
-					TupleDesc relationTupleDesc, bool *proj)
+					int *segfile_no_arr, int segfile_count)
 {
 	AOCSFileSegInfo **seginfo;
 	int			i;
@@ -450,21 +479,19 @@ aocs_beginrangescan(Relation relation,
 								   segfile_count,
 								   snapshot,
 								   appendOnlyMetaDataSnapshot,
-								   relationTupleDesc,
-								   proj,
+								   NULL,
 								   0);
 }
 
 AOCSScanDesc
 aocs_beginscan(Relation relation,
 			   Snapshot snapshot,
-			   TupleDesc relationTupleDesc,
 			   bool *proj,
 			   uint32 flags)
 {
-	AOCSFileSegInfo **seginfo;
-	Snapshot	aocsMetaDataSnapshot;
-	int			total_seg;
+	AOCSFileSegInfo	  **seginfo;
+	Snapshot			aocsMetaDataSnapshot;
+	int32				total_seg;
 
 	RelationIncrementReferenceCount(relation);
 
@@ -483,20 +510,12 @@ aocs_beginscan(Relation relation,
 								   total_seg,
 								   snapshot,
 								   aocsMetaDataSnapshot,
-								   relationTupleDesc,
 								   proj,
 								   flags);
 }
 
 /*
  * begin the scan over the given relation.
- *
- * 'relationTupleDesc' if NULL, then this function will simply use
- * relation->rd_att.  This is the typical use-case. Passing in a
- * separate tuple descriptor is only needed for cases for the caller has
- * changed relation->rd_att without updating the underlying relation files
- * yet (that is, the caller is doing an alter and relation->rd_att will be
- * the relation's new form but relationTupleDesc is the old form)
  */
 static AOCSScanDesc
 aocs_beginscan_internal(Relation relation,
@@ -504,21 +523,13 @@ aocs_beginscan_internal(Relation relation,
 						int total_seg,
 						Snapshot snapshot,
 						Snapshot appendOnlyMetaDataSnapshot,
-						TupleDesc relationTupleDesc,
 						bool *proj,
 						uint32 flags)
 {
-	AOCSScanDesc scan;
-	int			nvp;
-	int			i;
-	NameData    nd;
-	Oid         visimaprelid;
-	Oid         visimapidxid;
-
-	if (!relationTupleDesc)
-		relationTupleDesc = RelationGetDescr(relation);
-
-	nvp = relationTupleDesc->natts;
+	AOCSScanDesc	scan;
+	AttrNumber		natts;
+	Oid				visimaprelid;
+	Oid				visimapidxid;
 
 	scan = (AOCSScanDesc) palloc0(sizeof(AOCSScanDescData));
 	scan->rs_base.rs_rd = relation;
@@ -527,40 +538,47 @@ aocs_beginscan_internal(Relation relation,
 	scan->appendOnlyMetaDataSnapshot = appendOnlyMetaDataSnapshot;
 	scan->seginfo = seginfo;
 	scan->total_seg = total_seg;
-	scan->relationTupleDesc = relationTupleDesc;
+	scan->columnScanInfo.scanCtx = CurrentMemoryContext;
 
-    GetAppendOnlyEntryAttributes(RelationGetRelid(relation),
-                                 &scan->blocksz,
-                                 NULL,
-                                 (int16 *)&scan->compLevel,
-                                 &scan->checksum,
-                                 &nd);
-    scan->compType = NameStr(nd);
+	/* relationTupleDesc will be inited by the slot when needed */
+	scan->columnScanInfo.relationTupleDesc = NULL;
 
-	GetAppendOnlyEntryAuxOids(RelationGetRelid(relation),
-                              scan->appendOnlyMetaDataSnapshot,
-                              NULL, NULL, NULL,
-                              &visimaprelid, &visimapidxid);
 	/*
 	 * We get an array of booleans to indicate which columns are needed. But
 	 * if you have a very wide table, and you only select a few columns from
 	 * it, just scanning the boolean array to figure out which columns are
 	 * needed can incur a noticeable overhead in aocs_getnext. So convert it
 	 * into an array of the attribute numbers of the required columns.
+	 *
+	 * However, if no array is given, then let it get lazily initialized when
+	 * needed since all the attributes will be fetched.
 	 */
-	scan->proj_atts = palloc(nvp * sizeof(*scan->proj_atts));
-	scan->num_proj_atts = 0;
-
-	for (i = 0; i < nvp; i++)
+	if (proj)
 	{
-		/* if proj is NULL,fetch all column */
-		if (proj == NULL || proj[i])
-			scan->proj_atts[scan->num_proj_atts++] = i;
+		natts = RelationGetNumberOfAttributes(relation);
+		scan->columnScanInfo.proj_atts = palloc0(natts * sizeof(AttrNumber *));
+		scan->columnScanInfo.num_proj_atts = 0;
+
+		for (AttrNumber i = 0; i < natts; i++)
+		{
+			if (proj[i])
+				scan->columnScanInfo.proj_atts[scan->columnScanInfo.num_proj_atts++] = i;
+		}
 	}
 
-	scan->ds = (DatumStreamRead **) palloc0(sizeof(DatumStreamRead *) * nvp);
+	scan->columnScanInfo.ds = NULL;
 
-	aocs_initscan(scan);
+	GetAppendOnlyEntryAttributes(RelationGetRelid(relation),
+								 NULL,
+								 NULL,
+								 NULL,
+								 &scan->checksum,
+								 NULL);
+
+	GetAppendOnlyEntryAuxOids(RelationGetRelid(relation),
+							  scan->appendOnlyMetaDataSnapshot,
+							  NULL, NULL, NULL,
+							  &visimaprelid, &visimapidxid);
 
 	if (scan->total_seg != 0)
 		AppendOnlyVisimap_Init(&scan->visibilityMap,
@@ -576,24 +594,36 @@ void
 aocs_rescan(AOCSScanDesc scan)
 {
 	close_cur_scan_seg(scan);
-	close_ds_read(scan->ds, scan->relationTupleDesc->natts);
+	if (scan->columnScanInfo.ds)
+		close_ds_read(scan->columnScanInfo.ds, scan->columnScanInfo.relationTupleDesc->natts);
 	aocs_initscan(scan);
 }
 
 void
 aocs_endscan(AOCSScanDesc scan)
 {
-	int			i;
-
-	RelationDecrementReferenceCount(scan->rs_base.rs_rd);
-
 	close_cur_scan_seg(scan);
-	close_ds_read(scan->ds, scan->relationTupleDesc->natts);
 
-	pfree(scan->proj_atts);
-	pfree(scan->ds);
+	if (scan->columnScanInfo.ds)
+	{
+		Assert(scan->columnScanInfo.proj_atts);
 
-	for (i = 0; i < scan->total_seg; ++i)
+		close_ds_read(scan->columnScanInfo.ds, scan->columnScanInfo.relationTupleDesc->natts);
+		pfree(scan->columnScanInfo.ds);
+	}
+
+	if (scan->columnScanInfo.relationTupleDesc)
+	{
+		Assert(scan->columnScanInfo.proj_atts);
+
+		ReleaseTupleDesc(scan->columnScanInfo.relationTupleDesc);
+		scan->columnScanInfo.relationTupleDesc = NULL;
+	}
+
+	if (scan->columnScanInfo.proj_atts)
+		pfree(scan->columnScanInfo.proj_atts);
+
+	for (int i = 0; i < scan->total_seg; ++i)
 	{
 		if (scan->seginfo[i])
 		{
@@ -601,11 +631,14 @@ aocs_endscan(AOCSScanDesc scan)
 			scan->seginfo[i] = NULL;
 		}
 	}
+
 	if (scan->seginfo)
 		pfree(scan->seginfo);
 
 	if (scan->total_seg != 0)
 		AppendOnlyVisimap_Finish(&scan->visibilityMap, AccessShareLock);
+
+	RelationDecrementReferenceCount(scan->rs_base.rs_rd);
 
 	pfree(scan);
 }
@@ -674,7 +707,7 @@ static void upgrade_datum_impl(DatumStreamRead *ds, int attno, Datum values[],
 static void upgrade_datum_scan(AOCSScanDesc scan, int attno, Datum values[],
 							   bool isnull[], int formatversion)
 {
-	upgrade_datum_impl(scan->ds[attno], attno, values, isnull, formatversion);
+	upgrade_datum_impl(scan->columnScanInfo.ds[attno], attno, values, isnull, formatversion);
 }
 
 static void upgrade_datum_fetch(AOCSFetchDesc fetch, int attno, Datum values[],
@@ -687,19 +720,27 @@ static void upgrade_datum_fetch(AOCSFetchDesc fetch, int attno, Datum values[],
 bool
 aocs_getnext(AOCSScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
-	int			ncol;
 	Datum	   *d = slot->tts_values;
 	bool	   *null = slot->tts_isnull;
+
 	AOTupleId	aoTupleId;
 	int64		rowNum = INT64CONST(-1);
 	int			err = 0;
-	int			i;
 	bool		isSnapshotAny = (scan->rs_base.rs_snapshot == SnapshotAny);
+	AttrNumber	natts;
 
 	Assert(ScanDirectionIsForward(direction));
 
-	ncol = slot->tts_tupleDescriptor->natts;
-	Assert(ncol <= scan->relationTupleDesc->natts);
+	if (scan->columnScanInfo.relationTupleDesc == NULL)
+	{
+		scan->columnScanInfo.relationTupleDesc = slot->tts_tupleDescriptor;
+		/* Pin it! ... and of course release it upon destruction / rescan */
+		PinTupleDesc(scan->columnScanInfo.relationTupleDesc);
+		aocs_initscan(scan);
+	}
+
+	natts = slot->tts_tupleDescriptor->natts;
+	Assert(natts <= scan->columnScanInfo.relationTupleDesc->natts);
 
 	while (1)
 	{
@@ -724,15 +765,15 @@ ReadNext:
 		curseginfo = scan->seginfo[scan->cur_seg];
 
 		/* Read from cur_seg */
-		for (i = 0; i < scan->num_proj_atts; i++)
+		for (AttrNumber i = 0; i < scan->columnScanInfo.num_proj_atts; i++)
 		{
-			int			attno = scan->proj_atts[i];
+			AttrNumber	attno = scan->columnScanInfo.proj_atts[i];
 
-			err = datumstreamread_advance(scan->ds[attno]);
+			err = datumstreamread_advance(scan->columnScanInfo.ds[attno]);
 			Assert(err >= 0);
 			if (err == 0)
 			{
-				err = datumstreamread_block(scan->ds[attno], scan->blockDirectory, attno);
+				err = datumstreamread_block(scan->columnScanInfo.ds[attno], scan->blockDirectory, attno);
 				if (err < 0)
 				{
 					/*
@@ -742,7 +783,7 @@ ReadNext:
 					goto ReadNext;
 				}
 
-				err = datumstreamread_advance(scan->ds[attno]);
+				err = datumstreamread_advance(scan->columnScanInfo.ds[attno]);
 				Assert(err > 0);
 			}
 
@@ -750,7 +791,7 @@ ReadNext:
 			 * Get the column's datum right here since the data structures
 			 * should still be hot in CPU data cache memory.
 			 */
-			datumstreamread_get(scan->ds[attno], &d[attno], &null[attno]);
+			datumstreamread_get(scan->columnScanInfo.ds[attno], &d[attno], &null[attno]);
 
 			/*
 			 * Perform any required upgrades on the Datum we just fetched.
@@ -762,11 +803,11 @@ ReadNext:
 			}
 
 			if (rowNum == INT64CONST(-1) &&
-				scan->ds[attno]->blockFirstRowNum != INT64CONST(-1))
+				scan->columnScanInfo.ds[attno]->blockFirstRowNum != INT64CONST(-1))
 			{
-				Assert(scan->ds[attno]->blockFirstRowNum > 0);
-				rowNum = scan->ds[attno]->blockFirstRowNum +
-					datumstreamread_nth(scan->ds[attno]);
+				Assert(scan->columnScanInfo.ds[attno]->blockFirstRowNum > 0);
+				rowNum = scan->columnScanInfo.ds[attno]->blockFirstRowNum +
+					datumstreamread_nth(scan->columnScanInfo.ds[attno]);
 			}
 		}
 
@@ -794,7 +835,7 @@ ReadNext:
 		}
 		scan->cdb_fake_ctid = *((ItemPointer) &aoTupleId);
 
-		slot->tts_nvalid = ncol;
+		slot->tts_nvalid = natts;
 		slot->tts_tid = scan->cdb_fake_ctid;
 		return true;
 	}

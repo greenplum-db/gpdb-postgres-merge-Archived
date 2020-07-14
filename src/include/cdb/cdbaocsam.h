@@ -96,13 +96,30 @@ enum AOCSScanDescIdentifier
 };
 
 /*
- * used for scan of append only relations using BufferedRead and VarBlocks
+ * Used for scan of appendoptimized column oriented relations, should be used in
+ * the tableam api related code and under it.
  */
 typedef struct AOCSScanDescData
 {
 	TableScanDescData rs_base;	/* AM independent part of the descriptor */
 
+	/* AM dependant part of the descriptor */
 	enum AOCSScanDescIdentifier descIdentifier;
+
+	/* synthetic system attributes */
+	ItemPointerData cdb_fake_ctid;
+	int64 total_row;
+	int64 cur_seg_row;
+
+	/*
+	 * Only used by `analyze`
+	 */
+	int64		nextTupleId;
+	int64		targetTupleId;
+
+	/*
+	 * Part of the struct to be used only inside aocsam.c
+	 */
 
 	/*
 	 * Snapshot to use for metadata operations.
@@ -111,34 +128,47 @@ typedef struct AOCSScanDescData
 	 */ 
 	Snapshot	appendOnlyMetaDataSnapshot;
 
-	/* tuple descriptor of table to scan.
-	 *  Code should use this rather than ,
-	 *  as THEY MAY BE DIFFERENT.
-	 *  See code in aocsam.c's aocs_beginscan for more info
+	/*
+	 * Anonymous struct containing column level informations. In AOCS relations,
+	 * it is possible to only scan a subset of the columns. That subset is
+	 * recorderd in the proj_atts array. If all the columns are required, then
+	 * is populated from the relation's tuple descriptor.
+	 *
+	 * The tuple descriptor for the scan can be different from the tuple
+	 * descriptor of the relation as held in rs_base. Such a scenario occurs
+	 * during some ALTER TABLE operations. In all cases, it is the caller's
+	 * responsibility to provide a valid tuple descriptor for the scan. It will
+	 * get acquired from the slot.
+	 *
+	 * The proj_atts array if empty, and the datumstreams, will get initialized in
+	 * relation to the tuple descriptor, when it becomes available.
 	 */
-	TupleDesc   relationTupleDesc;
+	struct {
+		/*
+		 * Used during lazy initialization since at that moment, the context is the
+		 * per tuple context, we need to keep a reference to the context used in
+		 * begin_scan
+		 */
+		MemoryContext	scanCtx;
 
-	Index aos_scanrelid; /* index */
+		TupleDesc	relationTupleDesc;
 
-	int total_seg;
-	int cur_seg;
+		/* Column numbers (zero based) of columns we need to fetch */
+		AttrNumber		   *proj_atts;
+		AttrNumber			num_proj_atts;
 
-	char *compType;
-	int32 compLevel;
-	int32 blocksz;
-    bool checksum;
+		struct DatumStreamRead **ds;
+	} columnScanInfo;
 
 	struct AOCSFileSegInfo **seginfo;
-	struct DatumStreamRead **ds;
+	int32					 total_seg;
+	int32					 cur_seg;
 
-	/* Column numbers (starting from 0) of columns we need to fetch */
-	int		   *proj_atts;
-	int			num_proj_atts;
-
-	/* synthetic system attributes */
-	ItemPointerData cdb_fake_ctid;
-	int64 total_row;
-	int64 cur_seg_row;
+	/*
+	 * The only relation wide Storage Option, the rest are aquired in a per
+	 * column basis and there is no need to keep track of.
+	 */
+	bool checksum;
 
 	/*
 	 * The block directory info.
@@ -148,15 +178,7 @@ typedef struct AOCSScanDescData
 	 * scanning.
 	 */
 	AppendOnlyBlockDirectory *blockDirectory;
-
 	AppendOnlyVisimap visibilityMap;
-
-	/*
-	 * Only used by `analyze`
-	 */
-	int64		nextTupleId;
-	int64		targetTupleId;
-
 } AOCSScanDescData;
 
 typedef AOCSScanDescData *AOCSScanDesc;
@@ -263,16 +285,15 @@ typedef struct AOCSAddColumnDescData
 typedef AOCSAddColumnDescData *AOCSAddColumnDesc;
 
 /* ----------------
- *		function prototypes for appendonly access method
+ *		function prototypes for appendoptimized columnar access method
  * ----------------
  */
 
 extern AOCSScanDesc aocs_beginscan(Relation relation, Snapshot snapshot,
-								   TupleDesc relationTupleDesc, bool *proj, uint32 flags);
+								   bool *proj, uint32 flags);
 extern AOCSScanDesc aocs_beginrangescan(Relation relation, Snapshot snapshot,
-		Snapshot appendOnlyMetaDataSnapshot, 
-		int *segfile_no_arr, int segfile_count,
-	TupleDesc relationTupleDesc, bool *proj);
+										Snapshot appendOnlyMetaDataSnapshot,
+										int *segfile_no_arr, int segfile_count);
 
 extern void aocs_rescan(AOCSScanDesc scan);
 extern void aocs_endscan(AOCSScanDesc scan);
