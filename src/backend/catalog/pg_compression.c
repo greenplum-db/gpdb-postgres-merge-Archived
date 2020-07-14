@@ -543,12 +543,11 @@ default_column_encoding_clause(Relation rel)
 	int32		blocksize = -1;
 	int16		compresslevel = 0;
 	char	   *compresstype = NULL;
+	NameData	compresstype_nd;
 
 	appendonly = rel && RelationIsAppendOptimized(rel);
 	if (appendonly)
 	{
-		NameData	compresstype_nd;
-
 		GetAppendOnlyEntryAttributes(RelationGetRelid(rel),
 									 &blocksize,
 									 NULL,
