@@ -3385,17 +3385,6 @@ CopyOneRowTo(CopyState cstate, TupleTableSlot *slot)
 	MemoryContextSwitchTo(oldcontext);
 }
 
-static char *
-linenumber_atoi(char *buffer, size_t bufsz, int64 linenumber)
-{
-	if (linenumber < 0)
-		snprintf(buffer, bufsz, "%s", "N/A");
-	else
-		snprintf(buffer, bufsz, INT64_FORMAT, linenumber);
-
-	return buffer;
-}
-
 /*
  * error context callback for COPY FROM
  *
