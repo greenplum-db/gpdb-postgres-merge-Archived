@@ -4503,20 +4503,24 @@ from (
 group by 1, 2;
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=593965281.42..614907081.42 rows=100000 width=36)
-   ->  GroupAggregate  (cost=593965281.42..614905081.42 rows=33334 width=36)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=159775821.84..159786321.84 rows=100000 width=36)
+   ->  GroupAggregate  (cost=159775821.84..159784321.84 rows=33334 width=36)
          Group Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
-         ->  GroupAggregate  (cost=593965281.42..614889081.42 rows=333334 width=36)
-               Group Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
-               ->  Sort  (cost=593965281.42..600934881.42 rows=929280000 width=36)
-                     Sort Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+         ->  Sort  (cost=159775821.84..159778321.84 rows=333334 width=36)
+               Sort Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+               ->  HashAggregate  (cost=154206164.00..159666164.00 rows=333334 width=36)
+                     Group Key: (c.bar_6325_attr)::integer, a.foo_6325_attr
+                     Planned Partitions: 8
                      ->  Nested Loop  (cost=0.00..118486964.00 rows=929280000 width=36)
                            ->  Seq Scan on foo_6325 a  (cost=0.00..628.00 rows=17600 width=32)
                            ->  Materialize  (cost=0.00..3532.00 rows=52800 width=32)
                                  ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=0.00..2740.00 rows=52800 width=32)
                                        ->  Seq Scan on bar_6325 c  (cost=0.00..628.00 rows=17600 width=32)
  Optimizer: Postgres query optimizer
-(13 rows)
+ JIT:
+   Functions: 8
+   Options: Inlining true, Optimization true, Expressions true, Deforming true
+(17 rows)
 
 -- start_ignore
 drop table qp_misc_jiras.foo_6325;
