@@ -25,9 +25,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/toasting.h"
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
 #include "commands/alter.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
@@ -79,7 +76,6 @@
 
 #include "access/table.h"
 #include "catalog/oid_dispatch.h"
-#include "catalog/pg_attribute_encoding.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 

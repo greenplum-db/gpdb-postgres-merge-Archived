@@ -62,7 +62,6 @@
 #include "utils/rls.h"
 #include "utils/snapmgr.h"
 
-#include "access/appendonlywriter.h"
 #include "access/external.h"
 #include "access/url.h"
 #include "catalog/catalog.h"

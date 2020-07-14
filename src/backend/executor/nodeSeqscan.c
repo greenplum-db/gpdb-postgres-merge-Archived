@@ -34,8 +34,6 @@
 #include "utils/rel.h"
 #include "nodes/nodeFuncs.h"
 
-#include "cdb/cdbaocsam.h"
-
 static TupleTableSlot *SeqNext(SeqScanState *node);
 
 /* ----------------------------------------------------------------

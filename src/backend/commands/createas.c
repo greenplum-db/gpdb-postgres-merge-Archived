@@ -52,11 +52,7 @@
 #include "utils/rls.h"
 #include "utils/snapmgr.h"
 
-#include "access/appendonlywriter.h"
-#include "catalog/aoseg.h"
-#include "catalog/aovisimap.h"
 #include "catalog/oid_dispatch.h"
-#include "catalog/pg_attribute_encoding.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"

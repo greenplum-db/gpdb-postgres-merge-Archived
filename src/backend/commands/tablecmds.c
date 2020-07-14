@@ -119,9 +119,6 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 
-#include "access/aocs_compaction.h"
-#include "access/aomd.h"
-#include "access/appendonlywriter.h"
 #include "access/appendonly_compaction.h"
 #include "access/bitmap_private.h"
 #include "access/external.h"

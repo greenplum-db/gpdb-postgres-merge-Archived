@@ -82,15 +82,9 @@
 
 #include "tcop/tcopprot.h"
 
-#include "access/aosegfiles.h"
-#include "access/appendonlywriter.h"
 #include "catalog/pg_tablespace.h"
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
 #include "catalog/catalog.h"
 #include "catalog/oid_dispatch.h"
-#include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
@@ -99,8 +93,6 @@
 #include "executor/nodeSubplan.h"
 #include "foreign/fdwapi.h"
 #include "libpq/pqformat.h"
-#include "cdb/cdbappendonlyam.h"
-#include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbexplain.h"             /* cdbexplain_sendExecStats() */
