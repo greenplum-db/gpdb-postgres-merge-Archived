@@ -43,6 +43,7 @@
 #include "catalog/pg_extprotocol.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_init_privs.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
@@ -726,7 +727,18 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				Oid			relOid;
 
 				relOid = RangeVarGetRelid(relvar, NoLock, false);
-				objects = lappend_oid(objects, relOid);
+				/*
+				 * GPDB: If we are the DISPATCH node and the object is a partitioned
+				 * relation, then we need to populate the partition references because the
+				 * information is not present in the cataloge tables on the segment nodes.
+				 */
+				if (Gp_role == GP_ROLE_DISPATCH && objtype == OBJECT_TABLE)
+				{
+					List *all_inheritors = find_all_inheritors(relOid, NoLock, NULL);
+					objects = list_concat(objects, all_inheritors);
+				}
+				else
+					objects = lappend_oid(objects, relOid);
 			}
 			break;
 		case OBJECT_DATABASE:
