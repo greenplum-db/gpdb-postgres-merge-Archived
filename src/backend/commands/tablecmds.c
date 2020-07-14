@@ -4838,15 +4838,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_ExpandTable:
-			/* External tables can be expanded */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 
 			/* GPDB_12_MERGE_FIXME: do we have these checks on ATTACH? */
 			if (!recursing)
 			{
-				// GPDB_12_MERGE_FIXME
-				//ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-
 				if (Gp_role == GP_ROLE_DISPATCH &&
 					rel->rd_cdbpolicy->numsegments == getgpsegmentCount())
 					ereport(ERROR,
@@ -7288,7 +7284,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			c->encoding = TypeNameGetStorageDirective(colDef->typeName);
 			
 			if (!c->encoding)
-				c->encoding = default_column_encoding_clause();
+				c->encoding = default_column_encoding_clause(rel);
 		}
 
 		AddRelationAttributeEncodings(rel, list_make1(c));
@@ -14879,11 +14875,25 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	ObjectAddress address;
 	const char *trigger_name;
 
+	/* 1. Replicated table cannot inherit a parent */
+	if (child_rel->rd_cdbpolicy &&
+		child_rel->rd_cdbpolicy->ptype == POLICYTYPE_REPLICATED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Replicated table cannot inherit a parent")));
+
 	/*
 	 * A self-exclusive lock is needed here.  See the similar case in
 	 * MergeAttributes() for a full explanation.
 	 */
 	parent_rel = table_openrv(parent, ShareUpdateExclusiveLock);
+
+	/* 2. Replicated table cannot be inherited */
+	if (parent_rel->rd_cdbpolicy &&
+		parent_rel->rd_cdbpolicy->ptype == POLICYTYPE_REPLICATED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Replicated table cannot be inherited")));
 
 	/*
 	 * Must be owner of both parent and child -- child was checked by

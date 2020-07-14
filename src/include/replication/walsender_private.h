@@ -75,12 +75,6 @@ typedef struct WalSnd
 	 */
 	XLogRecPtr	xlogCleanUpTo;
 
-	/*
-	 * Records time, either during initialization or due to disconnection.
-	 * This helps to detect time passed since mirror didn't connect.
-	 */
-	pg_time_t   replica_disconnected_at;
-
 	/* Measured lag times, or -1 for unknown/none. */
 	TimeOffset	writeLag;
 	TimeOffset	flushLag;

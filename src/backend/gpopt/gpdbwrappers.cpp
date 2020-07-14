@@ -3089,6 +3089,7 @@ gpdb::RunStaticPartitionSelection
 }
 #endif
 
+#ifdef FAULT_INJECTOR
 FaultInjectorType_e
 gpdb::InjectFaultInOptTasks
 	(
@@ -3102,6 +3103,9 @@ gpdb::InjectFaultInOptTasks
 	GP_WRAP_END;
 	return FaultInjectorTypeNotSpecified;
 }
+#endif
+
+/* GPDB_12_MERGE_FIXME: dead code now? */
 #if 0
 gpos::ULONG
 gpdb::CountLeafPartTables

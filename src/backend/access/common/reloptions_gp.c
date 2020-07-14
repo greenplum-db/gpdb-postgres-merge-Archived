@@ -1616,7 +1616,7 @@ transformAttributeEncoding(List *columns,
 					if (te)
 						encoding = copyObject(te);
 					else
-						encoding = default_column_encoding_clause();
+						encoding = default_column_encoding_clause(NULL);
 				}
 			}
 		}

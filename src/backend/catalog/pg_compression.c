@@ -25,6 +25,7 @@
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_compression.h"
 #include "catalog/dependency.h"
@@ -530,27 +531,54 @@ compresstype_is_valid(char *comptype)
 }
 
 /*
- * Make encoding (compresstype = none, blocksize=...) based on
+ * Make encoding (compresstype = ..., blocksize=...) based on
  * currently configured defaults.
  */
 List *
-default_column_encoding_clause(void)
+default_column_encoding_clause(Relation rel)
 {
-	const StdRdOptions *ao_opts = currentAOStorageOptions();
 	DefElem *e1, *e2, *e3;
-	if (ao_opts->compresstype[0])
+	const StdRdOptions *ao_opts = currentAOStorageOptions();
+	bool		appendonly;
+	int32		blocksize = -1;
+	int16		compresslevel = 0;
+	char	   *compresstype = NULL;
+
+	appendonly = rel && RelationIsAppendOptimized(rel);
+	if (appendonly)
 	{
-		e1 = makeDefElem("compresstype",
-						 (Node *)makeString(pstrdup(ao_opts->compresstype)), -1);
+		NameData	compresstype_nd;
+
+		GetAppendOnlyEntryAttributes(RelationGetRelid(rel),
+									 &blocksize,
+									 NULL,
+									 &compresslevel,
+									 NULL,
+									 &compresstype_nd);
+		compresstype = NameStr(compresstype_nd);
 	}
+
+	if (compresstype && compresstype[0])
+		e1 = makeDefElem("compresstype", (Node *) makeString(pstrdup(compresstype)), -1);
+	else if (ao_opts->compresstype[0])
+		e1 = makeDefElem("compresstype", (Node *) makeString(pstrdup(ao_opts->compresstype)), -1);
 	else
-	{
-		e1 = makeDefElem("compresstype", (Node *)makeString("none"), -1);
-	}
-	e2 = makeDefElem("blocksize",
-					 (Node *)makeInteger(ao_opts->blocksize), -1);
-	e3 = makeDefElem("compresslevel",
-					 (Node *)makeInteger(ao_opts->compresslevel), -1);
+		e1 = makeDefElem("compresstype", (Node *) makeString("none"), -1);
+
+	if (appendonly)
+		e2 = makeDefElem("blocksize", (Node *) makeInteger(blocksize), -1);
+	else if (ao_opts->blocksize != 0)
+		e2 = makeDefElem("blocksize", (Node *) makeInteger(ao_opts->blocksize), -1);
+	else
+		e2 = makeDefElem("blocksize", (Node *) makeInteger(AO_DEFAULT_BLOCKSIZE), -1);
+
+	if (appendonly && compresslevel != 0)
+		e3 = makeDefElem("compresslevel", (Node *) makeInteger(compresslevel), -1);
+	else if (ao_opts->compresslevel != 0)
+		e3 = makeDefElem("compresslevel", (Node *) makeInteger(ao_opts->compresslevel), -1);
+	else
+		e3 = makeDefElem("compresslevel", (Node *) makeInteger(AO_DEFAULT_COMPRESSLEVEL), -1);
+
 	return list_make3(e1, e2, e3);
 }
 

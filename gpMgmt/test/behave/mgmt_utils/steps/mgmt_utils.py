@@ -1,32 +1,27 @@
 import codecs
 import math
 import fnmatch
-import getpass
 import glob
 import json
-import yaml
 import os
 import re
 import pipes
 import platform
 import shutil
 import socket
-import tarfile
 import tempfile
 import thread
-import json
+import time
 try:
     from subprocess32 import check_output, Popen, PIPE
 except:
     from subprocess import check_output, Popen, PIPE
 import commands
-import signal
 from collections import defaultdict
 
 import psutil
 from behave import given, when, then
 from datetime import datetime, timedelta
-from time import sleep
 from os import path
 
 from gppylib.gparray import GpArray, ROLE_PRIMARY, ROLE_MIRROR
@@ -184,6 +179,19 @@ def impl(conetxt, tabname):
                "('gpfdist://host.invalid:8000/file') format 'text'").format(tabname=tabname)
         dbconn.execSQL(conn, sql)
     conn.close()
+
+@given('the user create an external table with name "{tabname}" in partition table t')
+def impl(conetxt, tabname):
+    dbname = 'gptest'
+    with dbconn.connect(dbconn.DbURL(dbname=dbname), unsetSearchPath=False) as conn:
+        sql = ("create external table {tabname}(i int, j int) location "
+               "('gpfdist://host.invalid:8000/file') format 'text'").format(tabname=tabname)
+        dbconn.execSQL(conn, sql)
+        sql = "create table t(i int, j int) partition by list(i) (values(2018), values(1218))"
+        dbconn.execSQL(conn, sql)
+        sql = ("alter table t exchange partition for (2018) with table {tabname} without validation").format(tabname=tabname)
+        dbconn.execSQL(conn, sql)
+        conn.commit()
 
 @given('the user executes "{sql}" with named connection "{cname}"')
 def impl(context, cname, sql):
@@ -1610,6 +1618,7 @@ def impl(context, filename):
 
 
 @then('an attribute of table "{table}" in database "{dbname}" is deleted on segment with content id "{segid}"')
+@when('an attribute of table "{table}" in database "{dbname}" is deleted on segment with content id "{segid}"')
 def impl(context, table, dbname, segid):
     local_cmd = 'psql %s -t -c "SELECT port,hostname FROM gp_segment_configuration WHERE content=%s and role=\'p\';"' % (
     dbname, segid)

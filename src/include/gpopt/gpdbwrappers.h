@@ -688,8 +688,10 @@ namespace gpdb {
 	SelectedParts *RunStaticPartitionSelection(PartitionSelector *ps);
 #endif
 
+#ifdef FAULT_INJECTOR
 	// simple fault injector used by COptTasks.cpp to inject GPDB fault
 	FaultInjectorType_e InjectFaultInOptTasks(const char* fault_name);
+#endif
 
 #if 0
 	// return the number of leaf partition for a given table oid

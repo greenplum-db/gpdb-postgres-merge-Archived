@@ -150,6 +150,7 @@
 #include "cdb/cdbgang.h"                /* cdbgang_parse_gpqeid_params */
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
+#include "cdb/ic_proxy_bgworker.h"
 #include "utils/metrics_utils.h"
 
 /*
@@ -410,6 +411,15 @@ static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 	 0, /* restart immediately if sweeper process exits with non-zero code */
 	 "postgres", "BackoffSweeperMain", 0, {0}, 0,
 	 BackoffSweeperStartRule},
+
+#ifdef ENABLE_IC_PROXY
+	{"ic proxy process",
+	 0,
+	 BgWorkerStart_RecoveryFinished,
+	 0, /* restart immediately if ic proxy process exits with non-zero code */
+	 ICProxyMain, {0}, {0}, 0, {0}, 0,
+	 ICProxyStartRule},
+#endif  /* ENABLE_IC_PROXY */
 
 	/*
 	 * Remember to set the MaxPMAuxProc to the number of items in this list

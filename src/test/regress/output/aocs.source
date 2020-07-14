@@ -850,8 +850,8 @@ select count(*) from temp_tenk_aocs5;
  10000
 (1 row)
 
-truncate table temp_tenk_aocs5;
 vacuum analyze temp_tenk_aocs5;
+truncate table temp_tenk_aocs5;
 \d temp_tenk_aocs5
           Table "pg_temp_273.temp_tenk_aocs5"
    Column    |  Type   | Collation | Nullable | Default 

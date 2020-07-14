@@ -510,6 +510,9 @@ static const struct config_enum_entry gp_interconnect_fc_methods[] = {
 static const struct config_enum_entry gp_interconnect_types[] = {
 	{"udpifc", INTERCONNECT_TYPE_UDPIFC},
 	{"tcp", INTERCONNECT_TYPE_TCP},
+#ifdef ENABLE_IC_PROXY
+	{"proxy", INTERCONNECT_TYPE_PROXY},
+#endif  /* ENABLE_IC_PROXY */
 	{NULL, 0}
 };
 
@@ -3499,6 +3502,16 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
+		{"gp_fts_replication_attempt_count", PGC_SIGHUP, GP_ARRAY_TUNING,
+			gettext_noop("Primary-mirror replication connection max continuously attempt count for FTS"),
+			gettext_noop("Used by the fts-probe process.")
+		},
+		&gp_fts_replication_attempt_count,
+		10, 0, 100,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"gp_gang_creation_retry_count", PGC_USERSET, GP_ARRAY_TUNING,
 			gettext_noop("After a gang-creation fails, retry the number of times if failure is retryable."),
 			gettext_noop("A value of zero disables retries."),
@@ -4274,6 +4287,19 @@ struct config_string ConfigureNamesString_gp[] =
 		NULL, NULL, NULL
 	},
 
+#ifdef ENABLE_IC_PROXY
+	{
+		{"gp_interconnect_proxy_addresses", PGC_POSTMASTER, DEVELOPER_OPTIONS,
+			gettext_noop("Sets the ic-proxy addresses as \"content:ip:port ...\", must be ordered by content, the port is ignored at the moment."),
+			gettext_noop("e.g. \"-1:10.0.0.1:2000 0:10.0.0.2:2000 1:10.0.0.2:2001\""),
+			GUC_NO_SHOW_ALL | GUC_GPDB_NO_SYNC
+		},
+		&gp_interconnect_proxy_addresses,
+		"",
+		NULL, NULL, NULL
+	},
+#endif  /* ENABLE_IC_PROXY */
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
@@ -4428,7 +4454,11 @@ struct config_enum ConfigureNamesEnum_gp[] =
 	{
 		{"gp_interconnect_type", PGC_BACKEND, GP_ARRAY_TUNING,
 			gettext_noop("Sets the protocol used for inter-node communication."),
-			gettext_noop("Valid values are \"tcp\" and \"udpifc\".")
+			gettext_noop("Valid values are \"tcp\", \"udpifc\""
+#ifdef ENABLE_IC_PROXY
+						 " and \"proxy\""
+#endif  /* ENABLE_IC_PROXY */
+						 ".")
 		},
 		&Gp_interconnect_type,
 		INTERCONNECT_TYPE_UDPIFC, gp_interconnect_types,
