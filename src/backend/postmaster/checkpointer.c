@@ -41,7 +41,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "access/appendonlywriter.h"
 #include "access/htup_details.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"

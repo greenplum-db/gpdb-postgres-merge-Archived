@@ -43,6 +43,7 @@
 #include "catalog/pg_extprotocol.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_init_privs.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
@@ -726,7 +727,18 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				Oid			relOid;
 
 				relOid = RangeVarGetRelid(relvar, NoLock, false);
-				objects = lappend_oid(objects, relOid);
+				/*
+				 * GPDB: If we are the DISPATCH node and the object is a partitioned
+				 * relation, then we need to populate the partition references because the
+				 * information is not present in the cataloge tables on the segment nodes.
+				 */
+				if (Gp_role == GP_ROLE_DISPATCH && objtype == OBJECT_TABLE)
+				{
+					List *all_inheritors = find_all_inheritors(relOid, NoLock, NULL);
+					objects = list_concat(objects, all_inheritors);
+				}
+				else
+					objects = lappend_oid(objects, relOid);
 			}
 			break;
 		case OBJECT_DATABASE:
@@ -6505,4 +6517,165 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 	CommandCounterIncrement();
 
 	table_close(relation, RowExclusiveLock);
+}
+
+/*
+ * Copy ACL info from one relation to another.
+ *
+ * This is currently used by ADD PARTITION, to copy the ACLs of the parent
+ * to the new partition.
+ */
+void
+CopyRelationAcls(Oid srcId, Oid destId)
+{
+	Relation	pg_class_rel;
+	Relation	pg_attribute_rel;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	Form_pg_class pg_class_tuple;
+	HeapTuple	srcTuple;
+	HeapTuple	destTuple;
+	HeapTuple	newTuple;
+	Datum		values[Natts_pg_class];
+	bool		nulls[Natts_pg_class];
+	bool		replaces[Natts_pg_class];
+	int			nnewmembers;
+	Oid		   *newmembers;
+	Oid			ownerId;
+	CatCList   *attlist;
+	int			i;
+
+	pg_class_rel = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_attribute_rel = heap_open(AttributeRelationId, RowExclusiveLock);
+
+	/* Look up the ACL on the source relation. */
+	srcTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(srcId));
+	if (!HeapTupleIsValid(srcTuple))
+		elog(ERROR, "cache lookup failed for relation %u", srcId);
+	aclDatum = SysCacheGetAttr(RELOID, srcTuple, Anum_pg_class_relacl,
+							   &isNull);
+	if (isNull)
+		acl = NULL;
+	else
+		acl = DatumGetAclPCopy(aclDatum);
+
+	/* Open the pg_class row of the dest relation */
+	destTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(destId));
+	if (!HeapTupleIsValid(destTuple))
+		elog(ERROR, "cache lookup failed for relation %u", destId);
+	pg_class_tuple = (Form_pg_class) GETSTRUCT(destTuple);
+
+	if (pg_class_tuple->relkind != RELKIND_RELATION &&
+		pg_class_tuple->relkind != RELKIND_PARTITIONED_TABLE)
+		elog(ERROR, "unexpected relkind %c",  pg_class_tuple->relkind);
+
+	/*
+	 * Check that the target ACL is NULL. Overwriting a non-NULL would require
+	 * removing the old dependencies first, and we're not prepared to do
+	 * that. In the current use of this function, there should be no previous
+	 * privileges.
+	 */
+	(void) SysCacheGetAttr(RELOID, destTuple, Anum_pg_class_relacl,
+						   &isNull);
+	if (!isNull)
+		elog(ERROR, "cannot copy ACL from parent, because there is an existing ACL");
+
+	/* Replace the ACL value */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	replaces[Anum_pg_class_relacl - 1] = true;
+	if (acl)
+	{
+		values[Anum_pg_class_relacl - 1] = PointerGetDatum(acl);
+		nulls[Anum_pg_class_relacl - 1] = false;
+	}
+	else
+	{
+		values[Anum_pg_class_relacl - 1] = (Datum) 0;
+		nulls[Anum_pg_class_relacl - 1] = true;
+	}
+	newTuple = heap_modify_tuple(destTuple, RelationGetDescr(pg_class_rel),
+								 values, nulls, replaces);
+
+	CatalogTupleUpdate(pg_class_rel, &newTuple->t_self, newTuple);
+
+	/* Update the shared dependency ACL info */
+	ownerId = pg_class_tuple->relowner;
+	nnewmembers = aclmembers(acl, &newmembers);
+
+	updateAclDependencies(RelationRelationId, destId, 0,
+						  ownerId,
+						  0, NULL,
+						  nnewmembers, newmembers);
+
+	/*
+	 * Now copy column-level privileges.
+	 */
+	attlist = SearchSysCacheList1(ATTNUM, srcId);
+	for (i = 0; i < attlist->n_members; i++)
+	{
+		HeapTuple	attSrcTuple = &attlist->members[i]->tuple;
+		Form_pg_attribute attSrcForm = (Form_pg_attribute) GETSTRUCT(attSrcTuple);
+		AttrNumber	attnum = attSrcForm->attnum;
+		HeapTuple	attDestTuple;
+		Datum		values[Natts_pg_attribute];
+		bool		nulls[Natts_pg_attribute];
+		bool		replaces[Natts_pg_attribute];
+
+		aclDatum = SysCacheGetAttr(ATTNUM, attSrcTuple, Anum_pg_attribute_attacl,
+								   &isNull);
+		if (isNull)
+			continue;
+		acl = DatumGetAclPCopy(aclDatum);
+
+		attDestTuple = SearchSysCache2(ATTNUM, destId, attnum);
+
+		(void) SysCacheGetAttr(ATTNUM, attDestTuple, Anum_pg_attribute_attacl,
+								   &isNull);
+		if (!isNull)
+			elog(ERROR, "cannot copy ACL from parent, because there is an existing ACL");
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		replaces[Anum_pg_attribute_attacl - 1] = true;
+		if (acl)
+		{
+			values[Anum_pg_attribute_attacl - 1] = PointerGetDatum(acl);
+			nulls[Anum_pg_attribute_attacl - 1] = false;
+		}
+		else
+		{
+			values[Anum_pg_attribute_attacl - 1] = (Datum) 0;
+			nulls[Anum_pg_attribute_attacl - 1] = true;
+		}
+		newTuple = heap_modify_tuple(attDestTuple, RelationGetDescr(pg_attribute_rel),
+									 values, nulls, replaces);
+
+		CatalogTupleUpdate(pg_attribute_rel, &newTuple->t_self, newTuple);
+
+		/* Update the shared dependency ACL info */
+		ownerId = pg_class_tuple->relowner;
+		nnewmembers = aclmembers(acl, &newmembers);
+
+		updateAclDependencies(RelationRelationId, destId, attnum,
+							  ownerId,
+							  0, NULL,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(attDestTuple);
+	}
+	ReleaseSysCacheList(attlist);
+
+	ReleaseSysCache(srcTuple);
+	ReleaseSysCache(destTuple);
+	heap_close(pg_class_rel, RowExclusiveLock);
+	heap_close(pg_attribute_rel, RowExclusiveLock);
+
+	/* Make these updates visible */
+	CommandCounterIncrement();
 }

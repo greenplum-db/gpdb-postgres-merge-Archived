@@ -2914,8 +2914,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			is_shared = true;
 			break;
 		default:
-			is_shared = contain_volatile_functions(cte->ctequery)
-				|| (root->config->gp_cte_sharing && cte->cterefcount > 1);
+			is_shared =  root->config->gp_cte_sharing && cte->cterefcount > 1;
 
 	}
 

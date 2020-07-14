@@ -28,7 +28,6 @@
 #include <sys/stat.h>
 
 #include "access/aomd.h"
-#include "access/appendonlywriter.h"
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"

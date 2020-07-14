@@ -119,9 +119,6 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 
-#include "access/aocs_compaction.h"
-#include "access/aomd.h"
-#include "access/appendonlywriter.h"
 #include "access/appendonly_compaction.h"
 #include "access/bitmap_private.h"
 #include "access/external.h"
@@ -1065,7 +1062,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  stmt->oncommit,
                                           policy,  /*CDB*/
 										  reloptions,
-										  true,
+										  stmt->partbound?false:true,
 										  allowSystemTableMods,
 										  false,
 										  InvalidOid,
@@ -1210,6 +1207,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		StorePartitionBound(rel, parent, bound);
 
 		table_close(parent, NoLock);
+
+		/*
+		 * GPDB inherits the ACLs from parent during creation.
+		 */
+		CopyRelationAcls(parentId, relationId);
 	}
 
 	/* Store inheritance information for new rel. */

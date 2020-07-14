@@ -1793,19 +1793,27 @@ hashagg_recompile_expressions(AggState *aggstate, bool minslot, bool nullcheck)
  * substantially larger than the initial value.
  */
 void
-hash_agg_set_limits(double hashentrysize, uint64 input_groups, int used_bits,
+hash_agg_set_limits(AggState *aggstate, double hashentrysize, uint64 input_groups, int used_bits,
 					Size *mem_limit, uint64 *ngroups_limit,
 					int *num_partitions)
 {
 	int npartitions;
 	Size partition_mem;
+	uint64 strict_memlimit = work_mem;
+
+	if (aggstate)
+	{
+		uint64 operator_mem = PlanStateOperatorMemKB((PlanState *) aggstate);
+		if (operator_mem < strict_memlimit)
+			strict_memlimit = operator_mem;
+	}
 
 	/* if not expected to spill, use all of work_mem */
-	if (input_groups * hashentrysize < work_mem * 1024L)
+	if (input_groups * hashentrysize < strict_memlimit * 1024L)
 	{
 		if (num_partitions != NULL)
 			*num_partitions = 0;
-		*mem_limit = work_mem * 1024L;
+		*mem_limit = strict_memlimit * 1024L;
 		*ngroups_limit = *mem_limit / hashentrysize;
 		return;
 	}
@@ -1832,10 +1840,10 @@ hash_agg_set_limits(double hashentrysize, uint64 input_groups, int used_bits,
 	 * minimum number of partitions, so we aren't going to dramatically exceed
 	 * work mem anyway.
 	 */
-	if (work_mem * 1024L > 4 * partition_mem)
-		*mem_limit = work_mem * 1024L - partition_mem;
+	if (strict_memlimit * 1024L > 4 * partition_mem)
+		*mem_limit = strict_memlimit * 1024L - partition_mem;
 	else
-		*mem_limit = work_mem * 1024L * 0.75;
+		*mem_limit = strict_memlimit * 1024L * 0.75;
 
 	if (*mem_limit > hashentrysize)
 		*ngroups_limit = *mem_limit / hashentrysize;
@@ -2013,6 +2021,7 @@ hash_choose_num_partitions(uint64 input_groups, double hashentrysize,
 	 * Avoid creating so many partitions that the memory requirements of the
 	 * open partition files are greater than 1/4 of work_mem.
 	 */
+	/* GPDB_12_MERGE_FIXME: respect the OperatorMem (statement_mem) */
 	partition_limit =
 		(work_mem * 1024L * 0.25 - HASHAGG_READ_BUFFER_SIZE) /
 		HASHAGG_WRITE_BUFFER_SIZE;
@@ -2650,7 +2659,7 @@ agg_refill_hash_table(AggState *aggstate)
 	 */
 	ngroups_estimate = batch->input_tuples;
 
-	hash_agg_set_limits(aggstate->hashentrysize, ngroups_estimate,
+	hash_agg_set_limits(aggstate, aggstate->hashentrysize, ngroups_estimate,
 						batch->used_bits, &aggstate->hash_mem_limit,
 						&aggstate->hash_ngroups_limit, NULL);
 
@@ -3682,7 +3691,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		for (i = 0; i < aggstate->num_hashes; i++)
 			totalGroups += aggstate->perhash[i].aggnode->numGroups;
 
-		hash_agg_set_limits(aggstate->hashentrysize, totalGroups, 0,
+		hash_agg_set_limits(aggstate, aggstate->hashentrysize, totalGroups, 0,
 							&aggstate->hash_mem_limit,
 							&aggstate->hash_ngroups_limit,
 							&aggstate->hash_planned_partitions);

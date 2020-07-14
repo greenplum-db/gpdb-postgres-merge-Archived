@@ -202,21 +202,8 @@ create table bar_p (i int);
 
 grant select on foo_p to part_role;
 revoke all on bar_p from part_role;
-
--- Granting on the partitioned table doesn't give you privileges to the individual
--- partitions. You can select from the partitioned table, but not directly from
--- a partition. (This changed in GPDB 7. Before that, with the old GPDB partitioning
--- implementation, GRANT or REVOKE on the "root partition" recursed to all
--- partitions.)
-select has_table_privilege('part_role', 'foo_p'::regclass, 'select');
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
 select has_table_privilege('part_role', 'bar_p'::regclass, 'select');
-
-grant select on foo_p_1_prt_6 to part_role;
-
--- When a partition is exchanged, the privileges follow the table contents.
--- In this case, the partition had SELECT privilege, and after the exchange,
--- the now-standalone table has it.
 alter table foo_p exchange partition for(6) with table bar_p;
 
 select has_table_privilege('part_role', 'foo_p_1_prt_6'::regclass, 'select');
@@ -419,28 +406,26 @@ partition by range(i)
 (start (1) end (20) every(0));
 
 -- Check for ambiguous EVERY parameters
+create table foo_p (i int) distributed by (i)
+partition by range(i)
+(start (1) end (3) every (0.6));
+\d+ foo_p
+drop table foo_p;
 -- should fail
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.6));
--- should fail
+(start (1) end (3) every (0.3));
 create table foo_p (i int) distributed by (i)
 partition by range(i)
-(start (1) end (20) every (0.3));
--- should fail
-create table foo_p (i int) distributed by (i)
-partition by range(i)
-(start (1) end (20) every (1.3));
+(start (1) end (3) every (1.3));
+\d+ foo_p
+drop table foo_p;
 
--- should fail
 create table foo_p (i int) distributed by (i)
 partition by range(i)
 (start (1) end (20) every (10.9));
-
--- should fail
-create table foo_p (i int, j date) distributed by (i)
-partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '0.5 days'));
+\d+ foo_p
+drop table foo_p;
 
 -- should fail
 create table foo_p (i int, j date) distributed by (i)
@@ -452,16 +437,17 @@ create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2008-01-01') every (interval '12 hours'));
 
--- should fail
 create table foo_p (i int, j date) distributed by (i)
 partition by range(j)
-(start ('2007-01-01') end ('2008-01-01') every (interval '1.2 days'));
+(start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
+\d+ foo_p
+drop table foo_p;
 
 -- should work
 create table foo_p (i int, j timestamp) distributed by (i)
 partition by range(j)
 (start ('2007-01-01') end ('2007-01-05') every (interval '1.2 days'));
-
+\d+ foo_p
 drop table foo_p;
 
 -- test inclusive/exclusive
@@ -946,11 +932,7 @@ end(10000::text));
 create table f (n numeric(20, 2)) partition by range(n) (start(1::bigint)
 end('f'::bool));
 
--- Granting on the partitioned table doesn't give you privileges to the individual
--- partitions. You can select from the partitioned table, but not directly from
--- a partition. (This changed in GPDB 7. Before that, with the old GPDB partitioning
--- implementation, GRANT and REVOKE on the "root partition" recursed to all
--- partitions.)
+-- see that grant and revoke cascade to children
 create role part_role;
 create table granttest (i int, j int) partition by range(i) 
 subpartition by list(j) subpartition template (values(1, 2, 3))
@@ -986,8 +968,8 @@ select relname, has_table_privilege('part_role', oid, 'insert') as tabpriv,
        has_column_privilege('part_role', oid, 'j', 'insert') as j_priv
 from pg_class where relname like 'granttest%';
 
--- Before GPDB 7, when a new partition was created, it also inherits the permissions
--- from the parent. Not anymore.
+-- Check that when a new partition is created, it inherits the permissions
+-- from the parent.
 alter table granttest add partition newpart start(100) end (101);
 
 -- same with the new upstream syntax.

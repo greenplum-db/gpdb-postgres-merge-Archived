@@ -38,8 +38,7 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
-#include "access/appendonlywriter.h"
-#include "access/aocssegfiles.h"
+#include "access/tableam.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "libpq-fe.h"
 #include "foreign/fdwapi.h"

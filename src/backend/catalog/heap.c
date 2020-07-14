@@ -97,10 +97,6 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "catalog/aocatalog.h"
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_stat_last_operation.h"
