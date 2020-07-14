@@ -5428,7 +5428,14 @@ select typname, typtype, typcategory from pg_type where typname like '%test_spli
                typname                | typtype | typcategory 
 --------------------------------------+---------+-------------
  _test_split_part                     | b       | A
- _test_split_part_1_prt_1             | b       | A
+ _test_split_part_1_prt_2             | b       | A
+ _test_split_part_1_prt_3             | b       | A
+ _test_split_part_1_prt_4             | b       | A
+ _test_split_part_1_prt_5             | b       | A
+ _test_split_part_1_prt_6             | b       | A
+ _test_split_part_1_prt_7             | b       | A
+ _test_split_part_1_prt_8             | b       | A
+ _test_split_part_1_prt_9             | b       | A
  _test_split_part_1_prt_10            | b       | A
  _test_split_part_1_prt_11            | b       | A
  _test_split_part_1_prt_12            | b       | A
@@ -5439,17 +5446,10 @@ select typname, typtype, typcategory from pg_type where typname like '%test_spli
  _test_split_part_1_prt_17            | b       | A
  _test_split_part_1_prt_18            | b       | A
  _test_split_part_1_prt_19            | b       | A
- _test_split_part_1_prt_2             | b       | A
  _test_split_part_1_prt_20            | b       | A
- _test_split_part_1_prt_3             | b       | A
- _test_split_part_1_prt_4             | b       | A
- _test_split_part_1_prt_5             | b       | A
- _test_split_part_1_prt_6             | b       | A
- _test_split_part_1_prt_7             | b       | A
- _test_split_part_1_prt_8             | b       | A
- _test_split_part_1_prt_9             | b       | A
- _test_split_part_1_prt_New           | b       | A
+ _test_split_part_1_prt_21            | b       | A
  _test_split_part_1_prt_Old           | b       | A
+ _test_split_part_1_prt_New           | b       | A
  _test_split_part_1_prt_other_log_ids | b       | A
 (24 rows)
 
