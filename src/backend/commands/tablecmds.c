@@ -1065,7 +1065,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  stmt->oncommit,
                                           policy,  /*CDB*/
 										  reloptions,
-										  true,
+										  stmt->partbound?false:true,
 										  allowSystemTableMods,
 										  false,
 										  InvalidOid,
@@ -1210,6 +1210,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		StorePartitionBound(rel, parent, bound);
 
 		table_close(parent, NoLock);
+
+		/*
+		 * GPDB inherits the ACLs from parent during creation.
+		 */
+		CopyRelationAcls(parentId, relationId);
 	}
 
 	/* Store inheritance information for new rel. */
