@@ -6580,7 +6580,8 @@ CopyRelationAcls(Oid srcId, Oid destId)
 	pg_class_tuple = (Form_pg_class) GETSTRUCT(destTuple);
 
 	if (pg_class_tuple->relkind != RELKIND_RELATION &&
-		pg_class_tuple->relkind != RELKIND_PARTITIONED_TABLE)
+		pg_class_tuple->relkind != RELKIND_PARTITIONED_TABLE &&
+		pg_class_tuple->relkind != RELKIND_FOREIGN_TABLE)
 		elog(ERROR, "unexpected relkind %c",  pg_class_tuple->relkind);
 
 	/*
