@@ -351,6 +351,32 @@ ALTER TABLE foopart SET DISTRIBUTED REPLICATED;
 ALTER TABLE foopart_1_prt_1 SET DISTRIBUTED REPLICATED;
 DROP TABLE foopart;
 
+-- Test that replicated table can't inherit a parent table, and it also
+-- can't be inherited by a child table.
+-- 1. Replicated table can't inherit a parent table.
+CREATE TABLE parent (t text) DISTRIBUTED BY (t);
+-- This is not allowed: should fail
+CREATE TABLE child () INHERITS (parent) DISTRIBUTED REPLICATED;
+
+CREATE TABLE child (t text) DISTRIBUTED REPLICATED;
+-- should fail
+ALTER TABLE child INHERIT parent;
+DROP TABLE child, parent;
+
+-- 2. Replicated table can't be inherited
+CREATE TABLE parent (t text) DISTRIBUTED REPLICATED;
+-- should fail
+CREATE TABLE child () INHERITS (parent) DISTRIBUTED REPLICATED;
+CREATE TABLE child () INHERITS (parent) DISTRIBUTED BY (t);
+
+CREATE TABLE child (t text) DISTRIBUTED REPLICATED;
+ALTER TABLE child INHERIT parent;
+
+CREATE TABLE child2(t text) DISTRIBUTED BY (t);
+ALTER TABLE child2 INHERIT parent;
+
+DROP TABLE child, child2, parent;
+
 -- start_ignore
 drop schema rpt cascade;
 -- end_ignore
