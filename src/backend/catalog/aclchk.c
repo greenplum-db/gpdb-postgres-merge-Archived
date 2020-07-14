@@ -725,6 +725,7 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 			{
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
 				Oid			relOid;
+				bool		relOidAddedToObjects = false;
 
 				relOid = RangeVarGetRelid(relvar, NoLock, false);
 				/*
@@ -734,10 +735,22 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				 */
 				if (Gp_role == GP_ROLE_DISPATCH && objtype == OBJECT_TABLE)
 				{
-					List *all_inheritors = find_all_inheritors(relOid, NoLock, NULL);
-					objects = list_concat(objects, all_inheritors);
+					HeapTuple	tp;
+
+					tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+					if (HeapTupleIsValid(tp))
+					{
+						Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+						if (reltup->relkind == RELKIND_PARTITIONED_TABLE)
+						{
+							List *all_inheritors = find_all_inheritors(relOid, NoLock, NULL);
+							objects = list_concat(objects, all_inheritors);
+							relOidAddedToObjects = true;
+						}
+						ReleaseSysCache(tp);
+					}
 				}
-				else
+				if (!relOidAddedToObjects)
 					objects = lappend_oid(objects, relOid);
 			}
 			break;
