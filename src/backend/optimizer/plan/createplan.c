@@ -1946,6 +1946,25 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 }
 
 /*
+ * Does the target list of 'pathtarget' contain a RowIdExpr?
+ */
+static bool
+pathtarget_contains_rowidexpr(PathTarget *pathtarget)
+{
+	ListCell   *lc;
+
+	foreach(lc, pathtarget->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+
+		if (IsA(expr, RowIdExpr))
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * create_projection_plan
  *
  *	  Create a plan tree to do a projection step and (recursively) plans
@@ -1972,8 +1991,12 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 	 * what path node will be placed on top of the projection path and
 	 * therefore can't predict whether it will require an exact tlist. For
 	 * both of these reasons, we have to recheck here.
+	 *
+	 * If this projection was created to evaluate a RowIdExpr, make sure
+	 * we don't optimize it away.
 	 */
-	if (!best_path->cdb_restrict_clauses && use_physical_tlist(root, &best_path->path, flags))
+	if (!best_path->cdb_restrict_clauses && use_physical_tlist(root, &best_path->path, flags) &&
+		!pathtarget_contains_rowidexpr(best_path->path.pathtarget))
 	{
 		/*
 		 * Our caller doesn't really care what tlist we return, so we don't
