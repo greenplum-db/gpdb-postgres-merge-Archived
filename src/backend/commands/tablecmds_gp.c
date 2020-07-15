@@ -1259,8 +1259,13 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 				if (!RelationGetPartitionDesc(firstrel)->is_leaf[0])
 				{
 					if (GetGpPartitionTemplate(topParentrelid, level + 1) == NULL)
+					{
+						/* GPDB_12_MERGE_FIXME: this is user-visible, see 'partition' test.
+						 * Make it an ereport and improve message
+						 */
 						elog(ERROR, "can't add partition at level %d since next level template doesn't exist",
 							 level);
+					}
 				}
 
 				/*

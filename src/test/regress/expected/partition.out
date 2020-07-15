@@ -2564,7 +2564,7 @@ select relid::regclass, level from gp_partition_template where relid = 'mpp5941'
 alter table mpp5941 set subpartition template (
 subpartition l1 values (1,2,3,4,5), 
 subpartition l2 values (6,7,8,9,10) );
-ERROR:  can't add partition at level 1 since next level template doesn't exist (tablecmds_gp.c:1262)
+ERROR:  can't add partition at level 1 since next level template doesn't exist (tablecmds_gp.c:1267)
 -- MPP-5992 - add deep templates correctly
 -- Note: need to re-add the templates from deepest to shallowest,
 -- because adding a template has a dependency on the existence of the
