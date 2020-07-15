@@ -163,6 +163,7 @@ static void bring_to_singleQE(PlannerInfo *root, RelOptInfo *rel);
 static bool is_query_contain_limit_groupby(Query *parse);
 static void handle_gen_seggen_volatile_path(PlannerInfo *root, RelOptInfo *rel);
 
+
 /*
  * make_one_rel
  *	  Finds all possible access paths for executing a query, returning a
@@ -746,6 +747,14 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				break;
 		}
 	}
+
+	/*
+	 * Greenplum specific behavior:
+	 * Change the path in pathlist if it is a general or segmentgeneral
+	 * path that contains volatile restrictions.
+	 */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		handle_gen_seggen_volatile_path(root, rel);
 
 	/*
 	 * Allow a plugin to editorialize on the set of Paths for this base
