@@ -99,8 +99,6 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 										  SubTransactionId mySubid,
 										  SubTransactionId parentSubid);
 
-extern bool rel_needs_long_lock(Oid relid);
-
 extern Oid get_settable_tablespace_oid(char *tablespacename);
 
 extern void SetSchemaAndConstraints(RangeVar *rangeVar, List **schema, List **constraints);

@@ -1996,6 +1996,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 	 * we don't optimize it away.
 	 */
 	if (!best_path->cdb_restrict_clauses && use_physical_tlist(root, &best_path->path, flags) &&
+		!best_path->force &&
 		!pathtarget_contains_rowidexpr(best_path->path.pathtarget))
 	{
 		/*
@@ -2009,7 +2010,9 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 			apply_pathtarget_labeling_to_tlist(tlist,
 											   best_path->path.pathtarget);
 	}
-	else if (!best_path->cdb_restrict_clauses && is_projection_capable_path(best_path->subpath))
+	else if (!best_path->cdb_restrict_clauses &&
+			 !best_path->force &&
+			 is_projection_capable_path(best_path->subpath))
 	{
 		/*
 		 * Our caller requires that we return the exact tlist, but no separate
@@ -2029,7 +2032,11 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 		 */
 		subplan = create_plan_recurse(root, best_path->subpath, 0);
 		tlist = build_path_tlist(root, &best_path->path);
-		needs_result_node = !tlist_same_exprs(tlist, subplan->targetlist);
+
+		if (best_path->force)
+			needs_result_node = true;
+		else
+			needs_result_node = !tlist_same_exprs(tlist, subplan->targetlist);
 	}
 
 	/*

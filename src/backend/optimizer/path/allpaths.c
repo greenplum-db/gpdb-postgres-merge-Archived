@@ -161,7 +161,7 @@ static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
 static void bring_to_outer_query(PlannerInfo *root, RelOptInfo *rel, List *outer_quals);
 static void bring_to_singleQE(PlannerInfo *root, RelOptInfo *rel);
 static bool is_query_contain_limit_groupby(Query *parse);
-
+static void handle_gen_seggen_volatile_path(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * make_one_rel
@@ -639,6 +639,40 @@ bring_to_singleQE(PlannerInfo *root, RelOptInfo *rel)
 
 		add_path(rel, path);
 	}
+	set_cheapest(rel);
+}
+
+/*
+ * handle_gen_seggen_volatile_path
+ *
+ * Only use for base replicated rel.
+ * Change the path in its pathlist if match the pattern
+ * (segmentgeneral or general path contains volatile restrictions).
+ */
+static void
+handle_gen_seggen_volatile_path(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *origpathlist;
+	ListCell   *lc;
+
+	origpathlist = rel->pathlist;
+	rel->cheapest_startup_path = NULL;
+	rel->cheapest_total_path = NULL;
+	rel->cheapest_unique_path = NULL;
+	rel->cheapest_parameterized_paths = NIL;
+	rel->pathlist = NIL;
+
+	foreach(lc, origpathlist)
+	{
+		Path	     *origpath = (Path *) lfirst(lc);
+		Path	     *path;
+
+		path = turn_volatile_seggen_to_singleqe(root,
+												origpath,
+												(Node *) (rel->baserestrictinfo));
+		add_path(rel, path);
+	}
+
 	set_cheapest(rel);
 }
 
@@ -2550,6 +2584,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	foreach(lc, sub_final_rel->pathlist)
 	{
 		Path	   *subpath = (Path *) lfirst(lc);
+		Path       *path;
+		List       *l;
 		List	   *pathkeys;
 		CdbPathLocus locus;
 
@@ -2564,10 +2600,22 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		else
 			locus = cdbpathlocus_from_subquery(root, rel, subpath);
 
+		path = (Path *) create_subqueryscan_path(root, rel, subpath,
+												 pathkeys, locus, required_outer);
+
+		/*
+		 * Greenplum specific behavior:
+		 * If the path is general or segmentgeneral locus and contains
+		 * volatile target list of havingQual, we should turn it into
+		 * singleQE.
+		 */
+		l = lappend(list_make1(subquery->havingQual), subpath->pathtarget->exprs);
+		path = turn_volatile_seggen_to_singleqe(root,
+												path,
+												(Node *) l);
+
 		/* Generate outer path using this subpath */
-		add_path(rel, (Path *)
-				 create_subqueryscan_path(root, rel, subpath,
-										  pathkeys, locus, required_outer));
+		add_path(rel, path);
 	}
 
 	/* If outer rel allows parallelism, do same for partial paths. */

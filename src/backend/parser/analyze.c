@@ -124,7 +124,8 @@ static void setQryDistributionPolicy(ParseState *pstate, IntoClause *into, Query
 
 static bool checkCanOptSelectLockingClause(SelectStmt *stmt);
 static bool queryNodeSearch(Node *node, void *context);
-static void sanity_check_on_conflict_update_set_distkey(Oid relid, List *onconflict_set);
+static void sanity_check_on_conflict_update_set_distkey(GpPolicy  *policy, List *onconflict_set);
+static void sanity_check_on_conflict_update(Oid relid, List *on_conflict_set, Node *on_conflict_where);
 
 /*
  * parse_analyze
@@ -968,8 +969,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * This fixes the github issue: https://github.com/greenplum-db/gpdb/issues/9444
 	 */
 	if (isOnConflictUpdate)
-		sanity_check_on_conflict_update_set_distkey(rte->relid,
-													qry->onConflict->onConflictSet);
+		sanity_check_on_conflict_update(rte->relid,
+													qry->onConflict->onConflictSet,
+													qry->onConflict->onConflictWhere);
 
 	/*
 	 * If we have a RETURNING clause, we need to add the target relation to
@@ -3688,12 +3690,11 @@ queryNodeSearch(Node *node, void *context)
 }
 
 static void
-sanity_check_on_conflict_update_set_distkey(Oid relid, List *onconflict_set)
+sanity_check_on_conflict_update_set_distkey(GpPolicy  *policy, List *onconflict_set)
 {
 	ListCell  *lc;
 	Bitmapset *dist_cols = NULL;
 	Bitmapset *conflict_update_cols = NULL;
-	GpPolicy  *policy = GpPolicyFetch(relid);
 
 	for (int i = 0; i < policy->nattrs; i++)
 		dist_cols = bms_add_member(dist_cols, policy->attrs[i]);
@@ -3710,5 +3711,26 @@ sanity_check_on_conflict_update_set_distkey(Oid relid, List *onconflict_set)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("modification of distribution columns in OnConflictUpdate is not supported")));
+	}
+}
+
+static void
+sanity_check_on_conflict_update(Oid relid, List *on_conflict_set, Node *on_conflict_where)
+{
+	GpPolicy  *policy = GpPolicyFetch(relid);
+	switch (policy->ptype)
+	{
+		case POLICYTYPE_PARTITIONED:
+			sanity_check_on_conflict_update_set_distkey(policy, on_conflict_set);
+			break;
+		case POLICYTYPE_REPLICATED:
+			if (contain_volatile_functions((Node*)on_conflict_set) ||
+				contain_volatile_functions(on_conflict_where))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("modification of replicated tables containing volatile functions in OnConflictUpdate is not supported")));
+			break;
+		default:
+			break;
 	}
 }

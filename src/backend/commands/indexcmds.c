@@ -581,7 +581,6 @@ DefineIndex(Oid relationId,
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
 	int			save_nestlevel = -1;
-	bool		need_longlock = true;
 	bool		shouldDispatch;
 	int			i;
 
@@ -1263,14 +1262,6 @@ DefineIndex(Oid relationId,
 		 */
 	}
 
-	if (rel_needs_long_lock(RelationGetRelid(rel)))
-		need_longlock = true;
-	/* if this is a concurrent build, we must lock you long time */
-	else if (stmt->concurrent)
-		need_longlock = true;
-	else
-		need_longlock = false;
-
 	/*
 	 * A valid stmt->oldNode implies that we already have a built form of the
 	 * index.  The caller should also decline any index build.
@@ -1675,10 +1666,7 @@ DefineIndex(Oid relationId,
 	if (!stmt->concurrent)
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
-		if (need_longlock)
-			table_close(rel, NoLock);
-		else
-			table_close(rel, lockmode);
+		table_close(rel, NoLock);
 
 		/* If this is the top-level index, we're done. */
 		if (!OidIsValid(parentIndexId))
@@ -1701,10 +1689,7 @@ DefineIndex(Oid relationId,
 	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	if (need_longlock)
-		table_close(rel, NoLock);
-	else
-		table_close(rel, lockmode);
+	table_close(rel, NoLock);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
