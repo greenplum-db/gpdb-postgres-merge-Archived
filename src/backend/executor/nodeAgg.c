@@ -239,12 +239,7 @@
  *-------------------------------------------------------------------------
  */
 /*
- * GPDB_12_MERGE_FIXME: All the hybrid hash aggregation stuff we had here
- * in GPDB 6 has been reverted away. We might need to bring back some of that
- * later, or better yet, backport the upstream patch that's been discussed
- * on pgsql-hackers, to spill hash aggregates to disk.
- *
- * Another feature that we lost in the merge is the "streaming bottom" feature.
+ * GPDB_12_MERGE_FIXME: we lost the "streaming bottom" feature in the merge.
  */
 
 #include "postgres.h"

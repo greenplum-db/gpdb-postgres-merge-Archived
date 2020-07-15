@@ -92,10 +92,8 @@ select count(*) from (select i, count(*) from aggspill group by i,j having count
 
 -- Reduce the statement memory to induce spilling
 set statement_mem = '10MB';
-/*
- * select overflows >= 1 from hashagg_spill.num_hashagg_overflows('explain analyze
- * select count(*) from (select i, count(*) from aggspill group by i,j having count(*) = 2) g') overflows;
- */
+select * from hashagg_spill.is_workfile_created('explain (analyze, verbose)
+select count(*) from (select i, count(*) from aggspill group by i,j having count(*) = 2) g');
 select count(*) from (select i, count(*) from aggspill group by i,j having count(*) = 2) g;
 
 -- Reduce the statement memory, nbatches and entrysize even further to cause multiple overflows
@@ -122,12 +120,8 @@ ANALYZE hashagg_spill;
 SET statement_mem='1000kB';
 SET gp_workfile_compression = OFF;
 select * from hashagg_spill.is_workfile_created('explain (analyze, verbose) SELECT avg(col2) col2 FROM hashagg_spill GROUP BY col1 HAVING(sum(col1)) < 0;');
---  GPDB_12_MERGE_FIXME implement serial/deserial for 2-phase agg
---  SELECT avg(col2) col2 FROM hashagg_spill GROUP BY col1 HAVING(sum(col1)) < 0;
 SET gp_workfile_compression = ON;
 select * from hashagg_spill.is_workfile_created('explain (analyze, verbose) SELECT avg(col2) col2 FROM hashagg_spill GROUP BY col1 HAVING(sum(col1)) < 0;');
---  GPDB_12_MERGE_FIXME implement serial/deserial for 2-phase agg
---  SELECT avg(col2) col2 FROM hashagg_spill GROUP BY col1 HAVING(sum(col1)) < 0;
 
 -- check spilling to a temp tablespace
 CREATE TABLE spill_temptblspace (a numeric) DISTRIBUTED BY (a);
