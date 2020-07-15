@@ -1,6 +1,15 @@
 --
 -- Test partitioning planner code
 --
+
+-- GPDB:
+-- One of the queries EXPLAINed in this file executes on one or two segments,
+-- depending on random choice by the planner. Accept either plan.
+-- start_matchsubs
+-- m/ Gather Motion [12]:1  \(slice1; segments: [12]\)/
+-- s/ Gather Motion [12]:1  \(slice1; segments: [12]\)/ Gather Motion XXX/
+-- end_matchsubs
+
 create table lp (a char) partition by list (a);
 create table lp_default partition of lp default;
 create table lp_ef partition of lp for values in ('e', 'f');
@@ -1022,6 +1031,11 @@ create temp table q22 partition of q2 for values in (2);
 
 insert into q22 values (2, 2, 3);
 
+-- GPDB: This is the query that needs the "matchsubs" rule at the top of the file
+-- The constant third branch of the UNION is executed at random segment. If the
+-- randomly chosen segment is the same as the one that needed for the other branches,
+-- the whole query runs on that one segment. Otherwise, it runs on two segments.
+-- The choice is made randomly, so accept both plans.
 explain (costs off)
 select *
 from (
