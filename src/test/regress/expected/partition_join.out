@@ -2149,22 +2149,30 @@ ANALYZE prt4_n;
 -- partitionwise join can not be applied if the partition ranges differ
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2 WHERE t1.a = t2.a;
-                     QUERY PLAN                     
-----------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Join
          Hash Cond: (t1.a = t2.a)
          ->  Append
-               ->  Seq Scan on prt1_p1 t1
-               ->  Seq Scan on prt1_p2 t1_1
-               ->  Seq Scan on prt1_p3 t1_2
+               ->  Result
+                     One-Time Filter: PartSelected
+                     ->  Seq Scan on prt1_p1 t1
+               ->  Result
+                     One-Time Filter: PartSelected
+                     ->  Seq Scan on prt1_p2 t1_1
+               ->  Result
+                     One-Time Filter: PartSelected
+                     ->  Seq Scan on prt1_p3 t1_2
          ->  Hash
-               ->  Append
-                     ->  Seq Scan on prt4_n_p1 t2
-                     ->  Seq Scan on prt4_n_p2 t2_1
-                     ->  Seq Scan on prt4_n_p3 t2_2
+               ->  Partition Selector for t1 (dynamic scan id: 1)
+                     Filter: t2.a
+                     ->  Append
+                           ->  Seq Scan on prt4_n_p1 t2
+                           ->  Seq Scan on prt4_n_p2 t2_1
+                           ->  Seq Scan on prt4_n_p3 t2_2
  Optimizer: Postgres query optimizer
-(13 rows)
+(21 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2, prt2 t3 WHERE t1.a = t2.a and t1.a = t3.b;
