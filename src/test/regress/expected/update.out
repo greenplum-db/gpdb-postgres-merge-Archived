@@ -890,6 +890,12 @@ DROP FUNCTION func_parted_mod_b();
 CREATE TABLE non_parted (id int);
 INSERT into non_parted VALUES (1), (1), (1), (2), (2), (2), (3), (3), (3);
 UPDATE list_parted t1 set a = 2 FROM non_parted t2 WHERE t1.a = t2.id and a = 1;
+ERROR:  multiple updates to a row by the same query is not allowed
+-- In GPDB, the above UPDATE fails because the distribution key is updated, and
+-- the Split Update codepath isn't smart enough to handle this situation. With
+-- a non-Split Update, it works:
+ALTER TABLE list_parted SET DISTRIBUTED BY (c);
+UPDATE list_parted t1 set a = 2 FROM non_parted t2 WHERE t1.a = t2.id and a = 1;
 SELECT tableoid::regclass::text, * FROM list_parted ORDER BY 1, 2, 3, 4;
   tableoid  | a | b  | c  
 ------------+---+----+----
