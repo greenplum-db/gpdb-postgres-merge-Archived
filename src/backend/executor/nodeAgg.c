@@ -238,8 +238,13 @@
  *
  *-------------------------------------------------------------------------
  */
+
 /*
  * GPDB_12_MERGE_FIXME: we lost the "streaming bottom" feature in the merge.
+ *
+ * And the detailed cdb executor instruments to print by explain.
+ *
+ * They were in execHHashagg.c
  */
 
 #include "postgres.h"
