@@ -2128,20 +2128,28 @@ select fact1.code, count(*) from dim1 inner join fact1 on (dim1.pid=fact1.pid) g
 --
 -- multi-attribute list partitioning
 --
+-- Before GPDB 7, we used to support multi-column list partitions natively,
+-- and these queries did partition elimination. We don't support that anymore,
+-- but emulate that by using a row expression as the partitioning key. You
+-- don't get partition elimination with that, however, so these tests are not
+-- very interesting anymore.
+--
 drop schema if exists dpe_malp cascade;
 NOTICE:  schema "dpe_malp" does not exist, skipping
 create schema dpe_malp;
 set search_path='dpe_malp';
 set gp_segments_for_planner=2;
 set optimizer_segments=2;
+create type malp_key as (i int, j int);
 create table malp (i int, j int, t text) 
 distributed by (i) 
-partition by list (i, j) 
-( 
-partition p1 values((1,10)) ,
-partition p2 values((2,20)),
-partition p3 values((3,30)) 
-);
+partition by list ((row(i, j)::malp_key));
+create table malp_p1 partition of malp for values in (row(1, 10));
+NOTICE:  table has parent, setting distribution columns to match parent table
+create table malp_p2 partition of malp for values in (row(2, 20));
+NOTICE:  table has parent, setting distribution columns to match parent table
+create table malp_p3 partition of malp for values in (row(3, 30));
+NOTICE:  table has parent, setting distribution columns to match parent table
 insert into malp select 1, 10, 'hello1';
 insert into malp select 1, 10, 'hello2';
 insert into malp select 1, 10, 'hello3';
@@ -2156,29 +2164,21 @@ analyze dim;
 -- ORCA doesn't do multi-attribute partitioning currently,so this falls
 -- back to the Postgres planner
 explain select * from dim inner join malp on (dim.i = malp.i);
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1.04..4.18 rows=6 width=23)
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=1.04..4.25 rows=4 width=23)
    ->  Hash Join  (cost=1.04..4.18 rows=2 width=23)
-         Hash Cond: malp_1_prt_p1.i = dim.i
-         ->  Append  (cost=0.00..3.06 rows=2 width=15)
-               ->  Result  (cost=0.00..1.03 rows=1 width=15)
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on malp_1_prt_p1  (cost=0.00..1.03 rows=1 width=15)
-               ->  Result  (cost=0.00..1.02 rows=1 width=15)
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on malp_1_prt_p2  (cost=0.00..1.02 rows=1 width=15)
-               ->  Result  (cost=0.00..1.01 rows=1 width=15)
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on malp_1_prt_p3  (cost=0.00..1.01 rows=1 width=15)
+         Hash Cond: (malp_p1.i = dim.i)
+         ->  Append  (cost=0.00..3.09 rows=2 width=15)
+               ->  Seq Scan on malp_p1  (cost=0.00..1.03 rows=1 width=15)
+               ->  Seq Scan on malp_p2  (cost=0.00..1.02 rows=1 width=15)
+               ->  Seq Scan on malp_p3  (cost=0.00..1.01 rows=1 width=15)
          ->  Hash  (cost=1.03..1.03 rows=1 width=8)
-               ->  Partition Selector for malp (dynamic scan id: 1)  (cost=0.00..1.03 rows=1 width=8)
-                     Filter: dim.i
-                     ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=8)
-                           Hash Key: dim.i
-                           ->  Seq Scan on dim  (cost=0.00..1.01 rows=1 width=8)
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..1.03 rows=1 width=8)
+                     Hash Key: dim.i
+                     ->  Seq Scan on dim  (cost=0.00..1.01 rows=1 width=8)
  Optimizer: Postgres query optimizer
-(20 rows)
+(12 rows)
 
 set gp_dynamic_partition_pruning = off;
 select * from dim inner join malp on (dim.i = malp.i);
@@ -2199,7 +2199,8 @@ select * from dim inner join malp on (dim.i = malp.i);
 (3 rows)
 
 set gp_dynamic_partition_pruning = on;
-select * from dim inner join malp on (dim.i = malp.i and dim.j = malp.j); -- only one partition should be chosen
+-- if only the planner was smart enough, one partition would be chosen
+select * from dim inner join malp on (dim.i = malp.i and dim.j = malp.j);
  i | j  | i | j  |   t    
 ---+----+---+----+--------
  1 | 10 | 1 | 10 | hello1

@@ -359,20 +359,27 @@ select fact1.code, count(*) from dim1 inner join fact1 on (dim1.pid=fact1.pid) g
 --
 -- multi-attribute list partitioning
 --
+-- Before GPDB 7, we used to support multi-column list partitions natively,
+-- and these queries did partition elimination. We don't support that anymore,
+-- but emulate that by using a row expression as the partitioning key. You
+-- don't get partition elimination with that, however, so these tests are not
+-- very interesting anymore.
+--
 drop schema if exists dpe_malp cascade;
 create schema dpe_malp;
 set search_path='dpe_malp';
 set gp_segments_for_planner=2;
 set optimizer_segments=2;
 
+create type malp_key as (i int, j int);
+
 create table malp (i int, j int, t text) 
 distributed by (i) 
-partition by list (i, j) 
-( 
-partition p1 values((1,10)) ,
-partition p2 values((2,20)),
-partition p3 values((3,30)) 
-);
+partition by list ((row(i, j)::malp_key));
+
+create table malp_p1 partition of malp for values in (row(1, 10));
+create table malp_p2 partition of malp for values in (row(2, 20));
+create table malp_p3 partition of malp for values in (row(3, 30));
 
 insert into malp select 1, 10, 'hello1';
 insert into malp select 1, 10, 'hello2';
@@ -400,7 +407,8 @@ set gp_dynamic_partition_pruning = on;
 select * from dim inner join malp on (dim.i = malp.i);
 
 set gp_dynamic_partition_pruning = on;
-select * from dim inner join malp on (dim.i = malp.i and dim.j = malp.j); -- only one partition should be chosen
+-- if only the planner was smart enough, one partition would be chosen
+select * from dim inner join malp on (dim.i = malp.i and dim.j = malp.j);
 
 
 --
