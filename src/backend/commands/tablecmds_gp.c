@@ -1260,11 +1260,11 @@ ATExecGPPartCmds(Relation origrel, AlterTableCmd *cmd)
 				{
 					if (GetGpPartitionTemplate(topParentrelid, level + 1) == NULL)
 					{
-						/* GPDB_12_MERGE_FIXME: this is user-visible, see 'partition' test.
-						 * Make it an ereport and improve message
-						 */
-						elog(ERROR, "can't add partition at level %d since next level template doesn't exist",
-							 level);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("can't add sub-partition template at level %d since next level template doesn't exist",
+										level),
+								 errhint("Add sub-partition template for next level.")));
 					}
 				}
 
