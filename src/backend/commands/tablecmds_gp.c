@@ -420,14 +420,6 @@ AtExecGPExchangePartition(Relation rel, AlterTableCmd *cmd)
 		Relation partrel;
 		HeapTuple tuple;
 
-		if (pid->idtype == AT_AP_IDDefault &&
-			!gp_enable_exchange_default_partition)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot exchange DEFAULT partition")));
-		}
-
 		partrelid = GpFindTargetPartition(rel, pid, false);
 		Assert(OidIsValid(partrelid));
 		partrel = table_open(partrelid, AccessShareLock);

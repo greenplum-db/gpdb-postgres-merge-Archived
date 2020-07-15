@@ -321,7 +321,6 @@ extern bool	Debug_database_command_print;
 extern bool Debug_resource_group;
 extern bool gp_create_table_random_default_distribution;
 extern bool gp_allow_non_uniform_partitioning_ddl;
-extern bool gp_enable_exchange_default_partition;
 extern int  dtx_phase2_retry_second;
 
 /* WAL replication debug gucs */
