@@ -708,6 +708,7 @@ ERROR:  no partition of relation "key_desc" found for row
 reset role;
 revoke all on key_desc from regress_insert_other_user;
 revoke all on key_desc_1 from regress_insert_other_user;
+NOTICE:  no privileges could be revoked
 drop role regress_insert_other_user;
 drop table key_desc, key_desc_1;
 -- test minvalue/maxvalue restrictions
