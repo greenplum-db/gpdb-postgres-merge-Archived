@@ -735,16 +735,16 @@ create table t_hashdist(a int, b int, c int) distributed by (a);
 create table t_replicate_volatile(a int, b int, c int) distributed replicated;
 ---- pushed down filter
 explain (costs off) select * from t_replicate_volatile, t_hashdist where t_replicate_volatile.a > random();
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
-         ->  Seq Scan on t_hashdist
+         ->  Broadcast Motion 1:3  (slice2; segments: 1)
+               ->  Result
+                     ->  Seq Scan on t_replicate_volatile
+                           Filter: ((a)::double precision > random())
          ->  Materialize
-               ->  Broadcast Motion 1:3  (slice2; segments: 1)
-                     ->  Result
-                           ->  Seq Scan on t_replicate_volatile
-                                 Filter: ((a)::double precision > random())
+               ->  Seq Scan on t_hashdist
  Optimizer: Postgres query optimizer
 (9 rows)
 
@@ -783,19 +783,21 @@ explain (costs off) select * from t_hashdist where a > All (select random() from
 (10 rows)
 
 explain (costs off) select * from t_hashdist where a in (select random()::int from t_replicate_volatile);
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Hash Semi Join
+   ->  Hash Join
          Hash Cond: (t_hashdist.a = ((random())::integer))
          ->  Seq Scan on t_hashdist
          ->  Hash
                ->  Redistribute Motion 1:3  (slice2; segments: 1)
                      Hash Key: ((random())::integer)
-                     ->  Result
-                           ->  Seq Scan on t_replicate_volatile
+                     ->  HashAggregate
+                           Group Key: ((random())::integer)
+                           ->  Result
+                                 ->  Seq Scan on t_replicate_volatile
  Optimizer: Postgres query optimizer
-(10 rows)
+(12 rows)
 
 -- subplan
 explain (costs off, verbose) select * from t_hashdist left join t_replicate_volatile on t_hashdist.a > any (select random() from t_replicate_volatile);
@@ -825,15 +827,15 @@ explain (costs off, verbose) select * from t_hashdist left join t_replicate_vola
 
 -- targetlist
 explain (costs off) select * from t_hashdist cross join (select random () from t_replicate_volatile)x;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Nested Loop
-         ->  Seq Scan on t_hashdist
+         ->  Broadcast Motion 1:3  (slice2; segments: 1)
+               ->  Result
+                     ->  Seq Scan on t_replicate_volatile
          ->  Materialize
-               ->  Broadcast Motion 1:3  (slice2; segments: 1)
-                     ->  Result
-                           ->  Seq Scan on t_replicate_volatile
+               ->  Seq Scan on t_hashdist
  Optimizer: Postgres query optimizer
 (8 rows)
 
@@ -923,17 +925,17 @@ explain (costs off) insert into t_replicate_volatile select nextval('seq_for_ins
 
 -- update & delete
 explain (costs off) update t_replicate_volatile set a = 1 where b > random();
-ERROR:  could not devise a plan (cdbpath.c:2535)
+ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) update t_replicate_volatile set a = 1 from t_replicate_volatile x where x.a + random() = t_replicate_volatile.b;
-ERROR:  could not devise a plan (cdbpath.c:2535)
+ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) update t_replicate_volatile set a = 1 from t_hashdist x where x.a + random() = t_replicate_volatile.b;
-ERROR:  could not devise a plan (cdbpath.c:2535)
+ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) delete from t_replicate_volatile where a < random();
-ERROR:  could not devise a plan (cdbpath.c:2535)
+ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) delete from t_replicate_volatile using t_replicate_volatile x where t_replicate_volatile.a + x.b < random();
-ERROR:  could not devise a plan (cdbpath.c:2535)
+ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) update t_replicate_volatile set a = random();
-ERROR:  could not devise a plan. (cdbpath.c:2398)
+ERROR:  could not devise a plan. (cdbpath.c:2399)
 -- limit
 explain (costs off) insert into t_replicate_volatile select * from t_replicate_volatile limit 1;
                                    QUERY PLAN                                    
