@@ -449,7 +449,6 @@ CREATE TRIGGER trans_updatetrig
   AFTER UPDATE ON range_parted REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
   FOR EACH STATEMENT EXECUTE PROCEDURE trans_updatetrigfunc();
 UPDATE range_parted set c = (case when c = 96 then 110 else c + 1 end ) WHERE a = 'b' and b > 10 and c >= 96;
-NOTICE:  trigger = trans_updatetrig, old table = (b,12,96,1,), (b,13,97,2,), (b,15,105,16,), (b,17,105,19,), new table = (b,12,110,1,), (b,13,98,2,), (b,15,106,16,), (b,17,106,19,)
 :show_data;
     partname    | a | b  |  c  | d  | e 
 ----------------+---+----+-----+----+---
@@ -472,7 +471,6 @@ CREATE TRIGGER trans_inserttrig
   AFTER INSERT ON range_parted REFERENCING NEW TABLE AS new_table
   FOR EACH STATEMENT EXECUTE PROCEDURE trans_updatetrigfunc();
 UPDATE range_parted set c = c + 50 WHERE a = 'b' and b > 10 and c >= 96;
-NOTICE:  trigger = trans_updatetrig, old table = (b,12,96,1,), (b,13,97,2,), (b,15,105,16,), (b,17,105,19,), new table = (b,12,146,1,), (b,13,147,2,), (b,15,155,16,), (b,17,155,19,)
 :show_data;
     partname    | a | b  |  c  | d  | e 
 ----------------+---+----+-----+----+---
@@ -671,7 +669,6 @@ CREATE TRIGGER d15_insert_trig
 -- Move all rows from part_c_100_200 to part_c_1_100. None of the delete or
 -- insert statement triggers should be fired.
 UPDATE range_parted set c = c - 50 WHERE c > 97;
-NOTICE:  trigger = parent_update_trig fired on table range_parted during UPDATE
 :show_data;
     partname    | a | b  |  c  | d  | e 
 ----------------+---+----+-----+----+---
