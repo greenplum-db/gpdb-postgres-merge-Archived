@@ -63,7 +63,8 @@ static List *generateRangePartitions(ParseState *pstate,
 									 Relation parentrel,
 									 GpPartDefElem *elem,
 									 PartitionSpec *subPart,
-									 partname_comp *partnamecomp);
+									 partname_comp *partnamecomp,
+									 bool *hasImplicitRangeBounds);
 static List *generateListPartition(ParseState *pstate,
 								   Relation parentrel,
 								   GpPartDefElem *elem,
@@ -868,7 +869,8 @@ generateRangePartitions(ParseState *pstate,
 						Relation parentrel,
 						GpPartDefElem *elem,
 						PartitionSpec *subPart,
-						partname_comp *partnamecomp)
+						partname_comp *partnamecomp,
+						bool *hasImplicitRangeBounds)
 {
 	GpPartitionRangeSpec *boundspec;
 	List				 *result = NIL;
@@ -923,6 +925,8 @@ generateRangePartitions(ParseState *pstate,
 		start = linitial(boundspec->partStart->val);
 		startExclusive = (boundspec->partStart->edge == PART_EDGE_EXCLUSIVE) ? true : false;
 	}
+	else
+		*hasImplicitRangeBounds = true;
 
 	if (boundspec->partEnd)
 	{
@@ -934,6 +938,8 @@ generateRangePartitions(ParseState *pstate,
 		end = linitial(boundspec->partEnd->val);
 		endInclusive = (boundspec->partEnd->edge == PART_EDGE_INCLUSIVE) ? true : false;
 	}
+	else
+		*hasImplicitRangeBounds = true;
 
 	/*
 	 * Tablename is used by legacy dump and restore ONLY. If tablename is
@@ -1403,6 +1409,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	bool isSubTemplate = false;
 	List       *penc_cls = NIL;
 	List       *parent_tblenc = NIL;
+	bool		hasImplicitRangeBounds;
 
 	partcomp.level = list_length(ancestors) + 1;
 
@@ -1505,6 +1512,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 		}
 	}
 
+	hasImplicitRangeBounds = false;
 	foreach(lc, partDefElems)
 	{
 		Node	   *n = lfirst(lc);
@@ -1572,7 +1580,9 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 				switch (key->strategy)
 				{
 					case PARTITION_STRATEGY_RANGE:
-						new_parts = generateRangePartitions(pstate, parentrel, elem, tmpSubPartSpec, &partcomp);
+						new_parts = generateRangePartitions(pstate, parentrel,
+															elem, tmpSubPartSpec, &partcomp,
+															&hasImplicitRangeBounds);
 						break;
 
 					case PARTITION_STRATEGY_LIST:
@@ -1600,8 +1610,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 	 * or END specification. While that's true for ADD PARTITION, it's not
 	 * while setting template.
 	 */
-	if (RelationGetPartitionKey(parentrel)->strategy == PARTITION_STRATEGY_RANGE &&
-		!forvalidationonly)
+	if (hasImplicitRangeBounds && !forvalidationonly)
 		result = deduceImplicitRangeBounds(pstate, parentrel, result);
 
 	free_parsestate(pstate);

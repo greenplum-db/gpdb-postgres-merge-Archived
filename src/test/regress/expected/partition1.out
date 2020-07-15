@@ -339,7 +339,7 @@ partition by range (b)
 partition bb start (date '2008-01-01') end (date '2009-01-01'),
 partition aa start (date '2007-01-01') end (date '2008-01-01') inclusive
 );
-ERROR:  partition "ggg_1_prt_bb" would overlap partition "ggg_1_prt_aa"
+ERROR:  partition "ggg_1_prt_aa" would overlap partition "ggg_1_prt_bb"
 drop table ggg cascade;
 ERROR:  table "ggg" does not exist
 -- legal because start of bb not inclusive
