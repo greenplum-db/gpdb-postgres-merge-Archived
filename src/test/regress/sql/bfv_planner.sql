@@ -294,8 +294,8 @@ where x.a > random();
 ---- join qual
 explain (costs off) select * from
 t_hashdist,
-(select a from generate_series(1, 10) a) x,
-(select a from generate_series(1, 10) a) y
+(select a from generate_series(1, 1000) a) x,
+(select a from generate_series(1, 1000) a) y
 where x.a + y.a > random();
 
 ---- sublink & subquery
