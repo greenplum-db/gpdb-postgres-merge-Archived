@@ -562,7 +562,10 @@ truncate_ao_perFile(const int segno, void *ctx)
 	char *segPathSuffixPosition = truncateFiles->segpathSuffixPosition;
 	aorel = truncateFiles->rel;
 
-	sprintf(segPathSuffixPosition, ".%u", segno);
+	if (segno > 0)
+		sprintf(segPathSuffixPosition, ".%u", segno);
+	else
+		*segPathSuffixPosition = '\0';
 
 	fd = OpenAOSegmentFile(aorel, segPath, 0);
 
