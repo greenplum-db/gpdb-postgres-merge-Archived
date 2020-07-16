@@ -937,7 +937,7 @@ ERROR:  could not devise a plan (cdbpath.c:2536)
 explain (costs off) update t_replicate_volatile set a = random();
 ERROR:  could not devise a plan. (cdbpath.c:2399)
 -- limit
-explain (costs off) insert into t_replicate_volatile select * from t_replicate_volatile limit 1;
+explain (costs off) insert into t_replicate_volatile select * from t_replicate_volatile limit random();
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Insert on t_replicate_volatile
@@ -948,7 +948,7 @@ explain (costs off) insert into t_replicate_volatile select * from t_replicate_v
  Optimizer: Postgres query optimizer
 (6 rows)
 
-explain (costs off) select * from t_hashdist cross join (select * from t_replicate_volatile limit 1) x;
+explain (costs off) select * from t_hashdist cross join (select * from t_replicate_volatile limit random()) x;
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
