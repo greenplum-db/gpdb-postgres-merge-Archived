@@ -437,7 +437,7 @@ select * from locktest_master where coalesce not like 'gp_%' and coalesce not li
         coalesce         |       mode       | locktype |  node  
 -------------------------+------------------+----------+--------
  partlockt               | AccessShareLock  | relation | master
- partlockt               | RowExclusiveLock | relation | master
+ partlockt               | ExclusiveLock    | relation | master
  partlockt_1_prt_4       | RowExclusiveLock | relation | master
  partlockt_1_prt_4_i_idx | RowExclusiveLock | relation | master
 (4 rows)
