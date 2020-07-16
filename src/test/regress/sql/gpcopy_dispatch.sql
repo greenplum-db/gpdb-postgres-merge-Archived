@@ -104,6 +104,8 @@ COPY partdisttest FROM stdin;
 
 SELECT gp_segment_id, tableoid::regclass, * from partdisttest;
 
+DROP TABLE partdisttest;
+
 -- Subpartitions
 CREATE TABLE partdisttest (a int, dropped int, b int, c int, d int)
   DISTRIBUTED RANDOMLY
