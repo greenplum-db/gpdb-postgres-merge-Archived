@@ -277,9 +277,6 @@ static void setEncodingConversionProc(CopyState cstate, int encoding, bool iswri
 static GpDistributionData *InitDistributionData(CopyState cstate, EState *estate);
 static void FreeDistributionData(GpDistributionData *distData);
 static void InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData, EState *estate);
-static GpDistributionData *GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
-															 ResultRelInfo *resultRelInfo,
-															 MemoryContext context);
 static unsigned int GetTargetSeg(GpDistributionData *distData, TupleTableSlot *slot);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
 static void close_program_pipes(CopyState cstate, bool ifThrow);
@@ -4195,8 +4192,7 @@ CopyFrom(CopyState cstate)
 		 * If this table is distributed randomly, there is nothing to check,
 		 * after all.
 		 */
-		if (!distData->hashmap &&
-			(distData->policy == NULL || distData->policy->nattrs == 0))
+		if (distData->policy == NULL || distData->policy->nattrs == 0)
 			is_check_distkey = false;
 	}
 
@@ -4544,15 +4540,10 @@ CopyFrom(CopyState cstate)
 		/*
 		 * Compute which segment this row belongs to.
 		 */
-		GpDistributionData *part_distData = NULL;
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
 			/* In QD, compute the target segment to send this row to. */
-			part_distData = GetDistributionPolicyForPartition(distData,
-															  resultRelInfo,
-															  cstate->copycontext);
-
-			target_seg = GetTargetSeg(part_distData, myslot);
+			target_seg = GetTargetSeg(distData, myslot);
 		}
 		else if (is_check_distkey)
 		{
@@ -4560,13 +4551,9 @@ CopyFrom(CopyState cstate)
 			 * In COPY FROM ON SEGMENT, check the distribution key in the
 			 * QE.
 			 */
-			part_distData = GetDistributionPolicyForPartition(distData,
-															  resultRelInfo,
-															  cstate->copycontext);
-
-			if (part_distData->policy->nattrs != 0)
+			if (distData->policy->nattrs != 0)
 			{
-				target_seg = GetTargetSeg(part_distData, myslot);
+				target_seg = GetTargetSeg(distData, myslot);
 
 				if (GpIdentity.segindex != target_seg)
 				{
@@ -4588,8 +4575,8 @@ CopyFrom(CopyState cstate)
 
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
-			bool send_to_all = part_distData &&
-							   GpPolicyIsReplicated(part_distData->policy);
+			bool send_to_all = distData &&
+							   GpPolicyIsReplicated(distData->policy);
 
 			/* in the QD, forward the row to the correct segment(s). */
 			SendCopyFromForwardedTuple(cstate, cdbCopy, send_to_all,
@@ -7709,66 +7696,18 @@ InitDistributionData(CopyState cstate, EState *estate)
 {
 	GpDistributionData *distData;
 	GpPolicy   *policy;
-	HTAB	   *hashmap;
 	CdbHash	   *cdbHash;
 
-	// GPDB_12_MERGE_FIXME
-#if 0
-	bool		multi_dist_policy;
-
-	multi_dist_policy = estate->es_result_partitions
-		&& !partition_policies_equal(cstate->rel->rd_cdbpolicy,
-									 estate->es_result_partitions);
-	if (!multi_dist_policy)
-#endif
-	{
-		/*
-		 * A non-partitioned table, or all the partitions have identical
-		 * distribution policies.
-		 */
-		policy = GpPolicyCopy(cstate->rel->rd_cdbpolicy);
-		cdbHash = makeCdbHashForRelation(cstate->rel);
-		hashmap = NULL;
-	}
-	// GPDB_12_MERGE_FIXME
-#if 0
-	else
-	{
-		/*
-		 * This is a partitioned table that has multiple, different
-		 * distribution policies.
-		 *
-		 * We don't support partitioned tables with arbitrary distribution
-		 * policies in the partitions. But we do support having randomly
-		 * distributed partitions, in a hash partitioned table. Also, it's
-		 * possible that the physical attribute numbers of the distribution
-		 * keys are different in different partitions, even if they were
-		 * specified with the same DISTRIBUTED BY columns, if some partitions
-		 * contain dropped columns.
-		 */
-		HASHCTL		hash_ctl;
-
-		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize = sizeof(Oid);
-		hash_ctl.entrysize = sizeof(GpDistributionData);
-		hash_ctl.hash = oid_hash;
-		hash_ctl.hcxt = CurrentMemoryContext;
-
-		hashmap = hash_create("partition cdb hash map",
-		                      100, /* initial guess */
-		                      &hash_ctl,
-		                      HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
-
-		/* We will use the policies from individual partitions. */
-		policy = NULL;
-		cdbHash = NULL;
-	}
-#endif
+	/*
+	 * A non-partitioned table, or all the partitions have identical
+	 * distribution policies.
+	 */
+	policy = GpPolicyCopy(cstate->rel->rd_cdbpolicy);
+	cdbHash = makeCdbHashForRelation(cstate->rel);
 
 	distData = palloc(sizeof(GpDistributionData));
 	distData->policy = policy;
 	distData->cdbHash = cdbHash;
-	distData->hashmap = hashmap;
 
 	return distData;
 }
@@ -7782,8 +7721,6 @@ FreeDistributionData(GpDistributionData *distData)
 			pfree(distData->policy);
 		if (distData->cdbHash)
 			pfree(distData->cdbHash);
-		if (distData->hashmap)
-			hash_destroy(distData->hashmap);
 		pfree(distData);
 	}
 }
@@ -7842,49 +7779,6 @@ InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData,
 		else
 			elog(INFO, "first field processed in the QE: %d", first_qe_processed_field);
 	}
-}
-
-/* Get distribution policy for specific part */
-static GpDistributionData *
-GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
-								  ResultRelInfo *resultRelInfo,
-								  MemoryContext context)
-{
-
-	/*
-	 * If we are copying into a partitioned table whose partitions have
-	 * differing distribution policies, get the policy for this particular
-	 * child partition.
-	 */
-	if (mainDistData->hashmap)
-	{
-		Oid			relid;
-		GpDistributionData *d;
-		bool		found;
-
-		relid = resultRelInfo->ri_RelationDesc->rd_id;
-
-		d = hash_search(mainDistData->hashmap, &(relid), HASH_ENTER, &found);
-		if (!found)
-		{
-			Relation	rel = resultRelInfo->ri_RelationDesc;
-			MemoryContext oldcontext;
-
-			/*
-			 * Make sure this all persists the current iteration.
-			 */
-			oldcontext = MemoryContextSwitchTo(context);
-
-			d->cdbHash = makeCdbHashForRelation(rel);
-			d->policy = GpPolicyCopy(rel->rd_cdbpolicy);
-
-			MemoryContextSwitchTo(oldcontext);
-		}
-
-		return d;
-	}
-	else
-		return mainDistData;
 }
 
 static unsigned int
