@@ -17161,61 +17161,6 @@ l_distro_fini:
 	}
 }
 
-/*
- * partition children, toast tables and indexes, and indexes on partition
- * children do not need long lived locks because the lock on the partition master
- * protects us.
- */
-bool
-rel_needs_long_lock(Oid relid)
-{
-	/* GPDB_12_MERGE_FIXME: I'm (Heikki) very skeptical of this lock-skipping
-	 * business. I think we should revert this kinds of changes, not only
-	 * because the conflicts are annoying, but also because it seems dangerous.
-	 * But if we want to keep it, then this needs to be modified to work with
-	 * the new partitining implementation */
-#if 0
-	bool needs_lock = true;
-	Relation rel = relation_open(relid, NoLock);
-
-	relid = rel_get_table_oid(rel);
-
-	relation_close(rel, NoLock);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		needs_lock = !rel_is_child_partition(relid);
-	else
-	{
-		Relation inhrel;
-		ScanKeyData scankey[2];
-		SysScanDesc sscan;
-
-		ScanKeyInit(&scankey[0],
-					Anum_pg_inherits_inhrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(relid));
-		ScanKeyInit(&scankey[1],
-					Anum_pg_inherits_inhseqno,
-					BTEqualStrategyNumber, F_INT4EQ,
-					Int32GetDatum(1));
-
-		inhrel = heap_open(InheritsRelationId, AccessShareLock);
-
-		sscan = systable_beginscan(inhrel, InheritsRelidSeqnoIndexId,
-								   true, NULL, 2, scankey);
-
-		if (systable_getnext(sscan))
-			needs_lock = false;
-
-		systable_endscan(sscan);
-		heap_close(inhrel, AccessShareLock);
-	}
-	return needs_lock;
-#endif
-	return true;
-}
-
-
 #if 0
 /* 
  * Build a basic ResultRelInfo for executing split. We only need
