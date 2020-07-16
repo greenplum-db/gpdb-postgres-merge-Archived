@@ -5435,6 +5435,60 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		}
 		heap_close(OldHeap, NoLock);
 
+		/*
+		 * GPDB_12_MERGE_FIXME: This is a AM specific optimization, currently
+		 * exposted out of the AM handler.  The add-column optimization should
+		 * ideally be implemented within the table AM.
+		 *
+		 * A counterargument can be made that this optimization is very
+		 * specific to column-oriented table AM.  Should the table AM API be
+		 * generalised to fit it?
+		 *
+		 * If table AM API needs to be changed, we can imagine a few options
+		 * to implement the add-column optimization.
+		 *
+		 * (1) definfe a new interface on the lines of
+		 * table_relation_copy_for_cluster.  It would require traslating the
+		 * state currently maintained in AlteredTableInfo for per-row
+		 * expression and constraint evaluation and passed as arguments to the
+		 * new interface.
+		 *
+		 * (2) Define a new interface to scan the underlying table one block
+		 * at a time, where block is a append-optimized varblock.  And another
+		 * interface to scan tuples within the block.  After evaluating the
+		 * expressions and constraints on this tuple, new slot is constructed,
+		 * as is currently done.  A new interface is needed to insert this
+		 * slot into specific block and finish the block being inserted into,
+		 * when there are no more tuples in the scanned block.  Let's
+		 * illustrate this with pseudocode:
+		 *
+		 * TableScanDesc sdesc = table_begin_block_scan();
+		 * Block block;
+		 * 
+		 * // table AM API doesn't provide an insert descriptor
+		 * TableInsertDesc idesc = table_begin_block_insert();
+		 *
+		 * while (block = table_getnext_block(sdesc))
+		 * {
+		 *     table_insert_begin_block(idesc, block);
+		 *     while (slot = table_getnextslot_in_block(block))
+		 *     {
+		 *         // evaluate expressions and constraints for tab->newvals
+		 *         newslot = ExecEvalExpr();
+		 *         tuple_insert_in_block(idesc, block, newslot);
+		 *     }
+		 *     table_insert_end_block(idesc);
+		 * }
+		 *
+		 * table_end_block_insert(idesc);
+		 *
+		 * table_end_blcok_scan(sdesc);
+		 *
+		 *
+		 * Ideally, ALTER TABLE ADD COLUMN should not be exposed to any code
+		 * specific to table AM.  Descide the best option to achieve this
+		 * goal.
+		 */
 		if (tab->rewrite & AT_REWRITE_NEW_COLUMNS_ONLY_AOCS)
 		{
 			ATAocsWriteNewColumns(tab);
