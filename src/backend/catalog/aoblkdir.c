@@ -35,26 +35,18 @@ AlterTableCreateAoBlkdirTable(Oid relOid)
 	Oid			classObjectId[3];
 	int16		coloptions[3];
 	List	   *indexColNames;
+	bool	   isAO;
 
 	SIMPLE_FAULT_INJECTOR("before_acquire_lock_during_create_ao_blkdir_table");
 
 	/*
 	 * Check if this is an appendoptimized table, without acquiring any lock.
-	 *
-	 * GPDB_12_MERGE_FIXME: we need a new API such as get_rel_am() for this in
-	 * lsyscache.c.  Similar boilerplate code also exists in DefineIndex.
 	 */
-	{
-		bool isAO;
-		HeapTuple tuple;
-		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
-		Form_pg_class pgc = (Form_pg_class) GETSTRUCT(tuple);
-		isAO = (pgc->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-				pgc->relam == AOCO_TABLE_AM_OID);
-		ReleaseSysCache(tuple);
-		if (!isAO)
-			return;
-	}
+	rel = table_open(relOid, NoLock);
+	isAO = RelationIsAppendOptimized(rel);
+	table_close(rel, NoLock);
+	if (!isAO)
+		return;
 
 	/*
 	 * GPDB_12_MERGE_FIXME: Block directory creation must block any

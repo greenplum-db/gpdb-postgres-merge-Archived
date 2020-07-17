@@ -5902,7 +5902,7 @@ ATAocsWriteNewColumns(AlteredTableInfo *tab)
 	}
 
 	rel = heap_open(tab->relid, NoLock);
-	Assert(rel->rd_rel->relam == AOCO_TABLE_AM_OID);
+	Assert(RelationIsAoCols(rel));
 
 	/* Try to recycle any old segfiles first. */
 	AppendOnlyRecycleDeadSegments(rel);
@@ -7420,7 +7420,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				AlteredTableInfo *childtab;
 				childtab = ATGetQueueEntry(wqueue, rel);
 
-				if (rel->rd_rel->relam == AOCO_TABLE_AM_OID)
+				if (RelationIsAoCols(rel))
 					childtab->rewrite |= AT_REWRITE_NEW_COLUMNS_ONLY_AOCS;
 				heap_close(rel, NoLock);
 			}
