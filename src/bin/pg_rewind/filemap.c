@@ -591,10 +591,10 @@ process_aofile_change(RelFileNode rnode, int segno, int64 offset)
 			case FILE_ACTION_REMOVE:
 				break;
 			case FILE_ACTION_CREATE:
-				pg_fatal("unexpected AO file modification for directory or symbolic link \"%s\"\n", entry->path);
+				pg_fatal("unexpected AO file modification for directory or symbolic link \"%s\"", entry->path);
 		}
 
-		pg_log_debug("Entry for path %s has action %d\n", entry->path, entry->action);
+		pg_log_debug("entry for path %s has action %d", entry->path, entry->action);
 	}
 	else
 	{
