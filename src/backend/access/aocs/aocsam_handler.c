@@ -1234,6 +1234,8 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Finish and deallocate insertion */
 	aocs_insert_finish(idesc);
+
+	SwapAppendonlyEntries(RelationGetRelid(OldHeap), RelationGetRelid(NewHeap));
 }
 
 static bool

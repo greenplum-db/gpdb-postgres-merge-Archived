@@ -338,42 +338,6 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 	}
 
 	/*
-	 * We don't support cluster on an AO table that cannot be sorted.
-	 * We print out a warning/error to the user, and simply return.
-	 *
-	 * GPDB_12_MERGE_FIXME: CLUSTER works through the table AM API now.
-	 * Do we need anything here anymore?
-	 */
-#if 0		
-	if (OldHeap->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-		OldHeap->rd_rel->relam == AOCO_TABLE_AM_OID)
-	{
-		ereport((printError ? ERROR : WARNING),
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot cluster append-optimized table \"%s\"", RelationGetRelationName(OldHeap))));
-		bool		isBtree = false;
-		Relation	oldIndex;
-
-		Assert(indexOid != InvalidOid);
-
-		oldIndex = index_open(indexOid, AccessExclusiveLock);
-		isBtree = IS_BTREE(oldIndex);
-		index_close(oldIndex, NoLock);
-
-		if (!isBtree)
-		{
-			ereport((printError ? ERROR : WARNING),
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("cannot cluster append-optimized table \"%s\"", RelationGetRelationName(OldHeap)),
-					errdetail("Append-optimized tables can only be clustered against a B-tree index")));
-
-			relation_close(OldHeap, AccessExclusiveLock);
-			return false;
-		}
-	}
-#endif
-
-	/*
 	 * Since we may open a new transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
 	 *
@@ -1172,7 +1136,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				relfilenode2;
 	Oid			swaptemp;
 	char		swptmpchr;
-	bool		isAO1, isAO2;
 
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = table_open(RelationRelationId, RowExclusiveLock);
@@ -1186,11 +1149,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	if (!HeapTupleIsValid(reltup2))
 		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);
-
-	isAO1 = (relform1->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-			 relform1->relam == AOCO_TABLE_AM_OID);
-	isAO2 = (relform2->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-			 relform2->relam == AOCO_TABLE_AM_OID);
 
 	relfilenode1 = relform1->relfilenode;
 	relfilenode2 = relform2->relfilenode;
@@ -1272,23 +1230,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 		/* Pass OIDs of mapped r2 tables back to caller */
 		*mapped_tables++ = r2;
-	}
-
-	/*
-	 * Swap the AO auxiliary relations and their indexes. Unlike the toast
-	 * relations, we need to swap the index oids as well.
-	 */
-	if (isAO1 && isAO2)
-	{
-		SwapAppendonlyEntries(r1, r2);
-	}
-	else if (isAO1)
-	{
-		TransferAppendonlyEntry(r1, r2);
-	}
-	else if (isAO2)
-	{
-		TransferAppendonlyEntry(r2, r1);
 	}
 
 	/*
@@ -1376,18 +1317,15 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 			if (relform1->reltoastrelid && relform2->reltoastrelid)
 			{
 				/* Recursively swap the contents of the toast tables */
-#ifdef USE_ASSERT_CHECKING
 				/*
 				 * CLUSTER operation on append-optimized tables does not
 				 * compute freeze limit (frozenXid) because AO tables do not
 				 * have relfrozenxid.  The toast tables need to keep existing
 				 * relfrozenxid value unchanged in this case.
 				 *
-				 * GPDB_12_MERGE_FIXME: Is this still right?
+				 * GPDB_12_MERGE_FIXME: If the above argument is correct,
+				 * figure out a way check it with an assert.
 				 */
-				if (!TransactionIdIsNormal(frozenXid))
-					Assert(isAO1 && isAO2);
-#endif
 				swap_relation_files(relform1->reltoastrelid,
 									relform2->reltoastrelid,
 									target_is_pg_class,
