@@ -8,6 +8,10 @@
 -- updating, as the system improves.
 --
 
+-- GPDB_12_MERGE_FIXME: Many of these queries are no longer able to constraint
+-- exclusion, like we used to on GPDB 6. Not sure what we should do about it.
+-- See https://github.com/greenplum-db/gpdb/issues/10287.
+
 -- Use index scans when possible. That exercises more code, and allows us to
 -- spot the cases where the planner cannot use even when it exists.
 set enable_seqscan=off;

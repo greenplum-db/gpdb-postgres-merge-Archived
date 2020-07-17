@@ -7,6 +7,9 @@
 -- the planner and the rest of the system, so the expected output can need
 -- updating, as the system improves.
 --
+-- GPDB_12_MERGE_FIXME: Many of these queries are no longer able to constraint
+-- exclusion, like we used to on GPDB 6. Not sure what we should do about it.
+-- See https://github.com/greenplum-db/gpdb/issues/10287.
 -- Use index scans when possible. That exercises more code, and allows us to
 -- spot the cases where the planner cannot use even when it exists.
 set enable_seqscan=off;
@@ -2074,12 +2077,18 @@ explain select * from ds_4 where month_id = '200800';
 explain select * from ds_4 where month_id::int = 200800;
                                              QUERY PLAN                                             
 ----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000352.00 rows=15 width=196)
-   ->  Append  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000001409.44 rows=58 width=196)
+   ->  Append  (cost=10000000000.00..40000001408.29 rows=20 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000352.00 rows=5 width=196)
-               Filter: month_id::integer = 200800
+               Filter: ((month_id)::integer = 200800)
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: ((month_id)::integer = 200800)
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: ((month_id)::integer = 200800)
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: ((month_id)::integer = 200800)
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- this will be satisfied by 200800
 -- start_ignore
@@ -2088,12 +2097,18 @@ explain select * from ds_4 where month_id::int = 200800;
 explain select * from ds_4 where month_id::int - 801 < 200000;
                                               QUERY PLAN                                               
 -------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000388.00 rows=4800 width=196)
-   ->  Append  (cost=10000000000.00..10000000388.00 rows=1600 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000002032.00 rows=19200 width=196)
+   ->  Append  (cost=10000000000.00..40000001648.00 rows=6400 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000388.00 rows=1600 width=196)
-               Filter: (month_id::integer - 801) < 200000
+               Filter: (((month_id)::integer - 801) < 200000)
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000388.00 rows=1600 width=196)
+               Filter: (((month_id)::integer - 801) < 200000)
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000388.00 rows=1600 width=196)
+               Filter: (((month_id)::integer - 801) < 200000)
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000388.00 rows=1600 width=196)
+               Filter: (((month_id)::integer - 801) < 200000)
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- test OR case -- should NOT get pruning
 explain select * from ds_4 where month_id::int - 801 < 200000 OR count_vas > 10;
@@ -2119,12 +2134,18 @@ explain select * from ds_4 where month_id::int - 801 < 200000 OR count_vas > 10;
 explain select * from ds_4 where month_id::int - 801 < 200000 AND count_vas > 10;
                                               QUERY PLAN                                              
 ------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000424.00 rows=2772 width=196)
-   ->  Append  (cost=10000000000.00..10000000424.00 rows=924 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000001973.13 rows=11086 width=196)
+   ->  Append  (cost=10000000000.00..40000001751.43 rows=3696 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000424.00 rows=924 width=196)
-               Filter: count_vas > 10 AND (month_id::integer - 801) < 200000
+               Filter: ((count_vas > 10) AND (((month_id)::integer - 801) < 200000))
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000424.00 rows=924 width=196)
+               Filter: ((count_vas > 10) AND (((month_id)::integer - 801) < 200000))
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000424.00 rows=924 width=196)
+               Filter: ((count_vas > 10) AND (((month_id)::integer - 801) < 200000))
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000424.00 rows=924 width=196)
+               Filter: ((count_vas > 10) AND (((month_id)::integer - 801) < 200000))
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- test expression case : should get pruning
 -- start_ignore
@@ -2133,26 +2154,38 @@ explain select * from ds_4 where month_id::int - 801 < 200000 AND count_vas > 10
 explain select * from ds_4 where case when month_id = '200800' then 100 else 2 end = 100;
                                              QUERY PLAN                                             
 ----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000316.00 rows=15 width=196)
-   ->  Append  (cost=10000000000.00..10000000316.00 rows=5 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000001265.44 rows=58 width=196)
+   ->  Append  (cost=10000000000.00..40000001264.29 rows=20 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000316.00 rows=5 width=196)
-               Filter: CASE WHEN month_id::text = '200800'::text THEN 100 ELSE 2 END = 100
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN 100 ELSE 2 END = 100)
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000316.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN 100 ELSE 2 END = 100)
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000316.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN 100 ELSE 2 END = 100)
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000316.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN 100 ELSE 2 END = 100)
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- test expression case : should get pruning
 -- start_ignore
 -- Known_opt_diff: MPP-21316
 -- end_ignore
 explain select * from ds_4 where case when month_id = '200800' then NULL else 2 end IS NULL;
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000280.00 rows=15 width=196)
-   ->  Append  (cost=10000000000.00..10000000280.00 rows=5 width=196)
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000001121.44 rows=58 width=196)
+   ->  Append  (cost=10000000000.00..40000001120.29 rows=20 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000280.00 rows=5 width=196)
-               Filter: CASE WHEN month_id::text = '200800'::text THEN NULL::integer ELSE 2 END IS NULL
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN NULL::integer ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000280.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN NULL::integer ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000280.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN NULL::integer ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000280.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::text = '200800'::text) THEN NULL::integer ELSE 2 END IS NULL)
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- should still get pruning here -- count_vas is only used in the path for month id = 200800
 -- start_ignore
@@ -2161,28 +2194,38 @@ explain select * from ds_4 where case when month_id = '200800' then NULL else 2 
 explain select * from ds_4 where case when month_id::int = 200800 then count_vas else 2 end IS NULL;
                                              QUERY PLAN                                             
 ----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..10000000352.00 rows=15 width=196)
-   ->  Append  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000001409.44 rows=58 width=196)
+   ->  Append  (cost=10000000000.00..40000001408.29 rows=20 width=196)
          ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000352.00 rows=5 width=196)
-               Filter: CASE WHEN month_id::integer = 200800 THEN count_vas ELSE 2 END IS NULL
+               Filter: (CASE WHEN ((month_id)::integer = 200800) THEN count_vas ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::integer = 200800) THEN count_vas ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::integer = 200800) THEN count_vas ELSE 2 END IS NULL)
+         ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000352.00 rows=5 width=196)
+               Filter: (CASE WHEN ((month_id)::integer = 200800) THEN count_vas ELSE 2 END IS NULL)
  Optimizer: Postgres query optimizer
-(5 rows)
+(11 rows)
 
 -- do one that matches a couple partitions
 -- start_ignore
 -- Known_opt_diff: MPP-21316
 -- end_ignore
 explain select * from ds_4 where month_id::int in (200801, 1,55,6,6,6,6,66,565,65,65,200803);
-                                               QUERY PLAN                                               
---------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..20000001064.00 rows=346 width=196)
-   ->  Append  (cost=10000000000.00..20000001064.00 rows=116 width=196)
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000000.00..40000002145.28 rows=692 width=196)
+   ->  Append  (cost=10000000000.00..40000002131.46 rows=231 width=196)
+         ->  Seq Scan on ds_4_1_prt_p200800  (cost=10000000000.00..10000000532.00 rows=58 width=196)
+               Filter: ((month_id)::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[]))
          ->  Seq Scan on ds_4_1_prt_p200801  (cost=10000000000.00..10000000532.00 rows=58 width=196)
-               Filter: month_id::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[])
+               Filter: ((month_id)::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[]))
+         ->  Seq Scan on ds_4_1_prt_p200802  (cost=10000000000.00..10000000532.00 rows=58 width=196)
+               Filter: ((month_id)::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[]))
          ->  Seq Scan on ds_4_1_prt_p200803  (cost=10000000000.00..10000000532.00 rows=58 width=196)
-               Filter: month_id::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[])
+               Filter: ((month_id)::integer = ANY ('{200801,1,55,6,6,6,6,66,565,65,65,200803}'::integer[]))
  Optimizer: Postgres query optimizer
-(7 rows)
+(11 rows)
 
 -- cleanup
 drop table ds_4;
@@ -2237,15 +2280,33 @@ set optimizer_segments=2;
 explain select * from ds_2 where month_id::int in (200808, 1315) order by month_id;
                                                 QUERY PLAN                                                 
 -----------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000352.70..10000000352.77 rows=29 width=196)
-   Merge Key: ds_2_1_prt_p200808.month_id
-   ->  Sort  (cost=10000000352.70..10000000352.77 rows=10 width=196)
-         Sort Key: ds_2_1_prt_p200808.month_id
-         ->  Append  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=100000003533.20..100000003539.68 rows=289 width=196)
+   Merge Key: ds_2_1_prt_p200800.month_id
+   ->  Sort  (cost=100000003533.20..100000003533.92 rows=97 width=196)
+         Sort Key: ds_2_1_prt_p200800.month_id
+         ->  Append  (cost=10000000000.00..100000003521.44 rows=97 width=196)
+               ->  Seq Scan on ds_2_1_prt_p200800  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200801  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200802  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200803  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200804  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200805  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200806  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200807  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
                ->  Seq Scan on ds_2_1_prt_p200808  (cost=10000000000.00..10000000352.00 rows=10 width=196)
-                     Filter: month_id::integer = ANY ('{200808,1315}'::integer[])
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200809  (cost=10000000000.00..10000000352.00 rows=10 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,1315}'::integer[]))
  Optimizer: Postgres query optimizer
-(8 rows)
+(26 rows)
 
 -- start_ignore
 -- Known_opt_diff: MPP-21316
@@ -2253,17 +2314,33 @@ explain select * from ds_2 where month_id::int in (200808, 1315) order by month_
 explain  select * from ds_2 where month_id::int in (200808, 200801, 2008010) order by month_id;
                                                 QUERY PLAN                                                 
 -----------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=20000000742.78..20000000743.00 rows=87 width=196)
-   Merge Key: ds_2_1_prt_p200801.month_id
-   ->  Sort  (cost=20000000742.78..20000000743.00 rows=29 width=196)
-         Sort Key: ds_2_1_prt_p200801.month_id
-         ->  Append  (cost=10000000000.00..20000000740.00 rows=29 width=196)
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=100000003721.07..100000003730.79 rows=432 width=196)
+   Merge Key: ds_2_1_prt_p200800.month_id
+   ->  Sort  (cost=100000003721.07..100000003722.15 rows=144 width=196)
+         Sort Key: ds_2_1_prt_p200800.month_id
+         ->  Append  (cost=10000000000.00..100000003702.16 rows=144 width=196)
+               ->  Seq Scan on ds_2_1_prt_p200800  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
                ->  Seq Scan on ds_2_1_prt_p200801  (cost=10000000000.00..10000000370.00 rows=15 width=196)
-                     Filter: month_id::integer = ANY ('{200808,200801,2008010}'::integer[])
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200802  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200803  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200804  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200805  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200806  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200807  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
                ->  Seq Scan on ds_2_1_prt_p200808  (cost=10000000000.00..10000000370.00 rows=15 width=196)
-                     Filter: month_id::integer = ANY ('{200808,200801,2008010}'::integer[])
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
+               ->  Seq Scan on ds_2_1_prt_p200809  (cost=10000000000.00..10000000370.00 rows=15 width=196)
+                     Filter: ((month_id)::integer = ANY ('{200808,200801,2008010}'::integer[]))
  Optimizer: Postgres query optimizer
-(10 rows)
+(26 rows)
 
 reset optimizer_segments;
 select * from ds_2 where month_id::int in (200907, 1315) order by month_id;
