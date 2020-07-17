@@ -641,7 +641,7 @@ cdb_estimate_partitioned_numtuples(Relation rel)
 		return rel->rd_rel->reltuples;
 
 	inheritors = find_all_inheritors(RelationGetRelid(rel),
-									 NoLock,
+									 AccessShareLock,
 									 NULL);
 	totaltuples = 0;
 	foreach(lc, inheritors)
