@@ -51,6 +51,7 @@ our @EXPORT = qw(
 
   setup_cluster
   start_master
+  restart_master
   create_standby
   promote_standby
   promote_master
@@ -164,6 +165,13 @@ sub start_master
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
+
+	return;
+}
+
+sub restart_master
+{
+	$node_master->restart;
 
 	return;
 }
