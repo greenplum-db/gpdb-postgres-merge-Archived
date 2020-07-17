@@ -3155,7 +3155,11 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 			break;
 #endif
 		case 0:
-			if (gpdb::RelIsExternalTable(rel->rd_id))
+			// GPDB_12_MERGE_FIXME: pretend partitioned tables are heap
+			// ORCA should stop asking about storage types of a partitioned table
+			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+				rel_storage_type = IMDRelation::ErelstorageHeap;
+			else if (gpdb::RelIsExternalTable(rel->rd_id))
 				rel_storage_type = IMDRelation::ErelstorageExternal;
 			else
 			{
