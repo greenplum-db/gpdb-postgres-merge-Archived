@@ -155,6 +155,8 @@ sub new
 	my $self = {
 		_port    => $pgport,
 		_host    => $pghost,
+		# GPDB needs dbid for a node for certain operations
+		_dbid    => int(rand(10)),
 		_basedir => "$TestLib::tmp_check/t_${testname}_${name}_data",
 		_name    => $name,
 		_logfile_generation => 0,
@@ -202,6 +204,20 @@ sub host
 {
 	my ($self) = @_;
 	return $self->{_host};
+}
+
+=pod
+
+=item $node->dbid()
+
+Return the dbid for this instance.
+
+=cut
+
+sub dbid
+{
+	my ($self) = @_;
+	return $self->{_dbid};
 }
 
 =pod
@@ -432,6 +448,7 @@ sub init
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
 	my $host   = $self->host;
+	my $dbid   = $self->dbid;
 
 	print "####### HOST = $host\n";
 
@@ -482,7 +499,7 @@ sub init
 		print $conf "shared_buffers = 1MB\n";
 		print $conf "wal_log_hints = on\n";
 		print $conf "hot_standby = on\n";
-		print $conf "max_connections = 10\n";
+		print $conf "max_connections = 20\n";
 	}
 	else
 	{
@@ -508,6 +525,18 @@ sub init
 
 	$self->set_replication_conf if $params{allows_streaming};
 	$self->enable_archiving     if $params{has_archiving};
+
+	# We have to specify the master's dbid explicitly because initdb
+	# only creates an empty file. gpconfigurenewseg is tasked with
+	# populating the master's dbid.
+	open $conf, '>>', "$pgdata/internal.auto.conf";
+	print $conf "\n# Added by PostgresNode.pm\n";
+	print $conf "gp_dbid=$dbid\n";
+	close $conf;
+
+	chmod($self->group_access ? 0640 : 0600, "$pgdata/internal.auto.conf")
+	  or die("unable to set permissions for $pgdata/internal.auto.conf");
+
 	return;
 }
 
@@ -559,7 +588,7 @@ sub backup
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
 	TestLib::system_or_bail('pg_basebackup', '-D', $backup_path, '-h',
-		$self->host, '-p', $self->port, '--no-sync');
+		$self->host, '-p', $self->port, '--no-sync', '--target-gp-dbid', 5);
 	print "# Backup finished\n";
 	return;
 }
@@ -770,7 +799,7 @@ sub start
 		# Note: We set the cluster_name here, not in postgresql.conf (in
 		# sub init) so that it does not get copied to standbys.
 		$ret = TestLib::system_log('pg_ctl', '-D', $self->data_dir, '-l',
-			$self->logfile, '-o', "--cluster-name=$name -c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
+		$self->logfile, '-o', "--cluster-name=$name -c gp_role=utility --gp_dbid=$self->{_dbid} --gp_contentid=0 --logging-collector=off",
 			'start');
 	}
 

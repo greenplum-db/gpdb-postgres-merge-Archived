@@ -53,6 +53,7 @@ our @EXPORT = qw(
   start_master
   create_standby
   promote_standby
+  promote_master
   run_pg_rewind
   clean_rewind_test
 );
@@ -216,6 +217,26 @@ sub promote_standby
 	return;
 }
 
+sub promote_master
+{
+	# Wait for the master to receive and write all WAL.
+	#$node_standby->wait_for_catchup($node_master, 'write');
+
+	# Now promote master and insert some new data on master, this will put
+	# the standby out-of-sync with the master.
+	$node_master->promote;
+
+	# Force a checkpoint after the promotion. pg_rewind looks at the control
+	# file to determine what timeline the server is on, and that isn't updated
+	# immediately at promotion, but only at the next checkpoint. When running
+	# pg_rewind in remote mode, it's possible that we complete the test steps
+	# after promotion so quickly that when pg_rewind runs, the standby has not
+	# performed a checkpoint after promotion yet.
+	master_psql("checkpoint");
+
+	return;
+}
+
 sub run_pg_rewind
 {
 	my $test_mode       = shift;
@@ -257,6 +278,9 @@ sub run_pg_rewind
 				"--no-sync"
 			],
 			'pg_rewind local');
+
+		# GPDB: not sure why upstream doesn't need this step
+		$node_standby->start;
 	}
 	elsif ($test_mode eq "remote")
 	{
@@ -311,6 +335,10 @@ primary_conninfo='port=$port_standby'));
 
 	# Restart the master to check that rewind went correctly
 	$node_master->start;
+
+	# GPDB doesn't have hot standby enabled. Hence promote master to
+	# perform below validations.
+	RewindTest::promote_master();
 
 	#### Now run the test-specific parts to check the result
 
