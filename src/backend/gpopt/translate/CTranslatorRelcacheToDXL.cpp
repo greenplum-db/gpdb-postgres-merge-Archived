@@ -480,10 +480,10 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 #if 0
 	List *part_keys = gpdb::GetPartitionAttrs(rel_oid);
 	ULONG num_of_levels = gpdb::ListLength(part_keys);
-#endif
 	ULONG num_of_levels = 0;
+#endif
 
-	if (0 == num_of_levels && gpdb::HasSubclassSlow(rel_oid))
+	if (!gpdb::RelIsPartitioned(rel_oid) && gpdb::HasSubclassSlow(rel_oid))
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Inherited tables"));
 	}
