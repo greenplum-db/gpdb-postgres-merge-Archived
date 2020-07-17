@@ -527,7 +527,9 @@ namespace gpdb {
 	// check whether the part with the given oid is an interior subpartition
 	bool RelPartIsInterior(Oid relid);
 #endif
-	
+
+	bool RelIsPartitioned(Oid relid);
+
 	// check whether table with the given oid is a regular table and not part of a partitioned table
 	bool RelPartIsNone(Oid relid);
 

@@ -2341,12 +2341,10 @@ gpdb::RelPartIsNone
 	Oid relid
 	)
 {
-	GP_WRAP_START;
-	{
-		return !relation_is_partitioned(relid);
-	}
-	GP_WRAP_END;
-	return false;
+	// FIXME: this is left unused for now. But when it's used, we also need to
+	// check for whether relid is a partition of another table
+	pg_unreachable();
+	return !RelIsPartitioned(relid);
 }
 
 bool
@@ -3402,6 +3400,16 @@ gpdb::ExpressionReturnsSet(Node *clause)
 	GP_WRAP_START;
 	{
 		return expression_returns_set(clause);
+	}
+	GP_WRAP_END;
+}
+
+bool
+gpdb::RelIsPartitioned(Oid relid)
+{
+	GP_WRAP_START;
+	{
+		return relation_is_partitioned(relid);
 	}
 	GP_WRAP_END;
 }

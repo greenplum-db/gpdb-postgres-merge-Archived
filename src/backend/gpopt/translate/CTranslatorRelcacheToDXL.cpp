@@ -470,7 +470,7 @@ CTranslatorRelcacheToDXL::CheckUnsupportedRelation
 	OID rel_oid
 	)
 {
-	if (!gpdb::RelPartIsNone(rel_oid))
+	if (gpdb::RelIsPartitioned(rel_oid))
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Query on partitioned tables"));
 	}
@@ -2681,7 +2681,7 @@ CTranslatorRelcacheToDXL::RetrieveNumChildPartitions
        GPOS_ASSERT(InvalidOid != rel_oid);
 
        ULONG num_part_tables = gpos::ulong_max;
-       if (gpdb::RelPartIsNone(rel_oid))
+       if (!gpdb::RelIsPartitioned(rel_oid))
        {
     	   // not a partitioned table
             num_part_tables = 1;
