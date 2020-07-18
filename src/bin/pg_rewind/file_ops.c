@@ -171,7 +171,7 @@ create_target(file_entry_t *entry)
 
 		case FILE_TYPE_FIFO:
 			/* Only pgsql_tmp files are FIFO and they are ignored from source target. */
-			pg_fatal("invalid action (CREATE) for fifo file\n");
+			pg_fatal("invalid action (CREATE) for fifo file");
 			break;
 	}
 }
@@ -293,12 +293,12 @@ create_target_tablespace_layout(const char *path, const char *link)
 
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 	if (symlink(newlink, dstpath) != 0)
-		pg_fatal("could not create symbolic link at \"%s\": %s\n",
+		pg_fatal("could not create symbolic link at \"%s\": %s",
 				 dstpath, strerror(errno));
 
 	/* We need to create the directory at the symlink target. */
 	if (mkdir(newlink, S_IRWXU) != 0)
-		pg_fatal("could not create directory \"%s\": %s\n",
+		pg_fatal("could not create directory \"%s\": %s",
 				 dstpath, strerror(errno));
 
 	pfree(newlink);
