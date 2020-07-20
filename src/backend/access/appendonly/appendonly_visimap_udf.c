@@ -82,13 +82,11 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->aorel = table_open(aoRelOid, AccessShareLock);
-		if (context->aorel->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
-			context->aorel->rd_rel->relam != AOCO_TABLE_AM_OID)
-		{
+		if (!RelationIsAppendOptimized(context->aorel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function not supported on relation")));
-		}
+
 		Snapshot sst = GetLatestSnapshot();
 
         GetAppendOnlyEntryAuxOids(context->aorel->rd_id, sst,
@@ -199,13 +197,10 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->parentRelation = table_open(aoRelOid, AccessShareLock);
-		if (context->parentRelation->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
-			context->parentRelation->rd_rel->relam != AOCO_TABLE_AM_OID)
-		{
+		if (!RelationIsAppendOptimized(context->parentRelation))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function not supported on relation")));
-		}
 
         Oid segrelid;
 		snapshot = GetLatestSnapshot();
@@ -219,7 +214,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 							   AccessShareLock,
 							   snapshot);
 
-		if (context->parentRelation->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)
+		if (RelationIsAoRows(context->parentRelation))
 		{
 			context->appendonlySegfileInfo = GetAllFileSegInfo(context->parentRelation,
 															   snapshot,
@@ -227,7 +222,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			Assert(context->parentRelation->rd_rel->relam == AOCO_TABLE_AM_OID);
+			Assert(RelationIsAoCols(context->parentRelation));
 			context->aocsSegfileInfo = GetAllAOCSFileSegInfo(context->parentRelation,
 															 snapshot, &context->segfile_info_total);
 		}
@@ -381,13 +376,10 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->parentRelation = table_open(aoRelOid, AccessShareLock);
-		if (context->parentRelation->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
-			context->parentRelation->rd_rel->relam != AOCO_TABLE_AM_OID)
-		{
+		if (!RelationIsAppendOptimized(context->parentRelation))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function not supported on relation")));
-		}
 
         Snapshot sst = GetLatestSnapshot();
 

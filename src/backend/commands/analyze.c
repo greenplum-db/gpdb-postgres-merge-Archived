@@ -878,8 +878,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	{
 		BlockNumber relallvisible;
 
-		if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-			onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
+		if (RelationIsAppendOptimized(onerel))
 			relallvisible = 0;
 		else
 			visibilitymap_count(onerel, &relallvisible, NULL);

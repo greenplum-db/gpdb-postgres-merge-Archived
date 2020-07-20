@@ -695,14 +695,12 @@ DefineIndex(Oid relationId,
 	 * (hence the fixme).
 	 */
 	{
-		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
-		Form_pg_class pgc = (Form_pg_class) GETSTRUCT(tuple);
-		if (pgc->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
-			pgc->relam == AOCO_TABLE_AM_OID)
+		rel = table_open(relationId, NoLock);
+		if (RelationIsAppendOptimized(rel))
 			lockmode = ShareRowExclusiveLock;
 		else
 			lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
-		ReleaseSysCache(tuple);
+		table_close(rel, NoLock);
 	}
 	rel = table_open(relationId, lockmode);
 
