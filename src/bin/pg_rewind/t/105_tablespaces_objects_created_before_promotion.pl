@@ -41,7 +41,7 @@ sub run_test
 	standby_psql("INSERT INTO t_ao VALUES(generate_series(1, 100))");
 	standby_psql("CHECKPOINT");
 
-	RewindTest::run_pg_rewind($test_mode);
+	RewindTest::run_pg_rewind($test_mode, do_not_start_master => 1);
 
 	# Confirm that after rewind the master has the correct symlink set up.
 	my $master_pgdata = $node_master->data_dir;
@@ -57,6 +57,11 @@ sub run_test
 	chomp($num_entries);
 	# Expect 7 relfiles (for t_heap, t_heap_idx, t_ao (with its 3 metadata tables) and t_heap_after_promotion)
 	$num_entries == 7 or die "found $num_entries expected 7 files in $absolute_path/GPDB_*/${db_oid}/";
+
+	# Restart and promote the master to check that rewind went
+	# correctly
+	$node_master->start;
+	RewindTest::promote_master();
 	
 	check_query(
 		'SELECT count(*) from t_heap',

@@ -108,8 +108,14 @@ sub run_test
 	# whole new relfilenode)
 	master_psql("DELETE FROM tail_cotbl WHERE id > 10");
 	master_psql("VACUUM tail_cotbl");
-	
-	RewindTest::run_pg_rewind($test_mode);
+
+	# Use immediate shutdown option. Hence, in this test we also test
+	# unclean shutdown case for pg_rewind. The master will be stopped
+	# with immediate mode which will cause unclean shutdown and leave
+	# "in production" in the control file. At the beginning of
+	# pg_rewind, a single-user mode postgres session should be run to
+	# ensure clean shutdown on the target instance.
+	RewindTest::run_pg_rewind($test_mode, stop_master_mode => 'immediate');
 
 	check_query(
 		'SELECT * FROM aotbl1',

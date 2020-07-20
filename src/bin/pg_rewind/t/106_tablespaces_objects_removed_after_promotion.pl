@@ -3,7 +3,7 @@ use warnings;
 use File::Path qw(rmtree);
 use Cwd qw(abs_path realpath);
 use TestLib;
-use Test::More tests => 11;
+use Test::More tests => 13;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -32,7 +32,9 @@ sub run_test
 	# Create a new tablespace in the standby that will not be on the old master.
 	master_psql("CREATE TABLESPACE ts LOCATION '$tablespace_location'");
 	master_psql("CREATE TABLESPACE drop_ts LOCATION '$drop_tablespace_location'");
+
 	my $drop_ts_oid = $node_master->safe_psql('postgres', q{SELECT oid FROM pg_tablespace WHERE spcname = 'drop_ts'});
+	ok(-l "$master_pgdata/pg_tblspc/$drop_ts_oid", "symbolic for tablespace was created: $master_pgdata/pg_tblspc/$drop_ts_oid");
 	my $drop_ts_absolute_path = realpath("$master_pgdata/pg_tblspc/$drop_ts_oid");
 	ok(-e $drop_ts_absolute_path, "drop tablespace directory created");
 	
@@ -51,7 +53,7 @@ sub run_test
 	standby_psql("DROP TABLESPACE drop_ts");
 	standby_psql("CHECKPOINT");
 
-	RewindTest::run_pg_rewind($test_mode);
+	RewindTest::run_pg_rewind($test_mode, do_not_start_master => 1);
 
 	# Confirm that after rewind the master has the correct symlink set up.
 	my $ts_oid = $node_standby->safe_psql('postgres', q{SELECT oid FROM pg_tablespace WHERE spcname = 'ts'});
@@ -67,7 +69,7 @@ sub run_test
 	# Test that there are 0 relfilenodes as all objects have been deleted for tablespace ts.
 	$num_entries == 0 or die "found $num_entries expected 0 files in $absolute_path/GPDB_*/${db_oid}/";
 
-	ok(!-e $drop_ts_absolute_path, "drop tablespace directory ($drop_ts_absolute_path) removed");
+	ok(!-l "$master_pgdata/pg_tblspc/$drop_ts_oid", "symbolic for tablespace was created: $master_pgdata/pg_tblspc/$drop_ts_oid");
 
 	RewindTest::clean_rewind_test();
 	return;

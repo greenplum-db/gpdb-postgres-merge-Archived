@@ -28,7 +28,7 @@ sub run_test
 	# same oid and relfilenode. pg_control file records NextRelfilenode
 	# which will be used on restart by master and standby uses the same
 	# after promotion.
-	RewindTest::restart_master();
+	$node_master->restart();
 	master_psql("INSERT INTO tb1 SELECT 0, 1 FROM generate_series(1, 128)");
 	master_psql("INSERT INTO tb1 SELECT 0, 0 FROM generate_series(1, 64)");
 	master_psql("DELETE FROM tb1 WHERE b = 1");

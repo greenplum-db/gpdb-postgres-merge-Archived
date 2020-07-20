@@ -51,7 +51,6 @@ our @EXPORT = qw(
 
   setup_cluster
   start_master
-  restart_master
   create_standby
   promote_standby
   promote_master
@@ -113,7 +112,7 @@ sub check_query
 	}
 	else
 	{
-		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
+		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 	return;
@@ -151,7 +150,7 @@ sub start_master
 
 	# Create custom role which is used to run pg_rewind, and adjust its
 	# permissions to the minimum necessary.
-	$node_master->safe_psql(
+	$node_master->psql(
 		'postgres', "
 		CREATE ROLE rewind_user LOGIN;
 		GRANT EXECUTE ON function pg_catalog.pg_ls_dir(text, boolean, boolean)
@@ -165,13 +164,6 @@ sub start_master
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
-
-	return;
-}
-
-sub restart_master
-{
-	$node_master->restart;
 
 	return;
 }
@@ -204,11 +196,17 @@ primary_conninfo='$connstr_master'
 
 sub promote_standby
 {
+	my ($stop_master_before_promote) = @_;
 	#### Now run the test-specific parts to run after standby has been started
 	# up standby
 
 	# Wait for the standby to receive and write all WAL.
 	$node_master->wait_for_catchup($node_standby, 'write');
+
+	if(defined($stop_master_before_promote) && $stop_master_before_promote)
+	{
+		$node_master->stop;
+	}
 
 	# Now promote standby and insert some new data on master, this will put
 	# the master out-of-sync with the standby.
@@ -248,16 +246,27 @@ sub promote_master
 sub run_pg_rewind
 {
 	my $test_mode       = shift;
+	my (%params)        = @_;
 	my $master_pgdata   = $node_master->data_dir;
 	my $standby_pgdata  = $node_standby->data_dir;
 	my $standby_connstr = $node_standby->connstr('postgres');
 	my $tmp_folder      = TestLib::tempdir;
 
+	$params{stop_master_mode} = 0 unless defined $params{stop_master_mode};
+	$params{do_not_start_master} = 0 unless defined $params{do_not_start_master};
+
 	# Append the rewind-specific role to the connection string.
 	$standby_connstr = "$standby_connstr user=rewind_user";
 
 	# Stop the master and be ready to perform the rewind
-	$node_master->stop;
+	if ($params{stop_master_mode})
+	{
+		$node_master->stop($params{stop_master_mode});
+	}
+	else
+	{
+		$node_master->stop;
+	}
 
 	# At this point, the rewind processing is ready to run.
 	# We now have a very simple scenario with a few diverged WAL record.
@@ -287,8 +296,10 @@ sub run_pg_rewind
 			],
 			'pg_rewind local');
 
-		# GPDB: not sure why upstream doesn't need this step
-		$node_standby->start;
+		# Best to leave the standby in running state. Some GPDB
+		# specific test query against standby as well to perform
+		# validation.
+		$node_standby->start
 	}
 	elsif ($test_mode eq "remote")
 	{
@@ -341,12 +352,15 @@ primary_conninfo='port=$port_standby'));
 		$node_master->set_standby_mode();
 	}
 
-	# Restart the master to check that rewind went correctly
-	$node_master->start;
+	unless ($params{do_not_start_master})
+	{
+		# Restart the master to check that rewind went correctly
+		$node_master->start;
 
-	# GPDB doesn't have hot standby enabled. Hence promote master to
-	# perform below validations.
-	RewindTest::promote_master();
+		# GPDB doesn't have hot standby enabled. Hence promote master to
+		# perform below validations.
+		RewindTest::promote_master();
+	}
 
 	#### Now run the test-specific parts to check the result
 
