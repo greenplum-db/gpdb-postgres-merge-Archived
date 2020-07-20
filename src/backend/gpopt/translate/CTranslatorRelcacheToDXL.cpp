@@ -13,6 +13,7 @@
 //
 //---------------------------------------------------------------------------
 
+extern "C" {
 #include "postgres.h"
 #include "utils/array.h"
 #include "utils/rel.h"
@@ -34,6 +35,7 @@
 #endif
 #include "catalog/namespace.h"
 #include "catalog/pg_statistic.h"
+}
 
 #include "naucrates/md/CMDIdCast.h"
 #include "naucrates/md/CMDIdScCmp.h"
