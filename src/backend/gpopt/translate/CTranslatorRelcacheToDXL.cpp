@@ -35,6 +35,8 @@ extern "C" {
 #endif
 #include "catalog/namespace.h"
 #include "catalog/pg_statistic.h"
+#include "utils/partcache.h"
+#include "partitioning/partdesc.h"
 }
 
 #include "naucrates/md/CMDIdCast.h"
@@ -601,7 +603,6 @@ CTranslatorRelcacheToDXL::RetrieveRel
 		// collect relation indexes
 		md_index_info_array = RetrieveRelIndexInfo(mp, rel);
 
-#if 0
 		// get partition keys
 		if (IMDRelation::ErelstorageExternal != rel_storage_type)
 		{
@@ -610,11 +611,12 @@ CTranslatorRelcacheToDXL::RetrieveRel
 		is_partitioned = (NULL != part_keys && 0 < part_keys->Size());
 
 		// get number of leaf partitions
-		if (gpdb::RelPartIsRoot(oid))
+		if (gpdb::RelIsPartitioned(oid))
 		{
-			num_leaf_partitions = gpdb::CountLeafPartTables(oid);
+			// FIXME_GPDB_12_MERGE_FIXME: misestimate (most likely underestimate) the number of leaf partitions
+			// ORCA doesn't really care, except to determine whether to sort before inserting
+			num_leaf_partitions = rel->rd_partdesc->nparts;
 		}
-#endif
 
 		// get key sets
 		BOOL should_add_default_keys = RelHasSystemColumns(rel->rd_rel->relkind);
@@ -3176,7 +3178,6 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 	return rel_storage_type;
 }
 
-#if 0
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
@@ -3198,7 +3199,8 @@ CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
 {
 	GPOS_ASSERT(NULL != rel);
 
-	if (!gpdb::RelPartIsRoot(oid))
+	// FIXME: isn't it faster to check rel.rd_partkey?
+	if (!gpdb::RelIsPartitioned(oid))
 	{
 		// not a partitioned table
 		*part_keys = NULL;
@@ -3206,37 +3208,22 @@ CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
 		return;
 	}
 
-	// TODO: Feb 23, 2012; support intermediate levels
-
 	*part_keys = GPOS_NEW(mp) ULongPtrArray(mp);
 	*part_types = GPOS_NEW(mp) CharPtrArray(mp);
 
-	List *part_keys_list = NIL;
-	List *part_types_list = NIL;
-	gpdb::GetOrderedPartKeysAndKinds(oid, &part_keys_list, &part_types_list);
+	PartitionKeyData *partkey = rel->rd_partkey;
 
-	ListCell *lc_key = NULL;
-	ListCell *lc_type = NULL;
-	ForBoth (lc_key, part_keys_list, lc_type, part_types_list)
+	if (1 < partkey->partnatts)
 	{
-		List *part_key = (List *) lfirst(lc_key);
-
-		if (1 < gpdb::ListLength(part_key))
-		{
-			GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Composite part key"));
-		}
-
-		INT attno = linitial_int(part_key);
-		CHAR part_type = (CHAR) lfirst_int(lc_type);
-		GPOS_ASSERT(0 < attno);
-		(*part_keys)->Append(GPOS_NEW(mp) ULONG(attno - 1));
-		(*part_types)->Append(GPOS_NEW(mp) CHAR(part_type));
+		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Composite part key"));
 	}
 
-	gpdb::ListFree(part_keys_list);
-	gpdb::ListFree(part_types_list);
+	INT attno = partkey->partattrs[0];
+	CHAR part_type = (CHAR) partkey->strategy;
+	GPOS_ASSERT(0 < attno);
+	(*part_keys)->Append(GPOS_NEW(mp) ULONG(attno - 1));
+	(*part_types)->Append(GPOS_NEW(mp) CHAR(part_type));
 }
-#endif
 
 
 //---------------------------------------------------------------------------

@@ -257,8 +257,8 @@ namespace gpdxl
 								);
 
 			// get partition keys and types for a relation
-			/* static */
-			/* void RetrievePartKeysAndTypes(CMemoryPool *mp, Relation rel, OID oid, ULongPtrArray **part_keys, CharPtrArray **part_types); */
+			static
+			void RetrievePartKeysAndTypes(CMemoryPool *mp, Relation rel, OID oid, ULongPtrArray **part_keys, CharPtrArray **part_types);
 
 			// get keysets for relation
 			static
