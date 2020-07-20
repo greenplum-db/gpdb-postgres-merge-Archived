@@ -1116,8 +1116,6 @@ appendonly_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Finish and deallocate insertion */
 	appendonly_insert_finish(aoInsertDesc);
-
-	SwapAppendonlyEntries(RelationGetRelid(OldHeap), RelationGetRelid(NewHeap));
 }
 
 static bool

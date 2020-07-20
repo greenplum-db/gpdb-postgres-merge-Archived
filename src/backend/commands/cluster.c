@@ -1270,6 +1270,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		relform2->relallvisible = swap_allvisible;
 	}
 
+	SwapAppendonlyEntries(r1, r2);
+
 	/*
 	 * Update the tuples in pg_class --- unless the target relation of the
 	 * swap is pg_class itself.  In that case, there is zero point in making

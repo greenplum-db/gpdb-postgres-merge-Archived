@@ -547,10 +547,10 @@ GetAppendEntryForMove(
 							  NULL, 1, key);
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("appendonly table relid \"%d\" does not exist in "
-						"pg_appendonly", relId)));
+	{
+		systable_endscan(scan);
+		return tuple;
+	}
 
     *aosegrelid = heap_getattr(tuple,
 							   Anum_pg_appendonly_segrelid,
@@ -598,7 +598,6 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 {
 	Relation	pg_appendonly_rel;
 	TupleDesc	pg_appendonly_dsc;
-	HeapTuple	tuple;
 	HeapTuple	tupleCopy1;
 	HeapTuple	tupleCopy2;
 	Datum 		*newValues;
@@ -614,7 +613,7 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 	pg_appendonly_rel = table_open(AppendOnlyRelationId, RowExclusiveLock);
 	pg_appendonly_dsc = RelationGetDescr(pg_appendonly_rel);
 	
-	tuple = GetAppendEntryForMove(
+	tupleCopy1 = GetAppendEntryForMove(
 							pg_appendonly_rel,
 							pg_appendonly_dsc,
 							entryRelId1,
@@ -622,15 +621,7 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 							&aoblkdirrelid1,
 							&aovisimaprelid1);
 
-	/* Since gp_fastsequence entry is referenced by aosegrelid, it rides along  */
-
-	/*
-	 * Delete the appendonly table entry from the catalog (pg_appendonly).
-	 */
-	tupleCopy1 = heap_copytuple(tuple);
-	simple_heap_delete(pg_appendonly_rel, &tuple->t_self);
-	
-	tuple = GetAppendEntryForMove(
+	tupleCopy2 = GetAppendEntryForMove(
 							pg_appendonly_rel,
 							pg_appendonly_dsc,
 							entryRelId2,
@@ -638,13 +629,17 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 							&aoblkdirrelid2,
 							&aovisimaprelid2);
 
-	/* Since gp_fastsequence entry is referenced by aosegrelid, it rides along  */
+	if (!HeapTupleIsValid(tupleCopy1) || !HeapTupleIsValid(tupleCopy2))
+	{
+		if (HeapTupleIsValid(tupleCopy1) || HeapTupleIsValid(tupleCopy2))
+			elog(ERROR, "swapping pg_appendonly entries is not permitted for non-appendoptimized tables");
+		table_close(pg_appendonly_rel, NoLock);
+		return;
+	}
 
-	/*
-	 * Delete the appendonly table entry from the catalog (pg_appendonly).
-	 */
-	tupleCopy2 = heap_copytuple(tuple);
-	simple_heap_delete(pg_appendonly_rel, &tuple->t_self);
+	/* Since gp_fastsequence entry is referenced by aosegrelid, it rides along  */
+	simple_heap_delete(pg_appendonly_rel, &tupleCopy1->t_self);
+	simple_heap_delete(pg_appendonly_rel, &tupleCopy2->t_self);
 
 	/*
 	 * (Re)insert.

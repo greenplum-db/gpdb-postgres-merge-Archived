@@ -6377,9 +6377,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 		table_finish_bulk_insert(newrel, ti_options);
 
-		if (RelationIsAppendOptimized(newrel))
-			SwapAppendonlyEntries(tab->relid, OIDNewHeap);
-
 		table_close(newrel, NoLock);
 	}
 }
