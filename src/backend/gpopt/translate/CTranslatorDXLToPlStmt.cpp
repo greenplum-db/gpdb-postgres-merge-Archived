@@ -336,7 +336,12 @@ CTranslatorDXLToPlStmt::TranslateDXLOperatorToPlan
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, dxlnode->GetOperator()->GetOpNameStr()->GetBuffer());
 	}
 
-	return (this->* dxlnode_to_logical_funct)(dxlnode, output_context, ctxt_translation_prev_siblings);
+	Plan *const plan = (this->*dxlnode_to_logical_funct)(
+		dxlnode, output_context, ctxt_translation_prev_siblings);
+	if (nullptr == plan)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				   dxlnode->GetOperator()->GetOpNameStr()->GetBuffer());
+	return plan;
 }
 
 //---------------------------------------------------------------------------
