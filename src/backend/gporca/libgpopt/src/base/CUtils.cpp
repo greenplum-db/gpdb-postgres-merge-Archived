@@ -4331,8 +4331,6 @@ CUtils::PpartcnstrFromMDPartCnstr
 	BOOL fDummyConstraint
 	)
 {
-	// GPDB_12_MERGE_FIXME: we ignore the argument and just return dummy constraints
-	fDummyConstraint = true;
 	if (fDummyConstraint)
 	{
 		return GPOS_NEW(mp) CPartConstraint(true /*fUninterpreted*/);
