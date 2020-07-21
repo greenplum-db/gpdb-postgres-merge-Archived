@@ -78,6 +78,7 @@ static void OOMEventSetup()
 static
 void VmemTrackerTestSetup(void **state)
 {
+	bool found = false;
 	InitFakeSessionState();
 
 	OOMEventSetup();
@@ -88,7 +89,7 @@ void VmemTrackerTestSetup(void **state)
 	runaway_detector_activation_percent = 100;
 
 	will_return(ShmemInitStruct, &fakeSegmentVmemChunks);
-	will_assign_value(ShmemInitStruct, foundPtr, false);
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 
 	expect_any_count(ShmemInitStruct, name, 1);
 	expect_any_count(ShmemInitStruct, size, 1);
@@ -386,10 +387,11 @@ void test__VmemTracker_ShmemInit__InitSegmentVmemLimitUnderPostmaster(void **sta
 	chunkSizeInBits = BITS_IN_MB;
 
 	static int32 tempSegmentVmemChunks = SEGMENT_VMEM_CHUNKS_TEST_VALUE;
+	bool found = true;
 	expect_any(ShmemInitStruct, name);
 	expect_any(ShmemInitStruct, size);
 	expect_any(ShmemInitStruct, foundPtr);
-	will_assign_value(ShmemInitStruct, foundPtr, true);
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 	will_return(ShmemInitStruct, &tempSegmentVmemChunks);
 
 	assert_true(segmentVmemChunks == &fakeSegmentVmemChunks);
@@ -417,11 +419,12 @@ void test__VmemTracker_ShmemInit__InitSegmentVmemLimitInPostmaster(void **state)
 	vmemTrackerInited = false;
 	chunkSizeInBits = BITS_IN_MB;
 
+	bool found = false;
 	static int32 tempSegmentVmemChunks = SEGMENT_VMEM_CHUNKS_TEST_VALUE;
 	expect_any(ShmemInitStruct, name);
 	expect_any(ShmemInitStruct, size);
 	expect_any(ShmemInitStruct, foundPtr);
-	will_assign_value(ShmemInitStruct, foundPtr, false);
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 	will_return(ShmemInitStruct, &tempSegmentVmemChunks);
 
 	assert_true(segmentVmemChunks == &fakeSegmentVmemChunks);
@@ -449,9 +452,6 @@ static
 void SetVmemLimit(int32 newSegmentVmemLimitMB, int32 newSessionVmemLimitMB)
 {
 	static int32 tempSegmentVmemChunks = 0;
-	static int32 sessionVmem,segmentVmem;
-	segmentVmem = newSegmentVmemLimitMB;
-	sessionVmem = newSessionVmemLimitMB;
 
 	/* Keep the assertions happy */
 	vmemTrackerInited = false;
@@ -460,7 +460,8 @@ void SetVmemLimit(int32 newSegmentVmemLimitMB, int32 newSessionVmemLimitMB)
 	expect_any(ShmemInitStruct, name);
 	expect_any(ShmemInitStruct, size);
 	expect_any(ShmemInitStruct, foundPtr);
-	will_assign_value(ShmemInitStruct, foundPtr, false);
+	bool found = false;
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 	will_return(ShmemInitStruct, &tempSegmentVmemChunks);
 
 	will_be_called(EventVersion_ShmemInit);
@@ -469,13 +470,13 @@ void SetVmemLimit(int32 newSegmentVmemLimitMB, int32 newSessionVmemLimitMB)
 
 	IsUnderPostmaster = false;
 
-	gp_vmem_protect_limit = segmentVmem;
+	gp_vmem_protect_limit = newSegmentVmemLimitMB;
 	/* Session vmem limit is in kB unit */
-	gp_vmem_limit_per_query = sessionVmem * 1024;
+	gp_vmem_limit_per_query = newSessionVmemLimitMB * 1024;
 	VmemTracker_ShmemInit();
 
-	assert_true(chunkSizeInBits >= BITS_IN_MB && vmemChunksQuota == MB_TO_CHUNKS(segmentVmem));
-	assert_true(chunkSizeInBits >= BITS_IN_MB && maxChunksPerQuery == MB_TO_CHUNKS(sessionVmem));
+	assert_true(chunkSizeInBits >= BITS_IN_MB && vmemChunksQuota == MB_TO_CHUNKS(newSegmentVmemLimitMB));
+	assert_true(chunkSizeInBits >= BITS_IN_MB && maxChunksPerQuery == MB_TO_CHUNKS(newSessionVmemLimitMB));
 }
 
 /*

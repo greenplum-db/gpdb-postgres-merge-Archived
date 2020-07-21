@@ -23,6 +23,7 @@ test_boundaries_of_CreateSharedSnapshotArray(void **state)
 
 	SharedSnapshotStruct 	*fakeSharedSnapshotArray = NULL;
 	LWLockPadded 			*fakeLockBase = NULL;
+	bool found = false;
 
 	expect_string(RequestNamedLWLockTranche, tranche_name, "SharedSnapshotLocks");
 	expect_value(RequestNamedLWLockTranche, num_lwlocks, NUM_SHARED_SNAPSHOT_SLOTS);
@@ -31,7 +32,7 @@ test_boundaries_of_CreateSharedSnapshotArray(void **state)
 	fakeSharedSnapshotArray = malloc(sharedSnapshotShmemSize);
 
 	will_return(ShmemInitStruct, fakeSharedSnapshotArray);
-	will_assign_value(ShmemInitStruct, foundPtr, false);
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 	expect_any_count(ShmemInitStruct, name, 1);
 	expect_any_count(ShmemInitStruct, size, 1);
 	expect_any_count(ShmemInitStruct, foundPtr, 1);

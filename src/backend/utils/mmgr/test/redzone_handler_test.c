@@ -51,8 +51,9 @@ CreateSessionStateArray(int numEntries)
 	SessionStateArray *fakeSessionStateArray = NULL;
 	fakeSessionStateArray = malloc(SessionState_ShmemSize());
 
+	bool found = false;
 	will_return(ShmemInitStruct, fakeSessionStateArray);
-	will_assign_value(ShmemInitStruct, foundPtr, false);
+	will_assign_value(ShmemInitStruct, foundPtr, found);
 
 	expect_any_count(ShmemInitStruct, name, 1);
 	expect_any_count(ShmemInitStruct, size, 1);
