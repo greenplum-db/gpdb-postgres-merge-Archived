@@ -1590,7 +1590,13 @@ ApplyWorkerMain(Datum main_arg)
 		MyLogicalRepWorker->reply_time = GetCurrentTimestamp();
 
 	/* Load the libpq-specific functions */
-	load_file("libpqwalreceiver", false);
+	/*
+	 * In GPDB, we build libpqwalreceiver functions, as well as a copy of
+	 * libpq into the backend itself, to support QD-QE communication. See
+	 * src/backend/libpq.
+	 */
+	if (!WalReceiverFunctions)
+		libpqwalreceiver_PG_init();
 
 	/* Run as replica session replication role. */
 	SetConfigOption("session_replication_role", "replica",

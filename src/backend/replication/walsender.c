@@ -2252,7 +2252,8 @@ WalSndLoop(WalSndSendDataCallback send_data)
 		if (!MyWalSnd->caughtup_within_range && WalSndCaughtUpWithinRange)
 			WalSndSetCaughtupWithinRange(true);
 
-		Assert(!WalSndCaughtUp || WalSndCaughtUpWithinRange);
+		if (send_data == XLogSendPhysical)
+			Assert(!WalSndCaughtUp || WalSndCaughtUpWithinRange);
 
 		/* Try to flush pending output to the client */
 		if (pq_flush_if_writable() != 0)
