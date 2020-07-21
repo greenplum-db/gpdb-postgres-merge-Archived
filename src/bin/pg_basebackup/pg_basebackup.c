@@ -1556,7 +1556,6 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * new xlog files into pg_xlog directory.
 						 */
 						if (pg_str_endswith(filename, "/pg_log") ||
-							pg_str_endswith(filename, "/log") ||
 							pg_str_endswith(filename, "/pg_wal") ||
 							pg_str_endswith(filename, "/pg_xlog"))
 							continue;
@@ -1878,7 +1877,7 @@ BaseBackup(void)
 	 */
 	if (replication_slot && !create_slot)
 	{
-		CreateReplicationSlot(conn, replication_slot, NULL, true, true, false, false);
+		CreateReplicationSlot(conn, replication_slot, NULL, false, true, false, false);
 	}
 
 	/*
