@@ -261,6 +261,7 @@ SKIP:
 	my $tblspc1UnloggedPath = $node->safe_psql('postgres',
 		q{select pg_relation_filepath('tblspc1_unlogged')});
 
+	my $node_dbid = $node->dbid;
 	# Make sure main and init forks exist
 	ok( -f "$pgdata/${tblspc1UnloggedPath}_init",
 		'unlogged init fork in tablespace');
@@ -278,7 +279,7 @@ SKIP:
 	foreach my $filename (@tempRelationFiles)
 	{
 		append_to_file(
-			"$shorter_tempdir/tblspc1/1/$tblSpc1Id/$postgresOid/$filename",
+			"$shorter_tempdir/tblspc1/$node_dbid/$tblSpc1Id/$postgresOid/$filename",
 			'TEMP_RELATION');
 	}
 
@@ -326,7 +327,7 @@ SKIP:
 
 		# Also remove temp relation files or tablespace drop will fail.
 		my $filepath =
-		  "$shorter_tempdir/tblspc1/1/$tblSpc1Id/$postgresOid/$filename";
+		  "$shorter_tempdir/tblspc1/$node_dbid/$tblSpc1Id/$postgresOid/$filename";
 
 		unlink($filepath)
 		  or BAIL_OUT("unable to unlink $filepath");
