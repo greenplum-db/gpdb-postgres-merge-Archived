@@ -449,6 +449,9 @@ static
 void SetVmemLimit(int32 newSegmentVmemLimitMB, int32 newSessionVmemLimitMB)
 {
 	static int32 tempSegmentVmemChunks = 0;
+	static int32 sessionVmem,segmentVmem;
+	segmentVmem = newSegmentVmemLimitMB;
+	sessionVmem = newSessionVmemLimitMB;
 
 	/* Keep the assertions happy */
 	vmemTrackerInited = false;
@@ -466,13 +469,13 @@ void SetVmemLimit(int32 newSegmentVmemLimitMB, int32 newSessionVmemLimitMB)
 
 	IsUnderPostmaster = false;
 
-	gp_vmem_protect_limit = newSegmentVmemLimitMB;
+	gp_vmem_protect_limit = segmentVmem;
 	/* Session vmem limit is in kB unit */
-	gp_vmem_limit_per_query = newSessionVmemLimitMB * 1024;
+	gp_vmem_limit_per_query = sessionVmem * 1024;
 	VmemTracker_ShmemInit();
 
-	assert_true(chunkSizeInBits >= BITS_IN_MB && vmemChunksQuota == MB_TO_CHUNKS(newSegmentVmemLimitMB));
-	assert_true(chunkSizeInBits >= BITS_IN_MB && maxChunksPerQuery == MB_TO_CHUNKS(newSessionVmemLimitMB));
+	assert_true(chunkSizeInBits >= BITS_IN_MB && vmemChunksQuota == MB_TO_CHUNKS(segmentVmem));
+	assert_true(chunkSizeInBits >= BITS_IN_MB && maxChunksPerQuery == MB_TO_CHUNKS(sessionVmem));
 }
 
 /*
