@@ -175,7 +175,7 @@ class PgControlData(Command):
 
 
 class PgBaseBackup(Command):
-    def __init__(self, pgdata, host, port, create_slot=False, replication_slot_name=None, excludePaths=[], ctxt=LOCAL, remoteHost=None, forceoverwrite=False, target_gp_dbid=0, logfile=None,
+    def __init__(self, pgdata, host, port, replication_slot_name=None, excludePaths=[], ctxt=LOCAL, remoteHost=None, forceoverwrite=False, target_gp_dbid=0, logfile=None,
                  recovery_mode=True):
         cmd_tokens = ['pg_basebackup', '-c', 'fast']
         cmd_tokens.append('-D')
@@ -184,10 +184,6 @@ class PgBaseBackup(Command):
         cmd_tokens.append(host)
         cmd_tokens.append('-p')
         cmd_tokens.append(port)
-
-        if create_slot:
-            cmd_tokens.append('--create-slot')
-
         cmd_tokens.extend(self._xlog_arguments(replication_slot_name))
 
         # GPDB_12_MERGE_FIXME: avoid checking checksum for heap tables

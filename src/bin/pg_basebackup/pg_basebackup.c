@@ -1556,7 +1556,6 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * new xlog files into pg_xlog directory.
 						 */
 						if (pg_str_endswith(filename, "/pg_log") ||
-							pg_str_endswith(filename, "/log") ||
 							pg_str_endswith(filename, "/pg_wal") ||
 							pg_str_endswith(filename, "/pg_xlog"))
 							continue;
@@ -1868,6 +1867,18 @@ BaseBackup(void)
 	 */
 	if (!RunIdentifySystem(conn, &sysidentifier, &latesttli, NULL, NULL))
 		exit(1);
+
+	/*
+	 * Greenplum only: create replication slot.  This replication slot is used
+	 * for primary/mirror and master/standby WAL replication.
+	 *
+	 * GPDB_12_MERGE_FIXME: Is this needed? Can't we expect the user/calling
+	 * program to use the --create-slot option?
+	 */
+	if (replication_slot && !create_slot)
+	{
+		CreateReplicationSlot(conn, replication_slot, NULL, false, true, false, false);
+	}
 
 	/*
 	 * Start the actual backup
