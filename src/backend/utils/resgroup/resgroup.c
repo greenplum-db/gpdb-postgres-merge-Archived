@@ -3669,6 +3669,9 @@ shouldBypassQuery(const char *query_string)
 	{
 		parsetree = (Node *) lfirst(parsetree_item);
 
+		if (nodeTag(parsetree) == T_RawStmt)
+			parsetree = ((RawStmt *)parsetree)->stmt;
+
 		if (nodeTag(parsetree) != T_VariableSetStmt &&
 			nodeTag(parsetree) != T_VariableShowStmt)
 		{

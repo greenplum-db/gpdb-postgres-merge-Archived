@@ -54,7 +54,6 @@ test_boundaries_of_CreateSharedSnapshotArray(void **state)
 		 * Assert that each slot in SharedSnapshotStruct has an associated
 		 * dynamically allocated LWLock.
 		 */
-		s->snapshot.satisfies = HeapTupleSatisfiesMVCC;
 		assert_true(s->slotLock == &fakeLockBase[i].lock);
 		/*
 		 * Assert that every slot xip array falls inside the boundaries of the
