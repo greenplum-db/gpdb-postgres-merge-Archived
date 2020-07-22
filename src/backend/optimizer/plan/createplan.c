@@ -58,8 +58,8 @@
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbtargeteddispatch.h"
 #include "cdb/cdbvars.h"
+#include "optimizer/joinpartprune.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/planpartition.h"
 #include "optimizer/planshare.h"
 #include "parser/parse_oper.h"	/* ordering_oper_opid */
 #include "rewrite/rewriteManip.h"

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * planpartition.c
+ * joinpartprune.c
  *	  Transforms to produce plans that achieve dynamic partition elimination.
  *
  * This file contains GPDB specific code, to perform partition pruning
@@ -79,7 +79,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/optimizer/plan/planpartition.c
+ *	  src/backend/optimizer/plan/joinpartprune.c
  *
  *-------------------------------------------------------------------------
  */
@@ -87,9 +87,9 @@
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
+#include "optimizer/joinpartprune.h"
 #include "optimizer/paramassign.h"
 #include "optimizer/planmain.h"
-#include "optimizer/planpartition.h"
 #include "optimizer/pathnode.h"
 #include "partitioning/partprune.h"
 #include "cdb/cdbvars.h"

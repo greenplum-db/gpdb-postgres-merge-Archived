@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * planpartition.h
+ * joinpartprune.h
  *	  Transforms to produce plans that achieve join partition pruning
  *
  * Portions Copyright (c) 2011-2013, EMC Corporation
@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	    src/include/optimizer/planpartition.h
+ *	    src/include/optimizer/joinpartprune.h
  *
  *-------------------------------------------------------------------------
  */
 
-#ifndef PLANPARTITION_H
-#define PLANPARTITION_H
+#ifndef JOINPARTPRUNE_H
+#define JOINPARTPRUNE_H
 
 #include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
@@ -32,4 +32,4 @@ extern List *make_partition_join_pruneinfos(struct PlannerInfo *root,
 
 extern Plan *create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *pspath);
 
-#endif /* PLANPARTITION_H */
+#endif /* JOINPARTPRUNE_H */
