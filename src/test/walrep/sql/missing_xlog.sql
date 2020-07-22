@@ -118,7 +118,7 @@ $$;
 checkpoint;
 
 -- start_ignore
-\! gprecoverseg -a
+\! gprecoverseg -av
 -- end_ignore
 -- check the view, we expect to see error, since the WAL files required
 -- by mirror are removed on the corresponding primary
@@ -136,7 +136,7 @@ select wait_for_mirror_down(0::smallint, 30);
 select gp_inject_fault('keep_log_seg', 'reset', dbid)
   from gp_segment_configuration where role='p' and content = 0;
 -- start_ignore
-\! gprecoverseg -aF
+\! gprecoverseg -avF
 -- end_ignore
 -- force the WAL segment to switch over from after previous pg_switch_wal().
 create temp table dummy2 (id int4) distributed randomly;
