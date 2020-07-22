@@ -390,12 +390,7 @@ retry:
 	 * If we found the slot but it's already active in another backend, we
 	 * either error out or retry after a short wait, as caller specified.
 	 */
-	/*
-	 * GPDB_12_MERGE_FIXME Is it safe not checking the pid? Which is required
-	 * by Greenplum, because the CREATE SLOT and START REPLICATION are running
-	 * on different processes.
-	 */
-	if (false && active_pid != MyProcPid)
+	if (active_pid != MyProcPid)
 	{
 		if (nowait)
 			ereport(ERROR,
