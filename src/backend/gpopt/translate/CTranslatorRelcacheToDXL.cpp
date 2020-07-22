@@ -256,14 +256,20 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfo
 {
 	GPOS_ASSERT(NULL != rel);
 
-	return RetrieveRelIndexInfoForNonPartTable(mp, rel);
-#if 0
-	if (gpdb::RelPartIsNone(rel->rd_id) || gpdb::IsLeafPartition(rel->rd_id))
+	if (!gpdb::RelIsPartitioned(rel->rd_id))
 	{
 		return RetrieveRelIndexInfoForNonPartTable(mp, rel);
 	}
+	else
+	{
+		// GPDPB_12_MERGE_FIXME: we do need to retrieve the actual index info
+		// for partitioned tables, but for now we create an empty array for it,
+		// so that we can tolerate mdpart_constraint being NULL in RetrieveRel()
+		CMDIndexInfoArray *md_index_info_array = GPOS_NEW(mp) CMDIndexInfoArray(mp);
+		return md_index_info_array;
+	}
+#if 0
 
-	return NULL;
 	else if (gpdb::RelPartIsRoot(rel->rd_id))
 	{
 		return RetrieveRelIndexInfoForPartTable(mp, rel);
