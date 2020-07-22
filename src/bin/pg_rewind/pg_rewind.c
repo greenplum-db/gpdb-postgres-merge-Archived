@@ -891,7 +891,7 @@ ensureCleanShutdown(const char *argv0)
 			 exec_path, datadir_target, DEVNULL);
 
 	if (system(cmd) != 0)
-		pg_fatal("postgres single-user mode of target instance failed for command: %s\n", cmd);
+		pg_fatal("postgres single-user mode of target instance failed for command: %s", cmd);
 }
 
 static int32
