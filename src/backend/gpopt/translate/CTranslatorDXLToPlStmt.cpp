@@ -3663,8 +3663,11 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan
 	DynamicSeqScan *dyn_seq_scan = MakeNode(DynamicSeqScan);
 
 	dyn_seq_scan->seqscan.scanrelid = index;
+	// GPDB_12_MERGE_FIXME: broken with the Partition Selector refactoring
+#if 0
 	dyn_seq_scan->partIndex = dyn_tbl_scan_dxlop->GetPartIndexId();
 	dyn_seq_scan->partIndexPrintable = dyn_tbl_scan_dxlop->GetPartIndexIdPrintable();
+#endif
 
 	Plan *plan = &(dyn_seq_scan->seqscan.plan);
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
@@ -5351,8 +5354,11 @@ CTranslatorDXLToPlStmt::TranslateDXLBitmapTblScan
 	{
 		DynamicBitmapHeapScan *dscan = MakeNode(DynamicBitmapHeapScan);
 
+		// GPDB_12_MERGE_FIXME: broken with the Partition Selector refactoring
+#if 0
 		dscan->partIndex = part_index_id;
 		dscan->partIndexPrintable = part_idx_printable_id;
+#endif
 
 		bitmap_tbl_scan = &dscan->bitmapheapscan;
 	}
