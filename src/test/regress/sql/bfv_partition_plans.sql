@@ -213,7 +213,10 @@ analyze mpp24151_t;
 -- TEST
 set optimizer_enable_dynamictablescan = off;
 
-select count_operator('select * from mpp24151_t, mpp24151_pt where tid = ptid and pt1 = E''hello0'';','Result');
+-- GPDB_12_MERGE_FIXME: With the big refactoring t how Partition Selectors are
+-- implemented during the v12 merge, I'm not sure if this test is testing anything
+-- useful anymore. And/or it redundant with the tests in 'dpe'?
+select count_operator('select * from mpp24151_t, mpp24151_pt where tid = ptid and pt1 = E''hello0'';','->  Partition Selector');
 select * from mpp24151_t, mpp24151_pt where tid = ptid and pt1 = 'hello0';
 
 -- CLEANUP

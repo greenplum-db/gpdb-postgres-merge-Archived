@@ -1224,20 +1224,14 @@ SELECT t1.a, t2.b FROM prt1 t1, prt2 t2 WHERE t1::text = t2::text AND t1.a = t2.
                Sort Key: t1.a, ((((t1.*)::prt1))::text)
                ->  Result
                      ->  Append
-                           ->  Result
-                                 One-Time Filter: PartSelected
-                                 ->  Seq Scan on prt1_p1 t1
-                           ->  Result
-                                 One-Time Filter: PartSelected
-                                 ->  Seq Scan on prt1_p2 t1_1
-                           ->  Result
-                                 One-Time Filter: PartSelected
-                                 ->  Seq Scan on prt1_p3 t1_2
+                           Partition Selectors: $0
+                           ->  Seq Scan on prt1_p1 t1
+                           ->  Seq Scan on prt1_p2 t1_1
+                           ->  Seq Scan on prt1_p3 t1_2
          ->  Sort
                Sort Key: t2.b, ((((t2.*)::prt2))::text)
                ->  Result
-                     ->  Partition Selector for t1 (dynamic scan id: 1)
-                           Filter: t2.b
+                     ->  Partition Selector (selector id: $0)
                            ->  Redistribute Motion 3:3  (slice2; segments: 3)
                                  Hash Key: t2.b
                                  ->  Append
@@ -1245,7 +1239,7 @@ SELECT t1.a, t2.b FROM prt1 t1, prt2 t2 WHERE t1::text = t2::text AND t1.a = t2.
                                        ->  Seq Scan on prt2_p2 t2_1
                                        ->  Seq Scan on prt2_p3 t2_2
  Optimizer: Postgres query optimizer
-(29 rows)
+(23 rows)
 
 SELECT t1.a, t2.b FROM prt1 t1, prt2 t2 WHERE t1::text = t2::text AND t1.a = t2.b ORDER BY t1.a;
  a  | b  
@@ -2149,30 +2143,24 @@ ANALYZE prt4_n;
 -- partitionwise join can not be applied if the partition ranges differ
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2 WHERE t1.a = t2.a;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Join
          Hash Cond: (t1.a = t2.a)
          ->  Append
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_p1 t1
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_p2 t1_1
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_p3 t1_2
+               Partition Selectors: $0
+               ->  Seq Scan on prt1_p1 t1
+               ->  Seq Scan on prt1_p2 t1_1
+               ->  Seq Scan on prt1_p3 t1_2
          ->  Hash
-               ->  Partition Selector for t1 (dynamic scan id: 1)
-                     Filter: t2.a
+               ->  Partition Selector (selector id: $0)
                      ->  Append
                            ->  Seq Scan on prt4_n_p1 t2
                            ->  Seq Scan on prt4_n_p2 t2_1
                            ->  Seq Scan on prt4_n_p3 t2_2
  Optimizer: Postgres query optimizer
-(21 rows)
+(15 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2, prt2 t3 WHERE t1.a = t2.a and t1.a = t3.b;
@@ -2235,18 +2223,12 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1, prt2_m t2 WHERE t1.a = (t2.b + t2.
    ->  Hash Join
          Hash Cond: (t1.a = ((t2.b + t2.a) / 2))
          ->  Append
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_m_p1 t1
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_m_p2 t1_1
-               ->  Result
-                     One-Time Filter: PartSelected
-                     ->  Seq Scan on prt1_m_p3 t1_2
+               Partition Selectors: $0
+               ->  Seq Scan on prt1_m_p1 t1
+               ->  Seq Scan on prt1_m_p2 t1_1
+               ->  Seq Scan on prt1_m_p3 t1_2
          ->  Hash
-               ->  Partition Selector for t1 (dynamic scan id: 1)
-                     Filter: ((t2.b + t2.a) / 2)
+               ->  Partition Selector (selector id: $0)
                      ->  Redistribute Motion 3:3  (slice2; segments: 3)
                            Hash Key: ((t2.b + t2.a) / 2)
                            ->  Append
@@ -2254,7 +2236,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1, prt2_m t2 WHERE t1.a = (t2.b + t2.
                                  ->  Seq Scan on prt2_m_p2 t2_1
                                  ->  Seq Scan on prt2_m_p3 t2_2
  Optimizer: Postgres query optimizer
-(23 rows)
+(17 rows)
 
 -- equi-join between out-of-order partition key columns does not qualify for
 -- partitionwise join
@@ -2396,18 +2378,12 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
          ->  Hash Join
                Hash Cond: (t2.b = t1.a)
                ->  Append
-                     ->  Result
-                           One-Time Filter: PartSelected
-                           ->  Seq Scan on prt2_p1 t2
-                     ->  Result
-                           One-Time Filter: PartSelected
-                           ->  Seq Scan on prt2_p2 t2_1
-                     ->  Result
-                           One-Time Filter: PartSelected
-                           ->  Seq Scan on prt2_p3 t2_2
+                     Partition Selectors: $0
+                     ->  Seq Scan on prt2_p1 t2
+                     ->  Seq Scan on prt2_p2 t2_1
+                     ->  Seq Scan on prt2_p3 t2_2
                ->  Hash
-                     ->  Partition Selector for t2 (dynamic scan id: 2)
-                           Filter: t1.a
+                     ->  Partition Selector (selector id: $0)
                            ->  Broadcast Motion 3:3  (slice2; segments: 3)
                                  ->  Append
                                        ->  Seq Scan on prt1_p1 t1
@@ -2417,5 +2393,5 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
                                        ->  Seq Scan on prt1_p3 t1_2
                                              Filter: (b = 0)
  Optimizer: Postgres query optimizer
-(28 rows)
+(22 rows)
 

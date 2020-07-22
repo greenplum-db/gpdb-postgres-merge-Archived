@@ -2368,7 +2368,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{0,0,1}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2381,15 +2383,14 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{0,0,1}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{0,0,1}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{0,0,1}'::integer[]))
-   (slice0)    Executor memory: 203K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{0,0,1}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 -- Ensure the same partitions are pruned when we make the nested loop
 -- parameter an Expr rather than a plain Param.
@@ -2437,7 +2438,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 100kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,3}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2462,15 +2465,14 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{1,0,3}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a3_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{1,0,3}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,3}'::integer[]))
-   (slice0)    Executor memory: 332K bytes.
-   (slice1)    Executor memory: 599K bytes avg x 2 workers, 599K bytes max (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 110kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{1,0,3}'::integer[]))
  Optimizer: Postgres query optimizer
-(40 rows)
+(41 rows)
 
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
                                         explain_parallel_append                                        
@@ -2482,7 +2484,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2495,20 +2499,19 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,0}'::integer[]))
-   (slice0)    Executor memory: 196K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{1,0,0}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 delete from lprt_a where a = 1;
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
-                                        explain_parallel_append                                        
--------------------------------------------------------------------------------------------------------
+                                    explain_parallel_append                                     
+------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
@@ -2516,28 +2519,29 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b1_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
                                  ->  Bitmap Heap Scan on ab_a1_b2 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
                                  ->  Bitmap Heap Scan on ab_a1_b3 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,0}'::integer[]))
-   (slice0)    Executor memory: 196K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=100 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=100 loops=1)
+                                       Filter: (a = ANY ('{1,0,0}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 reset enable_hashjoin;
 reset enable_mergejoin;
