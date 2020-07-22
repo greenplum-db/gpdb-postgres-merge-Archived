@@ -137,7 +137,7 @@ begin
 	-- memorized above.
 	loop
 		all_caught_up = true;
-		for r in select gp_segment_id, replay_location as loc from gp_stat_replication loop
+		for r in select gp_segment_id, replay_lsn as loc from gp_stat_replication loop
 			replay_locs[r.gp_segment_id] = r.loc;
 			if r.loc < checkpoint_locs[r.gp_segment_id] then
 				all_caught_up = false;

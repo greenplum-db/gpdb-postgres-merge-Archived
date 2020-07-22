@@ -91,8 +91,8 @@ select gp_inject_fault_infinite('walrecv_skip_flush', 'skip', dbid)
 select pg_terminate_backend(pid) from pg_stat_replication;
 
 -- Should be set to 1 WAL segment by default.  Standby is considered
--- caught up if its flush_location is less than 1 WAL segment (64MB)
--- away from sent_location.
+-- caught up if its flush_lsn is less than 1 WAL segment (64MB)
+-- away from sent_lsn.
 show repl_catchup_within_range;
 
 -- Start a transaction, execute a DDL and commit.  The commit should
@@ -139,7 +139,7 @@ select gp_inject_fault('wal_sender_loop', 'reset', dbid)
 
 -- Once this fault is triggered, WAL sender should have set
 -- caughtup_within_range to true because difference between
--- sent_location and flush_location is within 1 WAL segment (64) MB.
+-- sent_lsn and flush_lsn is within 1 WAL segment (64) MB.
 select gp_wait_until_triggered_fault(
        'wal_sender_after_caughtup_within_range', 1, dbid)
        from gp_segment_configuration where content=-1 and role='p';
