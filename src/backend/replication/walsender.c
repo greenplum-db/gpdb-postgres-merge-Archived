@@ -3669,7 +3669,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			if (priority == 0)
 				values[10] = CStringGetTextDatum("async");
 			else if (list_member_int(sync_standbys, i))
-				values[10] = SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY ?
+				values[10] = (IS_QUERY_DISPATCHER() || SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY) ?
 					CStringGetTextDatum("sync") : CStringGetTextDatum("quorum");
 			else
 				values[10] = CStringGetTextDatum("potential");

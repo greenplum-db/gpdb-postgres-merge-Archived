@@ -144,6 +144,12 @@ static bool SyncRepQueueIsOrderedByLSN(int mode);
  * represents a commit record.  If it doesn't, then we wait only for the WAL
  * to be flushed if synchronous_commit is set to the higher level of
  * remote_apply, because only commit records provide apply feedback.
+ *
+ * GPDB_12_MERGE_FIXME: we now have quite few hacks for IS_QUERY_DISPATCHER to
+ * internally treat it as SYNC rep and not using the GUC to make it
+ * happen. All the places in syncrep.c and walsender.c having conditionals for
+ * IS_QUERY_DISPATCHER should be removed and we should try to use proper GUC
+ * mechanism to force sync nature for master-standby as well.
  */
 void
 SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
@@ -230,13 +236,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 * condition but we'll be fetching that cache line anyway so it's likely
 	 * to be a low cost check.
 	 */
-	/*
-	 * GPDB_12_MERGE_FIXME: We used to only exit early for segments, but this
-	 * is now blocking master even if we use an asynchronous standby. Look at
-	 * commit 7f6066eaac03 for more details of how to change to synchronous
-	 * standby. Probably should be done in master branch.
-	 */
-	if (!WalSndCtl->sync_standbys_defined ||
+	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
 		lsn <= WalSndCtl->lsn[mode])
 	{
 		elogif(debug_walrepl_syncrep, LOG,
@@ -556,7 +556,7 @@ SyncRepReleaseWaiters(void)
 	{
 		announce_next_takeover = false;
 
-		if (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
+		if (IS_QUERY_DISPATCHER() || SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
 			ereport(LOG,
 					(errmsg("standby \"%s\" is now a synchronous standby with priority %u",
 							application_name, MyWalSnd->sync_standby_priority)));
@@ -634,7 +634,12 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	 * Quick exit if we are not managing a sync standby or there are not
 	 * enough synchronous standbys.
 	 */
-	if (!(*am_sync) ||
+	if (IS_QUERY_DISPATCHER())
+	{
+		if (list_length(sync_standbys) == 0)
+			return false;
+	}
+	else if (!(*am_sync) ||
 		SyncRepConfig == NULL ||
 		list_length(sync_standbys) < SyncRepConfig->num_sync)
 	{
@@ -655,7 +660,8 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	 * we can use SyncRepGetOldestSyncRecPtr() to calculate the synced
 	 * positions even in a quorum-based sync replication.
 	 */
-	if (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
+	if (IS_QUERY_DISPATCHER() ||
+		SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
 	{
 		SyncRepGetOldestSyncRecPtr(writePtr, flushPtr, applyPtr,
 								   sync_standbys);
@@ -778,19 +784,42 @@ cmp_lsn(const void *a, const void *b)
  * On return, *am_sync is set to true if this walsender is connecting to
  * sync standby. Otherwise it's set to false.
  */
-/*
- * GPDB_12_MERGE_FIXME: This always returns an empty list for QD, which
- * effectively makes the replication asynchronous between QD and standby. But
- * at least we're not crashing when trying to access SyncRepConfig. If you want
- * to make the replication synchronous then check out these commits: b8f98fc
- * and 7f6066e.
- */
 List *
 SyncRepGetSyncStandbys(bool *am_sync)
 {
+	List	   *result = NIL;
+	bool		syncStandbyPresent;
+	int			i;
+	volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
+								 * rearrangement */
+
 	/* Set default result */
 	if (am_sync != NULL)
 		*am_sync = false;
+
+	/* GPDB_12_MERGE_FIXME: Should this be in SyncRepGetSyncStandbysQuorum()
+	 * instead? */
+	if (IS_QUERY_DISPATCHER())
+	{
+		for (i = 0; i < max_wal_senders; i++)
+		{
+			walsnd = &WalSndCtl->walsnds[i];
+			SpinLockAcquire(&walsnd->mutex);
+			syncStandbyPresent = (walsnd->pid != 0)
+				&& ((walsnd->state == WALSNDSTATE_STREAMING)
+				|| (walsnd->state == WALSNDSTATE_CATCHUP &&
+				walsnd->caughtup_within_range));
+			SpinLockRelease(&walsnd->mutex);
+
+			if (syncStandbyPresent)
+			{
+				result = lappend_int(result, i);
+				if (am_sync)
+					*am_sync = true;
+				return result;
+			}
+		}
+	}
 
 	/* Quick exit if sync replication is not requested */
 	if (SyncRepConfig == NULL)
