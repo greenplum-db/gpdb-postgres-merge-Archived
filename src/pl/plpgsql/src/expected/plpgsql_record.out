@@ -1,6 +1,16 @@
 --
 -- Tests for PL/pgSQL handling of composite (record) variables
 --
+-- GPDB:
+-- Insert to "mutable" table results in random distribution of tuples
+-- as distribution (first) column is dropped by test. Hence, the ctid
+-- printed via function sillytrig() is not consistent as PostgreSQL,
+-- since depends on which segment the tuples land. Hence, add rule to
+-- ignore the ctid.
+-- start_matchsubs
+-- m/NOTICE:  old.ctid = \(0,[12]\)/
+-- s/NOTICE:  old.ctid = \(0,[12]\)/ NOTICE:  old.ctid = \(0,XXX\)/
+-- end_matchsubs
 create type two_int4s as (f1 int4, f2 int4);
 create type two_int8s as (q1 int8, q2 int8);
 -- base-case return of a composite type
