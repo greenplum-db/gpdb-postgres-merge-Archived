@@ -111,7 +111,9 @@ test: alter-table-4
 #test: create-trigger
 test: sequence-ddl
 test: async-notify
-test: vacuum-reltuples
+# vacuum-reltuples uses a cursor to keep page pinned, but in GPDB that doesn't
+# keep it pinned.
+#test: vacuum-reltuples
 test: timeouts
 test: vacuum-concurrent-drop
 test: vacuum-conflict
