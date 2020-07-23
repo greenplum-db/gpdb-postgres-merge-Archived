@@ -1,6 +1,13 @@
 --
 -- Test partitioning planner code
 --
+-- GPDB:
+-- One of the queries EXPLAINed in this file executes on one or two segments,
+-- depending on random choice by the planner. Accept either plan.
+-- start_matchsubs
+-- m/ Gather Motion [12]:1  \(slice1; segments: [12]\)/
+-- s/ Gather Motion [12]:1  \(slice1; segments: [12]\)/ Gather Motion XXX/
+-- end_matchsubs
 create table lp (a char) partition by list (a);
 create table lp_default partition of lp default;
 create table lp_ef partition of lp for values in ('e', 'f');
@@ -1252,18 +1259,13 @@ create table coercepart_ab partition of coercepart for values in ('ab');
 create table coercepart_bc partition of coercepart for values in ('bc');
 create table coercepart_cd partition of coercepart for values in ('cd');
 explain (costs off) select * from coercepart where a in ('ab', to_char(125, '999'));
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)
-   ->  Append
-         ->  Seq Scan on coercepart_ab
-               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-         ->  Seq Scan on coercepart_bc
-               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-         ->  Seq Scan on coercepart_cd
-               Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Gather Motion 2:1  (slice1; segments: 2)
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text = ANY ('{ab," 125"}'::text[]))
  Optimizer: Postgres query optimizer
-(9 rows)
+(4 rows)
 
 explain (costs off) select * from coercepart where a ~ any ('{ab}');
                         QUERY PLAN                        
@@ -2108,13 +2110,11 @@ create function list_part_fn(int) returns int as $$ begin return $1; end;$$ lang
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
                             QUERY PLAN                            
 ------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
-   ->  Append (actual rows=1 loops=1)
-         Subplans Removed: 3
-         ->  Seq Scan on list_part1 (actual rows=1 loops=1)
-               Filter: (a = list_part_fn(1))
+ Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
+   ->  Seq Scan on list_part1 (actual rows=1 loops=1)
+         Filter: (a = 1)
  Optimizer: Postgres query optimizer
-(6 rows)
+(4 rows)
 
 -- Ensure pruning does not take place when the function has a Var parameter
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
@@ -2140,13 +2140,13 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
          ->  Seq Scan on list_part1 (never executed)
-               Filter: (a = (list_part_fn(1) + a))
+               Filter: (a = (1 + a))
          ->  Seq Scan on list_part2 (never executed)
-               Filter: (a = (list_part_fn(1) + a))
+               Filter: (a = (1 + a))
          ->  Seq Scan on list_part3 (never executed)
-               Filter: (a = (list_part_fn(1) + a))
+               Filter: (a = (1 + a))
          ->  Seq Scan on list_part4 (never executed)
-               Filter: (a = (list_part_fn(1) + a))
+               Filter: (a = (1 + a))
  Optimizer: Postgres query optimizer
 (11 rows)
 
@@ -2368,7 +2368,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{0,0,1}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2381,15 +2383,14 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{0,0,1}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{0,0,1}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{0,0,1}'::integer[]))
-   (slice0)    Executor memory: 203K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{0,0,1}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 -- Ensure the same partitions are pruned when we make the nested loop
 -- parameter an Expr rather than a plain Param.
@@ -2437,7 +2438,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 100kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,3}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2462,15 +2465,14 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{1,0,3}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a3_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{1,0,3}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,3}'::integer[]))
-   (slice0)    Executor memory: 332K bytes.
-   (slice1)    Executor memory: 599K bytes avg x 2 workers, 599K bytes max (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 110kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{1,0,3}'::integer[]))
  Optimizer: Postgres query optimizer
-(40 rows)
+(41 rows)
 
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
                                         explain_parallel_append                                        
@@ -2482,7 +2484,9 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
@@ -2495,20 +2499,19 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
                                        ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,0}'::integer[]))
-   (slice0)    Executor memory: 196K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=102 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=102 loops=1)
+                                       Filter: (a = ANY ('{1,0,0}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 delete from lprt_a where a = 1;
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
-                                        explain_parallel_append                                        
--------------------------------------------------------------------------------------------------------
+                                    explain_parallel_append                                     
+------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
@@ -2516,28 +2519,29 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      Merge Cond: (ab_a1_b1.a = a.a)
                      ->  Sort (never executed)
                            Sort Key: ab_a1_b1.a
+                           Sort Method:  quicksort  Memory: 50kB
                            ->  Append (never executed)
+                                 Partition Selectors: $0
                                  ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b1_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
                                  ->  Bitmap Heap Scan on ab_a1_b2 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
                                  ->  Bitmap Heap Scan on ab_a1_b3 (never executed)
                                        Recheck Cond: (a = ANY ('{1,0,0}'::integer[]))
-                                       ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
+                                       ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                                              Index Cond: (a = ANY ('{1,0,0}'::integer[]))
-                     ->  Sort (never executed)
+                     ->  Sort (actual rows=1 loops=1)
                            Sort Key: a.a
-                           ->  Seq Scan on lprt_a a (never executed)
-                                 Filter: (a = ANY ('{1,0,0}'::integer[]))
-   (slice0)    Executor memory: 196K bytes.
-   (slice1)    Executor memory: 442K bytes (seg1).
- Memory used:  128000kB
+                           Sort Method:  quicksort  Memory: 60kB
+                           ->  Partition Selector (selector id: $0) (actual rows=100 loops=1)
+                                 ->  Seq Scan on lprt_a a (actual rows=100 loops=1)
+                                       Filter: (a = ANY ('{1,0,0}'::integer[]))
  Optimizer: Postgres query optimizer
-(28 rows)
+(29 rows)
 
 reset enable_hashjoin;
 reset enable_mergejoin;
@@ -4159,6 +4163,11 @@ create temp table q2 partition of q for values in (2) partition by list (b);
 create temp table q21 partition of q2 for values in (1);
 create temp table q22 partition of q2 for values in (2);
 insert into q22 values (2, 2, 3);
+-- GPDB: This is the query that needs the "matchsubs" rule at the top of the file
+-- The constant third branch of the UNION is executed at random segment. If the
+-- randomly chosen segment is the same as the one that needed for the other branches,
+-- the whole query runs on that one segment. Otherwise, it runs on two segments.
+-- The choice is made randomly, so accept both plans.
 explain (costs off)
 select *
 from (

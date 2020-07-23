@@ -1,3 +1,13 @@
+-- Tests for Dynamic Partition Elimination, or partition pruning in
+-- PostgreSQL terms, based on join quals.
+-- start_matchsubs
+-- m/Memory Usage: \d+\w?B/
+-- s/Memory Usage: \d+\w?B/Memory Usage: ###B/
+-- m/Buckets: \d+/
+-- s/Buckets: \d+/Buckets: ###/
+-- m/Batches: \d+/
+-- s/Batches: \d+/Batches: ###/
+-- end_matchsubs
 drop schema if exists dpe_single cascade;
 NOTICE:  schema "dpe_single" does not exist, skipping
 create schema dpe_single;

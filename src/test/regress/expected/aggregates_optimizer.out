@@ -1,11 +1,11 @@
 --
 -- AGGREGATES
 --
--- avoid bit-exact output here because operations may not be bit-exact.
-SET extra_float_digits = 0;
 -- start_ignore
 SET optimizer_trace_fallback to on;
 -- end_ignore
+-- avoid bit-exact output here because operations may not be bit-exact.
+SET extra_float_digits = 0;
 SELECT avg(four) AS avg_1 FROM onek;
        avg_1        
 --------------------

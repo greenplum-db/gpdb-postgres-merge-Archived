@@ -5113,7 +5113,7 @@ HINT:  Include the partition key or create a part-wise UNIQUE index instead.
 alter table at
     alter column b
 	type numeric;
-ERROR:  cannot alter type of a column used in a partitioning key
+ERROR:  cannot alter type of column used in partition key
 	
 -- MPP-17606 end
 -- MPP-17707 start
