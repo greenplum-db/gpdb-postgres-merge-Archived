@@ -253,13 +253,6 @@ typedef enum NodeTag
 	T_RowIdExpr,
 	T_DistributedBy,
 	T_DMLActionExpr,
-	T_PartDefaultExpr,
-	T_PartBoundExpr,
-	T_PartBoundInclusionExpr,
-	T_PartBoundOpenExpr,
-	T_PartListRuleExpr,
-	T_PartListNullTestExpr,
-	T_TableOidInfo,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)

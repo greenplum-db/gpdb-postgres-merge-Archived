@@ -284,73 +284,6 @@ _readDMLActionExpr(void)
 	READ_DONE();
 }
 
-static PartDefaultExpr *
-_readPartDefaultExpr(void)
-{
-	READ_LOCALS(PartDefaultExpr);
-
-	READ_INT_FIELD(level);
-
-	READ_DONE();
-}
-
-static PartBoundExpr *
-_readPartBoundExpr(void)
-{
-	READ_LOCALS(PartBoundExpr);
-
-	READ_INT_FIELD(level);
-	READ_OID_FIELD(boundType);
-	READ_BOOL_FIELD(isLowerBound);
-
-	READ_DONE();
-}
-
-static PartBoundInclusionExpr *
-_readPartBoundInclusionExpr(void)
-{
-	READ_LOCALS(PartBoundInclusionExpr);
-
-	READ_INT_FIELD(level);
-	READ_BOOL_FIELD(isLowerBound);
-
-	READ_DONE();
-}
-
-static PartBoundOpenExpr *
-_readPartBoundOpenExpr(void)
-{
-	READ_LOCALS(PartBoundOpenExpr);
-
-	READ_INT_FIELD(level);
-	READ_BOOL_FIELD(isLowerBound);
-
-	READ_DONE();
-}
-
-static PartListRuleExpr *
-_readPartListRuleExpr(void)
-{
-	READ_LOCALS(PartListRuleExpr);
-
-	READ_INT_FIELD(level);
-	READ_OID_FIELD(resulttype);
-	READ_OID_FIELD(elementtype);
-
-	READ_DONE();
-}
-
-static PartListNullTestExpr *
-_readPartListNullTestExpr(void)
-{
-	READ_LOCALS(PartListNullTestExpr);
-
-	READ_INT_FIELD(level);
-	READ_ENUM_FIELD(nulltesttype, NullTestType);
-
-	READ_DONE();
-}
-
 /*
  *	Stuff from primnodes.h.
  */
@@ -2394,24 +2327,6 @@ readNodeBinary(void)
 				break;
 			case T_DMLActionExpr:
 				return_value = _readDMLActionExpr();
-				break;
-			case T_PartDefaultExpr:
-				return_value = _readPartDefaultExpr();
-				break;
-			case T_PartBoundExpr:
-				return_value = _readPartBoundExpr();
-				break;
-			case T_PartBoundInclusionExpr:
-				return_value = _readPartBoundInclusionExpr();
-				break;
-			case T_PartBoundOpenExpr:
-				return_value = _readPartBoundOpenExpr();
-				break;
-			case T_PartListRuleExpr:
-				return_value = _readPartListRuleExpr();
-				break;
-			case T_PartListNullTestExpr:
-				return_value = _readPartListNullTestExpr();
 				break;
 			case T_GroupingSet:
 				return_value = _readGroupingSet();

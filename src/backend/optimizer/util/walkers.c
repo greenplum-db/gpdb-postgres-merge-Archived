@@ -569,12 +569,6 @@ plan_tree_walker(Node *node,
 		case T_SetOperationStmt:
 		case T_SpecialJoinInfo:
 		case T_TableValueExpr:
-		case T_PartDefaultExpr:
-		case T_PartBoundExpr:
-		case T_PartBoundInclusionExpr:
-		case T_PartBoundOpenExpr:
-		case T_PartListRuleExpr:
-		case T_PartListNullTestExpr:
 
 		default:
 			return expression_tree_walker(node, walker, context);
@@ -937,7 +931,6 @@ check_collation_walker(Node *node, check_collation_context *context)
 		case T_AlternativeSubPlan:
 		case T_GroupingFunc:
 		case T_DMLActionExpr:
-		case T_PartBoundExpr:
 			collation = exprCollation(node);
 			inputCollation = exprInputCollation(node);
 			if ((InvalidOid != collation && DEFAULT_COLLATION_OID != collation) ||

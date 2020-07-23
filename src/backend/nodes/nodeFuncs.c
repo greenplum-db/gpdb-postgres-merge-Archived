@@ -271,24 +271,6 @@ exprType(const Node *expr)
 		case T_DMLActionExpr:
 			type = INT4OID;
 			break;
-		case T_PartDefaultExpr:
-			type = BOOLOID;
-			break;
-		case T_PartBoundExpr:
-			type = ((PartBoundExpr *) expr)->boundType;
-			break;
-		case T_PartBoundInclusionExpr:
-			type = BOOLOID;
-			break;
-		case T_PartBoundOpenExpr:
-			type = BOOLOID;
-			break;
-		case T_PartListRuleExpr:
-			type = ((PartListRuleExpr *) expr)->resulttype;
-			break;
-		case T_PartListNullTestExpr:
-			type = BOOLOID;
-			break;
 		case T_AggExprId:
 			type = INT4OID;
 			break;
@@ -955,18 +937,6 @@ exprCollation(const Node *expr)
 			break;
 
 		case T_DMLActionExpr:
-		case T_PartDefaultExpr:
-		case T_PartBoundExpr:
-		case T_PartBoundInclusionExpr:
-		case T_PartBoundOpenExpr:
-		case T_PartListRuleExpr:
-		case T_PartListNullTestExpr:
-			/*
-			 * ORCA currently does not support collation,
-			 * so return invalid oid for ORCA only expressions
-			 */
-			coll = InvalidOid;
-			break;
 		case T_AggExprId:
 		case T_RowIdExpr:
 			coll = InvalidOid;
@@ -1956,12 +1926,6 @@ expression_tree_walker(Node *node,
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 		case T_DMLActionExpr:
-		case T_PartDefaultExpr:
-		case T_PartBoundExpr:
-		case T_PartBoundInclusionExpr:
-		case T_PartBoundOpenExpr:
-		case T_PartListRuleExpr:
-		case T_PartListNullTestExpr:
 		case T_AggExprId:
 		case T_RowIdExpr:
 			/* primitive node types with no expression subnodes */
@@ -2693,12 +2657,6 @@ expression_tree_mutator(Node *node,
 		case T_RangeTblRef:
 		case T_String:
 		case T_Null:
-		case T_PartDefaultExpr:
-		case T_PartBoundExpr:
-		case T_PartBoundInclusionExpr:
-		case T_PartBoundOpenExpr:
-		case T_PartListRuleExpr:
-		case T_PartListNullTestExpr:
 			return (Node *) copyObject(node);
 		case T_WithCheckOption:
 			{

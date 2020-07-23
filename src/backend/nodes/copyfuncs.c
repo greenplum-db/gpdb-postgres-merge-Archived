@@ -3548,67 +3548,6 @@ _copyDMLActionExpr(const DMLActionExpr *from)
 	return newnode;
 }
 
-static PartDefaultExpr *
-_copyPartDefaultExpr(const PartDefaultExpr *from)
-{
-	PartDefaultExpr *newnode = makeNode(PartDefaultExpr);
-	COPY_SCALAR_FIELD(level);
-
-	return newnode;
-}
-
-static PartBoundExpr *
-_copyPartBoundExpr(const PartBoundExpr *from)
-{
-	PartBoundExpr *newnode = makeNode(PartBoundExpr);
-	COPY_SCALAR_FIELD(level);
-	COPY_SCALAR_FIELD(boundType);
-	COPY_SCALAR_FIELD(isLowerBound);
-
-	return newnode;
-}
-
-static PartBoundInclusionExpr *
-_copyPartBoundInclusionExpr(const PartBoundInclusionExpr *from)
-{
-	PartBoundInclusionExpr *newnode = makeNode(PartBoundInclusionExpr);
-	COPY_SCALAR_FIELD(level);
-	COPY_SCALAR_FIELD(isLowerBound);
-
-	return newnode;
-}
-
-static PartBoundOpenExpr *
-_copyPartBoundOpenExpr(const PartBoundOpenExpr *from)
-{
-	PartBoundOpenExpr *newnode = makeNode(PartBoundOpenExpr);
-	COPY_SCALAR_FIELD(level);
-	COPY_SCALAR_FIELD(isLowerBound);
-
-	return newnode;
-}
-
-static PartListRuleExpr *
-_copyPartListRuleExpr(const PartListRuleExpr *from)
-{
-	PartListRuleExpr *newnode = makeNode(PartListRuleExpr);
-	COPY_SCALAR_FIELD(level);
-	COPY_SCALAR_FIELD(resulttype);
-	COPY_SCALAR_FIELD(elementtype);
-
-	return newnode;
-}
-
-static PartListNullTestExpr *
-_copyPartListNullTestExpr(const PartListNullTestExpr *from)
-{
-	PartListNullTestExpr *newnode = makeNode(PartListNullTestExpr);
-	COPY_SCALAR_FIELD(level);
-	COPY_SCALAR_FIELD(nulltesttype);
-
-	return newnode;
-}
-
 static RoleSpec *
 _copyRoleSpec(const RoleSpec *from)
 {
@@ -6753,24 +6692,6 @@ copyObjectImpl(const void *from)
 			break;
 		case T_DMLActionExpr:
 			retval = _copyDMLActionExpr(from);
-			break;
-		case T_PartDefaultExpr:
-			retval = _copyPartDefaultExpr(from);
-			break;
-		case T_PartBoundExpr:
-			retval = _copyPartBoundExpr(from);
-			break;
-		case T_PartBoundInclusionExpr:
-			retval = _copyPartBoundInclusionExpr(from);
-			break;
-		case T_PartBoundOpenExpr:
-			retval = _copyPartBoundOpenExpr(from);
-			break;
-		case T_PartListRuleExpr:
-			retval = _copyPartListRuleExpr(from);
-			break;
-		case T_PartListNullTestExpr:
-			retval = _copyPartListNullTestExpr(from);
 			break;
 		case T_RangeTblEntry:
 			retval = _copyRangeTblEntry(from);

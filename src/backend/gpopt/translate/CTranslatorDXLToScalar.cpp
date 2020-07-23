@@ -115,12 +115,16 @@ CTranslatorDXLToScalar::TranslateDXLToScalar
 		{EdxlopScalarArray, &CTranslatorDXLToScalar::TranslateDXLScalarArrayToScalar},
 		{EdxlopScalarArrayRef, &CTranslatorDXLToScalar::TranslateDXLScalarArrayRefToScalar},
 		{EdxlopScalarDMLAction, &CTranslatorDXLToScalar::TranslateDXLScalarDMLActionToScalar},
+#if 0
+		// GPDB_12_MERGE_FIXME: These were removed from the server with the v12 merge
+		// of upstream partitioning. Need something to replace? Need to rip out from GPORCA?
 		{EdxlopScalarPartDefault, &CTranslatorDXLToScalar::TranslateDXLScalarPartDefaultToScalar},
 		{EdxlopScalarPartBound, &CTranslatorDXLToScalar::TranslateDXLScalarPartBoundToScalar},
 		{EdxlopScalarPartBoundInclusion, &CTranslatorDXLToScalar::TranslateDXLScalarPartBoundInclusionToScalar},
 		{EdxlopScalarPartBoundOpen, &CTranslatorDXLToScalar::TranslateDXLScalarPartBoundOpenToScalar},
 		{EdxlopScalarPartListValues, &CTranslatorDXLToScalar::TranslateDXLScalarPartListValuesToScalar},
 		{EdxlopScalarPartListNullTest, &CTranslatorDXLToScalar::TranslateDXLScalarPartListNullTestToScalar},
+#endif
 	};
 
 	const ULONG num_translators = GPOS_ARRAY_SIZE(translators);
@@ -1766,151 +1770,6 @@ CTranslatorDXLToScalar::TranslateDXLDatumGenericToScalar
 	}
 
 	return constant;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartDefaultToScalar
-//
-//	@doc:
-//		Translates a DXL part default into a GPDB part default
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartDefaultToScalar
-	(
-	const CDXLNode *part_default_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartDefault *dxlop = CDXLScalarPartDefault::Cast(part_default_node->GetOperator());
-
-	PartDefaultExpr *expr = MakeNode(PartDefaultExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-
-	return (Expr *) expr;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartBoundToScalar
-//
-//	@doc:
-//		Translates a DXL part bound into a GPDB part bound
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartBoundToScalar
-	(
-	const CDXLNode *part_bound_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartBound *dxlop = CDXLScalarPartBound::Cast(part_bound_node->GetOperator());
-
-	PartBoundExpr *expr = MakeNode(PartBoundExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-	expr->boundType = CMDIdGPDB::CastMdid(dxlop->MdidType())->Oid();
-	expr->isLowerBound = dxlop->IsLowerBound();
-
-	return (Expr *) expr;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartBoundInclusionToScalar
-//
-//	@doc:
-//		Translates a DXL part bound inclusion into a GPDB part bound inclusion
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartBoundInclusionToScalar
-	(
-	const CDXLNode *part_bound_incl_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartBoundInclusion *dxlop = CDXLScalarPartBoundInclusion::Cast(part_bound_incl_node->GetOperator());
-
-	PartBoundInclusionExpr *expr = MakeNode(PartBoundInclusionExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-	expr->isLowerBound = dxlop->IsLowerBound();
-
-	return (Expr *) expr;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartBoundOpenToScalar
-//
-//	@doc:
-//		Translates a DXL part bound openness into a GPDB part bound openness
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartBoundOpenToScalar
-	(
-	const CDXLNode *part_bound_open_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartBoundOpen *dxlop = CDXLScalarPartBoundOpen::Cast(part_bound_open_node->GetOperator());
-
-	PartBoundOpenExpr *expr = MakeNode(PartBoundOpenExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-	expr->isLowerBound = dxlop->IsLowerBound();
-
-	return (Expr *) expr;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartListValuesToScalar
-//
-//	@doc:
-//		Translates a DXL part list values into a GPDB part list values
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartListValuesToScalar
-	(
-	const CDXLNode *part_list_values_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartListValues *dxlop = CDXLScalarPartListValues::Cast(part_list_values_node->GetOperator());
-
-	PartListRuleExpr *expr = MakeNode(PartListRuleExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-	expr->resulttype = CMDIdGPDB::CastMdid(dxlop->GetResultTypeMdId())->Oid();
-	expr->elementtype = CMDIdGPDB::CastMdid(dxlop->GetElemTypeMdId())->Oid();
-
-	return (Expr *) expr;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::TranslateDXLScalarPartListNullTestToScalar
-//
-//	@doc:
-//		Translates a DXL part list values into a GPDB part list null test
-//
-//---------------------------------------------------------------------------
-Expr *
-CTranslatorDXLToScalar::TranslateDXLScalarPartListNullTestToScalar
-	(
-	const CDXLNode *part_list_null_test_node,
-	CMappingColIdVar * //colid_var
-	)
-{
-	CDXLScalarPartListNullTest *dxlop = CDXLScalarPartListNullTest::Cast(part_list_null_test_node->GetOperator());
-
-	PartListNullTestExpr *expr = MakeNode(PartListNullTestExpr);
-	expr->level = dxlop->GetPartitioningLevel();
-	expr->nulltesttype = dxlop->IsNull() ? IS_NULL : IS_NOT_NULL;
-
-	return (Expr *) expr;
 }
 
 //---------------------------------------------------------------------------
