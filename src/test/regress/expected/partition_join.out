@@ -116,29 +116,45 @@ SELECT t1, t2 FROM prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER
 -- right outer join
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 RIGHT JOIN prt2 t2 ON t1.a = t2.b WHERE t2.a = 0 ORDER BY t1.a, t2.b;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Sort
-   Sort Key: t1.a, t2.b
-   ->  Append
-         ->  Hash Right Join
-               Hash Cond: (t1.a = t2.b)
-               ->  Seq Scan on prt1_p1 t1
-               ->  Hash
-                     ->  Seq Scan on prt2_p1 t2
-                           Filter: (a = 0)
-         ->  Hash Right Join
-               Hash Cond: (t1_1.a = t2_1.b)
-               ->  Seq Scan on prt1_p2 t1_1
-               ->  Hash
-                     ->  Seq Scan on prt2_p2 t2_1
-                           Filter: (a = 0)
-         ->  Nested Loop Left Join
-               ->  Seq Scan on prt2_p3 t2_2
-                     Filter: (a = 0)
-               ->  Index Scan using iprt1_p3_a on prt1_p3 t1_2
-                     Index Cond: (a = t2_2.b)
-(20 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: t1.a, t2.b
+   ->  Sort
+         Sort Key: t1.a, t2.b
+         ->  Append
+               ->  Hash Right Join
+                     Hash Cond: (t1.a = t2.b)
+                     ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                           Hash Key: t1.a
+                           ->  Seq Scan on prt1_p1 t1
+                     ->  Hash
+                           ->  Redistribute Motion 1:3  (slice3; segments: 1)
+                                 Hash Key: t2.b
+                                 ->  Seq Scan on prt2_p1 t2
+                                       Filter: (a = 0)
+               ->  Hash Right Join
+                     Hash Cond: (t1_1.a = t2_1.b)
+                     ->  Redistribute Motion 3:3  (slice4; segments: 3)
+                           Hash Key: t1_1.a
+                           ->  Seq Scan on prt1_p2 t1_1
+                     ->  Hash
+                           ->  Redistribute Motion 1:3  (slice5; segments: 1)
+                                 Hash Key: t2_1.b
+                                 ->  Seq Scan on prt2_p2 t2_1
+                                       Filter: (a = 0)
+               ->  Hash Right Join
+                     Hash Cond: (t1_2.a = t2_2.b)
+                     ->  Redistribute Motion 3:3  (slice6; segments: 3)
+                           Hash Key: t1_2.a
+                           ->  Seq Scan on prt1_p3 t1_2
+                     ->  Hash
+                           ->  Redistribute Motion 1:3  (slice7; segments: 1)
+                                 Hash Key: t2_2.b
+                                 ->  Seq Scan on prt2_p3 t2_2
+                                       Filter: (a = 0)
+ Optimizer: Postgres query optimizer
+(36 rows)
 
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 RIGHT JOIN prt2 t2 ON t1.a = t2.b WHERE t2.a = 0 ORDER BY t1.a, t2.b;
   a  |  c   |  b  |  c   
