@@ -1788,13 +1788,14 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
+		/* GPDB_12_MERGE_FIXME: disabling orca by default */
 		{"optimizer", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enable GPORCA."),
 			NULL
 		},
 		&optimizer,
 #ifdef USE_ORCA
-		true,
+		false,
 #else
 		false,
 #endif
