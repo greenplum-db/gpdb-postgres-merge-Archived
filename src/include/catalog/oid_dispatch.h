@@ -46,6 +46,8 @@ extern Oid GetPreassignedOidForDatabase(const char *datname);
 extern void RememberAssignedOidForDatabase(const char *datname, Oid oid);
 extern Oid GetPreassignedOidForEnum(Oid enumtypid, const char *enumlabel);
 extern void RememberAssignedOidForEnum(Oid enumtypid, const char *enumlabel, Oid oid);
+extern Oid GetPreassignedOidForRelation(Oid namespaceId, const char *relname);
+extern Oid GetPreassignedOidForType(Oid namespaceId, const char *typname);
 extern Oid GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								  Oid defaclrole, Oid defaclnamespace, char defaclobjtype);
 extern Oid GetNewOidForExtension(Relation relation, Oid indexId, AttrNumber oidcolumn,

@@ -74,8 +74,6 @@ binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS)
 	char	   *typname = GET_STR(PG_GETARG_TEXT_P(2));
 
 	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_next_toast_pg_type_oid++;
-
 	AddPreassignedOidFromBinaryUpgrade(typoid, TypeRelationId, typname,
 						typnamespaceoid, InvalidOid, InvalidOid);
 
@@ -118,8 +116,6 @@ binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 	char		*relname = GET_STR(PG_GETARG_TEXT_P(2));
 
 	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_next_toast_pg_class_oid++;
-
 	AddPreassignedOidFromBinaryUpgrade(reloid, RelationRelationId, relname,
 									   relnamespace, InvalidOid, InvalidOid);
 

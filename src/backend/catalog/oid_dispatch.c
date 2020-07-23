@@ -128,21 +128,6 @@
 /* #define OID_DISPATCH_DEBUG */
 
 /*
- * In upstream PostgreSQL, the below variables are set before object creation
- * in binary upgrade mode, while Greenplum use the Oid dispatcher functionality
- * for binary upgrade as well.  We do however need these for signalling the
- * TOAST code to ensure that toast tables are created in the new cluster iff
- * they exist in the old. Since Greenplum creates partitioned tables with a
- * single CREATE TABLE statement, the below variables are used as reference
- * counters rather than single-use signals. The fact that Oids are defined as
- * unsigned integers is abused to keep the datatype aligned with upstream and
- * avoid merge conflicts. See documentation in create_toast_table() for a
- * longer discussion on this.
- */
-extern Oid			binary_upgrade_next_toast_pg_class_oid;
-extern Oid			binary_upgrade_next_toast_pg_type_oid;
-
-/*
  * These were received from the QD, and should be consumed by the current
  * statement.
  */
@@ -357,10 +342,15 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 		 * since objects may be created in new cluster which didn't exist in
 		 * the old cluster.
 		 */
-		if (oid == InvalidOid && !IsBinaryUpgrade)
-			elog(ERROR, "no pre-assigned OID for %s tuple \"%s\" (namespace:%u keyOid1:%u keyOid2:%u)",
-				 RelationGetRelationName(relation), searchkey->objname ? searchkey->objname : "",
-				 searchkey->namespaceOid, searchkey->keyOid1, searchkey->keyOid2);
+		if (oid == InvalidOid)
+		{
+			if (IsBinaryUpgrade)
+				oid = GetNewOidWithIndex(relation, indexId, oidcolumn);
+			else
+				elog(ERROR, "no pre-assigned OID for %s tuple \"%s\" (namespace:%u keyOid1:%u keyOid2:%u)",
+					 RelationGetRelationName(relation), searchkey->objname ? searchkey->objname : "",
+					 searchkey->namespaceOid, searchkey->keyOid1, searchkey->keyOid2);
+		}
 	}
 	else if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -569,6 +559,40 @@ RememberAssignedOidForDatabase(const char *datname, Oid oid)
 	dispatch_oids = lappend(dispatch_oids, key);
 
 	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * Return the preassigned OID if it exists, but doesn't allocate or
+ * complain if it doesn't.
+ */
+Oid
+GetPreassignedOidForRelation(Oid namespaceOid, const char *relname)
+{
+	OidAssignment searchkey;
+
+	memset(&searchkey, 0, sizeof(OidAssignment));
+	searchkey.catalog = RelationRelationId;
+	searchkey.namespaceOid = namespaceOid;
+	searchkey.objname = (char *) relname;
+
+	return GetPreassignedOid(&searchkey);
+}
+
+/*
+ * Return the preassigned OID if it exists, but doens't allocate or
+ * complain if it doesn't.
+ */
+Oid
+GetPreassignedOidForType(Oid namespaceOid, const char *typname)
+{
+	OidAssignment searchkey;
+
+	memset(&searchkey, 0, sizeof(OidAssignment));
+	searchkey.catalog = TypeRelationId;
+	searchkey.namespaceOid = namespaceOid;
+	searchkey.objname = (char *) typname;
+
+	return GetPreassignedOid(&searchkey);
 }
 
 /* Enums values have similar issues as databases */

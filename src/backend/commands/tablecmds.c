@@ -2357,7 +2357,11 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 	 * physical truncation will occur in their case.)
 	 */
 	if (reltuple->relkind != RELKIND_RELATION &&
-		reltuple->relkind != RELKIND_PARTITIONED_TABLE)
+		reltuple->relkind != RELKIND_PARTITIONED_TABLE &&
+		(!IsBinaryUpgrade || (
+			reltuple->relkind != RELKIND_AOSEGMENTS &&
+			reltuple->relkind != RELKIND_AOBLOCKDIR &&
+			reltuple->relkind != RELKIND_AOVISIMAP)))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table", relname)));

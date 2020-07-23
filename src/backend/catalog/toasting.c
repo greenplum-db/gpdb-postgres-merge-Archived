@@ -36,9 +36,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-/* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
-
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
 									 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
@@ -177,6 +174,20 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		return false;
 
 	/*
+	 * Toast tables for regular relations go in pg_toast; those for temp
+	 * relations go into the per-backend temp-toast-table namespace.
+	 */
+	if (isTempOrTempToastNamespace(rel->rd_rel->relnamespace))
+		namespaceid = GetTempToastNamespace();
+	else
+		namespaceid = PG_TOAST_NAMESPACE;
+
+	snprintf(toast_relname, sizeof(toast_relname),
+			 "pg_toast_%u", relOid);
+	snprintf(toast_idxname, sizeof(toast_idxname),
+			 "pg_toast_%u_index", relOid);
+
+	/*
 	 * Check to see whether the table actually needs a TOAST table.
 	 */
 	if (!IsBinaryUpgrade)
@@ -199,24 +210,22 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 * should be able to get along without one even if the new version's
 		 * needs_toast_table rules suggest we should have one.  There is a lot
 		 * of daylight between where we will create a TOAST table and where
-		 * one is really necessary to avoid failures, so small cross-version
+		 *		 * one is really necessary to avoid failures, so small cross-version
 		 * differences in the when-to-create heuristic shouldn't be a problem.
 		 * If we tried to create a TOAST table anyway, we would have the
 		 * problem that it might take up an OID that will conflict with some
 		 * old-cluster table we haven't seen yet.
 		 */
-		/*
-		 * In Greenplum, partitioned tables are created in a single CREATE
-		 * TABLE statement instead of each member table individually. The
-		 * Oid preassignments are all done before the CREATE TABLE, so we
-		 * can't use and reset a single oid variable, but instead we use them
-		 * as a reference counter. Await the actuall preassign all before we
-		 * decide whether to require a toast table or not.
-		 *
-		 * if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
-		 *	!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
-		 *	return false;
-		 */
+		if (IsBinaryUpgrade)
+		{
+			Assert(toastOid == InvalidOid);
+			toastOid = GetPreassignedOidForRelation(namespaceid, toast_relname);
+			if (!OidIsValid(toastOid))
+				return false;
+			toast_typid = GetPreassignedOidForType(namespaceid, toast_relname);
+			if (!OidIsValid(toast_typid))
+				return false;
+		}
 	}
 
 	/*
@@ -229,10 +238,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	/*
 	 * Create the toast table and its index
 	 */
-	snprintf(toast_relname, sizeof(toast_relname),
-			 "pg_toast_%u", relOid);
-	snprintf(toast_idxname, sizeof(toast_idxname),
-			 "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(3);
@@ -259,36 +264,12 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	TupleDescAttr(tupdesc, 2)->attstorage = 'p';
 
 	/*
-	 * Toast tables for regular relations go in pg_toast; those for temp
-	 * relations go into the per-backend temp-toast-table namespace.
-	 */
-	if (isTempOrTempToastNamespace(rel->rd_rel->relnamespace))
-		namespaceid = GetTempToastNamespace();
-	else
-		namespaceid = PG_TOAST_NAMESPACE;
-
-	/*
 	 * Use binary-upgrade override for pg_type.oid, if supplied.  We might be
 	 * in the post-schema-restore phase where we are doing ALTER TABLE to
 	 * create TOAST tables that didn't exist in the old cluster.
+	 *
+	 * GPDB: already got the OIDs above
 	 */
-	if (IsBinaryUpgrade)
-	{
-		class_rel = table_open(RelationRelationId, RowExclusiveLock);
-		toastOid = GetNewOidForRelation(class_rel,
-										ClassOidIndexId,
-										Anum_pg_class_oid,
-										toast_relname,
-										namespaceid);
-		table_close(class_rel, RowExclusiveLock);
-		if (!OidIsValid(toastOid))
-			return false;
-		pg_type_desc = table_open(TypeRelationId, RowExclusiveLock);
-		toast_typid = GetNewOidForType(pg_type_desc, TypeOidIndexId,
-								  Anum_pg_type_oid,
-								  toast_relname, namespaceid);
-		table_close(pg_type_desc, RowExclusiveLock);
-	}
 
 	/* Toast table is shared if and only if its parent is. */
 	shared_relation = rel->rd_rel->relisshared;
@@ -369,17 +350,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	coloptions[0] = 0;
 	coloptions[1] = 0;
-
-	if (IsBinaryUpgrade)
-	{
-		class_rel = table_open(RelationRelationId, RowExclusiveLock);
-		toastOid = GetNewOidForRelation(class_rel,
-										ClassOidIndexId,
-										Anum_pg_class_oid,
-										toast_idxname,
-										namespaceid);
-		table_close(class_rel, RowExclusiveLock);
-	}
 
 	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
 				 InvalidOid, InvalidOid,
