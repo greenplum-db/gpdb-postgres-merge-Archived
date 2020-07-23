@@ -4729,6 +4729,20 @@ binary_upgrade_set_namespace_oid(Archive *fout, PQExpBuffer upgrade_buffer,
 
 	simple_oid_list_append(&preassigned_oids, pg_namespace_oid);
 	appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_namespace oid\n");
+
+	/*
+	 * In PostgreSQL, the creation of the public schema is not dumped, because
+	 * it's assumed to exist in a new cluster. But in GPDB, we need to re-create
+	 * it, so that we can set its OID.
+	 *
+	 * GPDB_12_MERGE_FIXME: Or could we rely that it has the same built-in
+	 * OID on all nodes?
+	 */
+	if (strcmp(pg_nspname, "public") == 0)
+	{
+		appendPQExpBuffer(upgrade_buffer,
+						  "DROP SCHEMA IF EXISTS public;");
+	}
 	appendPQExpBuffer(upgrade_buffer,
 	 "SELECT binary_upgrade_set_next_pg_namespace_oid('%u'::pg_catalog.oid, "
 													 "$$%s$$::text);\n\n",
@@ -4749,7 +4763,6 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	Oid			pg_type_array_oid;
 	Oid			pg_type_array_nsoid;
 	char	   *pg_type_array_name;
-	bool		free_name = false;
 
 	simple_oid_list_append(&preassigned_oids, pg_type_oid);
 	appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
@@ -4771,7 +4784,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 	pg_type_array_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typarray")));
 	pg_type_array_nsoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typnamespace")));
-	pg_type_array_name = PQgetvalue(res, 0, PQfnumber(res, "typname"));
+	pg_type_array_name = pstrdup(PQgetvalue(res, 0, PQfnumber(res, "typname")));
 
 	PQclear(res);
 
@@ -4787,6 +4800,8 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 		 */
 		static Oid	next_possible_free_oid = FirstNormalObjectId;
 		bool		is_dup;
+
+		pfree(pg_type_array_name);
 
 		do
 		{
@@ -4804,7 +4819,6 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 		pg_type_array_oid = next_possible_free_oid;
 		pg_type_array_nsoid = pg_type_ns_oid;
 		pg_type_array_name = psprintf("_%s", pg_type_name);
-		free_name = true;
 	}
 
 	if (OidIsValid(pg_type_array_oid))
@@ -4819,8 +4833,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 						  pg_type_array_name);
 	}
 
-	if (free_name)
-		pfree(pg_type_array_name);
+	pfree(pg_type_array_name);
 	destroyPQExpBuffer(upgrade_query);
 }
 

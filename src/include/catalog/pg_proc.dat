@@ -10136,7 +10136,7 @@
   prosrc => 'binary_upgrade_set_missing_value' },
 { oid => '7178', descr => 'for use by pg_upgrade',
   proname => 'binary_upgrade_set_preassigned_oids', provolatile => 'v',
-  proparallel => 'u', prorettype => 'void', proargtypes => '_text',
+  proparallel => 'u', prorettype => 'void', proargtypes => '_oid',
   prosrc => 'binary_upgrade_set_preassigned_oids' },
 { oid => '7179', descr => 'for use by pg_upgrade',
   proname => 'binary_upgrade_set_next_pg_namespace_oid', provolatile => 'v',
