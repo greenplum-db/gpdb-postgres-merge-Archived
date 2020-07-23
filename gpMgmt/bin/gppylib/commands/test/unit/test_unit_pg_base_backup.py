@@ -21,6 +21,7 @@ class TestUnitPgBaseBackup(unittest.TestCase):
 
     def test_base_backup_passes_parameters_necessary_to_create_replication_slot_when_given_slotname(self):
         base_backup = pg.PgBaseBackup(
+            create_slot = True,
             replication_slot_name = 'some-replication-slot-name',
             pgdata = "foo",
             host = "bar",
@@ -34,6 +35,7 @@ class TestUnitPgBaseBackup(unittest.TestCase):
 
     def test_base_backup_does_not_pass_conflicting_xlog_method_argument_when_given_replication_slot(self):
         base_backup = pg.PgBaseBackup(
+            create_slot = True,
             replication_slot_name = 'some-replication-slot-name',
             pgdata = "foo",
             host = "bar",
