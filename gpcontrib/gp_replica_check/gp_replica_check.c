@@ -56,7 +56,7 @@ extern Datum gp_replica_check(PG_FUNCTION_ARGS);
 typedef struct RelfilenodeEntry
 {
 	Oid relfilenode;
-	int relam;
+	Oid relam;
 	int relkind;
 	char relname[NAMEDATALEN];
 	List *segments;
@@ -93,8 +93,8 @@ static RelationTypeData relation_types[MAX_INCLUDE_RELATION_TYPES] = {
 };
 
 static void init_relation_types(char *include_relation_types);
-static RelationTypeData get_relation_type_data(int relam, int relkind);
-static void mask_block(char *pagedata, BlockNumber blkno, int relam, int relkind);
+static RelationTypeData get_relation_type_data(Oid relam, int relkind);
+static void mask_block(char *pagedata, BlockNumber blkno, Oid relam, int relkind);
 static bool compare_files(char* primaryfilepath, char* mirrorfilepath, RelfilenodeEntry *rentry);
 static bool sync_wait(void);
 static HTAB* get_relfilenode_map();
@@ -155,7 +155,7 @@ init_relation_types(char *include_relation_types)
 }
 
 static RelationTypeData
-get_relation_type_data(int relam, int relkind)
+get_relation_type_data(Oid relam, int relkind)
 {
 	/* GPDB_12_MERGE_FIXME: Why doesn't this just look up the AM name from pg_am? */
 	switch(relam)
@@ -186,7 +186,7 @@ get_relation_type_data(int relam, int relkind)
 }
 
 static void
-mask_block(char *pagedata, BlockNumber blockno, int relam, int relkind)
+mask_block(char *pagedata, BlockNumber blockno, Oid relam, int relkind)
 {
 	switch(relam)
 	{
@@ -633,6 +633,10 @@ gp_replica_check(PG_FUNCTION_ARGS)
 							relfilenode)));
 			continue;
 		}
+
+		/* skip if relation has no AM (like a partitioned table or view) */
+		if (rentry->relam == InvalidOid)
+			continue;
 
 		/* skip if relation type not requested by user input */
 		if (!get_relation_type_data(rentry->relam, rentry->relkind).include)
