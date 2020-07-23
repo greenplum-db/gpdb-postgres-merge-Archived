@@ -166,7 +166,7 @@ cdb_build_distribution_keys(PlannerInfo *root, Index rti, GpPolicy *policy)
 										  opcintype,
 										  exprCollation((Node *) expr),
 										  0,
-										  NULL,
+										  bms_make_singleton(rti),
 										  true);
 
 		/* Create a distribution key for it. */
