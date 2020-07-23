@@ -344,7 +344,9 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 {
 	Oid			oid;
 
-	if (Gp_role == GP_ROLE_EXECUTE)
+	searchkey->catalog = RelationGetRelid(relation);
+
+	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
 		oid = GetPreassignedOid(searchkey);
 

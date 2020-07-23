@@ -10119,7 +10119,7 @@
   prosrc => 'binary_upgrade_set_next_pg_enum_oid' },
 { oid => '3590', descr => 'for use by pg_upgrade',
   proname => 'binary_upgrade_set_next_pg_authid_oid', provolatile => 'v',
-  proparallel => 'r', prorettype => 'void', proargtypes => 'oid oid text',
+  proparallel => 'r', prorettype => 'void', proargtypes => 'oid text',
   prosrc => 'binary_upgrade_set_next_pg_authid_oid' },
 { oid => '3591', descr => 'for use by pg_upgrade',
   proname => 'binary_upgrade_create_empty_extension', proisstrict => 'f',

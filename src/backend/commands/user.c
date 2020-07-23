@@ -618,11 +618,14 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
 	 * binary-upgrade override.
+	 *
+	 * GPDB_12_MERGE_FIXME: GetNewOidForAuthId() will return the pre-assigned
+	 * OID, if any, but should we do something special here to check and error out
+	 * if there was no pre-assigned values in binary upgrade mode.
 	 */
+#if 0
 	if (IsBinaryUpgrade)
 	{
-		/* GPDB_12_MERGE_FIXME: how should this work? */
-#if 0
 		if (!OidIsValid(binary_upgrade_next_pg_authid_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -630,10 +633,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 		roleid = binary_upgrade_next_pg_authid_oid;
 		binary_upgrade_next_pg_authid_oid = InvalidOid;
-#endif
-		roleid = InvalidOid;
 	}
 	else
+#endif
 	{
 		roleid = GetNewOidForAuthId(pg_authid_rel, AuthIdOidIndexId,
 									Anum_pg_authid_oid,
