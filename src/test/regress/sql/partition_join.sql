@@ -6,6 +6,10 @@
 -- Enable partitionwise join, which by default is disabled.
 SET enable_partitionwise_join to true;
 
+-- Also enable Nested Loop Joins, which are disabled by default in GPDB,
+-- to get plans more similar to upstream's.
+set enable_nestloop to true;
+
 --
 -- partitioned by a single column
 --
