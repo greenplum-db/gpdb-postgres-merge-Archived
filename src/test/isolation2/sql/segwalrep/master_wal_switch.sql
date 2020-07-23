@@ -8,7 +8,7 @@ SELECT gp_inject_fault('base_backup_post_create_checkpoint', 'suspend', dbid)
 FROM gp_segment_configuration WHERE content=-1 and role='p';
 
 -- Run pg_basebackup which should trigger and suspend at the fault
-1&: SELECT pg_basebackup(hostname, 100, port, NULL,
+1&: SELECT pg_basebackup(hostname, 100, port, false, NULL,
         '/tmp/master_wal_switch_test', true, 'fetch')
     from gp_segment_configuration where content=-1 and role='p';
 
