@@ -1102,7 +1102,7 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 	 * is enough to scan the table, but are we updating them, too? If not,
 	 * NoLock might be enough?
 	 */
-	oid_list = find_all_inheritors(attrelid, AccessShareLock, NULL);
+	oid_list = find_all_inheritors(attrelid, NoLock, NULL);
 	foreach(lc, oid_list)
 	{
 		Oid			partRelid = lfirst_oid(lc);

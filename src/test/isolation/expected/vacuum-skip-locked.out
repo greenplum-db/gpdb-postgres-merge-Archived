@@ -116,17 +116,6 @@ step commit:
 	COMMIT;
 
 
-starting permutation: lock_access_exclusive analyze_all_parts commit
-step lock_access_exclusive: 
-	BEGIN;
-	LOCK part1 IN ACCESS EXCLUSIVE MODE;
-
-step analyze_all_parts: ANALYZE (SKIP_LOCKED) parted; <waiting ...>
-step commit: 
-	COMMIT;
-
-step analyze_all_parts: <... completed>
-
 starting permutation: lock_access_exclusive vac_analyze_specified commit
 step lock_access_exclusive: 
 	BEGIN;
@@ -137,17 +126,6 @@ step vac_analyze_specified: VACUUM (ANALYZE, SKIP_LOCKED) part1, part2;
 step commit: 
 	COMMIT;
 
-
-starting permutation: lock_access_exclusive vac_analyze_all_parts commit
-step lock_access_exclusive: 
-	BEGIN;
-	LOCK part1 IN ACCESS EXCLUSIVE MODE;
-
-step vac_analyze_all_parts: VACUUM (ANALYZE, SKIP_LOCKED) parted; <waiting ...>
-step commit: 
-	COMMIT;
-
-step vac_analyze_all_parts: <... completed>
 
 starting permutation: lock_access_exclusive vac_full_specified commit
 step lock_access_exclusive: 

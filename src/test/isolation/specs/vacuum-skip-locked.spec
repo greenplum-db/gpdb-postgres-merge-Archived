@@ -52,8 +52,13 @@ permutation "lock_share" "vac_full_all_parts" "commit"
 permutation "lock_access_exclusive" "vac_specified" "commit"
 permutation "lock_access_exclusive" "vac_all_parts" "commit"
 permutation "lock_access_exclusive" "analyze_specified" "commit"
-permutation "lock_access_exclusive" "analyze_all_parts" "commit"
+# GPDB: This blocks in GPDB, because the ANALYZE tries to acquire inherited
+# sample on segments, which blocks. We consider that OK, even though it's
+# different from upstream. Even in PostgreSQL, the documentation for
+# SKIP_LOCKED says that it may still block if it needs to acquire sample
+# rows from the partitions.
+#permutation "lock_access_exclusive" "analyze_all_parts" "commit"
 permutation "lock_access_exclusive" "vac_analyze_specified" "commit"
-permutation "lock_access_exclusive" "vac_analyze_all_parts" "commit"
+#permutation "lock_access_exclusive" "vac_analyze_all_parts" "commit"
 permutation "lock_access_exclusive" "vac_full_specified" "commit"
 permutation "lock_access_exclusive" "vac_full_all_parts" "commit"
