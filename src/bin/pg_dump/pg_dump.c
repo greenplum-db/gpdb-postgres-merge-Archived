@@ -17539,8 +17539,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			/*
 			 * If this is a partition hierarchy parent, dump the Oid
 			 * preassignments for each partition member individually.
+			 *
+			 * GPDB_12_MERGE_FIXME: Disabled when dumping GPDB 7. But do
+			 * we need it when dumping older versions, either? The presumed
+			 * *target* is the current latest version anyway.
 			 */
-			if (tbinfo->parparent)
+			if (tbinfo->parparent && fout->remoteVersion < 100000)
 			{
 				PQExpBuffer 	partquery = createPQExpBuffer();
 				PGresult	   *partres;
