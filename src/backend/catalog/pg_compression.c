@@ -45,6 +45,11 @@
 #include "utils/syscache.h"
 #include "utils/faultinjector.h"
 
+/*
+ * GPDB_12_MERGE_FIXME:
+ *		This enumaration does not fit in pg_compression. Also it should probably
+ *		be treated as a new reloption kind and be unified in reloptions_gp
+ */
 /* names we expect to see in ENCODING clauses */
 char *storage_directive_names[] = {"compresstype", "compresslevel",
 								   "blocksize", NULL};
@@ -531,6 +536,17 @@ compresstype_is_valid(char *comptype)
 }
 
 /*
+ * GPDB_12_MERGE_FIXME:
+ *		This function does not fit pg_compression and should probably be moved
+ *		to pg_attribute_encoding or reloptions_gp.
+ *
+ *		The comment of the function does not match what the function is actually
+ *		doing. Especially for blocksize, it is impossible for the value to be
+ *		unset if an appendonly relation, hence the default is always ignored.
+ *
+ *		Currently used only in reloptions_gp.
+ */
+/*
  * Make encoding (compresstype = ..., blocksize=...) based on
  * currently configured defaults.
  */
@@ -581,6 +597,13 @@ default_column_encoding_clause(Relation rel)
 	return list_make3(e1, e2, e3);
 }
 
+/*
+ * GPDB_12_MERGE_FIXME:
+ *		This function does not fit pg_compression and should probably be moved
+ *		to pg_attribute_encoding or reloptions_gp.
+ *
+ *		Currently used only in typecmds.c
+ */
 bool
 is_storage_encoding_directive(char *name)
 {

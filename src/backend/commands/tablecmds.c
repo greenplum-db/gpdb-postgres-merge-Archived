@@ -949,6 +949,15 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 *
 	 * This is done in dispatcher (and in utility mode). In QE, we receive
 	 * the already-processed options from the QD.
+	 *
+	 * GPDB_12_MERGE_FIXME:
+	 * 		Try to handle attribute encodings in a unified way under the same
+	 * 		interface for CREATE/ALTER statements and remove the diff footprint
+	 * 		with upstream.
+	 *
+	 *		One observed discrepancy between the two statements regarding
+	 *		precedence of, command specific options, environment (gucs), type
+	 *		specific encodings and relation wide options.
 	 */
 	if ((relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
 		 relkind == RELKIND_PARTITIONED_TABLE) &&
@@ -6889,6 +6898,11 @@ static void
 ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 *		This logic can possibly be moved in an encoding specific function
+	 *		during add column executiion, removing the diff with upstream.
+	 */	
 	/* 
 	 * If there's an encoding clause, this better be an append only
 	 * column oriented table.
@@ -7303,6 +7317,16 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
 	add_column_collation_dependency(myrelid, newattnum, attribute.attcollation);
 
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 * 		Try to handle attribute encodings in a unified way under the same
+	 * 		interface for CREATE/ALTER statements and remove the diff footprint
+	 * 		with upstream.
+	 *
+	 *		One observed discrepancy between the two statements regarding
+	 *		precedence of, command specific options, environment (gucs), type
+	 *		specific encodings and relation wide options.
+	 */
 	if (!RelationIsAoCols(rel) && colDef->encoding)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -15998,6 +16022,12 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro,
 			rel->rd_rel->relhasindex)
 			cs->buildAoBlkdir = true;
 
+		/*
+		 * GPDB_12_MERGE_FIXME:
+		 *		Try to unify the logic for encoding: adding/moving/removing etc.
+		 *		The logic is possible to not have to leak outside reloptions or
+		 *		pg_attribute_encoding common code.
+		 */
 		if (RelationIsAoCols(rel))
 		{
 			if (useExistingColumnAttributes)
@@ -17556,6 +17586,12 @@ make_distributedby_for_rel(Relation rel)
 	return dist;
 }
 
+/*
+ * GPDB_12_MERGE_FIXME:
+ *		This interface does not belong here. At worst it can be moved into
+ *		greenplum specific tablecmds_gp; at best into pg_attribute_encoding or
+ *		reloptions_gp.
+ */
 /*
  * Given a relation, get all column encodings for that relation as a list of
  * ColumnReferenceStorageDirective structures.

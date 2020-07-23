@@ -1503,6 +1503,14 @@ find_crsd(const char *column, List *stenc)
  * most transformation, but only later in DefineRelation(). This needs
  * access to possible inherited columns, so it can only be done after
  * expanding them.
+ *
+ * GPDB_12_MERGE_FIXME:
+ *		Attempt to code, precedence, merging and access to possibly existing
+ *		encodings in this function, in a manner similar to
+ *		validateColumnStorageEncodingClauses(). Currently the whole transform,
+ *		merge, validate dance is happening both inside and outside this function
+ *		but not consistently in all cases. Look at CREATE and ALTER table for
+ *		specifics.
  */
 List *
 transformAttributeEncoding(List *columns,

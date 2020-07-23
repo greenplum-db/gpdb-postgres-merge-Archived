@@ -69,6 +69,13 @@ InsertAppendOnlyEntry(Oid relid,
 	values = palloc0(sizeof(Datum) * natts);
 	nulls = palloc0(sizeof(bool) * natts);
 
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 *		Consider not storing the parsed values for blocksize, compresstype,
+	 *		compresslevel and checksum as those are also present in StdRdOptions
+	 *		of Relcache.
+	 */
+
 	if (compresstype)
 		namestrcpy(&compresstype_name, compresstype);
 	else

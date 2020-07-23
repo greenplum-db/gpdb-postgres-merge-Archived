@@ -314,6 +314,12 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			defelp = &collatableEl;
 		else if (is_storage_encoding_directive(defel->defname))
 		{
+			/*
+			 * GPDB_12_MERGE_FIXME:
+			 *		There might be discrepancies between the comment and the
+			 *		command using the type. Validate that the comment is correct
+			 *		for both CREATE and ALTER statements.
+			 */
 			/* 
 			 * This is to define default block size, compress type, and
 			 * compress level. When this type is used in an append only column
@@ -457,6 +463,13 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	if (collatableEl)
 		collation = defGetBoolean(collatableEl) ? DEFAULT_COLLATION_OID : InvalidOid;
 
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 *		Try to use a common function that does the transformation and
+	 *		setting like bellow. This pattern seems to be scattered in various
+	 *		places withing tablecmds, tablecmds_gp, reloptions_gp and possibly
+	 *		others.
+	 */
 	if (encoding)
 	{
 		encoding = transformStorageEncodingClause(encoding, true);
@@ -3862,6 +3875,11 @@ AlterType(AlterTypeStmt *stmt)
 									 false,
 									 false);
 
+	/*
+	 * GPDB_12_MERGE_FIXME:
+	 *		Consider moving this under pg_type that is the owner of that catalog
+	 *		table.
+	 */
 	/* SELECT * FROM pg_type_encoding WHERE typid = :1 FOR UPDATE */
 	pgtypeenc = heap_open(TypeEncodingRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey, Anum_pg_type_encoding_typid,
@@ -3907,6 +3925,10 @@ AlterType(AlterTypeStmt *stmt)
 									NULL);
 }
 
+/*
+ * GPDB_12_MERGE_FIXME:
+ *		Move this function together with add_type_encoding under pg_type.
+ */
 /*
  * Remove the default type encoding for typid.
  */

@@ -1361,6 +1361,14 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
+	 * GPDB_12_MERGE_FIXME:
+	 * 		This is wrong and creates unspecified behaviour when multiple like
+	 * 		clauses are present in the statement.
+	 *
+	 *		Try to use a unified interface for encoding handling in a manner
+	 *		similar to CREATE/ALTER commands.
+	 */
+	/*
 	 * If STORAGE is included, we need to copy over the table storage params
 	 * as well as the attribute encodings.
 	 */
@@ -4783,6 +4791,12 @@ getLikeDistributionPolicy(TableLikeClause *e)
 	return likeDistributedBy;
 }
 
+
+/*
+ * GPDB_12_MERGE_FIXME:
+ *		This function seems to be better suited in pg_type.
+ *		Also consider renaming to match the rest of the family of functions.
+ */
 List *
 TypeNameGetStorageDirective(TypeName *typname)
 {
