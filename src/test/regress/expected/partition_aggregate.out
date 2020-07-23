@@ -74,23 +74,21 @@ SELECT a, sum(b), avg(b), count(*), min(a), max(b) FROM pagg_tab GROUP BY a HAVI
    Merge Key: pagg_tab_p1.a, (sum(pagg_tab_p1.b)), (avg(pagg_tab_p1.b))
    ->  Sort
          Sort Key: pagg_tab_p1.a, (sum(pagg_tab_p1.b)), (avg(pagg_tab_p1.b))
-         ->  Finalize GroupAggregate
+         ->  Finalize HashAggregate
                Group Key: pagg_tab_p1.a
                Filter: (avg(pagg_tab_p1.d) < '15'::numeric)
-               ->  Sort
-                     Sort Key: pagg_tab_p1.a
-                     ->  Append
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_p1.a
-                                 ->  Seq Scan on pagg_tab_p1
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_p2.a
-                                 ->  Seq Scan on pagg_tab_p2
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_p3.a
-                                 ->  Seq Scan on pagg_tab_p3
+               ->  Append
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_p1.a
+                           ->  Seq Scan on pagg_tab_p1
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_p2.a
+                           ->  Seq Scan on pagg_tab_p2
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_p3.a
+                           ->  Seq Scan on pagg_tab_p3
  Optimizer: Postgres query optimizer
-(20 rows)
+(18 rows)
 
 SELECT a, sum(b), avg(b), count(*), min(a), max(b) FROM pagg_tab GROUP BY a HAVING avg(d) < 15 ORDER BY 1, 2, 3;
  a  | sum  |         avg         | count | min | max 
@@ -976,23 +974,21 @@ SELECT a, sum(b), avg(c), count(*) FROM pagg_tab_m GROUP BY a HAVING avg(c) < 22
    Merge Key: pagg_tab_m_p1.a, (sum(pagg_tab_m_p1.b)), (avg(pagg_tab_m_p1.c))
    ->  Sort
          Sort Key: pagg_tab_m_p1.a, (sum(pagg_tab_m_p1.b)), (avg(pagg_tab_m_p1.c))
-         ->  Finalize GroupAggregate
+         ->  Finalize HashAggregate
                Group Key: pagg_tab_m_p1.a
                Filter: (avg(pagg_tab_m_p1.c) < '22'::numeric)
-               ->  Sort
-                     Sort Key: pagg_tab_m_p1.a
-                     ->  Append
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_m_p1.a
-                                 ->  Seq Scan on pagg_tab_m_p1
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_m_p2.a
-                                 ->  Seq Scan on pagg_tab_m_p2
-                           ->  Partial HashAggregate
-                                 Group Key: pagg_tab_m_p3.a
-                                 ->  Seq Scan on pagg_tab_m_p3
+               ->  Append
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_m_p1.a
+                           ->  Seq Scan on pagg_tab_m_p1
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_m_p2.a
+                           ->  Seq Scan on pagg_tab_m_p2
+                     ->  Partial HashAggregate
+                           Group Key: pagg_tab_m_p3.a
+                           ->  Seq Scan on pagg_tab_m_p3
  Optimizer: Postgres query optimizer
-(20 rows)
+(18 rows)
 
 SELECT a, sum(b), avg(c), count(*) FROM pagg_tab_m GROUP BY a HAVING avg(c) < 22 ORDER BY 1, 2, 3;
  a  | sum  |         avg         | count 
