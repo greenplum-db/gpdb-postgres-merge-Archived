@@ -220,6 +220,10 @@ check_hash_partition_usage(void)
 	bool			found = false;
 	char			output_path[MAXPGPATH];
 
+	/* Merge with PostgreSQL v11 introduced hash partitioning again. */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1100)
+		return;
+
 	prep_status("Checking for hash partitioned tables");
 
 	snprintf(output_path, sizeof(output_path), "hash_partitioned_tables.txt");
