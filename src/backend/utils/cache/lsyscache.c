@@ -4265,7 +4265,7 @@ get_index_opfamilies(Oid oidIndex)
 	HeapTuple	htup;
 	List	   *opfam_oids;
     bool		isnull = false;
-	int			indnatts;
+	int			indnkeyatts;
 	Datum		indclassDatum;
 	oidvector  *indclass;
 
@@ -4278,7 +4278,7 @@ get_index_opfamilies(Oid oidIndex)
      * use SysCacheGetAttr() to retrieve number of index attributes, and the oid
 	 * vector of indclass
      */
-    indnatts = DatumGetInt16(SysCacheGetAttr(INDEXRELID, htup, Anum_pg_index_indnatts, &isnull));
+	indnkeyatts = DatumGetInt16(SysCacheGetAttr(INDEXRELID, htup, Anum_pg_index_indnkeyatts, &isnull));
 	Assert(!isnull);
 
     indclassDatum = SysCacheGetAttr(INDEXRELID, htup, Anum_pg_index_indclass, &isnull);
@@ -4287,7 +4287,7 @@ get_index_opfamilies(Oid oidIndex)
     indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	opfam_oids = NIL;
-	for (int i = 0; i < indnatts; i++)
+	for (int i = 0; i < indnkeyatts; i++)
 	{
 		Oid			oidOpClass = indclass->values[i];
 		Oid 		opfam = get_opclass_family(oidOpClass);
