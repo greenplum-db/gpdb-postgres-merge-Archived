@@ -273,12 +273,6 @@ typedef enum NodeTag
 	T_SubPlanState,
 	T_AlternativeSubPlanState,
 	T_DomainConstraintState,
-	T_PartDefaultExprState,
-	T_PartBoundExprState,
-	T_PartBoundInclusionExprState,
-	T_PartBoundOpenExprState,
-	T_PartListRuleExprState,
-	T_PartListNullTestExprState,
 	T_AggExprIdState,
 	T_RowIdExprState,
 
@@ -638,7 +632,6 @@ typedef enum NodeTag
 	T_ExtProtocolData,          /* in access/extprotocol.h */
 	T_ExtProtocolValidatorData, /* in access/extprotocol.h */
 	T_ExternalScanInfo,			/* in access/plannodes.h */
-	T_SelectedParts,            /* in executor/nodePartitionSelector.h */
 	T_CookedConstraint,			/* in catalog/heap.h */
 
     /* CDB: tags for random other stuff */

@@ -1162,12 +1162,8 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * or other such statements that would be created from the main
 					 * CreateStmt by parse analysis. The QD will dispatch those other statements
 					 * separately.
-					 *
-					 * Also, when processing an ALTER TABLE ADD PARTITION, atpxPartAddList()
-					 * passes us an already-transformed statement.
-					 * GPDB_12_MERGE_FIXME: don't need the 'is_add_part' check anymore, right?
 					 */
-					if (Gp_role == GP_ROLE_EXECUTE /* || ((CreateStmt *) parsetree)->is_add_part */)
+					if (Gp_role == GP_ROLE_EXECUTE)
 						stmts = list_make1(parsetree);
 					else
 						stmts = transformCreateStmt((CreateStmt *) parsetree,

@@ -4440,9 +4440,6 @@ copy_generic_opt_arg_list_item:
  *
  *****************************************************************************/
 
-/* GPDB_12_MERGE_FIXME: In GPDB, these took OptTabPartitionBy at the end. Need
- * to re-implement a variable like that. In upstream syntax PARTITION BY must come
- * before WITH */
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptInherit OptFirstPartitionSpec table_access_method_clause OptWith
 			OnCommitOption OptTableSpace
@@ -5560,9 +5557,9 @@ TabPartitionBoundarySpecValList:
 		;
 
 /*
- * GPDB_12_MERGE_FIXME: We don't have these PART_EDGE_* constants anymore
- * In PostgreSQL, the RANGE START is always inclusive and the RANGE END
- * exclusive
+ * In PostgreSQL, the RANGE FROM is always inclusive and the RANGE TO
+ * exclusive, but the old Greenplum syntax with START/END is more
+ * flexible.
  */
 OptTabPartitionRangeInclusive:
 			INCLUSIVE			{ $$ = PART_EDGE_INCLUSIVE; }

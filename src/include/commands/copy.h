@@ -238,7 +238,6 @@ typedef struct CopyStateData
 	int			raw_buf_len;	/* total # of bytes stored */
 
 	/* Greenplum Database specific variables */
-	/* GPDB_12_MERGE_FIXME: cleanup the not used variables */
 	FmgrInfo   *enc_conversion_proc; /* conv proc from exttbl encoding to
 										server or the other way around */
 	bool		escape_off;		/* treat backslashes as non-special? */

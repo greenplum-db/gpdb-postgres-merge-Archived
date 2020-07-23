@@ -1984,16 +1984,13 @@ typedef enum AlterTableType
 	/* CDB: Partitioned Tables */
 	// GPDB_12_MERGE_FIXME: can all this be removed now?
 	AT_PartAdd,					/* Add */
-	AT_PartAddForSplit,			/* Add, as subcommand of a split */
 	AT_PartAlter,				/* Alter */
 	AT_PartDrop,				/* Drop */
 	AT_PartExchange,			/* Exchange */
 	AT_PartRename,				/* Rename */
 	AT_PartSetTemplate,			/* Set Subpartition Template */
 	AT_PartSplit,				/* Split */
-	AT_PartTruncate,			/* Truncate */
-	AT_PartAddInternal,			/* CREATE TABLE time partition addition */
-	AT_PartAttachIndex			/* ALTER INDEX ATTACH PARTITION (not exposed to user) */
+	AT_PartTruncate				/* Truncate */
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -2070,8 +2067,9 @@ typedef struct GpAlterPartitionCmd
 	int         location;   /* token location, or -1 if unknown */
 } GpAlterPartitionCmd;
 
-/* GPDB_12_MERGE_FIXME: In PostgreSQL, the lower boundary is always inclusive
- * and the upper boundary is exclusive. The legacy syntax was more flexible.
+/*
+ * In PostgreSQL, the lower boundary is always inclusive and the upper
+ * boundary is exclusive. The legacy syntax was more flexible.
  */
 typedef enum GpPartitionEdgeBounding
 {

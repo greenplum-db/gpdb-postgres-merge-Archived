@@ -527,6 +527,7 @@ typedef struct ResultRelInfo
  *   Encapsulate the information that is needed to maintain the pid indexes
  * for all dynamic table scans in a plan.
  */
+/* GPDB_12_MERGE_FIXME: dead code now? */
 typedef struct DynamicTableScanInfo
 {
 	/*
@@ -1007,81 +1008,6 @@ typedef struct SetExprState
 	 */
 	FunctionCallInfo fcinfo;
 } SetExprState;
-
-
-/* GPDB_12_MERGE_FIXME: These are legacy GPDB partitioning stuff. Can be removed? */
-
-/* ----------------
- *		PartDefaultExprState node
- * ----------------
- */
-typedef struct PartDefaultExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartDefaultExprState;
-
-/* ----------------
- *		PartBoundExprState node
- * ----------------
- */
-typedef struct PartBoundExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartBoundExprState;
-
-/* ----------------
- *		PartBoundInclusionExprState node
- * ----------------
- */
-typedef struct PartBoundInclusionExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartBoundInclusionExprState;
-
-/* ----------------
- *		PartBoundOpenExprState node
- * ----------------
- */
-typedef struct PartBoundOpenExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartBoundOpenExprState;
-
-/* ----------------
- *		PartListRuleExprState node
- * ----------------
- */
-typedef struct PartListRuleExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartListRuleExprState;
-
-/* ----------------
- *		PartListNullTestExprState node
- * ----------------
- */
-typedef struct PartListNullTestExprState
-{
-	ExprState	xprstate;
-
-	/* PartitionSelectorState where expression evaluator can look for rules */
-	struct PartitionSelectorState *selector;
-} PartListNullTestExprState;
 
 /* ----------------
  *		SubPlanState node

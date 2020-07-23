@@ -4212,15 +4212,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				newcmds = lappend(newcmds, cmd);
 				break;
 
-			case AT_PartAddInternal:	/* Add partition, as part of CREATE TABLE */
-				/* GDPB_12_MERGE_FIXME: need to re-implement this */
-				elog(ERROR, "not implemented");
-#if 0
-				cxt.iscreatepart = true;
-#endif
-				newcmds = lappend(newcmds, cmd);
-				break;
-
 			case AT_AlterColumnType:
 				{
 					ColumnDef  *def = (ColumnDef *) cmd->def;

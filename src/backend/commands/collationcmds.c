@@ -571,7 +571,6 @@ get_icu_locale_comment(const char *localename)
 
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * pg_import_system_collations: add known system collations to pg_collation
  */
 Datum
