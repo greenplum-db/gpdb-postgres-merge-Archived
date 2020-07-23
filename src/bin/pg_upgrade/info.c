@@ -555,9 +555,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 			 CppAsString2(RELKIND_AOSEGMENTS) ", "
 			 CppAsString2(RELKIND_AOBLOCKDIR) ", "
+			 CppAsString2(RELKIND_MATVIEW) " %s) AND "
 	/* workaround for Greenplum 4.3 bugs */
-			 " %s "
-			 CppAsString2(RELKIND_MATVIEW) ") AND "
 			 " %s "
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
@@ -611,7 +610,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "SELECT all_rels.*, n.nspname, c.relname, "
-			 "  c.relstorage, c.relkind, "
+			 "  %s as relstorage, c.relkind, "
 			 "  c.relfilenode, c.reltablespace, %s "
 			 "FROM (SELECT * FROM regular_heap "
 			 "      UNION ALL "
@@ -622,16 +621,31 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "      ON all_rels.reloid = c.oid "
 			 "  JOIN pg_catalog.pg_namespace n "
 			 "     ON c.relnamespace = n.oid "
+			 "  %s"
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "     ON c.reltablespace = t.oid "
 			 "ORDER BY 1;",
+	/*
+	 * GPDB 7 with PostgreSQL v12 merge removed the relstorage column.
+	 * It was replaced with the upstream 'relam'.
+	 */
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 906) ?
+			 "c.relstorage" :
+			 "(CASE WHEN am.amname = 'appendoptimized' THEN 'a'"
+                  " WHEN am.amname = 'aoco' THEN 'c'"
+                  " WHEN am.amname = 'heap' THEN 'h'"
+                  " WHEN c.relkind = 'f' THEN 'x'"
+			      " ELSE '' END)",
+
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during the 8.4 merge
 	 */
 			(GET_MAJOR_VERSION(cluster->major_version) <= 803) ?
-			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
 
+			(GET_MAJOR_VERSION(cluster->major_version) <= 1000) ?
+			 "" : "LEFT OUTER JOIN pg_catalog.pg_am am ON c.relam = am.oid");
 
 	res = executeQueryOrDie(conn, "%s", query);
 

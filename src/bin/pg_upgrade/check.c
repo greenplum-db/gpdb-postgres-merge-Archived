@@ -1155,9 +1155,9 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')",
 						/* GPDB 4.3 support */
 						GET_MAJOR_VERSION(old_cluster.major_version) == 802 ?
-							"0" :
-							"'pg_catalog.regconfig'::pg_catalog.regtype, "
-							"'pg_catalog.regdictionary'::pg_catalog.regtype ");
+							"" :
+							",'pg_catalog.regconfig'::pg_catalog.regtype::pg_catalog.text "
+							",'pg_catalog.regdictionary'::pg_catalog.regtype::pg_catalog.text ");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
