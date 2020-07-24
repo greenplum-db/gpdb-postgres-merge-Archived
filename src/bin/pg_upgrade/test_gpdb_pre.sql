@@ -13,6 +13,9 @@
 --\c regression;
 --\i test_gpdb_pre_drop_partition_indices.sql;
 
+-- The rest of the things we're fixing are in the 'regression' database
+\c regression
+
 -- This one's interesting:
 --    No match found in new cluster for old relation with OID 173472 in database "regression": "public.sales_1_prt_bb_pkey" which is an index on "public.newpart"
 --    No match found in old cluster for new relation with OID 556718 in database "regression": "public.newpart_pkey" which is an index on "public.newpart"
@@ -27,6 +30,20 @@ DROP TABLE IF EXISTS public.test_inh_check_child CASCADE;
 
 -- This view definition changes after upgrade.
 DROP VIEW IF EXISTS v_xpect_triangle_de CASCADE;
+
+-- Similarly, one of the partitions in this table has a DEFAULT that has
+-- a cosmetic difference when it's dumped and restored twice:
+--
+-- CREATE TABLE public.constraint_pt1_1_prt_feb08 (
+--      id integer,
+--      date date,
+-- -    amt numeric(10,2) DEFAULT NULL,
+-- +    amt numeric(10,2) DEFAULT NULL::numeric,
+--      CONSTRAINT amt_check CHECK ((amt > (0)::numeric))
+--  )
+--   DISTRIBUTED BY (id);
+--
+DROP TABLE IF EXISTS constraint_pt1;
 
 -- The dump locations for these protocols change sporadically and cause a false
 -- negative. This may indicate a bug in pg_dump's sort priority for PROTOCOLs.
