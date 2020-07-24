@@ -47,7 +47,7 @@ clean-local:
 $(call recurse,unittest-check)
 unittest-check: unittest-check-local
 unittest-check-local:
-	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test check; fi
+	@if [ -d $(CURDIR)/test ]; then $(MAKE) CFLAGES=-DUNITTEST -C $(CURDIR)/test check; fi
 
 $(call recurse,coverage)
 $(call recurse,install)
