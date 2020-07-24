@@ -112,6 +112,7 @@ begin
           return replstate; /* in func */
       end if; /* in func */
       perform pg_sleep(0.1); /* in func */
+      perform pg_stat_clear_snapshot(); /* in func */
       i := i + 1; /* in func */
    end loop; /* in func */
    return replstate; /* in func */
