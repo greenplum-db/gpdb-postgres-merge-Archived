@@ -70,10 +70,10 @@ static const int dbObjectTypePriority[] =
 	33,							/* DO_DEFAULT_ACL */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
+	25,							/* DO_BLOB_DATA */
 	8,							/* DO_EXTPROTOCOL */
 	21,							/* DO_TYPE_STORAGE_OPTIONS */
 	1,							/* DO_BINARY_UPGRADE */
-	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	26,							/* DO_POST_DATA_BOUNDARY */
 	34,							/* DO_EVENT_TRIGGER */
