@@ -35,12 +35,6 @@ expectSendFtsResponse(const char *expectedMessageType, const FtsResponse *expect
 	expect_any_count(pq_sendint, buf, -1);
 	expect_any_count(pq_sendint, b, -1);
 
-#if 0
-	expect_any_count(enlargeStringInfo, str, -1);
-	expect_any_count(enlargeStringInfo, needed, -1);
-	will_be_called(enlargeStringInfo);
-#endif
-
 	/* verify the schema */
 	expect_value(pq_sendint, i, Natts_fts_message_response);
 	expect_any_count(pq_sendint, i, Natts_fts_message_response * 6 /* calls_per_column_for_schema */);
