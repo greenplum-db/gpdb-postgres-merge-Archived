@@ -248,7 +248,7 @@ function _main() {
       # require `./configure --with-zlib`.
 
       # GPDB_12_MERGE_FIXME: Temporarily commenting out to get CI running
-      # unittest_check_gpdb
+      unittest_check_gpdb
   fi
   include_zstd
   include_quicklz
