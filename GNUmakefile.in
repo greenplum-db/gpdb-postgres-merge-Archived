@@ -166,8 +166,8 @@ $(call recurse,installcheck-world,src/bin/pg_upgrade,check)
 # to put into "make all", either.
 .PHONY : unittest-check
 unittest-check:
-	$(MAKE) -C src/backend unittest-check
-	$(MAKE) -C src/bin unittest-check
+	$(MAKE) CFLAGS=-DUNITTEST -C src/backend unittest-check
+	$(MAKE) CFLAGS=-DUNITTEST -C src/bin unittest-check
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
