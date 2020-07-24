@@ -28,7 +28,9 @@ select pg_basebackup(address, 100, port, true, 'some_replication_slot', '@testta
 -- Then we should have two directories in newly created target tablespace, some_database_with_tablespace and some_database_without_tablespace
 select count_of_items_in_directory('@testtablespace@/some_basebackup_tablespace/100/GPDB_*/');
 
--- Then we should have four files in newly created target tablespace under the some_database_without_tablespace, test, test_index, test_tmp, test_tmp_index
+-- Then we should have two files in newly created target tablespace
+-- under the some_database_without_tablespace, test, test_index. Files
+-- for temp table are not copied.
 select count_of_items_in_database_directory('@testtablespace@/some_basebackup_tablespace/100/GPDB_*/', oid) from pg_database where datname='some_database_without_tablespace';
 
 -- Then we should have the tablespace symlink link to the mapped tablespace directory
@@ -40,7 +42,9 @@ select pg_basebackup(address, 100, port, false, 'some_replication_slot', '@testt
 -- Then we should have two directories in newly created target tablespace, some_database_with_tablespace and some_database_without_tablespace
 select count_of_items_in_directory('@testtablespace@/some_basebackup_tablespace/100/GPDB_*/');
 
--- Then we should have four files in newly created target tablespace under the some_database_without_tablespace, test, test_index, test_tmp, test_tmp_index
+-- Then we should have two files in newly created target tablespace
+-- under the some_database_without_tablespace, test, test_index. Files
+-- for temp table are not copied.
 select count_of_items_in_database_directory('@testtablespace@/some_basebackup_tablespace/100/GPDB_*/', oid) from pg_database where datname='some_database_without_tablespace';
 
 -- Then we should have the tablespace symlink link to the mapped tablespace directory
