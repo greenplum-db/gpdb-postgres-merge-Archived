@@ -56,7 +56,8 @@ insert into pt select i, 'hello' || i, 'world', 'drop this', i % 6 from generate
 
 insert into t select i, i % 6, 'hello' || i, 'bar' from generate_series(0,1) i;
 
-create table t1 as select * from t;
+create table t1(dist int, tid int, t1 text, t2 text);
+insert into t1 select i, i % 6, 'hello' || i, 'bar' from generate_series(1,2) i;
 
 insert into pt1 select * from pt;
 insert into pt1 select dist, pt1, pt2, pt3, ptid-100 from pt;
@@ -211,13 +212,30 @@ reset enable_hashjoin;
 reset enable_nestloop;
 
 --
--- cascading joins
+-- multiple joins
 --
 
-
+-- one of the joined tables can be used for partition elimination, the other can not
 explain (costs off, timing off, summary off, analyze) select * from t, t1, pt where t1.t2 = t.t2 and t1.tid = ptid;
 
 select * from t, t1, pt where t1.t2 = t.t2 and t1.tid = ptid;
+
+-- Both joined tables can be used for partition elimination. Only partitions
+-- that contain matching rows for both joins need to be scanned.
+explain (costs off, timing off, summary off, analyze) select * from t, t1, pt where t1.tid = ptid and t.tid = ptid;
+
+select * from t, t1, pt where t1.tid = ptid and t.tid = ptid;
+
+-- One non-joined table contributing to partition elimination in two different
+-- partitioned tables
+begin;
+-- have to force the planner for it to consider the kind of plan we want
+-- to test
+set local from_collapse_limit = 1;
+set local join_collapse_limit = 1;
+explain (costs off, timing off, summary off, analyze) select * from t1 inner join (select pt1.*, pt2.ptid as ptid2 from pt as pt1, pt as pt2 WHERE pt1.ptid <= pt2.ptid and pt1.dist = pt2.dist ) as ptx ON t1.dist = ptx.dist and t1.tid = ptx.ptid and t1.tid = ptx.ptid2;
+rollback;
+
 
 --
 -- Partitioned table on both sides of the join. This will create a result node as Append node is

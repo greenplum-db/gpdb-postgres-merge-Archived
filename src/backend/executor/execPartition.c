@@ -2049,6 +2049,8 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 	{
 		ListCell   *lc;
 
+		join_selected = bms_add_range(join_selected, 0, nplans - 1);
+
 		foreach (lc, join_prune_paramids)
 		{
 			int			paramid = lfirst_int(lc);
@@ -2067,14 +2069,13 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 				 * is fully executed before the Append.
 				 */
 				elog(WARNING, "partition selector was not fully executed");
-				join_selected = bms_add_range(join_selected, 0, nplans - 1);
 			}
 			else
 			{
 				Assert(IsA(psstate, PartitionSelectorState));
 
-				join_selected = bms_add_members(join_selected,
-												psstate->part_prune_result);
+				join_selected = bms_intersect(join_selected,
+											  psstate->part_prune_result);
 			}
 		}
 
