@@ -81,7 +81,7 @@ typedef struct RelationTypeData
  * If the tool is desired to be used against pre-defined access methods only,
  * then no change would be needed.
  */
-static RelationTypeData relation_types[MAX_INCLUDE_RELATION_TYPES] = {
+static RelationTypeData relation_types[MAX_INCLUDE_RELATION_TYPES+1] = {
 	{"btree", false},
 	{"hash", false},
 	{"gist", false},
