@@ -89,7 +89,8 @@ static RelationTypeData relation_types[MAX_INCLUDE_RELATION_TYPES] = {
 	{"bitmap", false},
 	{"heap", false},
 	{"sequence", false},
-	{"ao", false}
+	{"ao", false},
+	{"unknown relam", false}
 };
 
 static void init_relation_types(char *include_relation_types);
@@ -181,7 +182,7 @@ get_relation_type_data(Oid relam, int relkind)
 			return relation_types[7];
 
 		default:
-			ereport(ERROR, (errmsg("unknown relam %u", relam)));
+			return relation_types[MAX_INCLUDE_RELATION_TYPES];
 	}
 }
 
