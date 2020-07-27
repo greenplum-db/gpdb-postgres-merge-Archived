@@ -139,7 +139,7 @@ class ConfExpSegCmd(Command):
                     cmd = PgBaseBackup(pgdata=self.datadir,
                                        host=self.syncWithSegmentHostname,
                                        port=str(self.syncWithSegmentPort),
-                                       create_slot = False,
+                                       create_slot = True,
                                        replication_slot_name=self.replicationSlotName,
                                        forceoverwrite=self.forceoverwrite,
                                        target_gp_dbid=self.dbid,
