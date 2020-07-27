@@ -411,17 +411,15 @@ $node->command_ok(
 	'pg_basebackup -X stream runs with --no-slot');
 rmtree("$tempdir/backupnoslot");
 
-# GPDB_12_MERGE_FIXME: this fails in upstream, but passes in GPDB because
-# pg_basebackup always creates the slot in GPDB. Is that still valid behavior?
-$node->command_ok(
+$node->command_fails(
 	[
 		'pg_basebackup', '--target-gp-dbid', '123',
         '-D',
 		"$tempdir/backupxs_sl_fail", '-X',
 		'stream',                    '-S',
-		'slotxx'
+		'slot0'
 	],
-	'pg_basebackup passes with nonexistent replication slot in GPDB');
+	'pg_basebackup fails with nonexistent replication slot');
 
 $node->command_fails(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backupxs_slot", '-C' ],
