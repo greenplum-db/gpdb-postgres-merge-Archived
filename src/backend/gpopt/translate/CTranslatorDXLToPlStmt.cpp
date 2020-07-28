@@ -250,7 +250,6 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL
 //	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
 	planned_stmt->intoPolicy = m_dxl_to_plstmt_context->GetDistributionPolicy();
 
-	// GPDB_12_MERGE_FIXME: keep track of param id: type in the translator
 	planned_stmt->paramExecTypes = m_dxl_to_plstmt_context->GetParamTypes();
 	planned_stmt->slices = m_dxl_to_plstmt_context->GetSlices(&planned_stmt->numSlices);
 	planned_stmt->subplan_sliceIds = m_dxl_to_plstmt_context->GetSubplanSliceIdArray();
