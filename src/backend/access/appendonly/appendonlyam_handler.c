@@ -371,41 +371,6 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, MemTupleBinding *m
 	return result;
 }
 
-TupleTableSlot *
-ExecStoreMemTuple(MemTuple tuple,
-				  MemTupleBinding *mt_bind,
-				  TupleTableSlot *slot,
-				  bool shouldFree)
-{
-	ExecClearTuple(slot);
-	memtuple_deform(tuple, mt_bind, slot->tts_values, slot->tts_isnull);
-	if (shouldFree)
-		(slot)->tts_flags |= TTS_FLAG_SHOULDFREE;
-
-	(slot)->tts_flags &= ~TTS_FLAG_EMPTY;
-	return slot;
-}
-
-/*
- * GPDB_12_MERGE_FIXME:
- * So far, it seem only shared input scan require memtuple as tuple store
- * in executor. After Shared scan PR merged, we will do the fellow
- * two callback.
- */
-MemTuple
-ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
-					   char *dest, unsigned int *len)
-{
-	elog(ERROR, "ExecCopySlotMemTupleTo not implemented");
-}
-
-void
-ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
-					   bool shouldFree)
-{
-	elog(ERROR, "ExecForceStoreMemTuple not implemented");
-}
-
 /* ------------------------------------------------------------------------
  * Parallel aware Seq Scan callbacks for appendonly AM
  * ------------------------------------------------------------------------

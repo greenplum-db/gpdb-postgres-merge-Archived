@@ -331,14 +331,6 @@ extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
 extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree, MemTupleBinding *mt_bind);
-extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
-										 MemTupleBinding *mt_bind,
-										 TupleTableSlot *slot,
-										 bool shouldFree);
-extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
-									   char *dest, unsigned int *len);
-extern void ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
-								   bool shouldFree);
 
 #ifndef FRONTEND
 
