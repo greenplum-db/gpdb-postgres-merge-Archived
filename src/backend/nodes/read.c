@@ -55,7 +55,7 @@ save_strtok_states(const char ** save_ptr, const char ** save_begin)
 }
 
 void
-set_strtok_states(char *ptr, char *begin)
+set_strtok_states(const char *ptr, const char *begin)
 {
 	pg_strtok_ptr = ptr;		/* point pg_strtok at the string to read */
 	pg_strtok_begin = begin;	/* CDB: save starting position for debug */

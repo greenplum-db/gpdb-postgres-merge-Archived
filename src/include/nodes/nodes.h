@@ -751,7 +751,7 @@ extern Node *readNodeFromBinaryString(const char *str, int len);
  * nodes/{readfuncs.c,read.c}
  */
 extern void save_strtok_states(const char ** save_ptr, const char ** save_begin);
-extern void set_strtok_states(char *ptr, char *begin);
+extern void set_strtok_states(const char *ptr, const char *begin);
 extern void *stringToNode(const char *str);
 #ifdef WRITE_READ_PARSE_PLAN_TREES
 extern void *stringToNodeWithLocations(const char *str);
