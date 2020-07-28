@@ -168,6 +168,7 @@ SET work_mem='64kB';
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 -- Produce results with sorting.
 SET enable_hashagg=FALSE;
+SET optimizer_enable_hashagg=FALSE;
 SET jit_above_cost=0;
 EXPLAIN (costs off)
 SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;

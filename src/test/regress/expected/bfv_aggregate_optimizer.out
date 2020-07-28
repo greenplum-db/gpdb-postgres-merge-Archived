@@ -204,6 +204,13 @@ reset optimizer_force_multistage_agg;
 --
 -- Testing not picking HashAgg for aggregates without combine functions
 --
+-- GPDB_12_MERGE_FIXME: The reason that we tested that a HashAggregate is
+-- not chosen when an aggregate is missing combine functions is that in
+-- GPDB Hybrid Hash Agg, a HashAggregate can spill to disk, and it requires
+-- the combine function for that. But that got reverted with the v12 merge.
+-- Currently, this does choose a Hash Agg, and as long as we don't do the
+-- spilling like we used to, that's OK. But if we resurrect the Hybrid Hash
+-- Agg spilling, then this test becomes relevant again.
 -- SETUP
 set optimizer_print_missing_stats = off;
 CREATE TABLE attribute_table (product_id integer, attribute_id integer,attribute text, attribute2 text,attribute_ref_lists text,short_name text,attribute6 text,attribute5 text,measure double precision,unit character varying(60)) DISTRIBUTED BY (product_id ,attribute_id);
@@ -1571,6 +1578,9 @@ select array_agg(a order by b desc nulls last) from aggordertest;
 (1 row)
 
 -- begin MPP-14125: if combine function is missing, do not choose hash agg.
+-- GPDB_12_MERGE_FIXME: Like in the 'attribute_table' and 'concat' test earlier in this
+-- file, a Hash Agg is currently OK, since we lost the Hybrid Hash Agg spilling
+-- code in the merge.
 create temp table mpp14125 as select repeat('a', a) a, a % 10 b from generate_series(1, 100)a;
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entry.
 explain select string_agg(a, '') from mpp14125 group by b;

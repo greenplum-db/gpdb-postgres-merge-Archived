@@ -192,14 +192,14 @@ CREATE TABLE parent_part (
 CREATE TABLE child (
         salary          int4,
         manager         name
-) INHERITS (parent_rep) WITH OIDS;
+) INHERITS (parent_rep);
 ERROR:  cannot inherit from replicated table "parent_rep" to create table "child"
 DETAIL:  An inheritance hierarchy cannot contain a mixture of distributed and non-distributed tables.
 -- replicated table can not have parents, should fail
 CREATE TABLE child (
         salary          int4,
         manager         name
-) INHERITS (parent_part) WITH OIDS DISTRIBUTED REPLICATED;
+) INHERITS (parent_part) DISTRIBUTED REPLICATED;
 ERROR:  INHERITS clause cannot be used with DISTRIBUTED REPLICATED clause
 drop table if exists parent_rep;
 drop table if exists parent_part;
@@ -652,7 +652,7 @@ analyze baz;
 create view v_qux as select ctid from qux;
 alter table qux set distributed replicated;
 ERROR:  cannot set distributed replicated because other object depend on its system columns
-DETAIL:  view v_qux depends on table qux column ctid
+DETAIL:  view v_qux depends on column ctid of table qux
 HINT:  system columns of replicated table will be exposed to users after altering, resolve dependencies first
 drop view v_qux;
 alter table qux set distributed replicated;
