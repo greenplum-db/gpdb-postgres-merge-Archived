@@ -545,7 +545,7 @@ convert_line(char *line, replacements *repls)
 	if (repls->amname)
 	{
 		replace_string(line, "@amname@", repls->amname);
-		if (strcmp(repls->amname, "appendoptimized") == 0)
+		if (strcmp(repls->amname, "ao_row") == 0)
 			replace_string(line, "@aoseg@", "aoseg");
 		else
 			replace_string(line, "@aoseg@", "aocsseg");
@@ -652,9 +652,9 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 		while (fgets(line, sizeof(line), infile))
 		{
 			strlcpy(line_row, line, sizeof(line_row));
-			repls->amname = "appendoptimized";
+			repls->amname = "ao_row";
 			convert_line(line_row, repls);
-			repls->amname = "aoco";
+			repls->amname = "ao_column";
 			convert_line(line, repls);
 			fputs(line, outfile_col);
 			fputs(line_row, outfile_row);

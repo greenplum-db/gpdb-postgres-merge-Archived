@@ -651,9 +651,9 @@ alter table aocs_multi_level_part_table drop partition yearYYYY;
 alter table aocs_multi_level_part_table add default partition yearYYYY with (appendonly=true, orientation=column) (default subpartition def);
 SELECT am.amname FROM pg_class c LEFT JOIN pg_am am ON (c.relam = am.oid)
 WHERE c.relname = 'aocs_multi_level_part_table_1_prt_yearyyyy_2_prt_def';
- amname 
---------
- aoco
+  amname   
+-----------
+ ao_column
 (1 row)
 
 -- index on atts 1, 4

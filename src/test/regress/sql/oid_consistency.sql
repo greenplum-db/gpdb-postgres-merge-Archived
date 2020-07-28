@@ -78,7 +78,7 @@ select verify('oid_check_pt1_1_prt_feb08');
 select verify('oid_check_pt1_1_prt_mar08');
 
 CREATE TABLE oid_check_ao_pt1 (id int, date date, amt decimal(10,2) default 0.0)
-USING appendoptimized
+USING ao_row
 DISTRIBUTED BY (id)
 PARTITION BY RANGE (date)
       (PARTITION Jan08 START (date '2008-01-01') INCLUSIVE ,
@@ -92,7 +92,7 @@ select verify('oid_check_ao_pt1_1_prt_mar08');
 
 CREATE TABLE oid_check_co_pt1 (id int, year int, month int CHECK (month > 0),
        day int CHECK (day > 0), region text default('abc'))
-USING aoco
+USING ao_column
 DISTRIBUTED BY (id)
 PARTITION BY RANGE (year)
       SUBPARTITION BY RANGE (month)

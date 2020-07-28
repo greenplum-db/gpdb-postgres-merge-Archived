@@ -16,12 +16,12 @@
   descr => 'heap table access method',
   amname => 'heap', amhandler => 'heap_tableam_handler', amtype => 't' },
 
-{ oid => '3434', oid_symbol => 'APPENDOPTIMIZED_TABLE_AM_OID',
+{ oid => '3434', oid_symbol => 'AO_ROW_TABLE_AM_OID',
   descr => 'row-oriented append-optimized table access method',
-  amname => 'appendoptimized', amhandler => 'appendonly_tableam_handler', amtype => 't' },
-{ oid => '3435', oid_symbol => 'AOCO_TABLE_AM_OID',
+  amname => 'ao_row', amhandler => 'ao_row_tableam_handler', amtype => 't' },
+{ oid => '3435', oid_symbol => 'AO_COLUMN_TABLE_AM_OID',
   descr => 'column-oriented append-optimized table access method',
-  amname => 'aoco', amhandler => 'aoco_tableam_handler', amtype => 't' },
+  amname => 'ao_column', amhandler => 'ao_column_tableam_handler', amtype => 't' },
 
 { oid => '403', oid_symbol => 'BTREE_AM_OID',
   descr => 'b-tree index access method',

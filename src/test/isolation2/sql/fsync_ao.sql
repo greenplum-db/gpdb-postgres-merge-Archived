@@ -20,7 +20,7 @@
 create table fsync_ao(a int, b int) with (appendoptimized = true) distributed by (a);
 create table fsync_co(a int, b int) with (appendoptimized = true, orientation = column) distributed by (a);
 -- no fsync requests should ever be registered for unlogged tables
-create unlogged table ul_fsync_co(a int, b int, c int) using aoco distributed by (a);
+create unlogged table ul_fsync_co(a int, b int, c int) using ao_column distributed by (a);
 
 insert into fsync_ao select i, i from generate_series(1,10)i;
 insert into fsync_co select i, i from generate_series(1,10)i;

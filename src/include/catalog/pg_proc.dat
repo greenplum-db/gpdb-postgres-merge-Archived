@@ -874,16 +874,16 @@
   prorettype => 'table_am_handler', proargtypes => 'internal',
   prosrc => 'heap_tableam_handler' },
 
-{ oid => '4187', oid_symbol => 'APPENDONLY_TABLE_AM_HANDLER_OID',
+{ oid => '4187', oid_symbol => 'AO_ROW_TABLE_AM_HANDLER_OID',
   descr => 'row-oriented append-optimized table access method handler',
-  proname => 'appendonly_tableam_handler', provolatile => 'v',
+  proname => 'ao_row_tableam_handler', provolatile => 'v',
   prorettype => 'table_am_handler', proargtypes => 'internal',
-  prosrc => 'appendoptimized_tableam_handler' },
-{ oid => '4188', oid_symbol => 'AOCO_TABLE_AM_HANDLER_OID',
+  prosrc => 'ao_row_tableam_handler' },
+{ oid => '4188', oid_symbol => 'AO_COLUMN_TABLE_AM_HANDLER_OID',
   descr => 'column-oriented append-optimized table access method handler',
-  proname => 'aoco_tableam_handler', provolatile => 'v',
+  proname => 'ao_column_tableam_handler', provolatile => 'v',
   prorettype => 'table_am_handler', proargtypes => 'internal',
-  prosrc => 'aoco_tableam_handler' },
+  prosrc => 'ao_column_tableam_handler' },
 
 # Index access method handlers
 { oid => '330', descr => 'btree index access method handler',

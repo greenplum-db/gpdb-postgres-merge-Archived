@@ -781,8 +781,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * appendonly relations. This check can not be performed earlier because it
 	 * is needed to know the access method.
 	 */
-	if ((amHandlerOid == APPENDONLY_TABLE_AM_HANDLER_OID ||
-			amHandlerOid == AOCO_TABLE_AM_HANDLER_OID))
+	if ((amHandlerOid == AO_ROW_TABLE_AM_HANDLER_OID ||
+			amHandlerOid == AO_COLUMN_TABLE_AM_HANDLER_OID))
 	{
 		Assert(relkind == RELKIND_MATVIEW || relkind == RELKIND_RELATION );
 
@@ -803,7 +803,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 									 stdRdOptions->compresslevel,
 									 stdRdOptions->compresstype,
 									 stdRdOptions->checksum,
-									 (amHandlerOid == AOCO_TABLE_AM_HANDLER_OID));
+									 (amHandlerOid == AO_COLUMN_TABLE_AM_HANDLER_OID));
 
 		reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
 	} else if (relkind == RELKIND_VIEW)
@@ -970,7 +970,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 														  stmt->options,
 														  relkind == RELKIND_PARTITIONED_TABLE,
 														  &found_enc);
-		if (amHandlerOid != AOCO_TABLE_AM_HANDLER_OID)
+		if (amHandlerOid != AO_COLUMN_TABLE_AM_HANDLER_OID)
 		{
 			/*
 			 * ENCODING options were specified, but the table is not
@@ -7266,8 +7266,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * but starting with PostgreSQL v11, a table doesn't need to be rewritten
 		 * even if a non-NULL default is used. That caused an assertion failure in
 		 * the 'uao_ddl/alter_ao_table_constraint_column' test. To make that go
-		 * away, always force full rewrite on AO and AOCO tables. We should be
-		 * smarter..
+		 * away, always force full rewrite on AO_ROW and AO_COLUMN tables. We
+		 * should be smarter..
 		 */
 
 		if (RelationIsAppendOptimized(rel))
@@ -14156,7 +14156,9 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 	 *
 	 * GPDP_91_MERGE_FIXME: Is it possible to use the new reloptions format to
 	 * avoid replicating each AO reloption here?  How about introducing new
-	 * RELOPT_KIND_AO and RELOPT_KIND_AOCO to relopt_kind?
+	 * RELOPT_KIND_AO and RELOPT_KIND_AOCO to relopt_kind?  As of PostgreSQL v12,
+	 * RELOPT_KIND_APPENDOPTIMIZED is introduced and can be leveraged when
+	 * addressing this fixme.
 	 *
 	 * Future work: could convert from SET to SET WITH codepath which
 	 * can support additional reloption types
@@ -15977,7 +15979,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro,
 	TupleDesc tupdesc = RelationGetDescr(rel);
 
 	/* 
-	 * We cannot CTAS and do per column compression for AOCO tables so we need
+	 * We cannot CTAS and do per column compression for AO_COLUMN tables so we need
 	 * to CREATE and then INSERT.
 	 */
 	if (RelationIsAoCols(rel))
@@ -16038,7 +16040,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro,
 			{
 				/* 
 				 * Need to remove table level compression settings for the
-				 * AOCO case since they're set at the column level.
+				 * AO_COLUMN case since they're set at the column level.
 				 */
 				ListCell *lc;
 

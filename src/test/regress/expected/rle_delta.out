@@ -48,7 +48,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a7     | text                        |           |          |         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_all select i/5, i/12, date '2012-02-02' + i/5,
@@ -155,7 +155,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a7     | text                        |           |          |                                         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (id)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_alter(a1,a2,a3,a4,a5,a6,a7)  select                                                                                                                                           
@@ -204,7 +204,7 @@ Alter table delta_alter Alter column a4 Type interval;
  a7     | text                        |           |          |                                         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (id)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 select 'compression_ratio' as compr_ratio, get_ao_compression_ratio('delta_alter');
@@ -246,7 +246,7 @@ Alter table delta_alter Alter column a5 Type timestamp with time zone;
  a7     | text                        |           |          |                                         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (id)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 select 'compression_ratio' as compr_ratio, get_ao_compression_ratio('delta_alter');
@@ -312,7 +312,7 @@ Checksum: f
 Indexes:
     "dl_ix_bt" bitmap (a1)
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_bitmap_ins select
@@ -393,7 +393,7 @@ Checksum: f
 Indexes:
     "dl_ix_br" btree (a1)
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_btree_ins select
@@ -471,7 +471,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a7     | text                        |           |          |         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_ins_bitmap select
@@ -506,7 +506,7 @@ Checksum: f
 Indexes:
     "dl_ins_bt_ix" bitmap (a3)
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 select 'compression_ratio' as compr_ratio, get_ao_compression_ratio('delta_ins_bitmap');
@@ -568,7 +568,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a7     | text                        |           |          |         | extended |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_ins_btree select
@@ -603,7 +603,7 @@ Checksum: f
 Indexes:
     "dl_br_ix" btree (a3)
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 select 'compression_ratio' as compr_ratio, get_ao_compression_ratio('delta_ins_btree');
@@ -677,7 +677,7 @@ Indexes:
     "dl_bt_ix" bitmap (a1)
     "dl_ix" btree (a3)
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=1, blocksize=8192, checksum=false
 
 Select a1,a2,a6 from delta_blocks where a4 = '20:13:11.232421' order by a1 limit 10;
@@ -743,7 +743,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a9     | text                        |           |          |         | extended |              | rle_type         | 2                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_none select
@@ -813,7 +813,7 @@ DISTRIBUTED BY (b);
  c      | character(100) |           |          |         | extended |              | rle_type         | 1                 | 32768      | 
 Checksum: f
 Distributed by: (b)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, checksum=false
 
 INSERT INTO delta_one SELECT i as a, 0 as b, '' as c FROM generate_series(1, 100000) AS i;
@@ -1108,7 +1108,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a9     | text                        |           |          |         | extended |              | rle_type         | 2                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: checksum=false
 
 Insert into delta_zlib select 
@@ -1206,7 +1206,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 1                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=1, checksum=false
 
 Insert into rle_type_1_delta_null values
@@ -1305,7 +1305,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 2                 | 32768      | 
 Checksum: t
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=2, checksum=true
 
 Insert into rle_type_2_delta_chkt values
@@ -1371,7 +1371,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 2                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=2, checksum=false
 
 Insert into rle_type_2_delta_chkf values
@@ -1440,7 +1440,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 2                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=2, checksum=false
 
 Insert into rle_type_2_delta_null values
@@ -1563,7 +1563,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 3                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=3, checksum=false
 
 Insert into rle_type_3_delta_null values
@@ -1662,7 +1662,7 @@ select attrelid::regclass as relname, attnum, attoptions from pg_class c, pg_att
  a6     | timestamp with time zone    |           |          |         | plain   |              | rle_type         | 4                 | 32768      | 
 Checksum: f
 Distributed by: (a1)
-Access method: aoco
+Access method: ao_column
 Options: compresstype=rle_type, compresslevel=4, checksum=false
 
 Insert into rle_type_4_delta_null values

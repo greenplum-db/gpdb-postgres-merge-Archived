@@ -14,7 +14,7 @@ NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
 CREATE TABLE t_ao_enc_a (LIKE t_ao_enc INCLUDING STORAGE);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 -- Verify default_table_access_method GUC doesn't get used
-SET default_table_access_method="appendoptimized";
+SET default_table_access_method = ao_row;
 CREATE TABLE t_ao_d (LIKE t_ao INCLUDING ALL);
 RESET gp_default_storage_options;
 -- Verify created tables and attributes
@@ -30,15 +30,15 @@ FROM
 		LEFT OUTER JOIN pg_catalog.pg_appendonly a ON (c.oid = a.relid)
 WHERE
 	c.relname LIKE 't_ao%';
-  relname   | amname | columnstore | compresstype | compresslevel 
-------------+--------+-------------+--------------+---------------
- t_ao       | aoco   | t           |              |             0
- t_ao_enc   | aoco   | t           |              |             0
- t_ao_a     | aoco   | t           |              |             0
- t_ao_b     | aoco   | t           |              |             0
- t_ao_c     | heap   |             |              |              
- t_ao_enc_a | aoco   | t           |              |             0
- t_ao_d     | aoco   | t           |              |             0
+  relname   |  amname   | columnstore | compresstype | compresslevel 
+------------+-----------+-------------+--------------+---------------
+ t_ao       | ao_column | t           |              |             0
+ t_ao_enc   | ao_column | t           |              |             0
+ t_ao_a     | ao_column | t           |              |             0
+ t_ao_b     | ao_column | t           |              |             0
+ t_ao_c     | heap      |             |              |              
+ t_ao_enc_a | ao_column | t           |              |             0
+ t_ao_d     | ao_column | t           |              |             0
 (7 rows)
 
 SELECT

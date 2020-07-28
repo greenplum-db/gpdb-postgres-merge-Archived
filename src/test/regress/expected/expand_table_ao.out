@@ -4,7 +4,7 @@ create extension if not exists gp_debug_numsegments;
 drop schema if exists test_expand_table_ao cascade;
 create schema test_expand_table_ao;
 set search_path=test_expand_table_ao,public;
-set default_table_access_method='appendoptimized';
+set default_table_access_method = ao_row;
 set allow_system_table_mods=true;
 -- Hash distributed tables
 select gp_debug_set_create_table_default_numsegments(2);

@@ -70,7 +70,7 @@ SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=tru
 SET gp_default_storage_options = 'blocksize=32768,compresstype=none,checksum=true,blocksize=8';
 SET gp_default_storage_options = 'blocksize=65536,compresstype=none,checksum=true';
 SHOW gp_default_storage_options;
-SET default_table_access_method = 'appendoptimized';
+SET default_table_access_method = ao_row;
 SHOW default_table_access_method;
 CREATE TABLE tenk_ao14 (like tenk_heap);
 SELECT amhandler, reloptions FROM pg_class c, PG_AM a WHERE c.relname = 'tenk_ao14' AND c.relam = a.oid;

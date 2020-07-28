@@ -77,7 +77,7 @@ typedef struct RelationTypeData
  * The AM handler functions need to be looked up and compared instead.
  * E.g. to tell if it's an appendoptimized row oriented table, look up the
  * handler function for that table's AM in pg_am_handler and compare it with
- * APPENDONLY_TABLE_AM_HANDLER_OID.
+ * AO_ROW_TABLE_AM_HANDLER_OID.
  *
  * If the tool is desired to be used against pre-defined access methods only,
  * then no change would be needed.

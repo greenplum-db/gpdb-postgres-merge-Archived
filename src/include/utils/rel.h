@@ -413,14 +413,14 @@ typedef struct ViewOptions
  * 		True iff relation has append only storage with row orientation
  */
 #define RelationIsAoRows(relation) \
-	((relation)->rd_amhandler == APPENDONLY_TABLE_AM_HANDLER_OID)
+	((relation)->rd_amhandler == AO_ROW_TABLE_AM_HANDLER_OID)
 
 /*
  * RelationIsAoCols
  * 		True iff relation has append only storage with column orientation
  */
 #define RelationIsAoCols(relation) \
-	((relation)->rd_amhandler == AOCO_TABLE_AM_HANDLER_OID)
+	((relation)->rd_amhandler == AO_COLUMN_TABLE_AM_HANDLER_OID)
 
 /*
  * RelationIsAppendOptimized

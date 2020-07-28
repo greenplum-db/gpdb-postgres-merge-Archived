@@ -353,7 +353,7 @@ get_delete_descriptor(const Relation relation, bool forUpdate)
 }
 
 /*
- * AOCO access method uses virtual tuples
+ * AO_COLUMN access method uses virtual tuples
  */
 static const TupleTableSlotOps *
 aoco_slot_callbacks(Relation relation)
@@ -489,7 +489,7 @@ aoco_beginscan_extractcolumns_bm(Relation rel, Snapshot snapshot,
 	{
 		/*
 		 * At least one column needs to be projected in non-recheck case.
-		 * Otherwise, the AOCO fetch code may skip visimap checking because
+		 * Otherwise, the AO_COLUMN fetch code may skip visimap checking because
 		 * there are no columns to be scanned and we may get wrong results.
 		 */
 		if (!found)
@@ -519,7 +519,7 @@ aoco_beginscan(Relation relation,
 {
 	AOCSScanDesc	aoscan;
 
-	/* Parallel scan not supported for AOCO tables */
+	/* Parallel scan not supported for AO_COLUMN tables */
 	Assert(pscan == NULL);
 
 	aoscan = aocs_beginscan(relation,
@@ -586,19 +586,19 @@ aoco_getnextslot(TableScanDesc scan, ScanDirection direction, TupleTableSlot *sl
 static Size
 aoco_parallelscan_estimate(Relation rel)
 {
-	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+	elog(ERROR, "parallel SeqScan not implemented for AO_COLUMN tables");
 }
 
 static Size
 aoco_parallelscan_initialize(Relation rel, ParallelTableScanDesc pscan)
 {
-	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+	elog(ERROR, "parallel SeqScan not implemented for AO_COLUMN tables");
 }
 
 static void
 aoco_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
 {
-	elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+	elog(ERROR, "parallel SeqScan not implemented for AO_COLUMN tables");
 }
 
 static IndexFetchTableData *
@@ -714,14 +714,14 @@ aoco_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
                                     BulkInsertState bistate, uint32 specToken)
 {
 	/* GPDB_12_MERGE_FIXME: not supported. Can this function be left out completely? Or ereport()? */
-	elog(ERROR, "speculative insertion not supported on AOCO tables");
+	elog(ERROR, "speculative insertion not supported on AO_COLUMN tables");
 }
 
 static void
 aoco_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
                                       uint32 specToken, bool succeeded)
 {
-	elog(ERROR, "speculative insertion not supported on AOCO tables");
+	elog(ERROR, "speculative insertion not supported on AO_COLUMN tables");
 }
 
 /*
@@ -895,7 +895,7 @@ aoco_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
                                     Snapshot snapshot)
 {
 	/*
-	 * AOCO table dose not support unique and tidscan yet.
+	 * AO_COLUMN table dose not support unique and tidscan yet.
 	 */
 	ereport(ERROR,
 	        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -912,7 +912,7 @@ aoco_compute_xid_horizon_for_tuples(Relation rel,
 }
 
 /* ------------------------------------------------------------------------
- * DDL related callbacks for aoco AM.
+ * DDL related callbacks for ao_column AM.
  * ------------------------------------------------------------------------
  */
 static void
@@ -942,9 +942,9 @@ aoco_relation_set_new_filenode(Relation rel,
 	*minmulti = GetOldestMultiXactId();
 
 	/*
-	 * No special treatment is needed for new AO/AOCO relation. Create the
-	 * underlying disk file storage for the relation.
-	 * No clean up is needed, RelationCreateStorage() is transactional.
+	 * No special treatment is needed for new AO_ROW/COLUMN relation. Create
+	 * the underlying disk file storage for the relation.  No clean up is
+	 * needed, RelationCreateStorage() is transactional.
 	 *
 	 * Segment files will be created when / if needed.
 	 */
@@ -1507,7 +1507,7 @@ aoco_index_build_range_scan(Relation heapRelation,
 		 * appendonly_getnext did the time qual check
 		 *
 		 * GPDB_12_MERGE_FIXME: in heapam, we do visibility checks in SnapshotAny case
-		 * here. Is that not needed with AOCO tables?
+		 * here. Is that not needed with AO_COLUMN tables?
 		 */
 		tupleIsAlive = true;
 		reltuples += 1;
@@ -1658,7 +1658,7 @@ static bool
 aoco_relation_needs_toast_table(Relation rel)
 {
 	/*
-	 * AOCO never used the toasting, don't create the toast table from
+	 * AO_COLUMN never used the toasting, don't create the toast table from
 	 * Greenplum 7
 	 */
 	return false;
@@ -1820,7 +1820,7 @@ static bool
 aoco_scan_sample_next_block(TableScanDesc scan, SampleScanState *scanstate)
 {
 	/*
-	 * GPDB_95_MERGE_FIXME: Add support for AOCO tables
+	 * GPDB_95_MERGE_FIXME: Add support for AO_COLUMN tables
 	 */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1833,7 +1833,7 @@ aoco_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
                                   TupleTableSlot *slot)
 {
 	/*
-	 * GPDB_95_MERGE_FIXME: Add support for AOCO tables
+	 * GPDB_95_MERGE_FIXME: Add support for AO_COLUMN tables
 	 */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1842,14 +1842,14 @@ aoco_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 }
 
 /* ------------------------------------------------------------------------
- * Definition of the AOCO table access method.
+ * Definition of the AO_COLUMN table access method.
  *
  * NOTE: While there is a lot of functionality shared with the appendoptimized
  * access method, is best for the hanlder methods to remain static in order to
  * honour the contract of the access method interface.
  * ------------------------------------------------------------------------
  */
-static const TableAmRoutine aoco_methods = {
+static const TableAmRoutine ao_column_methods = {
 	.type = T_TableAmRoutine,
 	.slot_callbacks = aoco_slot_callbacks,
 
@@ -1918,7 +1918,7 @@ static const TableAmRoutine aoco_methods = {
 };
 
 Datum
-aoco_tableam_handler(PG_FUNCTION_ARGS)
+ao_column_tableam_handler(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(&aoco_methods);
+	PG_RETURN_POINTER(&ao_column_methods);
 }

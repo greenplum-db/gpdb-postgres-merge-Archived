@@ -3,10 +3,10 @@
 -- Scope: database, role and session level defaults.
 drop database if exists dsp1;
 create database dsp1;
-alter database dsp1 set default_table_access_method = "aoco";
+alter database dsp1 set default_table_access_method = ao_column;
 drop database if exists dsp2;
 create database dsp2;
-alter database dsp2 set default_table_access_method = "appendoptimized";
+alter database dsp2 set default_table_access_method = ao_row;
 alter database dsp2 set gp_default_storage_options = "checksum=true";
 
 -- Testing pg_authid.rolconfig is currently deferred in
@@ -43,7 +43,7 @@ SELECT am.amname FROM pg_class c LEFT JOIN pg_am am ON (c.relam = am.oid) WHERE 
 insert into t1 select i, i from generate_series(1,5)i;
 update t1 set b = 50 where a < 50;
 
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "blocksize=8192";
 show default_table_access_method;
 show gp_default_storage_options;
@@ -74,7 +74,7 @@ select relid::regclass, blocksize, compresstype,
 	compresslevel, columnstore, checksum from pg_appendonly order by 1;
 
 \c dsp2
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "compresslevel=2,checksum=true";
 show default_table_access_method;
 show gp_default_storage_options;
@@ -103,7 +103,7 @@ select attrelid::regclass, attnum, attoptions
 	from pg_attribute_encoding order by 1,2;
 -- SET operation in a session has higher precedence.  Also test if
 -- compresstype is correctly inferred based on compress level.
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "compresslevel=4,checksum=false";
 show default_table_access_method;
 show gp_default_storage_options;
@@ -151,7 +151,7 @@ SELECT relname, checksum from pg_appendonly ao, pg_class c where ao.relid = c.oi
 drop table alter_part_tab1;
 
 -- attribute encoding tests for column oriented tables
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "compresslevel=1";
 show default_table_access_method;
 show gp_default_storage_options;
@@ -184,7 +184,7 @@ select attrelid::regclass,attnum,attoptions
 drop database if exists dsp3;
 create database dsp3;
 \c dsp3
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "compresslevel=0";
 show default_table_access_method;
 show gp_default_storage_options;
@@ -209,7 +209,7 @@ show default_table_access_method;
 show gp_default_storage_options;
 create table co3 (a int, b float) with (appendonly=true, orientation=column) distributed by (a);
 create table co4 (a int encoding (blocksize=8192), b int) distributed by (a);
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 create table co5 (a int encoding (blocksize=8192), b float)
 	with (appendonly=true,orientation=column, checksum=false) distributed by (a);
@@ -228,12 +228,12 @@ show gp_default_storage_options;
 
 \c dsp3
 
-alter database dsp1 set default_table_access_method = "appendoptimized";
+alter database dsp1 set default_table_access_method = ao_row;
 alter database dsp1 set gp_default_storage_options = "compresstype=zlib";
 
 \c dsp1
 
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 show gp_default_storage_options;
 set gp_default_storage_options = "compresstype=rle_type";
 show gp_default_storage_options;
@@ -244,7 +244,7 @@ show gp_default_storage_options;
 
 \c dsp3
 
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "compresslevel=5";
 show gp_default_storage_options;
 -- negative tests - should fail due to invalid combinations of
@@ -270,7 +270,7 @@ alter database dsp1 set gp_default_storage_options = "checksum=invalid";
 alter database dsp1 set	gp_default_storage_options = "compresstype=zlib,compresslevel=0";
 
 -- set_config() tests
-select pg_catalog.set_config('default_table_access_method', 'aoco', false);
+select pg_catalog.set_config('default_table_access_method', 'ao_column', false);
 show default_table_access_method;
 select pg_catalog.set_config('gp_default_storage_options', 'compresstype=none', false);
 show gp_default_storage_options;
@@ -317,7 +317,7 @@ create table ao4 (a int, b int) with (appendonly=true)
 \d ao4
 select amname, reloptions from pg_class left join pg_am on pg_am.oid = relam where relname = 'ao4';
 select compresstype from pg_appendonly where relid = 'ao4'::regclass;
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "compresstype=NONE";
 create table co10 (a int, b int, c int) with (appendonly=true,orientation=column)
     distributed by (a);
@@ -326,7 +326,7 @@ select attnum,attoptions from pg_attribute_encoding
 select compresstype from pg_appendonly where relid = 'co10'::regclass;
 
 -- compression disabled by default, enable in WITH clause
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 show gp_default_storage_options;
 -- compresstype only
@@ -345,7 +345,7 @@ create table ao7 with (compresstype=zlib, compresslevel=3) as
 
 -- compression enabled by default, disable in WITH clause
 set gp_default_storage_options = "compresstype=zlib";
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 show gp_default_storage_options;
 -- compresstype only
 create table ao8 with (compresstype=none) as select * from ao7
@@ -367,14 +367,14 @@ create table ao12 (a int, b int) with (appendonly=true) distributed by (a);
 \d ao12
 
 --bitmap index
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 create table bitmap_table(a int, b int, c varchar);
 create index bitmap_i on bitmap_table using bitmap(b);
 
 -- external tables: ensure that default access methods are ignored
 -- during external table creation.
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 create external table ext_t1 (a int, b int)
     location ('file:///tmp/test.txt') format 'text';
@@ -399,7 +399,7 @@ SELECT am.amname FROM pg_class c LEFT JOIN pg_am am ON (c.relam = am.oid) WHERE 
 -- Make sure gp_default_storage_options GUC value is set in newly created cdbgangs
 -- after previous idle cdbgang is stopped
 SET gp_vmem_idle_resource_timeout=30;
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 SET gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=false";
 \! sleep 1
 CREATE TABLE check_guc_value_after_new_cdbgang (a int) DISTRIBUTED RANDOMLY;
@@ -411,20 +411,20 @@ RESET gp_vmem_idle_resource_timeout;
 
 -- Make sure ALTER TABLE REORGANIZE does not change the table type due
 -- to gp_default_storage_options GUC
-set default_table_access_method = "appendoptimized";
+set default_table_access_method = ao_row;
 set gp_default_storage_options = "blocksize=32768";
 create table alter_table_reorg_ao (a int, b text);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
     where c.relname = 'alter_table_reorg_ao';
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "blocksize=32768";
 alter table alter_table_reorg_ao set with (reorganize=true);
 select c.relname, am.amname, c.relkind, c.reloptions
 	from pg_class c left join pg_am am on (c.relam = am.oid)
     where c.relname = 'alter_table_reorg_ao';
 
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "blocksize=32768";
 create table alter_table_reorg_aoco (a int, b text);
 select c.relname, am.amname, c.relkind, c.reloptions
@@ -440,7 +440,7 @@ select c.relname, am.amname, c.relkind, c.reloptions
 -- Make sure SELECT INTO uses gp_default_storage_options GUC
 create table select_into_heap_from (a int, b text);
 insert into select_into_heap_from select i, 'aaa' from generate_series(1,50)i;
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "blocksize=32768";
 select * into select_into_heap_to from select_into_heap_from;
 select c.relname, am.amname, c.relkind, c.reloptions
@@ -463,7 +463,7 @@ select c.relname, am.amname, c.relkind, c.reloptions
     where c.relname like 'dsp_partition1%' order by relname;
 select compresslevel, compresstype, blocksize, checksum, columnstore from pg_appendonly
        where relid in (select oid from pg_class where relname  like 'dsp_partition1%') order by columnstore;
-set default_table_access_method = "aoco";
+set default_table_access_method = ao_column;
 set gp_default_storage_options = "blocksize=32768,compresstype=none,checksum=true";
 -- Add partition
 alter table dsp_partition1 add partition p3 start(11) end(15);

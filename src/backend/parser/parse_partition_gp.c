@@ -1568,7 +1568,7 @@ generatePartitions(Oid parentrelid, GpPartitionDefinition *gpPartSpec,
 			if (elem->accessMethod == NULL)
 				elem->accessMethod = parentaccessmethod ? pstrdup(parentaccessmethod) : NULL;
 
-			if (elem->accessMethod && strcmp(elem->accessMethod, "aoco") == 0)
+			if (elem->accessMethod && strcmp(elem->accessMethod, "ao_column") == 0)
 				elem->colencs = merge_partition_encoding(pstate, elem->colencs, penc_cls);
 
 			if (elem->isDefault)

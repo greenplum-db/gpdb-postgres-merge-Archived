@@ -1371,10 +1371,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			GetAppendOnlyEntryAttributes(relation->rd_id, &blocksize,
 			                             &safefswritersize,&compresslevel,
 			                             &checksum,&compresstype);
-			if (RelationIsAoRows(relation))
-				stmt->accessMethod = pstrdup("appendoptimized");
-			else if (RelationIsAoCols(relation))
-				stmt->accessMethod = pstrdup("aoco");
+
+			stmt->accessMethod = get_am_name(relation->rd_rel->relam);
 
 			stmt->options = lappend(stmt->options,
 			                        makeDefElem("blocksize", (Node *) makeInteger(blocksize), -1));

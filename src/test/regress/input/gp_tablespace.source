@@ -109,10 +109,10 @@ ALTER INDEX ao_ul_ts_index SET TABLESPACE ul_testspace;
 ALTER TABLE aoco_ul_ts_table SET TABLESPACE ul_testspace;
 
 -- Unlogged tables with .0 segfiles
-CREATE UNLOGGED TABLE ao_ul_ctas USING appendoptimized AS select * from ao_ul_ts_table;
+CREATE UNLOGGED TABLE ao_ul_ctas USING ao_row AS select * from ao_ul_ts_table;
 ALTER TABLE ao_ul_ctas SET TABLESPACE ul_testspace;
 
-CREATE UNLOGGED TABLE aoco_ul_ctas USING aoco AS select * from aoco_ul_ts_table;
+CREATE UNLOGGED TABLE aoco_ul_ctas USING ao_column AS select * from aoco_ul_ts_table;
 ALTER TABLE aoco_ul_ctas SET TABLESPACE ul_testspace;
 
 -- The .0 segfile should have been moved correctly, leading to

@@ -19621,7 +19621,7 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 	}
 	*options = amendedOptions;
 
-	/* GPDB_12_MERGE_FIXME: during the development of the ao/aoco tableam we
+	/* GPDB_12_MERGE_FIXME: during the development of the ao_row/column tableam we
 	 * need to have this layer turned off. When removing this fixme, make
 	 * certain that any sanity checks on the options are also introduced if
 	 * needed. Such examples can be:
@@ -19643,17 +19643,17 @@ greenplumLegacyAOoptions(const char *accessMethod, List **options)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("invalid option \"orientation\" for base relation"),
-				 errhint("Table orientation only valid for Append Only relations, create an AO relation to use table orientation.")));
+				 errhint("Table orientation only valid for Append Optimized relations, create an AO relation to use table orientation.")));
 
 	/* access_method takes precedence */
 	if (accessMethod)
 		return (char *)accessMethod;
 
 	if (appendoptimized && is_column_oriented)
-		return pstrdup("aoco");
+		return pstrdup("ao_column");
 
 	if (appendoptimized)
-		return pstrdup("appendoptimized");
+		return pstrdup("ao_row");
 
 	/*
 	 * appendonly=false is different from appendonly option not existing in

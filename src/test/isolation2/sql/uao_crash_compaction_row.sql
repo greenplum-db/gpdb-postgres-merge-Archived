@@ -11,7 +11,7 @@
 --
 -- Setup tables to test crash at different points
 -- for crash_before_cleanup_phase
-3:set default_table_access_method=appendoptimized;
+3:set default_table_access_method = ao_row;
 3:show default_table_access_method;
 3:DROP TABLE IF EXISTS crash_before_cleanup_phase CASCADE;
 3:CREATE TABLE crash_before_cleanup_phase (a INT, b INT, c CHAR(20));
@@ -76,7 +76,7 @@
 -- Setup tables to test crash at different points on master now
 --
 -- for crash_master_before_cleanup_phase
-2:set default_table_access_method=appendoptimized;
+2:set default_table_access_method = ao_row;
 2:show default_table_access_method;
 2:DROP TABLE IF EXISTS crash_master_before_cleanup_phase CASCADE;
 2:CREATE TABLE crash_master_before_cleanup_phase (a INT, b INT, c CHAR(20));

@@ -921,8 +921,8 @@ typedef struct RelOptInfo
  * suffers from double evaluation.
  */
 #define REL_SUPPORTS_TID_SCAN(rel) \
-	((rel)->amhandler != APPENDONLY_TABLE_AM_HANDLER_OID &&	\
-	 (rel)->amhandler != AOCO_TABLE_AM_HANDLER_OID)
+	((rel)->amhandler != AO_ROW_TABLE_AM_HANDLER_OID &&	\
+	 (rel)->amhandler != AO_COLUMN_TABLE_AM_HANDLER_OID)
 
 /*
  * IndexOptInfo

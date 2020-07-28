@@ -2319,9 +2319,9 @@ alter table rank_settemp add partition f1 values ('N');
 alter table rank_settemp set subpartition template (start (date '2007-01-01') with (appendonly=true, compresslevel=5));
 alter table rank_settemp add partition f2 values ('C');
 select relid::regclass, level, template from gp_partition_template where relid = 'rank_settemp'::regclass;
-    relid     | level |                                                                                                                                                                                                                                                                                                       template                                                                                                                                                                                                                                                                                                       
---------------+-------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- rank_settemp |     1 | {GPPARTITIONDEFINITION :partDefElems ({GPPARTDEFELEM :partName <> :boundSpec {GPPARTITIONRANGESPEC :partStart {GPPARTITIONRANGEITEM :val ({TYPECAST :arg {A_CONST :val "\2007-01-01" :location 64} :typeName {TYPENAME :names ("date") :typeOid 0 :setof false :pct_type false :typmods <> :typemod -1 :arrayBounds <> :location 59} :location -1}) :edge 1} :partEnd <> :partEvery <>} :subSpec <> :isDefault false :options ({DEFELEM :defnamespace <> :defname compresslevel :arg 5 :defaction 0 :location 101}) :accessMethod appendoptimized :tablespacename <> :colencs <>}) :enc_clauses <> :istemplate true}
+    relid     | level |                                                                                                                                                                                                                                                                                                  template                                                                                                                                                                                                                                                                                                   
+--------------+-------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ rank_settemp |     1 | {GPPARTITIONDEFINITION :partDefElems ({GPPARTDEFELEM :partName <> :boundSpec {GPPARTITIONRANGESPEC :partStart {GPPARTITIONRANGEITEM :val ({TYPECAST :arg {A_CONST :val "\2007-01-01" :location 64} :typeName {TYPENAME :names ("date") :typeOid 0 :setof false :pct_type false :typmods <> :typemod -1 :arrayBounds <> :location 59} :location -1}) :edge 1} :partEnd <> :partEvery <>} :subSpec <> :isDefault false :options ({DEFELEM :defnamespace <> :defname compresslevel :arg 5 :defaction 0 :location 101}) :accessMethod ao_row :tablespacename <> :colencs <>}) :enc_clauses <> :istemplate true}
 (1 row)
 
 drop table rank_settemp;
@@ -2428,9 +2428,9 @@ insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 10
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
 select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'foo_p_1_prt_p10_20'::regclass;
-        oid         | relkind |     amname      |    reloptions     
---------------------+---------+-----------------+-------------------
- foo_p_1_prt_p10_20 | r       | appendoptimized | {compresslevel=5}
+        oid         | relkind | amname |    reloptions     
+--------------------+---------+--------+-------------------
+ foo_p_1_prt_p10_20 | r       | ao_row | {compresslevel=5}
 (1 row)
 
 select count(distinct k) from foo_p;
@@ -2449,10 +2449,10 @@ insert into foo_p select i, i+1, repeat('fooo', 9000) from generate_series(1, 10
 alter table foo_p split default partition start (10) end(20) 
 into (partition p10_20, default partition);
 select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid in ('foo_p_1_prt_p10_20'::regclass, 'foo_p_1_prt_def'::regclass);
-        oid         | relkind |     amname      | reloptions 
---------------------+---------+-----------------+------------
- foo_p_1_prt_def    | r       | appendoptimized | 
- foo_p_1_prt_p10_20 | r       | appendoptimized | 
+        oid         | relkind | amname | reloptions 
+--------------------+---------+--------+------------
+ foo_p_1_prt_p10_20 | r       | ao_row | 
+ foo_p_1_prt_def    | r       | ao_row | 
 (2 rows)
 
 select count(distinct k) from foo_p;
@@ -4172,8 +4172,8 @@ from pg_class pc
 inner join pg_namespace ns on pc.relnamespace=ns.oid
 left join pg_am am on am.oid = pc.relam
 where relname like ('mpp6979%');
-   nspname    |       relname       |     amname      
---------------+---------------------+-----------------
+   nspname    |       relname       | amname 
+--------------+---------------------+--------
  public       | mpp6979part         | 
  public       | mpp6979part_1_prt_1 | heap
  public       | mpp6979part_1_prt_2 | heap
@@ -4184,7 +4184,7 @@ where relname like ('mpp6979%');
  public       | mpp6979part_1_prt_7 | heap
  public       | mpp6979part_1_prt_8 | heap
  public       | mpp6979part_1_prt_9 | heap
- mpp6979dummy | mpp6979tab          | appendoptimized
+ mpp6979dummy | mpp6979tab          | ao_row
 (11 rows)
 
 -- exchange the partition with the ao table.  
@@ -4215,10 +4215,10 @@ select relname, nspname, relispartition, amname
 from pg_class c inner join pg_namespace n on c.relnamespace = n.oid
 left join pg_am am on am.oid = c.relam
 where relname like ('mpp6979%');
-       relname       |   nspname    | relispartition |     amname      
----------------------+--------------+----------------+-----------------
+       relname       |   nspname    | relispartition | amname 
+---------------------+--------------+----------------+--------
  mpp6979part         | public       | f              | 
- mpp6979part_1_prt_1 | public       | t              | appendoptimized
+ mpp6979part_1_prt_1 | public       | t              | ao_row
  mpp6979part_1_prt_2 | public       | t              | heap
  mpp6979part_1_prt_3 | public       | t              | heap
  mpp6979part_1_prt_4 | public       | t              | heap
@@ -5684,15 +5684,15 @@ select gp_segment_id, attrelid::regclass, attnum, attoptions from gp_dist_random
 (5 rows)
 
 select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_abc'::regclass;
-            oid            | relkind | amname |             reloptions              
----------------------------+---------+--------+-------------------------------------
- pt_tab_encode_1_prt_s_abc | r       | aoco   | {compresstype=zlib,compresslevel=1}
+            oid            | relkind |  amname   |             reloptions              
+---------------------------+---------+-----------+-------------------------------------
+ pt_tab_encode_1_prt_s_abc | r       | ao_column | {compresstype=zlib,compresslevel=1}
 (1 row)
 
 select c.oid::regclass, relkind, amname, reloptions from pg_class c left join pg_am am on am.oid = relam where c.oid = 'pt_tab_encode_1_prt_s_xyz'::regclass;
-            oid            | relkind | amname |             reloptions              
----------------------------+---------+--------+-------------------------------------
- pt_tab_encode_1_prt_s_xyz | r       | aoco   | {compresstype=zlib,compresslevel=1}
+            oid            | relkind |  amname   |             reloptions              
+---------------------------+---------+-----------+-------------------------------------
+ pt_tab_encode_1_prt_s_xyz | r       | ao_column | {compresstype=zlib,compresslevel=1}
 (1 row)
 
 -- Ensure that only the correct type of partitions can be added

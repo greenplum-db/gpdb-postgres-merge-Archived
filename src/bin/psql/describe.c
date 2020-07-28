@@ -1629,24 +1629,24 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 }
 
 static inline bool
-greenplum_is_appendoptimized(const char olddesc, const char *newdesc)
+greenplum_is_ao_row(const char olddesc, const char *newdesc)
 {
 	if (olddesc == 'a')
 		return true;
 
-	if (newdesc && !strncmp(newdesc, "appendoptimized", strlen("appendoptimized")))
+	if (newdesc && !strncmp(newdesc, "ao_row", strlen("ao_row")))
 		return true;
 
 	return false;
 }
 
 static inline bool
-greenplum_is_aoco(const char olddesc, const char *newdesc)
+greenplum_is_ao_column(const char olddesc, const char *newdesc)
 {
 	if (olddesc == 'c')
 		return true;
 
-	if (newdesc && !strncmp(newdesc, "aoco", strlen("aoco")))
+	if (newdesc && !strncmp(newdesc, "ao_column", strlen("ao_column")))
 		return true;
 
 	return false;
@@ -2068,8 +2068,8 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;		/* not an error, just return early */
 	}
 
-	if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam)
-			|| greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam))
+	if (greenplum_is_ao_column(tableinfo.relstorage, tableinfo.relam)
+			|| greenplum_is_ao_row(tableinfo.relstorage, tableinfo.relam))
 	{
 		PGresult *result = NULL;
 		/* Get Append Only information
@@ -2186,7 +2186,7 @@ describeOneTableDetails(const char *schemaname,
 			attstattarget_col = cols++;
 		}
 
-		if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
+		if (greenplum_is_ao_column(tableinfo.relstorage, tableinfo.relam))
 		{
 			if (isGE42 == true)
 			{
@@ -2317,7 +2317,7 @@ describeOneTableDetails(const char *schemaname,
 	if (attstattarget_col >= 0)
 		headers[cols++] = gettext_noop("Stats target");
 
-	if (verbose && greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
+	if (verbose && greenplum_is_ao_column(tableinfo.relstorage, tableinfo.relam))
 	{
 		headers[cols++] = gettext_noop("Compression Type");
 		headers[cols++] = gettext_noop("Compression Level");
@@ -2403,7 +2403,7 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddCell(&cont, PQgetvalue(res, i, attstattarget_col),
 							  false, false);
 
-		if (greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam)
+		if (greenplum_is_ao_column(tableinfo.relstorage, tableinfo.relam)
 				&& attoptions_col >= 0)
 		{
 			/* The compression type, compression level, and block size are all in the next column.
@@ -2643,10 +2643,10 @@ describeOneTableDetails(const char *schemaname,
 			add_external_table_footer(&cont, oid);
 
 		/* print append only table information */
-		if (greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam) ||
-			greenplum_is_aoco(tableinfo.relstorage, tableinfo.relam))
+		if (greenplum_is_ao_row(tableinfo.relstorage, tableinfo.relam) ||
+			greenplum_is_ao_column(tableinfo.relstorage, tableinfo.relam))
 		{
-			if (greenplum_is_appendoptimized(tableinfo.relstorage, tableinfo.relam))
+			if (greenplum_is_ao_row(tableinfo.relstorage, tableinfo.relam))
 			{
 				printfPQExpBuffer(&buf, _("Compression Type: %s"), tableinfo.compressionType);
 				printTableAddFooter(&cont, buf.data);
@@ -4628,8 +4628,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 		{
 			appendPQExpBuffer(&buf, ", CASE c.relam");
 			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", HEAP_TABLE_AM_OID, gettext_noop("heap"));
-			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", APPENDOPTIMIZED_TABLE_AM_OID, gettext_noop("append only"));
-			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AOCO_TABLE_AM_OID, gettext_noop("append only columnar"));
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AO_ROW_TABLE_AM_OID, gettext_noop("append only"));
+			appendPQExpBuffer(&buf, " WHEN %d THEN '%s'", AO_COLUMN_TABLE_AM_OID, gettext_noop("append only columnar"));
 			/* GPDB_12_MERGE_FIXME fill other storage types */
 			appendPQExpBuffer(&buf, " END as \"%s\"\n", gettext_noop("Storage"));
 		}

@@ -2984,11 +2984,11 @@ SELECT extract(day from "time") FROM project( TABLE( SELECT * FROM history ), 2)
 
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
   CASE 1 WHEN 2 THEN 1 ELSE GREATEST(1, COALESCE(1+1)) END);
-     amname      
------------------
+  amname   
+-----------
  heap
- appendoptimized
- aoco
+ ao_row
+ ao_column
  btree
  hash
  gist
@@ -3001,11 +3001,11 @@ SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
 
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
   CASE WHEN 3 IS NOT NULL AND 1 IN (1, 2) THEN floor(NULLIF(2, 3))::int END);
-     amname      
------------------
+  amname   
+-----------
  heap
- appendoptimized
- aoco
+ ao_row
+ ao_column
  btree
  hash
  gist

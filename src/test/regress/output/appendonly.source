@@ -94,18 +94,18 @@ SHOW gp_default_storage_options;
  blocksize=65536,compresstype=none,checksum=true
 (1 row)
 
-SET default_table_access_method = 'appendoptimized';
+SET default_table_access_method = ao_row;
 SHOW default_table_access_method;
  default_table_access_method 
 -----------------------------
- appendoptimized
+ ao_row
 (1 row)
 
 CREATE TABLE tenk_ao14 (like tenk_heap);
 SELECT amhandler, reloptions FROM pg_class c, PG_AM a WHERE c.relname = 'tenk_ao14' AND c.relam = a.oid;
-         amhandler          |    reloptions     
-----------------------------+-------------------
- appendonly_tableam_handler | {blocksize=65536}
+       amhandler        |    reloptions     
+------------------------+-------------------
+ ao_row_tableam_handler | {blocksize=65536}
 (1 row)
 
 RESET gp_default_storage_options;

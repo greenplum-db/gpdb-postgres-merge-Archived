@@ -815,8 +815,8 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * are no straight forward solutions though.
 		 */
 		if (index->amhasgettuple &&
-				(rel->amhandler != APPENDONLY_TABLE_AM_HANDLER_OID &&
-				 rel->amhandler != AOCO_TABLE_AM_HANDLER_OID))
+				(rel->amhandler != AO_ROW_TABLE_AM_HANDLER_OID &&
+				 rel->amhandler != AO_COLUMN_TABLE_AM_HANDLER_OID))
 			add_path(rel, (Path *) ipath);
 
 		if (index->amhasgetbitmap &&

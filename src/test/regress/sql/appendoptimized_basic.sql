@@ -1,4 +1,4 @@
-create table ao_basic_t1 (a int, b varchar) using appendoptimized distributed by (a);
+create table ao_basic_t1 (a int, b varchar) using ao_row distributed by (a);
 
 -- Validate that the appendoptimized table access method will be used
 -- for this table.
@@ -42,7 +42,7 @@ insert into heap_t2 select i, i from generate_series(1, 20)i;
 
 select * from ao_basic_t1 t1 join heap_t2 t2 on t1.a=t2.a where t1.a != 1;
 
-create table ao_basic_t2 (a int) using appendoptimized distributed by (a);
+create table ao_basic_t2 (a int) using ao_row distributed by (a);
 
 insert into ao_basic_t2 select i from generate_series(1,20)i;
 
@@ -54,7 +54,7 @@ insert into ao_basic_t2 select  i, 'new column' from generate_series(1,12)i;
 
 select * from ao_basic_t2 where b != 'abc';
 
-create table ao_ctas using appendoptimized as select * from heap_t2;
+create table ao_ctas using ao_row as select * from heap_t2;
 select amhandler from pg_class c, pg_am a where c.relname = 'ao_ctas' and c.relam = a.oid;
 
 insert into ao_ctas values (0, 'inserted');
