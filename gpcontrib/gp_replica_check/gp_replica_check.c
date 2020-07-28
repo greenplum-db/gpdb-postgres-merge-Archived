@@ -533,6 +533,10 @@ get_relfilenode_map()
 			   && !relstorage_is_ao(classtuple->relstorage)) */)
 			continue;
 
+		/* unlogged tables do not propagate to replica servers */
+		if (classtuple->relpersistence == RELPERSISTENCE_UNLOGGED)
+			continue;
+
 		RelfilenodeEntry *rentry;
 		Oid rnode;
 		/* Its relmapped relation, need to fetch the mapping from relmap file */
