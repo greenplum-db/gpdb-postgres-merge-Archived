@@ -39,6 +39,14 @@
 # to this list then these tests can be enabled.  insert-conflict-do-update-2
 # has additional issue where GPDB does not support creating unique indexes on
 # mutated columns via lower().
+#
+# GPDB_12_MERGE_FIXME: tuplelock-upgrade-no-deadlock, freeze-the-dead 
+# SELECT..FOR SHARE/UPDATE can block each other in gpdb if GDD does not open.
+# insert-conflict-specconflict, In this case, three sessions using advisory lock 
+# to control INSERT...ON CONFLICT in a small critical region so that test txn will 
+# successful abort. GPDB lock managed in master node, it is hard to test this feature
+# by the case.
+
 
 test: read-only-anomaly
 #test: read-only-anomaly-2
@@ -78,7 +86,7 @@ test: inherit-temp
 #test: insert-conflict-do-update-2
 #test: insert-conflict-do-update-3
 test: insert-conflict-toast
-test: insert-conflict-specconflict
+#test: insert-conflict-specconflict
 test: delete-abort-savept
 #test: delete-abort-savept-2
 #test: aborted-keyrevoke
@@ -91,8 +99,8 @@ test: update-locked-tuple
 #test: propagate-lock-delete
 #test: tuplelock-conflict
 #test: tuplelock-update
-test: tuplelock-upgrade-no-deadlock
-test: freeze-the-dead
+#test: tuplelock-upgrade-no-deadlock
+#test: freeze-the-dead
 #test: nowait
 #test: nowait-2
 #test: nowait-3
