@@ -419,27 +419,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	}
 
 	/*
-	 * Save the alist for root partitions before transformPartitionBy adds the
-	 * child create statements.
-	 */
-	/* GPDB_12_MERGE_FIXME */
-#if 0
-	if (stmt->partitionBy && !stmt->is_part_child)
-	{
-		save_root_partition_alist = cxt.alist;
-		cxt.alist = NIL;
-	}
-#endif
-
-	/*
-	 * Process table partitioning clause
-	 */
-	/* GDPB_12_MERGE_FIXME: need to re-implement this */
-#if 0
-	transformPartitionBy(&cxt, stmt, stmt->partitionBy);
-#endif
-
-	/*
 	 * Postprocess check constraints.
 	 */
 	transformCheckConstraints(&cxt, !is_foreign_table ? true : false);

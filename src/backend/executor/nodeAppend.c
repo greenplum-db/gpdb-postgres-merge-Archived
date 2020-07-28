@@ -112,8 +112,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
-	appendstate->eflags = eflags;
-
 	/*
 	 * create new AppendState for our append node
 	 */

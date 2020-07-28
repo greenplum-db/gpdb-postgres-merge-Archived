@@ -361,7 +361,6 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	BlessTupleDesc(resultdesc);
 
 	/* Initialize scan slot and type */
-	/* GPDB_12_MERGE_FIXME: What's the right TTSOps for this? */
 	ExecInitScanTupleSlot(estate, &scanstate->ss, resultdesc,
 						  &TTSOpsHeapTuple);
 	scanstate->resultdesc = resultdesc;

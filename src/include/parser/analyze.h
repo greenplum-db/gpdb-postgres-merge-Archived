@@ -43,16 +43,7 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 							   LockClauseStrength strength,
 							   LockWaitPolicy waitPolicy, bool pushedDown);
 
-/* GDPB_12_MERGE_FIXME: legacy partitioning stuff */
-#if 0
-extern int validate_partition_spec(CreateStmtContext *cxt, 
-							CreateStmt 			*stmt, 
-							PartitionBy 		*partitionBy, 	
-							char	   			*at_depth,
-							int					 partNumber);
-#endif
-
-List *TypeNameGetStorageDirective(TypeName *typname);
+extern List *TypeNameGetStorageDirective(TypeName *typname);
 
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 											   Index exclRelIndex);

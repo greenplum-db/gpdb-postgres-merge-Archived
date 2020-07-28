@@ -1348,7 +1348,6 @@ struct AppendState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
-	int			eflags;			/* used to initialize each subplan */ // GPDB_12_MERGE_FIXME: Is this still needed?
 	int			as_nplans;
 	int			as_whichplan;
 	int			as_first_partial_plan;	/* Index of 'appendplans' containing
@@ -2473,14 +2472,6 @@ typedef struct AggStatePerTransData *AggStatePerTrans;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
 typedef struct AggStatePerPhaseData *AggStatePerPhase;
 typedef struct AggStatePerHashData *AggStatePerHash;
-
-/* GPDB_12_MERGE_FIXME: What was this for? I think we lost whatever feature that
- * was in the merge. */
-typedef struct SplitAggInfo
-{
-	int             idx;
-	TupleTableSlot  *outerslot;
-} SplitAggInfo;
 
 typedef struct AggState
 {
