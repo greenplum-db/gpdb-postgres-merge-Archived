@@ -1335,10 +1335,12 @@ SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
  Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Seq Scan on tenk1
-                     Filter: (stringu1 = 'TVAAAA'::name)
- Optimizer: Pivotal Optimizer (GPORCA) version 3.77.0
-(6 rows)
+               ->  Bitmap Heap Scan on tenk1
+                     Recheck Cond: (stringu1 = 'TVAAAA'::name)
+                     ->  Bitmap Index Scan on hash_tuplesort_idx
+                           Index Cond: (stringu1 = 'TVAAAA'::name)
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
  count 
@@ -1882,11 +1884,12 @@ EXPLAIN (COSTS OFF)
  Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Index Scan using dupindexcols_i on dupindexcols
-                     Index Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000))
-                     Filter: (f1 ~<~ 'YX'::text)
- Optimizer: Pivotal Optimizer (GPORCA) version 3.1.0
-(7 rows)
+               ->  Bitmap Heap Scan on dupindexcols
+                     Recheck Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+                     ->  Bitmap Index Scan on dupindexcols_i
+                           Index Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 SELECT count(*) FROM dupindexcols
   WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
@@ -2021,13 +2024,12 @@ explain (costs off)
  Limit
    ->  Gather Motion 3:1  (slice1; segments: 3)
          Merge Key: i
-         ->  Limit
-               ->  Sort
-                     Sort Key: i
-                     ->  Seq Scan on boolindex
-                           Filter: b
- Optimizer: Postgres query optimizer
-(9 rows)
+         ->  Sort
+               Sort Key: i
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(8 rows)
 
 -- Repeate with different distribution key
 alter table boolindex set distributed by (i);
@@ -2036,45 +2038,68 @@ explain (costs off)
                       QUERY PLAN                       
 -------------------------------------------------------
  Limit
-   ->  Index Scan using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Sort
+               Sort Key: i
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(8 rows)
 
 explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
                            QUERY PLAN                           
 ----------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Sort
+               Sort Key: i DESC
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(8 rows)
 
 explain (costs off)
   select * from boolindex where not b order by i limit 10;
                       QUERY PLAN                       
 -------------------------------------------------------
  Limit
-   ->  Index Scan using boolindex_b_i_key on boolindex
-         Index Cond: (b = false)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Sort
+               Sort Key: i
+               ->  Index Scan using boolindex_b_i_key on boolindex
+                     Index Cond: (b = false)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(8 rows)
 
 explain (costs off)
   select * from boolindex where b is true order by i desc limit 10;
                            QUERY PLAN                           
 ----------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = true)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan Backward using boolindex_b_i_key on boolindex
+                     Index Cond: (b = true)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
   select * from boolindex where b is false order by i desc limit 10;
                            QUERY PLAN                           
 ----------------------------------------------------------------
  Limit
-   ->  Index Scan Backward using boolindex_b_i_key on boolindex
-         Index Cond: (b = false)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: i
+         ->  Limit
+               ->  Index Scan Backward using boolindex_b_i_key on boolindex
+                     Index Cond: (b = false)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 --
 -- REINDEX (VERBOSE)
