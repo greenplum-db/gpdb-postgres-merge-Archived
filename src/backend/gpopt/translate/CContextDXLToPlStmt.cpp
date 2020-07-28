@@ -50,6 +50,7 @@ CContextDXLToPlStmt::CContextDXLToPlStmt
 	m_plan_id_counter(plan_id_counter),
 	m_motion_id_counter(motion_id_counter),
 	m_param_id_counter(param_id_counter),
+	m_param_types_list(NIL),
 	m_distribution_hashops(distribution_hashops),
 	m_rtable_entries_list(NULL),
 	m_partitioned_tables_list(NULL),
@@ -126,27 +127,29 @@ CContextDXLToPlStmt::GetNextMotionId()
 //		CContextDXLToPlStmt::GetNextParamId
 //
 //	@doc:
-//		Get the next plan id
+//		Get the next param id, for a parameter of type 'typeoid'
 //
 //---------------------------------------------------------------------------
 ULONG
-CContextDXLToPlStmt::GetNextParamId()
+CContextDXLToPlStmt::GetNextParamId(OID typeoid)
 {
+	m_param_types_list = gpdb::LAppendOid(m_param_types_list, typeoid);
+
 	return m_param_id_counter->next_id();
 }
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CContextDXLToPlStmt::GetCurrentParamId
+//		CContextDXLToPlStmt::GetParamTypes
 //
 //	@doc:
-//		Get the current param id
+//		Get the current param types list
 //
 //---------------------------------------------------------------------------
-ULONG
-CContextDXLToPlStmt::GetCurrentParamId()
+List *
+CContextDXLToPlStmt::GetParamTypes()
 {
-	return m_param_id_counter->current_id();
+	return m_param_types_list;
 }
 
 //---------------------------------------------------------------------------

@@ -251,13 +251,7 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL
 	planned_stmt->intoPolicy = m_dxl_to_plstmt_context->GetDistributionPolicy();
 
 	// GPDB_12_MERGE_FIXME: keep track of param id: type in the translator
-	// planned_stmt->nParamExec = m_dxl_to_plstmt_context->GetCurrentParamId();
-	if (m_dxl_to_plstmt_context->GetCurrentParamId() != 0)
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
-				GPOS_WSZ_LIT("FIXME: fix parameter translation"));
-	else
-		planned_stmt->paramExecTypes = NIL;
-
+	planned_stmt->paramExecTypes = m_dxl_to_plstmt_context->GetParamTypes();
 	planned_stmt->slices = m_dxl_to_plstmt_context->GetSlices(&planned_stmt->numSlices);
 	planned_stmt->subplan_sliceIds = m_dxl_to_plstmt_context->GetSubplanSliceIdArray();
 
@@ -1484,10 +1478,12 @@ CTranslatorDXLToPlStmt::TranslateDXLNLJoin
 			IMDId *pmdid = pdxlcr->MdidType();
 			ULONG ulColid = pdxlcr->Id();
 			INT iTypeModifier = pdxlcr->TypeModifier();
+			OID iTypeOid = CMDIdGPDB::CastMdid(pmdid)->Oid();
 
 			if (NULL == right_dxl_translate_ctxt.GetParamIdMappingElement(ulColid))
 			{
-				CMappingElementColIdParamId *pmecolidparamid = GPOS_NEW(m_mp) CMappingElementColIdParamId(ulColid, m_dxl_to_plstmt_context->GetNextParamId(), pmdid, iTypeModifier);
+				ULONG param_id = m_dxl_to_plstmt_context->GetNextParamId(iTypeOid);
+				CMappingElementColIdParamId *pmecolidparamid = GPOS_NEW(m_mp) CMappingElementColIdParamId(ulColid, param_id, pmdid, iTypeModifier);
 #ifdef GPOS_DEBUG
 					BOOL fInserted =
 #endif

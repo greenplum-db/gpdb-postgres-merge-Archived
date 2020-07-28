@@ -105,6 +105,7 @@ namespace gpdxl
 
 			// counter for generating unique param ids
 			CIdGenerator *m_param_id_counter;
+			List *m_param_types_list;
 
 			// What operator classes to use for distribution keys?
 			DistributionHashOpsKind m_distribution_hashops;
@@ -163,11 +164,11 @@ namespace gpdxl
 			// retrieve the next motion id
 			ULONG GetNextMotionId();
 
-			// retrieve the current parameter id
-			ULONG GetCurrentParamId();
+			// retrieve the current parameter type list
+			List *GetParamTypes();
 
 			// retrieve the next parameter id
-			ULONG GetNextParamId();
+			ULONG GetNextParamId(OID typeoid);
 
 			// add a newly found CTE consumer
 			void AddCTEConsumerInfo(ULONG cte_id, ShareInputScan *share_input_scan);

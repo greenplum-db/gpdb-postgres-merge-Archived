@@ -684,11 +684,13 @@ CTranslatorDXLToScalar::TranslateDXLScalarSubplanToScalar
 		IMDId *mdid = dxl_colref->MdidType();
 		ULONG colid = dxl_colref->Id();
 		INT type_modifier = dxl_colref->TypeModifier();
+		OID type_oid = CMDIdGPDB::CastMdid(mdid)->Oid();
 
 		if (NULL == subplan_translate_ctxt.GetParamIdMappingElement(colid))
 		{
 			// keep outer reference mapping to the original column for subsequent subplans
-			CMappingElementColIdParamId *colid_to_param_id_map = GPOS_NEW(m_mp) CMappingElementColIdParamId(colid, dxl_to_plstmt_ctxt->GetNextParamId(), mdid, type_modifier);
+			ULONG param_id = dxl_to_plstmt_ctxt->GetNextParamId(type_oid);
+			CMappingElementColIdParamId *colid_to_param_id_map = GPOS_NEW(m_mp) CMappingElementColIdParamId(colid, param_id, mdid, type_modifier);
 
 #ifdef GPOS_DEBUG
 			BOOL is_inserted =
@@ -830,8 +832,8 @@ CTranslatorDXLToScalar::TranslateDXLSubplanTestExprToScalar
 	Param *param = MakeNode(Param);
 	param->paramkind = PARAM_EXEC;
 	CContextDXLToPlStmt *dxl_to_plstmt_ctxt = (dynamic_cast<CMappingColIdVarPlStmt *>(colid_var))->GetDXLToPlStmtContext();
-	param->paramid = dxl_to_plstmt_ctxt->GetNextParamId();
 	CTranslatorDXLToScalar::STypeOidAndTypeModifier oidAndTypeModifier = OidParamOidFromDXLIdentOrDXLCastIdent(inner_child_node);
+	param->paramid = dxl_to_plstmt_ctxt->GetNextParamId(oidAndTypeModifier.oid_type);
 	param->paramtype = oidAndTypeModifier.oid_type;
 	param->paramtypmod = oidAndTypeModifier.type_modifier;
 
