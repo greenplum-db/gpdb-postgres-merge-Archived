@@ -92,6 +92,7 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         
 
 SELECT count(*) FROM radix_text_tbl WHERE t ^@  'Worth';
 
+set optimizer_enable_tablescan = OFF;
 -- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
@@ -410,6 +411,7 @@ EXPLAIN (COSTS OFF)
 SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
 SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
 
+RESET optimizer_enable_tablescan;
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
