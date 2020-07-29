@@ -1538,13 +1538,8 @@ gp_proto1_read(char *buf, int bufsz, URL_CURL_FILE *file, CopyState pstate, char
 
 				memcpy(fname, file->in.ptr + file->in.bot, len);
 				fname[len] = 0;
-				/* GPDB_12_MERGE_FIXME: pstate->filename can be NULL here. We check
-				 * for that here, but we used to not. In other words, I think this
-				 * was broken before, but no one had tested on a platform that
-				 * crashes when passing NULL to %s. Add test.
-				 */
-				snprintf(pstate->cdbsreh->filename, sizeof pstate->cdbsreh->filename,"%s [%s]",
-						 (pstate->filename != NULL) ? pstate->filename : "(null)", fname);
+				snprintf(pstate->cdbsreh->filename, sizeof pstate->cdbsreh->filename, "%s [%s]",
+						 file->common.url, fname);
 			}
 
 			file->in.bot += len;
