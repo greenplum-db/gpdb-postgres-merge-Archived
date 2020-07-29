@@ -151,8 +151,28 @@ class ConfExpSegCmd(Command):
                         if shouldDeleteProgressFile:
                             os.remove(self.progressFile)
                     except Exception, e:
-                        self.set_results(CommandResult(1,'',e,True,False))
-                        raise
+                        #  If the cluster never has mirrors, cmd will fail
+                        #  quickly because the internal slot doesn't exist.
+                        #  Re-run with `create_slot`.
+                        #  GPDB_12_MERGE_FIXME could we check it before? or let
+                        #  pg_basebackup create slot if not exists.
+                        cmd = PgBaseBackup(pgdata=self.datadir,
+                                           host=self.syncWithSegmentHostname,
+                                           port=str(self.syncWithSegmentPort),
+                                           create_slot = True,
+                                           replication_slot_name=self.replicationSlotName,
+                                           forceoverwrite=self.forceoverwrite,
+                                           target_gp_dbid=self.dbid,
+                                           logfile=self.progressFile)
+                        try:
+                            logger.info("Re-running pg_basebackup, creating the slot this time")
+                            cmd.run(validateAfter=True)
+                            self.set_results(CommandResult(0, '', '', True, False))
+                            if shouldDeleteProgressFile:
+                                os.remove(self.progressFile)
+                        except Exception, e:
+                            self.set_results(CommandResult(1, '', e, True, False))
+                            raise
 
                     logger.info("Successfully ran pg_basebackup: %s" % cmd.cmdStr)
                     return
@@ -161,12 +181,12 @@ class ConfExpSegCmd(Command):
                 try:
                     self.makeOrUpdatePathAsNeeded(self.datadir)
                 except Exception, e:
-                    self.set_results(CommandResult(1,'',e,True,False))
+                    self.set_results(CommandResult(1, '', e, True, False))
                     raise
 
                 if self.tarfile:
                     logger.info("extract tar file to new segment")
-                    extractTarCmd = unix.ExtractTar('extract tar file to new segment', self.tarfile, self.datadir )
+                    extractTarCmd = unix.ExtractTar('extract tar file to new segment', self.tarfile, self.datadir)
                     try:
                         logger.debug('Extracting tar file %s to %s' % (self.tarfile, self.datadir))
                         extractTarCmd.run(validateAfter=True)
