@@ -3221,7 +3221,14 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 	CDXLTranslationContextArray *ctxt_translation_prev_siblings
 	)
 {
-	return NULL;
+	// HAAAAACK: recognize static pruning, and return a place holder partition
+	// selector
+	const bool dynamic_pruning = (EdxlpsIndexChild == partition_selector_dxlnode->Arity() - 1);
+	if (!dynamic_pruning)
+		return reinterpret_cast<Plan *>(MakeNode(Result));
+	else
+		return nullptr;
+
 #if 0
 	PartitionSelector *partition_selector = MakeNode(PartitionSelector);
 
@@ -3838,6 +3845,8 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan
 		);
 
 	SetParamIds(plan);
+
+	dyn_seq_scan->partOids = gpdb::RelLeafPartitions(rte->relid);
 
 	return (Plan *) dyn_seq_scan;
 }

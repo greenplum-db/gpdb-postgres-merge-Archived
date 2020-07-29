@@ -4494,3 +4494,18 @@ relation_is_partitioned(Oid relid)
 	else
 		return false;
 }
+
+List *
+relation_get_leaf_partitions(Oid oid)
+{
+	List *descendants = find_all_inheritors(oid, AccessShareLock, NULL);
+	List *leaves = NIL;
+	ListCell *lc;
+	foreach(lc, descendants)
+	{
+		const Oid descendant = lfirst_oid(lc);
+		if (get_rel_relkind(descendant) != RELKIND_PARTITIONED_TABLE)
+			leaves = lappend_oid(leaves, descendant);
+	}
+	return leaves;
+}

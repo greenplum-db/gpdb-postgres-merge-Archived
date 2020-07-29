@@ -2124,26 +2124,6 @@ typedef struct DynamicSeqScanState
 	SeqScanState *seqScanState;
 
 	/*
-	 * Pid index that maintains all unique partition pids for this dynamic
-	 * table scan to scan.
-	 */
-	HTAB	   *pidIndex;
-
-	/*
-	 * The status of sequentially scan the pid index.
-	 */
-	HASH_SEQ_STATUS pidStatus;
-
-	/*
-	 * Should we call hash_seq_term()? This is required
-	 * to handle error condition, where we are required to explicitly
-	 * call hash_seq_term(). Also, if we don't have any partition, this
-	 * flag should prevent ExecEndDynamicSeqScan from calling
-	 * hash_seq_term() on a NULL hash table.
-	 */
-	bool		shouldCallHashSeqTerm;
-
-	/*
 	 * The first partition requires initialization of expression states,
 	 * such as qual and targetlist, regardless of whether we need to re-map varattno
 	 */
@@ -2168,7 +2148,9 @@ typedef struct DynamicSeqScanState
 	 */
 	MemoryContext partitionMemoryContext;
 
-
+	int nOids;
+	Oid *partOids;
+	int whichpart;
 } DynamicSeqScanState;
 
 /* ----------------

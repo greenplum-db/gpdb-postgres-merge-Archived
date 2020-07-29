@@ -529,6 +529,8 @@ namespace gpdb {
 
 	bool RelIsPartitioned(Oid relid);
 
+	List *RelLeafPartitions(Oid relid);
+
 	// check whether table with the given oid is a regular table and not part of a partitioned table
 	bool RelPartIsNone(Oid relid);
 
