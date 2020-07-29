@@ -1058,13 +1058,8 @@ AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorRe
 			/*
 			 * Store the converted memtuple in slot->data, so that it gets free'd
 			 * automatically when it's no longer needed.
-			 *
-			 * GPDB_12_MERGE_FIXME: we're assuming that it's a VirtualTupleTableSlot.
-			 * But we cannot assert it here, becuase it's actually not;
-			 * appendonly_slot_callbacks() returns a copy of TTSOpsVirtual, so it's
-			 * a not exactly a virtual tuple slot, but something compatible. An
-			 * assertion sure would be nice.
 			 */
+			Assert(TTS_IS_VIRTUAL(slot));
 			VirtualTupleTableSlot *vslot = (VirtualTupleTableSlot *) slot;
 			Assert(vslot->data == NULL);
 			Assert(!TTS_SHOULDFREE(slot));
