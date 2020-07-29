@@ -173,7 +173,7 @@ initNextTableToScan(DynamicSeqScanState *node)
 		pfree(attMap);
 
 	DynamicScan_SetTableOid(&node->ss, *pid);
-	node->seqScanState = ExecInitSeqScanForPartition(&plan->seqscan, estate, node->eflags,
+	node->seqScanState = ExecInitSeqScanForPartition(&plan->seqscan, estate,
 													 currentRelation);
 	return true;
 }

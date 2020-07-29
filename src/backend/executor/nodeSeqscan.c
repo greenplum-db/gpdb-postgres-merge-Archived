@@ -136,11 +136,11 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 */
 	currentRelation = ExecOpenScanRelation(estate, node->scanrelid, eflags);
 
-	return ExecInitSeqScanForPartition(node, estate, eflags, currentRelation);
+	return ExecInitSeqScanForPartition(node, estate, currentRelation);
 }
 
 SeqScanState *
-ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
+ExecInitSeqScanForPartition(SeqScan *node, EState *estate,
 							Relation currentRelation)
 {
 	SeqScanState *scanstate;
@@ -170,10 +170,7 @@ ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 	/*
 	 * open the scan relation
 	 */
-	scanstate->ss.ss_currentRelation =
-		ExecOpenScanRelation(estate,
-							 node->scanrelid,
-							 eflags);
+	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/* and create slot with the appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
