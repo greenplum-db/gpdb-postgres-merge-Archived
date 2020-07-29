@@ -178,8 +178,8 @@ get_relation_type_data(Oid relam, int relkind)
 				return relation_types[6];
 			else
 				return relation_types[5];
-		case APPENDOPTIMIZED_TABLE_AM_OID:
-		case AOCO_TABLE_AM_OID:
+		case AO_ROW_TABLE_AM_OID:
+		case AO_COLUMN_TABLE_AM_OID:
 			return relation_types[7];
 
 		default:

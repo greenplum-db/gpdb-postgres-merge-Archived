@@ -3152,10 +3152,10 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 		case HEAP_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageHeap;
 			break;
-		case AOCO_TABLE_AM_OID:
+		case AO_COLUMN_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageAppendOnlyCols;
 			break;
-		case APPENDOPTIMIZED_TABLE_AM_OID:
+		case AO_ROW_TABLE_AM_OID:
 			rel_storage_type = IMDRelation::ErelstorageAppendOnlyRows;
 			break;
 // GPDB_12_MERGE_FIXME: why did ORCA even care about relstorage = 'v'??? DEAD CODE!
