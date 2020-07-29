@@ -2286,8 +2286,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
 
-	resultRelInfo->ri_aocsInsertDesc = NULL;
-
 	/*
 	 * Partition constraint, which also includes the partition constraint of
 	 * all the ancestors that are partitions.  Note that it will be checked

@@ -345,20 +345,6 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						 RelationGetRelationName(pstate->p_target_relation))));
 
-	// GPDB_12_MERGE_FIXME: We don't need to forbid this anymore, right? Look up MPP-21035
-	// and check if it's something we still need to worry about.
-#if 0
-    /* MPP-21035: Directly modify a part of a partitioned table is disallowed */
-    PartStatus targetRelPartStatus = rel_part_status(RelationGetRelid(pstate->p_target_relation));
-    if(PART_STATUS_INTERIOR == targetRelPartStatus)
-    {
-    	ereport(ERROR,
-    			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("directly modifying intermediate part of a partitioned table is disallowed"),
-				 errhint("Modify either the root or a leaf partition instead.")));
-    }
-#endif
-
 	/*
 	 * Override addRangeTableEntry's default ACL_SELECT permissions check, and
 	 * instead mark target table as requiring exactly the specified

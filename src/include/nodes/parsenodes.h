@@ -1981,8 +1981,8 @@ typedef enum AlterTableType
 
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
-	/* CDB: Partitioned Tables */
-	// GPDB_12_MERGE_FIXME: can all this be removed now?
+
+	/* GPDB: Legacy commands to manipulate partitions */
 	AT_PartAdd,					/* Add */
 	AT_PartAlter,				/* Alter */
 	AT_PartDrop,				/* Drop */
@@ -2025,22 +2025,12 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 
 } AlterTableCmd;
 
-/* GPDB_12_MERGE_FIXME: which of these are still needed? */
 typedef enum GpAlterPartitionIdType
 {
 	AT_AP_IDNone,				/* no ID */
 	AT_AP_IDName,				/* IDentify by Name */
 	AT_AP_IDValue,				/* IDentifier FOR Value */
-#if 0
-	AT_AP_IDRank,				/* IDentifier FOR Rank */
-	AT_AP_ID_oid,				/* IDentifier by oid (for internal use only) */
-	AT_AP_IDList,				/* List of IDentifier(for internal use only) */
-	AT_AP_IDRule,				/* partition rule (for internal use only) */
-#endif
 	AT_AP_IDDefault,			/* IDentify DEFAULT partition */
-#if 0
-	AT_AP_IDRangeVar			/* IDentify Partition by RangeVar */
-#endif
 } GpAlterPartitionIdType;
 
 typedef struct GpAlterPartitionId /* Identify a partition by name, val, pos */

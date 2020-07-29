@@ -299,7 +299,6 @@ extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 									 int options, bool verbose, LOCKMODE lmode);
 
-/* GPDB_12_MERGE_FIXME: what happened to this function? */
 extern bool vacuumStatement_IsTemporary(Relation onerel);
 
 /* in commands/analyze.c */

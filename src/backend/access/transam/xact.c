@@ -480,7 +480,6 @@ GetAllTransactionXids(
 	TransactionState s = CurrentTransactionState;
 
 	*distribXid = getDistributedTransactionId();
-	/* GPDB_12_MERGE_FIXME: Should we change this to return FullTransactionId? */
 	*localXid = XidFromFullTransactionId(s->fullTransactionId);
 	*subXid = s->subTransactionId;
 }

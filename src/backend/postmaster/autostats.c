@@ -73,7 +73,7 @@ autostats_issue_analyze(Oid relationOid)
 	analyzeStmt->is_vacuumcmd = false;
 
 	pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = NULL; // GPDB_12_MERGE_FIXME: Is a value mandatory?
+	pstate->p_sourcetext = NULL;
 
 	ExecVacuum(pstate, analyzeStmt, false);
 

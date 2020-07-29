@@ -70,26 +70,6 @@ NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
 void
 NewRelationCreateToastTable(Oid relOid, Datum reloptions)
 {
-	/* GPDB_12_MERGE_FIXME */
-#if 0
-	LOCKMODE	lockmode;
-
-	/*
-	 * Grab a DDL-exclusive lock on the target table, since we'll update the
-	 * pg_class tuple.	This is redundant for all present users.  Tuple
-	 * toasting behaves safely in the face of a concurrent TOAST table add.
-	 *
-	 * When we're creating a new table, we should already hold an AccessExclusiveLock
-	 * on it. It may seem silly to acquire a *stronger* lock in that, case, but
-	 * the idea is that it's cheaper to hold an AccessExclusiveLock twice, rather
-	 * than both an AccessExlusiveLock and a ShareUpdateExclusiveLock.
-	 */
-	if (is_part_child)
-		lockmode = NoLock;
-	else
-		lockmode = AccessExclusiveLock;
-#endif
-
 	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false);
 }
 
@@ -361,19 +341,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
 
 	table_close(toast_rel, NoLock);
-
-	/* GPDB_12_MERGE_FIXME: We don't want to take these shortcuts with partitions anymore, right? */
-#if 0
-	/*
-	 * If this is a partitioned child, we can unlock since the master is
-	 * already locked.
-	 */
-	if (is_part_child)
-	{
-		UnlockRelationOid(toast_relid, ShareLock);
-		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
-	}
-#endif
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

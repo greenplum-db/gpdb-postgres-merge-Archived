@@ -4409,22 +4409,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	/* Append extended statistic objects */
 	transformExtendedStatistics(&cxt);
 
-#if 0
-	/* GPDB_12_MERGE_FIXME: Where does this logic go now?
-	 *
-	 * If this is part of a CREATE TABLE of a partitioned table, creating
-	 * the partitions, we release the lock immediately, however. We hold
-	 * a lock on the parent table, and no-one can see the partitions yet,
-	 * so the lock on each partition isn't strictly required. Creating a
-	 * massively partitioned table could otherwise require holding a lot
-	 * of locks, running out of shared memory in the lock manager.
-	 */
-	if (cxt.iscreatepart)
-		relation_close(rel, AccessExclusiveLock);
-	else
-		relation_close(rel, NoLock);
-#endif
-
 	/* Close rel */
 	relation_close(rel, NoLock);
 
