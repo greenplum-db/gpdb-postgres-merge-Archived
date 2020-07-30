@@ -12498,38 +12498,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						relKind == RELKIND_PARTITIONED_INDEX)
 					{
 						Assert(foundObject.objectSubId == 0);
-
-						// GPDB_12_MERGE_FIXME
-#if 0						
-						if (!list_member_oid(tab->changedIndexOids, foundObject.objectId))
-						{
-							char *indexdefstring = pg_get_indexdef_string(foundObject.objectId);
-							tab->changedIndexOids = lappend_oid(tab->changedIndexOids,
-													   foundObject.objectId);
-							tab->changedIndexDefs = lappend(tab->changedIndexDefs,
-															indexdefstring);
-
-							if (indexdefstring != NULL &&
-								strstr(indexdefstring," UNIQUE ") != 0 &&
-								relContainsTuples)
-							{
-								Assert(Gp_role == GP_ROLE_DISPATCH &&
-									   GpPolicyIsPartitioned(rel->rd_cdbpolicy) &&
-									   tab->dist_opfamily_changed);
-
-								for (int ia = 0; ia < rel->rd_cdbpolicy->nattrs; ia++)
-								{
-									if (attnum == rel->rd_cdbpolicy->attrs[ia])
-									{
-										ereport(ERROR,
-												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("changing the type of a column that is part of the distribution policy and used in a unique index is not allowed")));
-									}
-								}
-							}
-						}
-#endif
-
 						RememberIndexForRebuilding(foundObject.objectId, tab);
 					}
 					else if (relKind == RELKIND_SEQUENCE)
@@ -12566,34 +12534,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 			case OCLASS_CONSTRAINT:
 				Assert(foundObject.objectSubId == 0);
-
-				// GPDB_12_MERGE_FIXME: Where should this go now?
-#if 0
-				if (!list_member_oid(tab->changedConstraintOids,
-									 foundObject.objectId))
-				{
-					char	   *defstring = pg_get_constraintdef_command(foundObject.objectId);
-
-					if (relContainsTuples &&
-						(strstr(defstring," UNIQUE") != 0 || strstr(defstring,"PRIMARY KEY") != 0))
-					{
-						Assert(Gp_role == GP_ROLE_DISPATCH &&
-							   tab->dist_opfamily_changed &&
-							   rel->rd_cdbpolicy != NULL &&
-							   rel->rd_cdbpolicy->ptype != POLICYTYPE_ENTRY);
-
-						for (int ia = 0; ia < rel->rd_cdbpolicy->nattrs; ia++)
-						{
-							if (attnum == rel->rd_cdbpolicy->attrs[ia])
-							{
-								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("changing the type of a column that is used in a UNIQUE or PRIMARY KEY constraint is not allowed")));
-							}
-						}
-					}
-				}
-#endif
 				RememberConstraintForRebuilding(foundObject.objectId, tab);
 				break;
 
