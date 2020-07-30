@@ -765,7 +765,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 				 * Store HLL/HLL fullscan information for leaf partitions in
 				 * the stats object
 				 */
-				/* GPDB_12_MERGE_FIXME: how to do this with new partitioning implementation? */
 				if (onerel->rd_rel->relkind == RELKIND_RELATION)
 				{
 					MemoryContext old_context;
@@ -2672,7 +2671,6 @@ std_typanalyze(VacAttrStats *stats)
 	 * Determine which standard statistics algorithm to use
 	 */
 	List *va_cols = list_make1(makeString(NameStr(stats->attr->attname)));
-	/* GPDB_12_MERGE_FIXME: merging stats not yet implemented with new partitioning implementation */
 	if (get_rel_relkind(attr->attrelid) == RELKIND_PARTITIONED_TABLE &&
 		!get_rel_relispartition(attr->attrelid) &&
 		leaf_parts_analyzed(stats->attr->attrelid, InvalidOid, va_cols, stats->elevel) &&
