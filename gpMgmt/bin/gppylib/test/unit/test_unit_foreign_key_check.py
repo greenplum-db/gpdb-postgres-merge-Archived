@@ -175,7 +175,7 @@ class GpCheckCatTestCase(GpTestCase):
     ####################### PRIVATE METHODS #######################
     def _get_filter(self, table_name):
         query_filters = {}
-        query_filters['pg_appendonly'] = "(relam in (select oid from pg_am where amname='appendoptimized' or amname='aoco'))"
+        query_filters['pg_appendonly'] = "(select amname from pg_am am where am.oid = relam) IN ('appendoptimized', 'aoco')"
         query_filters['pg_attribute'] = "true"
         query_filters['pg_constraint'] = "((relchecks>0 or relhaspkey='t') and relkind = 'r')"
         query_filters['gp_distribution_policy'] = """(relnamespace not in(select oid from pg_namespace where nspname ~ 'pg_')
