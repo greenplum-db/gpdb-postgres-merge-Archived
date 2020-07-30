@@ -460,22 +460,39 @@ string_matches_pattern(const char *str, const char *pattern)
 
 /*
  * Replace all occurrences of a string in a string with a different string.
- * NOTE: Assumes there is enough room in the target buffer!
+ *
+ * The caller is responsible for keeping track if the string has to be freed.
  */
-void
-replace_string(char *string, const char *replace, const char *replacement)
+char *
+replace_string(char *orig, size_t *len, const char *replace, const char *replacement)
 {
 	char	   *ptr;
+	char	   *string = orig;
+	ssize_t		overflow_len = strlen(replacement) - strlen(replace);
+	int			occurance = 0;
 
 	while ((ptr = strstr(string, replace)) != NULL)
 	{
 		char	   *dup = pg_strdup(string);
+
+		occurance++;
+		if (overflow_len > 0 &&
+			((ptr + strlen(ptr) + overflow_len) > (string + *len - 1)))
+		{
+			*len *= 2;
+			string = repalloc(string, *len);
+
+			for (int i = 0; i < occurance; i++)
+				ptr = strstr(string, replace);
+		}
 
 		strlcpy(string, dup, ptr - string + 1);
 		strcat(string, replacement);
 		strcat(string, dup + (ptr - string) + strlen(replace));
 		free(dup);
 	}
+
+	return string;
 }
 
 typedef struct replacements
@@ -530,26 +547,28 @@ detectCgroupMountPoint(char *cgdir, int len)
 #endif
 }
 
-static void
-convert_line(char *line, replacements *repls)
+static char *
+convert_line(char *line, size_t *len, replacements *repls)
 {
-	replace_string(line, "@cgroup_mnt_point@", repls->cgroup_mnt_point);
-	replace_string(line, "@abs_srcdir@", repls->abs_srcdir);
-	replace_string(line, "@abs_builddir@", repls->abs_builddir);
-	replace_string(line, "@testtablespace@", repls->testtablespace);
-	replace_string(line, "@libdir@", repls->dlpath);
-	replace_string(line, "@DLSUFFIX@", repls->dlsuffix);
-	replace_string(line, "@bindir@", repls->bindir);
-	replace_string(line, "@hostname@", repls->content_zero_hostname);
-	replace_string(line, "@curusername@", (char *) repls->username);
+	line = replace_string(line, len, "@cgroup_mnt_point@", repls->cgroup_mnt_point);
+	line = replace_string(line, len, "@abs_srcdir@", repls->abs_srcdir);
+	line = replace_string(line, len, "@abs_builddir@", repls->abs_builddir);
+	line = replace_string(line, len, "@testtablespace@", repls->testtablespace);
+	line = replace_string(line, len, "@libdir@", repls->dlpath);
+	line = replace_string(line, len, "@DLSUFFIX@", repls->dlsuffix);
+	line = replace_string(line, len, "@bindir@", repls->bindir);
+	line = replace_string(line, len, "@hostname@", repls->content_zero_hostname);
+	line = replace_string(line, len, "@curusername@", (char *) repls->username);
 	if (repls->amname)
 	{
-		replace_string(line, "@amname@", repls->amname);
+		line = replace_string(line, len, "@amname@", repls->amname);
 		if (strcmp(repls->amname, "ao_row") == 0)
-			replace_string(line, "@aoseg@", "aoseg");
+			line = replace_string(line, len, "@aoseg@", "aoseg");
 		else
-			replace_string(line, "@aoseg@", "aocsseg");
+			line = replace_string(line, len, "@aoseg@", "aocsseg");
 	}
+
+	return line;
 }
 
 /*
@@ -592,8 +611,10 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 		FILE	   *infile,
 				   *outfile_row,
 				   *outfile_col;
-		char		line[1024];
-		char		line_row[1024];
+		char	   *input_line;
+		char	   *converted_row;
+		size_t		input_line_len;
+		size_t		converted_row_len;
 		bool		has_tokens = false;
 
 		/* reject filenames not finishing in ".source" */
@@ -649,22 +670,55 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 			exit(2);
 		}
 
-		while (fgets(line, sizeof(line), infile))
+		input_line_len = 1024;
+		input_line = palloc(input_line_len);
+
+		converted_row = palloc(input_line_len);
+		converted_row_len = input_line_len;
+
+		while (fgets(input_line, input_line_len, infile))
 		{
-			strlcpy(line_row, line, sizeof(line_row));
+			char   *converted_col = input_line;
+			size_t	converted_col_len = input_line_len;
+
+			Assert(converted_row_len == input_line_len);
+			strcpy(converted_row, input_line);
+
 			repls->amname = "ao_row";
-			convert_line(line_row, repls);
+			converted_row = convert_line(converted_row, &converted_row_len, repls);
+			fputs(converted_row, outfile_row);
+
 			repls->amname = "ao_column";
-			convert_line(line, repls);
-			fputs(line, outfile_col);
-			fputs(line_row, outfile_row);
+			converted_col = convert_line(converted_col, &converted_col_len, repls);
+			fputs(converted_col, outfile_col);
+
+			/*
+			 * Either the column version changed only or both, because the
+			 * string "ao_column" is larger than "ao_row". Use the extended new
+			 * length for the subsequent inputs and grow the row version if
+			 * needed.
+			 */
+			if (input_line != converted_col)
+			{
+				input_line_len = converted_col_len;
+				input_line = converted_col;
+
+				if (converted_col_len > converted_row_len)
+				{
+					converted_row_len = converted_col_len;
+					converted_row = repalloc(converted_row, converted_row_len);
+				}
+			}
+
 			/*
 			 * Remember if there are any more tokens that we didn't recognize.
 			 * They need to be handled by the gpstringsubs.pl script
 			 */
-			if (!has_tokens && strstr(line, "@gp") != NULL)
+			if (!has_tokens && strstr(input_line, "@gp") != NULL)
 				has_tokens = true;
 		}
+		pfree(converted_row);
+		pfree(input_line);
 
 		fclose(infile);
 		fclose(outfile_row);
@@ -790,7 +844,8 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 		char		prefix[MAXPGPATH];
 		FILE	   *infile,
 				   *outfile;
-		char		line[1024];
+		char	   *line;
+		size_t		line_len;
 		bool		has_tokens = false;
 		struct stat fst;
 
@@ -847,9 +902,12 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 					progname, destfile, strerror(errno));
 			exit(2);
 		}
-		while (fgets(line, sizeof(line), infile))
+
+		line_len = 1024;
+		line = palloc0(line_len);
+		while (fgets(line, line_len, infile))
 		{
-			convert_line(line, &repls);
+			line = convert_line(line, &line_len, &repls);
 			fputs(line, outfile);
 
 			/*
@@ -859,6 +917,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 			if (!has_tokens && strstr(line, "@gp") != NULL)
 				has_tokens = true;
 		}
+		pfree(line);
 		fclose(infile);
 		fclose(outfile);
 

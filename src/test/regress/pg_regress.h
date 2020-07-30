@@ -52,5 +52,5 @@ int			regression_main(int argc, char *argv[],
 							init_function ifunc, test_function tfunc);
 void		add_stringlist_item(_stringlist **listhead, const char *str);
 PID_TYPE	spawn_process(const char *cmdline);
-void		replace_string(char *string, const char *replace, const char *replacement);
+char	   *replace_string(char *orig, size_t *len, const char *replace, const char *replacement);
 bool		file_exists(const char *file);
