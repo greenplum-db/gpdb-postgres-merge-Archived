@@ -3,8 +3,8 @@
 
 \set HIDE_TABLEAM off
 
-create access method ao_row_testam type table handler appendonly_tableam_handler;
-create access method ao_col_testam type table handler aoco_tableam_handler;
+create access method ao_row_testam type table handler ao_row_tableam_handler;
+create access method ao_col_testam type table handler ao_column_tableam_handler;
 create access method heap_testam type table handler heap_tableam_handler;
 
 select amname, amhandler, amtype from pg_am where amname like '%_testam';

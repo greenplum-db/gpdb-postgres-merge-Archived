@@ -1,15 +1,15 @@
 -- Greenplum specific access method tests, in addition to what's
 -- covered by upstream create_am.sql tests
 \set HIDE_TABLEAM off
-create access method ao_row_testam type table handler appendonly_tableam_handler;
-create access method ao_col_testam type table handler aoco_tableam_handler;
+create access method ao_row_testam type table handler ao_row_tableam_handler;
+create access method ao_col_testam type table handler ao_column_tableam_handler;
 create access method heap_testam type table handler heap_tableam_handler;
 select amname, amhandler, amtype from pg_am where amname like '%_testam';
-    amname     |         amhandler          | amtype 
----------------+----------------------------+--------
- ao_row_testam | appendonly_tableam_handler | t
- ao_col_testam | aoco_tableam_handler       | t
- heap_testam   | heap_tableam_handler       | t
+    amname     |         amhandler         | amtype 
+---------------+---------------------------+--------
+ ao_row_testam | ao_row_tableam_handler    | t
+ ao_col_testam | ao_column_tableam_handler | t
+ heap_testam   | heap_tableam_handler      | t
 (3 rows)
 
 create table create_am_gp_ao1 (a int, b int) using ao_row_testam distributed by (a);
@@ -19,6 +19,10 @@ create table create_am_gp_ao1 (a int, b int) using ao_row_testam distributed by 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
+Compression Type: None
+Compression Level: 0
+Block Size: 32768
+Checksum: t
 Distributed by: (a)
 Access method: ao_row_testam
 
@@ -29,6 +33,10 @@ create table create_am_gp_ao2 (a int, b int) using ao_row_testam with (compresst
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
+Compression Type: zlib
+Compression Level: 1
+Block Size: 32768
+Checksum: t
 Distributed by: (a)
 Access method: ao_row_testam
 Options: compresstype=zlib
@@ -75,6 +83,10 @@ create table create_am_gp_ao6(a int, b int) using ao_row_testam with (compressty
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
+Compression Type: zlib
+Compression Level: 1
+Block Size: 32768
+Checksum: t
 Distributed by: (a)
 Access method: ao_row_testam
 Options: compresstype=zlib
