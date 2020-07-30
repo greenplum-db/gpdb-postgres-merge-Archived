@@ -1274,6 +1274,7 @@ drop table p1 cascade;
 
 create domain mytype as text;
 create temp table foo (f1 text, f2 mytype, f3 text);
+alter table foo set distributed randomly;
 
 insert into foo values('bb','cc','dd');
 select * from foo;
@@ -1293,7 +1294,7 @@ alter table foo alter f1 TYPE varchar(10);
 
 create table anothertab (atcol1 serial8, atcol2 boolean,
 	constraint anothertab_chk check (atcol1 <= 3))
-	distributed by (atcol1);
+	distributed randomly;
 
 insert into anothertab (atcol1, atcol2) values (default, true);
 insert into anothertab (atcol1, atcol2) values (default, false);

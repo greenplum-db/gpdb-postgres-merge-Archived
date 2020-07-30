@@ -12077,6 +12077,30 @@ ATPrepAlterColumnType(List **wqueue,
 		}
 	}
 
+	/*
+	 * Distribution key cannot be changed in a non-compatible way. Unless the
+	 * table is completely empty.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH &&
+		GpPolicyIsPartitioned(rel->rd_cdbpolicy) &&
+		tab->dist_opfamily_changed)
+	{
+		bool		relContainsTuples;
+
+		relContainsTuples = cdbRelMaxSegSize(rel) > 0;
+		if (relContainsTuples)
+		{
+			for (int ia = 0; ia < rel->rd_cdbpolicy->nattrs; ia++)
+			{
+				if (attnum == rel->rd_cdbpolicy->attrs[ia])
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot alter type of a column used in "
+									"a distribution policy")));
+			}
+		}
+	}
+
 	if (tab->relkind == RELKIND_RELATION ||
 		tab->relkind == RELKIND_PARTITIONED_TABLE)
 	{
@@ -12340,7 +12364,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	SysScanDesc scan;
 	HeapTuple	depTup;
 	ObjectAddress address;
-	bool		relContainsTuples = false;
 
 	/*
 	 * Clear all the missing values if we're rewriting the table, since this
@@ -12424,13 +12447,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	}
 	else
 		defaultexpr = NULL;
-
-	if (Gp_role == GP_ROLE_DISPATCH &&
-		GpPolicyIsPartitioned(rel->rd_cdbpolicy) &&
-		tab->dist_opfamily_changed)
-	{
-		relContainsTuples = cdbRelMaxSegSize(rel) > 0;
-	}
 
 	/*
 	 * Find everything that depends on the column (constraints, indexes, etc),
@@ -12751,61 +12767,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	systable_endscan(scan);
 
 	table_close(depRel, RowExclusiveLock);
-
-	/*
-	 * FIXME: we used to allow changing partition key datatype, if the old
-	 * and new types were "compatible". The compatibility used to be hard-coded,
-	 * so that int2, int4 and int4 were compatible, as were text, varchar, bpchar.
-	 * For the check below, on changing the DISTRIBUTED BY columns, I replaced
-	 * that hard-coded notion by checking that the old and new hash opclass belongs
-	 * to the same operator family. But that's not quite right for the partitioning
-	 * key. Firstly, the partitioning is based on the btree operators, not hash
-	 * compatibility, so if you used something funny as the hash opclass, even if
-	 * the hash opfamily is the same, it doesn't necessarily mean that the btree
-	 * operators are compatible. Secondly, even if you change the datatype from
-	 * e.g. int4 to int2, their default opclasses belong to the same operator family,
-	 * but int2 has a smaller range so the partition boundaries might be out-of-range
-	 * with the new datatype (That's actually an existing bug, see issue
-	 * https://github.com/greenplum-db/gpdb/issues/6181)
-	 *
-	 * I think the right thing to do would be to check if the old and new 'partclass'
-	 * are in the same opfamily.
-	 */
-	/* GPDB_12_MERGE_FIXME: do we still need this check with new upstream partitioning implementation? */
-#if 0
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		ListCell   *lc;
-		List	   *partkeys;
-
-		partkeys = rel_partition_key_attrs(rel->rd_id);
-		foreach (lc, partkeys)
-		{
-			if (attnum == lfirst_int(lc))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type of a column used in "
-								"a partitioning key")));
-		}
-	}
-#endif
-	
-	if (Gp_role == GP_ROLE_DISPATCH &&
-		GpPolicyIsPartitioned(rel->rd_cdbpolicy) &&
-		tab->dist_opfamily_changed)
-	{
-		if (relContainsTuples)
-		{
-			for (int ia = 0; ia < rel->rd_cdbpolicy->nattrs; ia++)
-			{
-				if (attnum == rel->rd_cdbpolicy->attrs[ia])
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot alter type of a column used in "
-									"a distribution policy")));
-			}
-		}
-	}
 
 	/*
 	 * Here we go --- change the recorded column type and collation.  (Note

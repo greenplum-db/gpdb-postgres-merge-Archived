@@ -1844,6 +1844,7 @@ NOTICE:  drop cascades to table c1
 -- its datatype
 create domain mytype as text;
 create temp table foo (f1 text, f2 mytype, f3 text);
+alter table foo set distributed randomly;
 insert into foo values('bb','cc','dd');
 select * from foo;
  f1 | f2 | f3 
@@ -1888,7 +1889,7 @@ HINT:  You might need to specify "USING f1::integer".
 alter table foo alter f1 TYPE varchar(10);
 create table anothertab (atcol1 serial8, atcol2 boolean,
 	constraint anothertab_chk check (atcol1 <= 3))
-	distributed by (atcol1);
+	distributed randomly;
 insert into anothertab (atcol1, atcol2) values (default, true);
 insert into anothertab (atcol1, atcol2) values (default, false);
 select * from anothertab;
@@ -1942,7 +1943,8 @@ ERROR:  default for column "atcol1" cannot be cast automatically to type boolean
 alter table anothertab alter column atcol1 drop default;
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end; -- fails
-ERROR:  cannot alter type of a column used in a distribution policy
+ERROR:  operator does not exist: boolean <= integer
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 alter table anothertab drop constraint anothertab_chk;
 alter table anothertab drop constraint anothertab_chk; -- fails
 ERROR:  constraint "anothertab_chk" of relation "anothertab" does not exist
@@ -1950,13 +1952,12 @@ alter table anothertab drop constraint IF EXISTS anothertab_chk; -- succeeds
 NOTICE:  constraint "anothertab_chk" of relation "anothertab" does not exist, skipping
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end;
-ERROR:  cannot alter type of a column used in a distribution policy
 select * from anothertab;
  atcol1 |    atcol2    
 --------+--------------
-      1 | IT WAS TRUE
-      2 | IT WAS FALSE
-      3 | IT WAS NULL!
+ f      | IT WAS TRUE
+ t      | IT WAS FALSE
+ f      | IT WAS NULL!
 (3 rows)
 
 drop table anothertab;
