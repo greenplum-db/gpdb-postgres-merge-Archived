@@ -612,6 +612,8 @@ cdbCopyEndInternal(CdbCopy *c, char *abort_msg,
 						break;
 					}
 				}
+				if (buffer)
+					PQfreemem(buffer);
 			}
 
 			/* in SREH mode, check if this seg rejected (how many) rows */

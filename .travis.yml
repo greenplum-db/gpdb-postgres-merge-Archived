@@ -21,6 +21,7 @@ addons:
             - libxerces-c-dev
             - libevent-dev
             - libperl-dev
+            - libuv1-dev
             - g++-8
             - python-dev
             - python-yaml
@@ -132,6 +133,7 @@ install:
 
 before_script:
     - ssh-keygen -t "rsa" -f ~/.ssh/id_rsa -N ""
+    - ssh-keyscan $(hostname) >> ~/.ssh/known_hosts
     - cp ~/.ssh/{id_rsa.pub,authorized_keys}
     - ccache --zero-stats
 
@@ -153,6 +155,7 @@ script:
             --with-libxml \
             --enable-mapreduce \
             --enable-orafce \
+            --enable-ic-proxy \
             $C
         travis_wait 40 make -s
         make -s install
@@ -176,6 +179,7 @@ script:
             --with-libxml \
             --enable-mapreduce \
             --enable-orafce \
+            --enable-ic-proxy \
             $C
         make -s
         make -s install

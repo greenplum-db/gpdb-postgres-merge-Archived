@@ -5760,6 +5760,7 @@ getTypeStorageOptions(Archive *fout, int *numTypes)
 	{
 		numTypes = 0;
 		tstorageoptions = (TypeStorageOptions *) pg_malloc(0);
+		destroyPQExpBuffer(query);
 		return tstorageoptions;
 	}
 
@@ -18558,7 +18559,8 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 
 	/*
 	 * GPDB_12_MERGE_FIXME: upstream always uses ONLY here, why gpdb need
-	 * condition?
+	 * condition? Fix corresponding tests in t/002_pg_dump.pl if you change
+	 * this.
 	 *
 	 * If the table is the parent of a partitioning hierarchy, the default
 	 * constraint must be applied to all children as well.
