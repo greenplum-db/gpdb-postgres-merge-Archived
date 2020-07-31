@@ -4041,12 +4041,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	stmt = copyObject(stmt);
 
 	/* Caller is responsible for locking the relation */
-	/* GPDB_94_MERGE_FIXME: this function used to be responsible, and we had some
-	 * more complicated logic here for partitions:
-	 *
-	 * In GPDB, we release the lock early if this command is part of a
-	 * partitioned CREATE TABLE.
-	 */
 	rel = relation_open(relid, NoLock);
 	tupdesc = RelationGetDescr(rel);
 
@@ -4095,7 +4089,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 * The only subtypes that currently require parse transformation handling
 	 * are ADD COLUMN, ADD CONSTRAINT and SET DATA TYPE.  These largely re-use
 	 * code from CREATE TABLE.
-	 * And ALTER TABLE ... <operator> PARTITION ...
 	 */
 	foreach(lcmd, stmt->cmds)
 	{
