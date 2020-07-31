@@ -580,8 +580,6 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	/* Perform the insertion, and copy the resulting ItemPointer */
 	appendonly_insert(insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
 
-	// GPDB_12_MERGE_FIXME: isn't this fixed by the pgstat_count_heap_insert?
-	//(resultRelInfo->ri_aoprocessed)++;
 	pgstat_count_heap_insert(relation, 1);
 
 	if (shouldFree)
@@ -686,9 +684,6 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 		return result;
 
 	appendonly_insert(insertDesc, mtuple, (AOTupleId *) &slot->tts_tid);
-
-	// GPDB_12_MERGE_FIXME
-	//(resultRelInfo->ri_aoprocessed)++;
 
 	pgstat_count_heap_update(relation, false);
 	/* No HOT updates with AO tables. */

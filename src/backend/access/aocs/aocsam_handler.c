@@ -802,9 +802,6 @@ aoco_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
 
 	aocs_insert(insertDesc, slot);
 
-	// GPDB_12_MERGE_FIXME
-	//(resultRelInfo->ri_aoprocessed)++;
-
 	pgstat_count_heap_update(relation, false);
 	/* No HOT updates with AO tables. */
 	*update_indexes = true;
