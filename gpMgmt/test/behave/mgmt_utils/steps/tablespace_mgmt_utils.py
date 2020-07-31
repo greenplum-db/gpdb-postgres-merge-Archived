@@ -119,11 +119,11 @@ begin
 	checkpoint;
 
 	-- Get the WAL positions after the checkpoint records on every segment.
-	for r in select gp_segment_id, pg_current_xlog_location() as loc from gp_dist_random('gp_id') loop
+	for r in select gp_segment_id, pg_current_wal_lsn() as loc from gp_dist_random('gp_id') loop
 		checkpoint_locs[r.gp_segment_id] = r.loc;
 	end loop;
 	-- and the QD, too.
-	checkpoint_locs[-1] = pg_current_xlog_location();
+	checkpoint_locs[-1] = pg_current_wal_lsn();
 
 	-- Force some WAL activity, to nudge the mirrors to replay past the
 	-- checkpoint location. There are some cases where a non-transactional
