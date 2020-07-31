@@ -4,43 +4,49 @@
  *		Functions to ensure that QD and QEs use same OIDs for catalog objects.
  *
  *
- * In Greenplum, it's important that most objects, like relations,
- * functions, operators, have the same OIDs in the master and all QE nodes.
- * Otherwise query plans generated in the master will not work on the QE
- * nodes, because they use the master's OIDs to refer to objects.
+ * In Greenplum, it's important that most objects, like relations, functions,
+ * operators, have the same OIDs in the master and all QE nodes.  Otherwise
+ * query plans generated in the master will not work on the QE nodes, because
+ * they use the master's OIDs to refer to objects.
  *
- * Whenever a CREATE statement, or any other command that creates new
- * objects, is dispatched, the master also needs to tell the QE servers which
- * OIDs to use for the new objects. Before GPDB 5.0, that was done by
- * modifying all the structs representing DDL statements, like DefineStmt,
+ * Whenever a CREATE statement, or any other command that creates new objects,
+ * is dispatched, the master also needs to tell the QE servers which OIDs to
+ * use for the new objects.  Before GPDB 5.0, that was done by modifying all
+ * the structs representing DDL statements, like DefineStmt,
  * CreateOpClassStmt, and so forth, by adding a new OID field to them.
  * However, that was annoying when merging with the upstream, because it
  * required scattered changes to all the structs, and the accompanying
- * routines to copy and serialize them. Moreover, for more complicated object
+ * routines to copy and serialize them.  Moreover, for more complicated object
  * types, like a table, a single OID was not enough, as CREATE TABLE not only
  * creates the entry in pg_class, it also creates a composite type, an array
- * type for the composite type, and possibly the same for the associated
- * toast table.
+ * type for the composite type, and possibly the same for the associated toast
+ * table.
  *
- * GPDP_12_MERGE_FIXME: the paragraph bellow is out of sync now after commit
- * 77a2c7f38e0862 (in the iteration_REL_12 branch)
+ * Starting with GPDB 5.0, we take a different tack.  Whenever a new OID is
+ * needed for an object in PostgreSQL, the GetNewOidWithIndex() is used.
+ * In GPDB, all the upstream calls to GetNewOidWithIndex() function have been
+ * replaced with calls to the GetNewOidFor* functions in this file.  All the
+ * GetNewOidFor*() functions are actually just wrappers for the
+ * GetNewOrPreassignedOid() function, and only differ in the key arguments
+ * for each object type.  GetNewOrPreassignedOid() does the heavy
+ * lifting.  It behaves differently in the QD and the QEs:
  *
- * Starting with GPDB 5.0, we take a different tact. Whenever an OID is
- * assigned for a system table in the QD node, the OID is recorded in private
- * memory, in the 'dispatch_oids' list, along with the key for that object.
- * AddDispatchOidFromTuple() function does that, and it's called from
- * heap_insert(). For example, when a new type is created, the OID of the new
- * type, and the namespace and the type name of the new type, are recorded in
- * the 'dispatch_oids' list.  When the command is dispatched to the QE
- * servers, all the recorded OIDs are included in the dispatched request, and
- * the QE processes in turn stash the list into backend-private memory. This
- * is the 'preassigned_oids' list.
+ * In the QD, GetNewOrPreassignedOid() generates a new OID by calling through
+ * to the upstream GetNewOidWithIndex() function.  But it also records the
+ * the generated OID in private memory, in the 'dispatch_oids' list, along
+ * with the key for that object.  For example, when a new type is created,
+ * the GetNewOrPreassignedOid() function generates a new OID, and records it
+ * it along with the type's namespace and name in the 'dispatch_oids' list.
+ * When the command is dispatched to the QE servers, all the recorded OIDs
+ * are included in the dispatched request, and the QE processes in turn stash
+ * the list into backend-private memory.  This is the 'preassigned_oids' list.
  *
- * In a QE node, when we are about to create a new object, and assign an OID
- * for it, we look into the 'preassigned_oids' list to see if we had received
- * an OID to use for the named object from the master. Under normal
- * circumstances, we should have a pre-assigned OID for all objects created
- * in QEs, and the GetPreassigned*() functions will throw an error if we
+ * In a QE node, when we reach the same code as in the QD to create a new
+ * object, the GetNewOrPreassignedOid() function is called again.  The
+ * function looks into the 'preassigned_oids' list to see if we had received
+ * an OID for to use for the named object from the master. Under normal
+ * circumstances, we should have pre-assigned OIDs for all objects created in
+ * QEs, and the GetNewOrPreassignedOid() function will throw an error if we
  * don't.
  *
  * All in all, this provides a generic mechanism for DDL commands, to record
