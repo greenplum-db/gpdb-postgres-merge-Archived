@@ -161,7 +161,7 @@ class ConfExpSegCmd(Command):
                                            port=str(self.syncWithSegmentPort),
                                            create_slot = True,
                                            replication_slot_name=self.replicationSlotName,
-                                           forceoverwrite=self.forceoverwrite,
+                                           forceoverwrite=True,
                                            target_gp_dbid=self.dbid,
                                            logfile=self.progressFile)
                         try:
