@@ -469,21 +469,17 @@ replace_string(char *orig, size_t *len, const char *replace, const char *replace
 	char	   *ptr;
 	char	   *string = orig;
 	ssize_t		overflow_len = strlen(replacement) - strlen(replace);
-	int			occurance = 0;
 
 	while ((ptr = strstr(string, replace)) != NULL)
 	{
 		char	   *dup = pg_strdup(string);
 
-		occurance++;
 		if (overflow_len > 0 &&
 			((ptr + strlen(ptr) + overflow_len) > (string + *len - 1)))
 		{
 			*len *= 2;
 			string = repalloc(string, *len);
-
-			for (int i = 0; i < occurance; i++)
-				ptr = strstr(string, replace);
+			ptr = strstr(string, replace);
 		}
 
 		strlcpy(string, dup, ptr - string + 1);
