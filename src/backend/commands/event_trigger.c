@@ -1230,7 +1230,6 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_TRANSFORM:
 			return true;
 		case OCLASS_EXTPROTOCOL:
-		case OCLASS_COMPRESSION:
 			return false;
 
 			/*

@@ -3695,17 +3695,6 @@ getObjectDescription(const ObjectAddress *object)
 								 ExtProtocolGetNameByOid(object->objectId));
 				break;
 			}
-
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-				break;
-			}
-
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new OCLASS hasn't been handled above.
-			 */
 	}
 
 	return buffer.data;
@@ -4224,10 +4213,6 @@ getObjectTypeDescription(const ObjectAddress *object)
 
 		case OCLASS_EXTPROTOCOL:
 			appendStringInfoString(&buffer, "external protocol");
-			break;
-
-		case OCLASS_COMPRESSION:
-			appendStringInfoString(&buffer, "compression");
 			break;
 
 			/*
@@ -5300,12 +5285,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 			}
 			break;
 
-
-		case OCLASS_COMPRESSION:
-			// GPDB_12_MERGE_FIXME: do we really need OCLASS_COMPRESSION?
-			elog(ERROR, "not implemented for compression methods");
-			break;
-			
 			/*
 			 * There's intentionally no default: case here; we want the
 			 * compiler to warn if a new OCLASS hasn't been handled above.

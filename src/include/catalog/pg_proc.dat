@@ -10761,8 +10761,7 @@
 { oid => 6116, descr => 'implementation of % operator',
    proname => 'interval_interval_mod', prorettype => 'interval', proargtypes => 'interval interval', prosrc => 'interval_interval_mod' },
 
-# GPDB_12_MERGE_FIXME: Shouldn't the description be "*decrement* by one"?
-{ oid => 6997, descr => 'increment by one',
+{ oid => 6997, descr => 'decrement by one',
    proname => 'numeric_dec', prorettype => 'numeric', proargtypes => 'numeric', prosrc => 'numeric_dec' },
 
 
