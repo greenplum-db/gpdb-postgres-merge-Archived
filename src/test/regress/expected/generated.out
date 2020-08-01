@@ -602,6 +602,7 @@ CREATE TABLE gtest27 (
     a int,
     b int GENERATED ALWAYS AS (a * 2) STORED
 );
+ALTER TABLE gtest27 SET DISTRIBUTED RANDOMLY;
 INSERT INTO gtest27 (a) VALUES (3), (4);
 ALTER TABLE gtest27 ALTER COLUMN a TYPE text;  -- error
 ERROR:  cannot alter type of a column used by a generated column
