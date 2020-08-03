@@ -69,8 +69,12 @@ maintainer-clean: distclean
 install-tests:
 	$(MAKE) -C $(top_builddir)/contrib/pageinspect install
 
+# Unlike in most 'installcheck' tests, drop the database on success. The tests
+# are run in utility mode, so the database is inconsistent between QD and the
+# segments, and we don't want to leave that behind to confuse other tests.
 installcheck: all gpdiff.pl gpstringsubs.pl install-tests
 	$(pg_isolation_regress_installcheck) --init-file=$(srcdir)/init_file --load-extension=pageinspect --schedule=$(srcdir)/isolation_schedule
+	$(bindir)/dropdb --if-exists isolation_regression
 
 check: all
 	$(pg_isolation_regress_check) --schedule=$(srcdir)/isolation_schedule
