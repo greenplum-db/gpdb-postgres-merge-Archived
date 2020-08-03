@@ -305,14 +305,14 @@ def check_table_exists(context, dbname, table_name, table_type=None, host=None, 
         if '.' in table_name:
             schemaname, tablename = table_name.split('.')
             SQL_format = """
-                SELECT c.oid, c.relkind, c.relstorage, c.reloptions
+                SELECT c.oid, c.relkind, c.relam, c.reloptions
                 FROM pg_class c, pg_namespace n
                 WHERE c.relname = '%s' AND n.nspname = '%s' AND c.relnamespace = n.oid;
                 """
             SQL = SQL_format % (escape_string(tablename, conn=conn), escape_string(schemaname, conn=conn))
         else:
             SQL_format = """
-                SELECT oid, relkind, relstorage, reloptions \
+                SELECT oid, relkind, relam, reloptions \
                 FROM pg_class \
                 WHERE relname = E'%s';\
                 """
@@ -328,16 +328,12 @@ def check_table_exists(context, dbname, table_name, table_type=None, host=None, 
         if table_type is None:
             return True
 
-    if table_row[2] == 'a':
+    if table_row[2] == '4187':
         original_table_type = 'ao'
-    elif table_row[2] == 'c':
+    elif table_row[2] == '4188':
         original_table_type = 'co'
-    elif table_row[2] == 'h':
+    elif table_row[2] == '3':
         original_table_type = 'heap'
-    elif table_row[2] == 'x':
-        original_table_type = 'external'
-    elif table_row[2] == 'v':
-        original_table_type = 'view'
     else:
         raise Exception('Unknown table type %s' % table_row[2])
 
@@ -347,25 +343,10 @@ def check_table_exists(context, dbname, table_name, table_type=None, host=None, 
     return True
 
 
-def drop_external_table_if_exists(context, table_name, dbname):
-    if check_table_exists(context, table_name=table_name, dbname=dbname, table_type='external'):
-        drop_external_table(context, table_name=table_name, dbname=dbname)
-
-
 def drop_table_if_exists(context, table_name, dbname, host=None, port=0, user=None):
     SQL = 'drop table if exists %s' % table_name
     with closing(dbconn.connect(dbconn.DbURL(hostname=host, port=port, username=user, dbname=dbname), unsetSearchPath=False)) as conn:
         dbconn.execSQL(conn, SQL)
-
-
-def drop_external_table(context, table_name, dbname, host=None, port=0, user=None):
-    SQL = 'drop external table %s' % table_name
-    with closing(dbconn.connect(dbconn.DbURL(hostname=host, port=port, username=user, dbname=dbname), unsetSearchPath=False)) as conn:
-        dbconn.execSQL(conn, SQL)
-
-    if check_table_exists(context, table_name=table_name, dbname=dbname, table_type='external', host=host, port=port,
-                          user=user):
-        raise Exception('Unable to successfully drop the table %s' % table_name)
 
 
 def drop_table(context, table_name, dbname, host=None, port=0, user=None):
