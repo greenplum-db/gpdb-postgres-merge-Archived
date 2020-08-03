@@ -4741,7 +4741,7 @@ binary_upgrade_set_namespace_oid(Archive *fout, PQExpBuffer upgrade_buffer,
 	if (strcmp(pg_nspname, "public") == 0)
 	{
 		appendPQExpBuffer(upgrade_buffer,
-						  "DROP SCHEMA IF EXISTS public;");
+						  "DROP SCHEMA IF EXISTS public;\n");
 	}
 	appendPQExpBuffer(upgrade_buffer,
 	 "SELECT binary_upgrade_set_next_pg_namespace_oid('%u'::pg_catalog.oid, "
@@ -17832,12 +17832,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			PQExpBuffer result;
 
 			result = createViewAsClause(fout, tbinfo);
-			appendPQExpBuffer(q, " AS\n%s\n  WITH NO DATA\n",
+			appendPQExpBuffer(q, " AS\n%s\n  WITH NO DATA",
 							  result->data);
 			destroyPQExpBuffer(result);
 		}
-		else
-			appendPQExpBufferStr(q, "\n");
 
 		/* START MPP ADDITION */
 
@@ -18565,8 +18563,8 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	 * If the table is the parent of a partitioning hierarchy, the default
 	 * constraint must be applied to all children as well.
 	 */
-	appendPQExpBuffer(q, "ALTER TABLE %s %s ",
-					  tbinfo->parparent ? "" : "ONLY",
+	appendPQExpBuffer(q, "ALTER TABLE %s%s ",
+					  tbinfo->parparent ? "" : "ONLY ",
 					  qualrelname);
 	appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
 					  fmtId(tbinfo->attnames[adnum - 1]),
@@ -20696,6 +20694,7 @@ addDistributedBy(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_att
 	{
 		PQExpBuffer query = createPQExpBuffer();
 		PGresult   *res;
+		char	   *dby;
 
 		appendPQExpBuffer(query,
 						  "SELECT pg_catalog.pg_get_table_distributedby(%u)",
@@ -20703,7 +20702,9 @@ addDistributedBy(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_att
 
 		res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
-		appendPQExpBuffer(q, " %s", PQgetvalue(res, 0, 0));
+		dby = PQgetvalue(res, 0, 0);
+		if (strcmp(dby, "") != 0)
+			appendPQExpBuffer(q, " %s", PQgetvalue(res, 0, 0));
 
 		PQclear(res);
 		destroyPQExpBuffer(query);
