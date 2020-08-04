@@ -553,9 +553,9 @@ def impl(context, table_type, tablename, dbname, numrows):
             conn.close()
 
 @then(
-    'data for partition table "{table_name}" with partition level "{part_level}" is distributed across all segments on "{dbname}"')
-def impl(context, table_name, part_level, dbname):
-    validate_part_table_data_on_segments(context, table_name, part_level, dbname)
+    'data for partition table "{table_name}" with leaf partition distributed across all segments on "{dbname}"')
+def impl(context, table_name, dbname):
+    validate_part_table_data_on_segments(context, table_name, dbname)
 
 @then('verify that table "{tname}" in "{dbname}" has "{nrows}" rows')
 def impl(context, tname, dbname, nrows):

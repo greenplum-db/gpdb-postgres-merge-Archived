@@ -518,7 +518,7 @@ Feature: gpcheckcat tests
         And the user runs "echo > /tmp/backup_gpfdist_dummy"
         And the user runs "gpfdist -p 8098 -d /tmp &"
         And there is a partition table "part_external" has external partitions of gpfdist with file "backup_gpfdist_dummy" on port "8098" in "miss_attr_db3" with data
-        Then data for partition table "part_external" with partition level "0" is distributed across all segments on "miss_attr_db3"
+        Then data for partition table "part_external" with leaf partition distributed across all segments on "miss_attr_db3"
         When the user runs "gpcheckcat miss_attr_db3"
         And gpcheckcat should return a return code of 0
         Then gpcheckcat should not print "Missing" to stdout
@@ -537,7 +537,7 @@ Feature: gpcheckcat tests
         And the user runs "echo > /tmp/backup_gpfdist_dummy"
         And the user runs "gpfdist -p 8098 -d /tmp &"
         And there is a partition table "part_external" has external partitions of gpfdist with file "backup_gpfdist_dummy" on port "8098" in "miss_attr_db3" with data
-        Then data for partition table "part_external" with partition level "0" is distributed across all segments on "miss_attr_db3"
+        Then data for partition table "part_external" with leaf partition distributed across all segments on "miss_attr_db3"
         When the user runs "gpcheckcat miss_attr_db3"
         And gpcheckcat should return a return code of 0
         Then gpcheckcat should not print "Missing" to stdout
