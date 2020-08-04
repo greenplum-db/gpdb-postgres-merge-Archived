@@ -413,11 +413,11 @@ static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 	 BackoffSweeperStartRule},
 
 #ifdef ENABLE_IC_PROXY
-	{"ic proxy process",
+	{"ic proxy process", "ic proxy process",
 	 0,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if ic proxy process exits with non-zero code */
-	 ICProxyMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "ICProxyMain", 0, {0}, 0,
 	 ICProxyStartRule},
 #endif  /* ENABLE_IC_PROXY */
 
