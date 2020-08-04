@@ -5621,7 +5621,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		 * PM_STATUS_STANDBY, instead wish pg_ctl -w to wait till
 		 * connections can be actually accepted by the database.
 		 */
-		promote_trigger_file_exists = false;
+		promote_trigger_file_exist = false;
 		if (PromoteTriggerFile != NULL && strcmp(PromoteTriggerFile, "") != 0)
 		{
 			struct stat stat_buf;
