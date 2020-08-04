@@ -138,7 +138,7 @@ ExecInitDynamicSeqScan(DynamicSeqScan *node, EState *estate, int eflags)
 	state->partOids = palloc(sizeof(Oid) * state->nOids);
 	foreach_with_count(lc, node->partOids, i)
 		state->partOids[i] = lfirst_oid(lc);
-	state->whichpart = -1;
+	state->whichPart = -1;
 
 	reloid = exec_rt_fetch(node->seqscan.scanrelid, estate)->relid;
 	Assert(OidIsValid(reloid));
@@ -185,20 +185,19 @@ initNextTableToScan(DynamicSeqScanState *node)
 	Oid		   *pid;
 	Relation	currentRelation;
 
-	if (++node->whichpart < node->nOids)
-		pid = &node->partOids[node->whichpart];
+	if (++node->whichPart < node->nOids)
+		pid = &node->partOids[node->whichPart];
 	else
 		return false;
 
 	currentRelation = scanState->ss_currentRelation =
-		table_open(node->partOids[node->whichpart], AccessShareLock);
+		table_open(node->partOids[node->whichPart], AccessShareLock);
 
 	if (currentRelation->rd_rel->relkind != RELKIND_RELATION)
 	{
 		/* shouldn't happen */
 		elog(ERROR, "unexpected relkind in Dynamic Scan: %c", currentRelation->rd_rel->relkind);
 	}
-
 	lastScannedRel = table_open(node->lastRelOid, AccessShareLock);
 	lastTupDesc = RelationGetDescr(lastScannedRel);
 	partTupDesc = RelationGetDescr(scanState->ss_currentRelation);
