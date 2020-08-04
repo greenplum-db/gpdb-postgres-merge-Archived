@@ -6244,34 +6244,34 @@ distributed by (pkid) partition by range (option3)
 	partition cc start(201) end (300)
 );
 -- root partition (and only root) should have relfrozenxid as 0
-select relname from pg_class where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
- relname 
----------
- sales
+select relname, relkind from pg_class where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+ relname | relkind 
+---------+---------
+ sales   | p
 (1 row)
 
-select gp_segment_id, relname from gp_dist_random('pg_class') where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
- gp_segment_id | relname 
----------------+---------
-             1 | sales
-             2 | sales
-             0 | sales
+select gp_segment_id, relname, relkind from gp_dist_random('pg_class') where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+ gp_segment_id | relname | relkind 
+---------------+---------+---------
+             0 | sales   | p
+             2 | sales   | p
+             1 | sales   | p
 (3 rows)
 
 alter table sales add column tax float;
 -- root partition (and only root) continues to have relfrozenxid as 0
-select relname from pg_class where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
- relname 
----------
- sales
+select relname, relkind from pg_class where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+ relname | relkind 
+---------+---------
+ sales   | p
 (1 row)
 
-select gp_segment_id, relname from gp_dist_random('pg_class') where relkind = 'r' and relname like 'sales%' and relfrozenxid=0;
- gp_segment_id | relname 
----------------+---------
-             1 | sales
-             2 | sales
-             0 | sales
+select gp_segment_id, relname, relkind from gp_dist_random('pg_class') where relkind in ('r', 'p') and relname like 'sales%' and relfrozenxid=0;
+ gp_segment_id | relname | relkind 
+---------------+---------+---------
+             0 | sales   | p
+             1 | sales   | p
+             2 | sales   | p
 (3 rows)
 
 alter table sales drop column tax;
@@ -6306,7 +6306,7 @@ select * from sales order by pkid;
 (0 rows)
 
 drop table sales cascade;
-NOTICE:  drop cascades to default for table newpart column pkid
+NOTICE:  drop cascades to default value for column pkid of table newpart
 -- Exchage partiton table with a table having dropped column
 create table exchange_part(a int, b int) partition by range(b) (start (0) end (10) every (5));
 create table exchange1(a int, c int, b int);
@@ -6410,9 +6410,9 @@ select oid::regclass, relkind, relstorage, reloptions from pg_class where oid = 
 create table at_range (a int) partition by range (a) (start(1) end(5));
 create table at_list (i int) partition by list(i) (partition p1 values(1));
 alter table at_list add partition foo2 start(6) end (10);
-ERROR:  cannot add range partition to list partitioned table
+ERROR:  invalid boundary specification for LIST partition
 alter table at_range add partition test values(5);
-ERROR:  cannot add list partition to range partitioned table
+ERROR:  invalid boundary specification for RANGE partition
 -- Ensure array type for the non-partition table is there after partition exchange.
 CREATE TABLE pt_xchg(a int) PARTITION BY RANGE(a) (START(1) END(4) EVERY (2));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.

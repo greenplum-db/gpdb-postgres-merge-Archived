@@ -74,14 +74,14 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
                            Index Cond: (id = boxes.apple_id)
          ->  Index Scan using box_locations_pkey on box_locations  (cost=0.00..12.00 rows=1 width=12) (never executed)
                Index Cond: (id = boxes.location_id)
- Planning time: 14.784 ms
+ Planning Time: 14.784 ms
    (slice0)    Executor memory: 192K bytes.
    (slice1)    Executor memory: 96K bytes avg x 3 workers, 96K bytes max (seg0).
    (slice2)    Executor memory: 96K bytes avg x 3 workers, 96K bytes max (seg0).
    (slice3)    Executor memory: 60K bytes avg x 3 workers, 60K bytes max (seg0).
  Memory used:  128000kB
  Optimizer: Pivotal Optimizer (GPORCA)
- Execution time: 23.433 ms
+ Execution Time: 23.433 ms
 (24 rows)
 
 -- explain_processing_on
@@ -148,6 +148,7 @@ QUERY PLAN
         Total Cost: 449.00
         Plan Rows: 3
         Plan Width: 28
+        Inner Unique: false
         Join Filter: "true"
         Plans: 
           - Node Type: "Redistribute Motion"
@@ -175,6 +176,7 @@ QUERY PLAN
                 Total Cost: 437.00
                 Plan Rows: 2
                 Plan Width: 16
+                Inner Unique: false
                 Join Filter: "true"
                 Plans: 
                   - Node Type: "Redistribute Motion"
@@ -272,6 +274,7 @@ QUERY PLAN
         Actual Total Time: 0.000
         Actual Rows: 0
         Actual Loops: 0
+        Inner Unique: false
         Join Filter: "true"
         Rows Removed by Join Filter: 0
         Plans: 
@@ -308,6 +311,7 @@ QUERY PLAN
                 Actual Total Time: 0.000
                 Actual Rows: 0
                 Actual Loops: 0
+                Inner Unique: false
                 Join Filter: "true"
                 Rows Removed by Join Filter: 0
                 Plans: 
