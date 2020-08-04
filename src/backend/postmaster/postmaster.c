@@ -5593,8 +5593,9 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_STARTED) &&
 		pmState == PM_STARTUP && Shutdown == NoShutdown)
 	{
-		bool promote_trigger_file_exist;
 		/* WAL redo has started. We're out of reinitialization. */
+		bool		promote_trigger_file_exist;
+
 		FatalError = false;
 		Assert(AbortStartTime == 0);
 
@@ -5615,16 +5616,17 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (XLogArchivingAlways())
 			PgArchPID = pgarch_start();
 
+		/*
+		 * GPDB: if promote trigger file exist we don't wish to convey
+		 * PM_STATUS_STANDBY, instead wish pg_ctl -w to wait till
+		 * connections can be actually accepted by the database.
+		 */
+		promote_trigger_file_exists = false;
+		if (PromoteTriggerFile != NULL && strcmp(PromoteTriggerFile, "") != 0)
 		{
-			/*
-			 * GPDB: if promote trigger file exist we don't wish to convey
-			 * PM_STATUS_STANDBY, instead wish pg_ctl -w to wait till
-			 * connections can be actually accepted by the database.
-			 */
 			struct stat stat_buf;
-			if (PromoteTriggerFile == NULL || strcmp(PromoteTriggerFile, "") == 0)
-				promote_trigger_file_exist = false;
-			else if (stat(PromoteTriggerFile, &stat_buf) == 0)
+
+			if (stat(PromoteTriggerFile, &stat_buf) == 0)
 				promote_trigger_file_exist = true;
 		}
 
