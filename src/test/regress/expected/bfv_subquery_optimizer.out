@@ -487,9 +487,9 @@ EXPLAIN SELECT (EXISTS (SELECT UNNEST(X))) AS B FROM A;
    ->  Seq Scan on a  (cost=0.00..882690.51 rows=334 width=1)
          SubPlan 1
            ->  Result  (cost=0.00..0.00 rows=1 width=6)
-                 ->  Result  (cost=0.00..0.00 rows=1 width=6)
+                 ->  ProjectSet  (cost=0.00..0.00 rows=1 width=6)
                        ->  Result  (cost=0.00..0.00 rows=1 width=1)
- Optimizer: Pivotal Optimizer (GPORCA) version 3.83.0
+ Optimizer: Pivotal Optimizer (GPORCA)
 (7 rows)
 
 DROP TABLE A;
