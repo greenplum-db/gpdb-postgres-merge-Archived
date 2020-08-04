@@ -3175,31 +3175,18 @@ def checkcatReport():
         if len(GV.missing_attr_tables) or len(GV.extra_attr_tables):
             # Expand partition tables
             db = connect2(GV.cfg[GV.master_dbid], utilityMode=False)
-            # GPDB_12_MERGE_FIXME: This query on pg_partitions is now broken.
-            parent_tables = [t[0] for t in db.query("SELECT DISTINCT (schemaname || '.' || tablename) FROM pg_partitions").getresult()]
-            partition_leaves_sql = """
-            SELECT x.partitionschemaname || '.' || x.partitiontablename
-            FROM (
-                 SELECT distinct schemaname, tablename, partitionschemaname, partitiontablename, partitionlevel
-                 FROM pg_partitions
-                 WHERE schemaname || '.' || tablename in (%s)
-                 ) as X,
-            (SELECT schemaname, tablename maxtable, max(partitionlevel) maxlevel
-             FROM pg_partitions
-             group by (tablename, schemaname)
-            ) as Y
-            WHERE x.schemaname = y.schemaname and x.tablename = Y.maxtable and x.partitionlevel = Y.maxlevel;
-            """ % ("'" + "', '".join([pg.escape_string(t) for t in parent_tables]) + "'")
+
+            # GPDB_12_MERGE_FIXME: We used to have a query here, to fetch
+            # some extra informationa about partitioned tables. I (Heikki)
+            # didn't understand what it did. I ripped it out, and in the
+            # limited tests I did, I got the same result without it.
+            # What was it for? Do we need to put something back?
 
             GV.missing_attr_tables = list(set(GV.missing_attr_tables))
             if len(GV.missing_attr_tables) > 0:
                 myprint('----------------------------------------------------')
                 myprint("    Tables with missing issues:")
                 myprint("        Format [database name].[schema name].[table name].[segment id]:")
-                for table, segids in GV.missing_attr_tables:
-                    if table in parent_tables:
-                        for part_table in db.query(partition_leaves_sql).getresult():
-                            GV.missing_attr_tables.append( (part_table[0], segids) )
                 for table, segids in sorted(GV.missing_attr_tables):
                     for id in segids[1:-1].split(','):
                         myprint("        Table %s.%s.%s" % (GV.dbname, table, id))
