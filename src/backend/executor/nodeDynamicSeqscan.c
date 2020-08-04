@@ -127,8 +127,8 @@ ExecInitDynamicSeqScan(DynamicSeqScan *node, EState *estate, int eflags)
 	state->ss.ps.qual =
 		ExecInitQual(node->seqscan.plan.qual, (PlanState *) state);
 
-	Relation grandma = ExecOpenScanRelation(estate, node->seqscan.scanrelid, eflags);
-	ExecInitScanTupleSlot(estate, &state->ss, RelationGetDescr(grandma), table_slot_callbacks(grandma));
+	Relation scanRel = ExecOpenScanRelation(estate, node->seqscan.scanrelid, eflags);
+	ExecInitScanTupleSlot(estate, &state->ss, RelationGetDescr(scanRel), table_slot_callbacks(scanRel));
 
 	/* Initialize result tuple type. */
 	ExecInitResultTypeTL(&state->ss.ps);
