@@ -1349,11 +1349,11 @@ class checkAOSegVpinfoThread(execThread):
 
             for relname, relid, segrelid, segrelname in curs.getresult():
                 qry = "SELECT count(*) FROM pg_attribute WHERE attrelid=%d AND attnum > 0;" % (relid)
-                attr_count = self.db.query(qry).single()[0]
+                attr_count = self.db.query(qry).getresult()[0]
 
                 qry = "SELECT distinct(length(vpinfo)) FROM pg_aoseg.%s where state = 1;" % (segrelname)
                 vpinfo_curs = self.db.query(qry)
-                nrows = len(vpinfo_curs)
+                nrows = vpinfo_curs.ntuples()
                 if nrows == 0:
                     continue
                 elif nrows > 1:
@@ -1368,7 +1368,7 @@ class checkAOSegVpinfoThread(execThread):
                     logger.error(qry)
                     continue
 
-                vpinfo_length = vpinfo_curs.single()[0]
+                vpinfo_length = vpinfo_curs.getresult()[0][0]
 
                 # vpinfo is bytea type, the length of the first 3 fields is 12 bytes, and the size of AOCSVPInfoEntry is 16
                 # typedef struct AOCSVPInfo
