@@ -13,6 +13,10 @@
 --\c regression;
 --\i test_gpdb_pre_drop_partition_indices.sql;
 
+-- The isolation tests are run in utility mode, and the objects left behind
+-- are not consistent between the QD and QEs.
+DROP DATABASE IF EXISTS isolation_regression;
+
 -- The rest of the things we're fixing are in the 'regression' database
 \c regression
 
