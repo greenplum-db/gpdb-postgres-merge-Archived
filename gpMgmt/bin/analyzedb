@@ -89,11 +89,11 @@ and c.oid not in (select ftrelid from pg_foreign_table)
 and n.nspname = '%s'
 """
 
-# Get leaf partitions of given named table
+# Get leaf partitions of named root table.
 GET_LEAF_PARTITIONS_SQL = """
 select n.nspname, c.relname
 from pg_partition_tree(
-  (select c.oid from pg_class c, pg_namespace n where n.oid = c.relnamespace and nspname='%s' and relname='%s')
+  (select c.oid from pg_class c, pg_namespace n where n.oid = c.relnamespace and nspname='%s' and relname='%s' and not relispartition)
 ), pg_class c, pg_namespace n
 where n.oid = c.relnamespace and relid = c.oid
 """
