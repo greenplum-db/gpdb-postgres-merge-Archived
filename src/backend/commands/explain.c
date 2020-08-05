@@ -979,16 +979,6 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	int			nr;
 	ListCell   *l;
 
-	/*
-	 * GPDB_12_MERGE_FIXME: partitioned table is replaced to upstream
-	 * maybe we can rid of this comments. Validation after conflicts
-	 * removed.
-	 * GPDB_91_MERGE_FIXME: If the target is a partitioned table, we
-	 * should also report information on the triggers in the partitions.
-	 * I.e. we should scan the 'ri_partition_hash' of each
-	 * ResultRelInfo as well. This is somewhat academic, though, as long
-	 * as we don't support triggers in GPDB in general..
-	 */
 	routerels = queryDesc->estate->es_tuple_routing_result_relations;
 	targrels = queryDesc->estate->es_trig_target_relations;
 
