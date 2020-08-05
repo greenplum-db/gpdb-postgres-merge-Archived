@@ -1124,8 +1124,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 * partitiong was replaced with upstream impementation, but for
 		 * backwards-compatibility, we do the translation to "COPY (SELECT
 		 * ...)" variant automatically, just like PostgreSQL does for RLS.
-		 * GPDB_12_MERGE_FIXME: Verify that the performance is acceptable.
-		 * The executor surely adds some overhead.
 		 */
 		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED ||
 			(!is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
