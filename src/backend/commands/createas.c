@@ -528,16 +528,15 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 static void
 intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-	/* no-op */
+	/*
+	 * In PostgreSQL, this is a no-op, but in GPDB, AO relations do need some
+	 * initialization of state, because the tableam API does not provide a
+	 * good enough interface for handling with this later, we need to
+	 * specifically all the init at start up.
+	 */
 
 	/* See intorel_initplan() for explanation */
 
-	/*
-	 * GPDB_12_MERGE_FIXME: NOT a no-op anymore, at least not for now. AO
-	 * relations do need some initialization of state, because the tableam API
-	 * does not provide a good enough interface for handling with this later, we
-	 * need to specifically all the init at start up.
-	 */
 	if (RelationIsAoRows(((DR_intorel *)self)->rel))
 		appendonly_dml_init(((DR_intorel *)self)->rel, CMD_INSERT);
 	else if (RelationIsAoCols(((DR_intorel *)self)->rel))
