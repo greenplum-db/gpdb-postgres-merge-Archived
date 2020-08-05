@@ -47,7 +47,7 @@ def impl(context, storage_type, tablename, col_name_list, col_type_list, scheman
     check_table_exists(context, context.dbname, '.'.join([schemaname, tablename]), table_type=storage_type)
 
 
-@given('there is a hard coded partitioned table "{tablename}" with 4 child partitions in schema "{schemaname}"')
+@given('there is a hard coded partition table "{tablename}" with 4 child partitions in schema "{schemaname}"')
 def impl(context, tablename, schemaname):
     if not check_schema_exists(context, schemaname, context.dbname):
         raise Exception("Schema %s does not exist in database %s" % (schemaname, context.dbname))
@@ -57,7 +57,7 @@ def impl(context, tablename, schemaname):
     check_table_exists(context, context.dbname, '.'.join([schemaname, tablename]), table_type=None)
 
 
-@given('there is a hard coded multi-level partitioned table "{tablename}" with 4 mid-level and 16 leaf-level partitions in schema "{schemaname}"')
+@given('there is a hard coded multi-level partition table "{tablename}" with 4 mid-level and 16 leaf-level partitions in schema "{schemaname}"')
 def impl(context, tablename, schemaname):
     if not check_schema_exists(context, schemaname, context.dbname):
         raise Exception("Schema %s does not exist in database %s" % (schemaname, context.dbname))
