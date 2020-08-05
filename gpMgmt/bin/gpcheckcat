@@ -2227,6 +2227,7 @@ GPObjectGraph = {}  # key = GPObject, value=[GPObject]
 # -------------------------------------------------------------------------------
 TableMainColumn = {}
 # Table with no OID
+TableMainColumn['gp_distribution_policy'] = ['localoid', 'pg_class']
 TableMainColumn['gp_version_at_initdb'] = ['schemaversion', 'gp_version_at_initdb']
 TableMainColumn['pg_aggregate'] = ['aggfnoid', 'pg_proc']
 TableMainColumn['pg_amop'] = ['amopclaid', 'pg_opclass']
@@ -2236,6 +2237,7 @@ TableMainColumn['pg_attribute'] = ['attrelid', 'pg_class']
 TableMainColumn['pg_attribute_encoding'] = ['attrelid', 'pg_class']
 TableMainColumn['pg_auth_members'] = ['roleid', 'pg_authid']
 TableMainColumn['pg_autovacuum'] = ['vacrelid', 'pg_class']
+TableMainColumn['pg_compression'] = ['compname', 'pg_compression']
 TableMainColumn['pg_depend'] = ['objid', 'pg_class']
 TableMainColumn['pg_foreign_table'] = ['ftrelid', 'pg_class']
 TableMainColumn['pg_index'] = ['indexrelid', 'pg_class']
@@ -2245,7 +2247,6 @@ TableMainColumn['pg_pltemplate'] = ['tmplname', 'pg_pltemplate']
 TableMainColumn['pg_proc_callback'] = ['profnoid', 'pg_proc']
 TableMainColumn['pg_type_encoding'] = ['typid', 'pg_type']
 TableMainColumn['pg_window'] = ['winfnoid', 'pg_proc']
-TableMainColumn['gp_distribution_policy'] = ['localoid', 'pg_class']
 
 # Table with OID (special case), these OIDs are known to be inconsistent
 TableMainColumn['pg_attrdef'] = ['adrelid', 'pg_class']
@@ -3197,10 +3198,6 @@ def checkcatReport():
                 myprint('----------------------------------------------------')
                 myprint("    Tables with extra issues:")
                 myprint("        Format [database name].[schema name].[table name].[segment id]:")
-                for table, segids in GV.extra_attr_tables:
-                    if table in parent_tables:
-                        for part_table in db.query(partition_leaves_sql).getresult():
-                            GV.extra_attr_tables.append( (part_table[0], segids) )
                 for table, segids in sorted(GV.extra_attr_tables):
                     for id in segids[1:-1].split(','):
                         myprint("        Table %s.%s.%s" % (GV.dbname, table, id))
