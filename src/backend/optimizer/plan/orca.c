@@ -756,7 +756,7 @@ static Var *
 var_for_grouped_window_expr(grouped_window_ctx * ctx, Node *expr, bool force)
 {
 	Var		   *var = NULL;
-	TargetEntry *tle = tlist_member(expr, ctx->subtlist);
+	TargetEntry *tle = tlist_member((Expr *) expr, ctx->subtlist);
 
 	if (tle == NULL && force)
 	{
