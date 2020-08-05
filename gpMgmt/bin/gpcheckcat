@@ -1349,7 +1349,7 @@ class checkAOSegVpinfoThread(execThread):
 
             for relname, relid, segrelid, segrelname in curs.getresult():
                 qry = "SELECT count(*) FROM pg_attribute WHERE attrelid=%d AND attnum > 0;" % (relid)
-                attr_count = self.db.query(qry).getresult()[0]
+                attr_count = self.db.query(qry).getresult()[0][0]
 
                 qry = "SELECT distinct(length(vpinfo)) FROM pg_aoseg.%s where state = 1;" % (segrelname)
                 vpinfo_curs = self.db.query(qry)
