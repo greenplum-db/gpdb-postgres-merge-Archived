@@ -16249,14 +16249,24 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 			ExtTableEntry *ext = GetExtTableEntry(relid);
 
 			if (!ext->iswritable)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("unsupported ALTER command for external table")));
+			{
+				/*
+				 * Skip expanding readable external table, since data is not
+				 * located inside gpdb
+				 */
+				// GPDB_12_MERGE_FIXME: should we close the relation here?
+				return;
+			}
 		}
 		else
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("unsupported ALTER command for foreign table")));
+		{
+				/*
+				 * Skip expanding readable external table, since data is not
+				 * located inside gpdb
+				 */
+				// GPDB_12_MERGE_FIXME: should we close the relation here?
+				return;
+		}
 
 		// GPDB_12_MERGE_FIXME: Previously, we closed the relation here, but
 		// now we're getting an assertion failure later, when the caller tries
