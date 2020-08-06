@@ -2330,7 +2330,8 @@ CREATE TABLE citext_table (
 INSERT INTO citext_table (name)
   VALUES ('one'), ('two'), ('three'), (NULL), (NULL);
 CREATE MATERIALIZED VIEW citext_matview AS
-  SELECT * FROM citext_table;
+  SELECT * FROM citext_table
+DISTRIBUTED BY (id);
 CREATE UNIQUE INDEX citext_matview_id
   ON citext_matview (id);
 SELECT *
