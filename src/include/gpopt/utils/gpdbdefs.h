@@ -38,7 +38,6 @@ extern "C" {
 
 #include "catalog/namespace.h"
 #if 0
-#include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
 #endif
 #include "cdb/cdbhash.h"

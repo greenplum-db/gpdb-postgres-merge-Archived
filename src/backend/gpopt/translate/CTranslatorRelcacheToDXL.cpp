@@ -30,9 +30,6 @@ extern "C" {
 #include "catalog/pg_am.h"
 #include "catalog/pg_proc.h"
 
-#if 0
-#include "cdb/cdbpartition.h"
-#endif
 #include "catalog/namespace.h"
 #include "catalog/pg_statistic.h"
 #include "utils/partcache.h"
