@@ -561,7 +561,8 @@ def checkPartitionIntegrity():
            pg_get_table_distributedby(inhparent) as dby_parent,
            pg_get_table_distributedby(inhrelid) as dby_child
     from pg_inherits
-    where pg_get_table_distributedby(inhrelid) is distinct from pg_get_table_distributedby(inhparent);
+    where pg_get_table_distributedby(inhrelid) is distinct from pg_get_table_distributedby(inhparent)
+          and not (pg_get_table_distributedby(inhparent) = 'DISTRIBUTED RANDOMLY' and pg_get_table_distributedby(inhrelid) = '');
     '''
     try:
         curs = db.query(qry)

@@ -46,7 +46,6 @@
 #include "common/keywords.h"
 #include "executor/spi.h"
 #include "funcapi.h"
-#include "foreign/foreign.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -11554,17 +11553,10 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 
 	/*
 	 * Fetch the policy tuple
-	 *
-	 * FYI, writable external table has a policy
 	 */
 	gp_policy_tuple = SearchSysCache1(GPPOLICYID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(gp_policy_tuple))
 	{
-		/*
-		 * readable external table is distributed randomly
-		 */
-		if (rel_is_external_table(relid))
-			PG_RETURN_TEXT_P(cstring_to_text("DISTRIBUTED RANDOMLY"));
 		/* not distributed */
 		PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
