@@ -192,6 +192,13 @@ initNextTableToScan(DynamicSeqScanState *node)
 
 	currentRelation = scanState->ss_currentRelation =
 		table_open(node->partOids[node->whichpart], AccessShareLock);
+
+	if (currentRelation->rd_rel->relkind != RELKIND_RELATION)
+	{
+		/* shouldn't happen */
+		elog(ERROR, "unexpected relkind in Dynamic Scan: %c", currentRelation->rd_rel->relkind);
+	}
+
 	lastScannedRel = table_open(node->lastRelOid, AccessShareLock);
 	lastTupDesc = RelationGetDescr(lastScannedRel);
 	partTupDesc = RelationGetDescr(scanState->ss_currentRelation);
