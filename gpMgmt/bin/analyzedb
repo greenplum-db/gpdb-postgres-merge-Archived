@@ -101,10 +101,8 @@ where n.oid = c.relnamespace and relid = c.oid
 # Get mid-level partitions of table with given OID
 GET_MID_LEVEL_PARTITIONS_SQL = """
 select n.nspname, c.relname
-from pg_partition_tree(
-  (select pg_partition_root(c.oid) from pg_class c, pg_namespace n where n.oid = c.relnamespace and nspname='%s' and relname='%s')
-), pg_class c, pg_namespace n
-where n.oid = c.relnamespace and relid = c.oid
+from pg_class c, pg_namespace n
+where n.oid = c.relnamespace
 and c.relkind = 'p' and c.relispartition
 """
 
