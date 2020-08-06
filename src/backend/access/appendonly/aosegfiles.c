@@ -1595,7 +1595,6 @@ aorow_compression_ratio_internal(Relation parentrel)
 	/*
 	 * assemble our query string
 	 */
-	// GPDB_12_MERGE_FIXME: quoting and escaping?
 	aosegrel = table_open(segrelid, AccessShareLock);
 	initStringInfo(&sqlstmt);
 	appendStringInfo(&sqlstmt, "select sum(eof), sum(eofuncompressed) "
