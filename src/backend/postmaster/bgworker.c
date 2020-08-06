@@ -14,6 +14,7 @@
 
 #include <unistd.h>
 
+#include "cdb/ic_proxy_bgworker.h"
 #include "libpq/pqsignal.h"
 #include "access/parallel.h"
 #include "miscadmin.h"
@@ -150,6 +151,9 @@ static const struct
 	},
 	{
 		"BackoffSweeperMain", BackoffSweeperMain
+	},
+	{
+		"ICProxyMain", ICProxyMain
 	},
 
 };
