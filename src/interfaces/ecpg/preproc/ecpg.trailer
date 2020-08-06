@@ -29,10 +29,7 @@ statement: ecpgstart at stmt ';' { connection = NULL; }
 		}
 		;
 
-/* GPDB_12_MERGE_FIXME: In GPDB, these took OptTabPartitionBy at the end. Need
- * to re-implement a variable like that. In upstream syntax PARTITION BY must come
- * before WITH. This is part of the meatball surgery of ee05b1a52d0 */
-CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data OptDistributedBy /*OptTabPartitionBy*/
+CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data OptDistributedBy OptFirstPartitionSpec
 		{
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
