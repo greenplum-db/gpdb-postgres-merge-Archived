@@ -152,10 +152,11 @@ static const struct
 	{
 		"BackoffSweeperMain", BackoffSweeperMain
 	},
+#ifdef ENABLE_IC_PROXY
 	{
 		"ICProxyMain", ICProxyMain
 	},
-
+#endif  /* ENABLE_IC_PROXY */
 };
 
 /* Private functions. */
