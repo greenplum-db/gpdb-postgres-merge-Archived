@@ -707,9 +707,10 @@ typedef struct GpId
  */
 extern GpId GpIdentity;
 
-/* GPDB_12_MERGE_FIXME: We used to compute the length of 'dbid' as a string.
- * But then it couldn't be used to size a stack variable. Use max length instead. */
-#define get_dbid_string_length()  11
+/*
+ * Maximum length of string representation of 'dbid' (same as max length of an int4)
+ */
+#define MAX_DBID_STRING_LENGTH  11
 
 #define UNINITIALIZED_GP_IDENTITY_VALUE (-10000)
 #define IS_QUERY_DISPATCHER() (GpIdentity.segindex == MASTER_CONTENT_ID)

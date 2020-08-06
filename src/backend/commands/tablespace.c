@@ -350,7 +350,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * reference the whole path here, but MakePGDirectory() uses the first two
 	 * parts.
 	 */
-	if (strlen(location) + 1 + get_dbid_string_length() + 1 + strlen(GP_TABLESPACE_VERSION_DIRECTORY) + 1 +
+	if (strlen(location) + 1 + MAX_DBID_STRING_LENGTH + 1 + strlen(GP_TABLESPACE_VERSION_DIRECTORY) + 1 +
 		OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
 	{
 		ereport(ERROR,
@@ -359,7 +359,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 						location)));
 	}
 
-	if ((strlen(location) + 1 + get_dbid_string_length() + 1) > MAX_TARABLE_SYMLINK_PATH_LENGTH)
+	if ((strlen(location) + 1 + MAX_DBID_STRING_LENGTH + 1) > MAX_TARABLE_SYMLINK_PATH_LENGTH)
 		ereport(WARNING, (errmsg("tablespace location \"%s\" is too long for TAR", location),
 						  errdetail("The location is used to create a symlink target from pg_tblspc. Symlink targets are truncated to 100 characters when sending a TAR (e.g the BASE_BACKUP protocol response).")
 						  ));
@@ -1023,7 +1023,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 {
 	char	   *linkloc;
 	char	   *linkloc_with_version_dir;
-	char	    link_target_dir[MAXPGPATH + 1 + get_dbid_string_length()];
+	char	    link_target_dir[MAXPGPATH + 1 + MAX_DBID_STRING_LENGTH];
 	int		    rllen;
 	DIR		   *dirdesc;
 	struct dirent *de;
