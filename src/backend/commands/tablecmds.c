@@ -2435,14 +2435,10 @@ storage_name(char c)
  * 'supers' is a list of OIDs of parent relations, already locked by caller.
  * 'relpersistence' is a persistence type of the table.
  * 'is_partition' tells if the table is a partition
- * 'GpPolicy *' is NULL if the distribution policy is not to be updated
  *
  * Output arguments:
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
- * 'GpPolicy' is updated with the offsets of the distribution
- *      attributes in the new schema
- * GPDB_12_MERGE_FIXME: where did GpPolicy argument go?
  *
  * Return value:
  * Completed schema list.
