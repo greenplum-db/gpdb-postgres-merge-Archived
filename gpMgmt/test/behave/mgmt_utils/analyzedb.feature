@@ -1577,9 +1577,9 @@ Feature: Incrementally analyze the database
         When the user runs "analyzedb -l -d incr_analyze -t pg_catalog.pg_attribute"
         Then analyzedb should print "-pg_catalog.pg_attribute" to stdout
         When the user runs "analyzedb -l -d incr_analyze -s pg_catalog"
-        Then output should contain both "pg_catalog.pg_class" and "pg_catalog.pg_partition_rule"
+        Then output should contain both "pg_catalog.pg_class" and "pg_catalog.pg_partitioned_table"
         When the user runs "analyzedb -l -d incr_analyze"
-        Then output should contain both "pg_catalog.pg_class" and "pg_catalog.pg_partition_rule"
+        Then output should contain both "pg_catalog.pg_class" and "pg_catalog.pg_partitioned_table"
 
     Scenario: Concurrent analyzedb runs all capture the correct values in their output files
         Given no state files exist for database "incr_analyze"

@@ -52,8 +52,6 @@ DEPENDENCY_EXCLUSION = [
     'pg_database',
     'pg_enum',
     'pg_namespace',
-    'pg_partition',
-    'pg_partition_rule',
     'pg_resgroup',
     'pg_resgroupcapability',
     'pg_resourcetype',
