@@ -2605,7 +2605,14 @@ dispatchVacuum(VacuumParams *params, Oid relid, VacuumStatsContext *ctx)
 	int flags = DF_CANCEL_ON_ERROR | DF_WITH_SNAPSHOT;
 	VacuumRelation *rel;
 
-	// GPDB_12_MERGE_FIXME
+	/*
+	 * The AO compaction phase needs to run in a distributed transaction,
+	 * but other phases and heap VACUUM could run in local transactions. See
+	 * comments in vacuum_ao.c "Overview" section. (In practice, though,
+	 * this function is called with a distributed transaction open for the
+	 * other phases too, so we end up using distributed transactions for
+	 * all, anyway.)
+	 */
 	if ((params->options & VACUUM_AO_PHASE_MASK) == VACOPT_AO_COMPACT_PHASE)
 		flags |= DF_NEED_TWO_PHASE;
 
