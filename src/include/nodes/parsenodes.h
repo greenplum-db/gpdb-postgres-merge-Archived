@@ -3161,6 +3161,9 @@ typedef struct SecLabelStmt
  */
 #define CURSOR_OPT_UPDATABLE	0x0200	/* updateable with CURRENT OF, if possible */
 
+/* GPDB additions */
+#define CURSOR_OPT_SKIP_FOREIGN_PARTITIONS	0x1000	/* don't expand foreign partitions */
+
 typedef struct DeclareCursorStmt
 {
 	NodeTag		type;

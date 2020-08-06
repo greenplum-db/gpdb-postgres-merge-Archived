@@ -352,7 +352,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	if (optimizer &&
 		GP_ROLE_DISPATCH == Gp_role &&
-		IS_QUERY_DISPATCHER())
+		IS_QUERY_DISPATCHER() &&
+		(cursorOptions & CURSOR_OPT_SKIP_FOREIGN_PARTITIONS) == 0)
 	{
 		if (gp_log_optimization_time)
 			INSTR_TIME_SET_CURRENT(starttime);
@@ -414,6 +415,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	else
 		glob->simplyUpdatableRel = InvalidOid;
 	glob->dependsOnRole = false;
+
+	if ((cursorOptions & CURSOR_OPT_SKIP_FOREIGN_PARTITIONS) != 0)
+		glob->skip_foreign_partitions = true;
 
 	/*
 	 * Assess whether it's feasible to use parallel mode for this query. We

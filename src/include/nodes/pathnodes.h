@@ -208,6 +208,10 @@ typedef struct PlannerGlobal
 
 	PartitionDirectory partition_directory; /* partition descriptors */
 
+	/* GPDB: flags to support COPY's IGNORE EXTERNAL PARTITIONS option. */
+	bool		skip_foreign_partitions;	/* don't expand foreign partitions */
+	bool		foreign_partition_was_skipped; /* foreign partition was skipped */
+
 	/*
 	 * Slice table. Built by cdbllize_build_slice_table() near the end of
 	 * planning, and copied to the final PlannedStmt.

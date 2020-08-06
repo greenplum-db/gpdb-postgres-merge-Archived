@@ -1425,16 +1425,90 @@ CREATE TABLE sales (
           PARTITION dec17 START ('2017-12-01'::date) END ('2018-01-01'::date) WITH (tablename='sales_1_prt_dec17', appendonly=false )
           );
 COPY sales (id, date, amt) FROM stdin;
--- execute external psql here to get the message of COPY
-\! psql -c "COPY sales TO '/tmp/test_sales_<SEGID>' ON SEGMENT" regression
+-- Set QUIET off, to also test the row counts that COPY returns
+\set QUIET 'off'
+COPY sales TO '/tmp/test_sales_<SEGID>' ON SEGMENT;
 COPY 26
-\! psql -c "COPY sales FROM '/tmp/test_sales_<SEGID>' ON SEGMENT" regression
+TRUNCATE sales;
+TRUNCATE TABLE
+COPY sales FROM '/tmp/test_sales_<SEGID>' ON SEGMENT;
 COPY 26
-CREATE EXTERNAL WEB TABLE ext_dec17(LIKE sales_1_prt_dec17) EXECUTE 'printf "12\t2017-12-01\t20.00\n"' ON MASTER FORMAT 'text';
+CREATE EXTERNAL WEB TABLE ext_dec17(LIKE sales_1_prt_dec17) EXECUTE 'printf "12\t2017-12-01\t21.00\n"' ON MASTER FORMAT 'text';
+CREATE EXTERNAL TABLE
 ALTER TABLE sales EXCHANGE PARTITION dec17 WITH TABLE ext_dec17;
+ALTER TABLE
 DROP TABLE ext_dec17;
-COPY sales TO PROGRAM 'cat > /dev/null' IGNORE EXTERNAL PARTITIONS;
-COPY sales TO PROGRAM 'printf <SEGID> && cat > /dev/null' ON SEGMENT IGNORE EXTERNAL PARTITIONS;
+DROP TABLE
+COPY sales TO PROGRAM 'cat > /tmp/test_sales_all' IGNORE EXTERNAL PARTITIONS;
+NOTICE:  COPY ignores external partition(s)
+COPY 24
+COPY sales TO PROGRAM 'cat > /tmp/test_sales_<SEGID>' ON SEGMENT IGNORE EXTERNAL PARTITIONS;
+NOTICE:  COPY ignores external partition(s)
+COPY 24
+-- Verify that the files don't contain the row from the external partition.
+\set QUIET 'on'
+CREATE EXTERNAL WEB TABLE pg_temp.read_result(line text) EXECUTE 'cat /tmp/test_sales_all' ON MASTER FORMAT 'text' (DELIMITER 'off');
+SELECT * FROM pg_temp.read_result;
+             line              
+-------------------------------
+ 1       01-01-2017      20.00
+ 1       01-01-2017      20.00
+ 11      11-01-2017      20.00
+ 11      11-01-2017      20.00
+ 15      05-01-2017      20.00
+ 15      05-01-2017      20.00
+ 18      08-01-2017      20.00
+ 18      08-01-2017      20.00
+ 2       02-01-2017      20.00
+ 2       02-01-2017      20.00
+ 25      05-01-2017      20.00
+ 25      05-01-2017      20.00
+ 3       03-01-2017      20.00
+ 3       03-01-2017      20.00
+ 4       04-01-2017      20.00
+ 4       04-01-2017      20.00
+ 5       05-01-2017      20.00
+ 5       05-01-2017      20.00
+ 7       07-01-2017      20.00
+ 7       07-01-2017      20.00
+ 8       08-01-2017      20.00
+ 8       08-01-2017      20.00
+ 9       09-01-2017      20.00
+ 9       09-01-2017      20.00
+(24 rows)
+
+DROP EXTERNAL TABLE pg_temp.read_result;
+CREATE EXTERNAL WEB TABLE pg_temp.read_result(line text) EXECUTE 'cat /tmp/test_sales_$GP_SEGMENT_ID' FORMAT 'text' (DELIMITER 'off');
+SELECT * FROM pg_temp.read_result;
+             line              
+-------------------------------
+ 1       01-01-2017      20.00
+ 1       01-01-2017      20.00
+ 11      11-01-2017      20.00
+ 11      11-01-2017      20.00
+ 15      05-01-2017      20.00
+ 15      05-01-2017      20.00
+ 18      08-01-2017      20.00
+ 18      08-01-2017      20.00
+ 2       02-01-2017      20.00
+ 2       02-01-2017      20.00
+ 25      05-01-2017      20.00
+ 25      05-01-2017      20.00
+ 3       03-01-2017      20.00
+ 3       03-01-2017      20.00
+ 4       04-01-2017      20.00
+ 4       04-01-2017      20.00
+ 5       05-01-2017      20.00
+ 5       05-01-2017      20.00
+ 7       07-01-2017      20.00
+ 7       07-01-2017      20.00
+ 8       08-01-2017      20.00
+ 8       08-01-2017      20.00
+ 9       09-01-2017      20.00
+ 9       09-01-2017      20.00
+(24 rows)
+
+DROP EXTERNAL TABLE pg_temp.read_result;
 DROP TABLE sales;
 CREATE TABLE ao_copy(c int) WITH (appendonly=true);
 COPY ao_copy TO '/tmp/ao<SEGID>.txt' ON SEGMENT;

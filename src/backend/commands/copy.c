@@ -1124,14 +1124,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 * partitiong was replaced with upstream impementation, but for
 		 * backwards-compatibility, we do the translation to "COPY (SELECT
 		 * ...)" variant automatically, just like PostgreSQL does for RLS.
-		 *
-		 * GPDB_12_MERGE_FIXME: We don't pass the IGNORE EXTERNAL PARTITIONS
-		 * flag to the planner, so it is ignored. Should we create a query
-		 * with UNION ALL of all the non-external partitions here? Or pass
-		 * a flag to the planner to not expand foreign partitions. There's
-		 * a test for this in 'gpcopy', but it doesn't check the number of
-		 * rows fetched from the partitioned table, so it doesn't catch
-		 * this bug.
 		 */
 		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED ||
 			(!is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
@@ -2118,7 +2110,13 @@ BeginCopy(ParseState *pstate,
 		}
 
 		/* plan the query */
-		plan = pg_plan_query(query, CURSOR_OPT_PARALLEL_OK, NULL);
+		int			cursorOptions = CURSOR_OPT_PARALLEL_OK;
+
+		/* GPDB: Pass the IGNORE EXTERNAL PARTITION option to the planner. */
+		if (cstate->skip_ext_partition)
+			cursorOptions |= CURSOR_OPT_SKIP_FOREIGN_PARTITIONS;
+
+		plan = pg_plan_query(query, cursorOptions, NULL);
 
 		/*
 		 * With row level security and a user using "COPY relation TO", we
@@ -2661,7 +2659,16 @@ BeginCopyTo(ParseState *pstate,
 	else
 		cstate->dispatch_mode = COPY_DIRECT;
 
-	// GPDB_12_MERGE_FIXME
+	/*
+	 * GPDB_12_MERGE_FIXME: We used to have this limitation, but now that we
+	 * handle partitioned tables by invoking the planner (we basically do
+	 * the "COPY (SELECT ...) TO" trick automatically now), we handle it
+	 * just fine. Do we still want to restrict it? If not, we can just
+	 * remove this.
+	 *
+	 * Whether we resurrect or remove this, we should add a test for it; no
+	 * existing test covered this error.
+	 */
 #if 0
 	if (rel != NULL && rel_has_external_partition(rel->rd_id))
 	{
@@ -2672,12 +2679,6 @@ BeginCopyTo(ParseState *pstate,
 					 errmsg("cannot copy from relation \"%s\" which has external partition(s)",
 							RelationGetRelationName(rel)),
 					 errhint("Try the COPY (SELECT ...) TO variant.")));
-		}
-		else
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("COPY ignores external partition(s)")));
 		}
 	}
 #endif
