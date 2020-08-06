@@ -624,7 +624,7 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 	CopyState cstate = palloc0(sizeof(CopyStateData));
 
 	pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = NULL; // GPDB_12_MERGE_FIXME is NULL ok here?
+	pstate->p_sourcetext = NULL;
 
 	Assert(fmttype_is_custom(formattype) ||
 		   fmttype_is_text(formattype) ||
