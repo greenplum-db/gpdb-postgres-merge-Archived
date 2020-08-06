@@ -1124,6 +1124,14 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 * partitiong was replaced with upstream impementation, but for
 		 * backwards-compatibility, we do the translation to "COPY (SELECT
 		 * ...)" variant automatically, just like PostgreSQL does for RLS.
+		 *
+		 * GPDB_12_MERGE_FIXME: We don't pass the IGNORE EXTERNAL PARTITIONS
+		 * flag to the planner, so it is ignored. Should we create a query
+		 * with UNION ALL of all the non-external partitions here? Or pass
+		 * a flag to the planner to not expand foreign partitions. There's
+		 * a test for this in 'gpcopy', but it doesn't check the number of
+		 * rows fetched from the partitioned table, so it doesn't catch
+		 * this bug.
 		 */
 		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED ||
 			(!is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
