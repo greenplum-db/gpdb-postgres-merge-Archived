@@ -16250,7 +16250,6 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 				 * Skip expanding readable external table, since data is not
 				 * located inside gpdb
 				 */
-				// GPDB_12_MERGE_FIXME: should we close the relation here?
 				return;
 			}
 		}
@@ -16260,15 +16259,8 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 				 * Skip expanding readable external table, since data is not
 				 * located inside gpdb
 				 */
-				// GPDB_12_MERGE_FIXME: should we close the relation here?
 				return;
 		}
-
-		// GPDB_12_MERGE_FIXME: Previously, we closed the relation here, but
-		// now we're getting an assertion failure later, when the caller tries
-		// to close it. Like in ATExecSetDistributedBy(), it seems wrong to close
-		// here. But was there some problem in keeping it open? Investigate.
-		//relation_close(rel, NoLock);
 	}
 	else
 	{
@@ -16405,18 +16397,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 
 	/*
 	 * Step (f) - swap relfilenodes and MORE !!!
-	 *
-	 * Just lookup the Oid and pass it to swap_relation_files(). To do
-	 * this we must close the rel, since it needs to be forgotten by
-	 * the cache, we keep the lock though. ATRewriteCatalogs() knows
-	 * that we've closed the relation here.
 	 */
-	// GPDB_12_MERGE_FIXME: Previously, we closed the relation here, but
-	// now we're getting an assertion failure later, when the caller tries
-	// to close it. Like in ATExecSetDistributedBy(), it seems wrong to close
-	// here. But was there some problem in keeping it open? Investigate.
-	//relation_close(rel, NoLock);
-	//heap_close(rel, NoLock);
 	rel = NULL;
 	tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 	swap_relation_files(relid, tmprelid,
@@ -16960,7 +16941,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		 */
 		if (cmd->backendId == 0)
 		{
-			/* caller expects rel to be closed for this AT type */
 			goto l_distro_fini;			
 		}
 
@@ -16994,15 +16974,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 
 		/*
 		 * Step (f) - swap relfilenodes and MORE !!!
-		 *
-		 * Just lookup the Oid and pass it to swap_relation_files(). To do
-		 * this we must close the rel, since it needs to be forgotten by
-		 * the cache, we keep the lock though. ATRewriteCatalogs() knows
-		 * that we've closed the relation here.
-		 * GPDB_12_MERGE_FIXME: We no longer close the relation. Is that OK?
-		 * See FIXME comment at top of function, too.
 		 */
-		//table_close(rel, NoLock);
 		rel = NULL;
 		tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 		swap_relation_files(tarrelid, tmprelid,
