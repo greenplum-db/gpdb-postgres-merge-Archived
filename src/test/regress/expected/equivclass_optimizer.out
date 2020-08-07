@@ -481,12 +481,12 @@ drop user regress_user_ectest;
 -- check that X=X is converted to X IS NOT NULL when appropriate
 explain (costs off)
   select * from tenk1 where unique1 = unique1 and unique2 = unique2;
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on tenk1
-         Filter: ((unique1 IS NOT NULL) AND (unique2 IS NOT NULL))
- Optimizer: Postgres query optimizer
+         Filter: ((unique1 = unique1) AND (unique2 = unique2))
+ Optimizer: Pivotal Optimizer (GPORCA)
 (4 rows)
 
 -- this could be converted, but isn't at present
