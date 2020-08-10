@@ -426,7 +426,7 @@ insert into sometable values (3, 'z', repeat('ffoob',100000));
 do $$
 declare d ordered_texts;
 begin
-  for d in select a, b from sometable loop
+  for d in select a, b from sometable order by id loop
     raise notice 'succeeded at "%"', d.f1;
   end loop;
 end$$;
@@ -434,7 +434,7 @@ end$$;
 do $$
 declare r record; d ordered_texts;
 begin
-  for r in select * from sometable loop
+  for r in select * from sometable order by id loop
     raise notice 'processing row %', r.id;
     d := row(r.a, r.b);
   end loop;
@@ -443,7 +443,7 @@ end$$;
 do $$
 declare r record; d ordered_texts;
 begin
-  for r in select * from sometable loop
+  for r in select * from sometable order by id loop
     raise notice 'processing row %', r.id;
     d := null;
     d.f1 := r.a;
