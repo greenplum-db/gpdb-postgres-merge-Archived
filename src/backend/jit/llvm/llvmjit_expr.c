@@ -1880,6 +1880,18 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
+			case EEOP_SCALARARRAYOP_FAST_INT:
+				build_EvalXFunc(b, mod, "ExecEvalScalarArrayOpFastInt",
+								v_state, v_econtext, op);
+				LLVMBuildBr(b, opblocks[i + 1]);
+				break;
+
+			case EEOP_SCALARARRAYOP_FAST_STR:
+				build_EvalXFunc(b, mod, "ExecEvalScalarArrayOpFastStr",
+								v_state, v_econtext, op);
+				LLVMBuildBr(b, opblocks[i + 1]);
+				break;
+
 			case EEOP_XMLEXPR:
 				build_EvalXFunc(b, mod, "ExecEvalXmlExpr",
 								v_state, v_econtext, op);

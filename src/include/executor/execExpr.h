@@ -213,6 +213,8 @@ typedef enum ExprEvalOp
 	/* evaluate assorted special-purpose expression types */
 	EEOP_CONVERT_ROWTYPE,
 	EEOP_SCALARARRAYOP,
+	EEOP_SCALARARRAYOP_FAST_INT, 	/* fast path x in (123, 456, 789) */
+	EEOP_SCALARARRAYOP_FAST_STR, 	/* fast path x in ('a', 'b', 'c') */
 	EEOP_XMLEXPR,
 	EEOP_AGGREF,
 	EEOP_GROUPING_FUNC,
@@ -559,6 +561,20 @@ typedef struct ExprEvalStep
 			PGFunction	fn_addr;	/* actual call address */
 		}			scalararrayop;
 
+		/* for EEOP_SCALARARRAYOP_FAST_INT / SCALARARRAYOP_FAST_STR */
+		struct
+		{
+			/* useOr missing because OR semantics have not been implemented in the fast path */
+			Oid			opfuncid;
+
+			Datum		scalarval;		/* holds the scalar arg during evaluation */
+			bool		scalarisnull;
+
+			int			fp_n;
+			int		   *fp_len;
+			Datum	   *fp_datum;
+		}			scalararrayop_fast;
+
 		/* for EEOP_XMLEXPR */
 		struct
 		{
@@ -786,6 +802,8 @@ extern void ExecEvalSubscriptingRefAssign(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op,
 								   ExprContext *econtext);
 extern void ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalScalarArrayOpFastInt(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalScalarArrayOpFastStr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConstraintNotNull(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConstraintCheck(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op);

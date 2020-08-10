@@ -77,6 +77,7 @@
 #include "utils/xml.h"
 
 #include "cdb/cdbvars.h"
+#include "utils/fmgroids.h"
 
 
 /*
@@ -381,6 +382,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_DOMAIN_CHECK,
 		&&CASE_EEOP_CONVERT_ROWTYPE,
 		&&CASE_EEOP_SCALARARRAYOP,
+		&&CASE_EEOP_SCALARARRAYOP_FAST_INT,
+		&&CASE_EEOP_SCALARARRAYOP_FAST_STR,
 		&&CASE_EEOP_XMLEXPR,
 		&&CASE_EEOP_AGGREF,
 		&&CASE_EEOP_GROUPING_FUNC,
@@ -1418,6 +1421,22 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* too complex for an inline implementation */
 			ExecEvalScalarArrayOp(state, op);
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_SCALARARRAYOP_FAST_INT)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalScalarArrayOpFastInt(state, op);
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_SCALARARRAYOP_FAST_STR)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalScalarArrayOpFastStr(state, op);
 
 			EEO_NEXT();
 		}
@@ -3598,6 +3617,126 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 
 	*op->resvalue = result;
 	*op->resnull = resultnull;
+}
+
+/*
+ * Fast-path versin of "scalar op ANY/ALL (array)".
+ *
+ * Used when 'op' is one of the hard-coded built-in functions, and array is a Const.
+ *
+ * Source array has already been deconstructed in op->fp_len/fp_datum arrays.
+ * Scalar arg is already evaluated into op->scalarval.
+ *
+ * The operator always yields boolean, and we combine the results across all
+ * array elements using OR and AND (for ANY and ALL respectively).  Of course
+ * we short-circuit as soon as the result is known.
+ */
+void
+ExecEvalScalarArrayOpFastInt(ExprState *state, ExprEvalStep *op)
+{
+	Oid			opfuncid = op->d.scalararrayop_fast.opfuncid;
+	int			nelems;
+	Datum	   *fp_datum;
+	Datum		scalar;
+	bool		result;
+
+	/*
+	 * If the scalar is NULL, and the function is strict, return NULL; no
+	 * point in iterating the loop.
+	 *
+	 * (All the hard-coded built-in eq functions we support are strict.)
+	 */
+	if (*op->resnull)
+		return;
+
+	/* Else fetch the scalar argument */
+	scalar = *op->resvalue;
+
+	if (opfuncid == F_INT4EQ || opfuncid == F_DATE_EQ)
+		scalar = Int32GetDatum(DatumGetInt32(scalar));
+	else if (opfuncid == F_INT2EQ)
+	{
+		Assert(opfuncid == F_INT2EQ);
+		scalar = Int16GetDatum(DatumGetInt16(scalar));
+	}
+	else
+	{
+		Assert (opfuncid == F_INT8EQ);
+		scalar = Int64GetDatum(DatumGetInt64(scalar));
+	}
+
+	nelems = op->d.scalararrayop_fast.fp_n;
+	fp_datum = op->d.scalararrayop_fast.fp_datum;
+	result = false;
+	for (int i = 0; i < nelems; i++)
+	{
+		if (scalar == fp_datum[i])
+		{
+			result = true;
+			break;
+		}
+	}
+
+	*op->resvalue = BoolGetDatum(result);
+	*op->resnull = false;
+}
+
+/*
+ * Fast-path version of "scalar op ANY/ALL (array)", texteq() variant.
+ */
+void
+ExecEvalScalarArrayOpFastStr(ExprState *state, ExprEvalStep *op)
+{
+	Oid			opfuncid = op->d.scalararrayop_fast.opfuncid;
+	int			nelems;
+	int		   *fp_len;
+	Datum	   *fp_datum;
+	Datum		scalar;
+	bool		result;
+
+	char *p; void *tofree; int len;
+
+	/*
+	 * If the scalar is NULL, and the function is strict, return NULL; no
+	 * point in iterating the loop.
+	 *
+	 * (All the hard-coded built-in eq functions we support are strict.)
+	 */
+	if (*op->resnull)
+		return;
+
+	/* Else fetch the scalar argument */
+	scalar = *op->resvalue;
+
+	varattrib_untoast_ptr_len(scalar, &p, &len, &tofree);
+
+	/* bpchareq, rid of trailing white space.  see bpeq and bcTruelen */
+	if (opfuncid == F_BPCHAREQ)
+	{
+		while(len > 0 && p[len-1] == ' ')
+			--len;
+	}
+
+	nelems = op->d.scalararrayop_fast.fp_n;
+	fp_len = op->d.scalararrayop_fast.fp_len;
+	fp_datum = op->d.scalararrayop_fast.fp_datum;
+	result = false;
+	for (int i = 0; i < nelems; i++)
+	{
+		if (fp_len[i] != len)
+			continue;
+		if (memcmp(p, DatumGetPointer(fp_datum[i]), fp_len[i]) == 0)
+		{
+			result = true;
+			break;
+		}
+	}
+
+	if (tofree)
+		pfree(tofree);
+
+	*op->resvalue = BoolGetDatum(result);
+	*op->resnull = false;
 }
 
 /*

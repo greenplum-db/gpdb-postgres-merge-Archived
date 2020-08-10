@@ -48,7 +48,10 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
+#include "access/tuptoaster.h"
+#include "catalog/pg_collation.h"
 #include "cdb/cdbvars.h"
+#include "utils/pg_locale.h"
 
 
 typedef struct LastAttnumInfo
@@ -74,6 +77,10 @@ static void ExecInitSubscriptingRef(ExprEvalStep *scratch,
 									SubscriptingRef *sbsref,
 									ExprState *state,
 									Datum *resv, bool *resnull);
+static bool ExecInitScalarArrayOpFastPath(ExprEvalStep *scratch,
+										  ScalarArrayOpExpr *opexpr,
+										  ExprState *state, Datum *resv, bool *resnull);
+
 static bool isAssignmentIndirectionExpr(Expr *expr);
 static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 								   ExprState *state,
@@ -1037,6 +1044,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
 								   get_func_name(opexpr->opfuncid));
 				InvokeFunctionExecuteHook(opexpr->opfuncid);
+
+				/* GPDB: Try the hard-coded fast-path versions of these */
+				if (ExecInitScalarArrayOpFastPath(&scratch, opexpr,
+												  state, resv, resnull))
+					break;
 
 				/* Set up the primary fmgr lookup information */
 				finfo = palloc0(sizeof(FmgrInfo));
@@ -2970,6 +2982,205 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 				break;
 		}
 	}
+}
+
+/*
+ * GPDB: For a few built-in equality operators, we have a specialized fast-path
+ * version to evaluate a ScalarArrayOpExpr. In the fast path, the array
+ * argument must be a constant. It is decomposed into a C array here for faster
+ * evaluation at runtime.
+ */
+static bool
+ExecInitScalarArrayOpFastPath(ExprEvalStep *scratch,
+							  ScalarArrayOpExpr *opexpr,
+							  ExprState *state, Datum *resv, bool *resnull)
+{
+	Oid			opfuncid = opexpr->opfuncid;
+	Oid			collid = opexpr->inputcollid;
+	Expr	   *scalararg;
+	Expr	   *arrayarg;
+	Const	   *arrayconst;
+	ArrayType  *arr;
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	char	   *s;
+	bits8	   *bitmap;
+	int			bitmask;
+	int			nelems;
+	int		   *fp_len;
+	Datum	   *fp_datum;
+
+	Assert(list_length(opexpr->args) == 2);
+	scalararg = (Expr *) linitial(opexpr->args);
+	arrayarg = (Expr *) lsecond(opexpr->args);
+
+	/* IN will be evaluated as OR */
+	if (!opexpr->useOr)
+		return false;
+
+	/* only if the array arg is const */
+	if (!IsA(arrayarg, Const))
+		return false;
+	arrayconst = (Const *) arrayarg;
+
+	/* We do not handle null */
+	if (arrayconst->constisnull)
+		return false;
+
+	arr = DatumGetArrayTypeP(arrayconst->constvalue);
+	nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+
+	/* We do not handle this case */
+	if (nelems <= 0)
+		return false;
+
+	if (opfuncid == F_INT2EQ || opfuncid == F_INT4EQ || opexpr->opfuncid == F_INT8EQ ||
+		opfuncid == F_DATE_EQ)
+	{
+		/* ok */
+	}
+	else if (opfuncid == F_TEXTEQ || opfuncid == F_BPCHAREQ)
+	{
+		/*
+		 * Since we're not calling texteq(), sanity check here that collation was
+		 * reosolved. This is the same as check_collation_set(collid).
+		 */
+		if (!OidIsValid(collid))
+		{
+			/*
+			 * This typically means that the parser could not resolve a conflict
+			 * of implicit collations, so report it that way.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_COLLATION),
+					 errmsg("could not determine which collation to use for string comparison"),
+					 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+
+		/*
+		 * Only ok if we can use memcmp(). These conditions should match those
+		 * in texteq()!
+		 */
+		if (lc_collate_is_c(collid) ||
+			collid == DEFAULT_COLLATION_OID ||
+			pg_newlocale_from_collation(collid)->deterministic)
+		{
+			/* ok */
+		}
+		else
+			return false;
+	}
+	else
+		return false;
+
+	/* All looks good. Deconstruct the array. */
+	get_typlenbyvalalign(ARR_ELEMTYPE(arr),
+						 &typlen,
+						 &typbyval,
+						 &typalign);
+	s = (char *) ARR_DATA_PTR(arr);
+	bitmap = ARR_NULLBITMAP(arr);
+	bitmask = 1;
+
+	fp_len = (int *) palloc(sizeof(int) * nelems);
+	fp_datum = (Datum *) palloc(sizeof(Datum) * nelems);
+
+	for (int i = 0; i < nelems; i++)
+	{
+		Datum		elt;
+		Datum		datum;
+		int			len = 0;
+
+		/* Do not deal with null yet */
+		if (bitmap && (*bitmap & bitmask) == 0)
+			return false;
+
+		elt = fetch_att(s, typbyval, typlen);
+		s = att_addlength_pointer(s, typlen, PointerGetDatum(s));
+		s = (char *) att_align_nominal(s, typalign);
+
+		/* int type */
+		if (opfuncid == F_INT2EQ)
+			datum = Int16GetDatum(DatumGetInt16(elt));
+		else if (opfuncid == F_INT4EQ || opfuncid == F_DATE_EQ)
+			datum = Int32GetDatum(DatumGetInt32(elt));
+		else if (opfuncid == F_INT8EQ)
+			datum = elt;
+		else if (opfuncid == F_TEXTEQ || opfuncid == F_BPCHAREQ)
+		{
+			char	   *p;
+			void	   *tofree;
+			char	   *pdest;
+
+			varattrib_untoast_ptr_len(elt, &p, &len, &tofree);
+
+			/* bpchareq, rid of trailing white space.  see bpeq and bcTruelen */
+			if (opfuncid == F_BPCHAREQ)
+			{
+				while(len > 0 && p[len-1] == ' ')
+					--len;
+			}
+
+			pdest = palloc(len);
+			datum = PointerGetDatum(pdest);
+
+			memcpy(pdest, p, len);
+
+			if (tofree)
+				pfree(tofree);
+		}
+		else
+		{
+			Assert(!"Wrong optimize_funcoid");
+			return false;
+		}
+
+		fp_len[i] = len;
+		fp_datum[i] = datum;
+
+		/* advance bitmap pointer if any */
+		if (bitmap)
+		{
+			bitmask <<= 1;
+			if (bitmask == 0x100 /* 1<<8 */)
+			{
+				bitmap++;
+				bitmask = 1;
+			}
+		}
+	}
+
+	/*
+	 * Evaluate scalar argument into our return value.  There's no danger in
+	 * that, because the return value is guaranteed to be overwritten by
+	 * EEOP_SCALARARRAYOP_FAST_* step, and will not be passed to any other
+	 * expression. (In the slow path, the array argument is similarly
+	 * evaluated into the return value)
+	 */
+	ExecInitExprRec(scalararg, state, resv, resnull);
+
+	/* And perform the operation */
+	if (opfuncid == F_INT2EQ || opfuncid == F_INT4EQ || opfuncid == F_INT8EQ ||
+		opfuncid == F_DATE_EQ)
+	{
+		scratch->opcode = EEOP_SCALARARRAYOP_FAST_INT;
+	}
+	else if (opfuncid == F_TEXTEQ || opfuncid == F_BPCHAREQ)
+		scratch->opcode = EEOP_SCALARARRAYOP_FAST_STR;
+	else
+	{
+		Assert(!"Wrong optimize_funcoid");
+		return false;
+	}
+
+	scratch->d.scalararrayop_fast.opfuncid = opfuncid;
+	scratch->d.scalararrayop_fast.fp_n = nelems;
+	scratch->d.scalararrayop_fast.fp_len = fp_len;
+	scratch->d.scalararrayop_fast.fp_datum = fp_datum;
+	ExprEvalPushStep(state, scratch);
+
+	return true;
 }
 
 /*
