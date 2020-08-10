@@ -446,7 +446,11 @@ endif
 # entries appear more than once in the tree, and parallel installs of the same
 # file can fail with EEXIST.
 checkprep:
+ifndef NO_TEMP_INSTALL
 	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
+else
+	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra install || exit; done)
+endif
 
 PROVE = @PROVE@
 # There are common routines in src/test/perl, and some test suites have
