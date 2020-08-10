@@ -2698,14 +2698,14 @@ vacuum_params_to_options_list(VacuumParams *params)
 
 	if (params->truncate == VACOPT_TERNARY_DISABLED)
 		options = lappend(options, makeDefElem("truncate", (Node *) makeInteger(0), -1));
-	if (params->truncate == VACOPT_TERNARY_ENABLED)
+	else if (params->truncate == VACOPT_TERNARY_ENABLED)
 		options = lappend(options, makeDefElem("truncate", (Node *) makeInteger(1), -1));
 	else
 		elog(ERROR, "unexpected VACUUM 'truncate' option '%d'", (int) params->truncate);
 
 	if (params->index_cleanup == VACOPT_TERNARY_DISABLED)
 		options = lappend(options, makeDefElem("index_cleanup", (Node *) makeInteger(0), -1));
-	if (params->index_cleanup == VACOPT_TERNARY_ENABLED)
+	else if (params->index_cleanup == VACOPT_TERNARY_ENABLED)
 		options = lappend(options, makeDefElem("index_cleanup", (Node *) makeInteger(1), -1));
 	else
 		elog(ERROR, "unexpected VACUUM 'index_cleanup' option '%d'", (int) params->truncate);
