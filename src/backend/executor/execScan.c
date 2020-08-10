@@ -40,6 +40,9 @@ ExecScanFetch(ScanState *node,
 
 	CHECK_FOR_INTERRUPTS();
 
+	if (QueryFinishPending)
+		return NULL;
+
 	if (estate->es_epqTupleSlot != NULL)
 	{
 		/*
