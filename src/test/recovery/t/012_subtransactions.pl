@@ -6,14 +6,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 12;
 
-# GPDB: These tests rely on PREPARE TRANSACTION, which is disabled in GPDB.
-# Skip everything in this file.
-diag("PREPARE TRANSACTION not implemented on GPDB; skipping tests");
-SKIP:
-{
-	skip "PREPARE TRANSACTION not implemented on GPDB", 12;
-
-
 # Setup master node
 my $node_master = get_new_node("master");
 $node_master->init(allows_streaming => 1);
@@ -222,5 +214,3 @@ $node_master->psql(
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
-
-} # end SKIP

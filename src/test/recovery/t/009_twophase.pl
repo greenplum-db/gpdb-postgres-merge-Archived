@@ -6,13 +6,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 24;
 
-# GPDB: These tests rely on PREPARE TRANSACTION, which is disabled in GPDB.
-# Skip everything in this file.
-diag("PREPARE TRANSACTION not implemented on GPDB; skipping tests");
-SKIP:
-{
-	skip "PREPARE TRANSACTION not implemented on GPDB", 24;
-
 my $psql_out = '';
 my $psql_rc  = '';
 
@@ -482,5 +475,3 @@ $cur_standby->psql(
 is( $psql_out,
 	qq{27|issued to paris},
 	"Check expected t_009_tbl2 data on standby");
-
-} # end SKIP

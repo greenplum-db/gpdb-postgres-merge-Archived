@@ -475,16 +475,12 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_PREPARE:
-						/*
-						 * PREPARE TRANSACTION is not supported in GPDB. GPDB
-						 * uses prepared transactions to maintain consistency
-						 * across nodes, but we don't support the user to
-						 * initiate them.
-						 */
-						ereport(ERROR,
-								(errcode(ERRCODE_GP_COMMAND_ERROR),
-								 errmsg("PREPARE TRANSACTION is not yet supported in Greenplum Database")));
-#if 0
+						if (Gp_role == GP_ROLE_DISPATCH)
+						{
+							ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
+									errmsg("PREPARE TRANSACTION is not yet supported in Greenplum Database")));
+
+						}
 						PreventCommandDuringRecovery("PREPARE TRANSACTION");
 						if (!PrepareTransactionBlock(stmt->gid))
 						{
@@ -492,7 +488,6 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 							if (completionTag)
 								strcpy(completionTag, "ROLLBACK");
 						}
-#endif
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
