@@ -159,7 +159,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errmsg("non-exclusive backup in progress"),
 				 errhint("Did you mean to use pg_stop_backup('f')?")));
 
-#if 0
 	/*
 	 * Exclusive backups were typically started in a different connection, so
 	 * don't try to verify that status of backup is set to
@@ -168,8 +167,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * do_pg_stop_backup.
 	 */
 	stoppoint = do_pg_stop_backup(NULL, true, NULL);
-#endif
-	
+
 	PG_RETURN_LSN(stoppoint);
 }
 

@@ -65,11 +65,11 @@ $standby->init_from_backup($primary, 'bkp', has_streaming => 1);
 $standby->start;
 
 # Create base table whose data consistency is checked.
+# Use more data in GPDB, because the block size is larger, and because
+# in GPDB the data will be distributed across segments.
 $primary->safe_psql(
 	'postgres', "
 CREATE TABLE test1 (a int) WITH (fillfactor = 10);
-# Use more data in GPDB, because the block size is larger, and because
-# in GPDB the data will be distributed across segments.
 INSERT INTO test1 SELECT generate_series(1, 10000 * 100);");
 
 # Take a checkpoint and enforce post-checkpoint full page writes
