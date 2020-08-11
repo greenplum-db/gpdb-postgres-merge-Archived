@@ -472,6 +472,12 @@ sub init
 	print $conf "log_replication_commands = on\n";
 	print $conf "wal_retrieve_retry_interval = '500ms'\n";
 
+	# In GPBB, logging_collector is enabled by default. Disable it, so that
+	# upstream tests behave the same as in PostgreSQL. In particular, the
+	# issues_sql_like() doesn't work if logging_collector is enabled.
+	# Individual tests can override this.
+	print $conf "logging_collector = off\n";
+
 	# If a setting tends to affect whether tests pass or fail, print it after
 	# TEMP_CONFIG.  Otherwise, print it before TEMP_CONFIG, thereby permitting
 	# overrides.  Settings that merely improve performance or ease debugging
