@@ -4703,7 +4703,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBufferStr(&buf, ")\n");
 
 	/*
-	 * GDPB 6 and earlier versions had pg_class.relstorage column, to distinguish
+	 * GPDB 6 and earlier versions had pg_class.relstorage column, to distinguish
 	 * external and other kinds of tables. It's gone in GPDB 6, we use relkind and
 	 * relam fields now.
 	 */

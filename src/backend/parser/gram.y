@@ -3704,7 +3704,7 @@ alter_table_partition_id_spec:
 					if ($6)
 						parser_yyerror("syntax error");
 
-					/* GDPB_12_MERGE_FIXME: need to re-implement or remove this. */
+					/* GPDB_12_MERGE_FIXME: need to re-implement or remove this. */
 					elog(ERROR, "addressing partition by RANK not implemented");
 #if 0
 					AlterPartitionId *n;

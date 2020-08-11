@@ -2139,7 +2139,7 @@ cdbexplain_countLeafPartTables(PlanState *planstate)
 		   IsA(planstate, DynamicIndexScanState));
 
 	return -1;
-	/* GDPB_12_MERGE_FIXME */
+	/* GPDB_12_MERGE_FIXME */
 #if 0
 	Scan	   *scan = (Scan *) planstate->plan;
 

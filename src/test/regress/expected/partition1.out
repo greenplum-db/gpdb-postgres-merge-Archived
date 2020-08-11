@@ -2724,7 +2724,7 @@ DROP TABLE validation_syntax_tbl;
 --
 -- Test a case where the automatically created partition name clashes with
 -- another table or partition.
--- Before GDPB 7, the automatic table name generation used check if the name is
+-- Before GPDB 7, the automatic table name generation used check if the name is
 -- in use, and pick another name to avoid the clash. It's not as smart anymore.
 -- It's more tricky now, because e.g. the ALTER TABLE ALTER/DROP/ADD PARTITION
 -- commands rely on the deterministic naming of the partitions. If a user runs

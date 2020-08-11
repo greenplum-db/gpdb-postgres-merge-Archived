@@ -1870,7 +1870,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_DynamicBitmapIndexScan:
 			{
-			/* GDPB_12_MERGE_FIXME */
+			/* GPDB_12_MERGE_FIXME */
 #if 0
 				BitmapIndexScan *bitmapindexscan = (BitmapIndexScan *) plan;
 				Oid indexoid = bitmapindexscan->indexid;

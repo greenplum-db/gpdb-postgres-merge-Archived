@@ -1070,7 +1070,7 @@ CREATE VIEW rw_view1 WITH (security_barrier=true) AS
 
 SELECT * FROM rw_view1;
 
-set enable_seqscan=off; -- To get the same plan in GDPB as in upstream
+set enable_seqscan=off; -- To get the same plan in GPDB as in upstream
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 reset enable_seqscan;
