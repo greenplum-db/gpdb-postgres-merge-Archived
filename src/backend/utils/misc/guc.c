@@ -1485,7 +1485,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"autovacuum", PGC_SIGHUP, DEFUNCT_OPTIONS,
+		{"autovacuum", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Starts the autovacuum subprocess."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
@@ -3693,7 +3693,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_line_prefix", PGC_SIGHUP, DEFUNCT_OPTIONS,
+		{"log_line_prefix", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Controls information prefixed to each log line."),
 			gettext_noop("If blank, no prefix is used."),
 			GUC_NO_SHOW_ALL
