@@ -1156,6 +1156,12 @@ alter table ataprank truncate partition girls;
 alter table ataprank alter partition girls truncate partition for ('2001-01-01');
 alter table ataprank alter partition girls alter partition 
 for ('2001-01-01') truncate partition mass;
+-- addressing partitions by RANK is no longer supported
+alter table ataprank truncate partition for (rank (1));
+ERROR:  addressing partition by RANK is no longer supported
+LINE 1: alter table ataprank truncate partition for (rank (1));
+                                                     ^
+HINT:  Use partition name or FOR (<partition key value>) instead.
 -- don't NOTIFY of children if cascade
 alter table ataprank truncate partition girls cascade;
 -- fail - no partition for '1999-01-01'

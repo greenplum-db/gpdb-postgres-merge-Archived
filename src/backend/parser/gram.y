@@ -3655,9 +3655,13 @@ alter_table_partition_id_spec:
 					$$ = (Node *)n;
 				}
 			/*
-			 * What we'd really want here is:
+			 * In GPDB 6 and below, we supported addressing partitions by
+			 * their position among siblings:
 			 *
 			 * FOR '(' RANK '(' NumericOnly ')' ')'
+			 *
+			 * We don't support that anymore, but recognize the syntax to
+			 * give a better error message.
 			 *
 			 * But we don't want to make RANK a reserved keyword. Also,
 			 * just replacing RANK with IDENT creates a conflict with this
@@ -3704,18 +3708,11 @@ alter_table_partition_id_spec:
 					if ($6)
 						parser_yyerror("syntax error");
 
-					/* GPDB_12_MERGE_FIXME: need to re-implement or remove this. */
-					elog(ERROR, "addressing partition by RANK not implemented");
-#if 0
-					AlterPartitionId *n;
-
-					n = makeNode(AlterPartitionId);
-					n->idtype = AT_AP_IDRank;
-                    n->partiddef = (Node *) val;
-                    n->location  = @5;
-
-					$$ = (Node *)n;
-#endif
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("addressing partition by RANK is no longer supported"),
+							 errhint("Use partition name or FOR (<partition key value>) instead."),
+							 parser_errposition(@3)));
 				}
 		;
 
