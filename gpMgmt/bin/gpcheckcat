@@ -2246,6 +2246,7 @@ TableMainColumn['pg_inherits'] = ['inhrelid', 'pg_class']
 TableMainColumn['pg_largeobject'] = ['loid', 'pg_largeobject']
 TableMainColumn['pg_pltemplate'] = ['tmplname', 'pg_pltemplate']
 TableMainColumn['pg_proc_callback'] = ['profnoid', 'pg_proc']
+TableMainColumn['pg_statistic_ext_data'] = ['stxoid', 'pg_statistic_ext']
 TableMainColumn['pg_type_encoding'] = ['typid', 'pg_type']
 TableMainColumn['pg_window'] = ['winfnoid', 'pg_proc']
 
