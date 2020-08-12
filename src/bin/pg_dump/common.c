@@ -124,7 +124,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	{
 		BinaryUpgradeInfo *binfo;
 
-		pg_log_info(NULL, "identifying required binary upgrade calls");
+		pg_log_info("identifying required binary upgrade calls");
 
 		binfo = getBinaryUpgradeObjects();
 		binaryupgradeinfoindex = buildIndexArray(binfo, 1, sizeof(BinaryUpgradeInfo));
