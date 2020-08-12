@@ -409,6 +409,11 @@ typedef struct ViewOptions
 	((relation)->rd_amhandler == HEAP_TABLE_AM_HANDLER_OID)
 
 /*
+ * CAUTION: this macro is a violation of the absraction that table AM and
+ * index AM interfaces provide.  Use of this macro is discouraged.  If
+ * table/index AM API falls short for your use case, consider enhancing the
+ * interface.
+ *
  * RelationIsAoRows
  * 		True iff relation has append only storage with row orientation
  */
@@ -416,6 +421,11 @@ typedef struct ViewOptions
 	((relation)->rd_amhandler == AO_ROW_TABLE_AM_HANDLER_OID)
 
 /*
+ * CAUTION: this macro is a violation of the absraction that table AM and
+ * index AM interfaces provide.  Use of this macro is discouraged.  If
+ * table/index AM API falls short for your use case, consider enhancing the
+ * interface.
+ *
  * RelationIsAoCols
  * 		True iff relation has append only storage with column orientation
  */
@@ -423,6 +433,11 @@ typedef struct ViewOptions
 	((relation)->rd_amhandler == AO_COLUMN_TABLE_AM_HANDLER_OID)
 
 /*
+ * CAUTION: this macro is a violation of the absraction that table AM and
+ * index AM interfaces provide.  Use of this macro is discouraged.  If
+ * table/index AM API falls short for your use case, consider enhancing the
+ * interface.
+ *
  * RelationIsAppendOptimized
  * 		True iff relation has append only storage (can be row or column orientation)
  */
