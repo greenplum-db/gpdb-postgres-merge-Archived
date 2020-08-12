@@ -133,6 +133,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	bool		mapped_relation;
 	Relation	toast_rel;
 	Relation	class_rel;
+	Relation	pg_type_desc;
 	Oid			toast_relid;
 	Oid			toast_idxid;
 	Oid			toast_typid = InvalidOid;

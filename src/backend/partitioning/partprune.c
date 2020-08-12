@@ -140,6 +140,11 @@ typedef struct PruneStepResult
 	bool		scan_null;		/* Scan the partition for NULL values? */
 } PruneStepResult;
 
+static PartitionPruneInfo *make_partition_pruneinfo_internal(PlannerInfo *root,
+															 RelOptInfo *parentrel,
+															 List *subpaths, List *partitioned_rels,
+															 List *prunequal, Relids available_relids);
+
 static List *make_partitionedrel_pruneinfo(PlannerInfo *root,
 										   RelOptInfo *parentrel,
 										   int *relid_subplan_map,

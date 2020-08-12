@@ -65,6 +65,7 @@ static Datum getMaxBound(AttStatsSlot * *histSlots, int nParts, Oid ltFuncOid, O
 static void
 			getHistogramHeapTuple(AttStatsSlot * *histSlots, HeapTuple *heaptupleStats, int *numNotNullParts, int nParts);
 static void initDatumHeap(binaryheap *hp, AttStatsSlot * *histSlots, int *cursors, int nParts);
+static bool datumCompare(Datum d1, Datum d2, Oid opFuncOid, Oid collid);
 
 static float4 getBucketSizes(const HeapTuple *heaptupleStats, const float4 *relTuples, int nParts,
 			   MCVFreqPair **mcvPairRemaining, int rem_mcv,

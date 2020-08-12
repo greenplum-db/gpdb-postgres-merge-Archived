@@ -4651,6 +4651,8 @@ void
 ExecEndAgg(AggState *node)
 {
 	PlanState  *outerPlan;
+	int			numGroupingSets = Max(node->maxsets, 1);
+	int			setno;
 
 	ExecEagerFreeAgg(node);
 

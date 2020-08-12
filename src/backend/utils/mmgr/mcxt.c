@@ -275,7 +275,7 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	context->ident = NULL;
 
-	context->methods->delete_context(context);
+	context->methods->delete_context(context, parent);
 
 	VALGRIND_DESTROY_MEMPOOL(context);
 }
