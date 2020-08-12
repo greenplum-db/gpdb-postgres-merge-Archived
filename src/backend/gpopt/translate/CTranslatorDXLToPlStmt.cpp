@@ -21,10 +21,14 @@ extern "C"
 #include "nodes/nodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
+#include "partitioning/partdesc.h"
 #include "catalog/gp_distribution_policy.h"
 #include "catalog/pg_collation.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#include "executor/execPartition.h"
+#include "executor/executor.h"
+#include "utils/partcache.h"
 #if 0
 #include "cdb/partitionselection.h"
 #endif
@@ -34,6 +38,10 @@ extern "C"
 #include "utils/typcache.h"
 #include "utils/uri.h"
 }
+
+#include <tuple>
+#include <numeric>
+
 #include "gpos/base.h"
 
 #include "gpopt/mdcache/CMDAccessor.h"
@@ -3205,6 +3213,102 @@ CTranslatorDXLToPlStmt::TranslateDXLResult
 	return (Plan *) result;
 }
 
+static List *ExecuteSaticPruning(PartitionPruneInfo *part_prune_info, List *rtable)
+{
+	auto estate = CreateExecutorState();
+	/* We can use the estate's working context to avoid memory leaks. */
+	auto oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	ExecInitRangeTable(estate, rtable);
+	PlanState bogus_plan_state{T_PlanState, nullptr, estate};
+	ExecAssignExprContext(estate, &bogus_plan_state);
+	auto prunestate = ExecCreatePartitionPruneState(&bogus_plan_state,
+													part_prune_info);
+
+	Bitmapset *remaining_indexes = ExecFindMatchingSubPlans(prunestate, estate, 0, nullptr);
+
+	/* Get back to outer memory context */
+	MemoryContextSwitchTo(oldcontext);
+
+	std::vector<Oid> universe;
+	// FIXME: I hate those ListCell variables. Extract them into an range-for iterator
+	ListCell *lc_prune_info_list;
+	ForEach(lc_prune_info_list, part_prune_info->prune_infos)
+	{
+		// We cannot use lfirst_node because it longjmp's
+		auto pinfolist = (List *)lfirst(lc_prune_info_list);
+		ListCell *lc;
+		ForEach(lc, pinfolist)
+		{
+			auto pinfo = (PartitionedRelPruneInfo *)lfirst(lc);
+			universe.insert(universe.cend(), pinfo->relid_map, pinfo->relid_map + pinfo->nparts);
+		}
+	}
+
+	List *prune_result = NIL;
+	for (int i = -1; (i = bms_next_member(remaining_indexes, i)) >= 0;)
+	{
+		prune_result = gpdb::LAppendOid(prune_result, universe[i]);
+	}
+
+	// Why the for-loop, if you assume one?
+	// This is a domain-specific knowledge of ORCA plans: orca doesn't smash
+	// static pruning for different partitioned tables into one partition selector
+	GPOS_ASSERT(estate->es_range_table_size == 1);
+
+	for (int i = 0; i < estate->es_range_table_size; ++i)
+		if (estate->es_relations[i])
+			// FIXME: this doesn't quite seem to handle locking, is this correct?
+			gpdb::CloseRelation(estate->es_relations[i]);
+	FreeExecutorState(estate);
+	return prune_result;
+}
+
+// Given a DXL Partition Selector, construct a PartitionPruneInfo
+// the pruning steps contained in the part_prune_info should be based on the
+// filter and eqFilter of the partition selector
+// XXX: currently the returned structure is almost completely hardcoded and made up
+static std::tuple<ULONG, PartitionPruneInfo *, List *>
+PartitionPruneInfoFromPartitionSelector(const CDXLNode *partition_selector_dxlnode)
+{
+	auto dxl_part_selector = dynamic_cast<CDXLPhysicalPartitionSelector *>(
+		partition_selector_dxlnode->GetOperator());
+	auto oid = dynamic_cast<CMDIdGPDB *>(dxl_part_selector->GetRelMdId())->Oid();
+	auto relation = gpdb::GetRelation(oid);
+	auto part_prune_info = MakeNode(PartitionPruneInfo);
+	PartitionedRelPruneInfo *prelinfo = MakeNode(PartitionedRelPruneInfo);
+	// our artisanal rte will always be the first and only entry in our isolated range table
+	const Index index = 1;
+	RangeTblEntry *rte = MakeNode(RangeTblEntry);
+	rte->relid = oid;
+	rte->rellockmode = AccessShareLock;
+	rte->alias = MakeNode(Alias);
+	rte->eref = rte->alias;
+
+	List *range_table = ListMake1(rte);
+	prelinfo->rtindex = index;
+	prelinfo->nparts = relation->rd_partdesc->nparts;
+	prelinfo->present_parts = bms_add_range(NULL, 0, prelinfo->nparts - 1);
+	prelinfo->subpart_map = static_cast<int*>(palloc(sizeof(int) * prelinfo->nparts));
+	std::fill(prelinfo->subpart_map, prelinfo->subpart_map + prelinfo->nparts, -1);
+	prelinfo->subplan_map = static_cast<int*>(palloc(sizeof(int) * prelinfo->nparts));
+	std::iota(prelinfo->subplan_map, prelinfo->subplan_map + prelinfo->nparts, 0);
+	prelinfo->relid_map = static_cast<Oid*>(palloc(sizeof(Oid) * prelinfo->nparts));
+	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts, prelinfo->relid_map);
+
+	auto opstep = MakeNode(PartitionPruneStepOp);
+	opstep->step.step_id = 0;
+	opstep->opstrategy = BTLessStrategyNumber;
+	auto int_const = gpdb::MakeIntConst(4200);
+	opstep->exprs = ListMake1(int_const);
+	opstep->cmpfns = ListMake1Oid(relation->rd_partkey->partsupfunc[0].fn_oid);
+	prelinfo->exec_pruning_steps = ListMake1(opstep);
+	gpdb::CloseRelation(relation);
+	part_prune_info->prune_infos = ListMake1(ListMake1(prelinfo));
+
+	return {dxl_part_selector->ScanId(), part_prune_info, range_table};
+}
+
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToPlStmt::TranslateDXLPartSelector
@@ -3225,7 +3329,20 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 	// selector
 	const bool dynamic_pruning = (EdxlpsIndexChild == partition_selector_dxlnode->Arity() - 1);
 	if (!dynamic_pruning)
+	{
+		PartitionPruneInfo *part_prune_info;
+		List *range_table;
+		ULONG scanId;
+		std::tie(scanId, part_prune_info, range_table) =
+			PartitionPruneInfoFromPartitionSelector(partition_selector_dxlnode);
+
+		// FIXME: prelinfo->nparts won't work if you have subparts
+		auto prune_result = ExecuteSaticPruning(part_prune_info, range_table);
+
+		m_dxl_to_plstmt_context->SetStaticPruneResult(scanId,
+													  prune_result);
 		return reinterpret_cast<Plan *>(MakeNode(Result));
+	}
 	else
 		return nullptr;
 
@@ -3835,7 +3952,10 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan
 
 	SetParamIds(plan);
 
-	dyn_seq_scan->partOids = gpdb::RelLeafPartitions(rte->relid);
+	// FIXME: this really needs to agree with what's in part_prune_info
+	auto *prune_result = m_dxl_to_plstmt_context->GetStaticPruneResult(dyn_tbl_scan_dxlop->GetPartIndexIdPrintable());
+
+	dyn_seq_scan->partOids = prune_result;
 
 	return (Plan *) dyn_seq_scan;
 }

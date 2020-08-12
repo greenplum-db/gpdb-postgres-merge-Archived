@@ -3449,14 +3449,4 @@ gpdb::RelIsPartitioned(Oid relid)
 	GP_WRAP_END;
 }
 
-List *
-gpdb::RelLeafPartitions(Oid relid)
-{
-	GP_WRAP_START;
-	{
-		return relation_get_leaf_partitions(relid);
-	}
-	GP_WRAP_END;
-}
-
 // EOF

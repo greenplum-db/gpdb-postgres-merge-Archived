@@ -17,6 +17,8 @@
 #ifndef GPDXL_CContextDXLToPlStmt_H
 #define GPDXL_CContextDXLToPlStmt_H
 
+#include <vector>
+
 #include "gpopt/translate/CDXLTranslateContext.h"
 #include "gpopt/translate/CDXLTranslateContextBaseTable.h"
 #include "gpopt/translate/CTranslatorUtils.h"
@@ -140,6 +142,9 @@ namespace gpdxl
 			// CTAS distribution policy
 			GpPolicy  *m_distribution_policy;
 
+			// FXIME: this uses NEW/DELETE, should we use palloc/pfree/memory pool?
+			std::vector<List *> m_static_prune_results;
+
 		public:
 			// ctor/dtor
 			CContextDXLToPlStmt
@@ -250,6 +255,10 @@ namespace gpdxl
 			// based on decision made by DetermineDistributionHashOpclasses()
 			Oid GetDistributionHashOpclassForType(Oid typid);
 			Oid GetDistributionHashFuncForType(Oid typid);
+
+			List *GetStaticPruneResult(ULONG scanId);
+			void SetStaticPruneResult(ULONG scanId, List *static_prune_result);
+
 	};
 
 	}

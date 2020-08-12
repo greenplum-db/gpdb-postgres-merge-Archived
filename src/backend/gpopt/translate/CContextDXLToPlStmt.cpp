@@ -536,4 +536,16 @@ CContextDXLToPlStmt::GetDistributionHashFuncForType(Oid typid)
 	return hashproc;
 }
 
+List *
+CContextDXLToPlStmt::GetStaticPruneResult(ULONG scanId)
+{
+	return m_static_prune_results[scanId];
+}
+void
+CContextDXLToPlStmt::SetStaticPruneResult(ULONG scanId, List *static_prune_result)
+{
+	m_static_prune_results.reserve(scanId + 1);
+	m_static_prune_results[scanId] = static_prune_result;
+}
+
 // EOF
