@@ -1541,6 +1541,12 @@ def checkTableInconsistentEntry(cat):
     columns = list(map(lambda b: b.replace("attmissingval","attmissingval::text"), columns))
     castcols = list(map(lambda b: b.replace("attmissingval","attmissingval::text"), castcols))
 
+    # pg_dependencies and pg_mcv_list disallow inputs, convert to text for the query
+    columns = list(map(lambda b: b.replace("stxddependencies","stxddependencies::text"), columns))
+    castcols = list(map(lambda b: b.replace("stxddependencies","stxddependencies::text"), castcols))
+    columns = list(map(lambda b: b.replace("stxdmcv","stxdmcv::text"), columns))
+    castcols = list(map(lambda b: b.replace("stxdmcv","stxdmcv::text"), castcols))
+
     if cat.tableHasConsistentOids():
         qry = inconsistentEntryQuery(GV.max_content, catname, ['oid'], columns, castcols)
     else:
