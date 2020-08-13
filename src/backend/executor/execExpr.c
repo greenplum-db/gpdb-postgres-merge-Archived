@@ -842,6 +842,10 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					 * aggregations in targetlist, however, for queries with multiple
 					 * groups, the HashJoin combination will not be taken. For a single
 					 * group, the GROUP_ID() function should always return 0
+					 *
+					 * GPDB_12_MERGE_FIXME: Does GPDB still do that? I think that was
+					 * the old way of construting multi-DQA plans, but now we use the
+					 * TupleSplit node for it.
 					 */
 					scratch.opcode = EEOP_CONST;
 					scratch.d.constval.value = Int32GetDatum(0);

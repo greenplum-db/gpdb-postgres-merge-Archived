@@ -901,18 +901,6 @@ typedef struct AggrefExprState
 } AggrefExprState;
 
 /* ----------------
- *		GroupIdExprState node
- *
- * ----------------
- * GPDB_12_MERGE_FIXME: Is this still needed? GroupingFuncExprState was removed in upstream.
- */
-typedef struct GroupIdExprState
-{
-	ExprState	xprstate;
-	struct AggState *aggstate;
-} GroupIdExprState;
-
-/* ----------------
  *		WindowFuncExprState node
  * ----------------
  */

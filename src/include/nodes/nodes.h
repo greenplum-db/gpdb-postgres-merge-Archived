@@ -265,9 +265,6 @@ typedef enum NodeTag
 	 */
 	T_ExprState,
 	T_AggrefExprState,
-	// GPDB_12_MERGE_FIXME: The similar T_GroupingFuncExprState was removed
-	// in upstream. Do we still need T_GroupIdExprState?
-	//T_GroupIdExprState,
 	T_WindowFuncExprState,
 	T_SetExprState,
 	T_SubPlanState,
