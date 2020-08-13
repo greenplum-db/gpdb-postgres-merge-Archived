@@ -1938,9 +1938,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	Relation	onerel;
 	LockRelId	onerelid;
 	Oid			toast_relid;
-	Oid			aoseg_relid;
-	Oid         aoblkdir_relid;
-	Oid         aovisimap_relid;
+	Oid			aoseg_relid = InvalidOid;
+	Oid         aoblkdir_relid = InvalidOid;
+	Oid         aovisimap_relid = InvalidOid;
 	Oid			save_userid;
 	RangeVar	*this_rangevar = NULL;
 	int			ao_vacuum_phase;
