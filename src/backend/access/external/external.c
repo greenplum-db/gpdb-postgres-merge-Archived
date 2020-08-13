@@ -775,7 +775,6 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 
 				uri = ParseExternalTableUri(uri_str);
 
-				found_candidate = false;
 				found_match = false;
 
 				/*
@@ -805,9 +804,6 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 							if (skip_map[segind])
 								continue;	/* skip it */
 						}
-
-						/* a valid primary segdb exist on this host */
-						found_candidate = true;
 
 						if (segdb_file_map[segind] == NULL)
 						{

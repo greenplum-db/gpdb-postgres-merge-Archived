@@ -279,7 +279,6 @@ ao_vacuum_rel_compact(Relation onerel, int options, VacuumParams *params,
 {
 	int			compaction_segno;
 	int			insert_segno;
-	AppendOnlyInsertDesc insertDesc;
 	List	   *compacted_segments = NIL;
 	List	   *compacted_and_inserted_segments = NIL;
 	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
@@ -321,7 +320,6 @@ ao_vacuum_rel_compact(Relation onerel, int options, VacuumParams *params,
 	 * we would need to coordinate the transactions from the QD.
 	 */
 	insert_segno = -1;
-	insertDesc = NULL;
 	while ((compaction_segno = ChooseSegnoForCompaction(onerel, compacted_and_inserted_segments)) != -1)
 	{
 		/*
@@ -362,9 +360,6 @@ ao_vacuum_rel_compact(Relation onerel, int options, VacuumParams *params,
 		 */
 		CommandCounterIncrement();
 	}
-
-	if (insertDesc)
-		appendonly_insert_finish(insertDesc);
 
 	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }

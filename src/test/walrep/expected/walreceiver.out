@@ -111,12 +111,6 @@ SELECT test_send();
  t
 (1 row)
 
-SELECT test_receive();
- test_receive 
---------------
- f
-(1 row)
-
 SELECT test_disconnect();
  test_disconnect 
 -----------------

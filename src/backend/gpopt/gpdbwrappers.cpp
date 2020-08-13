@@ -637,6 +637,41 @@ gpdb::FreeAttrStatsSlot
 }
 
 bool
+gpdb::IsFuncAllowedForPartitionSelection
+    (
+    Oid funcid
+    )
+{
+    GP_WRAP_START;
+    switch (funcid)
+    {
+	// These are the functions we have allowed as lossy casts for Partition selection.
+	// For range partition selection, the logic in ORCA checks on bounds of the partition ranges.
+	// Hence these must be increasing functions.
+        case F_TIMESTAMP_DATE:  // date(timestamp) -> date
+        case F_DTOI4:           // int4(float8) -> int4
+        case F_FTOI4:           // int4(float4) -> int4
+        case F_INT82:           // int2(int8) -> int2
+        case F_INT84:           // int4(int8) -> int4
+        case F_I4TOI2:          // int2(int4) -> int2
+        case F_FTOI8:           // int8(float4) -> int8
+        case F_FTOI2:           // int2(float4) -> int2
+        case F_FLOAT4_NUMERIC:  // numeric(float4) -> numeric
+        case F_DTOI8:           // int8(float8) -> int8
+        case F_DTOI2:           // int2(float4) -> int2
+        case F_DTOF:            // float4(float8) -> float4
+        case F_FLOAT8_NUMERIC:  // numeric(float8) -> numeric
+        case F_NUMERIC_INT8:    // int8(numeric) -> int8
+        case F_NUMERIC_INT2:    // int2(numeric) -> int2
+        case F_NUMERIC_INT4:    // int4(numeric) -> int4
+            return true;
+        default:
+            return false;
+    }
+    GP_WRAP_END;
+}
+
+bool
 gpdb::FuncStrict
 	(
 	Oid funcid

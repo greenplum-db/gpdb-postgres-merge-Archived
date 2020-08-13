@@ -2151,6 +2151,7 @@ setup_cdb_schema(FILE *cmdfd)
 		}
 
 		free(lines);
+		free(path);
 	}
 }
 

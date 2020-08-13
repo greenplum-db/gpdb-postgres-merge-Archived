@@ -16255,11 +16255,8 @@ ATExecExpandTable(List **wqueue, Relation rel, AlterTableCmd *cmd)
 		}
 		else
 		{
-				/*
-				 * Skip expanding readable external table, since data is not
-				 * located inside gpdb
-				 */
-				return;
+			/* Skip expanding foreign table, since data is not located inside gpdb */
+			return;
 		}
 	}
 	else
@@ -16398,7 +16395,6 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 	/*
 	 * Step (f) - swap relfilenodes and MORE !!!
 	 */
-	rel = NULL;
 	tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 	swap_relation_files(relid, tmprelid,
 						false, /* target_is_pg_class */
@@ -16593,13 +16589,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 
 				/* only need to rebuild if have new storage options */
 				if (!(DatumGetPointer(newOptions) || force_reorg))
-				{
-					/*
-					 * caller expects ATExecSetDistributedBy() to close rel
-					 * (see the non-random distribution case below for why.
-					 */
 					goto l_distro_fini;
-				}
 			}
 		}
 
@@ -16621,10 +16611,6 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			if (!DatumGetPointer(newOptions) &&
 				GpPolicyIsReplicated(rel->rd_cdbpolicy))
 			{
-				/*
-				 * caller expects ATExecSetDistributedBy() to close rel
-				 * (see the non-random distribution case below for why.
-				 */
 				goto l_distro_fini;
 			}
 
@@ -17492,7 +17478,6 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 	}
 	else
 		elog(ERROR, "unexpected identity type %u", stmt->identity_type);
-
 
 	/* Check that the index exists */
 	indexOid = get_relname_relid(stmt->name, rel->rd_rel->relnamespace);

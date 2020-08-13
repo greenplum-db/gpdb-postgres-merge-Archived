@@ -38,6 +38,7 @@
 #include "utils/session_state.h"
 #include "utils/typcache.h"
 #include "miscadmin.h"
+#include "mb/pg_wchar.h"
 
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
@@ -872,14 +873,25 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	oldContext = MemoryContextSwitchTo(DispatcherContext);
 
 	/*
-	 * If either querytree or plantree is set then the query string is not so
+	 * If plantree is set then the query string is not so
 	 * important, dispatch a truncated version to increase the performance.
 	 *
 	 * Here we only need to determine the truncated size, the actual work is
 	 * done later when copying it to the result buffer.
 	 */
 	if (plantree)
-		command_len = strnlen(command, QUERY_STRING_TRUNCATE_SIZE - 1) + 1;
+	{
+		int			cnt,
+					character_len;
+
+		cnt = 0;
+		while (cnt < QUERY_STRING_TRUNCATE_SIZE)
+		{
+			character_len = pg_encoding_mblen(GetDatabaseEncoding(), command + cnt);
+			cnt += character_len;
+		}
+		command_len = strnlen(command, cnt - character_len) + 1;
+	}
 	else
 		command_len = strlen(command) + 1;
 

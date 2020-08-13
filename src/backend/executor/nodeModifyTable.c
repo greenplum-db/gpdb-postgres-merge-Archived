@@ -753,8 +753,12 @@ ExecDelete(ModifyTableState *mtstate,
 	 * utility mode) or there is bug in code, etc.
 	 */
 	if (segid != GpIdentity.segindex)
-		elog(ERROR, "distribution key of the tuple doesn't belong to "
-			 "current segment (actually from seg%d)", segid);
+		elog(ERROR,
+			 "distribution key of the tuple (%u, %u) doesn't belong to "
+			 "current segment (actually from seg%d)",
+			 BlockIdGetBlockNumber(&(tupleid->ip_blkid)),
+			 tupleid->ip_posid,
+			 segid);
 
 	/*
 	 * get information on the (current) result relation
@@ -1219,8 +1223,12 @@ ExecUpdate(ModifyTableState *mtstate,
 	 * utility mode) or there is bug in code, etc.
 	 */
 	if (segid != GpIdentity.segindex)
-		elog(ERROR, "distribution key of the tuple doesn't belong to "
-			 "current segment (actually from seg%d)", segid);
+		elog(ERROR,
+			 "distribution key of the tuple (%u, %u) doesn't belong to "
+			 "current segment (actually from seg%d)",
+			 BlockIdGetBlockNumber(&(tupleid->ip_blkid)),
+			 tupleid->ip_posid,
+			 segid);
 
 	ExecMaterializeSlot(slot);
 

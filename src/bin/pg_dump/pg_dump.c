@@ -15320,6 +15320,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		if (aggfullsig)
 			free(aggfullsig);
 
+		free(query);
 		free(aggsig);
 
 		return;
@@ -17315,6 +17316,7 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 
 
 		destroyPQExpBuffer(query);
+		free(qualrelname);
 }
 
 /*

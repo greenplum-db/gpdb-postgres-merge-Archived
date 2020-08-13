@@ -51,14 +51,12 @@ void _PG_init(void);
 
 Datum test_connect(PG_FUNCTION_ARGS);
 Datum test_disconnect(PG_FUNCTION_ARGS);
-Datum test_receive(PG_FUNCTION_ARGS);
 Datum test_send(PG_FUNCTION_ARGS);
 Datum test_receive_and_verify(PG_FUNCTION_ARGS);
 Datum test_xlog_ao(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(test_connect);
 PG_FUNCTION_INFO_V1(test_disconnect);
-PG_FUNCTION_INFO_V1(test_receive);
 PG_FUNCTION_INFO_V1(test_send);
 PG_FUNCTION_INFO_V1(test_receive_and_verify);
 PG_FUNCTION_INFO_V1(test_xlog_ao);
@@ -101,20 +99,6 @@ test_disconnect(PG_FUNCTION_ARGS)
 	test_connection = NULL;
 
 	PG_RETURN_BOOL(true);
-}
-
-Datum
-test_receive(PG_FUNCTION_ARGS)
-{
-	int			result;
-	char	   *buf;
-	pgsocket	wait_fd;
-
-	if (!test_connection)
-		elog(ERROR, "not connected");
-	result = walrcv_receive(test_connection, &buf, &wait_fd);
-
-	PG_RETURN_INT32(result);
 }
 
 Datum
