@@ -1412,7 +1412,6 @@ CreateQueueStmt:
 			CREATE RESOURCE QUEUE QueueId OptQueueList
 				{
 					CreateQueueStmt *n = makeNode(CreateQueueStmt);
-					// GPDB_12_MERGE_FIXME: what is the purpose of this? Seems iffy...
 					DefElem         *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
 									(Node *)makeInteger(true), @5);
