@@ -636,7 +636,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * don't need to dispatch the plan.
 	 */
 	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc,
-											into->skipData ? true : false);
+											(into->skipData && !is_matview) ? true : false);
 
 	/*
 	 * Finally we can open the target table
