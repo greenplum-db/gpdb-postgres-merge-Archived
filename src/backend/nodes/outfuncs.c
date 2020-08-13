@@ -3818,6 +3818,7 @@ _outCreatePolicyStmt(StringInfo str, const CreatePolicyStmt *node)
 	WRITE_STRING_FIELD(policy_name);
 	WRITE_NODE_FIELD(table);
 	WRITE_STRING_FIELD(cmd_name);
+	WRITE_BOOL_FIELD(permissive);
 	WRITE_NODE_FIELD(roles);
 	WRITE_NODE_FIELD(qual);
 	WRITE_NODE_FIELD(with_check);

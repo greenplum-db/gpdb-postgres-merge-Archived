@@ -4103,6 +4103,7 @@ _readCreatePolicyStmt()
 	READ_STRING_FIELD(policy_name);
 	READ_NODE_FIELD(table);
 	READ_STRING_FIELD(cmd_name);
+	READ_BOOL_FIELD(permissive);
 	READ_NODE_FIELD(roles);
 	READ_NODE_FIELD(qual);
 	READ_NODE_FIELD(with_check);
