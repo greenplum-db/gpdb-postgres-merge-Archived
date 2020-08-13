@@ -1172,8 +1172,8 @@ aoco_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 					get_namespace_name(RelationGetNamespace(OldHeap)),
 					RelationGetRelationName(OldHeap))));
 
-	/* Scan through old table to convert data into heap tuples for sorting */
-	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
+	/* Scan through old table to convert data into tuples for sorting */
+	slot = table_slot_create(OldHeap, NULL);
 
 	scan = aocs_beginscan(OldHeap, GetActiveSnapshot(),
 						  NULL /* proj */,

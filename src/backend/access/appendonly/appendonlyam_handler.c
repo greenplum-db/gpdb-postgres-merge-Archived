@@ -982,8 +982,8 @@ appendonly_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 					get_namespace_name(RelationGetNamespace(OldHeap)),
 					RelationGetRelationName(OldHeap))));
 
-	/* Scan through old table to convert data into heap tuples for sorting */
-	slot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
+	/* Scan through old table to convert data into tuples for sorting */
+	slot = table_slot_create(OldHeap, NULL);
 	aoscandesc = appendonly_beginscan(OldHeap, GetActiveSnapshot(), 0, NULL,
 										NULL, 0);
 	mt_bind = create_memtuple_binding(oldTupDesc);
@@ -1456,8 +1456,7 @@ appendonly_index_validate_scan(Relation heapRelation,
 	 */
 	estate = CreateExecutorState();
 	econtext = GetPerTupleExprContext(estate);
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation),
-									&TTSOpsHeapTuple);
+	slot = table_slot_create(heapRelation, NULL);
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
