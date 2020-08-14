@@ -21,6 +21,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
@@ -330,8 +331,9 @@ CreateStatistics(CreateStatsStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	statoid = GetNewOidWithIndex(statrel, StatisticExtOidIndexId,
-								 Anum_pg_statistic_ext_oid);
+	statoid = GetNewOidForStatisticExt(
+		statrel, StatisticExtOidIndexId, Anum_pg_statistic_ext_oid,
+		relid, namespaceId, stxowner, NameStr(stxname));
 	values[Anum_pg_statistic_ext_oid - 1] = ObjectIdGetDatum(statoid);
 	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
 	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);

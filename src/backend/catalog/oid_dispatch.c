@@ -112,6 +112,7 @@
 #include "catalog/pg_resgroup.h"
 #include "catalog/pg_resgroupcapability.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
@@ -921,6 +922,25 @@ GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	key.type = T_OidAssignment;
 	key.keyOid1 = ev_class;
 	key.objname = rulename;
+	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
+}
+
+Oid
+GetNewOidForStatisticExt(Relation relation, Oid indexId, AttrNumber oidcolumn,
+						 Oid stxrelid, Oid stxnamespace, Oid stxowner, char *stxname)
+{
+	OidAssignment key;
+
+	Assert(RelationGetRelid(relation) == StatisticExtRelationId);
+	Assert(indexId == StatisticExtOidIndexId);
+	Assert(oidcolumn == Anum_pg_statistic_ext_oid);
+
+	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
+	key.keyOid1 = stxrelid;
+	key.keyOid2 = stxnamespace;
+	key.keyOid3 = stxowner;
+	key.objname = stxname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
