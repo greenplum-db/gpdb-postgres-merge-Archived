@@ -2767,9 +2767,12 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
 			nullsAtt[Anum_pg_attribute_attmissingval - 1] = missingIsNull;
 
-			*cookedMissingVal = true;
-			*missingval_p = missingval;
-			*missingIsNull_p = missingIsNull;
+			if (add_column_mode)
+			{
+				*cookedMissingVal = true;
+				*missingval_p = missingval;
+				*missingIsNull_p = missingIsNull;
+			}
 		}
 		atttup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
 								   valuesAtt, nullsAtt, replacesAtt);
