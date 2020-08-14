@@ -81,8 +81,6 @@ extern Oid GetNewOidForResQueue(Relation relation, Oid indexId, AttrNumber oidco
 								char *rsqname);
 extern Oid GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 							   Oid ev_class, char *rulename);
-extern Oid GetNewOidForStatisticExt(Relation relation, Oid indexId, AttrNumber oidcolumn,
-									Oid stxrelid, Oid stxnamespace, Oid stxowner, char *stxname);
 extern Oid GetNewOidForSubscription(Relation relation, Oid indexId, AttrNumber oidcolumn,
 									Oid subdbid, char *subname);
 extern Oid GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oidcolumn,
