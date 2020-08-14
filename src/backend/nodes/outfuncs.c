@@ -4141,6 +4141,12 @@ _outColumnDef(StringInfo str, const ColumnDef *node)
 	WRITE_INT_FIELD(storage);
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
+
+	WRITE_BOOL_FIELD(hasCookedMissingVal);
+	WRITE_BOOL_FIELD(missingIsNull);
+	if (node->hasCookedMissingVal && !node->missingIsNull)
+		outDatum(str, node->missingVal, -1, false);
+
 	WRITE_CHAR_FIELD(identity);
 	WRITE_NODE_FIELD(identitySequence);
 	WRITE_CHAR_FIELD(generated);

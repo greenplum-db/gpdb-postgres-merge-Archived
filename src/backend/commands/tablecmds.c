@@ -7127,10 +7127,16 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		rawEnt->attnum = attribute.attnum;
 		rawEnt->raw_default = copyObject(colDef->raw_default);
 
+		rawEnt->hasCookedMissingVal = colDef->hasCookedMissingVal;
+		rawEnt->missingVal = colDef->missingVal;
+		rawEnt->missingIsNull = colDef->missingIsNull;
+
 		/*
 		 * Attempt to skip a complete table rewrite by storing the specified
 		 * DEFAULT value outside of the heap.  This may be disabled inside
 		 * AddRelationNewConstraints if the optimization cannot be applied.
+		 *
+		 * In GPDB, AddRelationNewConstraints will also set rawEnt->missingVal/IsNull
 		 */
 		rawEnt->missingMode = (!colDef->generated);
 
@@ -7142,6 +7148,11 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 */
 		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
 								  false, true, false, NULL);
+
+		/* copy back the cooked attmissingval for dispatch */
+		colDef->hasCookedMissingVal = rawEnt->hasCookedMissingVal;
+		colDef->missingVal = rawEnt->missingVal;
+		colDef->missingIsNull = rawEnt->missingIsNull;
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -12847,7 +12858,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, true,
 						  true);
 
-		StoreAttrDefault(rel, attnum, defaultexpr, true, false);
+		StoreAttrDefault(rel, attnum, defaultexpr,
+						 NULL, NULL, NULL, /* missing val stuff */
+						 true, false);
 	}
 
 	ObjectAddressSubSet(address, RelationRelationId,

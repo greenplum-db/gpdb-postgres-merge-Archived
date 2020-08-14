@@ -3426,6 +3426,12 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_SCALAR_FIELD(storage);
 	COPY_NODE_FIELD(raw_default);
 	COPY_NODE_FIELD(cooked_default);
+
+	COPY_SCALAR_FIELD(hasCookedMissingVal);
+	COPY_SCALAR_FIELD(missingIsNull);
+	if (from->hasCookedMissingVal && !from->missingIsNull)
+		newnode->missingVal = datumCopy(from->missingVal, false, -1);
+
 	COPY_SCALAR_FIELD(identity);
 	COPY_NODE_FIELD(identitySequence);
 	COPY_SCALAR_FIELD(generated);

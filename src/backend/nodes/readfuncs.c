@@ -2140,6 +2140,12 @@ _readColumnDef(void)
 	READ_INT_FIELD(storage);
 	READ_NODE_FIELD(raw_default);
 	READ_NODE_FIELD(cooked_default);
+
+	READ_BOOL_FIELD(hasCookedMissingVal);
+	READ_BOOL_FIELD(missingIsNull);
+	if (local_node->hasCookedMissingVal && !local_node->missingIsNull)
+		local_node->missingVal = readDatum(false);
+
 	READ_CHAR_FIELD(identity);
 	READ_NODE_FIELD(identitySequence);
 	READ_CHAR_FIELD(generated);

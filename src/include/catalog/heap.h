@@ -30,6 +30,9 @@ typedef struct RawColumnDefault
 	AttrNumber	attnum;			/* attribute to attach default to */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	bool		missingMode;	/* true if part of add column processing */
+	bool		hasCookedMissingVal;
+	Datum		missingVal;
+	bool		missingIsNull;
 	char		generated;		/* attgenerated setting */
 } RawColumnDefault;
 
@@ -133,7 +136,11 @@ extern void RelationClearMissing(Relation rel);
 extern void SetAttrMissing(Oid relid, char *attname, char *value);
 
 extern Oid	StoreAttrDefault(Relation rel, AttrNumber attnum,
-							 Node *expr, bool is_internal,
+							 Node *expr,
+							 bool *cookedMissingVal,
+							 Datum *missingval_p,
+							 bool *missingIsNull_p,
+							 bool is_internal,
 							 bool add_column_mode);
 
 extern Node *cookDefault(ParseState *pstate,

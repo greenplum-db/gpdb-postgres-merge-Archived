@@ -699,6 +699,17 @@ typedef struct ColumnDef
 	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
+
+	/*
+	 * A "cooked missing val" is a pre-computed value to store in
+	 * pg_attribute.attmissingval. It's always a single-element array.
+	 * It's computed in the QD, and dispatched to the segments in ADD COLUMN,
+	 * so that every segment gets the same value.
+	 */
+	bool		hasCookedMissingVal;
+	Datum		missingVal;
+	bool		missingIsNull;
+
 	char		identity;		/* attidentity setting */
 	RangeVar   *identitySequence;	/* to store identity sequence name for
 									 * ALTER TABLE ... ADD COLUMN */
