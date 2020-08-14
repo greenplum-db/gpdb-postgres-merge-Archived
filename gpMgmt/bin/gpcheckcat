@@ -545,9 +545,6 @@ def checkDistribPolicy():
     checkConstraintsRepair()
 
 #############
-# GPDB_12_MERGE_FIXME: this doesn't check partitions specifically anymore, but
-# also "normal" inherited tables. Change the function name, comments, etc.
-# accordingly.
 def checkPartitionIntegrity():
     logger.info('-----------------------------------')
     logger.info('Checking pg_partition ...')
@@ -560,7 +557,7 @@ def checkPartitionIntegrity():
     select inhparent::regclass, inhrelid::regclass,
            pg_get_table_distributedby(inhparent) as dby_parent,
            pg_get_table_distributedby(inhrelid) as dby_child
-    from pg_inherits
+    from pg_inherits inner join pg_partitioned_table on (pg_inherits.inhparent = pg_partitioned_table.partrelid)
     where pg_get_table_distributedby(inhrelid) is distinct from pg_get_table_distributedby(inhparent)
           and not (pg_get_table_distributedby(inhparent) = 'DISTRIBUTED RANDOMLY' and pg_get_table_distributedby(inhrelid) = '');
     '''
