@@ -411,7 +411,7 @@ GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidc
 	OidAssignment key;
 
 	Assert(RelationGetRelid(relation) == AccessMethodOperatorRelationId);
-	Assert(indexId == AccessMethodOperatorIndexId);
+	Assert(indexId == AccessMethodOperatorOidIndexId);
 	Assert(oidcolumn == Anum_pg_amop_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
@@ -420,6 +420,26 @@ GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidc
 	key.keyOid2 = amoplefttype;
 	key.keyOid3 = amoprighttype;
 	key.keyOid4 = amopstrategy;
+	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
+}
+
+Oid
+GetNewOidForAccessMethodProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  Oid amprocfamily, Oid amproclefttype, Oid amprocrighttype,
+								  Oid amproc)
+{
+	OidAssignment key;
+
+	Assert(RelationGetRelid(relation) == AccessMethodProcedureRelationId);
+	Assert(indexId == AccessMethodProcedureOidIndexId);
+	Assert(oidcolumn == Anum_pg_amproc_oid);
+
+	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
+	key.keyOid1 = amprocfamily;
+	key.keyOid2 = amproclefttype;
+	key.keyOid3 = amprocrighttype;
+	key.keyOid4 = amproc;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 

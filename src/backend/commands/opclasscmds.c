@@ -1383,8 +1383,10 @@ storeOperators(List *opfamilyname, Oid amoid,
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
 
-		entryoid = GetNewOidWithIndex(rel, AccessMethodOperatorOidIndexId,
-									  Anum_pg_amop_oid);
+		entryoid = GetNewOidForAccessMethodOperator(
+			rel, AccessMethodOperatorOidIndexId, Anum_pg_amop_oid,
+			opfamilyoid, op->lefttype, op->righttype, op->number);
+
 		values[Anum_pg_amop_oid - 1] = ObjectIdGetDatum(entryoid);
 		values[Anum_pg_amop_amopfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amop_amoplefttype - 1] = ObjectIdGetDatum(op->lefttype);
@@ -1498,8 +1500,10 @@ storeProcedures(List *opfamilyname, Oid amoid,
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
 
-		entryoid = GetNewOidWithIndex(rel, AccessMethodProcedureOidIndexId,
-									  Anum_pg_amproc_oid);
+		entryoid = GetNewOidForAccessMethodProcedure(
+			rel, AccessMethodProcedureOidIndexId, Anum_pg_amproc_oid,
+			opfamilyoid, proc->lefttype, proc->righttype, proc->object);
+
 		values[Anum_pg_amproc_oid - 1] = ObjectIdGetDatum(entryoid);
 		values[Anum_pg_amproc_amprocfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amproc_amproclefttype - 1] = ObjectIdGetDatum(proc->lefttype);

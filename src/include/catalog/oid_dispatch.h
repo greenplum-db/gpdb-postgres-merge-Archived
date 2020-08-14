@@ -30,6 +30,9 @@ extern Oid GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber o
 extern Oid GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
 											Oid amopfamily, Oid amoplefttype, Oid amoprighttype,
 											Oid amopstrategy);
+extern Oid GetNewOidForAccessMethodProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
+											 Oid amprocfamily, Oid amproclefttype, Oid amprocrighttype,
+											 Oid amproc);
 extern Oid GetNewOidForAttrDefault(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								   Oid adrelid, int16 adnum);
 extern Oid GetNewOidForAuthId(Relation relation, Oid indexId, AttrNumber oidcolumn,
