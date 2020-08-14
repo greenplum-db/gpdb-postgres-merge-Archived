@@ -729,11 +729,12 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 
 				relOid = RangeVarGetRelid(relvar, NoLock, false);
 				/*
-				 * GPDB: If we are the DISPATCH node and the object is a partitioned
-				 * relation, then we need to populate the partition references because the
-				 * information is not present in the cataloge tables on the segment nodes.
+				 * GPDB: If we the object is a partitioned relation, also
+				 * recurse to the child partitions. It is different from
+				 * PostgreSQL, but it is how GRANT has historically worked on
+				 * GPDB.
 				 */
-				if (Gp_role == GP_ROLE_DISPATCH && objtype == OBJECT_TABLE)
+				if (objtype == OBJECT_TABLE)
 				{
 					HeapTuple	tp;
 
