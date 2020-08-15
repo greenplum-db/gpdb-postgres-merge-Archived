@@ -153,7 +153,6 @@ static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
 											   List *tlist, List *scan_clauses);
 static Plan *create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 								   List **qual, List **indexqual, List **indexECs);
-static void bitmap_subplan_mark_shared(Plan *plan);
 static TidScan *create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 									List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root,
@@ -6117,29 +6116,6 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 	plan->plan.plan_width = lefttree->plan_width;
 	plan->plan.parallel_aware = false;
 	plan->plan.parallel_safe = lefttree->parallel_safe;
-}
-
-/*
- * bitmap_subplan_mark_shared
- *	 Set isshared flag in bitmap subplan so that it will be created in
- *	 shared memory.
- */
-static void
-bitmap_subplan_mark_shared(Plan *plan)
-{
-	if (IsA(plan, BitmapAnd))
-		bitmap_subplan_mark_shared(
-								   linitial(((BitmapAnd *) plan)->bitmapplans));
-	else if (IsA(plan, BitmapOr))
-	{
-		((BitmapOr *) plan)->isshared = true;
-		bitmap_subplan_mark_shared(
-								   linitial(((BitmapOr *) plan)->bitmapplans));
-	}
-	else if (IsA(plan, BitmapIndexScan))
-		((BitmapIndexScan *) plan)->isshared = true;
-	else
-		elog(ERROR, "unrecognized node type: %d", nodeTag(plan));
 }
 
 /*****************************************************************************
