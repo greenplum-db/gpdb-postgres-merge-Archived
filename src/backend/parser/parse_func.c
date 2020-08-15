@@ -2589,6 +2589,10 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 			err = _("set-returning functions are not allowed in column generation expressions");
 			break;
 
+		case EXPR_KIND_SCATTER_BY:
+			err = _("et-returning functions are not allowed in scatter by expressions");
+			break;
+
 			/*
 			 * There is intentionally no default: case here, so that the
 			 * compiler will warn if we add a new ParseExprKind without

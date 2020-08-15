@@ -6361,6 +6361,9 @@ outNode(StringInfo str, const void *obj)
 			case T_GpAlterPartitionId:
 				_outGpAlterPartitionId(str, obj);
 				break;
+			case T_GpAlterPartitionCmd:
+				_outGpAlterPartitionCmd(str, obj);
+				break;
 			case T_GpDropPartitionCmd:
 				_outGpDropPartitionCmd(str, obj);
 				break;
