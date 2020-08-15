@@ -235,8 +235,6 @@ MemoryContextResetChildren(MemoryContext context)
 void
 MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *func, int sline)
 {
-	MemoryContext parent;
-
 	AssertArg(MemoryContextIsValid(context));
 	/* We had better not be deleting TopMemoryContext ... */
 	Assert(context != TopMemoryContext);
@@ -265,7 +263,6 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 * there's an error we won't have deleted/busted contexts still attached
 	 * to the context tree.  Better a leak than a crash.
 	 */
-	parent = MemoryContextGetParent(context);
 	MemoryContextSetParent(context, NULL);
 
 	/*
@@ -275,7 +272,7 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	context->ident = NULL;
 
-	context->methods->delete_context(context, parent);
+	context->methods->delete_context(context);
 
 	VALGRIND_DESTROY_MEMPOOL(context);
 }
