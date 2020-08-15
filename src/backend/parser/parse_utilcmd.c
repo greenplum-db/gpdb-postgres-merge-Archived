@@ -185,7 +185,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	CreateStmtContext cxt;
 	List	   *result;
 	List	   *save_alist;
-	List	   *save_root_partition_alist = NIL;
 	ListCell   *elements;
 	Oid			namespaceid;
 	Oid			existing_relid;

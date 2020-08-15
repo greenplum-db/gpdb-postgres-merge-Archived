@@ -2684,7 +2684,6 @@ ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable)
     int                 curbatch = hashtable->curbatch;
     HashJoinTableStats *stats = hashtable->stats;
     HashJoinBatchStats *batchstats = &stats->batchstats[curbatch];
-    int                 i;
     
     Assert(!hashtable->eagerlyReleased);
 
