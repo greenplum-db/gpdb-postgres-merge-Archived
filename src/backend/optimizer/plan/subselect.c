@@ -89,12 +89,19 @@ static Node *convert_testexpr_mutator(Node *node,
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
+#if 0
+/*
+ * The following several functions are used by SS_process_ctes.
+ * But SS_process_ctes is commentted of because gpdb does not
+ * use it.
+ */
 static bool contain_dml(Node *node);
 static bool contain_dml_walker(Node *node, void *context);
 static bool contain_outer_selfref(Node *node);
 static bool contain_outer_selfref_walker(Node *node, Index *depth);
 static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
 static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
+#endif
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 									Node **testexpr, List **paramIds);
@@ -1190,7 +1197,6 @@ SS_process_ctes(PlannerInfo *root)
 		cost_subplan(root, splan, plan);
 	}
 }
-#endif
 
 /*
  * contain_dml: is any subquery not a plain SELECT?
@@ -1366,7 +1372,7 @@ inline_cte_walker(Node *node, inline_cte_walker_context *context)
 
 	return expression_tree_walker(node, inline_cte_walker, context);
 }
-
+#endif
 
 /*
  * convert_ANY_sublink_to_join: try to convert an ANY SubLink to a join
