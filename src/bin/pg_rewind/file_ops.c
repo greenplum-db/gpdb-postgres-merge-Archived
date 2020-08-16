@@ -293,13 +293,13 @@ create_target_tablespace_layout(const char *path, const char *link)
 
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 	if (symlink(newlink, dstpath) != 0)
-		pg_fatal("could not create symbolic link at \"%s\": %s",
-				 dstpath, strerror(errno));
+		pg_fatal("could not create symbolic link at \"%s\": %m",
+				 dstpath);
 
 	/* We need to create the directory at the symlink target. */
 	if (mkdir(newlink, S_IRWXU) != 0)
-		pg_fatal("could not create directory \"%s\": %s",
-				 dstpath, strerror(errno));
+		pg_fatal("could not create directory \"%s\": %m",
+				 newlink);
 
 	pfree(newlink);
 }
