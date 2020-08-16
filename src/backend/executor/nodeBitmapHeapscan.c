@@ -407,7 +407,7 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 
 	if (pstate == NULL)
 	{
-		TBMIterator *prefetch_iterator = node->prefetch_iterator;
+		GenericBMIterator *prefetch_iterator = node->prefetch_iterator;
 
 		if (node->prefetch_pages > 0)
 		{
@@ -510,7 +510,7 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 
 	if (pstate == NULL)
 	{
-		TBMIterator *prefetch_iterator = node->prefetch_iterator;
+		GenericBMIterator *prefetch_iterator = node->prefetch_iterator;
 
 		if (prefetch_iterator)
 		{
