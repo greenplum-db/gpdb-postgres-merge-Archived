@@ -107,6 +107,8 @@ our @EXPORT = qw(
 our ($use_tcp, $test_localhost, $test_pghost, $last_host_assigned,
 	$last_port_assigned, @all_nodes, $died);
 
+our ($last_dbid);
+
 # Windows path to virtual file system root
 
 our $vfs_path = '';
@@ -130,6 +132,8 @@ INIT
 
 	# Tracking of last port value assigned to accelerate free port lookup.
 	$last_port_assigned = int(rand() * 16384) + 49152;
+
+	$last_dbid			= 0
 }
 
 =pod
@@ -152,11 +156,14 @@ sub new
 	my ($class, $name, $pghost, $pgport) = @_;
 	my $testname = basename($0);
 	$testname =~ s/\.[^.]+$//;
+
+	# GPDB needs unique dbid for each node for certain operations
+	$last_dbid = $last_dbid + 1;
+
 	my $self = {
 		_port    => $pgport,
 		_host    => $pghost,
-		# GPDB needs dbid for a node for certain operations
-		_dbid    => int(rand(10)),
+		_dbid    => $last_dbid,
 		_basedir => "$TestLib::tmp_check/t_${testname}_${name}_data",
 		_name    => $name,
 		_logfile_generation => 0,
@@ -598,7 +605,7 @@ sub backup
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
 	TestLib::system_or_bail('pg_basebackup', '-D', $backup_path, '-h',
-		$self->host, '-p', $self->port, '--no-sync', '--target-gp-dbid', 5);
+		$self->host, '-p', $self->port, '--no-sync', '--target-gp-dbid', 99);
 	print "# Backup finished\n";
 	return;
 }
