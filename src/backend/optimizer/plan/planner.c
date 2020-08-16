@@ -858,12 +858,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 *
 	 * GPDB: Unlike upstream, we do not use initplan + CteScan, so SS_process_ctes
 	 * will generate unused initplans. Commenting out the following two
-	 * lines. And the related implementations are removed to avoid compiler warning.
-	 *
-	 * if (parse->cteList)
-	 *	  SS_process_ctes(root);
+	 * lines.
 	 */
-
+#if 0
+	if (parse->cteList)
+		SS_process_ctes(root);
+#endif
 
 	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
