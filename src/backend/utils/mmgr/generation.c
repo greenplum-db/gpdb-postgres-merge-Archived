@@ -150,7 +150,7 @@ static void *GenerationAlloc(MemoryContext context, Size size);
 static void GenerationFree(MemoryContext context, void *pointer);
 static void *GenerationRealloc(MemoryContext context, void *pointer, Size size);
 static void GenerationReset(MemoryContext context);
-static void GenerationDelete(MemoryContext context);
+static void GenerationDelete(MemoryContext context, MemoryContext parent);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
 static bool GenerationIsEmpty(MemoryContext context);
 static void GenerationStats(MemoryContext context,
@@ -316,7 +316,7 @@ GenerationReset(MemoryContext context)
  *		Free all memory which is allocated in the given context.
  */
 static void
-GenerationDelete(MemoryContext context)
+GenerationDelete(MemoryContext context, MemoryContext parent)
 {
 	/* Reset to release all the GenerationBlocks */
 	GenerationReset(context);

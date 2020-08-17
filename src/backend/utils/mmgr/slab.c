@@ -128,7 +128,7 @@ static void *SlabAlloc(MemoryContext context, Size size);
 static void SlabFree(MemoryContext context, void *pointer);
 static void *SlabRealloc(MemoryContext context, void *pointer, Size size);
 static void SlabReset(MemoryContext context);
-static void SlabDelete(MemoryContext context);
+static void SlabDelete(MemoryContext context, MemoryContext parent);
 static Size SlabGetChunkSpace(MemoryContext context, void *pointer);
 static bool SlabIsEmpty(MemoryContext context);
 static void SlabStats(MemoryContext context,
@@ -320,7 +320,7 @@ SlabReset(MemoryContext context)
  *		Free all memory which is allocated in the given context.
  */
 static void
-SlabDelete(MemoryContext context)
+SlabDelete(MemoryContext context, MemoryContext parent)
 {
 	/* Reset to release all the SlabBlocks */
 	SlabReset(context);
