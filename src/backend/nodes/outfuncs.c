@@ -3298,6 +3298,7 @@ _outViewStmt(StringInfo str, const ViewStmt *node)
 	WRITE_NODE_FIELD(aliases);
 	WRITE_NODE_FIELD(query);
 	WRITE_BOOL_FIELD(replace);
+	WRITE_NODE_FIELD(options);
 }
 
 static void

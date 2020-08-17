@@ -828,6 +828,7 @@ _readViewStmt(void)
 	READ_NODE_FIELD(aliases);
 	READ_NODE_FIELD(query);
 	READ_BOOL_FIELD(replace);
+	READ_NODE_FIELD(options);
 
 	READ_DONE();
 }
