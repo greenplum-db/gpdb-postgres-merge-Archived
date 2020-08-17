@@ -1295,6 +1295,12 @@ def checkTableMissingEntry(cat):
         db = connect2(GV.cfg[GV.master_dbid], utilityMode=False)
         curs = db.query(qry)
         nrows = curs.ntuples()
+        results = curs.getresult()
+        fields = curs.listfields()
+
+        if nrows != 0:
+            results = filterSpuriousFailures(catname, fields, results)
+            nrows = len(results)
 
         if nrows == 0:
             logger.info('[OK] Checking for missing or extraneous entries for ' + catname)
@@ -1311,9 +1317,7 @@ def checkTableMissingEntry(cat):
             logger.info(('[%s] Checking for missing or extraneous entries for ' + catname) %
                         ('WARNING' if log_level == logging.WARNING else 'FAIL'))
             logger_with_level('  %s has %d issue(s)' % (catname, nrows))
-            fields = curs.listfields()
             gplog.log_literal(logger, log_level, "    " + " | ".join(fields))
-            results = curs.getresult()
             for row in results:
                 gplog.log_literal(logger, log_level, "    " + " | ".join(map(str, row)))
             processMissingDuplicateEntryResult(catname, fields, results, "missing")
@@ -2355,6 +2359,22 @@ def getResourceTypeOid(oid):
     except Exception, e:
         setError(ERROR_NOREPAIR)
         myprint('  Execution error: ' + str(e))
+
+
+def filterSpuriousFailures(catname, colnames, results):
+    masterOnlyOids = map(lambda cat: cat._oid,
+                         filter(lambda cat: cat.isMasterOnly(),
+                                GV.catalog.getCatalogTables()))
+    legitFailures = []
+    for row in results:
+        if catname == 'pg_depend':
+            # Catalog tables having content only on master
+            # (e.g. pg_statistic*) should be excluded from pg_depend
+            # comparisons between master and segments.
+            if row[colnames.index('classid')] not in masterOnlyOids:
+                legitFailures.apend(row)
+
+    return legitFailures
 
 
 #-------------------------------------------------------------------------------

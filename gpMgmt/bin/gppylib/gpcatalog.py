@@ -31,6 +31,8 @@ MASTER_ONLY_TABLES = [
     'pg_stat_last_operation',
     'pg_stat_last_shoperation',
     'pg_statistic',
+    'pg_statistic_ext',
+    'pg_statistic_ext_data',
     'gp_partition_template', # GPDB_12_MERGE_FIXME: is gp_partition_template intentionally missing from segments?
     ]
 
@@ -131,7 +133,7 @@ class GPCatalog():
            SELECT version()
         """
         catalog_query = """
-           SELECT relname, relisshared FROM pg_class 
+           SELECT oid, relname, relisshared FROM pg_class 
            WHERE relnamespace=11 and relkind = 'r' 
         """
 
@@ -150,10 +152,11 @@ class GPCatalog():
 
         # Construct our internal representation of the catalog
         
-        for [relname, relisshared] in curs.getresult():
+        for [oid, relname, relisshared] in curs.getresult():
             self._tables[relname] = GPCatalogTable(self, relname)
             # Note: stupid API returns t/f for boolean value
             self._tables[relname]._setShared(relisshared == 't')
+            self._tables[relname]._setOid(oid)
         
         # The tidycat.pl utility has been used to generate a json file 
         # describing aspects of the catalog that we can not currently
@@ -535,6 +538,9 @@ class GPCatalogTable():
 
     def _setMasterOnly(self, value=True):
         self._master = value
+
+    def _setOid(self, oid):
+        self._oid = oid
 
     def _setShared(self, value):
         self._isshared = value
