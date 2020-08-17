@@ -3615,6 +3615,9 @@ _outCreateSeqStmt(StringInfo str, const CreateSeqStmt *node)
 	WRITE_NODE_TYPE("CREATESEQSTMT");
 	WRITE_NODE_FIELD(sequence);
 	WRITE_NODE_FIELD(options);
+	WRITE_OID_FIELD(ownerId);
+	WRITE_BOOL_FIELD(for_identity);
+	WRITE_BOOL_FIELD(if_not_exists);
 }
 
 static void
@@ -3623,6 +3626,8 @@ _outAlterSeqStmt(StringInfo str, const AlterSeqStmt *node)
 	WRITE_NODE_TYPE("ALTERSEQSTMT");
 	WRITE_NODE_FIELD(sequence);
 	WRITE_NODE_FIELD(options);
+	WRITE_BOOL_FIELD(for_identity);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 
 static void

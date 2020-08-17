@@ -3698,6 +3698,9 @@ _readCreateSeqStmt(void)
 	READ_LOCALS(CreateSeqStmt);
 	READ_NODE_FIELD(sequence);
 	READ_NODE_FIELD(options);
+	READ_OID_FIELD(ownerId);
+	READ_BOOL_FIELD(for_identity);
+	READ_BOOL_FIELD(if_not_exists);
 
 	READ_DONE();
 }
@@ -3709,6 +3712,8 @@ _readAlterSeqStmt(void)
 
 	READ_NODE_FIELD(sequence);
 	READ_NODE_FIELD(options);
+	READ_BOOL_FIELD(for_identity);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }
