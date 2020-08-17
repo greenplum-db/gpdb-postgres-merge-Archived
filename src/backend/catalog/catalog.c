@@ -511,8 +511,6 @@ RelationNeedsSynchronizedOIDs(Relation relation)
 			 */
 			case RewriteRelationId:
 			case TriggerRelationId:
-			case AccessMethodOperatorRelationId:
-			case AccessMethodProcedureRelationId:
 				return false;
 
 			/* Event triggers are only stored and fired in the QD. */
