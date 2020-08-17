@@ -63,7 +63,7 @@ typedef struct MemoryContextMethods
 	void		(*free_p) (MemoryContext context, void *pointer);
 	void	   *(*realloc) (MemoryContext context, void *pointer, Size size);
 	void		(*reset) (MemoryContext context);
-	void		(*delete_context) (MemoryContext context);
+	void		(*delete_context) (MemoryContext context, MemoryContext parent);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
 	void		(*stats) (MemoryContext context,
