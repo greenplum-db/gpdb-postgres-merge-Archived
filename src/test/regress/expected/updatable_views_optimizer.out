@@ -2049,9 +2049,8 @@ END;
 $$
 LANGUAGE plpgsql STRICT IMMUTABLE LEAKPROOF;
 SELECT * FROM rw_view1 WHERE snoop(person);
-NOTICE:  snooped value: Tom
-NOTICE:  snooped value: Dick
-NOTICE:  snooped value: Harry
+NOTICE:  snooped value: Tom  (seg0 slice1 127.0.0.1:7002 pid=76060)
+NOTICE:  snooped value: Harry  (seg0 slice1 127.0.0.1:7002 pid=76060)
  person 
 --------
  Tom
@@ -2119,24 +2118,22 @@ EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
 (6 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
-                     QUERY PLAN                      
------------------------------------------------------
- Update on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: snoop(base_tbl.person)
-         ->  Seq Scan on base_tbl base_tbl_2
-               Filter: (visibility = 'public'::text)
-(5 rows)
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Update on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person))
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
-                     QUERY PLAN                      
------------------------------------------------------
- Delete on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: (NOT snoop(base_tbl.person))
-         ->  Seq Scan on base_tbl base_tbl_2
-               Filter: (visibility = 'public'::text)
-(5 rows)
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Delete on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND (NOT snoop(person)))
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 -- security barrier view on top of security barrier view
 CREATE VIEW rw_view2 WITH (security_barrier = true) AS
@@ -2201,28 +2198,22 @@ EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
 (8 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
- Update on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: snoop(base_tbl.person)
-         ->  Subquery Scan on base_tbl_2
-               Filter: snoop(base_tbl_2.person)
-               ->  Seq Scan on base_tbl base_tbl_3
-                     Filter: (visibility = 'public'::text)
-(7 rows)
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Update on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person) AND snoop(person))
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
- Delete on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: (NOT snoop(base_tbl.person))
-         ->  Subquery Scan on base_tbl_2
-               Filter: snoop(base_tbl_2.person)
-               ->  Seq Scan on base_tbl base_tbl_3
-                     Filter: (visibility = 'public'::text)
-(7 rows)
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Delete on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person) AND (NOT snoop(person)))
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
