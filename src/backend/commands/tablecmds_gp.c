@@ -1378,11 +1378,9 @@ GpRenameChildPartitions(Relation targetrelation,
 						const char *oldparentrelname,
 						const char *newparentrelname)
 {
-	PartitionDesc partdesc = RelationGetPartitionDesc(targetrelation);
 	int skipped = 0;
 	int renamed = 1;
 	ListCell *lc;
-	Assert(partdesc != NULL);
 
 	List *oids = find_all_inheritors(RelationGetRelid(targetrelation), AccessExclusiveLock, NULL);
 	/* remove parent from the list */
