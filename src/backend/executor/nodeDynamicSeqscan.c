@@ -201,14 +201,21 @@ initNextTableToScan(DynamicSeqScanState *node)
 	lastScannedRel = table_open(node->lastRelOid, AccessShareLock);
 	lastTupDesc = RelationGetDescr(lastScannedRel);
 	partTupDesc = RelationGetDescr(scanState->ss_currentRelation);
-	// FIXME: should we use execute_attr_map_tuple instead? Seems like a higher
-	// level abstraction that fits the bill
+	/*
+	 * FIXME: should we use execute_attr_map_tuple instead? Seems like a
+	 * higher level abstraction that fits the bill
+	 */
 	attMap = convert_tuples_by_name_map_if_req(partTupDesc, lastTupDesc, "unused msg");
 	table_close(lastScannedRel, AccessShareLock);
 
 	/* If attribute remapping is not necessary, then do not change the varattno */
 	if (attMap)
 	{
+		/*
+		 * FIXME: Ewww, this doesn't really belong in the executor. The optimizer
+		 * really should explicitly pass a qual and a tlist to us, for each
+		 * partition
+		 */
 		change_varattnos_of_a_varno((Node*)scanState->ps.plan->qual, attMap, node->scanrelid);
 		change_varattnos_of_a_varno((Node*)scanState->ps.plan->targetlist, attMap, node->scanrelid);
 
