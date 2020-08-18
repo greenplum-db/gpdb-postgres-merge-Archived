@@ -2362,17 +2362,23 @@ def getResourceTypeOid(oid):
 
 
 def filterSpuriousFailures(catname, colnames, results):
-    masterOnlyOids = map(lambda cat: cat._oid,
-                         filter(lambda cat: cat.isMasterOnly(),
-                                GV.catalog.getCatalogTables()))
-    legitFailures = []
-    for row in results:
-        if catname == 'pg_depend':
-            # Catalog tables having content only on master
-            # (e.g. pg_statistic*) should be excluded from pg_depend
-            # comparisons between master and segments.
-            if row[colnames.index('classid')] not in masterOnlyOids:
+    if catname == 'pg_depend':
+        # Catalog tables having content only on master
+        # (e.g. pg_statistic*) should be excluded from pg_depend
+        # comparisons between master and segments.
+        legitFailures = []
+        masterOnlyOids = map(lambda cat: cat._oid,
+                             filter(lambda cat: cat.isMasterOnly(),
+                                    GV.catalog.getCatalogTables()))
+        for row in results:
+            legit = True
+            if row[colnames.index('classid')] in masterOnlyOids:
+                logger.info('excluding master-only entry from missing_pg_depend: %s' % str(row))
+                legit = False
+            if legit:
                 legitFailures.append(row)
+    else:
+        legitFailures = results
 
     return legitFailures
 
