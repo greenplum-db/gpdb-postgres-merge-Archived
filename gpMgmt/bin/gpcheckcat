@@ -2533,7 +2533,7 @@ def processForeignKeyResult(catname, pkcatname, colname, allValues):
     fkeytab = catname
     # The foreign keys are all entries except the last 4
     # NOTE: We can't assume the first few rows are the expected issues anymore...
-    fkeylist = [name.rsplit('_', 1)[1] for name in colname[:-4]]
+    fkeylist = [name.rsplit(catname+'_', 1)[1] for name in colname[:-4]]
 
     # This catname may not be a GPObject (e.g. pg_attribute)
     #    1. pg_attrdef(adrelid) referencing pg_attribute(attrelid)
