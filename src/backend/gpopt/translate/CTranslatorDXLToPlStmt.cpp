@@ -39,11 +39,13 @@ extern "C"
 #include "utils/uri.h"
 }
 
-#include <tuple>
+#include <algorithm>
 #include <numeric>
+#include <tuple>
 
 #include "gpos/base.h"
 
+#include "gpopt/base/CUtils.h"
 #include "gpopt/mdcache/CMDAccessor.h"
 #include "gpopt/translate/CTranslatorDXLToPlStmt.h"
 #include "gpopt/translate/CTranslatorUtils.h"
@@ -74,6 +76,14 @@ using namespace gpmd;
 #define GPDXL_MOTION_ID_START 1
 #define GPDXL_PARAM_ID_START 0
 
+static List *
+PartPruneStepsFromFilters(CDXLNode *filters, Oid supportfnoid,
+						  CTranslatorDXLToScalar *translator_dxl_to_scalar,
+						  CMDAccessor *md_accessor);
+static PartitionPruneStep *
+StepFromDXLScalarCmp(CDXLNode *filter, Oid supportfnoid, int step_id,
+					 CTranslatorDXLToScalar *translator_dxl_to_scalar,
+					 CMDAccessor *md_accessor);
 //---------------------------------------------------------------------------
 //	@function:
 //		CTranslatorDXLToPlStmt::CTranslatorDXLToPlStmt
@@ -3264,49 +3274,234 @@ static List *ExecuteSaticPruning(PartitionPruneInfo *part_prune_info, List *rtab
 	return prune_result;
 }
 
-// Given a DXL Partition Selector, construct a PartitionPruneInfo
-// the pruning steps contained in the part_prune_info should be based on the
-// filter and eqFilter of the partition selector
-// XXX: currently the returned structure is almost completely hardcoded and made up
-static std::tuple<ULONG, PartitionPruneInfo *, List *>
-PartitionPruneInfoFromPartitionSelector(const CDXLNode *partition_selector_dxlnode)
+static bool IsOneLevelPartitioned(Relation relation)
 {
-	auto dxl_part_selector = dynamic_cast<CDXLPhysicalPartitionSelector *>(
-		partition_selector_dxlnode->GetOperator());
-	auto oid = dynamic_cast<CMDIdGPDB *>(dxl_part_selector->GetRelMdId())->Oid();
-	auto relation = gpdb::GetRelation(oid);
-	auto part_prune_info = MakeNode(PartitionPruneInfo);
-	PartitionedRelPruneInfo *prelinfo = MakeNode(PartitionedRelPruneInfo);
-	// our artisanal rte will always be the first and only entry in our isolated range table
-	const Index index = 1;
+	return std::all_of(relation->rd_partdesc->is_leaf,
+								relation->rd_partdesc->is_leaf +
+									relation->rd_partdesc->nparts,
+								[](bool b) { return b; });
+}
+
+static RangeTblEntry*
+MinimalRTE(Oid oid)
+{
+	// our artisanal rte will always be the first and only entry in our isolated
+	// range table
 	RangeTblEntry *rte = MakeNode(RangeTblEntry);
 	rte->relid = oid;
 	rte->rellockmode = AccessShareLock;
 	rte->alias = MakeNode(Alias);
 	rte->eref = rte->alias;
 
-	List *range_table = ListMake1(rte);
-	prelinfo->rtindex = index;
-	prelinfo->nparts = relation->rd_partdesc->nparts;
-	prelinfo->present_parts = bms_add_range(NULL, 0, prelinfo->nparts - 1);
-	prelinfo->subpart_map = static_cast<int*>(palloc(sizeof(int) * prelinfo->nparts));
-	std::fill(prelinfo->subpart_map, prelinfo->subpart_map + prelinfo->nparts, -1);
-	prelinfo->subplan_map = static_cast<int*>(palloc(sizeof(int) * prelinfo->nparts));
-	std::iota(prelinfo->subplan_map, prelinfo->subplan_map + prelinfo->nparts, 0);
-	prelinfo->relid_map = static_cast<Oid*>(palloc(sizeof(Oid) * prelinfo->nparts));
-	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts, prelinfo->relid_map);
+	return rte;
+}
 
-	auto opstep = MakeNode(PartitionPruneStepOp);
-	opstep->step.step_id = 0;
-	opstep->opstrategy = BTLessStrategyNumber;
-	auto int_const = gpdb::MakeIntConst(4200);
-	opstep->exprs = ListMake1(int_const);
-	opstep->cmpfns = ListMake1Oid(relation->rd_partkey->partsupfunc[0].fn_oid);
-	prelinfo->exec_pruning_steps = ListMake1(opstep);
+// Given a DXL Partition Selector, construct a PartitionPruneInfo
+// the pruning steps contained in the part_prune_info should be based on the
+// filter and eqFilter of the partition selector
+// XXX: currently the returned structure is almost completely hardcoded and made up
+static std::tuple<ULONG, PartitionPruneInfo *, List *>
+PartitionPruneInfoFromPartitionSelector(
+	const CDXLNode *partition_selector_dxlnode, CMDAccessor *md_accessor,
+	CTranslatorDXLToScalar *translator_dxl_to_scalar)
+{
+	auto dxl_part_selector = dynamic_cast<CDXLPhysicalPartitionSelector *>(
+		partition_selector_dxlnode->GetOperator());
+	auto oid = dynamic_cast<CMDIdGPDB *>(dxl_part_selector->GetRelMdId())->Oid();
+	auto relation = gpdb::GetRelation(oid);
+	if (!IsOneLevelPartitioned(relation))
+		GPOS_RAISE(
+			gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+			GPOS_WSZ_LIT("multi-level partitioned tables"));
+
+	auto eqFilters = (*partition_selector_dxlnode)[EdxlpsIndexEqFilters];
+	if (!CTranslatorDXLToScalar::HasConstTrue((*eqFilters)[0], md_accessor))
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				   GPOS_WSZ_LIT("non-trivial eq-filters"));
+
+	auto filters = (*partition_selector_dxlnode)[EdxlpsIndexFilters];
+
+	PartitionedRelPruneInfo *pinfo = MakeNode(PartitionedRelPruneInfo);
+
+	auto rte = MinimalRTE(oid);
+	List *range_table = ListMake1(rte);
+
+	pinfo->rtindex = 1;
+	pinfo->nparts = relation->rd_partdesc->nparts;
+	pinfo->present_parts = bms_add_range(NULL, 0, pinfo->nparts - 1);
+	pinfo->subpart_map = static_cast<int*>(palloc(sizeof(int) * pinfo->nparts));
+	std::fill(pinfo->subpart_map, pinfo->subpart_map + pinfo->nparts, -1);
+	pinfo->subplan_map = static_cast<int*>(palloc(sizeof(int) * pinfo->nparts));
+	std::iota(pinfo->subplan_map, pinfo->subplan_map + pinfo->nparts, 0);
+	pinfo->relid_map = static_cast<Oid*>(palloc(sizeof(Oid) * pinfo->nparts));
+	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts,
+			  pinfo->relid_map);
+
+	pinfo->exec_pruning_steps = PartPruneStepsFromFilters(
+		filters, relation->rd_partkey->partsupfunc[0].fn_oid,
+		translator_dxl_to_scalar, md_accessor);
 	gpdb::CloseRelation(relation);
-	part_prune_info->prune_infos = ListMake1(ListMake1(prelinfo));
+
+	auto part_prune_info = MakeNode(PartitionPruneInfo);
+	part_prune_info->prune_infos = ListMake1(ListMake1(pinfo));
 
 	return {dxl_part_selector->ScanId(), part_prune_info, range_table};
+}
+
+static PartitionPruneStep *
+StepFromDXLBoolExpr(CDXLScalarBoolExpr *boolexpr, int step_id)
+{
+	GPOS_ASSERT(false);
+	GPOS_ASSERT(step_id > 1);
+	return nullptr;
+}
+
+// Turn a DXL partition selector's filter (in tree form) into a list of
+// PartitionPruneStep's (postfix). Because we intentionally ignore some types of
+// DXL scalar expressions (e.g. CDXLScalarPartBoundOpen), indicate the omission
+// with a false return value.
+static bool
+PartPruneStepsFromFiltersImpl(CDXLNode *filter, Oid supportfnoid,
+		CTranslatorDXLToScalar *translator_dxl_to_scalar,
+		CMDAccessor *md_accessor, List *&result)
+{
+	switch (filter->GetOperator()->GetDXLOperator())
+	{
+		default:
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+					   filter->GetOperator()->GetOpNameStr()->GetBuffer());
+		case gpdxl::EdxlopScalarPartBoundOpen:
+			return false;
+		case gpdxl::EdxlopScalarCmp:
+		{
+			auto step = StepFromDXLScalarCmp(
+				filter, supportfnoid, gpdb::ListLength(result),
+				translator_dxl_to_scalar, md_accessor);
+			result = gpdb::LAppend(result, step);
+			break;
+		}
+		case gpdxl::EdxlopScalarBoolExpr:
+		{
+			auto boolexpr =
+				gpdxl::CDXLScalarBoolExpr::Cast(filter->GetOperator());
+			switch (boolexpr->GetDxlBoolTypeStr())
+			{
+				case Edxland:
+				case Edxlor:
+				{
+					auto left_ok =
+						PartPruneStepsFromFiltersImpl((*filter)[0], supportfnoid,
+								translator_dxl_to_scalar, md_accessor, result);
+					auto right_ok =
+						PartPruneStepsFromFiltersImpl((*filter)[1], supportfnoid,
+								translator_dxl_to_scalar, md_accessor, result);
+
+					if (left_ok && right_ok)
+					{
+						PartitionPruneStep *me_step = StepFromDXLBoolExpr(
+							boolexpr, gpdb::ListLength(result));
+						result = gpdb::LAppend(result, me_step);
+					}
+					break;
+				}
+				case Edxlnot:
+					GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+							   boolexpr->GetOpNameStr()->GetBuffer());
+				case EdxlBoolExprTypeSentinel:
+					// FIXME: mark this as unreachable
+					GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+							   boolexpr->GetOpNameStr()->GetBuffer());
+			}
+		}
+	}
+	return true;
+}
+
+static StrategyNumber StrategyNumberFromCmpType(IMDType::ECmpType cmp_type)
+{
+	switch (cmp_type)
+	{
+		case IMDType::EcmptL:
+			return BTLessStrategyNumber;
+		case IMDType::EcmptLEq:
+			return BTLessEqualStrategyNumber;
+		case IMDType::EcmptEq:
+			return BTEqualStrategyNumber;
+		case IMDType::EcmptGEq:
+			return BTGreaterEqualStrategyNumber;
+		case IMDType::EcmptG:
+			return BTGreaterStrategyNumber;
+		case IMDType::EcmptNEq:
+		case IMDType::EcmptIDF:
+		case IMDType::EcmptOther:
+			break;
+	}
+	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+			   IMDType::GetCmpTypeStr(cmp_type));
+}
+
+static PartitionPruneStep *
+StepFromDXLScalarCmp(CDXLNode *filter, Oid supportfnoid, int step_id,
+					 CTranslatorDXLToScalar *translator_dxl_to_scalar,
+					 CMDAccessor *md_accessor)
+{
+	auto leftOp = (*filter)[0]->GetOperator();
+	if (EdxlopScalarPartBound != leftOp->GetDXLOperator())
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, GPOS_WSZ_LIT("scalar comparison whose LHS is not a part bound"));
+
+	auto partBound = CDXLScalarPartBound::Cast(leftOp);
+
+	auto opstep = MakeNode(PartitionPruneStepOp);
+	opstep->step.step_id = step_id;
+
+	// FIXME: consult get_op_btree_interpretation to get an unambiguous strategy number
+	auto scalarComp = gpdxl::CDXLScalarComp::Cast(filter->GetOperator());
+	StrategyNumber strategyNumber = StrategyNumberFromCmpType(CUtils::ParseCmpType(md_accessor, scalarComp->MDId()));
+
+	auto rhs = (*filter)[1];
+	auto rightOp = rhs->GetOperator();
+	if (EdxlopScalarConstTuple == rightOp->GetDXLOperator())
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				   GPOS_WSZ_LIT("scalar comparison whose RHS is not const"));
+	switch (strategyNumber)
+	{
+		case BTLessStrategyNumber:
+		case BTLessEqualStrategyNumber:
+			if (!partBound->IsLowerBound())
+				GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, GPOS_WSZ_LIT("scalar comparison whose LHS is not a lower bound"));
+			break;
+		case BTEqualStrategyNumber:
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, GPOS_WSZ_LIT("eq comp"));
+		case BTGreaterStrategyNumber:
+		case BTGreaterEqualStrategyNumber:
+			if (partBound->IsLowerBound())
+				GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, GPOS_WSZ_LIT("scalar comparison whose LHS is not a upper bound"));
+			break;
+		default:
+			// FIXME: have a better way to convey "unreachable"
+			GPOS_RTL_ASSERT(false);
+	}
+
+	opstep->opstrategy = strategyNumber;
+	auto scalar_expr = translator_dxl_to_scalar->TranslateDXLToScalar(rhs, nullptr);
+	opstep->exprs = ListMake1(scalar_expr);
+	opstep->cmpfns = ListMake1Oid(supportfnoid);
+
+	return (PartitionPruneStep *) opstep;
+}
+
+static List *
+PartPruneStepsFromFilters(CDXLNode *filters, Oid supportfnoid,
+						  CTranslatorDXLToScalar *translator_dxl_to_scalar,
+						  CMDAccessor *md_accessor)
+{
+	GPOS_ASSERT(filters->Arity() == 1);
+
+	auto filter = (*filters)[0];
+	List *result = NIL;
+	PartPruneStepsFromFiltersImpl(filter, supportfnoid, translator_dxl_to_scalar, md_accessor, result);
+
+	return result;
 }
 
 //---------------------------------------------------------------------------
@@ -3334,7 +3529,9 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 		List *range_table;
 		ULONG scanId;
 		std::tie(scanId, part_prune_info, range_table) =
-			PartitionPruneInfoFromPartitionSelector(partition_selector_dxlnode);
+			PartitionPruneInfoFromPartitionSelector(partition_selector_dxlnode,
+													m_md_accessor,
+													m_translator_dxl_to_scalar);
 
 		// FIXME: prelinfo->nparts won't work if you have subparts
 		auto prune_result = ExecuteSaticPruning(part_prune_info, range_table);
