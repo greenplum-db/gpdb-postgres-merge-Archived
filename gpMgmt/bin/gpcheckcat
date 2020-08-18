@@ -2372,7 +2372,7 @@ def filterSpuriousFailures(catname, colnames, results):
             # (e.g. pg_statistic*) should be excluded from pg_depend
             # comparisons between master and segments.
             if row[colnames.index('classid')] not in masterOnlyOids:
-                legitFailures.apend(row)
+                legitFailures.append(row)
 
     return legitFailures
 
