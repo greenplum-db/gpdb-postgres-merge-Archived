@@ -16,7 +16,7 @@ class ForeignKeyCheck:
         self.autoCast = autoCast
         self.query_filters = dict()
         self.query_filters['pg_appendonly.relid'] = "(select amname from pg_am am where am.oid = relam) IN ('ao_row', 'ao_column')"
-        self.query_filters['pg_attribute.attrelid'] = "(relnatts > 0)"
+        self.query_filters['pg_attribute.attrelid'] = "(relnatts > 0 or relnatts is NULL)"
         self.query_filters["pg_index.indexrelid"] = "(relkind='i')"
 
     def runCheck(self, tables):
