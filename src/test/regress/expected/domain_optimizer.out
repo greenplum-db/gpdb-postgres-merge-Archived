@@ -462,11 +462,12 @@ create table vc4table (f1 vc4[]);
 insert into vc4table values(array['too long']);  -- fail
 ERROR:  value too long for type character varying(4)
 insert into vc4table values(array['too long']::vc4[]);  -- cast truncates
+ERROR:  could not determine which collation to use for string comparison
+HINT:  Use the COLLATE clause to set the collation explicitly.
 select * from vc4table;
-    f1    
-----------
- {"too "}
-(1 row)
+ f1 
+----
+(0 rows)
 
 drop table vc4table;
 drop type vc4;
@@ -544,7 +545,8 @@ create table nulltest
            , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
-ERROR:  domain dnotnull does not allow null values
+ERROR:  null value in column "col3" violates not-null constraint  (seg0 127.0.0.1:7002 pid=20315)
+DETAIL:  Failing row contains (null, null, null, null, null).
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
 ERROR:  domain dcheck does not allow null values
