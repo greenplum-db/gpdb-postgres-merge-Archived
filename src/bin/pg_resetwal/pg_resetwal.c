@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--gp-version") == 0)
 		{
-			puts("pg_resetxlog (Greenplum Database) " GP_VERSION);
+			puts("pg_resetwal (Greenplum Database) " GP_VERSION);
 			exit(0);
 		}
 	}
@@ -607,7 +607,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Warn user of using pg_resetxlog with GPDB
+	 * Warn user of using pg_resetwal with GPDB
 	 */
 	if(!binary_upgrade && !AcceptWarning())
 	{
