@@ -631,11 +631,11 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 			 (GET_MAJOR_VERSION(cluster->major_version) <= 906) ?
 			 "c.relstorage" :
-			 "(CASE WHEN am.amname = 'appendoptimized' THEN 'a'"
-                  " WHEN am.amname = 'aoco' THEN 'c'"
-                  " WHEN am.amname = 'heap' THEN 'h'"
-                  " WHEN c.relkind = 'f' THEN 'x'"
-			      " ELSE '' END)",
+			 "(CASE WHEN am.amname = 'ao_row' THEN 'a'"
+			 " WHEN am.amname = 'ao_column' THEN 'c'"
+			 " WHEN am.amname = 'heap' THEN 'h'"
+			 " WHEN c.relkind = 'f' THEN 'x'"
+			 " ELSE '' END)",
 
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
