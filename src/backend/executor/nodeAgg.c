@@ -414,7 +414,8 @@ static void hashagg_recompile_expressions(AggState *aggstate, bool minslot,
 static long hash_choose_num_buckets(double hashentrysize,
 									long estimated_nbuckets,
 									Size memory);
-static int hash_choose_num_partitions(uint64 input_groups,
+static int hash_choose_num_partitions(AggState *aggstate,
+									  uint64 input_groups,
 									  double hashentrysize,
 									  int used_bits,
 									  int *log2_npartittions);
@@ -436,7 +437,8 @@ static HashAggBatch *hashagg_batch_new(LogicalTapeSet *tapeset,
 									   int input_tapenum, int setno,
 									   int64 input_tuples, int used_bits);
 static MinimalTuple hashagg_batch_read(HashAggBatch *batch, uint32 *hashp);
-static void hashagg_spill_init(HashAggSpill *spill, HashTapeInfo *tapeinfo,
+static void hashagg_spill_init(AggState *aggstate,
+							   HashAggSpill *spill, HashTapeInfo *tapeinfo,
 							   int used_bits, uint64 input_tuples,
 							   double hashentrysize);
 static Size hashagg_spill_tuple(HashAggSpill *spill, TupleTableSlot *slot,
@@ -1824,7 +1826,8 @@ hash_agg_set_limits(AggState *aggstate, double hashentrysize, uint64 input_group
 	 * once. Then, subtract that from the memory available for holding hash
 	 * tables.
 	 */
-	npartitions = hash_choose_num_partitions(input_groups,
+	npartitions = hash_choose_num_partitions(aggstate,
+											 input_groups,
 											 hashentrysize,
 											 used_bits,
 											 NULL);
@@ -1907,7 +1910,7 @@ hash_agg_enter_spill_mode(AggState *aggstate)
 			AggStatePerHash	 perhash = &aggstate->perhash[setno];
 			HashAggSpill	*spill	 = &aggstate->hash_spills[setno];
 
-			hashagg_spill_init(spill, aggstate->hash_tapeinfo, 0,
+			hashagg_spill_init(aggstate, spill, aggstate->hash_tapeinfo, 0,
 							   perhash->aggnode->numGroups,
 							   aggstate->hashentrysize);
 		}
@@ -2009,27 +2012,34 @@ hash_choose_num_buckets(double hashentrysize, long ngroups, Size memory)
  * *log2_npartitions to the log2() of the number of partitions.
  */
 static int
-hash_choose_num_partitions(uint64 input_groups, double hashentrysize,
+hash_choose_num_partitions(AggState *aggstate, uint64 input_groups, double hashentrysize,
 						   int used_bits, int *log2_npartitions)
 {
 	Size	mem_wanted;
 	int		partition_limit;
 	int		npartitions;
 	int		partition_bits;
+	uint64	strict_memlimit = work_mem;
+
+	if (aggstate)
+	{
+		uint64 operator_mem = PlanStateOperatorMemKB((PlanState *) aggstate);
+		if (operator_mem < strict_memlimit)
+			strict_memlimit = operator_mem;
+	}
 
 	/*
 	 * Avoid creating so many partitions that the memory requirements of the
 	 * open partition files are greater than 1/4 of work_mem.
 	 */
-	/* GPDB_12_MERGE_FIXME: respect the OperatorMem (statement_mem) */
 	partition_limit =
-		(work_mem * 1024L * 0.25 - HASHAGG_READ_BUFFER_SIZE) /
+		(strict_memlimit * 1024L * 0.25 - HASHAGG_READ_BUFFER_SIZE) /
 		HASHAGG_WRITE_BUFFER_SIZE;
 
 	mem_wanted = HASHAGG_PARTITION_FACTOR * input_groups * hashentrysize;
 
 	/* make enough partitions so that each one is likely to fit in memory */
-	npartitions = 1 + (mem_wanted / (work_mem * 1024L));
+	npartitions = 1 + (mem_wanted / (strict_memlimit * 1024L));
 
 	if (npartitions > partition_limit)
 		npartitions = partition_limit;
@@ -2169,7 +2179,7 @@ lookup_hash_entries(AggState *aggstate)
 			TupleTableSlot	*slot	 = aggstate->tmpcontext->ecxt_outertuple;
 
 			if (spill->partitions == NULL)
-				hashagg_spill_init(spill, aggstate->hash_tapeinfo, 0,
+				hashagg_spill_init(aggstate, spill, aggstate->hash_tapeinfo, 0,
 								   perhash->aggnode->numGroups,
 								   aggstate->hashentrysize);
 
@@ -2734,7 +2744,7 @@ agg_refill_hash_table(AggState *aggstate)
 				 * that we don't assign tapes that will never be used.
 				 */
 				spill_initialized = true;
-				hashagg_spill_init(&spill, tapeinfo, batch->used_bits,
+				hashagg_spill_init(aggstate, &spill, tapeinfo, batch->used_bits,
 					   ngroups_estimate, aggstate->hashentrysize);
 			}
 			/* no memory for a new group, spill */
@@ -2990,13 +3000,13 @@ hashagg_tapeinfo_release(HashTapeInfo *tapeinfo, int tapenum)
  * of partitions to create, and initializes them.
  */
 static void
-hashagg_spill_init(HashAggSpill *spill, HashTapeInfo *tapeinfo, int used_bits,
+hashagg_spill_init(AggState *aggstate, HashAggSpill *spill, HashTapeInfo *tapeinfo, int used_bits,
 				   uint64 input_groups, double hashentrysize)
 {
 	int		npartitions;
 	int     partition_bits;
 
-	npartitions = hash_choose_num_partitions(
+	npartitions = hash_choose_num_partitions(aggstate,
 		input_groups, hashentrysize, used_bits, &partition_bits);
 
 	spill->partitions = palloc0(sizeof(int) * npartitions);
