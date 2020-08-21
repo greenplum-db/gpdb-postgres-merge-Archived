@@ -2192,6 +2192,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_NamedTuplestoreScan:
 		case T_WorkTableScan:
 		case T_SubqueryScan:
+			if (nodeTag(plan) == T_DynamicSeqScan)
+				ExplainPropertyInteger(
+					"Number of partitions to scan", "",
+					list_length(((DynamicSeqScan *) plan)->partOids), es);
+
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
