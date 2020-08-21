@@ -215,6 +215,6 @@ DROP TABLE test_part_col;
 -- that each segment gets the same attmissingval.
 CREATE TABLE gp_test_fast_def(i int);
 INSERT INTO gp_test_fast_def (i) SELECT g FROM generate_series(1, 10) g;
-
 ALTER TABLE gp_test_fast_def ADD COLUMN ts timestamp DEFAULT now();
+ANALYZE gp_test_fast_def;
 SELECT COUNT (DISTINCT ts) FROM gp_test_fast_def;
