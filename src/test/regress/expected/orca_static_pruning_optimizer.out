@@ -38,3 +38,43 @@ EXPLAIN (COSTS OFF, VERBOSE)
  11 | 11 | 0
 (2 rows)
 
+RESET optimizer_trace_fallback;
+CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
+CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
+NOTICE:  table has parent, setting distribution columns to match parent table
+CREATE TABLE lp1 PARTITION OF lp FOR VALUES IN (10, 11);
+NOTICE:  table has parent, setting distribution columns to match parent table
+CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (42, 43);
+NOTICE:  table has parent, setting distribution columns to match parent table
+ERROR:  relation "lp0" already exists
+INSERT INTO lp VALUES (0, 0), (10, 10), (42, 42);
+ERROR:  no partition of relation "lp" found for row  (seg0 172.17.0.2:7002 pid=225015)
+DETAIL:  Partition key of the failing row contains (b) = (42).
+SET optimizer_trace_fallback TO on;
+SELECT $query$
+SELECT *
+FROM lp
+WHERE b > 42
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  DXL-to-PlStmt Translation: ArrayComp not supported
+WARNING:  relcache reference leak: relation "lp" not closed
+             QUERY PLAN              
+-------------------------------------
+ Result
+   Output: a, b
+   One-Time Filter: false
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=on
+(5 rows)
+
+:qry ;
+INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  DXL-to-PlStmt Translation: ArrayComp not supported
+WARNING:  relcache reference leak: relation "lp" not closed
+ a | b 
+---+---
+(0 rows)
+

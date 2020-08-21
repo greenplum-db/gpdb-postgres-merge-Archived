@@ -38,3 +38,37 @@ EXPLAIN (COSTS OFF, VERBOSE)
   0 |  0 | 0
 (2 rows)
 
+RESET optimizer_trace_fallback;
+CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
+CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
+NOTICE:  table has parent, setting distribution columns to match parent table
+CREATE TABLE lp1 PARTITION OF lp FOR VALUES IN (10, 11);
+NOTICE:  table has parent, setting distribution columns to match parent table
+CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (42, 43);
+NOTICE:  table has parent, setting distribution columns to match parent table
+ERROR:  relation "lp0" already exists
+INSERT INTO lp VALUES (0, 0), (10, 10), (42, 42);
+ERROR:  no partition of relation "lp" found for row  (seg0 172.17.0.2:7002 pid=225121)
+DETAIL:  Partition key of the failing row contains (b) = (42).
+SET optimizer_trace_fallback TO on;
+SELECT $query$
+SELECT *
+FROM lp
+WHERE b > 42
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+             QUERY PLAN              
+-------------------------------------
+ Result
+   Output: a, b
+   One-Time Filter: false
+ Optimizer: Postgres query optimizer
+ Settings: optimizer=off
+(5 rows)
+
+:qry ;
+ a | b 
+---+---
+(0 rows)
+
