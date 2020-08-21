@@ -286,8 +286,7 @@ CREATE TABLE co_crtb_with_strg_dir_and_col_ref_1_uncompr(id SERIAL,a1 int,a2 cha
 --
 -- Insert to uncompressed table
 --
-INSERT INTO co_crtb_with_strg_dir_and_col_ref_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) select * from data1();
-INSERT INTO co_crtb_with_strg_dir_and_col_ref_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) select * from data2();
+INSERT INTO co_crtb_with_strg_dir_and_col_ref_1_uncompr select * from co_crtb_with_strg_dir_and_col_ref_1;
 -- More data for bigger block size 
 --
 -- ********Validation******* 
@@ -2978,8 +2977,7 @@ CREATE TABLE ao_crtb_with_row_zlib_8192_1_uncompr(id SERIAL,a1 int,a2 char(5),a3
 --
 -- Insert to uncompressed table
 --
-INSERT INTO ao_crtb_with_row_zlib_8192_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) select * from data1();
-INSERT INTO ao_crtb_with_row_zlib_8192_1_uncompr(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42) select * from data2();
+INSERT INTO ao_crtb_with_row_zlib_8192_1_uncompr select * from ao_crtb_with_row_zlib_8192_1;
 --
 -- ********Validation******* 
 --
