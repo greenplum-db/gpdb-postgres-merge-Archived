@@ -550,32 +550,6 @@ ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
 	hashtable->hjstate = hjstate;
 	hashtable->first_pass = true;
 
-	/*
-	 * Create temporary memory contexts in which to keep the hashtable working
-	 * storage.  See notes in executor/hashjoin.h.
-	 */
-	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
-											   "HashTableContext",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-
-	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
-												"HashBatchContext",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* CDB */ /* track temp buf file allocations in separate context */
-	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
-											 "hbbfcxt",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* Allocate data that will live for the life of the hashjoin */
-
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
 	hashtable->chunks = NULL;
 	hashtable->current_chunk = NULL;
 	hashtable->parallel_state = state->parallel_state;
@@ -598,6 +572,13 @@ ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
 	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
 												"HashBatchContext",
 												ALLOCSET_DEFAULT_SIZES);
+
+	/* CDB: track temp buf file allocations in separate context */
+	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
+											 "hbbfcxt",
+											 ALLOCSET_DEFAULT_MINSIZE,
+											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* Allocate data that will live for the life of the hashjoin */
 
