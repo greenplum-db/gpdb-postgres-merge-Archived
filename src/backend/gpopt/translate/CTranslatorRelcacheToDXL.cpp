@@ -3225,9 +3225,11 @@ CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Composite part key"));
 	}
 
-	INT attno = partkey->partattrs[0];
+	AttrNumber attno = partkey->partattrs[0];
 	CHAR part_type = (CHAR) partkey->strategy;
-	GPOS_ASSERT(0 < attno);
+	if (attno == 0)
+		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("partitioning by expression"));
+
 	(*part_keys)->Append(GPOS_NEW(mp) ULONG(attno - 1));
 	(*part_types)->Append(GPOS_NEW(mp) CHAR(part_type));
 }
