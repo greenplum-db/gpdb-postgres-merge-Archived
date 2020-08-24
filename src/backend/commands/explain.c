@@ -2192,7 +2192,16 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_NamedTuplestoreScan:
 		case T_WorkTableScan:
 		case T_SubqueryScan:
-			if (nodeTag(plan) == T_DynamicSeqScan)
+			/*
+			 * GPDB_12_MERGE_FIXME: we used to show something along the lines of
+			 * "Partitions selected: 1 (out of 5)" under the partition selector.
+			 * By eleminating the (static) partition selector during translation,
+			 * we only get the survivor count, and lose the size of the universe
+			 * temporarily. However, if we manage to shift the static pruning
+			 * information sufficiently adjacent to (or better, into) a DXL Dynamic
+			 * Table Scan, we should be able to get that information back.
+			 */
+			if (IsA(plan, DynamicSeqScan))
 				ExplainPropertyInteger(
 					"Number of partitions to scan", "",
 					list_length(((DynamicSeqScan *) plan)->partOids), es);
