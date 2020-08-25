@@ -32,6 +32,29 @@ EXPLAIN (COSTS OFF, VERBOSE)
  4201 | 4201 | 0
 (1 row)
 
+SELECT $query$
+SELECT *
+FROM rp
+WHERE b = 4201
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+                QUERY PLAN                 
+-------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: rp2.a, rp2.b, rp2.c
+   ->  Seq Scan on orca_static_pruning.rp2
+         Output: rp2.a, rp2.b, rp2.c
+         Filter: (rp2.b = 4201)
+ Optimizer: Postgres query optimizer
+(6 rows)
+
+:qry ;
+  a   |  b   | c 
+------+------+---
+ 4201 | 4201 | 0
+(1 row)
+
 RESET optimizer_trace_fallback;
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
 CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
@@ -63,4 +86,27 @@ EXPLAIN (COSTS OFF, VERBOSE)
  a | b 
 ---+---
 (0 rows)
+
+SELECT $query$
+SELECT *
+FROM lp
+WHERE b = 42
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+                QUERY PLAN                 
+-------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: lp2.a, lp2.b
+   ->  Seq Scan on orca_static_pruning.lp2
+         Output: lp2.a, lp2.b
+         Filter: (lp2.b = 42)
+ Optimizer: Postgres query optimizer
+(6 rows)
+
+:qry ;
+ a  | b  
+----+----
+ 42 | 42
+(1 row)
 

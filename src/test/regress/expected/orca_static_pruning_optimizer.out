@@ -37,6 +37,34 @@ EXPLAIN (COSTS OFF, VERBOSE)
  4201 | 4201 | 0
 (1 row)
 
+SELECT $query$
+SELECT *
+FROM rp
+WHERE b = 4201
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: a, b, c
+   ->  Sequence
+         Output: a, b, c
+         ->  Result
+         ->  Dynamic Seq Scan on orca_static_pruning.rp
+               Output: a, b, c
+               Number of partitions to scan: 1 
+               Filter: (rp.b = 4201)
+ Optimizer: Pivotal Optimizer (GPORCA)
+ Settings: optimizer=on
+(11 rows)
+
+:qry ;
+  a   |  b   | c 
+------+------+---
+ 4201 | 4201 | 0
+(1 row)
+
 RESET optimizer_trace_fallback;
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
 CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
@@ -75,4 +103,32 @@ WARNING:  relcache reference leak: relation "lp" not closed
  a | b 
 ---+---
 (0 rows)
+
+SELECT $query$
+SELECT *
+FROM lp
+WHERE b = 42
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: a, b
+   ->  Sequence
+         Output: a, b
+         ->  Result
+         ->  Dynamic Seq Scan on orca_static_pruning.lp
+               Output: a, b
+               Number of partitions to scan: 1 
+               Filter: (lp.b = 42)
+ Optimizer: Pivotal Optimizer (GPORCA)
+ Settings: optimizer=on
+(11 rows)
+
+:qry ;
+ a  | b  
+----+----
+ 42 | 42
+(1 row)
 

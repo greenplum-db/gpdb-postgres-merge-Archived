@@ -3296,6 +3296,38 @@ MinimalRTE(Oid oid)
 	return rte;
 }
 
+static PartitionPruneStep *
+StepFromDXLConst(CDXLNode *dxl_const, Oid supportfnoid, uint32 step_id,
+				 CTranslatorDXLToScalar *translator_dxl_to_scalar)
+{
+	auto step = MakeNode(PartitionPruneStepOp);
+	step->step.step_id = step_id;
+	auto expr = translator_dxl_to_scalar->TranslateDXLToScalar(dxl_const, nullptr);
+	step->exprs = ListMake1(expr);
+	step->cmpfns = ListMake1Oid(supportfnoid);
+	step->opstrategy = BTEqualStrategyNumber;
+
+	return (PartitionPruneStep *)step;
+}
+
+static List *
+PartPruneStepsFromEqFilters(CDXLNode *eq_values, Oid supportfnoid,
+							CTranslatorDXLToScalar *translator_dxl_to_scalar,
+							CMDAccessor *md_accessor)
+{
+	GPOS_ASSERT(gpdxl::EdxlopScalarOpList == eq_values->GetOperator()->GetDXLOperator());
+	List *result = NIL;
+
+	for (ULONG i = 0; i < eq_values->Arity(); ++i) {
+		auto step =
+			StepFromDXLConst((*eq_values)[i], supportfnoid,
+							 gpdb::ListLength(result), translator_dxl_to_scalar);
+		result = gpdb::LAppend(result, step);
+	}
+
+	return result;
+}
+
 // Given a DXL Partition Selector, construct a PartitionPruneInfo
 // the pruning steps contained in the part_prune_info should be based on the
 // filter and eqFilter of the partition selector
@@ -3314,12 +3346,15 @@ PartitionPruneInfoFromPartitionSelector(
 			gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
 			GPOS_WSZ_LIT("multi-level partitioned tables"));
 
-	auto eqFilters = (*partition_selector_dxlnode)[EdxlpsIndexEqFilters];
-	if (!CTranslatorDXLToScalar::HasConstTrue((*eqFilters)[0], md_accessor))
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
-				   GPOS_WSZ_LIT("non-trivial eq-filters"));
-
+	auto eq_filters = (*partition_selector_dxlnode)[EdxlpsIndexEqFilters];
 	auto filters = (*partition_selector_dxlnode)[EdxlpsIndexFilters];
+	auto has_trivial_eq_filters = CTranslatorDXLToScalar::HasConstTrue((*eq_filters)[0], md_accessor);
+	auto has_trivial_filters = CTranslatorDXLToScalar::HasConstTrue((*filters)[0], md_accessor);
+
+	if (!has_trivial_eq_filters && !has_trivial_filters)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
+				   GPOS_WSZ_LIT("non-trivial eq-filters combined with "
+								"non-trivial part filter"));
 
 	PartitionedRelPruneInfo *pinfo = MakeNode(PartitionedRelPruneInfo);
 
@@ -3337,9 +3372,20 @@ PartitionPruneInfoFromPartitionSelector(
 	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts,
 			  pinfo->relid_map);
 
-	pinfo->exec_pruning_steps = PartPruneStepsFromFilters(
-		filters, relation->rd_partkey->partsupfunc[0].fn_oid,
-		translator_dxl_to_scalar, md_accessor);
+	if (!has_trivial_filters)
+	{
+		pinfo->exec_pruning_steps = PartPruneStepsFromFilters(
+			filters, relation->rd_partkey->partsupfunc[0].fn_oid,
+			translator_dxl_to_scalar, md_accessor);
+	}
+	else
+	{
+		GPOS_ASSERT(!has_trivial_eq_filters);
+
+		pinfo->exec_pruning_steps = PartPruneStepsFromEqFilters(
+			eq_filters, relation->rd_partkey->partsupfunc[0].fn_oid,
+			translator_dxl_to_scalar, md_accessor);
+	}
 	gpdb::CloseRelation(relation);
 
 	auto part_prune_info = MakeNode(PartitionPruneInfo);

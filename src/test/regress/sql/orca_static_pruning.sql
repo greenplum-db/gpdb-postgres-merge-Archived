@@ -20,6 +20,17 @@ EXPLAIN (COSTS OFF, VERBOSE)
 
 :qry ;
 
+SELECT $query$
+SELECT *
+FROM rp
+WHERE b = 4201
+$query$ AS qry \gset
+
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+
+:qry ;
+
 RESET optimizer_trace_fallback;
 
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
@@ -34,6 +45,17 @@ SELECT $query$
 SELECT *
 FROM lp
 WHERE b > 42
+$query$ AS qry \gset
+
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+
+:qry ;
+
+SELECT $query$
+SELECT *
+FROM lp
+WHERE b = 42
 $query$ AS qry \gset
 
 EXPLAIN (COSTS OFF, VERBOSE)
