@@ -977,12 +977,14 @@ create table list_parted_tbl (a int,b int) partition by list (a);
 create table list_parted_tbl1 partition of list_parted_tbl
   for values in (1) partition by list(b);
 explain (costs off) select * from list_parted_tbl;
-             QUERY PLAN              
--------------------------------------
- Result
-   One-Time Filter: false
- Optimizer: Postgres query optimizer
-(3 rows)
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on list_parted_tbl
+ Optimizer: Pivotal Optimizer (GPORCA)
+(5 rows)
 
 drop table list_parted_tbl;
 -- Test unsupported sorting operators
