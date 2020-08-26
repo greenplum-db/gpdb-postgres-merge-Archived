@@ -1586,7 +1586,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					pname = "???";
 					break;
 			}
-		break;
+			break;
 		case T_CustomScan:
 			sname = "Custom Scan";
 			custom_name = ((CustomScan *) plan)->methods->CustomName;

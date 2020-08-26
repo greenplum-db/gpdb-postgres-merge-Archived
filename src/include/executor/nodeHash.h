@@ -89,11 +89,4 @@ extern void ExecHashTableExplainInit(HashState *hashState, HashJoinState *hjstat
                                      HashJoinTable  hashtable);
 extern void ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable);
 
-static inline int
-ExecHashRowSize(int tupwidth)
-{
-    return HJTUPLE_OVERHEAD +
-		MAXALIGN(sizeof(MemTupleData)) +
-		MAXALIGN(tupwidth);
-}                               /* ExecHashRowSize */
 #endif							/* NODEHASH_H */

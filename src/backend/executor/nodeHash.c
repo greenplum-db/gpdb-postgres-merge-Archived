@@ -539,7 +539,6 @@ ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
 	hashtable->outerBatchFile = NULL;
 	hashtable->work_set = NULL;
 	hashtable->spaceUsed = 0;
-	hashtable->spaceAllowed = operatorMemKB * 1024L;
 	hashtable->spacePeak = 0;
 	hashtable->spaceAllowed = space_allowed;
 	hashtable->spaceUsedSkew = 0;
@@ -576,9 +575,7 @@ ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
 	/* CDB: track temp buf file allocations in separate context */
 	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
 											 "hbbfcxt",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+											 ALLOCSET_DEFAULT_SIZES);
 
 	/* Allocate data that will live for the life of the hashjoin */
 
@@ -747,7 +744,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * does not allow for any palloc overhead.  The manipulations of spaceUsed
 	 * don't count palloc overhead either.
 	 */
-	tupsize = ExecHashRowSize(tupwidth);
+	tupsize = HJTUPLE_OVERHEAD +
+		MAXALIGN(SizeofMinimalTupleHeader) +
+		MAXALIGN(tupwidth);
 	inner_rel_bytes = ntuples * tupsize;
 
 	/*
@@ -800,7 +799,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	}
 	else
 		*num_skew_mcvs = 0;
-
 
 	/*
 	 * Set nbuckets to achieve an average bucket load of gp_hashjoin_tuples_per_bucket when

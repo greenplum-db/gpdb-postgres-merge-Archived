@@ -615,7 +615,7 @@ ExecProcNodeGPDB(PlanState *node)
 		elog(ERROR, "cannot execute squelched plan node of type: %d",
 			 (int) nodeTag(node));
 
-	if(!node->fHadSentNodeStart)
+	if (!node->fHadSentNodeStart)
 	{
 		/* GPDB hook for collecting query info */
 		if (query_info_collect_hook)
@@ -880,10 +880,10 @@ ExecEndNode(PlanState *node)
 			ExecEndBitmapHeapScan((BitmapHeapScanState *) node);
 			break;
 
-/* gpdb_12_merge_fixme */
+/* GPDB_12_MERGE_FIXME */
 #if 0
-		case t_dynamicbitmapheapscanstate:
-			execenddynamicbitmapheapscan((dynamicbitmapheapscanstate *) node);
+		case T_DynamicBitmapHeapScanState:
+			ExecEndDynamicBitmapHeapScan((DynamicBitmapHeapScanState *) node);
 			break;
 #endif
 
