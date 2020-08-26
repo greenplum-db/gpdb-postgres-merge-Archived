@@ -62,3 +62,22 @@ EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 
 :qry ;
+
+RESET optimizer_trace_fallback;
+
+CREATE TABLE hp (a int, b int) PARTITION BY HASH (b);
+CREATE TABLE hp0 PARTITION OF hp FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE hp1 PARTITION OF hp FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO hp VALUES (0, 1), (0, 3), (0, 4), (0, 42);
+
+SET optimizer_trace_fallback TO on;
+SELECT $query$
+SELECT *
+FROM hp
+WHERE b = 42
+$query$ AS qry \gset
+
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+
+:qry ;

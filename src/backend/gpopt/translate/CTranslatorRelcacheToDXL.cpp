@@ -3229,6 +3229,14 @@ CTranslatorRelcacheToDXL::RetrievePartKeysAndTypes
 	CHAR part_type = (CHAR) partkey->strategy;
 	if (attno == 0)
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("partitioning by expression"));
+	switch (part_type)
+	{
+		default:
+			break;
+		case PARTITION_STRATEGY_HASH:
+		case PARTITION_STRATEGY_LIST:
+			GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("list or hash partitioning"));
+	}
 
 	(*part_keys)->Append(GPOS_NEW(mp) ULONG(attno - 1));
 	(*part_types)->Append(GPOS_NEW(mp) CHAR(part_type));
