@@ -295,11 +295,8 @@ insert into r select generate_series(1, 10000), generate_series(1, 10000) * 3;
 insert into s select generate_series(1, 100), generate_series(1, 100) * 4;
 update s set b = b + 1 where exists (select 1 from r where s.a = r.b);
 delete from s where exists (select 1 from r where s.a = r.b);
--- ----------------------------------------------------------------------
--- Test: unsupported_cases1.sql
--- ----------------------------------------------------------------------
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -327,11 +324,18 @@ delete from s where b = (select min(a) from r where b = s.b);
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
 update p set c = c + 1 where b in (select b from s) and c = 0;
--- ----------------------------------------------------------------------
--- Test: unsupported_cases2.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_extra | 5 |  1666
+ p_1_prt_5     | 4 |  1667
+ p_1_prt_2     | 1 |  3333
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -359,11 +363,18 @@ delete from s where b = (select min(a) from r where b = s.b);
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
 update p set c = c + 1 where b in (select b from s where b = 36);
--- ----------------------------------------------------------------------
--- Test: unsupported_cases3.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_3     | 2 |  1668
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_extra | 5 |  1666
+ p_1_prt_5     | 4 |  1667
+ p_1_prt_2     | 1 |  3332
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -391,11 +402,18 @@ delete from s where b = (select min(a) from r where b = s.b);
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
 update p set c = c + 1 where b in (select b from s) and c = 0;
--- ----------------------------------------------------------------------
--- Test: unsupported_cases4.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_5     | 4 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_extra | 5 |  1666
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -423,11 +441,18 @@ delete from s where b = (select min(a) from r where b = s.b);
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
 update p set c = c + 1 where b in (select b from s) and c = 0;
--- ----------------------------------------------------------------------
--- Test: unsupported_cases5.sql
--- ----------------------------------------------------------------------
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_extra | 5 |  1666
+ p_1_prt_5     | 4 |  1667
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_2     | 1 |  3333
+(5 rows)
+
 ------------------------------------------------------------
--- Update with Motion: unsupported cases
+-- Update with Motion:
 --     	Updating the distribution key
 ------------------------------------------------------------
 -- start_ignore
@@ -455,6 +480,16 @@ delete from s where b = (select min(a) from r where b = s.b);
 ------------------------------------------------------------
 update p set c = c + 1 where c = 0;
 update p set c = c + 1 where b in (select b from s) and c = 0;
+select tableoid::regclass, c, count(*) from p group by 1, 2;
+   tableoid    | c | count 
+---------------+---+-------
+ p_1_prt_extra | 5 |  1666
+ p_1_prt_4     | 3 |  1667
+ p_1_prt_3     | 2 |  1667
+ p_1_prt_2     | 1 |  3333
+ p_1_prt_5     | 4 |  1667
+(5 rows)
+
 -- ----------------------------------------------------------------------
 -- Test: partition_motion1.sql
 -- ----------------------------------------------------------------------
