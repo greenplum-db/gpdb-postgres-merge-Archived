@@ -98,7 +98,6 @@
  * is only used during VACUUM, which uses a ShareUpdateExclusiveLock,
  * so the VACUUM will not be affected by in-flight changes. Changing its
  * value has no effect until the next VACUUM, so no need for stronger lock.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 
 static relopt_bool boolRelOpts[] =
@@ -1528,7 +1527,7 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 										  RELOPT_KIND_HEAP);
 		case RELKIND_PARTITIONED_TABLE:
 			/*
-			 * GPDB_12_MERGE_FIXME: should we accept AO-related options for
+			 * GPDB_12_AFTER_MERGE_FIXME: should we accept AO-related options for
 			 * partitioned tables? A partitioned table has no data, but the options
 			 * might be inherited by partitions.
 			 */

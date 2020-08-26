@@ -1504,7 +1504,7 @@ find_crsd(const char *column, List *stenc)
  * access to possible inherited columns, so it can only be done after
  * expanding them.
  *
- * GPDB_12_MERGE_FIXME:
+ * GPDB_12_AFTER_MERGE_FIXME:
  *		Attempt to code, precedence, merging and access to possibly existing
  *		encodings in this function, in a manner similar to
  *		validateColumnStorageEncodingClauses(). Currently the whole transform,
@@ -1583,7 +1583,7 @@ transformAttributeEncoding(List *columns,
 		ColumnReferenceStorageDirective *c;
 		List *encoding = NIL;
 
-		/* GPDB_12_MERGE_FIXME: can we have anything else here? This used to be an Insist */
+		/* GPDB_12_AFTER_MERGE_FIXME: can we have anything else here? This used to be an Insist */
 		if (!IsA(elem, ColumnDef))
 			continue;
 

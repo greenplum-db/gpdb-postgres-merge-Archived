@@ -523,7 +523,10 @@ MarkAOCSFileSegInfoAwaitingDrop(Relation prel, int segno)
 	tupdesc = RelationGetDescr(segrel);
 
 	/*
-	 * GPDB_12_MERGE_FIXME: using NULL, should change to appropriate one
+	 * GPDB_12_MERGE_FIXME: we are using systable_beginscan API in this file
+	 * but the API used by aosegfiles.c is table_beginscan_catalog.  Let's
+	 * have parity between the two because they do have parity on master
+	 * branch.
 	 * 
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
@@ -580,6 +583,10 @@ MarkAOCSFileSegInfoAwaitingDrop(Relation prel, int segno)
  * The caller should have checked that the segfile is no longer needed by
  * any running transaction. It is not necessary to hold a lock on the segfile
  * row, though.
+ *
+ * GPDB_12_MERGE_FIXME: this and ClearFileSegInfo should look similar, which
+ * is not currently the case.  On master branch, they do look similar.  Let's
+ * make it so before we merge.
  */
 void
 ClearAOCSFileSegInfo(Relation prel, int segno)
@@ -617,8 +624,6 @@ ClearAOCSFileSegInfo(Relation prel, int segno)
 	segrel = heap_open(segrelid, RowExclusiveLock);
 	tupdesc = RelationGetDescr(segrel);
 
-	 /* GPDB_12_MERGE_FIXME: using NULL for snapshot in systable_beginscan
-	  * should change to appropriate one */
 	/*
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
