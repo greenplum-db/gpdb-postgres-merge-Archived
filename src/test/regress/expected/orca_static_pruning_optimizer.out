@@ -11,7 +11,7 @@ INSERT INTO rp VALUES (0, 0, 0), (11, 11, 0), (4201, 4201, 0);
 SELECT $query$
 SELECT *
 FROM rp
-WHERE b < 4200
+WHERE b > 4200
 $query$ AS qry \gset
 SET optimizer_trace_fallback TO on;
 EXPLAIN (COSTS OFF, VERBOSE)
@@ -25,18 +25,17 @@ EXPLAIN (COSTS OFF, VERBOSE)
          ->  Result
          ->  Dynamic Seq Scan on orca_static_pruning.rp
                Output: a, b, c
-               Number of partitions to scan: 2 
-               Filter: (rp.b < 4200)
+               Number of partitions to scan: 1 
+               Filter: (rp.b > 4200)
  Optimizer: Pivotal Optimizer (GPORCA)
  Settings: optimizer=on
 (11 rows)
 
 :qry ;
- a  | b  | c 
-----+----+---
-  0 |  0 | 0
- 11 | 11 | 0
-(2 rows)
+  a   |  b   | c 
+------+------+---
+ 4201 | 4201 | 0
+(1 row)
 
 RESET optimizer_trace_fallback;
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
@@ -44,12 +43,9 @@ CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
 NOTICE:  table has parent, setting distribution columns to match parent table
 CREATE TABLE lp1 PARTITION OF lp FOR VALUES IN (10, 11);
 NOTICE:  table has parent, setting distribution columns to match parent table
-CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (42, 43);
+CREATE TABLE lp2 PARTITION OF lp FOR VALUES IN (42, 43);
 NOTICE:  table has parent, setting distribution columns to match parent table
-ERROR:  relation "lp0" already exists
 INSERT INTO lp VALUES (0, 0), (10, 10), (42, 42);
-ERROR:  no partition of relation "lp" found for row  (seg0 172.17.0.2:7002 pid=225015)
-DETAIL:  Partition key of the failing row contains (b) = (42).
 SET optimizer_trace_fallback TO on;
 SELECT $query$
 SELECT *
@@ -61,14 +57,16 @@ EXPLAIN (COSTS OFF, VERBOSE)
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: ArrayComp not supported
 WARNING:  relcache reference leak: relation "lp" not closed
-             QUERY PLAN              
--------------------------------------
- Result
-   Output: a, b
-   One-Time Filter: false
+                QUERY PLAN                 
+-------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: lp2.a, lp2.b
+   ->  Seq Scan on orca_static_pruning.lp2
+         Output: lp2.a, lp2.b
+         Filter: (lp2.b > 42)
  Optimizer: Postgres query optimizer
  Settings: optimizer=on
-(5 rows)
+(7 rows)
 
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner

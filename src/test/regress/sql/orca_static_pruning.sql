@@ -11,7 +11,7 @@ INSERT INTO rp VALUES (0, 0, 0), (11, 11, 0), (4201, 4201, 0);
 SELECT $query$
 SELECT *
 FROM rp
-WHERE b < 4200
+WHERE b > 4200
 $query$ AS qry \gset
 
 SET optimizer_trace_fallback TO on;
@@ -19,12 +19,13 @@ EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 
 :qry ;
+
 RESET optimizer_trace_fallback;
 
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
 CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
 CREATE TABLE lp1 PARTITION OF lp FOR VALUES IN (10, 11);
-CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (42, 43);
+CREATE TABLE lp2 PARTITION OF lp FOR VALUES IN (42, 43);
 INSERT INTO lp VALUES (0, 0), (10, 10), (42, 42);
 
 SET optimizer_trace_fallback TO on;
