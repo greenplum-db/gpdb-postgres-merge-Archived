@@ -1038,7 +1038,7 @@ CTranslatorUtils::GetOpFamilyForIndexQual
 	)
 {
 	Relation rel = gpdb::GetRelation(index_oid);
-	GPOS_ASSERT(NULL != rel);
+	GPOS_ASSERT(rel);
 	GPOS_ASSERT(attno <= rel->rd_index->indnatts);
 	
 	OID op_family_oid = rel->rd_opfamily[attno - 1];

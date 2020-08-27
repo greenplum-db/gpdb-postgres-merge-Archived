@@ -304,7 +304,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfoForPartTable
 		// only add supported indexes
 		Relation index_rel = gpdb::GetRelation(index_oid);
 
-		if (NULL == index_rel)
+		if (!index_rel)
 		{
 			WCHAR wstr[1024];
 			CWStringStatic str(wstr, 1024);
@@ -360,7 +360,7 @@ CTranslatorRelcacheToDXL::RetrieveRelIndexInfoForNonPartTable
 		// only add supported indexes
 		Relation index_rel = gpdb::GetRelation(index_oid);
 
-		if (NULL == index_rel)
+		if (!index_rel)
 		{
 			WCHAR wstr[1024];
 			CWStringStatic str(wstr, 1024);
@@ -534,7 +534,7 @@ CTranslatorRelcacheToDXL::RetrieveRel
 
 	Relation rel = gpdb::GetRelation(oid);
 
-	if (NULL == rel)
+	if (!rel)
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, mdid->GetBuffer());
 	}
@@ -1071,7 +1071,7 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 	GPOS_ASSERT(0 != index_oid);
 	Relation index_rel = gpdb::GetRelation(index_oid);
 
-	if (NULL == index_rel)
+	if (!index_rel)
 	{
 		 GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, mdid_index->GetBuffer());
 	}
@@ -1148,7 +1148,8 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 		mdname = GPOS_NEW(mp) CMDName(mp, str_name);
 		GPOS_DELETE(str_name);
 
-		Relation table = gpdb::GetRelation(CMDIdGPDB::CastMdid(md_rel->MDId())->Oid());
+		Oid table_oid = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
+		Relation table = gpdb::GetRelation(table_oid);
 		ULONG size = GPDXL_SYSTEM_COLUMNS + (ULONG) table->rd_att->natts + 1;
 		gpdb::CloseRelation(table); // close relation as early as possible
 
@@ -1284,7 +1285,7 @@ CTranslatorRelcacheToDXL::RetrievePartTableIndex
 	
 	Relation index_rel = gpdb::GetRelation(index_oid);
 
-	if (NULL == index_rel)
+	if (!index_rel)
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, mdid_index->GetBuffer());
 	}
@@ -2267,7 +2268,7 @@ CTranslatorRelcacheToDXL::RetrieveRelStats
 	OID rel_oid = CMDIdGPDB::CastMdid(mdid_rel)->Oid();
 
 	Relation rel = gpdb::GetRelation(rel_oid);
-	if (NULL == rel)
+	if (!rel)
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, mdid->GetBuffer());
 	}
@@ -2338,10 +2339,6 @@ CTranslatorRelcacheToDXL::RetrieveColStats
 	OID rel_oid = CMDIdGPDB::CastMdid(mdid_rel)->Oid();
 
 	Relation rel = gpdb::GetRelation(rel_oid);
-	if (NULL == rel)
-	{
-		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, mdid->GetBuffer());
-	}
 
 	const IMDRelation *md_rel = md_accessor->RetrieveRel(mdid_rel);
 	const IMDColumn *md_col = md_rel->GetMdCol(pos);
