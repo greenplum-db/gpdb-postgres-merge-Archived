@@ -85,7 +85,8 @@ $query$ AS qry \gset
 EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
+DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
+WARNING:  relcache reference leak: relation "lp" not closed
                 QUERY PLAN                 
 -------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -99,7 +100,8 @@ DETAIL:  Feature not supported: list or hash partitioning
 
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
+DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
+WARNING:  relcache reference leak: relation "lp" not closed
  a | b 
 ---+---
 (0 rows)
@@ -111,22 +113,22 @@ WHERE b = 42
 $query$ AS qry \gset
 EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
-INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
-                QUERY PLAN                 
--------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   Output: lp2.a, lp2.b
-   ->  Seq Scan on orca_static_pruning.lp2
-         Output: lp2.a, lp2.b
-         Filter: (lp2.b = 42)
- Optimizer: Postgres query optimizer
+   Output: a, b
+   ->  Sequence
+         Output: a, b
+         ->  Result
+         ->  Dynamic Seq Scan on orca_static_pruning.lp
+               Output: a, b
+               Number of partitions to scan: 1 
+               Filter: (lp.b = 42)
+ Optimizer: Pivotal Optimizer (GPORCA)
  Settings: optimizer=on
-(7 rows)
+(11 rows)
 
 :qry ;
-INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
  a  | b  
 ----+----
  42 | 42
@@ -150,7 +152,7 @@ $query$ AS qry \gset
 EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
+DETAIL:  Feature not supported: hash partitioning
                 QUERY PLAN                 
 -------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -164,7 +166,7 @@ DETAIL:  Feature not supported: list or hash partitioning
 
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: list or hash partitioning
+DETAIL:  Feature not supported: hash partitioning
  a | b  
 ---+----
  0 | 42
