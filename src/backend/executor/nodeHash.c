@@ -744,9 +744,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * does not allow for any palloc overhead.  The manipulations of spaceUsed
 	 * don't count palloc overhead either.
 	 */
-	tupsize = HJTUPLE_OVERHEAD +
-		MAXALIGN(SizeofMinimalTupleHeader) +
-		MAXALIGN(tupwidth);
+	tupsize = ExecHashRowSize(tupwidth);
 	inner_rel_bytes = ntuples * tupsize;
 
 	/*
