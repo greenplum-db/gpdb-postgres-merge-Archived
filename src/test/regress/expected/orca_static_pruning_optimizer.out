@@ -16,22 +16,24 @@ $query$ AS qry \gset
 SET optimizer_trace_fallback TO on;
 EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
-                       QUERY PLAN                       
---------------------------------------------------------
+INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
+WARNING:  relcache reference leak: relation "rp" not closed
+                QUERY PLAN                 
+-------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   Output: a, b, c
-   ->  Sequence
-         Output: a, b, c
-         ->  Result
-         ->  Dynamic Seq Scan on orca_static_pruning.rp
-               Output: a, b, c
-               Number of partitions to scan: 1 
-               Filter: (rp.b > 4200)
- Optimizer: Pivotal Optimizer (GPORCA)
+   Output: rp2.a, rp2.b, rp2.c
+   ->  Seq Scan on orca_static_pruning.rp2
+         Output: rp2.a, rp2.b, rp2.c
+         Filter: (rp2.b > 4200)
+ Optimizer: Postgres query optimizer
  Settings: optimizer=on
-(11 rows)
+(7 rows)
 
 :qry ;
+INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
+WARNING:  relcache reference leak: relation "rp" not closed
   a   |  b   | c 
 ------+------+---
  4201 | 4201 | 0
