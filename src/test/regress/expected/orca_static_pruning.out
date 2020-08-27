@@ -55,6 +55,29 @@ EXPLAIN (COSTS OFF, VERBOSE)
  4201 | 4201 | 0
 (1 row)
 
+SELECT $query$
+SELECT *
+FROM rp
+WHERE b IN (4201, 4200)
+$query$ AS qry \gset
+EXPLAIN (COSTS OFF, VERBOSE)
+:qry ;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: rp2.a, rp2.b, rp2.c
+   ->  Seq Scan on orca_static_pruning.rp2
+         Output: rp2.a, rp2.b, rp2.c
+         Filter: (rp2.b = ANY ('{4201,4200}'::integer[]))
+ Optimizer: Postgres query optimizer
+(6 rows)
+
+:qry ;
+  a   |  b   | c 
+------+------+---
+ 4201 | 4201 | 0
+(1 row)
+
 RESET optimizer_trace_fallback;
 CREATE TABLE lp (a int, b int) DISTRIBUTED BY (a) PARTITION BY LIST (b);
 CREATE TABLE lp0 PARTITION OF lp FOR VALUES IN (0, 1);
