@@ -1854,6 +1854,9 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 							  hashtable->bfCxt);
 	}
 
+	if (shouldFree)
+		heap_free_minimal_tuple(tuple);
+
 	return (batchno == hashtable->curbatch);
 }
 
