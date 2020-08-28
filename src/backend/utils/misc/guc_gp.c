@@ -1494,7 +1494,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&coredump_on_memerror,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 	{
