@@ -2550,7 +2550,7 @@ gpdb::GetLogicalIndexInfo
 }
 #endif
 
-Relation
+gpdb::RelationWrapper
 gpdb::GetRelation
 	(
 	Oid rel_oid
@@ -2559,10 +2559,9 @@ gpdb::GetRelation
 	GP_WRAP_START;
 	{
 		/* catalog tables: relcache */
-		return RelationIdGetRelation(rel_oid);
+		return RelationWrapper{RelationIdGetRelation(rel_oid)};
 	}
 	GP_WRAP_END;
-	return NULL;
 }
 
 ExtTableEntry *

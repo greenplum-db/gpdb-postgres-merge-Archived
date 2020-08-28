@@ -3152,13 +3152,12 @@ CTranslatorQueryToDXL::NoteDistributionPolicyOpclasses
 	// ones, for all hashing within the query.
 	if (rte->rtekind == RTE_RELATION)
 	{
-		Relation rel = gpdb::GetRelation(rte->relid);
+		gpdb::RelationWrapper rel = gpdb::GetRelation(rte->relid);
 		GpPolicy *policy = rel->rd_cdbpolicy;
 
 		// master-only tables
 		if (NULL == policy)
 		{
-			gpdb::CloseRelation(rel);
 			return;
 		}
 
@@ -3193,7 +3192,6 @@ CTranslatorQueryToDXL::NoteDistributionPolicyOpclasses
 					contains_nondefault_hashops = true;
 			}
 		}
-		gpdb::CloseRelation(rel);
 
 		if (contains_nondefault_hashops)
 		{

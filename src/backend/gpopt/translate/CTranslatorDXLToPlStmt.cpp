@@ -3331,8 +3331,8 @@ PartitionPruneInfoFromPartitionSelector(
 	auto dxl_part_selector = dynamic_cast<CDXLPhysicalPartitionSelector *>(
 		partition_selector_dxlnode->GetOperator());
 	auto oid = dynamic_cast<CMDIdGPDB *>(dxl_part_selector->GetRelMdId())->Oid();
-	auto relation = gpdb::GetRelation(oid);
-	if (!IsOneLevelPartitioned(relation))
+	gpdb::RelationWrapper relation = gpdb::GetRelation(oid);
+	if (!IsOneLevelPartitioned(relation.get()))
 		GPOS_RAISE(
 			gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
 			GPOS_WSZ_LIT("multi-level partitioned tables"));
@@ -3367,7 +3367,6 @@ PartitionPruneInfoFromPartitionSelector(
 	pinfo->exec_pruning_steps = PartPruneStepsFromEqFilters(
 		eq_filters, relation->rd_partkey->partsupfunc[0].fn_oid,
 		translator_dxl_to_scalar, md_accessor);
-	gpdb::CloseRelation(relation);
 
 	auto part_prune_info = MakeNode(PartitionPruneInfo);
 	part_prune_info->prune_infos = ListMake1(ListMake1(pinfo));
