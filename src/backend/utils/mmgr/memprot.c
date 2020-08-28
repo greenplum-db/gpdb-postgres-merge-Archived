@@ -469,6 +469,9 @@ static void *gp_malloc_internal(int64 requested_size)
  */
 void *gp_malloc(int64 sz)
 {
+	if (sz == 8388616)
+		debug_backtrace();
+
 	Assert(!gp_mp_inited || MemoryProtection_IsOwnerThread());
 
 	void *ret;
