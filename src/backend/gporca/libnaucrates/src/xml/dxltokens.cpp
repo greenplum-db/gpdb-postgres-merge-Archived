@@ -499,7 +499,6 @@ CDXLTokens::Init
 			{EdxltokenRelStorageAppendOnlyParquet, GPOS_WSZ_LIT("AppendOnly, Parquet")},
 			{EdxltokenRelStorageVirtual, GPOS_WSZ_LIT("Virtual")},
 			{EdxltokenRelStorageExternal, GPOS_WSZ_LIT("External")},
-			{EdxltokenRelStorageSentinel, GPOS_WSZ_LIT("Sentinel")},
 			
 			{EdxltokenRelDistrPolicy, GPOS_WSZ_LIT("DistributionPolicy")},
 			{EdxltokenRelDistrMasterOnly, GPOS_WSZ_LIT("MasterOnly")},

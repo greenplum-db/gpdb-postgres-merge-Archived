@@ -4006,11 +4006,6 @@ CDXLOperatorFactory::ParseRelationStorageType
 	{
 		return IMDRelation::ErelstorageVirtual;
 	}
-
-	if (0 == XMLString::compareString(xml_val, CDXLTokens::XmlstrToken(EdxltokenRelStorageSentinel)))
-	{
-		return IMDRelation::ErelstorageSentinel;
-	}
 	
 	GPOS_ASSERT(!"Unrecognized storage type");
 	

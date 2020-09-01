@@ -462,7 +462,6 @@ namespace gpdxl
 		EdxltokenRelStorageAppendOnlyParquet,
 		EdxltokenRelStorageVirtual,
 		EdxltokenRelStorageExternal,
-		EdxltokenRelStorageSentinel,
 		
 		EdxltokenPartKeys,
 		EdxltokenPartTypes,
