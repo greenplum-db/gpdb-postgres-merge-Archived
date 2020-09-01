@@ -2525,6 +2525,7 @@ insert into t55 select i, i from generate_series(1, 1000) i;
 
 set optimizer_join_order = query;
 
+-- force_explain
 explain verbose
 CREATE TABLE TP AS
 WITH META AS (SELECT '2020-01-01' AS VALID_DT, '99' AS LOAD_ID)

@@ -603,5 +603,6 @@ create index on pt (ptid, sk);
 
 set enable_mergejoin=on;
 
+-- force_explain
 explain (analyze, timing off, summary off)
 select * from pt, t where t.dist = pt.dist and t.tid = pt.ptid order by t.tid, t.sk;

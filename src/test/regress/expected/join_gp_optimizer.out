@@ -1139,6 +1139,7 @@ drop table t_joinsize_3;
 -- test if subquery locus is general, then
 -- we should keep it general
 create table t_randomly_dist_table(c int) distributed randomly;
+-- force_explain
 -- the following plan should not contain redistributed motion (for planner)
 explain
 select * from (
