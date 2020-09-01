@@ -74,6 +74,8 @@ IMDRelation::GetStorageTypeStr
 			return CDXLTokens::GetDXLTokenStr(EdxltokenRelStorageExternal);
 		case ErelstorageVirtual:
 			return CDXLTokens::GetDXLTokenStr(EdxltokenRelStorageVirtual);
+		case ErelstorageSentinel:
+			return CDXLTokens::GetDXLTokenStr(EdxltokenRelStorageSentinel);
 		default:
 			return NULL;
 	}
