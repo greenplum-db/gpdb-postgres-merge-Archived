@@ -3179,7 +3179,7 @@ CTranslatorRelcacheToDXL::RetrieveRelStorageType
 			}
 			break;
 		default:
-			GPOS_ASSERT(!"Unsupported relation type");
+			GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Unsupported table AM"));
 	}
 
 	return rel_storage_type;
