@@ -2308,8 +2308,7 @@ SELECT COUNT(*) FROM dml_heap_s;
 (1 row)
 
 DELETE FROM dml_heap_s WHERE a = (SELECT dml_heap_r.a FROM dml_heap_r,dml_heap_s WHERE dml_heap_r.a = dml_heap_s.a);
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT COUNT(*) FROM dml_heap_s;
  count 
 -------
@@ -2613,8 +2612,7 @@ SELECT COUNT(*) FROM dml_heap_pt_s;
 (1 row)
 
 DELETE FROM dml_heap_pt_s WHERE a = (SELECT dml_heap_pt_r.a FROM dml_heap_pt_r,dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.a);
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT COUNT(*) FROM dml_heap_pt_s;
  count 
 -------
@@ -3144,7 +3142,7 @@ SELECT SUM(a) FROM dml_heap_pt_r;
 (1 row)
 
 UPDATE dml_heap_pt_r SET a = dml_heap_pt_r.a + 1 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.a;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg0 127.0.0.1:7002 pid=93168)
 SELECT SUM(a) FROM dml_heap_pt_r;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
@@ -3216,7 +3214,7 @@ SELECT DISTINCT(b) FROM dml_heap_pt_s ORDER BY 1 LIMIT 1;
 (1 row)
 
 UPDATE dml_heap_pt_r SET a = (SELECT DISTINCT(b) FROM dml_heap_pt_s ORDER BY 1 LIMIT 1) FROM dml_heap_pt_s WHERE dml_heap_pt_r.b = dml_heap_pt_s.a;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg1 127.0.0.1:7003 pid=93169)
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE a = 1;
  count 
 -------
@@ -3276,7 +3274,7 @@ SELECT dml_heap_pt_s.a ,dml_heap_pt_s.b,'z' FROM dml_heap_pt_r,dml_heap_pt_s WHE
 
 ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
 UPDATE dml_heap_pt_r SET (a,b,c) = (dml_heap_pt_s.a ,dml_heap_pt_s.b,'z') FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 1= dml_heap_pt_s.b;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg2 127.0.0.1:7004 pid=93170)
 SELECT * FROM dml_heap_pt_r WHERE c='z' ORDER BY 1 LIMIT 1;
  a | b | c | d 
 ---+---+---+---
@@ -3293,7 +3291,7 @@ ALTER TABLE dml_heap_pt_r DROP DEFAULT partition;
 begin;
 PREPARE plan_upd as UPDATE dml_heap_pt_r SET a = dml_heap_pt_s.a +1 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b ;
 EXECUTE plan_upd;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg1 127.0.0.1:7003 pid=93169)
 rollback;
 --Update and case
 begin;
@@ -3319,8 +3317,7 @@ SELECT SUM(a) FROM dml_heap_pt_r;
 (1 row)
 
 UPDATE dml_heap_pt_r SET a = ( SELECT DISTINCT(b) FROM dml_heap_pt_s ) FROM dml_heap_pt_s WHERE dml_heap_pt_r.b = dml_heap_pt_s.a;
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT SUM(a) FROM dml_heap_pt_r;
  sum  
 ------
@@ -3335,8 +3332,7 @@ SELECT SUM(b) FROM dml_heap_pt_r;
 (1 row)
 
 UPDATE dml_heap_pt_r SET b = (SELECT dml_heap_pt_r.b FROM dml_heap_pt_r,dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.a );
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT SUM(b) FROM dml_heap_pt_r;
   sum  
 -------
@@ -3368,7 +3364,7 @@ SELECT SUM(a) FROM dml_heap_pt_r;
 (1 row)
 
 UPDATE dml_heap_pt_r SET a = dml_heap_pt_r.b+1 FROM dml_heap_pt_p,dml_heap_pt_s WHERE dml_heap_pt_r.b = dml_heap_pt_s.b and dml_heap_pt_r.a = dml_heap_pt_p.b+1;
-ERROR:  cross-partition or multi-update to a row  (seg0 10.34.53.37:25432 pid=9227)
+ERROR:  multiple updates to a row by the same query is not allowed  (seg0 127.0.0.1:7002 pid=93168)
 SELECT SUM(a) FROM dml_heap_pt_r;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
@@ -3799,7 +3795,9 @@ SELECT COUNT(*) FROM dml_heap_r WHERE c ='n';
 (1 row)
 
 UPDATE dml_heap_r SET a = generate_series(1,10), c ='n';
-ERROR:  cross-partition or multi-update to a row
+ERROR:  set-returning functions are not allowed in UPDATE
+LINE 1: UPDATE dml_heap_r SET a = generate_series(1,10), c ='n';
+                                  ^
 SELECT COUNT(*) FROM dml_heap_r WHERE c ='n';
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 SELECT SUM(a) FROM dml_heap_r WHERE a = 1;
@@ -3866,7 +3864,7 @@ SELECT COUNT(*) FROM dml_heap_s WHERE b = (SELECT COUNT(*) FROM dml_heap_s);
 (1 row)
 
 UPDATE dml_heap_s SET b = (SELECT COUNT(*) FROM dml_heap_s) FROM dml_heap_r WHERE dml_heap_r.a = dml_heap_s.b;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg2 127.0.0.1:7004 pid=93170)
 SELECT COUNT(*) FROM dml_heap_s WHERE b = (SELECT COUNT(*) FROM dml_heap_s);
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
@@ -3935,7 +3933,7 @@ SELECT dml_heap_s.a ,dml_heap_s.b,'z' FROM dml_heap_r,dml_heap_s WHERE dml_heap_
 (1 row)
 
 UPDATE dml_heap_r SET (a,b,c) = (dml_heap_s.a ,dml_heap_s.b,'z') FROM dml_heap_s WHERE dml_heap_r.a = dml_heap_s.b;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg2 127.0.0.1:7004 pid=93170)
 SELECT * FROM dml_heap_r WHERE c='z' ORDER BY 1 LIMIT 1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 SELECT COUNT(*) FROM dml_heap_r WHERE c='z';
@@ -3945,7 +3943,7 @@ rollback;
 begin;
 PREPARE plan_upd_2 as UPDATE dml_heap_r SET a = dml_heap_s.a +1 FROM dml_heap_s WHERE dml_heap_r.a = dml_heap_s.b ;
 EXECUTE plan_upd_2;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg1 127.0.0.1:7003 pid=93169)
 rollback;
 --Update and case
 begin;
@@ -3970,9 +3968,11 @@ SELECT SUM(a) FROM dml_heap_r;
  5106
 (1 row)
 
+-- start_ignore
+GPDB_12_MERGE_FIXME: Unsupported exec location fallback
+-- end_ignore
 UPDATE dml_heap_r SET a = ( SELECT DISTINCT(b) FROM dml_heap_s ) FROM dml_heap_s WHERE dml_heap_r.b = dml_heap_s.a;
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT SUM(a) FROM dml_heap_r;
  sum  
 ------
@@ -3987,8 +3987,7 @@ SELECT SUM(b) FROM dml_heap_r;
 (1 row)
 
 UPDATE dml_heap_r SET b = (SELECT dml_heap_r.b FROM dml_heap_r,dml_heap_s WHERE dml_heap_r.a = dml_heap_s.a );
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT SUM(b) FROM dml_heap_r;
  sum  
 ------
@@ -4022,7 +4021,7 @@ SELECT SUM(a) FROM dml_heap_v;
 (1 row)
 
 UPDATE dml_heap_v SET a = dml_heap_u.a FROM dml_heap_u WHERE dml_heap_u.b = dml_heap_v.b;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg2 127.0.0.1:7004 pid=82404)
 SELECT SUM(a) FROM dml_heap_v;
  sum 
 -----
@@ -4031,7 +4030,7 @@ SELECT SUM(a) FROM dml_heap_v;
 
 --Update with joins on multiple table
 UPDATE dml_heap_r SET a = dml_heap_r.b+1 FROM dml_heap_p,dml_heap_s WHERE dml_heap_r.b = dml_heap_s.b and dml_heap_r.a = dml_heap_p.b+1;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg0 127.0.0.1:7002 pid=82402)
 --Update on table with composite distribution key
 UPDATE dml_heap_p SET a = dml_heap_p.b % 2 FROM dml_heap_r WHERE dml_heap_p.b::int = dml_heap_r.b::int and dml_heap_p.a = dml_heap_r.a;
 --Update on table with composite distribution key

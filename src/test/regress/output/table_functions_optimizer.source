@@ -311,8 +311,7 @@ ERROR:  subquery must return only one column
 LINE 1: SELECT scalar_1((select 1, 2));
                         ^
 SELECT scalar_1((select 1 union select 2));  -- subquery returns multiple rows
-ERROR:  one or more assertions failed
-DETAIL:  Expected no more than one row to be returned by expression
+ERROR:  more than one row returned by a subquery used as an expression
 SELECT scalar_1(TABLE(select 1));  -- TableValue expression does not match type
 ERROR:  function scalar_1(anytable) does not exist
 LINE 1: SELECT scalar_1(TABLE(select 1));
@@ -2985,11 +2984,11 @@ SELECT extract(day from "time") FROM project( TABLE( SELECT * FROM history ), 2)
 
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
   CASE 1 WHEN 2 THEN 1 ELSE GREATEST(1, COALESCE(1+1)) END);
-     amname      
------------------
+  amname   
+-----------
  heap
- appendoptimized
- aoco
+ ao_row
+ ao_column
  btree
  hash
  gist
@@ -3001,11 +3000,11 @@ SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
 
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ),
   CASE WHEN 3 IS NOT NULL AND 1 IN (1, 2) THEN floor(NULLIF(2, 3))::int END);
-     amname      
------------------
+  amname   
+-----------
  heap
- appendoptimized
- aoco
+ ao_row
+ ao_column
  btree
  hash
  gist
