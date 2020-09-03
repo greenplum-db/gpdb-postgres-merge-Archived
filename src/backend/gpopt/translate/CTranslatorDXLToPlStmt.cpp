@@ -3323,7 +3323,6 @@ PartPruneStepsFromEqFilters(CDXLNode *eq_values, Oid supportfnoid,
 // Given a DXL Partition Selector, construct a PartitionPruneInfo
 // the pruning steps contained in the part_prune_info should be based on the
 // filter and eqFilter of the partition selector
-// XXX: currently the returned structure is almost completely hardcoded and made up
 static std::tuple<ULONG, PartitionPruneInfo *, List *>
 PartitionPruneInfoFromPartitionSelector(
 	const CDXLNode *partition_selector_dxlnode, CMDAccessor *md_accessor,
@@ -3346,7 +3345,8 @@ PartitionPruneInfoFromPartitionSelector(
 	if (!has_trivial_filters)
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion,
 				   GPOS_WSZ_LIT("non-trivial part filter"));
-	GPOS_ASSERT(!has_trivial_eq_filters);
+	if (has_trivial_eq_filters && has_trivial_filters)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXL2PlStmtConversion, GPOS_WSZ_LIT("trivial eq filter"));
 
 	PartitionedRelPruneInfo *pinfo = MakeNode(PartitionedRelPruneInfo);
 
@@ -3364,7 +3364,6 @@ PartitionPruneInfoFromPartitionSelector(
 	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts,
 			  pinfo->relid_map);
 
-	GPOS_ASSERT(!has_trivial_eq_filters);
 	pinfo->exec_pruning_steps = PartPruneStepsFromEqFilters(
 		eq_filters, relation->rd_partkey->partsupfunc[0].fn_oid,
 		translator_dxl_to_scalar, md_accessor);
