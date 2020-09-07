@@ -118,20 +118,7 @@ GetContentIdsFromPlanForSingleRelation(PlannerInfo *root, Plan *plan, int rangeT
 	if (rte->rtekind == RTE_RELATION)
 	{
 		/* Get a copy of the rel's GpPolicy from the relcache. */
-		/*
-		 * GPDB_12_MERGE_FIXME:
-		 *
-		 * Before the merge, we used NoLock here, but the merge introduced
-		 * assertions into relation_open() that check that if it's called
-		 * with NoLock, the backend must already hold a lock. We were
-		 * hitting that assertion in the 'create_table_like' regression test,
-		 * when selecting from a table with an inheritance parent. I don't
-		 * understand why; we really should be holding a lock on all
-		 * tables being referenced by the plan, since we're still in the
-		 * planner. Investigate, fix, and revert this to NoLock.
-		 * Also change back the equivelant relation_close() call further down.
-		 */
-		relation = relation_open(rte->relid, AccessShareLock /* Was: NoLock */);
+		relation = relation_open(rte->relid, NoLock);
 		policy = relation->rd_cdbpolicy;
 
 		if (policy != NULL)
@@ -274,8 +261,7 @@ GetContentIdsFromPlanForSingleRelation(PlannerInfo *root, Plan *plan, int rangeT
 
 	if (rte->rtekind == RTE_RELATION)
 	{
-		/* GPDB_12_MERGE_FIXME: don't forget to change this also back to NoLock */
-		relation_close(relation, AccessShareLock);
+		relation_close(relation, NoLock);
 	}
 
 	result.haveProcessedAnyCalculations = true;
