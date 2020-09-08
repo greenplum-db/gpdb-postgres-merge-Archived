@@ -32,14 +32,13 @@ SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
 
 SET enable_bitmapscan TO off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                    QUERY PLAN                    
---------------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Index Scan using tbl_gist_idx on tbl_gist
-         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+   ->  Seq Scan on tbl_gist
          Filter: (c4 <@ '(10,10),(1,1)'::box)
  Optimizer: Pivotal Optimizer (GPORCA)
-(5 rows)
+(4 rows)
 
 SET enable_bitmapscan TO default;
 DROP TABLE tbl_gist;
@@ -72,14 +71,13 @@ SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
 
 SET enable_bitmapscan TO off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                    QUERY PLAN                    
---------------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Index Scan using tbl_gist_idx on tbl_gist
-         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+   ->  Seq Scan on tbl_gist
          Filter: (c4 <@ '(10,10),(1,1)'::box)
  Optimizer: Pivotal Optimizer (GPORCA)
-(5 rows)
+(4 rows)
 
 SET enable_bitmapscan TO default;
 DROP TABLE tbl_gist;
@@ -173,14 +171,13 @@ DETAIL:  Key (c4)=((4,5),(2,3)) conflicts with existing key (c4)=((2,3),(1,2)).
 INSERT INTO tbl_gist SELECT x, 2*x, 3*x, box(point(3*x,2*x),point(3*x+1,2*x+1)) FROM generate_series(1,10) AS x;
 set enable_seqscan=off;
 EXPLAIN  (costs off) SELECT * FROM tbl_gist where c4 <@ box(point(1,1),point(10,10));
-                          QUERY PLAN                          
---------------------------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Index Scan using tbl_gist_c4_c1_c2_c3_excl on tbl_gist
-         Index Cond: (c4 <@ '(10,10),(1,1)'::box)
+   ->  Seq Scan on tbl_gist
          Filter: (c4 <@ '(10,10),(1,1)'::box)
  Optimizer: Pivotal Optimizer (GPORCA)
-(5 rows)
+(4 rows)
 
 \d tbl_gist
               Table "public.tbl_gist"
