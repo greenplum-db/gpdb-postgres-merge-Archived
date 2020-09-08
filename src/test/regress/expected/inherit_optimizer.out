@@ -1926,13 +1926,16 @@ explain (costs off) select * from list_parted where a = 'ab' or a in (null, 'cd'
 (4 rows)
 
 explain (costs off) select * from list_parted where a = 'ab';
-                QUERY PLAN                
-------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)
-   ->  Seq Scan on part_ab_cd
-         Filter: ((a)::text = 'ab'::text)
- Optimizer: Postgres query optimizer
-(4 rows)
+                   QUERY PLAN                   
+------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on list_parted
+               Number of partitions to scan: 1 
+               Filter: ((a)::text = 'ab'::text)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 create table range_list_parted (
 	a	int,
