@@ -56,22 +56,28 @@ explain (costs off) select * from lp where a > 'a' and a <= 'd';
 (9 rows)
 
 explain (costs off) select * from lp where a = 'a';
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Seq Scan on lp_ad
-         Filter: (a = 'a'::bpchar)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on lp
+               Number of partitions to scan: 1 
+               Filter: (a = 'a'::bpchar)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 explain (costs off) select * from lp where 'a' = a;	/* commuted */
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Seq Scan on lp_ad
-         Filter: ('a'::bpchar = a)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on lp
+               Number of partitions to scan: 1 
+               Filter: (a = 'a'::bpchar)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 explain (costs off) select * from lp where a is not null;
                 QUERY PLAN                
@@ -720,11 +726,12 @@ explain (costs off) select * from rlp where a > 1 and a >=15;	/* rlp3 onwards, i
 (25 rows)
 
 explain (costs off) select * from rlp where a = 1 and a = 3;	/* empty */
-        QUERY PLAN        
---------------------------
+              QUERY PLAN               
+---------------------------------------
  Result
    One-Time Filter: false
-(2 rows)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(3 rows)
 
 explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 15);
                                QUERY PLAN                                
@@ -1180,13 +1187,16 @@ explain (costs off) select * from boolpart where a in (true, false);
 (7 rows)
 
 explain (costs off) select * from boolpart where a = false;
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  Seq Scan on boolpart_f
-         Filter: (NOT a)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on boolpart
+               Number of partitions to scan: 1 
+               Filter: (NOT a)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 explain (costs off) select * from boolpart where not a = false;
                 QUERY PLAN                
@@ -1219,11 +1229,12 @@ explain (costs off) select * from boolpart where a is not true;
 (4 rows)
 
 explain (costs off) select * from boolpart where a is not true and a is not false;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
    One-Time Filter: false
-(2 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 explain (costs off) select * from boolpart where a is unknown;
                 QUERY PLAN                
@@ -1498,11 +1509,12 @@ explain (costs off) select * from lp where a <> 'a';
 
 -- ensure we detect contradictions in clauses; a can't be NULL and NOT NULL.
 explain (costs off) select * from lp where a <> 'a' and a is null;
-        QUERY PLAN        
---------------------------
+              QUERY PLAN               
+---------------------------------------
  Result
    One-Time Filter: false
-(2 rows)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(3 rows)
 
 explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
                                      QUERY PLAN                                     
@@ -1607,22 +1619,28 @@ create table lparted_by_int2 (a smallint) partition by list (a);
 create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
 create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
 explain (costs off) select * from lparted_by_int2 where a = 100000000000000;
-        QUERY PLAN        
---------------------------
- Result
-   One-Time Filter: false
-(2 rows)
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on lparted_by_int2
+               Number of partitions to scan: 1 
+               Filter: (a = '100000000000000'::bigint)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 create table rparted_by_int2 (a smallint) partition by range (a);
 create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
 create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
 -- all partitions pruned
 explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
    One-Time Filter: false
-(2 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
 -- all partitions but rparted_by_int2_maxvalue pruned
@@ -2108,13 +2126,16 @@ begin;
 create function list_part_fn(int) returns int as $$ begin return $1; end;$$ language plpgsql stable;
 -- Ensure pruning works using a stable function containing no Vars
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
-   ->  Seq Scan on list_part1 (actual rows=1 loops=1)
-         Filter: (a = 1)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence (actual rows=1 loops=1)
+         ->  Result (actual rows=1 loops=1)
+         ->  Dynamic Seq Scan on list_part (actual rows=1 loops=1)
+               Number of partitions to scan: 1 
+               Filter: (a = 1)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 -- Ensure pruning does not take place when the function has a Var parameter
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
@@ -3466,11 +3487,12 @@ select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
   where a = any(array['2010-02-01', '2020-01-01']::timestamp[]);
-           QUERY PLAN           
---------------------------------
+             QUERY PLAN              
+-------------------------------------
  Result (actual rows=0 loops=1)
    One-Time Filter: false
-(2 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
@@ -3804,11 +3826,12 @@ explain (costs off) select * from pp_arrpart where a = '{1}';
 (4 rows)
 
 explain (costs off) select * from pp_arrpart where a = '{1, 2}';
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
    One-Time Filter: false
-(2 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
                                  QUERY PLAN                                 
@@ -3959,13 +3982,16 @@ create table pp_lp (a int, value int) partition by list (a);
 create table pp_lp1 partition of pp_lp for values in(1);
 create table pp_lp2 partition of pp_lp for values in(2);
 explain (costs off) select * from pp_lp where a = 1;
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Seq Scan on pp_lp1
-         Filter: (a = 1)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on pp_lp
+               Number of partitions to scan: 1 
+               Filter: (a = 1)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 explain (costs off) update pp_lp set value = 10 where a = 1;
         QUERY PLAN        
@@ -3988,15 +4014,15 @@ explain (costs off) delete from pp_lp where a = 1;
 set enable_partition_pruning = off;
 set constraint_exclusion = 'partition'; -- this should not affect the result.
 explain (costs off) select * from pp_lp where a = 1;
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Append
-         ->  Seq Scan on pp_lp1
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on pp_lp
+               Number of partitions to scan: 1 
                Filter: (a = 1)
-         ->  Seq Scan on pp_lp2
-               Filter: (a = 1)
- Optimizer: Postgres query optimizer
+ Optimizer: Pivotal Optimizer (GPORCA)
 (7 rows)
 
 explain (costs off) update pp_lp set value = 10 where a = 1;
@@ -4025,15 +4051,15 @@ explain (costs off) delete from pp_lp where a = 1;
 
 set constraint_exclusion = 'off'; -- this should not affect the result.
 explain (costs off) select * from pp_lp where a = 1;
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Append
-         ->  Seq Scan on pp_lp1
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on pp_lp
+               Number of partitions to scan: 1 
                Filter: (a = 1)
-         ->  Seq Scan on pp_lp2
-               Filter: (a = 1)
- Optimizer: Postgres query optimizer
+ Optimizer: Pivotal Optimizer (GPORCA)
 (7 rows)
 
 explain (costs off) update pp_lp set value = 10 where a = 1;
@@ -4142,13 +4168,16 @@ explain (costs off) select * from pp_temp_parent where true;
 (5 rows)
 
 explain (costs off) select * from pp_temp_parent where a = 2;
-                QUERY PLAN                
-------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
-   ->  Seq Scan on pp_temp_part_def
-         Filter: (a = 2)
- Optimizer: Postgres query optimizer
-(4 rows)
+   ->  Sequence
+         ->  Result
+         ->  Dynamic Seq Scan on pp_temp_parent
+               Number of partitions to scan: 1 
+               Filter: (a = 2)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(7 rows)
 
 drop table pp_temp_parent;
 -- Stress run-time partition pruning a bit more, per bug reports
