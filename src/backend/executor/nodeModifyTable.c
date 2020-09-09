@@ -801,7 +801,6 @@ ExecDelete(ModifyTableState *mtstate,
 	 */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_delete_before_row &&
-		planGen == PLANGEN_PLANNER &&
 		!splitUpdate)
 	{
 		bool		dodelete;
