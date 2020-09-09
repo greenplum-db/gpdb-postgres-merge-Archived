@@ -3251,7 +3251,7 @@ ALTER TABLE dml_heap_pt_r ADD DEFAULT partition def;
 -- processing.
 SAVEPOINT sp1;
 UPDATE dml_heap_pt_r SET a = dml_heap_pt_s.a + 10 ,b = NULL FROM dml_heap_pt_s WHERE dml_heap_pt_r.a + 2= dml_heap_pt_s.b;
-ERROR:  cross-partition or multi-update to a row
+ERROR:  multiple updates to a row by the same query is not allowed  (seg0 127.0.1.1:7002 pid=99068)
 SELECT * FROM dml_heap_pt_r WHERE a = 11 ORDER BY 1,2;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 SELECT COUNT(*) FROM dml_heap_pt_r WHERE b is NULL;
@@ -3373,7 +3373,6 @@ rollback;
 -- produce plans that update distribution key columns.
 begin;
 UPDATE dml_heap_pt_p SET a = dml_heap_pt_p.b % 2 FROM dml_heap_pt_r WHERE dml_heap_pt_p.b::int = dml_heap_pt_r.b::int and dml_heap_pt_p.a = dml_heap_pt_r.a and dml_heap_pt_p.b = 63;
-ERROR:  moving tuple from partition "dml_heap_pt_p_1_prt_def" to partition "dml_heap_pt_p_1_prt_one" not supported  (seg0 10.152.10.75:25432 pid=19629)
 rollback;
 --Update on table with composite distribution key
 begin;
