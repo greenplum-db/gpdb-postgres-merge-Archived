@@ -493,15 +493,12 @@ QUERY PLAN
           "Parallel Aware": false,
           "Plans": [
             {
-              "Node Type": "Partition Selector",
+              "Node Type": "Result",
               "Parent Relationship": "Member",
               "Slice": 1,
               "Segments": 1,
               "Gang Type": "primary reader",
-              "Parallel Aware": false,
-              "Relation": "jsonexplaintest",
-              "Dynamic Scan Id": 1,
-              "Partitions selected": "1 (out of 2)"
+              "Parallel Aware": false
             },
             {
               "Node Type": "Dynamic Seq Scan",
@@ -512,7 +509,7 @@ QUERY PLAN
               "Parallel Aware": false,
               "Relation Name": "jsonexplaintest",
               "Alias": "jsonexplaintest",
-              "Dynamic Scan Id": 1,
+              "Number of partitions to scan": 1,
               "Filter": "(i = 2)"
             }
           ]

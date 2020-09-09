@@ -1661,7 +1661,8 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL UNION SELECT NULL)::numeric;
-ERROR:  no partition for partitioning key  (seg0 sdw1:35511 pid=6757)
+ERROR:  no partition of relation "dml_union_s" found for row  (seg1 127.0.0.1:7003 pid=7112)
+DETAIL:  Partition key of the failing row contains (d) = (null).
 --SELECT DISTINCT(d) FROM dml_union_s;
 --SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 rollback;
@@ -1675,7 +1676,8 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL INTERSECT SELECT NULL)::numeric; 
-ERROR:  no partition for partitioning key  (seg1 sdw1:35512 pid=6983)
+ERROR:  no partition of relation "dml_union_s" found for row  (seg1 127.0.0.1:7003 pid=7112)
+DETAIL:  Partition key of the failing row contains (d) = (null).
 --SELECT DISTINCT(d) FROM dml_union_s;
 --SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 rollback;
@@ -1689,7 +1691,8 @@ SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 (1 row)
 
 UPDATE dml_union_s SET d = (SELECT NULL EXCEPT SELECT NULL)::numeric; 
-ERROR:  no partition for partitioning key  (seg0 sdw1:35511 pid=7201)
+ERROR:  no partition of relation "dml_union_s" found for row  (seg1 127.0.0.1:7003 pid=7112)
+DETAIL:  Partition key of the failing row contains (d) = (null).
 --SELECT DISTINCT(d) FROM dml_union_s;
 --SELECT COUNT(DISTINCT(d)) FROM dml_union_s;
 rollback;

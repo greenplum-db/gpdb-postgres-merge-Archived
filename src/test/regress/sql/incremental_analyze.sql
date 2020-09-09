@@ -1,3 +1,7 @@
+-- start_matchsubs
+-- m/^LOG.*PartitionSelector/
+-- s/^LOG.*PartitionSelector/PartitionSelector/
+-- end_matchsubs
 -- start_ignore
 DROP DATABASE IF EXISTS incrementalanalyze;
 CREATE DATABASE incrementalanalyze;
