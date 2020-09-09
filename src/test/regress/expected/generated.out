@@ -703,18 +703,27 @@ SELECT * FROM gtest26 ORDER BY a;
 -- when there's an update trigger on it. Secondly, the INFO messages from the
 -- triggers that run on different segments arrive in random order. To fix
 -- these issues, drop the primary key, and force all the rows to reside on
--- the same segment.
+-- the same segment. Only confirm data in a single segment is not enough for
+-- the case to be soild, we have to make sure the tuple's order is the same.
+-- However, "set distributed by" cannot gurantee this because the tuple order
+-- from interconnect is not always the same. To achieve the goal, we truncate
+-- the table and then re-insert it after set the distkey.
 alter table gtest26 drop constraint gtest26_pkey;
 alter table gtest26 add column distkey integer;
 alter table gtest26 set distributed by (distkey);
+truncate gtest26;
+INSERT INTO gtest26 (a) VALUES (-2), (0), (3);
+INFO:  gtest2: BEFORE: new = (-2,,)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest4: AFTER: new = (-2,-4,)  (seg0 127.0.1.1:7002 pid=179471)
 alter table gtest26 drop column distkey;
+NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 UPDATE gtest26 SET a = a * -2;
-INFO:  gtest1: BEFORE: old = (-2,-4)
-INFO:  gtest1: BEFORE: new = (4,)
-INFO:  gtest4: AFTER: old = (3,6)
-INFO:  gtest4: AFTER: new = (-6,-12)
-INFO:  gtest3: AFTER: old = (-2,-4)
-INFO:  gtest3: AFTER: new = (4,8)
+INFO:  gtest1: BEFORE: old = (-2,-4)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest1: BEFORE: new = (4,)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest3: AFTER: old = (-2,-4)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest3: AFTER: new = (4,8)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest4: AFTER: old = (3,6)  (seg0 127.0.1.1:7002 pid=179471)
+INFO:  gtest4: AFTER: new = (-6,-12)  (seg0 127.0.1.1:7002 pid=179471)
 SELECT * FROM gtest26 ORDER BY a;
  a  |  b  
 ----+-----
