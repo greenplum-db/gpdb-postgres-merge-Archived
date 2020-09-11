@@ -1158,9 +1158,7 @@ select sales_par.* from sales_par where id in (select s.b from s, r where s.a = 
   9 | 2004 |    10 |  10 | europe
 (2 rows)
 
--- start_ignore
 update sales_par set region = 'new_region' where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
--- end_ignore
 select sales_par.* from sales_par where id in (select s.b from s, r where s.a = r.b) and day in (select a from r);
  id | year | month | day |   region   
 ----+------+-------+-----+------------
@@ -1424,14 +1422,13 @@ select distinct sales_par.* from sales_par,s where sales_par.id in (s.b, s.b+1) 
 (4 rows)
 
 update sales_par set month = month+1 from s where sales_par.id in (s.b, s.b+1) and region = 'europe';
-ERROR:  multiple updates to a row by the same query is not allowed  (seg0 rhel62-vm1:25432 pid=32303)
 select distinct sales_par.* from sales_par,s where sales_par.id in (s.b, s.b+1) and region='europe';
  id | year | month | day | region 
 ----+------+-------+-----+--------
- 13 | 2008 |     2 |  14 | europe
-  5 | 2007 |     6 |   6 | europe
- 17 | 2005 |     6 |  18 | europe
-  9 | 2004 |    10 |  10 | europe
+  5 | 2007 |     7 |   6 | europe
+  9 | 2004 |    11 |  10 | europe
+ 13 | 2008 |     3 |  14 | europe
+ 17 | 2005 |     7 |  18 | europe
 (4 rows)
 
 -- direct dispatch: partitioned table: delete --
@@ -1524,14 +1521,13 @@ select distinct sales_par.* from sales_par,s where sales_par.id in (s.b, s.b+1) 
 
 PREPARE plan3 AS update sales_par set month = month+1 from s where sales_par.id in (s.b, s.b+1) and region = 'europe';
 EXECUTE plan3;
-ERROR:  multiple updates to a row by the same query is not allowed  (seg0 rhel62-vm1:25432 pid=32303)
 select distinct sales_par.* from sales_par,s where sales_par.id in (s.b, s.b+1) and region='europe';
  id | year | month | day | region 
 ----+------+-------+-----+--------
- 13 | 2008 |     2 |  14 | europe
-  5 | 2007 |     6 |   6 | europe
- 17 | 2005 |     6 |  18 | europe
-  9 | 2004 |    10 |  10 | europe
+  5 | 2007 |     7 |   6 | europe
+  9 | 2004 |    11 |  10 | europe
+ 13 | 2008 |     3 |  14 | europe
+ 17 | 2005 |     7 |  18 | europe
 (4 rows)
 
 -- direct dispatch: partitioned table: delete --
