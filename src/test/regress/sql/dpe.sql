@@ -4,6 +4,8 @@
 -- start_matchsubs
 -- m/Memory Usage: \d+\w?B/
 -- s/Memory Usage: \d+\w?B/Memory Usage: ###B/
+-- m/Memory: \d+kB/
+-- s/Memory: \d+kB/Memory: ###kB/
 -- m/Buckets: \d+/
 -- s/Buckets: \d+/Buckets: ###/
 -- m/Batches: \d+/
