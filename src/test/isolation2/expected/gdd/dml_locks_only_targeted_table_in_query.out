@@ -32,6 +32,29 @@ DELETE 10
 1: ROLLBACK;
 ROLLBACK
 
+--
+-- The session cannot be reused.
+--
+-- The macro RELCACHE_FORCE_RELEASE is defined iff USE_ASSERT_CHECKING is
+-- defined, and when RELCACHE_FORCE_RELEASE is defined the relcache is
+-- forcefully released when closing the relation.
+--
+-- The function generate_partition_qual() will behave differently depends on
+-- the existence of the relcache.
+--
+-- - if the relation is not cached, it will open it in AccessShareLock mode,
+--   and save the relpartbound in the relcache;
+-- - if the relation is already cached, it will load the relpartbound from the
+--   cache directly without opening the relation;
+--
+-- So as a result, in the following transactions we will see an extra
+-- AccessShareLock lock in a --enable-cassert build compared to a
+-- --disable-cassert build.
+--
+-- To make the test results stable, we do not reuse the sessions in the test,
+-- all the tests are performed without the relcache.
+--
+1q: ... <quitting>
 
 1: BEGIN;
 BEGIN
@@ -51,6 +74,7 @@ UPDATE 1
 (2 rows)
 1: ROLLBACK;
 ROLLBACK
+1q: ... <quitting>
 
 1: BEGIN;
 BEGIN
@@ -64,7 +88,7 @@ DELETE 10
 (1 row)
 1: ROLLBACK;
 ROLLBACK
-
+1q: ... <quitting>
 
 1: BEGIN;
 BEGIN
@@ -78,3 +102,4 @@ UPDATE 1
 (1 row)
 1: ROLLBACK;
 ROLLBACK
+1q: ... <quitting>
