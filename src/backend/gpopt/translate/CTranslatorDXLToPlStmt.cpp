@@ -163,7 +163,8 @@ CTranslatorDXLToPlStmt::InitTranslators()
 			{EdxlopPhysicalTVF,						&gpopt::CTranslatorDXLToPlStmt::TranslateDXLTvf},
 			{EdxlopPhysicalDML,						&gpopt::CTranslatorDXLToPlStmt::TranslateDXLDml},
 			{EdxlopPhysicalSplit,					&gpopt::CTranslatorDXLToPlStmt::TranslateDXLSplit},
-			{EdxlopPhysicalAssert,					&gpopt::CTranslatorDXLToPlStmt::TranslateDXLAssert},
+			// GPDB_12_MERGE_FIXME: stop generating AssertOp from ORCA
+//			{EdxlopPhysicalAssert,					&gpopt::CTranslatorDXLToPlStmt::TranslateDXLAssert},
 			{EdxlopPhysicalCTEProducer, 			&gpopt::CTranslatorDXLToPlStmt::TranslateDXLCTEProducerToSharedScan},
 			{EdxlopPhysicalCTEConsumer, 			&gpopt::CTranslatorDXLToPlStmt::TranslateDXLCTEConsumerToSharedScan},
 			{EdxlopPhysicalBitmapTableScan,			&gpopt::CTranslatorDXLToPlStmt::TranslateDXLBitmapTblScan},
