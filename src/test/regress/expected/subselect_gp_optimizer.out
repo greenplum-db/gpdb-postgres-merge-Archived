@@ -1241,25 +1241,27 @@ explain select row_number() over (order by seq asc) as id, foo.cnt
 from
 (select seq, (select count(*) from t1_mpp_24563 t1 where t1.id = t2.id) cnt from
 	t2_mpp_24563 t2 where value = 7) foo;
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
- WindowAgg  (cost=1.02..2.12 rows=1 width=20)
-   Order By: t2.seq
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=1.02..1.05 rows=1 width=8)
-         Merge Key: t2.seq
-         ->  Sort  (cost=1.02..1.03 rows=1 width=8)
-               Sort Key: t2.seq
-               ->  Seq Scan on t2_mpp_24563 t2  (cost=0.00..1.01 rows=1 width=8)
-                     Filter: (value = 7)
-   SubPlan 1
-     ->  Aggregate  (cost=1.05..1.06 rows=1 width=8)
-           ->  Result  (cost=0.00..1.04 rows=1 width=0)
-                 Filter: (t1.id = t2.id)
-                 ->  Materialize  (cost=0.00..1.03 rows=1 width=4)
-                       ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=4)
-                             ->  Seq Scan on t1_mpp_24563 t1  (cost=0.00..1.01 rows=1 width=4)
- Optimizer: Postgres query optimizer
-(16 rows)
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
+ WindowAgg  (cost=0.00..862.00 rows=1 width=16)
+   Order By: t2_mpp_24563.seq
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..862.00 rows=1 width=12)
+         Merge Key: t2_mpp_24563.seq
+         ->  Result  (cost=0.00..862.00 rows=1 width=12)
+               ->  Sort  (cost=0.00..862.00 rows=1 width=12)
+                     Sort Key: t2_mpp_24563.seq
+                     ->  Hash Left Join  (cost=0.00..862.00 rows=1 width=12)
+                           Hash Cond: (t2_mpp_24563.id = t1_mpp_24563.id)
+                           ->  Seq Scan on t2_mpp_24563  (cost=0.00..431.00 rows=1 width=8)
+                                 Filter: (value = 7)
+                           ->  Hash  (cost=431.00..431.00 rows=1 width=12)
+                                 ->  GroupAggregate  (cost=0.00..431.00 rows=1 width=12)
+                                       Group Key: t1_mpp_24563.id
+                                       ->  Sort  (cost=0.00..431.00 rows=1 width=4)
+                                             Sort Key: t1_mpp_24563.id
+                                             ->  Seq Scan on t1_mpp_24563  (cost=0.00..431.00 rows=1 width=4)
+ Optimizer: Pivotal Optimizer (GPORCA)
+(18 rows)
 
 drop table t1_mpp_24563;
 drop table t2_mpp_24563;
@@ -1304,7 +1306,10 @@ explain SELECT  cc, sum(nn) over() FROM v1_mpp_20470;
                                    ->  Seq Scan on t_mpp_20470_ptr1 a  (cost=0.00..567.00 rows=15567 width=32)
                                    ->  Seq Scan on t_mpp_20470_ptr2 a_1  (cost=0.00..567.00 rows=15567 width=32)
  Optimizer: Postgres query optimizer
-(15 rows)
+ JIT:
+   Functions: 17
+   Options: Inlining true, Optimization true, Expressions true, Deforming true
+(18 rows)
 
 drop view v1_mpp_20470;
 drop table t_mpp_20470;
