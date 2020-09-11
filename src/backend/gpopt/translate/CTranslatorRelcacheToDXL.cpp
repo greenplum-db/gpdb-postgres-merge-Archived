@@ -3566,7 +3566,8 @@ CTranslatorRelcacheToDXL::RelHasSystemColumns
 			RELKIND_SEQUENCE == rel_kind ||
 			RELKIND_AOSEGMENTS == rel_kind ||
 			RELKIND_TOASTVALUE == rel_kind ||
-			RELKIND_FOREIGN_TABLE == rel_kind;
+			RELKIND_FOREIGN_TABLE == rel_kind ||
+			RELKIND_PARTITIONED_TABLE == rel_kind;
 }
 
 //---------------------------------------------------------------------------
