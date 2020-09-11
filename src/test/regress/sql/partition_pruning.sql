@@ -624,30 +624,35 @@ create language plpythonu;
 
 
 -- @description Tests for static partition selection (MPP-24709, GPSQL-2879)
-
+-- GPDB_12_MERGE_FIXME: this function extract the number such as [5,10] out of
+-- the string "Partition selected: 5 out of 10". We have temporarily broken
+-- that when we reimplemented dynamic seq scan. Currently only the number of
+-- selected partitions is avalable, get the total number of partitions back
+-- post merge.
 create or replace function get_selected_parts(explain_query text) returns text as
 $$
+import re
 rv = plpy.execute(explain_query)
-search_text = 'Partition Selector'
+search_text = 'Dynamic Seq Scan on '
 result = []
 result.append(0)
 result.append(0)
 selected = 0
 out_of = 0
+pattern = re.compile(r"\s+Number of partitions to scan: (?P<selected>\d+)")
 for i in range(len(rv)):
     cur_line = rv[i]['QUERY PLAN']
     if search_text.lower() in cur_line.lower():
         j = i+1
         temp_line = rv[j]['QUERY PLAN']
-        while temp_line.find('Partitions selected:') == -1:
+        while (not pattern.match(temp_line)):
             j += 1
             if j == len(rv) - 1:
                 break
             temp_line = rv[j]['QUERY PLAN']
 
-        if temp_line.find('Partitions selected:') != -1:
-            selected += int(temp_line[temp_line.index('selected: ')+10:temp_line.index(' (out')])
-            out_of += int(temp_line[temp_line.index('out of')+6:temp_line.index(')')])
+        else:
+            selected += int(pattern.match(temp_line).group('selected'))
 result[0] = selected
 result[1] = out_of
 return result
