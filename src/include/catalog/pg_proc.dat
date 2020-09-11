@@ -9466,7 +9466,7 @@
 
 # SQL-spec window functions
 { oid => '3100', descr => 'row number within partition',
-  proexeclocation => 's',
+  proexeclocation => 'a',
   proname => 'row_number', prokind => 'w', proisstrict => 'f',
   prorettype => 'int8', proargtypes => '', prosrc => 'window_row_number' },
 { oid => '3101', descr => 'integer rank with gaps',
