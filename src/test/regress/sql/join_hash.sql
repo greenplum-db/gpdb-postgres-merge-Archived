@@ -61,14 +61,14 @@ $$;
 -- Make a simple relation with well distributed keys and correctly
 -- estimated size.
 create table simple as
-  select generate_series(1, 20000) AS id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  select generate_series(1, 60000) AS id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 alter table simple set (parallel_workers = 2);
 analyze simple;
 
 -- Make a relation whose size we will under-estimate.  We want stats
 -- to say 1000 rows, but actually there are 20,000 rows.
 create table bigger_than_it_looks as
-  select generate_series(1, 20000) as id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  select generate_series(1, 60000) as id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 alter table bigger_than_it_looks set (autovacuum_enabled = 'false');
 alter table bigger_than_it_looks set (parallel_workers = 2);
 analyze bigger_than_it_looks;
@@ -148,7 +148,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join simple s using (id);
 select count(*) from simple r join simple s using (id);
@@ -163,7 +163,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
@@ -179,7 +179,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '192kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
@@ -200,7 +200,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
 select count(*) FROM simple r JOIN bigger_than_it_looks s USING (id);
@@ -215,7 +215,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -231,7 +231,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '192kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -253,7 +253,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 0;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
 select count(*) from simple r join extremely_skewed s using (id);
@@ -267,7 +267,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = off;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
@@ -282,7 +282,7 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 1;
 set local work_mem = '128kB';
-set local statement_mem = '512kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
@@ -311,7 +311,7 @@ rollback to settings;
 
 create table join_foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
 alter table join_foo set (parallel_workers = 0);
-create table join_bar as select generate_series(1, 10000) as id, 'xxxxx'::text as t;
+create table join_bar as select generate_series(1, 20000) as id, 'xxxxx'::text as t;
 alter table join_bar set (parallel_workers = 2);
 
 -- multi-batch with rescan, parallel-oblivious
@@ -325,7 +325,7 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
-set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
@@ -380,7 +380,7 @@ set max_parallel_workers_per_gather = 2;
 set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
-set local statement_mem = '768kB'; -- GPDB uses statement_mem instead of work_mem
+set local statement_mem = '1000kB'; -- GPDB uses statement_mem instead of work_mem
 explain (costs off)
   select count(*) from join_foo
     left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
