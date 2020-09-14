@@ -682,8 +682,6 @@ from t1_github_issue_10143
 group by name
 union all
 select * from cte;
-INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: unsupported exec location
  rn2 | name  
 -----+-------
    1 | aname
