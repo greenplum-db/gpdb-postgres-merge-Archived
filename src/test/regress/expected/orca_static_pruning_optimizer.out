@@ -18,7 +18,6 @@ EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "rp" not closed
                 QUERY PLAN                 
 -------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -33,7 +32,6 @@ WARNING:  relcache reference leak: relation "rp" not closed
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "rp" not closed
   a   |  b   | c 
 ------+------+---
  4201 | 4201 | 0
@@ -76,7 +74,6 @@ EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "rp" not closed
                         QUERY PLAN                        
 ----------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -91,7 +88,6 @@ WARNING:  relcache reference leak: relation "rp" not closed
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "rp" not closed
   a   |  b   | c 
 ------+------+---
  4201 | 4201 | 0
@@ -116,7 +112,6 @@ EXPLAIN (COSTS OFF, VERBOSE)
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "lp" not closed
                 QUERY PLAN                 
 -------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -131,7 +126,6 @@ WARNING:  relcache reference leak: relation "lp" not closed
 :qry ;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  DXL-to-PlStmt Translation: non-trivial part filter not supported
-WARNING:  relcache reference leak: relation "lp" not closed
  a | b 
 ---+---
 (0 rows)
