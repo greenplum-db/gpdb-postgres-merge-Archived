@@ -3691,14 +3691,6 @@ CleanupBackgroundWorker(int pid,
 			/* Zero exit status means terminate */
 			rw->rw_crashed_at = 0;
 			rw->rw_terminate = true;
-
-			/* dtx recovery completed successfully */
-			if (rw->rw_worker.bgw_start_rule == DtxRecoveryStartRule)
-			{
-				Assert(strcmp(rw->rw_worker.bgw_name, "dtx recovery process") == 0);
-				Assert(*shmDtmStarted);
-				AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_DTM_RECOVERED);
-			}
 		}
 
 		/*
@@ -5733,6 +5725,12 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FtsProbePID() != 0)
 	{
 		signal_child(FtsProbePID(), SIGINT);
+	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_DTM_RECOVERED))
+	{
+		/* Report status, dtx recovery completed successfully */
+		AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_DTM_RECOVERED);
 	}
 
 	/*
