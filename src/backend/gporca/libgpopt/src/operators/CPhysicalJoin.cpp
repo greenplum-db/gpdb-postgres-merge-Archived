@@ -1174,7 +1174,7 @@ CPhysicalJoin::PppsRequiredCompute
 			else
 			{
 				// check if there is an interesting condition involving the partition key
-				CExpression *pexprScalar = exprhdl.PexprScalarChild(2 /*child_index*/);
+				CExpression *pexprScalar = exprhdl.PexprScalarExactChild(2 /*child_index*/);
 				AddFilterOnPartKey(mp, true /*fNLJoin*/, pexprScalar, ppim, ppfm, child_index, part_idx_id, fOuterPartConsumer, ppimResult, ppfmResult, pcrsAllowedRefs);
 			}
 		}
@@ -1193,7 +1193,7 @@ CPhysicalJoin::PppsRequiredCompute
 			else
 			{
 				// look for a filter on the part key
-				CExpression *pexprScalar = exprhdl.PexprScalarChild(2 /*child_index*/);
+				CExpression *pexprScalar = exprhdl.PexprScalarExactChild(2 /*child_index*/);
 				AddFilterOnPartKey(mp, false /*fNLJoin*/, pexprScalar, ppim, ppfm, child_index, part_idx_id, fOuterPartConsumer, ppimResult, ppfmResult, pcrsAllowedRefs);
 			}
 		}
@@ -1229,9 +1229,7 @@ CPhysicalJoin::PppsRequiredJoinChild
 	if (NULL == ppps)
 	{
 		ppps = PppsRequiredCompute(mp, exprhdl, pppsRequired, child_index, fNLJoin);
-#ifdef GPOS_DEBUG
-		BOOL fSuccess =
-#endif // GPOS_DEBUG
+		BOOL fSuccess GPOS_ASSERTS_ONLY =
 			m_phmpp->Insert(pppr, ppps);
 		GPOS_ASSERT(fSuccess);
 	}

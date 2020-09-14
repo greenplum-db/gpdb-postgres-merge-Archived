@@ -98,11 +98,11 @@ CXformLeftOuter2InnerUnionAllLeftAntiSemiJoin::Exfp
 	const
 {
 	CColRefSet *pcrsInner = exprhdl.DeriveOutputColumns(1 /*child_index*/);
-	CExpression *pexprScalar = exprhdl.PexprScalarChild(2 /*child_index*/);
+	CExpression *pexprScalar = exprhdl.PexprScalarExactChild(2 /*child_index*/);
 	CAutoMemoryPool amp;
 	CMemoryPool *mp = amp.Pmp();
 
-	if (!CPredicateUtils::FSimpleEqualityUsingCols(mp, pexprScalar, pcrsInner))
+	if (NULL == pexprScalar || !CPredicateUtils::FSimpleEqualityUsingCols(mp, pexprScalar, pcrsInner))
 	{
 		return ExfpNone;
 	}
@@ -470,9 +470,7 @@ CXformLeftOuter2InnerUnionAllLeftAntiSemiJoin::PexprProjectOverLeftAntiSemiJoin
 	{
 		ULONG ulOrigIndex = *(*pdrgpulIndexesOfOuter)[ul];
 		CColRef *pcrOriginal = (*pdrgpcrJoinOutput)[ulOrigIndex];
-#ifdef GPOS_DEBUG
-		BOOL fInserted =
-#endif
+		BOOL fInserted GPOS_ASSERTS_ONLY =
 		colref_mapping->Insert(GPOS_NEW(mp) ULONG(pcrOriginal->Id()), (*pdrgpcrOuterCopy)[ul]);
 		GPOS_ASSERT(fInserted);
 	}

@@ -208,8 +208,8 @@ CREATE TABLE r
     d NUMERIC(10,0), 
     e DATE
 ) DISTRIBUTED BY (a,b);
+ALTER TABLE r SET DISTRIBUTED BY (b);
 ALTER TABLE r ADD CONSTRAINT PKEY PRIMARY KEY (b);
-NOTICE:  updating distribution policy to match new PRIMARY KEY
 --TEST
 SELECT MAX(a) AS m FROM r GROUP BY b ORDER BY m;
  m 
@@ -616,10 +616,10 @@ from t2_github_issue_10143 a
 group by a.code;
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
- WindowAgg  (cost=1.02..2002.10 rows=1 width=176)
-   ->  Finalize GroupAggregate  (cost=1.02..1001.06 rows=1 width=38)
+ WindowAgg  (cost=1.02..2075.51 rows=1 width=176)
+   ->  Finalize GroupAggregate  (cost=1.02..1408.47 rows=1 width=38)
          Group Key: a.code
-         ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=1.02..1001.04 rows=1 width=38)
+         ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=1.02..1408.45 rows=2 width=38)
                Merge Key: a.code
                ->  Partial GroupAggregate  (cost=1.02..1.04 rows=1 width=38)
                      Group Key: a.code
@@ -627,11 +627,11 @@ group by a.code;
                            Sort Key: a.code
                            ->  Seq Scan on t2_github_issue_10143 a  (cost=0.00..1.01 rows=1 width=11)
    SubPlan 1
-     ->  Limit  (cost=0.00..1001.02 rows=1 width=6)
-           ->  Result  (cost=0.00..1001.02 rows=1 width=6)
+     ->  Limit  (cost=0.00..667.02 rows=1 width=6)
+           ->  Result  (cost=0.00..2001.06 rows=3 width=6)
                  Filter: ((t1_github_issue_10143.code)::text = (a.code)::text)
-                 ->  Materialize  (cost=0.00..1001.01 rows=1 width=12)
-                       ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..1001.01 rows=1 width=12)
+                 ->  Materialize  (cost=0.00..2001.03 rows=3 width=12)
+                       ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..2001.01 rows=3 width=12)
                              ->  Seq Scan on t1_github_issue_10143  (cost=0.00..1.01 rows=1 width=12)
  Optimizer: Postgres query optimizer
 (18 rows)

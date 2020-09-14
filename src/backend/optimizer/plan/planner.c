@@ -279,10 +279,6 @@ static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *p
 
 static Oid getSimplyUpdatableRel(Query *query);
 
-static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
-											WindowClause *wc,
-											bool *need_redistribute_p);
-
 /*****************************************************************************
  *
  *	   Query optimizer entry point
@@ -2353,6 +2349,39 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		root->processed_tlist = preprocess_targetlist(root);
 
 		/*
+		 * In the top query, determine a locus to indicate where the final
+		 * result will be needed.
+		 *
+		 * (This is just a hint to the planner, standard_planner() will tack
+		 * a Motion on top of the final path if needed.)
+		 */
+		if (Gp_role == GP_ROLE_DISPATCH && !root->parent_root)
+		{
+			List	   *tlist = root->processed_tlist;
+			PathTarget *target = make_pathtarget_from_tlist(tlist);
+
+			root->final_locus = cdbllize_get_final_locus(root, target);
+
+			/*
+			 * cdbllize_get_final_locus() can assign sortgrouprefs.
+			 * Copy them back to the original tlist.
+			 */
+			if (target->sortgrouprefs)
+			{
+				ListCell *lc;
+				int			idx;
+
+				idx = 0;
+				foreach(lc, tlist)
+				{
+					TargetEntry *tle = (TargetEntry *) lfirst(lc);
+					tle->ressortgroupref = target->sortgrouprefs[idx];
+					idx++;
+				}
+			}
+		}
+		
+		/*
 		 * Collect statistics about aggregates for estimating costs, and mark
 		 * all the aggregates with resolved aggtranstypes.  We must do this
 		 * before slicing and dicing the tlist into various pathtargets, else
@@ -2867,6 +2896,30 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			 */
 			if (parse->scatterClause)
 				path = create_scatter_path(root, parse->scatterClause, path);
+		}
+
+		/*
+		 * If we know where the result will be needed, create a Motion to
+		 * move it there.
+		 *
+		 * standard_planner() will tack a Motion on top of the cheapest
+		 * path anyway, if we don't do it here. But doing the Motion here
+		 * allows the cost of the Motion to be taken into account when
+		 * deciding which path is the cheapest.
+		 */
+		if (CdbPathLocus_IsHashed(root->final_locus) ||
+			CdbPathLocus_IsSingleQE(root->final_locus) ||
+			CdbPathLocus_IsEntry(root->final_locus) ||
+			CdbPathLocus_IsReplicated(root->final_locus))
+		{
+			Path	   *orig_path = path;
+
+			path = cdbpath_create_motion_path(root, orig_path,
+											  root->sort_pathkeys,
+											  false,
+											  root->final_locus);
+			if (!path)
+				path = orig_path;
 		}
 
 		/*
@@ -4425,9 +4478,11 @@ create_grouping_paths(PlannerInfo *root,
 
 		/* GPDB_12_MERGE_FIXME: this belongs here now, but add a new bitmask bit for it? */
 #if 0
-		/* GPDB can also do a two-stage aggregate when there is exactly one DISTINCT agg. */
+		/*
+		 * cdb_create_twostage_grouping_paths() can use hashing (in limited ways)
+		 * even if there are DISTINCT aggs or grouping sets.
+		 */
 		can_mpp_hash = (parse->groupClause != NIL &&
-						parse->groupingSets == NIL &&
 						agg_costs->numPureOrderedAggs == 0 &&
 						grouping_is_hashable(parse->groupClause));
 #endif
@@ -4634,7 +4689,7 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 {
 	Path	   *cheapest_path = input_rel->cheapest_total_path;
 	RelOptInfo *partially_grouped_rel = NULL;
-	double		dNumGroups;
+	double		dNumGroupsTotal;
 	PartitionwiseAggregateType patype = PARTITIONWISE_AGGREGATE_NONE;
 
 	/*
@@ -4720,15 +4775,22 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	/*
 	 * Estimate number of groups.
 	 */
-	dNumGroups = get_number_of_groups(root,
-									  cheapest_path->rows,
-                                      gd,
-                                      extra->targetList);
+	double			num_total_input_rows;
 
-    /* Build final grouping paths */
-    add_paths_to_grouping_rel(root, input_rel, grouped_rel,
-                              partially_grouped_rel, agg_costs, gd,
-                              dNumGroups, extra);
+	if (CdbPathLocus_IsPartitioned(cheapest_path->locus))
+		num_total_input_rows = cheapest_path->rows * CdbPathLocus_NumSegments(cheapest_path->locus);
+	else
+		num_total_input_rows = cheapest_path->rows;
+
+	dNumGroupsTotal = get_number_of_groups(root,
+										   num_total_input_rows,
+										   gd,
+										   extra->targetList);
+
+	/* Build final grouping paths */
+	add_paths_to_grouping_rel(root, input_rel, grouped_rel,
+							  partially_grouped_rel, agg_costs, gd,
+							  dNumGroupsTotal, extra);
 
 	/* Give a helpful error if we failed to find any implementation */
 	if (grouped_rel->pathlist == NIL)
@@ -4768,9 +4830,10 @@ consider_groupingsets_paths(PlannerInfo *root,
 							bool can_hash,
 							grouping_sets_data *gd,
 							const AggClauseCosts *agg_costs,
-							double dNumGroups)
+							double dNumGroupsTotal)
 {
 	Query	   *parse = root->parse;
+	double		dNumGroups;
 
 	/*
 	 * If we're not being offered sorted input, then only consider plans that
@@ -4797,6 +4860,24 @@ consider_groupingsets_paths(PlannerInfo *root,
 		double		exclude_groups = 0.0;
 
 		Assert(can_hash);
+
+		/* Redistribute the input if needed. */
+		path = cdb_prepare_path_for_hashed_agg(root,
+											   path,
+											   path->pathtarget,
+											   parse->groupClause,
+											   gd->rollups);
+
+		/*
+		 * dNumGroupsTotal is the total number of groups across all segments. If the
+		 * Aggregate is distributed, then the number of groups in one segment
+		 * is only a fraction of the total.
+		 */
+		if (CdbPathLocus_IsPartitioned(path->locus))
+			dNumGroups = clamp_row_est(dNumGroupsTotal /
+									   CdbPathLocus_NumSegments(path->locus));
+		else
+			dNumGroups = dNumGroupsTotal;
 
 		/*
 		 * If the input is coincidentally sorted usefully (which can happen
@@ -4929,17 +5010,26 @@ consider_groupingsets_paths(PlannerInfo *root,
 		 * Unless the input happens to be suitable distributed, we
 		 * need to redistribute it.
 		 */
-		{
-			CdbPathLocus locus;
-			bool		need_redistribute;
+		/* Redistribute the input if needed. */
+		path = cdb_prepare_path_for_hashed_agg(root,
+											   path,
+											   path->pathtarget,
+											   parse->groupClause,
+											   new_rollups);
 
-			locus = cdb_choose_grouping_locus(root, path,
-											  parse->groupClause,
-											  new_rollups,
-											  &need_redistribute);
-			if (need_redistribute)
-				path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-		}
+		// GPDB_12_MERGE_FIXME: fix computation of dNumGroups
+#if 0
+		/*
+		 * dNumGroupsTotal is the total number of groups across all segments. If the
+		 * Aggregate is distributed, then the number of groups in one segment
+		 * is only a fraction of the total.
+		 */
+		if (CdbPathLocus_IsPartitioned(path->locus))
+			dNumGroups = clamp_row_est(dNumGroupsTotal /
+										   CdbPathLocus_NumSegments(path->locus));
+		else
+			dNumGroups = dNumGroupsTotal;
+#endif
 
 		add_path(grouped_rel, (Path *)
 				 create_groupingsets_path(root,
@@ -4959,6 +5049,28 @@ consider_groupingsets_paths(PlannerInfo *root,
 	 */
 	if (list_length(gd->rollups) == 0)
 		return;
+
+	/* Redistribute the input if needed. */
+	path = cdb_prepare_path_for_sorted_agg(root,
+										   true, /* is_sorted */
+										   grouped_rel,
+										   path,
+										   path->pathtarget,
+										   root->group_pathkeys,
+										   -1.0,
+										   parse->groupClause,
+										   gd->rollups);
+
+	/*
+	 * dNumGroupsTotal is the total number of groups across all segments. If the
+	 * Aggregate is distributed, then the number of groups in one segment
+	 * is only a fraction of the total.
+	 */
+	if (CdbPathLocus_IsPartitioned(path->locus))
+		dNumGroups = clamp_row_est(dNumGroupsTotal /
+								   CdbPathLocus_NumSegments(path->locus));
+	else
+		dNumGroups = dNumGroupsTotal;
 
 	/*
 	 * Given sorted input, we try and make two paths: one sorted and one mixed
@@ -4981,6 +5093,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 		availspace -= estimate_hashagg_tablesize(path,
 												 agg_costs,
 												 gd->dNumHashGroups);
+		// FIXME: should we divide dNumHashGroups by numsegments?
 
 		if (availspace > 0 && list_length(gd->rollups) > 1)
 		{
@@ -5129,80 +5242,6 @@ consider_groupingsets_paths(PlannerInfo *root,
 }
 
 /*
- * Figure out the desired data distribution to perform windowing
- */
-static CdbPathLocus
-choose_one_window_locus(PlannerInfo *root, Path *path,
-						WindowClause *wc,
-						bool *need_redistribute_p)
-{
-	CdbPathLocus locus;
-	bool		need_redistribute;
-
-	if (CdbPathLocus_IsGeneral(path->locus))
-	{
-		need_redistribute = false;
-		locus = path->locus;
-	}
-	/*
-	 * If the input is already collected to a single segment, just perform the
-	 * aggregation there. We could redistribute it, so that we could perform
-	 * the aggregation in parallel, but Motions are pretty expensive so it's
-	 * probably not worthwhile.
-	 */
-	else if (CdbPathLocus_IsBottleneck(path->locus))
-	{
-		need_redistribute = false;
-		locus = path->locus;
-	}
-	else
-	{
-		List	   *partition_dist_pathkeys;
-		List	   *partition_dist_exprs;
-		List	   *partition_dist_opfamilies;
-		List	   *partition_dist_sortrefs;
-
-		make_distribution_exprs_for_groupclause(root,
-												wc->partitionClause,
-												make_tlist_from_pathtarget(path->pathtarget),
-												&partition_dist_pathkeys,
-												&partition_dist_exprs,
-												&partition_dist_opfamilies,
-												&partition_dist_sortrefs);
-		if (!partition_dist_exprs)
-		{
-			/*
-			 * There is no PARTITION BY, or none of the PARTITION BY
-			 * expressions can be used as a distribution key. Have to
-			 * gather everything to a single node.
-			 */
-			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-			need_redistribute = true;
-		}
-		else if (cdbpathlocus_collocates_pathkeys(root, path->locus, partition_dist_pathkeys, false))
-		{
-			/*
-			 * The current locus matches the PARTITION BY.
-			 */
-			need_redistribute = false;
-			locus = path->locus;
-		}
-		else
-		{
-			locus = cdbpathlocus_from_exprs(root,
-											partition_dist_exprs,
-											partition_dist_opfamilies,
-											partition_dist_sortrefs,
-											getgpsegmentCount());
-			need_redistribute = true;
-		}
-	}
-
-	*need_redistribute_p = need_redistribute;
-	return locus;
-}
-
-/*
  * create_window_paths
  *
  * Build a new upperrel containing Paths for window-function evaluation.
@@ -5333,8 +5372,6 @@ create_one_window_path(PlannerInfo *root,
 	{
 		WindowClause *wc = lfirst_node(WindowClause, l);
 		List	   *window_pathkeys;
-		CdbPathLocus locus;
-		bool		need_redistribute;
 
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
@@ -5349,33 +5386,18 @@ create_one_window_path(PlannerInfo *root,
 		 * partition, so we need to gather all the tuples to a single
 		 * node. But we'll do that after the Sort, so that the Sort
 		 * is parallelized.
+		 *
+		 * This is the same logic that is used for sorted Aggregates.
 		 */
-		locus = choose_one_window_locus(root, path, wc, &need_redistribute);
-		if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
-			path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-
-		/* Sort if necessary */
-		if (!pathkeys_contained_in(window_pathkeys, path->pathkeys))
-		{
-			path = (Path *) create_sort_path(root, window_rel,
-											 path,
-											 window_pathkeys,
-											 -1.0);
-		}
-
-		if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
-		{
-			/*
-			 * The subpath might be ordered by TLEs that we don't need
-			 * in the final result, and will therefore not be present in the
-			 * final target list. We can't preserve them in the Motion node,
-			 * because we don't have them available anymore.
-			 */
-			List	   *pathkeys =
-				cdbpullup_truncatePathKeysForTargetList(path->pathkeys,
-														make_tlist_from_pathtarget(path->pathtarget));
-			path = cdbpath_create_motion_path(root, path, pathkeys, false, locus);
-		}
+		path = cdb_prepare_path_for_sorted_agg(root,
+											   pathkeys_contained_in(window_pathkeys, path->pathkeys),
+											   window_rel,
+											   path,
+											   path->pathtarget,
+											   window_pathkeys,
+											   -1.0,
+											   wc->partitionClause,
+											   NIL);
 
 		if (lnext(l))
 		{
@@ -5429,9 +5451,13 @@ create_distinct_paths(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	Path	   *cheapest_input_path = input_rel->cheapest_total_path;
+	Path	   *hash_input_path = NULL;
 	RelOptInfo *distinct_rel;
-	double		numDistinctRows;
+	double		numDistinctRowsTotal;
+	double		numInputRowsTotal;
+	double		numDistinctRowsHash = 0;
 	bool		allow_hash;
+	bool		must_hash;
 	Path	   *path;
 	ListCell   *lc;
 	List	   *distinct_dist_pathkeys = NIL;
@@ -5552,6 +5578,11 @@ create_distinct_paths(PlannerInfo *root,
 	distinct_rel->fdwroutine = input_rel->fdwroutine;
 	distinct_rel->exec_location = input_rel->exec_location;
 
+	if (CdbPathLocus_IsPartitioned(cheapest_input_path->locus))
+		numInputRowsTotal = cheapest_input_path->rows * CdbPathLocus_NumSegments(cheapest_input_path->locus);
+	else
+		numInputRowsTotal = cheapest_input_path->rows;
+
 	/* Estimate number of distinct rows there will be */
 	if (parse->groupClause || parse->groupingSets || parse->hasAggs ||
 		root->hasHavingQual)
@@ -5561,7 +5592,7 @@ create_distinct_paths(PlannerInfo *root,
 		 * as the estimated number of DISTINCT rows (ie, assume the input is
 		 * already mostly unique).
 		 */
-		numDistinctRows = cheapest_input_path->rows;
+		numDistinctRowsTotal = numInputRowsTotal;
 	}
 	else
 	{
@@ -5572,9 +5603,9 @@ create_distinct_paths(PlannerInfo *root,
 
 		distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
 												parse->targetList);
-		numDistinctRows = estimate_num_groups(root, distinctExprs,
-											  cheapest_input_path->rows,
-											  NULL);
+		numDistinctRowsTotal = estimate_num_groups(root, distinctExprs,
+												   numInputRowsTotal,
+												   NULL);
 	}
 
 	/*
@@ -5609,26 +5640,29 @@ create_distinct_paths(PlannerInfo *root,
 
 			if (pathkeys_contained_in(needed_pathkeys, path->pathkeys))
 			{
+				double		numDistinctRows;
+
 				if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
 													  distinct_dist_pathkeys, false /* exact_match */ ))
 				{
+					/*
+					 * If the input path's locus is not suitable, gather the
+					 * result. We don't want to redistribute it because that
+					 * would break the input ordering, and we'd need to re-Sort
+					 * it. (We'll consider the explicit-sort case below, on top
+					 * of the cheapest overall path.)
+					 */
 					CdbPathLocus locus;
 
-					if (distinct_dist_exprs)
-					{
-						locus = cdbpathlocus_from_exprs(root,
-														distinct_dist_exprs,
-														distinct_dist_opfamilies,
-														distinct_dist_sortrefs,
-														getgpsegmentCount());
-					}
-					else
-					{
-						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-					}
+					CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 
 					path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 				}
+
+				if (CdbPathLocus_IsPartitioned(path->locus))
+					numDistinctRows = numDistinctRowsTotal / CdbPathLocus_NumSegments(path->locus);
+				else
+					numDistinctRows = numDistinctRowsTotal;
 
 				add_path(distinct_rel, (Path *)
 						 create_upper_unique_path(root, distinct_rel,
@@ -5661,6 +5695,7 @@ create_distinct_paths(PlannerInfo *root,
 				if (distinct_dist_exprs)
 				{
 					locus = cdbpathlocus_from_exprs(root,
+													path->parent,
 													distinct_dist_exprs,
 													distinct_dist_opfamilies,
 													distinct_dist_sortrefs,
@@ -5689,6 +5724,7 @@ create_distinct_paths(PlannerInfo *root,
 				if (distinct_dist_exprs)
 				{
 					locus = cdbpathlocus_from_exprs(root,
+													path->parent,
 													distinct_dist_exprs,
 													distinct_dist_opfamilies,
 													distinct_dist_sortrefs,
@@ -5702,6 +5738,13 @@ create_distinct_paths(PlannerInfo *root,
 				path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 			}
 		}
+
+		double		numDistinctRows;
+
+		if (CdbPathLocus_IsPartitioned(path->locus))
+			numDistinctRows = numDistinctRowsTotal / CdbPathLocus_NumSegments(path->locus);
+		else
+			numDistinctRows = numDistinctRowsTotal;
 
 		add_path(distinct_rel, (Path *)
 				 create_upper_unique_path(root, distinct_rel,
@@ -5724,48 +5767,23 @@ create_distinct_paths(PlannerInfo *root,
 	 * other gating conditions, so we want to do it last.
 	 */
 	if (distinct_rel->pathlist == NIL)
-		allow_hash = true;		/* we have no alternatives */
-	else if (parse->hasDistinctOn || !enable_hashagg)
-		allow_hash = false;		/* policy-based decision not to hash */
-
-	// GPDB_96_MERGE_FIXME: the divisors with planner_segment_count(NULL) are
-	// new here since commit 9936ca3bf141bed7f2677868d7cc85df9e06cf80. where
-	// do they go?
-#if 0
-=======
-	cost_agg(&hashed_p, root, AGG_HASHED, agg_costs,
-			 numGroupCols, dNumGroups / planner_segment_count(NULL),
-			 cheapest_path->startup_cost, cheapest_path->total_cost,
-			 path_rows,
-			 &hash_info,
-			 false);
-	/* Result of hashed agg is always unsorted */
-	if (target_pathkeys)
-		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
-				  dNumGroups, path_width,
-				  0.0, work_mem, limit_tuples);
-
-	if (sorted_path)
 	{
-		sorted_p.startup_cost = sorted_path->startup_cost;
-		sorted_p.total_cost = sorted_path->total_cost;
-		current_pathkeys = sorted_path->pathkeys;
+		allow_hash = true;		/* we have no alternatives */
+		must_hash = true;
 	}
->>>>>>> origin/master
-#endif
-			
+	else if (parse->hasDistinctOn || !enable_hashagg)
+	{
+		allow_hash = false;		/* policy-based decision not to hash */
+		must_hash = false;
+	}
 	else
 	{
-		Size		hashentrysize = hash_agg_entry_size(
-			0, cheapest_input_path->pathtarget->width, 0);
-
-		/* Allow hashing only if hashtable is predicted to fit in work_mem */
-		allow_hash = (hashentrysize * numDistinctRows <= work_mem * 1024L);
+		allow_hash = true;
+		must_hash = false;
 	}
 
-	if (allow_hash && grouping_is_hashable(parse->distinctClause))
+	if (allow_hash)
 	{
-		/* Generate hashed aggregate path --- no sort needed */
 		Path	   *path;
 
 		path = cheapest_input_path;
@@ -5777,6 +5795,7 @@ create_distinct_paths(PlannerInfo *root,
 			if (distinct_dist_exprs)
 			{
 				locus = cdbpathlocus_from_exprs(root,
+												path->parent,
 												distinct_dist_exprs,
 												distinct_dist_opfamilies,
 												distinct_dist_sortrefs,
@@ -5790,18 +5809,38 @@ create_distinct_paths(PlannerInfo *root,
 			path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 		}
 
+		hash_input_path = path;
+
+		if (CdbPathLocus_IsPartitioned(path->locus))
+			numDistinctRowsHash = numDistinctRowsTotal / CdbPathLocus_NumSegments(path->locus);
+		else
+			numDistinctRowsHash = numDistinctRowsTotal;
+
+		if (!must_hash)
+		{
+			Size		hashentrysize = hash_agg_entry_size(
+				0, cheapest_input_path->pathtarget->width, 0);
+
+			/* Allow hashing only if hashtable is predicted to fit in work_mem */
+			allow_hash = (hashentrysize * numDistinctRowsHash <= work_mem * 1024L);
+		}
+	}
+
+	if (allow_hash && grouping_is_hashable(parse->distinctClause))
+	{
+		/* Generate hashed aggregate path --- no sort needed */
 		add_path(distinct_rel, (Path *)
 				 create_agg_path(root,
 								 distinct_rel,
-								 path,
-								 path->pathtarget,
+								 hash_input_path,
+								 hash_input_path->pathtarget,
 								 AGG_HASHED,
 								 AGGSPLIT_SIMPLE,
 								 false, /* streaming */
 								 parse->distinctClause,
 								 NIL,
 								 NULL,
-								 numDistinctRows));
+								 numDistinctRowsHash));
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -5810,28 +5849,6 @@ create_distinct_paths(PlannerInfo *root,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not implement DISTINCT"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-
-	// GPDB_96_MERGE_FIXME: the divisors with planner_segment_count(NULL) are
-	// new here since commit 9936ca3bf141bed7f2677868d7cc85df9e06cf80. where
-	// do they go?
-#if 0
-
-	if (parse->hasAggs)
-		cost_agg(&sorted_p, root, AGG_SORTED, agg_costs,
-				 numGroupCols, dNumGroups / planner_segment_count(NULL),
-				 sorted_p.startup_cost, sorted_p.total_cost,
-				 path_rows, NULL, false);
-	else
-		cost_group(&sorted_p, root, numGroupCols, dNumGroups,
-				   sorted_p.startup_cost, sorted_p.total_cost,
-				   path_rows);
-	/* The Agg or Group node will preserve ordering */
-	if (target_pathkeys &&
-		!pathkeys_contained_in(target_pathkeys, current_pathkeys))
-		cost_sort(&sorted_p, root, target_pathkeys, sorted_p.total_cost,
-				  dNumGroups, path_width,
-				  0.0, work_mem, limit_tuples);
-#endif
 
 	/*
 	 * If there is an FDW that's responsible for all baserels of the query,
@@ -6031,7 +6048,10 @@ create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path)
 			sortrefs = lappend_int(sortrefs, 0);
 		}
 
-		locus = cdbpathlocus_from_exprs(root, scatterClause, opfamilies, sortrefs, getgpsegmentCount());
+		locus = cdbpathlocus_from_exprs(root,
+										path->parent,
+										scatterClause,
+										opfamilies, sortrefs, getgpsegmentCount());
 	}
 
 	/*
@@ -7219,10 +7239,16 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	cost_qual_eval(&indexExprCost, indexInfo->indexprs, root);
 	comparisonCost = 2.0 * (indexExprCost.startup + indexExprCost.per_tuple);
 
+	double		numsegments;
+	if (rel->cdbpolicy && rel->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+		numsegments = rel->cdbpolicy->numsegments;
+	else
+		numsegments = 1;
+
 	/* Estimate the cost of seq scan + sort */
 	seqScanPath = create_seqscan_path(root, rel, NULL, 0);
 	cost_sort(&seqScanAndSortPath, root, NIL,
-			  seqScanPath->total_cost, rel->tuples, rel->reltarget->width,
+			  seqScanPath->total_cost, rel->tuples / numsegments, rel->reltarget->width,
 			  comparisonCost, maintenance_work_mem, -1.0);
 
 	/* Estimate the cost of index scan */
@@ -7468,7 +7494,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 						  RelOptInfo *grouped_rel,
 						  RelOptInfo *partially_grouped_rel,
 						  const AggClauseCosts *agg_costs,
-						  grouping_sets_data *gd, double dNumGroups,
+						  grouping_sets_data *gd, double dNumGroupsTotal,
 						  GroupPathExtraData *extra)
 {
 	Query	   *parse = root->parse;
@@ -7494,68 +7520,32 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											  path->pathkeys);
 			if (path == cheapest_path || is_sorted)
 			{
-				CdbPathLocus locus;
-				bool		need_redistribute;
+				double		dNumGroups;
 
-				locus = cdb_choose_grouping_locus(root, path,
-												  parse->groupClause,
-												  gd ? gd->rollups : NIL,
-												  &need_redistribute);
+				/*
+				 * Sort the cheapest-total path if it isn't already sorted.
+				 * This also adds a Motion to redistribute it if needed.
+				 */
+				path = cdb_prepare_path_for_sorted_agg(root,
+													   is_sorted,
+													   grouped_rel,
+													   path,
+													   path->pathtarget,
+													   root->group_pathkeys,
+													   -1.0,
+													   parse->groupClause,
+													   gd ? gd->rollups : NIL);
 
-				/* Sort the cheapest-total path if it isn't already sorted */
-				if (!is_sorted)
-				{
-					/*
-					 * If we need to redistribute, it's usually best to
-					 * redistribute the data first, and then sort in parallel
-					 * on each segment.
-					 *
-					 * But if we don't have any expressions to redistribute
-					 * on, i.e. if we are gathering all data to a single node
-					 * to perform the aggregation, then it's better to sort
-					 * all the data on the segments first, in parallel, and
-					 * do a order-preserving motion to merge the inputs.
-					 */
-					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-
-					path = (Path *) create_sort_path(root,
-													 grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-
-					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-				}
+				/*
+				 * dNumGroupsTotal is the total number of groups across all segments. If the
+				 * Aggregate is distributed, then the number of groups in one segment
+				 * is only a fraction of the total.
+				 */
+				if (CdbPathLocus_IsPartitioned(path->locus))
+					dNumGroups = clamp_row_est(dNumGroupsTotal /
+											   CdbPathLocus_NumSegments(path->locus));
 				else
-				{
-					/*
-					 * The input is already conveniently sorted. We could
-					 * redistribute it by hash, but then we'd need to re-sort
-					 * it. That doesn't seem like a good idea, so we prefer to
-					 * gather it all, and take advantage of the sort order.
-					 *
-					 * If the grouping doesn't require any sorting (I think that
-					 * case only arises with plain aggregates, and no GROUP BY)
-					 * then we do redistribute so that we can run the aggregation
-					 * in parallel.
-					 */
-					if (need_redistribute)
-					{
-						if (root->group_pathkeys)
-						{
-							CdbPathLocus locus;
-
-							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-						}
-						else
-						{
-							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-						}
-					}
-				}
+					dNumGroups = dNumGroupsTotal;
 
 				/* Now decide what to stick atop it */
 				if (parse->groupingSets)
@@ -7617,62 +7607,35 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			foreach(lc, partially_grouped_rel->pathlist)
 			{
 				Path	   *path = (Path *) lfirst(lc);
-				CdbPathLocus locus;
-				bool		need_redistribute;
+				double		dNumGroups;
+				bool		is_sorted = false;
 
-				locus = cdb_choose_grouping_locus(root, cheapest_path,
-												  parse->groupClause, NIL,
-												  &need_redistribute);
-
-				/*
-				 * Insert a Sort node, if required.  But there's no point in
-				 * sorting anything but the cheapest path.
-				 */
-				if (!pathkeys_contained_in(root->group_pathkeys, path->pathkeys))
+				if (pathkeys_contained_in(root->group_pathkeys, path->pathkeys))
 				{
 					if (path != partially_grouped_rel->cheapest_total_path)
 						continue;
-
-					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-
-					path = (Path *) create_sort_path(root,
-													 grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-
-					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+					is_sorted = true;
 				}
+				path = cdb_prepare_path_for_sorted_agg(root,
+													   is_sorted,
+													   grouped_rel,
+													   path,
+													   path->pathtarget,
+													   root->group_pathkeys,
+													   -1.0,
+													   parse->groupClause,
+													   NIL);
+
+				/*
+				 * dNumGroupsTotal is the total number of groups across all segments. If the
+				 * Aggregate is distributed, then the number of groups in one segment
+				 * is only a fraction of the total.
+				 */
+				if (CdbPathLocus_IsPartitioned(path->locus))
+					dNumGroups = clamp_row_est(dNumGroupsTotal /
+											   CdbPathLocus_NumSegments(path->locus));
 				else
-				{
-					/*
-					 * The input is already conveniently sorted. We could
-					 * redistribute it by hash, but then we'd need to re-sort
-					 * it. That doesn't seem like a good idea, so we prefer to
-					 * gather it all, and take advantage of the sort order.
-					 *
-					 * If the grouping doesn't require any sorting (I think that
-					 * case only arises with plain aggregates, and no GROUP BY)
-					 * then we do redistribute so that we can run the aggregation
-					 * in parallel.
-					 */
-					if (need_redistribute)
-					{
-						if (root->group_pathkeys)
-						{
-							CdbPathLocus locus;
-
-							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-						}
-						else
-						{
-							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-						}
-					}
-				}
+					dNumGroups = dNumGroupsTotal;
 
 				//if (parse->hasAggs)
 				{
@@ -7715,10 +7678,31 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			 */
 			consider_groupingsets_paths(root, grouped_rel,
 										cheapest_path, false, true,
-										gd, agg_costs, dNumGroups);
+										gd, agg_costs, dNumGroupsTotal);
 		}
 		else
 		{
+			/* Redistribute the input if needed. */
+			Path	   *path;
+			double		dNumGroups;
+
+			path = cdb_prepare_path_for_hashed_agg(root,
+												   cheapest_path,
+												   cheapest_path->pathtarget,
+												   parse->groupClause,
+												   NIL);
+
+			/*
+			 * dNumGroupsTotal is the total number of groups across all segments. If the
+			 * Aggregate is distributed, then the number of groups in one segment
+			 * is only a fraction of the total.
+			 */
+			if (CdbPathLocus_IsPartitioned(path->locus))
+				dNumGroups = clamp_row_est(dNumGroupsTotal /
+										   CdbPathLocus_NumSegments(path->locus));
+			else
+				dNumGroups = dNumGroupsTotal;
+
 			hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
 														  agg_costs,
 														  dNumGroups);
@@ -7733,30 +7717,13 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				hashaggtablesize < work_mem * 1024L ||
 				grouped_rel->pathlist == NIL)
 			{
-				CdbPathLocus locus;
-				bool		need_redistribute;
-
-				locus = cdb_choose_grouping_locus(root, cheapest_path,
-												  parse->groupClause, NIL,
-												  &need_redistribute);
-
-				/*
-				 * Redistribute if needed.
-				 *
-				 * The hash agg doesn't care about input order, and it destroys any order there was,
-				 * so don't bother doing a order-preserving Motion even if we could.
-				 */
-				if (need_redistribute)
-					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
-															   NIL /* pathkeys */, false, locus);
-
 				/*
 				 * We just need an Agg over the cheapest-total input path,
 				 * since input order won't matter.
 				 */
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root, grouped_rel,
-										 cheapest_path,
+										 path,
 										 grouped_rel->reltarget,
 										 AGG_HASHED,
 										 AGGSPLIT_SIMPLE,
@@ -7776,6 +7743,24 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		if (partially_grouped_rel && partially_grouped_rel->pathlist)
 		{
 			Path	   *path = partially_grouped_rel->cheapest_total_path;
+			double		dNumGroups;
+
+			path = cdb_prepare_path_for_hashed_agg(root,
+												   path,
+												   path->pathtarget,
+												   parse->groupClause,
+												   NIL);
+
+			/*
+			 * dNumGroupsTotal is the total number of groups across all segments. If the
+			 * Aggregate is distributed, then the number of groups in one segment
+			 * is only a fraction of the total.
+			 */
+			if (CdbPathLocus_IsPartitioned(path->locus))
+				dNumGroups = clamp_row_est(dNumGroupsTotal /
+										   CdbPathLocus_NumSegments(path->locus));
+			else
+				dNumGroups = dNumGroupsTotal;
 
 			hashaggtablesize = estimate_hashagg_tablesize(path,
 														  agg_final_costs,
@@ -7784,23 +7769,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			if (enable_hashagg_disk ||
 				hashaggtablesize < work_mem * 1024L)
 			{
-				CdbPathLocus locus;
-				bool		need_redistribute;
-
-				locus = cdb_choose_grouping_locus(root, path,
-												  parse->groupClause, NIL,
-												  &need_redistribute);
-
-				/*
-				 * Redistribute if needed.
-				 *
-				 * The hash agg doesn't care about input order, and it destroys any order there was,
-				 * so don't bother doing a order-preserving Motion even if we could.
-				 */
-				if (need_redistribute)
-					path = cdbpath_create_motion_path(root, path,
-													  NIL /* pathkeys */, false, locus);
-
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root,
 										 grouped_rel,
@@ -7909,7 +7877,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										   havingQual,
                                            ((extra->flags & GROUPING_CAN_USE_SORT) != 0), /* can_sort */
 										   can_mpp_hash,
-										   dNumGroups,
+										   dNumGroupsTotal,
 										   agg_costs,
 										   &extra->agg_partial_costs,
 										   &extra->agg_final_costs,

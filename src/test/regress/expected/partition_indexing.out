@@ -180,17 +180,14 @@ CREATE UNIQUE INDEX mpp3033b_unique1 ON mpp3033b (unique1);
 ERROR:  insufficient columns in UNIQUE constraint definition
 DETAIL:  UNIQUE constraint on table "mpp3033b_1_prt_aa" lacks column "unique2" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_unique2 ON mpp3033b (unique2);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_hundred ON mpp3033b (hundred);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_stringu1 ON mpp3033b (stringu1);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 select count(*) from mpp3033a;
  count 
 -------
@@ -476,17 +473,14 @@ CREATE UNIQUE INDEX mpp3033b_unique1 ON mpp3033b (unique1);
 ERROR:  insufficient columns in UNIQUE constraint definition
 DETAIL:  UNIQUE constraint on table "mpp3033b_1_prt_1" lacks column "unique2" which is part of the partition key.
 CREATE UNIQUE INDEX mpp3033b_unique2 ON mpp3033b (unique2);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_hundred ON mpp3033b (hundred);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 CREATE UNIQUE INDEX mpp3033b_stringu1 ON mpp3033b (stringu1);
-NOTICE:  updating distribution policy to match new UNIQUE index
-ERROR:  insufficient columns in UNIQUE constraint definition
-DETAIL:  UNIQUE constraint on table "mpp3033b" lacks column "unique1" which is part of the partition key.
+ERROR:  UNIQUE index must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "unique1" is not included in the constraint.
 select count(*) from mpp3033a;
  count 
 -------

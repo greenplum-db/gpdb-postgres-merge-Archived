@@ -156,7 +156,7 @@ SELECT seqrelid::regclass, seqtypid::regtype, seqstart, seqincrement, seqmax, se
  out_of_range_insert_gid_seq | integer  |        1 |            1 | 2147483647 |      1 |        1 | f
 (1 row)
 
-CREATE SEQUENCE descending_sequence INCREMENT -1 MINVALUE 1 MAXVALUE 9223372036854775806 START 9223372036854775806;
+CREATE SEQUENCE descending_sequence INCREMENT -1 MINVALUE 1 MAXVALUE 9223372036854775806 START 9223372036854775806 CACHE 1;
 SELECT nextval('descending_sequence');
        nextval       
 ---------------------

@@ -3419,7 +3419,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_UNIT_S
 		},
 		&gp_snapshotadd_timeout,
-		10, 0, INT_MAX,
+		30, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -3484,6 +3484,28 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&gp_fts_replication_attempt_count,
 		10, 0, 100,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"gp_dtx_recovery_interval", PGC_SIGHUP, GP_ARRAY_TUNING,
+			gettext_noop("A complete checking in dtx recovery process starts each time a timer with this period expires."),
+			gettext_noop("Used by the dtx recovery process. "),
+			GUC_UNIT_S
+		},
+		&gp_dtx_recovery_interval,
+		60, 5, 3600,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"gp_dtx_recovery_prepared_period", PGC_SIGHUP, GP_ARRAY_TUNING,
+			gettext_noop("Gather prepared transactions before the time (in seconds) to find potential orphaned ones."),
+			gettext_noop("Used by the dtx recovery process. "),
+			GUC_UNIT_S
+		},
+		&gp_dtx_recovery_prepared_period,
+		120, 0, 3600,
 		NULL, NULL, NULL
 	},
 

@@ -1255,20 +1255,21 @@ select sum(v), count(*) from gstest_empty group by grouping sets ((),(),());
 
 explain (costs off)
   select sum(v), count(*) from gstest_empty group by grouping sets ((),(),());
-                      QUERY PLAN                      
-------------------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Finalize GroupAggregate
    Group Key: (GROUPINGSET_ID())
-   ->  Sort
-         Sort Key: (GROUPINGSET_ID())
-         ->  Gather Motion 3:1  (slice1; segments: 3)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: (GROUPINGSET_ID())
+         ->  Sort
+               Sort Key: (GROUPINGSET_ID())
                ->  Partial Aggregate
                      Group Key: ()
                      Group Key: ()
                      Group Key: ()
                      ->  Seq Scan on gstest_empty
  Optimizer: Postgres query optimizer
-(11 rows)
+(12 rows)
 
 -- check that functionally dependent cols are not nulled
 select a, d, grouping(a,b,c)
@@ -1408,14 +1409,17 @@ explain (costs off)
          ->  Sort
                Sort Key: a, b
                ->  MixedAggregate
-                     Hash Key: a, b
-                     Hash Key: a
                      Hash Key: b
+                     Group Key: a, b
+                     Group Key: a
                      Group Key: ()
                      ->  Gather Motion 3:1  (slice1; segments: 3)
-                           ->  Seq Scan on gstest2
+                           Merge Key: a, b
+                           ->  Sort
+                                 Sort Key: a, b
+                                 ->  Seq Scan on gstest2
  Optimizer: Postgres query optimizer
-(14 rows)
+(17 rows)
 
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)

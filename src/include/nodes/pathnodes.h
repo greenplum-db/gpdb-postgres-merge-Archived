@@ -91,6 +91,7 @@ typedef enum UpperRelationKind
 	UPPERREL_PARTIAL_GROUP_AGG, /* result of partial grouping/aggregation, if
 								 * any */
 	UPPERREL_GROUP_AGG,			/* result of grouping/aggregation, if any */
+	UPPERREL_CDB_FIRST_STAGE_GROUP_AGG,
 	UPPERREL_WINDOW,			/* result of window functions, if any */
 	UPPERREL_DISTINCT,			/* result of "SELECT DISTINCT", if any */
 	UPPERREL_ORDERED,			/* result of ORDER BY, if any */
@@ -377,6 +378,9 @@ struct PlannerInfo
 
 	List	   *part_schemes;	/* Canonicalised partition schemes used in the
 								 * query. */
+
+	/* hint on where the result of the query will be needed. Null if not known */
+	CdbPathLocus final_locus;
 
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
@@ -757,6 +761,10 @@ static inline void planner_subplan_put_plan(struct PlannerInfo *root, SubPlan *s
  * expressions from non-nullable and nullable relations resp. Lists at any
  * given position in those arrays together contain as many elements as the
  * number of joining relations.
+ *
+ * GPDB: Even if the relation is distributed, 'rows', 'tuples' and 'pages' are
+ * totals are across all segments. Divide by cdbpolicy->numsegments to get the
+ * sizes of a distributed scan node.
  *----------
  */
 typedef enum RelOptKind
@@ -1277,6 +1285,9 @@ typedef struct PathTarget
  * in join cases it's NIL because the set of relevant clauses varies depending
  * on how the join is formed.  The relevant clauses will appear in each
  * parameterized join path's joinrestrictinfo list, instead.
+ *
+ * GPDB: Like the rowcount in RelOptInfo, 'ppi_rows' is the total across all
+ * segments.
  */
 typedef struct ParamPathInfo
 {
@@ -1316,6 +1327,13 @@ typedef struct ParamPathInfo
  *
  * "pathkeys" is a List of PathKey nodes (see above), describing the sort
  * ordering of the path's output rows.
+ *
+ * GPDB: The 'rows' estimate, as well as al the costs, are *per node* values.
+ * That's similar to upstream parallel Paths, which also hold estimates
+ * per worker. But note that the 'rows', 'tuples', 'pages' in RelOptInfo
+ * are for the whole relation, across all segmnents! So you cannot generally
+ * assign RelOptInfo->rows to Path->rows, you will need to adjust it for
+ * the number of segments used to execute the Path..
  */
 typedef struct Path
 {
@@ -2088,8 +2106,7 @@ typedef struct TupleSplitPath
 	Path	   *subpath;		/* path representing input source */
 	List	   *groupClause;	/* a list of SortGroupClause's */
 
-	int         numDisDQAs;     /* the number of different DQAs */
-	Bitmapset **agg_args_id_bms;  /* the bitmapsets which store the dqa arg indexes */
+	List	   *dqa_expr_lst;
 } TupleSplitPath;
 
 /*

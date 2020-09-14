@@ -225,13 +225,12 @@ CLogicalProject::DerivePropertyConstraint
 	)
 	const
 {
-	if (exprhdl.DeriveHasSubquery(1))
+	CExpression *pexprPrL = exprhdl.PexprScalarExactChild(1);
+
+	if (NULL == pexprPrL)
 	{
 		return PpcDeriveConstraintPassThru(exprhdl, 0 /*ulChild*/);
 	}
-
-	CExpression *pexprPrL = exprhdl.PexprScalarChild(1);
-	GPOS_ASSERT(NULL != pexprPrL);
 
 	CConstraintArray *pdrgpcnstr = GPOS_NEW(mp) CConstraintArray(mp);
 	CColRefSetArray *pdrgpcrs = GPOS_NEW(mp) CColRefSetArray(mp);
@@ -373,7 +372,7 @@ CLogicalProject::PstatsDerive
 
 	// extract scalar constant expression that can be used for 
 	// statistics calculation
-	CExpression *pexprPrList = exprhdl.PexprScalarChild(1 /*child_index*/);
+	CExpression *pexprPrList = exprhdl.PexprScalarRepChild(1 /*child_index*/);
 	const ULONG arity = pexprPrList->Arity();
 	for (ULONG ul = 0; ul < arity; ul++)
 	{
@@ -389,9 +388,7 @@ CLogicalProject::PstatsDerive
 			if (datum->StatsMappable())
 			{
 				datum->AddRef();
-#ifdef GPOS_DEBUG
-				BOOL fInserted =
-#endif
+				BOOL fInserted GPOS_ASSERTS_ONLY =
 						phmuldatum->Insert(GPOS_NEW(mp) ULONG(colref->Id()), datum);
 				GPOS_ASSERT(fInserted);
 			}

@@ -878,22 +878,14 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	 *
 	 * Here we only need to determine the truncated size, the actual work is
 	 * done later when copying it to the result buffer.
+	 *
+	 * The +1 and -1 below are adjustments to accommodate terminating null
+	 * character.
 	 */
-	if (plantree)
-	{
-		int			cnt,
-					character_len;
-
-		cnt = 0;
-		while (cnt < QUERY_STRING_TRUNCATE_SIZE)
-		{
-			character_len = pg_encoding_mblen(GetDatabaseEncoding(), command + cnt);
-			cnt += character_len;
-		}
-		command_len = strnlen(command, cnt - character_len) + 1;
-	}
-	else
-		command_len = strlen(command) + 1;
+	command_len = strlen(command) + 1;
+	if (plantree && command_len > QUERY_STRING_TRUNCATE_SIZE)
+		command_len = pg_mbcliplen(command, command_len,
+								   QUERY_STRING_TRUNCATE_SIZE-1) + 1;
 
 	initStringInfo(&resgroupInfo);
 	if (IsResGroupActivated())

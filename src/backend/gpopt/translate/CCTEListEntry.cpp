@@ -48,9 +48,7 @@ CCTEListEntry::CCTEListEntry
 	m_cte_info = GPOS_NEW(mp) HMSzCTEInfo(mp);
 	Query *cte_query = (Query*) cte->ctequery;
 		
-#ifdef GPOS_DEBUG
-		BOOL result =
-#endif
+		BOOL result GPOS_ASSERTS_ONLY =
 	m_cte_info->Insert(cte->ctename, GPOS_NEW(mp) SCTEProducerInfo(cte_producer, cte_query->targetList));
 		
 	GPOS_ASSERT(result);
@@ -88,9 +86,7 @@ CCTEListEntry::CCTEListEntry
 
 		Query *cte_query = (Query*) cte->ctequery;
 		
-#ifdef GPOS_DEBUG
-		BOOL result =
-#endif
+		BOOL result GPOS_ASSERTS_ONLY =
 		m_cte_info->Insert(cte->ctename, GPOS_NEW(mp) SCTEProducerInfo(cte_producer, cte_query->targetList));
 		
 		GPOS_ASSERT(result);
@@ -165,9 +161,7 @@ CCTEListEntry::AddCTEProducer
 	GPOS_ASSERT(NULL == m_cte_info->Find(cte->ctename) && "CTE entry already exists");
 	Query *cte_query = (Query*) cte->ctequery;
 	
-#ifdef GPOS_DEBUG
-	BOOL result =
-#endif
+	BOOL result GPOS_ASSERTS_ONLY =
 	m_cte_info->Insert(cte->ctename, GPOS_NEW(mp) SCTEProducerInfo(cte_producer, cte_query->targetList));
 	
 	GPOS_ASSERT(result);

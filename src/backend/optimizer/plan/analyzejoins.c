@@ -654,6 +654,18 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL)
 		return false;
+
+	/*
+	 * Randomly distribute tables cannot guarantee uniqueness. You can't create
+	 * a unique index on on either, so this is normally redundant, but there is
+	 * one corner case: If you use gp_dist_random('table') on a replicated or
+	 * catalog table, the underlying table might have a unique index, but when
+	 * we're fetching the copies from all segments, the result will have
+	 * duplicates.
+	 */
+	if (GpPolicyIsRandomPartitioned(rel->cdbpolicy))
+		return false;
+
 	if (rel->rtekind == RTE_RELATION)
 	{
 		/*

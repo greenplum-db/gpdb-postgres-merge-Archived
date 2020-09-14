@@ -705,7 +705,7 @@ drop table atacc1;
 
 -- test primary key constraint adding
 
-create table atacc1 ( id serial, test int) ;
+create table atacc1 ( id serial, test int) distributed by (test);
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
 -- insert first value
@@ -721,7 +721,6 @@ alter table atacc1 add constraint atacc_oid1 primary key(id);
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
--- GPDB: this fails because the distribution key doesn't include 'id'
 alter table atacc1 add constraint atacc_oid1 primary key(id);
 alter table atacc1 set distributed by (id);
 alter table atacc1 add constraint atacc_oid1 primary key(id);
@@ -1348,12 +1347,26 @@ create index on anothertab(f2,f3);
 create unique index on anothertab(f4);
 
 \d anothertab
+
+-- In GPDB, you cannot change the type of a column that's part of a unique key
+alter table anothertab drop constraint anothertab_pkey;
+alter table anothertab drop constraint anothertab_f1_f4_key ;
+alter table anothertab drop constraint anothertab_f2_key;
+drop index anothertab_f4_idx;
+
 alter table anothertab alter column f1 type bigint;
 alter table anothertab
   alter column f2 type bigint,
   alter column f3 type bigint,
   alter column f4 type bigint;
 alter table anothertab alter column f5 type bigint;
+
+-- restore primary and unique keys
+alter table anothertab add constraint anothertab_pkey primary key (f1);
+alter table anothertab add constraint anothertab_f1_f4_key unique (f1, f4);
+create unique index on anothertab(f4);
+alter table anothertab add constraint anothertab_f2_key unique (f2);
+
 \d anothertab
 
 drop table anothertab;
@@ -1438,7 +1451,9 @@ select conname, obj_description(oid, 'pg_constraint') as desc
   from pg_constraint where conname like 'at_partitioned%'
   order by conname;
 
+-- this doesn't work in GPDB, which makes the rest of the test quite pointless.
 alter table at_partitioned alter column name type varchar(127);
+
 
 -- Note: these tests currently show the wrong behavior for comments :-(
 
@@ -1926,6 +1941,7 @@ DROP TABLE test_drop_constr_parent CASCADE;
 -- IF EXISTS test
 --
 ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 SET DISTRIBUTED BY(f);
 ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
 ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
 ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
@@ -1936,6 +1952,7 @@ CREATE TABLE tt8(a int);
 CREATE SCHEMA alter2;
 
 ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 SET DISTRIBUTED BY(f);
 ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
 ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
 ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
@@ -1984,19 +2001,22 @@ SELECT col_description('comment_test'::regclass, 1) as comment;
 SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
 SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
 
--- Changing the data type of an indexed column is not supported in GPDB as of fecd245
---start_ignore
 -- Change the datatype of all the columns. ALTER TABLE is optimized to not
 -- rebuild an index if the new data type is binary compatible with the old
 -- one. Check do a dummy ALTER TABLE that doesn't change the datatype
 -- first, to test that no-op codepath, and another one that does.
 ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE text;
+
+-- Changing the data type of an indexed column is not supported in GPDB as of fecd245
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ALTER TABLE comment_test DROP CONSTRAINT comment_test_pk;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ALTER TABLE comment_test ADD CONSTRAINT comment_test_pk PRIMARY KEY (id);
+
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
---end_ignore
 
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;

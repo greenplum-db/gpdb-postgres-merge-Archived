@@ -857,17 +857,13 @@ CStatisticsUtils::AddHistogram
 
 	if (NULL == col_histogram_mapping->Find(&colid))
 	{
-#ifdef GPOS_DEBUG
-		BOOL result =
-#endif
+		BOOL result GPOS_ASSERTS_ONLY =
 		col_histogram_mapping->Insert(GPOS_NEW(mp) ULONG(colid), histogram->CopyHistogram());
 		GPOS_ASSERT(result);
 	}
 	else if (replace_old)
 	{
-#ifdef GPOS_DEBUG
-		BOOL result =
-#endif
+		BOOL result GPOS_ASSERTS_ONLY =
 		col_histogram_mapping->Replace(&colid, histogram->CopyHistogram());
 		GPOS_ASSERT(result);
 	}
@@ -1212,7 +1208,7 @@ CStatisticsUtils::DeriveStatsForIndexGet
 		}
 	}
 
-	CExpression *scalar_expr = expr_handle.PexprScalarChild(0 /*ulChidIndex*/);
+	CExpression *scalar_expr = expr_handle.PexprScalarRepChild(0 /*ulChidIndex*/);
 	CExpression *local_expr = NULL;
 	CExpression *outer_refs_expr = NULL;
 
@@ -1265,7 +1261,7 @@ CStatisticsUtils::DeriveStatsForBitmapTableGet
 	CColRefSet *outer_col_refset = expr_handle.DeriveOuterReferences();
 	CExpression *local_expr = NULL;
 	CExpression *outer_refs_expr = NULL;
-	CExpression *scalar_expr = expr_handle.PexprScalarChild(child_cond_index);
+	CExpression *scalar_expr = expr_handle.PexprScalarRepChild(child_cond_index);
 	CPredicateUtils::SeparateOuterRefs(mp, scalar_expr, outer_col_refset, &local_expr, &outer_refs_expr);
 
 	// collect columns used by the index
@@ -1334,9 +1330,7 @@ CStatisticsUtils::GetGrpColIdToUpperBoundNDVIdxMap
 			{
 				ULongPtrArray *colids_new = GPOS_NEW(mp) ULongPtrArray(mp);
 				colids_new->Append(GPOS_NEW(mp) ULONG(colid));
-#ifdef GPOS_DEBUG
-		BOOL fres =
-#endif // GPOS_DEBUG
+		BOOL fres GPOS_ASSERTS_ONLY =
 					grp_colid_upper_bound_ndv_idx_map->Insert(GPOS_NEW(mp) ULONG(upper_bound_ndv_idx), colids_new);
 				GPOS_ASSERT(fres);
 			}

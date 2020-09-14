@@ -72,7 +72,8 @@ CXformSplitDQA::Exfp
 		0 == exprhdl.DeriveTotalDistinctAggs(1) ||
 		exprhdl.DeriveHasMultipleDistinctAggs(1) ||
 		0 < exprhdl.DeriveOuterReferences()->Size() ||
-		CXformUtils::FHasAmbiguousType(exprhdl.PexprScalarChild(1 /*child_index*/), COptCtxt::PoctxtFromTLS()->Pmda())
+		NULL == exprhdl.PexprScalarExactChild(1) ||
+		CXformUtils::FHasAmbiguousType(exprhdl.PexprScalarExactChild(1 /*child_index*/), COptCtxt::PoctxtFromTLS()->Pmda())
 		)
 	{
 		return CXform::ExfpNone;
@@ -907,9 +908,7 @@ CXformSplitDQA::ExtractDistinctCols
 				// insert into the map between the expression representing the DQA argument 
 				// and its column reference
 				pexprArg->AddRef();
-#ifdef GPOS_DEBUG
-				BOOL fInserted =
-#endif
+				BOOL fInserted GPOS_ASSERTS_ONLY =
 						phmexprcr->Insert(pexprArg, pcrDistinctCol);
 				GPOS_ASSERT(fInserted);
 

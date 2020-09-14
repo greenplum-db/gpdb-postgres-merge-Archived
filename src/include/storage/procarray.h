@@ -115,6 +115,7 @@ extern bool MinimumActiveBackends(int min);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountDBConnections(Oid databaseid);
 extern void CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending);
+extern int	SignalMppBackends(int sig);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
 								 int *nbackends, int *nprepared);
@@ -137,6 +138,7 @@ extern void getDtxCheckPointInfo(char **result, int *result_size);
 
 extern List *ListAllGxid(void);
 extern int GetPidByGxid(DistributedTransactionId gxid);
+extern bool IsDtxInProgress(DistributedTransactionTimeStamp distribTimeStamp, DistributedTransactionId gxid);
 
 extern void ProcArraySetReplicationSlotXmin(TransactionId xmin,
 											TransactionId catalog_xmin, bool already_locked);

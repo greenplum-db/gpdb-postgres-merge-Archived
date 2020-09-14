@@ -72,7 +72,7 @@ static char gpstringsubsprog[MAXPGPATH];
 #ifndef WIN32
 /* GPDB:  Add stuff to ignore all the extra NOTICE messages we give */
 const char *basic_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE:";
-const char *pretty_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE: -U3";
+const char *pretty_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE: -U20";
 #else
 const char *basic_diff_opts = "-w";
 const char *pretty_diff_opts = "-w -U3";

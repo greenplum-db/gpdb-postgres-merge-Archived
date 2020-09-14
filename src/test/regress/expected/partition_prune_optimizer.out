@@ -2947,6 +2947,7 @@ create index tprt6_idx on tprt_6 (col1);
 insert into tprt values (10), (20), (501), (502), (505), (1001), (4500);
 set enable_hashjoin = off;
 set enable_mergejoin = off;
+set enable_seqscan=off;
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
                                    QUERY PLAN                                    
@@ -3040,6 +3041,7 @@ order by tbl1.col1, tprt.col1;
   505 |  505
 (2 rows)
 
+reset enable_seqscan;
 -- Multiple partitions
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off)

@@ -908,8 +908,8 @@ DETAIL:  Key (test)=(2) already exists.
 insert into atacc1 (test) values (4);
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
-ERROR:  could not create unique index "atacc_test1"
-DETAIL:  Key (test)=(0) is duplicated.
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int );
@@ -956,10 +956,9 @@ ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
 DETAIL:  Key (test)=(3) already exists.
 drop table atacc1;
 -- test primary key constraint adding
-create table atacc1 ( id serial, test int) ;
+create table atacc1 ( id serial, test int) distributed by (test);
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  updating distribution policy to match new PRIMARY KEY
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
@@ -978,10 +977,9 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
--- GPDB: this fails because the distribution key doesn't include 'id'
 alter table atacc1 add constraint atacc_oid1 primary key(id);
-DETAIL:  Distribution key column "test" is not included in the constraint.
 ERROR:  PRIMARY KEY definition must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "test" is not included in the constraint.
 alter table atacc1 set distributed by (id);
 alter table atacc1 add constraint atacc_oid1 primary key(id);
 drop table atacc1;
@@ -1994,12 +1992,22 @@ Indexes:
     "anothertab_f4_excl1" EXCLUDE USING btree (f4 WITH =) WHERE (f5 > 0)
 Distributed Replicated
 
+-- In GPDB, you cannot change the type of a column that's part of a unique key
+alter table anothertab drop constraint anothertab_pkey;
+alter table anothertab drop constraint anothertab_f1_f4_key ;
+alter table anothertab drop constraint anothertab_f2_key;
+drop index anothertab_f4_idx;
 alter table anothertab alter column f1 type bigint;
 alter table anothertab
   alter column f2 type bigint,
   alter column f3 type bigint,
   alter column f4 type bigint;
 alter table anothertab alter column f5 type bigint;
+-- restore primary and unique keys
+alter table anothertab add constraint anothertab_pkey primary key (f1);
+alter table anothertab add constraint anothertab_f1_f4_key unique (f1, f4);
+create unique index on anothertab(f4);
+alter table anothertab add constraint anothertab_f2_key unique (f2);
 \d anothertab
             Table "public.anothertab"
  Column |  Type  | Collation | Nullable | Default 
@@ -2168,7 +2176,10 @@ select conname, obj_description(oid, 'pg_constraint') as desc
  at_partitioned_id_name_key   | parent constraint
 (3 rows)
 
+-- this doesn't work in GPDB, which makes the rest of the test quite pointless.
 alter table at_partitioned alter column name type varchar(127);
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 -- Note: these tests currently show the wrong behavior for comments :-(
 select relname,
   c.oid = oldoid as orig_oid,
@@ -2182,23 +2193,23 @@ select relname,
   from pg_class c left join old_oids using (relname)
   where relname like 'at_partitioned%'
   order by relname;
-           relname            | orig_oid | storage |     desc     
-------------------------------+----------+---------+--------------
+           relname            | orig_oid | storage |     desc      
+------------------------------+----------+---------+---------------
  at_partitioned               | t        | none    | 
  at_partitioned_0             | t        | orig    | 
- at_partitioned_0_id_name_key | f        | OTHER   | parent index
+ at_partitioned_0_id_name_key | t        | orig    | child 0 index
  at_partitioned_1             | t        | orig    | 
- at_partitioned_1_id_name_key | f        | OTHER   | parent index
- at_partitioned_id_name_key   | f        | none    | parent index
+ at_partitioned_1_id_name_key | t        | orig    | child 1 index
+ at_partitioned_id_name_key   | t        | none    | parent index
 (6 rows)
 
 select conname, obj_description(oid, 'pg_constraint') as desc
   from pg_constraint where conname like 'at_partitioned%'
   order by conname;
-           conname            |       desc        
-------------------------------+-------------------
- at_partitioned_0_id_name_key | 
- at_partitioned_1_id_name_key | 
+           conname            |        desc        
+------------------------------+--------------------
+ at_partitioned_0_id_name_key | child 0 constraint
+ at_partitioned_1_id_name_key | child 1 constraint
  at_partitioned_id_name_key   | parent constraint
 (3 rows)
 
@@ -3137,6 +3148,8 @@ NOTICE:  drop cascades to table test_drop_constr_child
 --
 ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
 NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 SET DISTRIBUTED BY(f);
+NOTICE:  relation "tt8" does not exist, skipping
 ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
 NOTICE:  relation "tt8" does not exist, skipping
 ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
@@ -3150,8 +3163,8 @@ NOTICE:  relation "tt8" does not exist, skipping
 CREATE TABLE tt8(a int);
 CREATE SCHEMA alter2;
 ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 SET DISTRIBUTED BY(f);
 ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
-NOTICE:  updating distribution policy to match new PRIMARY KEY
 ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
 ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
 ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
@@ -3237,19 +3250,24 @@ SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment F
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
 (2 rows)
 
--- Changing the data type of an indexed column is not supported in GPDB as of fecd245
---start_ignore
 -- Change the datatype of all the columns. ALTER TABLE is optimized to not
 -- rebuild an index if the new data type is binary compatible with the old
 -- one. Check do a dummy ALTER TABLE that doesn't change the datatype
 -- first, to test that no-op codepath, and another one that does.
 ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE text;
+-- Changing the data type of an indexed column is not supported in GPDB as of fecd245
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
+ALTER TABLE comment_test DROP CONSTRAINT comment_test_pk;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ALTER TABLE comment_test ADD CONSTRAINT comment_test_pk PRIMARY KEY (id);
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
---end_ignore
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;
            comment           
@@ -3258,16 +3276,16 @@ SELECT col_description('comment_test'::regclass, 1) as comment;
 (1 row)
 
 SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
-       index        |                    comment                    
---------------------+-----------------------------------------------
+       index        |           comment            
+--------------------+------------------------------
  comment_test_index | Simple index on comment_test
- comment_test_pk    | Index backing the PRIMARY KEY of comment_test
+ comment_test_pk    | 
 (2 rows)
 
 SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
            constraint            |                    comment                    
 ---------------------------------+-----------------------------------------------
- comment_test_pk                 | PRIMARY KEY constraint of comment_test
+ comment_test_pk                 | 
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
 (2 rows)
 
@@ -3282,9 +3300,11 @@ COMMENT ON INDEX comment_test_child_fk IS 'Index backing the FOREIGN KEY of comm
 COMMENT ON CONSTRAINT comment_test_child_fk ON comment_test_child IS 'FOREIGN KEY constraint of comment_test_child';
 -- Change column type of parent
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int USING id::integer;
-ERROR:  foreign key constraint "comment_test_child_fk" cannot be implemented
-DETAIL:  Key columns "id" and "id" are of incompatible types: text and integer.
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 -- Comments should be intact
 SELECT col_description('comment_test_child'::regclass, 1) as comment;
               comment              

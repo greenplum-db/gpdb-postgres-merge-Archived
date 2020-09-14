@@ -519,6 +519,36 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 			old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
 			keyscmp = compare_pathkeys(new_path_pathkeys,
 									   old_path_pathkeys);
+
+			/*
+			 * GPDB: If the new path has different locus than the other path,
+			 * keep it, like we keep paths with different pathkeys. We can
+			 * avoid the (Gather) Motion at the top of the plan, if we choose
+			 * a plan that produces the result at the right locus to begin
+			 * with. In particular, if it's a two-stage aggregate plan, it might
+			 * be cheaper to perform the Finalize Aggregate stage in the QD than
+			 * redistribute it to all segments, if that avoids a Gather Motion
+			 * at the top.
+			 *
+			 * Only do this for the "upper rels". The join planning code hasn't
+			 * been updated to consider plans with multiple loci. Keeping extra
+			 * paths might be a win, but it might also lead to erratic behavior.
+			 * For example, a Hash Join only considers the cheapest input paths,
+			 * but a Merge Join would consider all paths with sorted input. A
+			 * path with a suitable locus migh therefore win with a Merge Join
+			 * but not even be considered a Hash Join, even though the Hash Join
+			 * path would be cheaper.
+			 *
+			 * Parts of the upper planner functions could have similar issues,
+			 * but it seems more limited in scope.
+			 */
+			if (keyscmp != PATHKEYS_DIFFERENT &&
+				parent_rel->reloptkind == RELOPT_UPPER_REL &&
+				!cdbpathlocus_equal(new_path->locus, old_path->locus))
+			{
+				keyscmp = PATHKEYS_DIFFERENT;
+			}
+
 			if (keyscmp != PATHKEYS_DIFFERENT)
 			{
 				switch (costcmp)
@@ -1475,6 +1505,12 @@ create_merge_append_path(PlannerInfo *root,
 		pathnode->limit_tuples = -1.0;
 
 	/*
+	 * Add Motions to the child nodes as needed, and determine the locus
+	 * of the MergeAppend itself.
+	 */
+	set_append_path_locus(root, (Path *) pathnode, rel, pathkeys);
+
+	/*
 	 * Add up the sizes and costs of the input paths.
 	 */
 	pathnode->path.rows = 0;
@@ -1503,7 +1539,8 @@ create_merge_append_path(PlannerInfo *root,
 					  root,
 					  pathkeys,
 					  subpath->total_cost,
-					  subpath->parent->tuples,
+					  /* GPDB: pass subpath->rows because it's been adjusted for # of segments */
+					  subpath->rows,
 					  subpath->pathtarget->width,
 					  0.0,
 					  work_mem,
@@ -1531,8 +1568,6 @@ create_merge_append_path(PlannerInfo *root,
 						  pathkeys, list_length(subpaths),
 						  input_startup_cost, input_total_cost,
 						  pathnode->path.rows);
-
-	set_append_path_locus(root, (Path *) pathnode, rel, pathkeys);
 
 	return pathnode;
 }
@@ -1735,18 +1770,24 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 			else
 			{
 				Assert(CdbPathLocus_IsPartitioned(subpath->locus));
+				projectedlocus = subpath->locus;
+
 				/* Transform subpath locus into the appendrel's space for comparison. */
-				if (subpath->parent == rel ||
-					subpath->parent->reloptkind != RELOPT_OTHER_MEMBER_REL)
-					projectedlocus = subpath->locus;
-				else
-					projectedlocus =
-						cdbpathlocus_pull_above_projection(root,
+				if (subpath->parent->reloptkind == RELOPT_OTHER_MEMBER_REL &&
+					subpath->parent != rel &&
+					(CdbPathLocus_IsHashed(subpath->locus) || CdbPathLocus_IsHashed(subpath->locus)))
+				{
+					CdbPathLocus l;
+
+					l = cdbpathlocus_pull_above_projection(root,
 						                                   subpath->locus,
 						                                   subpath->parent->relids,
 						                                   subpath->parent->reltarget->exprs,
 						                                   rel->reltarget->exprs,
 						                                   rel->relid);
+					if (CdbPathLocus_IsHashed(l) || CdbPathLocus_IsHashedOJ(l))
+						projectedlocus = l;
+				}
 			}
 
 			/*
@@ -1981,6 +2022,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	int			numCols;
 	CdbPathLocus locus;
 	bool		add_motion = false;
+	double		numsegments;
 
 	/* Caller made a mistake if subpath isn't cheapest_total ... */
 	Assert(subpath == rel->cheapest_total_path);
@@ -2029,7 +2071,9 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 			sortrefs = lappend_int(sortrefs, 0);
 		}
 
-		locus = cdbpathlocus_from_exprs(root, sjinfo->semi_rhs_exprs, opfamilies, sortrefs, numsegments);
+		locus = cdbpathlocus_from_exprs(root,
+										subpath->parent,
+										sjinfo->semi_rhs_exprs, opfamilies, sortrefs, numsegments);
         subpath = cdbpath_create_motion_path(root, subpath, NIL, false, locus);
 		/*
 		 * We probably add agg/sort node above the added motion node, but it is
@@ -2041,6 +2085,11 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	}
 	else
 		locus = subpath->locus;
+
+	if (CdbPathLocus_IsPartitioned(locus))
+		numsegments = CdbPathLocus_NumSegments(locus);
+	else
+		numsegments = 1;
 
 	/*
 	 * If we get here, we can unique-ify using at least one of sorting and
@@ -2088,7 +2137,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		if (add_motion)
 			return NULL;
 		pathnode->umethod = UNIQUE_PATH_NOOP;
-		pathnode->path.rows = rel->rows;
+		pathnode->path.rows = rel->rows / numsegments;
 		pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost = subpath->total_cost;
 		pathnode->path.pathkeys = subpath->pathkeys;
@@ -2129,7 +2178,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 				if (add_motion)
 					return NULL;
 				pathnode->umethod = UNIQUE_PATH_NOOP;
-				pathnode->path.rows = rel->rows;
+				pathnode->path.rows = rel->rows / numsegments;
 				pathnode->path.startup_cost = subpath->startup_cost;
 				pathnode->path.total_cost = subpath->total_cost;
 				pathnode->path.pathkeys = subpath->pathkeys;
@@ -2157,7 +2206,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 */
 		cost_sort(&sort_path, root, NIL,
 				  subpath->total_cost,
-				  rel->rows,
+				  rel->rows / numsegments,
 				  subpath->pathtarget->width,
 				  0.0,
 				  work_mem,
@@ -2169,7 +2218,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 * probably this is an overestimate.)  This should agree with
 		 * create_upper_unique_path.
 		 */
-		sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
+		sort_path.total_cost += cpu_operator_cost * (rel->rows / numsegments) * numCols;
 	}
 
 	if (sjinfo->semi_can_hash)
@@ -2195,7 +2244,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					 NIL,
 					 subpath->startup_cost,
 					 subpath->total_cost,
-					 rel->rows,
+					 (rel->rows / numsegments),
 					 subpath->pathtarget->width);
 	}
 
@@ -2338,6 +2387,7 @@ create_unique_rowid_path(PlannerInfo *root,
 	int			numCols;
 	bool		all_btree;
 	bool		all_hash;
+	double		numsegments;
 
 	Assert(rowidexpr_id > 0);
 
@@ -2363,6 +2413,7 @@ create_unique_rowid_path(PlannerInfo *root,
 		int			numsegments = CdbPathLocus_NumSegments(subpath->locus);
 
 		locus = cdbpathlocus_from_exprs(root,
+										subpath->parent,
 										list_make1(rowidexpr),
 										list_make1_oid(cdb_default_distribution_opfamily_for_type(INT8OID)),
 										list_make1_int(0),
@@ -2392,6 +2443,11 @@ create_unique_rowid_path(PlannerInfo *root,
 		locus = subpath->locus;
 	}
 
+	if (CdbPathLocus_IsPartitioned(locus))
+		numsegments = CdbPathLocus_NumSegments(locus);
+	else
+		numsegments = 1;
+
 	/*
 	 * Start building the result Path object.
 	 */
@@ -2420,7 +2476,7 @@ create_unique_rowid_path(PlannerInfo *root,
 	/*
 	 * This just removes duplicates generated by broadcasting rows earlier.
 	 */
-	pathnode->path.rows = rel->rows;
+	pathnode->path.rows = (rel->rows / numsegments);
 	numCols = 1;		/* the RowIdExpr */
 
 	if (all_btree)
@@ -2430,7 +2486,7 @@ create_unique_rowid_path(PlannerInfo *root,
 		 */
 		cost_sort(&sort_path, root, NIL,
 				  subpath->total_cost,
-				  rel->rows,
+				  (rel->rows / numsegments),
 				  rel->reltarget->width,
 				  0, work_mem,
 				  -1.0);
@@ -2441,7 +2497,7 @@ create_unique_rowid_path(PlannerInfo *root,
 		 * probably this is an overestimate.)  This should agree with
 		 * make_unique.
 		 */
-		sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
+		sort_path.total_cost += cpu_operator_cost * (rel->rows / numsegments) * numCols;
 	}
 
 	if (all_hash)
@@ -2457,11 +2513,11 @@ create_unique_rowid_path(PlannerInfo *root,
 		else
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, 0,
-					 numCols, ((Path*)pathnode)->rows / planner_segment_count(NULL),
+					 numCols, ((Path *)pathnode)->rows,
 					 NIL, /* no quals */
 					 subpath->startup_cost,
 					 subpath->total_cost,
-					 rel->rows,
+					 (rel->rows / numsegments),
 					 false /* streaming */
 				);
 	}
@@ -3038,7 +3094,14 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 	if (subpath)
 	{
 		/* copy the cost estimates from the subpath */
-		pathnode->rows = rel->rows;
+		double		numsegments;
+
+		if (CdbPathLocus_IsPartitioned(locus))
+			numsegments = CdbPathLocus_NumSegments(locus);
+		else
+			numsegments = 1;
+
+		pathnode->rows = clamp_row_est(rel->rows / numsegments);
 		pathnode->startup_cost = subpath->startup_cost;
 		pathnode->total_cost = subpath->total_cost;
 		pathnode->pathkeys = subpath->pathkeys;
@@ -4454,8 +4517,7 @@ create_tup_split_path(PlannerInfo *root,
 					  Path *subpath,
 					  PathTarget *target,
 					  List *groupClause,
-					  Bitmapset **bitmapset,
-					  int numDisDQAs)
+					  List *dqa_expr_lst)
 {
 	TupleSplitPath *pathnode = makeNode(TupleSplitPath);
 
@@ -4474,13 +4536,9 @@ create_tup_split_path(PlannerInfo *root,
 	pathnode->subpath = subpath;
 	pathnode->groupClause = groupClause;
 
-	pathnode->numDisDQAs = numDisDQAs;
+	pathnode->dqa_expr_lst = dqa_expr_lst;
 
-	pathnode->agg_args_id_bms = palloc0(sizeof(Bitmapset *) * numDisDQAs);
-	for (int i = 0 ; i < numDisDQAs; i ++)
-		pathnode->agg_args_id_bms[i] = bms_copy(bitmapset[i]);
-
-	cost_tup_split(&pathnode->path, root, numDisDQAs,
+	cost_tup_split(&pathnode->path, root, list_length(dqa_expr_lst),
 				   subpath->startup_cost, subpath->total_cost,
 				   subpath->rows);
 
@@ -4656,7 +4714,19 @@ create_groupingsets_path(PlannerInfo *root,
 	pathnode->path.total_cost += target->cost.startup +
 		target->cost.per_tuple * pathnode->path.rows;
 
-	pathnode->path.locus = subpath->locus;
+	/*
+	 * If this is a one-stage aggregate, the caller should already have
+	 * ensured that the data is distributed so that a one-stage aggregate
+	 * works, and the distribution is preserved. But if this is the first
+	 * stage of a multi-stage aggregate, if any distribution key columns
+	 * are part of rollups, they will be set to NULLs for the rolled up
+	 * rows. That breaks the distribution.
+	 */
+	if (CdbPathLocus_IsPartitioned(subpath->locus))
+		CdbPathLocus_MakeStrewn(&pathnode->path.locus,
+								CdbPathLocus_NumSegments(subpath->locus));
+	else
+		pathnode->path.locus = subpath->locus;
 
 	return pathnode;
 }

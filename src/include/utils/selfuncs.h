@@ -191,8 +191,7 @@ extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,
 									   Selectivity *mcv_freq,
-									   Selectivity *bucketsize_frac,
-									   Path *path);
+									   Selectivity *bucketsize_frac);
 extern double estimate_hashagg_tablesize(Path *path,
 										 const AggClauseCosts *agg_costs,
 										 double dNumGroups);
@@ -212,7 +211,6 @@ extern Selectivity scalararraysel_containment(PlannerInfo *root,
 											  Node *leftop, Node *rightop,
 											  Oid elemtype, bool isEquality, bool useOr,
 											  int varRelid);
-extern double estimate_num_groups_per_segment(double groupNum, double numPerGroup, double numsegments);
-extern double estimate_num_groups_across_segments(double groupNum, double numPerGroup, double numsegments);
+extern double estimate_num_groups_on_segment(double dNumGroupsTotal, double rows, CdbPathLocus locus);
 
 #endif							/* SELFUNCS_H */

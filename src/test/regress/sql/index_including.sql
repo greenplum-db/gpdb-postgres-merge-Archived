@@ -73,15 +73,8 @@ SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conre
 INSERT INTO tbl SELECT 1, 2, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
 INSERT INTO tbl SELECT 1, NULL, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
 INSERT INTO tbl SELECT x, 2*x, NULL, NULL FROM generate_series(1,300) AS x;
--- GPDB_12_MERGE_FIXME
--- upstream this guc default is 4.0 but we change it to 100. We can not find any
--- clue in commit message. This change affect plan. GPDB perfer seqscan instead of bitmap 
--- index scan in upstream. We have met this issue many times still no conclusion yet. 
--- https://groups.google.com/a/greenplum.org/forum/#!msg/gpdb-dev/Plf2leSAUxA/-aG6ltl8CwAJ
--- 
--- I temporary set this guc follow by upstream default value. We can rid of it after conclusion
--- got.
-set random_page_cost=4.0;
+-- GPDB: Dial down random_page_cost to get the same plan as in upstream.
+set random_page_cost=1.0;
 explain (costs off)
 select * from tbl where (c1,c2,c3) < (2,5,1);
 select * from tbl where (c1,c2,c3) < (2,5,1);

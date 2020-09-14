@@ -3283,7 +3283,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		{
 			Expr	   *aggexpr_matches_expr;
 
-			/* evaluate expression: <AggExprId column> == pertrans->agg_expr_id */
+			/* evaluate expression: <AggExprId column> == pertrans->agg_aggref->expr_id - 1 */
 			aggexpr_matches_expr = (Expr *)
 				makeFuncExpr(F_INT4EQ,
 							 BOOLOID,
@@ -3298,7 +3298,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 										   -1,
 										   InvalidOid,
 										   sizeof(int32),
-										   Int32GetDatum(pertrans->agg_expr_id),
+										   Int32GetDatum(pertrans->aggref->agg_expr_id - 1),
 										   false,
 										   true)),
 							 InvalidOid,

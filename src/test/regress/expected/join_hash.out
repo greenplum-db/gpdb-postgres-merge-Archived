@@ -926,18 +926,17 @@ insert into wide select generate_series(3, 100) as id, rpad('', 320000, 'x') as 
 explain (costs off)
   select length(max(s.t))
   from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);
-                      QUERY PLAN                      
-------------------------------------------------------
- Finalize Aggregate
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Partial Aggregate
-               ->  Hash Right Join
-                     Hash Cond: (wide_1.id = wide.id)
-                     ->  Seq Scan on wide wide_1
-                     ->  Hash
-                           ->  Seq Scan on wide
+         ->  Hash Right Join
+               Hash Cond: (wide_1.id = wide.id)
+               ->  Seq Scan on wide wide_1
+               ->  Hash
+                     ->  Seq Scan on wide
  Optimizer: Postgres query optimizer
-(9 rows)
+(8 rows)
 
 select length(max(s.t))
 from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);

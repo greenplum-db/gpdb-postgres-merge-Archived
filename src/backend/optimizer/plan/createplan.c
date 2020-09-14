@@ -2338,7 +2338,7 @@ create_tup_split_plan(PlannerInfo *root, TupleSplitPath *best_path)
 
 	tlist = build_path_tlist(root, &best_path->path);
 
-	plan = make_tup_split(tlist, best_path->numDisDQAs, best_path->agg_args_id_bms,
+	plan = make_tup_split(tlist, best_path->dqa_expr_lst,
 						  list_length(best_path->groupClause),
 						  extract_grouping_cols(best_path->groupClause,
 												subplan->targetlist),
@@ -3722,6 +3722,12 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		List	   *subindexquals = NIL;
 		List	   *subindexECs = NIL;
 		ListCell   *l;
+		double		numsegments;
+
+		if (apath->path.parent->cdbpolicy && apath->path.parent->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+			numsegments = apath->path.parent->cdbpolicy->numsegments;
+		else
+			numsegments = 1;
 
 		/*
 		 * There may well be redundant quals among the subplans, since a
@@ -3750,7 +3756,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->startup_cost = apath->path.startup_cost;
 		plan->total_cost = apath->path.total_cost;
 		plan->plan_rows =
-			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples);
+			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples / numsegments);
 		plan->plan_width = 0;	/* meaningless */
 		plan->parallel_aware = false;
 		plan->parallel_safe = apath->path.parallel_safe;
@@ -3810,11 +3816,18 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		}
 		else
 		{
+			double		numsegments;
+
+			if (opath->path.parent->cdbpolicy && opath->path.parent->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+				numsegments = opath->path.parent->cdbpolicy->numsegments;
+			else
+				numsegments = 1;
+
 			plan = (Plan *) make_bitmap_or(subplans);
 			plan->startup_cost = opath->path.startup_cost;
 			plan->total_cost = opath->path.total_cost;
 			plan->plan_rows =
-				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
+				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples / numsegments);
 			plan->plan_width = 0;	/* meaningless */
 			plan->parallel_aware = false;
 			plan->parallel_safe = opath->path.parallel_safe;
@@ -3847,6 +3860,12 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		List	   *subindexquals;
 		List	   *subindexECs;
 		ListCell   *l;
+		double		numsegments;
+
+		if (ipath->path.parent->cdbpolicy && ipath->path.parent->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+			numsegments = ipath->path.parent->cdbpolicy->numsegments;
+		else
+			numsegments = 1;
 
 		/* Use the regular indexscan plan build machinery... */
 		iscan = castNode(IndexScan,
@@ -3861,7 +3880,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->startup_cost = 0.0;
 		plan->total_cost = ipath->indextotalcost;
 		plan->plan_rows =
-			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
+			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples / numsegments);
 		plan->plan_width = 0;	/* meaningless */
 		plan->parallel_aware = false;
 		plan->parallel_safe = ipath->path.parallel_safe;
@@ -7379,21 +7398,15 @@ make_agg(List *tlist, List *qual,
 }
 
 TupleSplit *
-make_tup_split(List *tlist,
-			   int numDQAs, Bitmapset **dqas_ref_bms,
-			   int numGroupCols, AttrNumber *grpColIdx,
-			   Plan *lefttree)
+make_tup_split(List *tlist, List *dqa_expr_lst, int numGroupCols,
+			   AttrNumber *grpColIdx, Plan *lefttree)
 {
 	TupleSplit *node = makeNode(TupleSplit);
 	Plan	   *plan = &node->plan;
 
 	node->numCols    = numGroupCols;
 	node->grpColIdx  = grpColIdx;
-	node->numDisDQAs = numDQAs;
-
-	node->dqa_args_id_bms = palloc0(sizeof(Bitmapset *) * numDQAs);
-	for (int id = 0; id < numDQAs; id++)
-		node->dqa_args_id_bms[id] = bms_copy(dqas_ref_bms[id]);
+	node->dqa_expr_lst = dqa_expr_lst;
 
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;

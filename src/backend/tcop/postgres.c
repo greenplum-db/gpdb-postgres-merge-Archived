@@ -1358,9 +1358,6 @@ exec_mpp_query(const char *query_string,
 		/* Make sure we are in a transaction command */
 		start_xact_command();
 
-		/* If we got a cancel signal in parsing or prior command, quit */
-		CHECK_FOR_INTERRUPTS();
-
 		/*
 		 * OK to analyze, rewrite, and plan this query.
 		 *
@@ -1369,7 +1366,6 @@ exec_mpp_query(const char *query_string,
 		 */
 		oldcontext = MemoryContextSwitchTo(MessageContext);
 
-		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
 
 		/*
@@ -5216,8 +5212,9 @@ PostgresMain(int argc, char *argv[],
 			restore_guc_to_QE();
 
 
+		// firstchar may be -1, it will cause AssertFailed if we enable cassert
 		ereport((Debug_print_full_dtm ? LOG : DEBUG5),
-				(errmsg_internal("First char: '%c'; gp_role = '%s'.", firstchar, role_to_string(Gp_role))));
+				(errmsg_internal("First char: '%d'; gp_role = '%s'.", firstchar, role_to_string(Gp_role))));
 
 		check_forbidden_in_gpdb_handlers(firstchar);
 

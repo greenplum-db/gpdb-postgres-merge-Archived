@@ -35,6 +35,7 @@
 #include "commands/queue.h"
 #include "commands/createas.h"
 #include "executor/spi.h"
+#include "pgstat.h"
 #include "postmaster/autostats.h"
 #include "postmaster/backoff.h"
 #include "utils/resource_manager.h"
@@ -289,7 +290,7 @@ ProcessQuery(Portal portal,
 	{
 		/* MPP-4082. Issue automatic ANALYZE if conditions are satisfied. */
 		bool inFunction = false;
-		auto_stats(cmdType, relationOid, queryDesc->es_processed, inFunction);
+		collect_tabstat(cmdType, relationOid, queryDesc->es_processed, inFunction);
 	}
 
 	FreeQueryDesc(queryDesc);

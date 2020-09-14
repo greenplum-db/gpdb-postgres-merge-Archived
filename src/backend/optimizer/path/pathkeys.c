@@ -558,7 +558,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
  * This should eventually go away, but we need to restructure SortGroupClause
  * first.
  */
-static PathKey *
+PathKey *
 make_pathkey_from_sortop(PlannerInfo *root,
 						 Expr *expr,
 						 Relids nullable_relids,
@@ -1389,6 +1389,7 @@ build_join_pathkeys(PlannerInfo *root,
  */
 DistributionKey *
 cdb_make_distkey_for_expr(PlannerInfo *root,
+						  RelOptInfo *rel,
 						  Node *expr,
 						  Oid opfamily /* hash opfamily */,
 						  int sortref)
@@ -1443,7 +1444,7 @@ cdb_make_distkey_for_expr(PlannerInfo *root,
 									  lefttype,
 									  exprCollation(expr),
 									  sortref,
-									  NULL,
+									  rel->relids,
 									  true);
 
 	dk = makeNode(DistributionKey);

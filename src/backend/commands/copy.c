@@ -81,6 +81,7 @@
 #include "utils/metrics_utils.h"
 #include "utils/resscheduler.h"
 #include "utils/string_utils.h"
+#include "pgstat.h"
 
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
@@ -1370,7 +1371,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 	/* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
 	if (Gp_role == GP_ROLE_DISPATCH && is_from)
-		auto_stats(AUTOSTATS_CMDTYPE_COPY, relid, *processed, false /* inFunction */);
+		collect_tabstat(AUTOSTATS_CMDTYPE_COPY, relid, *processed, false /* inFunction */);
 }
 
 /*

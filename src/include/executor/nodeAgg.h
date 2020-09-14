@@ -164,9 +164,6 @@ typedef struct AggStatePerTransData
 	FunctionCallInfo serialfn_fcinfo;
 
 	FunctionCallInfo deserialfn_fcinfo;
-
-	/* for MultiDQA split tuple check */
-	int     agg_expr_id;
 }			AggStatePerTransData;
 
 /*

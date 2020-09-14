@@ -695,9 +695,7 @@ CTranslatorDXLToScalar::TranslateDXLScalarSubplanToScalar
 			ULONG param_id = dxl_to_plstmt_ctxt->GetNextParamId(type_oid);
 			CMappingElementColIdParamId *colid_to_param_id_map = GPOS_NEW(m_mp) CMappingElementColIdParamId(colid, param_id, mdid, type_modifier);
 
-#ifdef GPOS_DEBUG
-			BOOL is_inserted =
-#endif
+			BOOL is_inserted GPOS_ASSERTS_ONLY =
 			subplan_translate_ctxt.FInsertParamMapping(colid, colid_to_param_id_map);
 			GPOS_ASSERT(is_inserted);
 		}

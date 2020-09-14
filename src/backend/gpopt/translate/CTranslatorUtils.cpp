@@ -35,6 +35,7 @@ extern "C"
 #define GPDB_SETVAL 1576
 
 #include "gpos/base.h"
+#include "gpos/attributes.h"
 #include "gpos/common/CAutoTimer.h"
 #include "gpos/common/CBitSetIter.h"
 #include "gpos/string/CWStringDynamic.h"
@@ -2327,7 +2328,7 @@ CTranslatorUtils::MapDXLSubplanToSublinkType
 
         const ULONG arity = GPOS_ARRAY_SIZE(mapping);
         SubLinkType slink = EXPR_SUBLINK;
-		BOOL found = false;
+		BOOL found GPOS_ASSERTS_ONLY = false;
         for (ULONG ul = 0; ul < arity; ul++)
         {
                 ULONG *elem = mapping[ul];
@@ -2370,7 +2371,7 @@ CTranslatorUtils::MapSublinkTypeToDXLSubplan
 
         const ULONG arity = GPOS_ARRAY_SIZE(mapping);
         EdxlSubPlanType dxl_subplan_type = EdxlSubPlanTypeScalar;
-		BOOL found = false;
+		BOOL found GPOS_ASSERTS_ONLY = false;
         for (ULONG ul = 0; ul < arity; ul++)
         {
                 ULONG *elem = mapping[ul];

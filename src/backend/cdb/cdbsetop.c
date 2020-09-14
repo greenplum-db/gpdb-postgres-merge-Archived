@@ -285,6 +285,7 @@ make_motion_hash_all_targets(PlannerInfo *root, Path *subpath, List *tlist)
 	{
 		/* Distribute to ALL to maximize parallelism */
 		locus = cdbpathlocus_from_exprs(root,
+										subpath->parent,
 										hashexprs,
 										hashopfamilies,
 										hashsortrefs,

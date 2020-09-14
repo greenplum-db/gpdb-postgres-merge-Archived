@@ -434,6 +434,9 @@ drop table idxpart;
 create table idxpart (a int primary key, b int) partition by range (a);
 \d idxpart
 -- multiple primary key on child should fail
+-- GPDB: the error mesage is a bit surprising. It's complaing because "b" is not
+-- included in the constraint that's inherited from the parent, which includes
+-- only "a".
 create table failpart partition of idxpart (b primary key) for values from (0) to (100);
 drop table idxpart;
 -- primary key on child is okay if there's no PK in the parent, though
@@ -696,6 +699,7 @@ alter table covidxpart attach partition covidxpart3 for values in (3);
 insert into covidxpart values (3, 1);
 insert into covidxpart values (3, 1);
 create table covidxpart4 (b int, a int);
+alter table covidxpart4 set distributed by (a);
 create unique index on covidxpart4 (a) include (b);
 create unique index on covidxpart4 (a);
 alter table covidxpart attach partition covidxpart4 for values in (4);

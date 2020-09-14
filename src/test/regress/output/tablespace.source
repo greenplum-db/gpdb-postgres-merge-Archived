@@ -194,6 +194,8 @@ Tablespace: "regress_tblspace"
 SET default_tablespace TO regress_tblspace;
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 \d testschema.test_index1
    Index "testschema.test_index1"
  Column |  Type  | Key? | Definition 
@@ -232,33 +234,35 @@ SELECT * FROM testschema.test_default_tab;
 
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 \d testschema.test_index1
-    Index "testschema.test_index1"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-    Index "testschema.test_index2"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 \d testschema.test_index3
-    Index "testschema.test_index3"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 primary key, btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index4
-    Index "testschema.test_index4"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 unique, btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
@@ -272,38 +276,42 @@ SELECT * FROM testschema.test_default_tab;
 SET default_tablespace TO '';
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 \d testschema.test_index1
-    Index "testschema.test_index1"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-    Index "testschema.test_index2"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 \d testschema.test_index3
-    Index "testschema.test_index3"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 primary key, btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index4
-    Index "testschema.test_index4"
- Column |  Type   | Key? | Definition 
---------+---------+------+------------
- id     | integer | yes  | id
+   Index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 unique, btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 \d testschema.test_index1
    Index "testschema.test_index1"
  Column |  Type  | Key? | Definition 

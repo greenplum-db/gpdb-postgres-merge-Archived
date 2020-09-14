@@ -1054,6 +1054,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TupleSplit:
 				_outTupleSplit(str, obj);
 				break;
+			case T_DQAExpr:
+				_outDQAExpr(str, obj);
+				break;
 			case T_WindowAgg:
 				_outWindowAgg(str, obj);
 				break;

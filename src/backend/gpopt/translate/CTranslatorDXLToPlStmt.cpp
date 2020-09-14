@@ -460,14 +460,7 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(tbl_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(tbl_scan_dxlnode, plan);
 
 	SetParamIds(plan);
 
@@ -598,14 +591,7 @@ CTranslatorDXLToPlStmt::TranslateDXLIndexScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(index_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(index_scan_dxlnode, plan);
 
 	// an index scan node must have 3 children: projection list, filter and index condition list
 	GPOS_ASSERT(3 == index_scan_dxlnode->Arity());
@@ -750,14 +736,7 @@ CTranslatorDXLToPlStmt::TranslateDXLIndexOnlyScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		 CDXLPhysicalProperties::PdxlpropConvert(index_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		 &(plan->startup_cost),
-		 &(plan->total_cost),
-		 &(plan->plan_rows),
-		 &(plan->plan_width)
-		);
+	TranslatePlanCosts(index_scan_dxlnode, plan);
 
 	// an index scan node must have 3 children: projection list, filter and index condition list
 	GPOS_ASSERT(3 == index_scan_dxlnode->Arity());
@@ -1048,14 +1027,7 @@ CTranslatorDXLToPlStmt::TranslateDXLLimit
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(limit_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(limit_dxlnode, plan);
 
 	GPOS_ASSERT(4 == limit_dxlnode->Arity());
 
@@ -1138,14 +1110,7 @@ CTranslatorDXLToPlStmt::TranslateDXLHashJoin
 	join->prefetch_inner = true;
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(hj_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(hj_dxlnode, plan);
 
 	// translate join children
 	CDXLNode *left_tree_dxlnode = (*hj_dxlnode)[EdxlhjIndexHashLeft];
@@ -1323,14 +1288,7 @@ CTranslatorDXLToPlStmt::TranslateDXLTvf
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(tvf_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(tvf_dxlnode, plan);
 
 	// a table scan node must have at least 1 child: projection list
 	GPOS_ASSERT(1 <= tvf_dxlnode->Arity());
@@ -1594,14 +1552,7 @@ CTranslatorDXLToPlStmt::TranslateDXLNLJoin
 	join->jointype = GetGPDBJoinTypeFromDXLJoinType(dxl_nlj->GetJoinType());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(nl_join_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(nl_join_dxlnode, plan);
 
 	// translate join children
 	CDXLNode *left_tree_dxlnode = (*nl_join_dxlnode)[EdxlnljIndexLeftChild];
@@ -1638,10 +1589,10 @@ CTranslatorDXLToPlStmt::TranslateDXLNLJoin
 				ULONG param_id = m_dxl_to_plstmt_context->GetNextParamId(iTypeOid);
 				CMappingElementColIdParamId *pmecolidparamid = GPOS_NEW(m_mp) CMappingElementColIdParamId(ulColid, param_id, pmdid, iTypeModifier);
 #ifdef GPOS_DEBUG
-					BOOL fInserted =
+				BOOL fInserted GPOS_ASSERTS_ONLY =
 #endif
 						right_dxl_translate_ctxt.FInsertParamMapping(ulColid, pmecolidparamid);
-					GPOS_ASSERT(fInserted);
+				GPOS_ASSERT(fInserted);
 			}
 		}
 		// right child (the index scan side) has references to left child's columns,
@@ -1739,14 +1690,7 @@ CTranslatorDXLToPlStmt::TranslateDXLMergeJoin
 	join->jointype = GetGPDBJoinTypeFromDXLJoinType(merge_join_dxlop->GetJoinType());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(merge_join_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(merge_join_dxlnode, plan);
 
 	// translate join children
 	CDXLNode *left_tree_dxlnode = (*merge_join_dxlnode)[EdxlmjIndexLeftChild];
@@ -1974,15 +1918,8 @@ CTranslatorDXLToPlStmt::TranslateDXLMotion
 	Plan *plan = &(motion->plan);
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
-	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(motion_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	// Translate operator costs before changing the current slice.
+	TranslatePlanCosts(motion_dxlnode, plan);
 
 	CDXLNode *project_list_dxlnode = (*motion_dxlnode)[EdxlgmIndexProjList];
 	CDXLNode *filter_dxlnode = (*motion_dxlnode)[EdxlgmIndexFilter];
@@ -2219,14 +2156,7 @@ CTranslatorDXLToPlStmt::TranslateDXLRedistributeMotionToResultHashFilters
 	CDXLPhysicalMotion *motion_dxlop = CDXLPhysicalMotion::Cast(motion_dxlnode->GetOperator());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(motion_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(motion_dxlnode, plan);
 
 	CDXLNode *project_list_dxlnode = (*motion_dxlnode)[EdxlrmIndexProjList];
 	CDXLNode *filter_dxlnode = (*motion_dxlnode)[EdxlrmIndexFilter];
@@ -2412,14 +2342,7 @@ CTranslatorDXLToPlStmt::TranslateDXLAgg
 	CDXLPhysicalAgg *dxl_phy_agg_dxlop = CDXLPhysicalAgg::Cast(agg_dxlnode->GetOperator());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(agg_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(agg_dxlnode, plan);
 
 	// translate agg child
 	CDXLNode *child_dxlnode = (*agg_dxlnode)[EdxlaggIndexChild];
@@ -2547,14 +2470,7 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow
 	CDXLPhysicalWindow *window_dxlop = CDXLPhysicalWindow::Cast(window_dxlnode->GetOperator());
 
 	// translate the operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(window_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(window_dxlnode, plan);
 
 	// translate children
 	CDXLNode *child_dxlnode = (*window_dxlnode)[EdxlwindowIndexChild];
@@ -2794,14 +2710,7 @@ CTranslatorDXLToPlStmt::TranslateDXLSort
 	CDXLPhysicalSort *sort_dxlop = CDXLPhysicalSort::Cast(sort_dxlnode->GetOperator());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(sort_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(sort_dxlnode, plan);
 
 	// translate sort child
 	CDXLNode *child_dxlnode = (*sort_dxlnode)[EdxlsortIndexChild];
@@ -2878,14 +2787,7 @@ CTranslatorDXLToPlStmt::TranslateDXLSubQueryScan
 	CDXLPhysicalSubqueryScan *subquery_scan_dxlop = CDXLPhysicalSubqueryScan::Cast(subquery_scan_dxlnode->GetOperator());
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(subquery_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(subquery_scan_dxlnode, plan);
 
 	// translate subplan
 	CDXLNode *child_dxlnode = (*subquery_scan_dxlnode)[EdxlsubqscanIndexChild];
@@ -3049,14 +2951,7 @@ CTranslatorDXLToPlStmt::TranslateDXLProjectSet
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-			CDXLPhysicalProperties::PdxlpropConvert(result_dxlnode->GetProperties())->GetDXLOperatorCost(),
-			&(plan->startup_cost),
-			&(plan->total_cost),
-			&(plan->plan_rows),
-			&(plan->plan_width)
-		);
+	TranslatePlanCosts(result_dxlnode, plan);
 
 	CDXLNode *child_dxlnode = NULL;
 	CDXLTranslateContext child_context(m_mp, false, output_context->GetColIdToParamIdMap());
@@ -3143,14 +3038,7 @@ CTranslatorDXLToPlStmt::TranslateDXLResult
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(result_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(result_dxlnode, plan);
 
 	CDXLNode *child_dxlnode = NULL;
 	CDXLTranslateContext child_context(m_mp, false, output_context->GetColIdToParamIdMap());
@@ -3428,14 +3316,7 @@ CTranslatorDXLToPlStmt::TranslateDXLPartSelector
 	partition_selector->selectorId = m_partition_selector_counter++;
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(partition_selector_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(partition_selector_dxlnode, plan);
 
 	CDXLNode *child_dxlnode = NULL;
 	CDXLTranslationContextArray *child_contexts = GPOS_NEW(m_mp) CDXLTranslationContextArray(m_mp);
@@ -3580,14 +3461,7 @@ CTranslatorDXLToPlStmt::TranslateDXLAppend
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(append_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(append_dxlnode, plan);
 
 	const ULONG arity = append_dxlnode->Arity();
 	GPOS_ASSERT(EdxlappendIndexFirstChild < arity);
@@ -3695,14 +3569,7 @@ CTranslatorDXLToPlStmt::TranslateDXLMaterialize
 	materialize->cdb_shield_child_from_rescans = true;
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(materialize_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(materialize_dxlnode, plan);
 
 	// translate materialize child
 	CDXLNode *child_dxlnode = (*materialize_dxlnode)[EdxlmatIndexChild];
@@ -3768,14 +3635,7 @@ CTranslatorDXLToPlStmt::TranslateDXLCTEProducerToSharedScan
 	m_dxl_to_plstmt_context->AddCTEConsumerInfo(cte_id, shared_input_scan);
 
 	// translate cost of the producer
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(cte_producer_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(cte_producer_dxlnode, plan);
 
 	// translate child plan
 	CDXLNode *project_list_dxlnode = (*cte_producer_dxlnode)[0];
@@ -3832,14 +3692,7 @@ CTranslatorDXLToPlStmt::TranslateDXLCTEConsumerToSharedScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(cte_consumer_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(cte_consumer_dxlnode, plan);
 
 #ifdef GPOS_DEBUG
 	ULongPtrArray *output_colids_array = cte_consumer_dxlop->GetOutputColIdsArray();
@@ -3903,14 +3756,7 @@ CTranslatorDXLToPlStmt::TranslateDXLSequence
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(sequence_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(sequence_dxlnode, plan);
 
 	ULONG arity = sequence_dxlnode->Arity();
 
@@ -3992,14 +3838,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDynTblScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(dyn_tbl_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(dyn_tbl_scan_dxlnode, plan);
 
 	GPOS_ASSERT(2 == dyn_tbl_scan_dxlnode->Arity());
 
@@ -4076,14 +3915,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDynIdxScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(dyn_idx_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(dyn_idx_scan_dxlnode, plan);
 
 	// an index scan node must have 3 children: projection list, filter and index condition list
 	GPOS_ASSERT(3 == dyn_idx_scan_dxlnode->Arity());
@@ -4312,14 +4144,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDml
 	child_contexts->Release();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(dml_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(dml_dxlnode, plan);
 
 	return (Plan *) dml;
 }
@@ -4349,12 +4174,44 @@ CTranslatorDXLToPlStmt::TranslateDXLDirectDispatchInfo
 	{
 		return NIL;
 	}
-	
+
 	CDXLDatumArray *dxl_datum_array = (*dispatch_identifier_datum_arrays)[0];
 	GPOS_ASSERT(0 < dxl_datum_array->Size());
-		
-	ULONG hash_code = GetDXLDatumGPDBHash(dxl_datum_array);
+
 	const ULONG length = dispatch_identifier_datum_arrays->Size();
+
+	if (dxl_direct_dispatch_info->FContainsRawValues()) {
+		List *segids_list = NIL;
+		INT segid;
+		Const *const_expr = NULL;
+
+		for (ULONG ul = 0; ul < length; ul++)
+		{
+			CDXLDatumArray *dispatch_identifier_datum_array = (*dispatch_identifier_datum_arrays)[ul];
+			GPOS_ASSERT(1 == dispatch_identifier_datum_array->Size());
+			const_expr = (Const *) m_translator_dxl_to_scalar->TranslateDXLDatumToScalar(
+				(*dispatch_identifier_datum_array)[0]
+			);
+
+			segid = DatumGetInt32(const_expr->constvalue);
+			if (segid >= -1 && segid < (INT)m_num_of_segments)
+			{
+				segids_list = gpdb::LAppendInt(segids_list, segid);
+			}
+		}
+
+		if (segids_list == NIL && const_expr)
+		{
+			// If no valid segids were found, and there were items in the
+			// dispatch identifier array, then append the last item to behave
+			// in same manner as Planner for consistency. Currently this will
+			// lead to a FATAL in the backend when we dispatch.
+			segids_list = gpdb::LAppendInt(segids_list, segid);
+		}
+		return segids_list;
+	}
+
+	ULONG hash_code = GetDXLDatumGPDBHash(dxl_datum_array);
 	for (ULONG ul = 0; ul < length; ul++)
 	{
 		CDXLDatumArray *dispatch_identifier_datum_array = (*dispatch_identifier_datum_arrays)[ul];
@@ -4485,14 +4342,7 @@ CTranslatorDXLToPlStmt::TranslateDXLSplit
 	child_contexts->Release();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(split_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(split_dxlnode, plan);
 
 	return (Plan *) split;
 }
@@ -4531,14 +4381,7 @@ CTranslatorDXLToPlStmt::TranslateDXLAssert
 	assert_node->errmessage = CTranslatorUtils::GetAssertErrorMsgs(filter_dxlnode);
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(assert_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(assert_dxlnode, plan);
 
 	CDXLTranslateContext child_context(m_mp, false, output_context->GetColIdToParamIdMap());
 
@@ -5012,17 +4855,22 @@ CTranslatorDXLToPlStmt::TranslateDXLScCondToQual
 void
 CTranslatorDXLToPlStmt::TranslatePlanCosts
 	(
-	const CDXLOperatorCost *dxl_operator_cost,
-	Cost *startup_cost_out,
-	Cost *total_cost_out,
-	Cost *cost_rows_out,
-	INT * width_out
+	const CDXLNode *dxlnode,
+	Plan *plan
 	)
 {
-	*startup_cost_out = CostFromStr(dxl_operator_cost->GetStartUpCostStr());
-	*total_cost_out = CostFromStr(dxl_operator_cost->GetTotalCostStr());
-	*cost_rows_out = CostFromStr(dxl_operator_cost->GetRowsOutStr());
-	*width_out = CTranslatorUtils::GetIntFromStr(dxl_operator_cost->GetWidthStr());
+	CDXLOperatorCost *costs = CDXLPhysicalProperties::PdxlpropConvert(dxlnode->GetProperties())->GetDXLOperatorCost();
+
+	plan->startup_cost = CostFromStr(costs->GetStartUpCostStr());
+	plan->total_cost = CostFromStr(costs->GetTotalCostStr());
+	plan->plan_width = CTranslatorUtils::GetIntFromStr(costs->GetWidthStr());
+
+	// In the Postgres planner, the estimates on each node are per QE
+	// process, whereas the row estimates in GPORCA are global, across all
+	// processes. Divide the row count estimate by the number of segments
+	// executing it.
+	plan->plan_rows = ceil(CostFromStr(costs->GetRowsOutStr()) /
+			       m_dxl_to_plstmt_context->GetCurrentSlice()->numsegments);
 }
 
 //---------------------------------------------------------------------------
@@ -5401,14 +5249,7 @@ CTranslatorDXLToPlStmt::TranslateDXLCtas
 
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(ctas_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(ctas_dxlnode, plan);
 
 	//IntoClause *into_clause = TranslateDXLPhyCtasToIntoClause(phy_ctas_dxlop);
 	IntoClause *into_clause = NULL;
@@ -5681,14 +5522,7 @@ CTranslatorDXLToPlStmt::TranslateDXLBitmapTblScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-		(
-		CDXLPhysicalProperties::PdxlpropConvert(bitmapscan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-		);
+	TranslatePlanCosts(bitmapscan_dxlnode, plan);
 
 	GPOS_ASSERT(4 == bitmapscan_dxlnode->Arity());
 
@@ -5992,14 +5826,7 @@ CTranslatorDXLToPlStmt::TranslateDXLValueScan
 	plan->plan_node_id = m_dxl_to_plstmt_context->GetNextPlanId();
 
 	// translate operator costs
-	TranslatePlanCosts
-	(
-		CDXLPhysicalProperties::PdxlpropConvert(value_scan_dxlnode->GetProperties())->GetDXLOperatorCost(),
-		&(plan->startup_cost),
-		&(plan->total_cost),
-		&(plan->plan_rows),
-		&(plan->plan_width)
-	);
+	TranslatePlanCosts(value_scan_dxlnode, plan);
 
 	// a table scan node must have at least 2 children: projection list and at least 1 value list
 	GPOS_ASSERT(2 <= value_scan_dxlnode->Arity());

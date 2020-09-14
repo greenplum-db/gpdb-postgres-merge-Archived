@@ -632,6 +632,7 @@ insert into tprt values (10), (20), (501), (502), (505), (1001), (4500);
 
 set enable_hashjoin = off;
 set enable_mergejoin = off;
+set enable_seqscan=off;
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
@@ -672,6 +673,8 @@ select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 < tprt.col1
 order by tbl1.col1, tprt.col1;
+
+reset enable_seqscan;
 
 -- No matching partition
 delete from tbl1;

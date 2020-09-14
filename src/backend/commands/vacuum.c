@@ -481,6 +481,15 @@ vacuum(List *relations, VacuumParams *params,
 				analyze_rel(vrel->oid, vrel->relation, params,
 							vrel->va_cols, in_outer_xact, vac_strategy, NULL);
 
+#ifdef FAULT_INJECTOR
+				if (IsAutoVacuumWorkerProcess())
+				{
+					FaultInjector_InjectFaultIfSet(
+						"analyze_finished_one_relation", DDLNotSpecified,
+						"", vrel->relation->relname);
+				}
+#endif
+
 				if (use_own_xacts)
 				{
 					PopActiveSnapshot();
@@ -1395,23 +1404,10 @@ vac_update_relstats(Relation relation,
 		}
 		else if (Gp_role == GP_ROLE_EXECUTE)
 		{
-			/*
-			 * CDB: Build a special message, to send the number of tuples
-			 * and the number of pages in pg_class located at QEs through
-			 * the dispatcher.
-			 */
-			StringInfoData buf;
-			VPgClassStats stats;
-
-			pq_beginmessage(&buf, 'y');
-			pq_sendstring(&buf, "VACUUM");
-			stats.relid = RelationGetRelid(relation);
-			stats.rel_pages = num_pages;
-			stats.rel_tuples = num_tuples;
-			stats.relallvisible = num_all_visible_pages;
-			pq_sendint(&buf, sizeof(VPgClassStats), sizeof(int));
-			pq_sendbytes(&buf, (char *) &stats, sizeof(VPgClassStats));
-			pq_endmessage(&buf);
+			vac_send_relstats_to_qd(relation,
+									num_pages,
+									num_tuples,
+									num_all_visible_pages);
 		}
 	}
 	
@@ -2831,6 +2827,34 @@ vac_update_relstats_from_list(List *updated_stats)
 							false /* isvacuum */);
 		relation_close(rel, AccessShareLock);
 	}
+}
+
+/*
+ * CDB: Build a special message, to send the number of tuples
+ * and the number of pages in pg_class located at QEs through
+ * the dispatcher.
+ */
+void
+vac_send_relstats_to_qd(Relation relation,
+						BlockNumber num_pages,
+						double num_tuples,
+						BlockNumber num_all_visible_pages)
+{
+
+	StringInfoData buf;
+	VPgClassStats stats;
+	Oid			relid = RelationGetRelid(relation);
+	Assert(relid != InvalidOid);
+
+	pq_beginmessage(&buf, 'y');
+	pq_sendstring(&buf, "VACUUM");
+	stats.relid = relid;
+	stats.rel_pages = num_pages;
+	stats.rel_tuples = num_tuples;
+	stats.relallvisible = num_all_visible_pages;
+	pq_sendint(&buf, sizeof(VPgClassStats), sizeof(int));
+	pq_sendbytes(&buf, (char *) &stats, sizeof(VPgClassStats));
+	pq_endmessage(&buf);
 }
 
 bool

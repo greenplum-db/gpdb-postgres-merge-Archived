@@ -1397,26 +1397,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	char       *skip_outer_msg = NULL;
 	int			motion_recv;
 	int			motion_snd;
-	float		scaleFactor = 1.0; /* we will divide planner estimates by this factor to produce
-									  per-segment estimates */
 	ExecSlice  *parentSlice = NULL;
 
 	/* Remember who called us. */
 	parentplanstate = es->parentPlanState;
 	es->parentPlanState = planstate;
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		/*
-		 * Estimates will have to be scaled down to be per-segment (except in a
-		 * few cases).
-		 */
-		if (es->currentSlice)
-		{
-			if (es->currentSlice->gangType != GANGTYPE_UNALLOCATED)
-				scaleFactor = list_length(es->currentSlice->segments);
-		}
-	}
 
 	/*
 	 * If this is a Motion node, we're descending into a new slice.
@@ -1695,19 +1680,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				motion_snd = list_length(es->currentSlice->segments);
 				motion_recv = parentSlice == NULL ? 1 : list_length(parentSlice->segments);
 
-				/* scale the number of rows by the number of segments sending data */
-				scaleFactor = motion_snd;
-
 				switch (pMotion->motionType)
 				{
 					case MOTIONTYPE_GATHER:
 						sname = "Gather Motion";
-						scaleFactor = 1;
 						motion_recv = 1;
 						break;
 					case MOTIONTYPE_GATHER_SINGLE:
 						sname = "Explicit Gather Motion";
-						scaleFactor = 1;
 						motion_recv = 1;
 						break;
 					case MOTIONTYPE_HASH:
@@ -2006,15 +1986,13 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 	}
 
-	Assert(scaleFactor > 0.0);
-
 	if (es->costs)
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
 			appendStringInfo(es->str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
 							 plan->startup_cost, plan->total_cost,
-							 ceil(plan->plan_rows / scaleFactor), plan->plan_width);
+							 plan->plan_rows, plan->plan_width);
 		}
 		else
 		{
@@ -2893,39 +2871,22 @@ show_tuple_split_keys(TupleSplitState *tstate, List *ancestors,
 	List	   *context;
 	bool		useprefix;
 	List	   *result = NIL;
-	PlanState *planstate = outerPlanState(tstate);
 	/* Set up deparsing context */
 	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
+											(Node *) tstate,
 											ancestors);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	StringInfoData buf;
 	initStringInfo(&buf);
 
-	for (int i = 0; i < plan->numDisDQAs; i++)
+	ListCell *lc;
+	foreach(lc, plan->dqa_expr_lst)
 	{
-		int id = -1;
-		Bitmapset *bm = plan->dqa_args_id_bms[i];
-		resetStringInfo(&buf);
-		appendStringInfoChar(&buf, '(');
-		while ((id = bms_next_member(bm, id)) >= 0)
-		{
-			TargetEntry *te = get_sortgroupref_tle((Index)id, planstate->plan->targetlist);
-			char	   *exprstr;
-
-			if (!te)
-				elog(ERROR, "no tlist entry for sort key: %d", id);
-			/* Deparse the expression, showing any top-level cast */
-			exprstr = deparse_expression((Node *) te->expr, context,
-										 useprefix, true);
-
-			appendStringInfoString(&buf, exprstr);
-			appendStringInfoChar(&buf, ',');
-		}
-		buf.data[buf.len - 1] = ')';
-
-		result = lappend(result, pstrdup(buf.data));
+		DQAExpr *dqa_expr = (DQAExpr *)lfirst(lc);
+		result = lappend(result,
+		                 deparse_expression((Node *) dqa_expr, context,
+		                                    useprefix, true));
 	}
 	ExplainPropertyList("Split by Col", result, es);
 

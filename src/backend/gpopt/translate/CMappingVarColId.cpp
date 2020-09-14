@@ -169,9 +169,7 @@ CMappingVarColId::Insert
 	gpdb_att_info->AddRef();
 	CGPDBAttOptCol *gpdb_att_opt_col_info = GPOS_NEW(m_mp) CGPDBAttOptCol(gpdb_att_info, opt_col_info);
 
-#ifdef GPOS_DEBUG
-	BOOL result =
-#endif // GPOS_DEBUG
+	BOOL result GPOS_ASSERTS_ONLY =
 			m_gpdb_att_opt_col_mapping->Insert(gpdb_att_info, gpdb_att_opt_col_info);
 
 	GPOS_ASSERT(result);
@@ -486,9 +484,7 @@ CMappingVarColId::CopyMapColId
 			CGPDBAttOptCol *gpdb_att_opt_col_new = GPOS_NEW(m_mp) CGPDBAttOptCol(gpdb_att_info_new, opt_col_info_new);
 
 			// insert into hashmap
-#ifdef GPOS_DEBUG
-			BOOL result =
-#endif // GPOS_DEBUG
+			BOOL result GPOS_ASSERTS_ONLY =
 					var_colid_mapping->m_gpdb_att_opt_col_mapping->Insert(gpdb_att_info_new, gpdb_att_opt_col_new);
 			GPOS_ASSERT(result);
 		}
@@ -528,9 +524,7 @@ CMappingVarColId::CopyMapColId
 		CGPDBAttOptCol *gpdb_att_opt_col_new = GPOS_NEW(mp) CGPDBAttOptCol(gpdb_att_info_new, opt_col_info_new);
 
 		// insert into hashmap
-#ifdef GPOS_DEBUG
-	BOOL result =
-#endif // GPOS_DEBUG
+	BOOL result GPOS_ASSERTS_ONLY =
 		var_colid_mapping->m_gpdb_att_opt_col_mapping->Insert(gpdb_att_info_new, gpdb_att_opt_col_new);
 		GPOS_ASSERT(result);
 	}
@@ -583,9 +577,7 @@ CMappingVarColId::CopyRemapColId
 		gpdb_att_info_new->AddRef();
 		CGPDBAttOptCol *gpdb_att_opt_col_new = GPOS_NEW(mp) CGPDBAttOptCol(gpdb_att_info_new, opt_col_info_new);
 
-#ifdef GPOS_DEBUG
-		BOOL result =
-#endif // GPOS_DEBUG
+		BOOL result GPOS_ASSERTS_ONLY =
 		var_colid_mapping->m_gpdb_att_opt_col_mapping->Insert(gpdb_att_info_new, gpdb_att_opt_col_new);
 		GPOS_ASSERT(result);
 	}

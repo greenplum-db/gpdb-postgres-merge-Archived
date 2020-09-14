@@ -8563,6 +8563,7 @@ select LC from lang_total;
 ERROR:  column "lc" does not exist
 LINE 5: select LC from lang_total;
                ^
+HINT:  Perhaps you meant to reference the column "lang_total.cc" or the column "lang_total.clc".
 -- query 3 use column list when there are duplicate names within the CTE
 with capitals("CO_C","C_ID","CAPITAL",country) as 
 (select country.code,id,city.name,country.name from city,country 

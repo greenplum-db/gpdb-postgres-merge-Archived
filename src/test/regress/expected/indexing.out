@@ -859,9 +859,12 @@ Indexes:
 Number of partitions: 0
 
 -- multiple primary key on child should fail
+-- GPDB: the error mesage is a bit surprising. It's complaing because "b" is not
+-- included in the constraint that's inherited from the parent, which includes
+-- only "a".
 create table failpart partition of idxpart (b primary key) for values from (0) to (100);
-NOTICE:  updating distribution policy to match new PRIMARY KEY
-ERROR:  multiple primary keys for table "failpart" are not allowed
+ERROR:  PRIMARY KEY definition must contain all columns in the table's distribution key
+DETAIL:  Distribution key column "b" is not included in the constraint.
 drop table idxpart;
 -- primary key on child is okay if there's no PK in the parent, though
 create table idxpart (a int) partition by range (a);
@@ -1249,8 +1252,8 @@ insert into covidxpart values (3, 1);
 ERROR:  duplicate key value violates unique constraint "covidxpart3_a_b_idx"
 DETAIL:  Key (a)=(3) already exists.
 create table covidxpart4 (b int, a int);
+alter table covidxpart4 set distributed by (a);
 create unique index on covidxpart4 (a) include (b);
-NOTICE:  updating distribution policy to match new UNIQUE index
 create unique index on covidxpart4 (a);
 alter table covidxpart attach partition covidxpart4 for values in (4);
 insert into covidxpart values (4, 1);

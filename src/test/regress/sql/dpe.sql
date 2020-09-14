@@ -224,9 +224,19 @@ select * from t, t1, pt where t1.t2 = t.t2 and t1.tid = ptid;
 
 -- Both joined tables can be used for partition elimination. Only partitions
 -- that contain matching rows for both joins need to be scanned.
+
+-- have to do some tricks to coerce the planner to choose the plan we want.
+begin;
+insert into t select i, -100, 'dummy' from generate_series(1,10) i;
+insert into t1 select i, -100, 'dummy' from generate_series(1,10) i;
+analyze t;
+analyze t1;
+
 explain (costs off, timing off, summary off, analyze) select * from t, t1, pt where t1.tid = ptid and t.tid = ptid;
 
 select * from t, t1, pt where t1.tid = ptid and t.tid = ptid;
+
+rollback;
 
 -- One non-joined table contributing to partition elimination in two different
 -- partitioned tables
@@ -295,6 +305,11 @@ set enable_seqscan=on;
 insert into t select i from generate_series(7,8) i;
 -- 0~2 in seg0, 3~4 in seg 1, no data in seg2
 insert into pt select i from generate_series(0,4) i;
+
+-- Insert some more rows to coerce the planner to put 'pt' on the outer
+-- side of the join.
+insert into t select i from generate_series(7,8) i;
+insert into pt select 0 from generate_series(1,1000) g;
 
 analyze t;
 analyze pt;
@@ -604,6 +619,7 @@ analyze pt;
 create index on pt (ptid, sk);
 
 set enable_mergejoin=on;
+set enable_seqscan=off;
 
 -- force_explain
 explain (analyze, timing off, summary off)

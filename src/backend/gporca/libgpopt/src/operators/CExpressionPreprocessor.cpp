@@ -659,7 +659,7 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 			exprhdl.Attach(pexpr);
 			exprhdl.DeriveProps(NULL /*pdpctxt*/);
 			CLogicalSequenceProject *popSequenceProject = CLogicalSequenceProject::PopConvert(pop);
-			if (popSequenceProject->FHasLocalOuterRefs(exprhdl))
+			if (popSequenceProject->FHasLocalReferencesTo(exprhdl.DeriveOuterReferences()))
 			{
 				COperator *popNew = popSequenceProject->PopRemoveLocalOuterRefs(mp, exprhdl);
 				pop->Release();
@@ -1959,9 +1959,7 @@ CExpressionPreprocessor::CollectCTEPredicates
 			if (NULL == pdrgpexpr)
 			{
 				pdrgpexpr = GPOS_NEW(mp) CExpressionArray(mp);
-#ifdef GPOS_DEBUG
-				BOOL fInserted =
-#endif // GPOS_DEBUG
+				BOOL fInserted GPOS_ASSERTS_ONLY =
 					phm->Insert(GPOS_NEW(mp) ULONG(ulCTEId), pdrgpexpr);
 				GPOS_ASSERT(fInserted);
 			}

@@ -349,16 +349,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
            ->  Seq Scan on uaccount
                  Filter: (pguser = CURRENT_USER)
    ->  Hash Join
-         Hash Cond: (document.cid = category.cid)
-         ->  Redistribute Motion 3:3  (slice2; segments: 3)
-               Hash Key: document.cid
-               ->  Seq Scan on document
-                     Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
-         ->  Hash
+         Hash Cond: (category.cid = document.cid)
+         ->  Broadcast Motion 3:3  (slice2; segments: 3)
                ->  Seq Scan on category
                      Filter: (cid < 50)
+         ->  Hash
+               ->  Seq Scan on document
+                     Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
  Optimizer: Postgres query optimizer
-(15 rows)
+(14 rows)
 
 -- 44 would technically fail for both p2r and p1r, but we should get an error
 -- back from p1r for this because it sorts first

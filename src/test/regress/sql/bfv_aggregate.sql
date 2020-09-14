@@ -222,6 +222,14 @@ insert into mtup1 values
 -- attributes, but not much more than that. There's some O(n^2) code in ExecInitAgg
 -- to detect duplicate AggRefs, so this starts to get really slow as you add more
 -- aggregates.
+
+-- GPDB_12_MERGE_FIXME: we use MinimalTuples in Motions now, and a MinimalTuple
+-- has a limit of 1600 columns. With the default plan, you now get an error from
+-- exceeding that limit. Are we OK with that limitation? Does the single-phase
+-- plan exercise the original bug?
+set gp_enable_multiphase_agg=off;
+
+
 select c0, c1, array_length(ARRAY[
  SUM(c4 % 2), SUM(c4 % 3), SUM(c4 % 4),
  SUM(c4 % 5), SUM(c4 % 6), SUM(c4 % 7), SUM(c4 % 8), SUM(c4 % 9),
@@ -1360,6 +1368,8 @@ select c0, c1, array_length(ARRAY[
  SUM(c4 % 5670), SUM(c4 % 5671)], 1)
 from mtup1 where c0 = 'foo' group by c0, c1 limit 10;
 
+reset gp_enable_multiphase_agg;
+
 -- MPP-29042 Multistage aggregation plans should have consistent targetlists in
 -- case of same column aliases and grouping on them.
 DROP TABLE IF EXISTS t1;
@@ -1438,6 +1448,21 @@ EXPLAIN (COSTS OFF)
 SELECT a.x, sum(b.x) FROM pagg_tab1 a FULL OUTER JOIN pagg_tab2 b ON a.x = b.y GROUP BY a.x ORDER BY 1 NULLS LAST;
 SELECT a.x, sum(b.x) FROM pagg_tab1 a FULL OUTER JOIN pagg_tab2 b ON a.x = b.y GROUP BY a.x ORDER BY 1 NULLS LAST;
 
+--
+-- Test GROUP BY with a constant
+--
+create temp table group_by_const (col1 int, col2 int);
+insert into group_by_const select i from generate_series(1, 1000) i;
+
+explain (costs off)
+select 1, sum(col1) from group_by_const group by 1;
+select 1, sum(col1) from group_by_const group by 1;
+
+-- Same, but using an aggregate that doesn't have a combine function, so
+-- that you get a one-phase aggregate plan.
+explain (costs off)
+select 1, median(col1) from group_by_const group by 1;
+select 1, median(col1) from group_by_const group by 1;
 
 -- CLEANUP
 set client_min_messages='warning';

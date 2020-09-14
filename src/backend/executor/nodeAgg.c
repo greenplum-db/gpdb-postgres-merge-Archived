@@ -2201,7 +2201,7 @@ lookup_hash_entries(AggState *aggstate)
  *	  stored in the expression context to be used when ExecProject evaluates
  *	  the result tuple.
  *
- * Streaming bottom: forces end of passes when no tuple for underlying node.  
+ * Streaming bottom: forces end of passes when no tuple for underlying node.
  *
  * MPP-2614: Btree scan will return null tuple at end of scan.  However,
  * if one calls ExecProNode again on a btree scan, it will restart from
@@ -4065,65 +4065,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	/* MPP */
 	aggstate->AggExprId_AttrNum = node->agg_expr_id;
-
-	/* > 0: there is a TupleSplit node under agg */
-	if (aggstate->AggExprId_AttrNum > 0)
-	{
-		List *allTupleSplit = extract_nodes_plan((Plan*) node, T_TupleSplit, false);
-		Assert(list_length(allTupleSplit) == 1);
-		
-		/* fetch TupleSplit provided bitmap sets for each trans function */
-		TupleSplit *tupleSplit = linitial(allTupleSplit);
-		Bitmapset **dqa_args_attr_num = palloc0(sizeof(Bitmapset *) * tupleSplit->numDisDQAs);
-		
-		/* create bitmap set for each dqa's aggs */
-		for (i = 0; i < tupleSplit->numDisDQAs; i++)
-		{
-			Bitmapset *bms = tupleSplit->dqa_args_id_bms[i];
-			
-			j = -1;
-			while ((j = bms_next_member(bms, j)) >= 0)
-			{
-				TargetEntry *te = get_sortgroupref_tle((Index)j, tupleSplit->plan.targetlist);
-				dqa_args_attr_num[i] = bms_add_member(dqa_args_attr_num[i], te->resno);
-			}
-		}
-		
-		for (i = 0; i < aggstate->numtrans; i++)
-		{
-			AggStatePerTrans pertrans = &aggstate->pertrans[i];
-			Bitmapset *args_attr_num = NULL;
-			
-			foreach(l, pertrans->aggref->args)
-			{
-					/*
-					 * GPDB_12_MERGE_FIXME: If we cannot guarantee that the
-					 * node is a TargetList then we need to create a walker to
-					 * find the Var.
-					 */
-				TargetEntry *expr = (TargetEntry *)lfirst(l);
-
-				/* All exprs should be calculated before TupleSplit */
-				Assert(IsA(expr->expr,Var));
-
-				Var *var = (Var *) expr->expr;
-
-				args_attr_num = bms_add_member(args_attr_num, var->varattno);
-			}
-			
-			for (j = 0; j < tupleSplit->numDisDQAs; j++)
-			{
-				/* set trans agg_expr_id if trans args bitmapset matched */
-				if (bms_equal(args_attr_num, dqa_args_attr_num[j]))
-				{
-					pertrans->agg_expr_id = j;
-					break;
-				}
-			}
-			
-			bms_free(args_attr_num);
-		}
-	}
 
 	/*
 	 * Build expressions doing all the transition work at once. We build a

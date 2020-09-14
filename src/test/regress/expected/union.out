@@ -359,12 +359,12 @@ select count(*) from
                      ->  HashSetOp Intersect
                            ->  Append
                                  ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                                       Hash Key: "*SELECT* 2".fivethous
-                                       ->  Subquery Scan on "*SELECT* 2"
-                                             ->  Seq Scan on tenk1
-                                 ->  Redistribute Motion 3:3  (slice3; segments: 3)
                                        Hash Key: "*SELECT* 1".unique1
                                        ->  Subquery Scan on "*SELECT* 1"
+                                             ->  Seq Scan on tenk1
+                                 ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                       Hash Key: "*SELECT* 2".fivethous
+                                       ->  Subquery Scan on "*SELECT* 2"
                                              ->  Seq Scan on tenk1 tenk1_1
  Optimizer: Postgres query optimizer
 (15 rows)
@@ -413,15 +413,15 @@ select count(*) from
                ->  Subquery Scan on ss
                      ->  SetOp Intersect
                            ->  Sort
-                                 Sort Key: "*SELECT* 2".fivethous
+                                 Sort Key: "*SELECT* 1".unique1
                                  ->  Append
                                        ->  Redistribute Motion 3:3  (slice2; segments: 3)
-                                             Hash Key: "*SELECT* 2".fivethous
-                                             ->  Subquery Scan on "*SELECT* 2"
-                                                   ->  Seq Scan on tenk1
-                                       ->  Redistribute Motion 3:3  (slice3; segments: 3)
                                              Hash Key: "*SELECT* 1".unique1
                                              ->  Subquery Scan on "*SELECT* 1"
+                                                   ->  Seq Scan on tenk1
+                                       ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                             Hash Key: "*SELECT* 2".fivethous
+                                             ->  Subquery Scan on "*SELECT* 2"
                                                    ->  Seq Scan on tenk1 tenk1_1
  Optimizer: Postgres query optimizer
 (17 rows)
@@ -969,25 +969,22 @@ select distinct q1 from
    union all
    select distinct * from int8_tbl i82) ss
 where q2 = q2;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   ->  GroupAggregate
-         Group Key: ss.q1
-         ->  Sort
-               Sort Key: ss.q1
-               ->  Subquery Scan on ss
-                     ->  Append
-                           ->  HashAggregate
-                                 Group Key: i81.q1, i81.q2
-                                 ->  Seq Scan on int8_tbl i81
-                                       Filter: (q2 IS NOT NULL)
-                           ->  HashAggregate
-                                 Group Key: i82.q1, i82.q2
-                                 ->  Seq Scan on int8_tbl i82
-                                       Filter: (q2 IS NOT NULL)
+   ->  HashAggregate
+         Group Key: i81.q1
+         ->  Append
+               ->  HashAggregate
+                     Group Key: i81.q1, i81.q2
+                     ->  Seq Scan on int8_tbl i81
+                           Filter: (q2 IS NOT NULL)
+               ->  HashAggregate
+                     Group Key: i82.q1, i82.q2
+                     ->  Seq Scan on int8_tbl i82
+                           Filter: (q2 IS NOT NULL)
  Optimizer: Postgres query optimizer
-(16 rows)
+(13 rows)
 
 select distinct q1 from
   (select distinct * from int8_tbl i81

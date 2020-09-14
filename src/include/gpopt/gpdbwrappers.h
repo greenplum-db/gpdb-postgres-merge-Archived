@@ -25,6 +25,8 @@ extern "C" {
 
 #include "gpos/types.h"
 
+#include "gpos/types.h"
+
 // fwd declarations
 typedef struct SysScanDescData *SysScanDesc;
 typedef int LOCKMODE;

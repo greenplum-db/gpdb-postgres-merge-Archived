@@ -368,6 +368,7 @@ cdbpathlocus_from_baserel(struct PlannerInfo *root,
  */
 CdbPathLocus
 cdbpathlocus_from_exprs(struct PlannerInfo *root,
+						RelOptInfo *rel,
 						List *hash_on_exprs,
 						List *hash_opfamilies,
 						List *hash_sortrefs,
@@ -384,7 +385,7 @@ cdbpathlocus_from_exprs(struct PlannerInfo *root,
 		int			sortref = lfirst_int(lsr);
 		DistributionKey *distkey;
 
-		distkey = cdb_make_distkey_for_expr(root, expr, opfamily, sortref);
+		distkey = cdb_make_distkey_for_expr(root, rel, expr, opfamily, sortref);
 		distkeys = lappend(distkeys, distkey);
 	}
 
@@ -419,6 +420,39 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 		List	   *usable_subtlist = NIL;
 		List	   *new_vars = NIL;
 		ListCell   *lc;
+
+		/*
+		 * If the subquery we're pulling up is a child of an append rel,
+		 * the pathkey should refer to the parent rel's Vars, not the child.
+		 * Normally, the planner puts the parent and child expressions in an
+		 * equivalence class for any potentially useful expressions, but that's
+		 * done earlier in the planning already.
+		 */
+		if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		{
+			Index		parent_relid = 0;
+
+			/* GPDB_12_MERGE_FIXME: we could use root->append_rel_array here? */
+			foreach (lc, root->append_rel_list)
+			{
+				AppendRelInfo *appendrel = lfirst(lc);
+
+				if (appendrel->child_relid == rel->relid)
+				{
+					parent_relid = appendrel->parent_relid;
+					break;
+				}
+			}
+
+			if (parent_relid <= 0)
+			{
+				/* shouldn't happen, but let's try to do something sane */
+				Assert(false);
+				CdbPathLocus_MakeStrewn(&locus, numsegments);
+				return locus;
+			}
+			rel = root->simple_rel_array[parent_relid];
+		}
 
 		foreach (lc, rel->reltarget->exprs)
 		{

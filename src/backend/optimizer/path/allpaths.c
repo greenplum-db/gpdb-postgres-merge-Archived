@@ -2598,16 +2598,16 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		List	   *pathkeys;
 		CdbPathLocus locus;
 
+		if (forceDistRand)
+			CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
+		else
+			locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 		/* Convert subpath's pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root,
 											 rel,
 											 subpath->pathkeys,
 											 make_tlist_from_pathtarget(subpath->pathtarget));
-
-		if (forceDistRand)
-			CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
-		else
-			locus = cdbpathlocus_from_subquery(root, rel, subpath);
 
 		path = (Path *) create_subqueryscan_path(root, rel, subpath,
 												 pathkeys, locus, required_outer);
@@ -2641,16 +2641,16 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			List	   *pathkeys;
 			CdbPathLocus locus;
 
+			if (forceDistRand)
+				CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
+			else
+				locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 			/* Convert subpath's pathkeys to outer representation */
 			pathkeys = convert_subquery_pathkeys(root,
 												 rel,
 												 subpath->pathkeys,
 												 make_tlist_from_pathtarget(subpath->pathtarget));
-
-			if (forceDistRand)
-				CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
-			else
-				locus = cdbpathlocus_from_subquery(root, rel, subpath);
 
 			/* Generate outer path using this subpath */
 			add_partial_path(rel, (Path *)
@@ -3087,7 +3087,18 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	pathkeys = subroot->query_pathkeys;
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, sub_final_rel->cheapest_total_path->rows);
+	{
+		double		numsegments;
+		double		sub_total_rows;
+
+		if (CdbPathLocus_IsPartitioned(sub_final_rel->cheapest_total_path->locus))
+			numsegments = CdbPathLocus_NumSegments(sub_final_rel->cheapest_total_path->locus);
+		else
+			numsegments = 1;
+		sub_total_rows = sub_final_rel->cheapest_total_path->rows * numsegments;
+
+		set_cte_size_estimates(root, rel, sub_total_rows);
+	}
 
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
@@ -3106,12 +3117,12 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		List	   *pathkeys;
 		CdbPathLocus locus;
 
+		/* GPDB_96_MERGE_FIXME: Should we check forceDistRandom here, like set_subquery_pathlist() does? */
+		locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 		/* Convert subquery pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root, rel, subpath->pathkeys,
 											 make_tlist_from_pathtarget(subpath->pathtarget));
-
-		/* GPDB_96_MERGE_FIXME: Should we check forceDistRandom here, like set_subquery_pathlist() does? */
-		locus = cdbpathlocus_from_subquery(root, rel, subpath);
 
 		/* Generate appropriate path */
 		add_path(rel, create_ctescan_path(root,

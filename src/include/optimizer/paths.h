@@ -210,6 +210,13 @@ extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
 								  ScanDirection scandir);
 extern List *build_partition_pathkeys(PlannerInfo *root, RelOptInfo *partrel,
 									  ScanDirection scandir, bool *partialkeys);
+extern PathKey *make_pathkey_from_sortop(PlannerInfo *root,
+										 Expr *expr,
+										 Relids nullable_relids,
+										 Oid ordering_op,
+										 bool nulls_first,
+										 Index sortref,
+										 bool create_it);
 extern List *build_expression_pathkey(PlannerInfo *root, Expr *expr,
 									  Relids nullable_relids, Oid opno,
 									  Relids rel, bool create_it);
@@ -221,6 +228,7 @@ extern List *build_join_pathkeys(PlannerInfo *root,
 								 JoinType jointype,
 								 List *outer_pathkeys);
 extern DistributionKey *cdb_make_distkey_for_expr(PlannerInfo  *root,
+												  RelOptInfo *rel,
 												  Node *expr, Oid opfamily /* hash opfamily */, int sortref);
 extern EquivalenceClass *
 cdb_pull_up_eclass(PlannerInfo    *root,

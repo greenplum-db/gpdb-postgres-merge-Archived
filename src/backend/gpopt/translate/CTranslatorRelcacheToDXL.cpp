@@ -574,9 +574,9 @@ CTranslatorRelcacheToDXL::RetrieveRel
 	}
 
 #if 0
-		convert_hash_to_random = gpdb::IsChildPartDistributionMismatched(rel.get());
+	convert_hash_to_random = gpdb::IsChildPartDistributionMismatched(rel.get());
 #endif
-		convert_hash_to_random = false;
+	convert_hash_to_random = false;
 
 	// collect relation indexes
 	md_index_info_array = RetrieveRelIndexInfo(mp, rel.get());
@@ -592,8 +592,8 @@ CTranslatorRelcacheToDXL::RetrieveRel
 	if (gpdb::RelIsPartitioned(oid))
 	{
 		// FIXME_GPDB_12_MERGE_FIXME: misestimate (most likely underestimate) the number of leaf partitions
-			// ORCA doesn't really care, except to determine whether to sort before inserting
-			num_leaf_partitions = rel->rd_partdesc->nparts;
+		// ORCA doesn't really care, except to determine whether to sort before inserting
+		num_leaf_partitions = rel->rd_partdesc->nparts;
 	}
 
 	// get key sets
@@ -1064,15 +1064,15 @@ CTranslatorRelcacheToDXL::RetrieveIndex
 	OID rel_oid = form_pg_index->indrelid;
 
 #if 0
-		if (gpdb::IsLeafPartition(rel_oid))
-		{
-			rel_oid = gpdb::GetRootPartition(rel_oid);
-		}
+	if (gpdb::IsLeafPartition(rel_oid))
+	{
+		rel_oid = gpdb::GetRootPartition(rel_oid);
+	}
 #endif
 
 	CMDIdGPDB *mdid_rel = GPOS_NEW(mp) CMDIdGPDB(rel_oid);
 
-		md_rel = md_accessor->RetrieveRel(mdid_rel);
+	md_rel = md_accessor->RetrieveRel(mdid_rel);
 #if 0
 	if (md_rel->IsPartitioned())
 	{
@@ -2338,11 +2338,9 @@ CTranslatorRelcacheToDXL::RetrieveColStats
 
 	// null frequency and NDV
 	CDouble null_freq(0.0);
-	int null_ndv = 0;
 	if (CStatistics::Epsilon < form_pg_stats->stanullfrac)
 	{
 		null_freq = form_pg_stats->stanullfrac;
-		null_ndv = 1;
 	}
 
 	// column width
@@ -2664,7 +2662,6 @@ CTranslatorRelcacheToDXL::RetrieveCast
 	CMDIdCast *mdid_cast = CMDIdCast::CastMdid(mdid);
 	IMDId *mdid_src = mdid_cast->MdidSrc();
 	IMDId *mdid_dest = mdid_cast->MdidDest();
-	IMDCast::EmdCoercepathType coercePathType;
 
 	OID src_oid = CMDIdGPDB::CastMdid(mdid_src)->Oid();
 	OID dest_oid = CMDIdGPDB::CastMdid(mdid_dest)->Oid();
@@ -2705,7 +2702,6 @@ CTranslatorRelcacheToDXL::RetrieveCast
 	switch (pathtype) {
 		case COERCION_PATH_ARRAYCOERCE:
 		{
-			coercePathType = IMDCast::EmdtArrayCoerce;
 			return GPOS_NEW(mp) CMDArrayCoerceCastGPDB(mp, mdid, mdname, mdid_src, mdid_dest, is_binary_coercible, GPOS_NEW(mp) CMDIdGPDB(cast_fn_oid), IMDCast::EmdtArrayCoerce, default_type_modifier, false, EdxlcfImplicitCast, -1);
 		}
 			break;
