@@ -7,7 +7,6 @@ test: lockmodes
 test: prepare_limit
 test: prepared_xact_deadlock_pg_rewind
 test: ao_partition_lock
-test: dml_on_root_locks_all_parts
 
 test: select_dropped_table
 test: update_hash_col_utilitymode execute_on_utilitymode
@@ -39,7 +38,6 @@ test: gdd/extended_protocol_test
 test: gdd/avoid-qd-deadlock
 test: gdd/delete-deadlock-root-leaf-concurrent-op
 test: gdd/update-deadlock-root-leaf-concurrent-op
-test: gdd/dml_locks_only_targeted_table_in_query
 
 # this resets the gp_global_deadlock_detector_period guc hence should
 # be last in the group.
