@@ -420,6 +420,8 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 		List	   *usable_subtlist = NIL;
 		List	   *new_vars = NIL;
 		ListCell   *lc;
+		ListCell   *lc2;
+		RelOptInfo *parentrel = NULL;
 
 		/*
 		 * If the subquery we're pulling up is a child of an append rel,
@@ -451,16 +453,28 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 				CdbPathLocus_MakeStrewn(&locus, numsegments);
 				return locus;
 			}
-			rel = root->simple_rel_array[parent_relid];
+			parentrel = root->simple_rel_array[parent_relid];
+			Assert(list_length(parentrel->reltarget->exprs) == list_length(rel->reltarget->exprs));
 		}
 
+		if (parentrel)
+			lc2 = list_head(parentrel->reltarget->exprs);
 		foreach (lc, rel->reltarget->exprs)
 		{
-			Var		   *var = (Var *) lfirst(lc);
-			Node	   *subexpr;
+			Expr	   *expr = (Expr *) lfirst(lc);
+			Var		   *var;
+			Expr	   *subexpr;
+			Expr	   *parentexpr;
 
-			if (!IsA(var, Var))
+			if (parentrel)
+			{
+				parentexpr = lfirst(lc2);
+				lc2 = lnext(lc2);
+			}
+
+			if (!IsA(expr, Var))
 				continue;
+			var = (Var *) expr;
 
 			/* ignore whole-row vars */
 			if (var->varattno == 0)
@@ -468,11 +482,11 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 
 			subexpr = list_nth(subpath->pathtarget->exprs, var->varattno - 1);
 			usable_subtlist = lappend(usable_subtlist,
-									  makeTargetEntry((Expr *) subexpr,
+									  makeTargetEntry(subexpr,
 													  list_length(usable_subtlist) + 1,
 													  NULL,
 													  false));
-			new_vars = lappend(new_vars, var);
+			new_vars = lappend(new_vars, parentrel ? parentexpr : expr);
 		}
 
 		foreach (dk_cell, subpath->locus.distkey)
