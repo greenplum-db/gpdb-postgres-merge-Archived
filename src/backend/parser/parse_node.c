@@ -93,6 +93,7 @@ free_parsestate(ParseState *pstate)
 	pfree(pstate);
 }
 
+
 /*
  * parser_errposition
  *		Report a parse-analysis-time cursor position, if possible.

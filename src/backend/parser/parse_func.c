@@ -16,13 +16,10 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_aggregate.h"
-#include "catalog/pg_attrdef.h"
-#include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
-#include "miscadmin.h"
 #include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -34,9 +31,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
-#include "parser/parsetree.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -2590,7 +2585,7 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 			break;
 
 		case EXPR_KIND_SCATTER_BY:
-			err = _("et-returning functions are not allowed in scatter by expressions");
+			err = _("set-returning functions are not allowed in scatter by expressions");
 			break;
 
 			/*

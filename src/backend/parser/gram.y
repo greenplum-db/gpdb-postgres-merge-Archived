@@ -1290,8 +1290,6 @@ stmt :
 			| AlterResourceGroupStmt
 			| AlterSeqStmt
 			| AlterSystemStmt
-			| AlterTSConfigurationStmt
-			| AlterTSDictionaryStmt
 			| AlterTableStmt
 			| AlterTblSpcStmt
 			| AlterCompositeTypeStmt
@@ -1299,6 +1297,8 @@ stmt :
 			| AlterRoleSetStmt
 			| AlterRoleStmt
 			| AlterSubscriptionStmt
+			| AlterTSConfigurationStmt
+			| AlterTSDictionaryStmt
 			| AlterTypeStmt
 			| AlterUserMappingStmt
 			| AnalyzeStmt
@@ -13210,7 +13210,7 @@ opt_verbose:
 			VERBOSE									{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
 		;
-			
+
 opt_full:	FULL									{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
 		;

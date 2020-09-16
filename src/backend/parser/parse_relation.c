@@ -29,7 +29,6 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
 #include "parser/parsetree.h"
 #include "parser/parse_enr.h"
 #include "parser/parse_relation.h"
@@ -42,8 +41,6 @@
 #include "utils/varlena.h"
 
 #include "cdb/cdbvars.h"
-#include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
-#include "parser/parse_coerce.h"
 
 
 #define MAX_FUZZY_DISTANCE				3
