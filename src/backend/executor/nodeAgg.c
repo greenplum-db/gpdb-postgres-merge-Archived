@@ -228,6 +228,10 @@
  *    to filter expressions having to be evaluated early, and allows to JIT
  *    the entire expression into one native function.
  *
+ *    GPDB: Note that statement_mem is used to decide the operator memory
+ *    instead of the work_mem, but to keep minimal change with postgres we keep
+ *    the word "work_mem" in comments.
+ *
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
@@ -544,7 +548,7 @@ initialize_phase(AggState *aggstate, int newphase)
 												  sortnode->sortOperators,
 												  sortnode->collations,
 												  sortnode->nullsFirst,
-												  work_mem,
+												  PlanStateOperatorMemKB((PlanState *) aggstate),
 												  NULL, false);
 	}
 
@@ -622,7 +626,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 									  pertrans->sortOperators[0],
 									  pertrans->sortCollations[0],
 									  pertrans->sortNullsFirst[0],
-									  work_mem, NULL, false);
+									  PlanStateOperatorMemKB((PlanState *) aggstate), NULL, false);
 		}
 		else
 			pertrans->sortstates[aggstate->current_set] =
@@ -632,7 +636,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 									 pertrans->sortOperators,
 									 pertrans->sortCollations,
 									 pertrans->sortNullsFirst,
-									 work_mem, NULL, false);
+									 PlanStateOperatorMemKB((PlanState *) aggstate), NULL, false);
 	}
 
 	/*
