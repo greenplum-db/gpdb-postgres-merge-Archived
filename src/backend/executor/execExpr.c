@@ -869,7 +869,9 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				if (!state->parent || !IsA(state->parent, AggState) ||
 					!IsA(state->parent->plan, Agg))
-					elog(ERROR, "GroupingSetId found in non-Agg plan node");
+					elog(ERROR, "GroupingSetId found in non-Agg plan node (parent %d, plan %d)",
+						 state->parent ? state->parent->type : -1,
+						 state->parent ? state->parent->plan->type : -1);
 
 				scratch.opcode = EEOP_GROUPING_SET_ID;
 				scratch.d.grouping_set_id.parent = (AggState *) state->parent;
