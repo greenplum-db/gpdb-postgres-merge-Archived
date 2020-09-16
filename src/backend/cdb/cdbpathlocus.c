@@ -420,7 +420,7 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 		List	   *usable_subtlist = NIL;
 		List	   *new_vars = NIL;
 		ListCell   *lc;
-		ListCell   *lc2;
+		ListCell   *lc2 = NULL;
 		RelOptInfo *parentrel = NULL;
 
 		/*
@@ -464,7 +464,7 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 			Expr	   *expr = (Expr *) lfirst(lc);
 			Var		   *var;
 			Expr	   *subexpr;
-			Expr	   *parentexpr;
+			Expr	   *parentexpr = NULL;
 
 			if (parentrel)
 			{
