@@ -7111,6 +7111,7 @@ make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids)
 										  &sortOperators,
 										  &collations,
 										  &nullsFirst);
+	Assert(numsortkeys > 0);
 
 	/* Now build the Sort node */
 	return make_sort(lefttree, numsortkeys,

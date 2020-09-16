@@ -99,7 +99,8 @@ typedef struct
 	PathTarget *partial_grouping_target;	/* targetlist of partially aggregated result */
 	List	   *final_groupClause;			/* SortGroupClause for final grouping */
 	List	   *final_group_tles;
-	List	   *final_group_pathkeys;
+	List	   *final_group_input_pathkeys;	/* order of the input to (sorted) second stage */
+	List	   *final_group_pathkeys;		/* order of the result of sorted second stage */
 
 	/*
 	 * partial_rel holds the partially aggregated results from the first stage.
@@ -334,6 +335,9 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 		GroupingSetId *gsetid;
 		List	   *grouping_sets_tlist;
 		SortGroupClause *gsetcl;
+		List	   *gcls;
+		List	   *tlist;
+		List	   *pl;
 
 		/* GPDB_12_MERGE_FIXME: For now, bail out if there are any unsortable
 		 * refs. PostgreSQL supports hashing with grouping sets nowadays, but
@@ -361,16 +365,24 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 			add_column_to_pathtarget(ctx.partial_grouping_target,
 									 (Expr *) gsetid, groupref);
 
-		List *gcls = get_all_rollup_groupclauses(rollups);
-		gcls = lappend(gcls, gsetcl);
+		gcls = get_all_rollup_groupclauses(rollups);
+		tlist = make_tlist_from_pathtarget(ctx.partial_grouping_target);
 
-		ctx.final_group_pathkeys = make_pathkeys_for_sortclauses(root, gcls,
-																 make_tlist_from_pathtarget(ctx.partial_grouping_target));
+		/* The final result will be sorted by this */
+		ctx.final_group_pathkeys = make_pathkeys_for_sortclauses(root, gcls, tlist);
+
+		/*
+		 * The input to the second-stage sorted Agg has GROUPINGSET_ID() as the last
+		 * sort key. It is not present in the final Agg result.
+		 */
+		pl = make_pathkeys_for_sortclauses(root, list_make1(gsetcl), tlist);
+		ctx.final_group_input_pathkeys = list_concat(list_copy(ctx.final_group_pathkeys), pl);
 	}
 	else
 	{
 		ctx.partial_grouping_target = partial_grouping_target;
 		ctx.final_groupClause = parse->groupClause;
+		ctx.final_group_input_pathkeys = root->group_pathkeys;
 		ctx.final_group_pathkeys = root->group_pathkeys;
 	}
 	ctx.final_group_tles = get_common_group_tles(ctx.partial_grouping_target,
@@ -740,7 +752,7 @@ add_second_stage_group_agg_path(PlannerInfo *root,
 	 * We generate a Path for both, and let add_path() decide which ones
 	 * to keep.
 	 */
-	pathkeys = ctx->final_group_pathkeys;
+	pathkeys = ctx->final_group_input_pathkeys;
 
 	/* Alternative 1: Redistribute -> Sort -> Agg */
 	if (CdbPathLocus_IsHashed(group_locus))
@@ -765,6 +777,8 @@ add_second_stage_group_agg_path(PlannerInfo *root,
 										ctx->havingQual,
 										ctx->agg_final_costs,
 										ctx->dNumGroupsTotal);
+		path->pathkeys = ctx->final_group_pathkeys;
+
 		add_path(output_rel, path);
 	}
 
@@ -798,6 +812,7 @@ add_second_stage_group_agg_path(PlannerInfo *root,
 									ctx->havingQual,
 									ctx->agg_final_costs,
 									ctx->dNumGroupsTotal);
+	path->pathkeys = ctx->final_group_pathkeys;
 	add_path(output_rel, path);
 }
 
