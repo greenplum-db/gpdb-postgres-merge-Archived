@@ -1179,11 +1179,19 @@ NOTICE:  x = 9, y = 13
 (3 rows)
 
 drop function tattle(x int, y int);
+set optimizer to off;
 --
 -- Test that LIMIT can be pushed to SORT through a subquery that just projects
 -- columns.  We check for that having happened by looking to see if EXPLAIN
 -- ANALYZE shows that a top-N sort was used.  We must suppress or filter away
 -- all the non-invariant parts of the EXPLAIN ANALYZE output.
+--
+-- GPDB_12_MERGE_FIXME: we need to revisit the following test because it is not
+-- testing what it advertized in the above comment. Specificly, we don't
+-- execute top-N sort for the planner plan. Orca on the other hand never honors
+-- ORDER BY in a subquery, as permitted by the SQL spec.  Consider rewriting
+-- the test using a replicated table so that we get the plan stucture like
+-- this: Limit -> Subquery -> Sort
 --
 create table sq_limit (pk int primary key, c1 int, c2 int);
 insert into sq_limit values
@@ -1211,14 +1219,18 @@ begin
 end;
 $$;
 select * from explain_sq_limit();
-                            explain_sq_limit                            
-------------------------------------------------------------------------
+                               explain_sq_limit                               
+------------------------------------------------------------------------------
  Limit (actual rows=3 loops=1)
-   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
-         ->  Limit (actual rows=3 loops=1)
-               ->  Seq Scan on sq_limit (actual rows=3 loops=1)
- Optimizer: Pivotal Optimizer (GPORCA)
-(5 rows)
+   ->  Subquery Scan on x (actual rows=3 loops=1)
+         ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+               Merge Key: sq_limit.c1, sq_limit.pk
+               ->  Sort (actual rows=5 loops=1)
+                     Sort Key: sq_limit.c1, sq_limit.pk
+                     Sort Method:  quicksort  Memory: xxx
+                     ->  Seq Scan on sq_limit (actual rows=5 loops=1)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
  pk | c2 
@@ -1228,6 +1240,7 @@ select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
   2 |  2
 (3 rows)
 
+reset optimizer;
 drop function explain_sq_limit();
 drop table sq_limit;
 --

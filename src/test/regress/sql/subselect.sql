@@ -607,11 +607,19 @@ select * from
 
 drop function tattle(x int, y int);
 
+set optimizer to off;
 --
 -- Test that LIMIT can be pushed to SORT through a subquery that just projects
 -- columns.  We check for that having happened by looking to see if EXPLAIN
 -- ANALYZE shows that a top-N sort was used.  We must suppress or filter away
 -- all the non-invariant parts of the EXPLAIN ANALYZE output.
+--
+-- GPDB_12_MERGE_FIXME: we need to revisit the following test because it is not
+-- testing what it advertized in the above comment. Specificly, we don't
+-- execute top-N sort for the planner plan. Orca on the other hand never honors
+-- ORDER BY in a subquery, as permitted by the SQL spec.  Consider rewriting
+-- the test using a replicated table so that we get the plan stucture like
+-- this: Limit -> Subquery -> Sort
 --
 create table sq_limit (pk int primary key, c1 int, c2 int);
 insert into sq_limit values
@@ -643,6 +651,7 @@ $$;
 select * from explain_sq_limit();
 
 select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
+reset optimizer;
 
 drop function explain_sq_limit();
 
