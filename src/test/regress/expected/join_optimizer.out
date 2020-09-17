@@ -6303,6 +6303,7 @@ select * from j1 full join j2 on j1.id = j2.id;
                      Output: j1.id
          ->  Sort
                Output: j2.id
+               Sort Key: j2.id
                ->  Seq Scan on public.j2
                      Output: j2.id
  Optimizer: Pivotal Optimizer (GPORCA)
@@ -6620,6 +6621,7 @@ where exists (select 1 from tenk1 t3
 create table j3 as select unique1, tenthous from onek;
 vacuum analyze j3;
 create unique index on j3(unique1, tenthous);
+ERROR:  UNIQUE and DISTRIBUTED RANDOMLY are incompatible
 explain (verbose, costs off)
 select t1.unique1, t2.hundred
 from onek t1, tenk1 t2
