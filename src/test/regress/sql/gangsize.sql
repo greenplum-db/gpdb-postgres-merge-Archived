@@ -1,3 +1,7 @@
+-- start_ignore
+-- FIXME: temporarily add this to debug in iteration CI
+SET optimizer_trace_fallback TO on;
+-- end_ignore
 set allow_system_table_mods = true;
 
 create temp table random_2_0 (a int, b int, c int, d int) distributed randomly;
