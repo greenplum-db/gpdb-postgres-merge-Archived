@@ -3608,17 +3608,15 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into qp_misc_jiras.tbl7553_test values(1,2);
 explain select i as a, i as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a, b), (a));
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000008018.50..10000008684.25 rows=2000 width=8)
-   ->  GroupAggregate  (cost=10000008018.50..10000008684.25 rows=667 width=8)
-         Group Key: i, i
-         Group Key: i
-         ->  Sort  (cost=10000008018.50..10000008233.75 rows=28700 width=4)
-               Sort Key: i, i
-               ->  Seq Scan on tbl7553_test  (cost=10000000000.00..10000000961.00 rows=28700 width=4)
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=10000000464.50..10000000636.25 rows=6000 width=8)
+   ->  HashAggregate  (cost=10000000464.50..10000000556.25 rows=2000 width=8)
+         Hash Key: i, i
+         Hash Key: i
+         ->  Seq Scan on tbl7553_test  (cost=10000000000.00..10000000321.00 rows=28700 width=8)
  Optimizer: Postgres query optimizer
-(8 rows)
+(9 rows)
 
 select i as a, i as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a, b), (a)); 
  a | b 
@@ -3628,13 +3626,14 @@ select i as a, i as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a
 (2 rows)
 
 explain select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a, b), (a)); 
-                                                     QUERY PLAN                                                      
----------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=10000002736.31..10000002769.64 rows=2000 width=8)
-   ->  Finalize HashAggregate  (cost=10000002736.31..10000002742.97 rows=667 width=8)
-         Group Key: (GROUPINGSET_ID()), j, j
-         ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=10000002446.06..10000002721.31 rows=2000 width=8)
-               Hash Key: j, j, (GROUPINGSET_ID())
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=10000002790.97..10000002940.97 rows=2000 width=8)
+   Group Key: j, j, (GROUPINGSET_ID())
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=10000002790.97..10000002875.97 rows=6000 width=8)
+         Merge Key: j, (GROUPINGSET_ID())
+         ->  Sort  (cost=10000002790.97..10000002795.97 rows=2000 width=8)
+               Sort Key: j, (GROUPINGSET_ID())
                ->  Partial GroupAggregate  (cost=10000002446.06..10000002681.31 rows=2000 width=8)
                      Group Key: j, j
                      Group Key: j
@@ -3642,7 +3641,7 @@ explain select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping 
                            Sort Key: j
                            ->  Seq Scan on tbl7553_test  (cost=10000000000.00..10000000321.00 rows=28700 width=8)
  Optimizer: Postgres query optimizer
-(12 rows)
+(16 rows)
 
 select j as a, j as b from qp_misc_jiras.tbl7553_test group by grouping sets( (a, b), (a)); 
  a | b 
