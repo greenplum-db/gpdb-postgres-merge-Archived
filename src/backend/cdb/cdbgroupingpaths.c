@@ -825,18 +825,10 @@ add_first_stage_hash_agg_path(PlannerInfo *root,
 							  cdb_agg_planning_context *ctx)
 {
 	Query	   *parse = root->parse;
-	Size		hashentrysize;
 	double		dNumGroups;
-
-	/* GPDB_12_MERGE_FIXME: upstream would support hashed grouping sets now. Add
-	 * support? */
 
 	dNumGroups = estimate_num_groups_on_segment(ctx->dNumGroupsTotal,
 												path->rows, path->locus);
-
-	hashentrysize = MAXALIGN(path->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
-	if (hashentrysize * dNumGroups > work_mem * 1024L)
-		return;	/* don't try to hash */
 
 	add_path(ctx->partial_rel,
 			 (Path *) create_agg_path(root,
@@ -1067,7 +1059,6 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 	bool		group_need_redistribute;
 	CdbPathLocus distinct_locus;
 	bool		distinct_need_redistribute;
-	Size		hashentrysize;
 
 	if (!gp_enable_agg_distinct)
 		return;
@@ -1103,15 +1094,6 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 								   CdbPathLocus_NumSegments(path->locus));
 	else
 		dNumGroups = ctx->dNumGroupsTotal;
-
-	/*
-	 * GPDB_96_MERGE_FIXME: compute the hash table size once. But we create
-	 * several different Hash Aggs below, depending on the query. Is this
-	 * computation sensible for all of them?
-	 */
-	hashentrysize = MAXALIGN(path->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
-	if (hashentrysize * dNumGroups > work_mem * 1024L)
-		return;	/* don't try to hash */
 
 	if (!distinct_need_redistribute || !group_need_redistribute)
 	{
@@ -1324,14 +1306,6 @@ add_multi_dqas_hash_agg_path(PlannerInfo *root,
 	List	   *dqa_group_tles;
 	CdbPathLocus distinct_locus;
 	bool		distinct_need_redistribute;
-	Size		hashentrysize;
-
-	/*
-	 * Check if the final Hash Agg would be too large.
-	 */
-	hashentrysize = MAXALIGN(path->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
-	if (hashentrysize * ctx->dNumGroupsTotal > work_mem * 1024L)
-		return;
 
 	/*
 	 * If subpath is projection capable, we do not want to generate a
