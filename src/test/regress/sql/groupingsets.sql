@@ -578,6 +578,11 @@ group by grouping sets (g100,g10);
 set enable_sort = true;
 set work_mem to default;
 
+-- GPDB_12_MERGE_FIXME: the following comparison query has an ORCA plan that
+-- relies on "IS NOT DISTINCT FROM" Hash Join, a variant that we likely have
+-- lost during the merge with upstream Postgres 12. Disable ORCA for this query
+SET optimizer TO off;
+
 -- Compare results
 
 (select * from gs_hash_1 except select * from gs_group_1)
@@ -593,6 +598,8 @@ set work_mem to default;
     union all
 (select g100,g10,unnest(a),c,m from gs_group_3 except
   select g100,g10,unnest(a),c,m from gs_hash_3);
+
+RESET optimizer;
 
 drop table gs_group_1;
 drop table gs_group_2;
