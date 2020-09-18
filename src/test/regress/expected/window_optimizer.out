@@ -2864,19 +2864,14 @@ from t1 where f1 = f2;
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  WindowAgg
-         Partition By: depname, empno
-         Order By: enroll_date
+         Partition By: f1
+         Order By: f2
          ->  Sort
-               Sort Key: depname, empno, enroll_date
-               ->  WindowAgg
-                     Partition By: depname
-                     Order By: empno
-                     ->  Sort
-                           Sort Key: depname, empno
-                           ->  Seq Scan on empsalary
-                                 Filter: ((depname)::text = 'sales'::text)
- Optimizer: Pivotal Optimizer (GPORCA) version 3.83.0
-(14 rows)
+               Sort Key: f1
+               ->  Seq Scan on t1
+                     Filter: (f1 = f2)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select f1, sum(f1) over (partition by f1 order by f2
                          range between 1 preceding and 1 following)
@@ -3096,23 +3091,22 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales' OR RANDOM() > 0.5;
-                                               QUERY PLAN                                                
----------------------------------------------------------------------------------------------------------
- Subquery Scan on emp
-   Filter: (((emp.depname)::text = 'sales'::text) OR (random() > '0.5'::double precision))
-   ->  Gather Motion 3:1  (slice1; segments: 3)
-         Merge Key: empsalary.depname
-         ->  WindowAgg
-               Partition By: empsalary.depname
-               ->  Sort
-                     Sort Key: empsalary.depname
-                     ->  WindowAgg
-                           Partition By: (((empsalary.depname)::text || 'A'::text)), empsalary.depname
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  WindowAgg
+         Partition By: (((depname)::text || 'A'::text)), depname
+         ->  Sort
+               Sort Key: (((depname)::text || 'A'::text)), depname
+               ->  WindowAgg
+                     Partition By: depname
+                     ->  Result
                            ->  Sort
-                                 Sort Key: (((empsalary.depname)::text || 'A'::text)), empsalary.depname
+                                 Sort Key: depname
                                  ->  Seq Scan on empsalary
- Optimizer: Postgres query optimizer
-(14 rows)
+                                       Filter: (((depname)::text = 'sales'::text) OR (random() > '0.5'::double precision))
+ Optimizer: Pivotal Optimizer (GPORCA)
+(13 rows)
 
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
@@ -3122,22 +3116,22 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Subquery Scan on emp
-   ->  Gather Motion 1:1  (slice1; segments: 1)
-         Merge Key: empsalary.empno, empsalary.enroll_date
-         ->  WindowAgg
-               Partition By: empsalary.depname
-               Order By: empsalary.empno
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  WindowAgg
+         Partition By: depname, empno
+         Order By: enroll_date
+         ->  Sort
+               Sort Key: depname, empno, enroll_date
                ->  WindowAgg
-                     Partition By: empsalary.depname, empsalary.empno
-                     Order By: empsalary.enroll_date
+                     Partition By: depname
+                     Order By: empno
                      ->  Sort
-                           Sort Key: empsalary.empno, empsalary.enroll_date
+                           Sort Key: depname, empno
                            ->  Seq Scan on empsalary
                                  Filter: ((depname)::text = 'sales'::text)
- Optimizer: Postgres query optimizer
+ Optimizer: Pivotal Optimizer (GPORCA)
 (14 rows)
 
 -- Test Sort node reordering
@@ -3146,20 +3140,22 @@ SELECT
   lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
   lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
 FROM empsalary;
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  WindowAgg
          Partition By: depname
-         Order By: salary, enroll_date
-         ->  WindowAgg
-               Partition By: depname
-               Order By: salary, enroll_date, empno
-               ->  Sort
-                     Sort Key: depname, salary, enroll_date, empno
-                     ->  Seq Scan on empsalary
- Optimizer: Postgres query optimizer
-(11 rows)
+         Order By: salary, enroll_date, empno
+         ->  Sort
+               Sort Key: depname, salary, enroll_date, empno
+               ->  WindowAgg
+                     Partition By: depname
+                     Order By: salary, enroll_date
+                     ->  Sort
+                           Sort Key: depname, salary, enroll_date
+                           ->  Seq Scan on empsalary
+ Optimizer: Pivotal Optimizer (GPORCA)
+(13 rows)
 
 -- cleanup
 DROP TABLE empsalary;
