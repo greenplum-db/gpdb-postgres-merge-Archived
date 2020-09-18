@@ -1489,6 +1489,12 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 {
 	EdxlFrameSpec frame_spec;
 
+	// GPDB_12_MERGE_FIXME: there's no reason ORCA would care about this, other
+	// than that it doesn't roundtrip this piece of info.
+	if ((frame_options & FRAMEOPTION_EXCLUSION))
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				   GPOS_WSZ_LIT("window frame EXCLUDE"));
+
 	if ((frame_options & FRAMEOPTION_ROWS) != 0)
 		frame_spec = EdxlfsRow;
 	else if ((frame_options & FRAMEOPTION_RANGE) != 0)
@@ -1497,22 +1503,29 @@ CTranslatorScalarToDXL::TranslateWindowFrameToDXL
 		// GPDB_12_MERGE_FIXME: as soon as we can pass WindowClause::startInRangeFunc
 		// and friends to ORCA and get them back, we can support stuff like
 		// RANGE 1 PRECEDING
-		if ((frame_options & (FRAMEOPTION_START_OFFSET | FRAMEOPTION_END_OFFSET)))
-			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
-					   GPOS_WSZ_LIT("Unsupported window frame option: RANGE "
-									"BETWEEN OFFSET PRECEDING / FOLLOWING"));
+		if ((frame_options &
+			 (FRAMEOPTION_START_OFFSET | FRAMEOPTION_END_OFFSET)))
+			GPOS_RAISE(
+				gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+				GPOS_WSZ_LIT(
+					"window frame RANGE with OFFSET PRECEDING or FOLLOWING"));
 	}
 	else if ((frame_options & FRAMEOPTION_GROUPS) != 0)
 		// GPDB_12_MERGE_FIXME: there's no reason the optimizer would care too
 		// much about this. As long as we recognize and roundtrip this, I think
 		// the executor will take care of it
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
-			GPOS_WSZ_LIT("Unsupported window frame option: GROUPS"));
+			GPOS_WSZ_LIT("window frame GROUPS mode"));
 	else
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
-			GPOS_WSZ_LIT("Unrecognized window frame option"));
+			GPOS_WSZ_LIT("window frame option"));
 
 
+	// GPDB_12_MERGE_FIXME: the following window frame options are flipped (i.e.
+	// the START_ and END_ ones are swapped accidently in commit
+	// ebf9763c78826819). The only reason we got away with it is because we also
+	// flipped them in CTranslatorDXLToPlStmt::TranslateDXLWindow(). Flip them
+	// back after the merge.
 	EdxlFrameBoundary leading_boundary;
 	if ((frame_options & FRAMEOPTION_END_UNBOUNDED_PRECEDING) != 0)
 		leading_boundary = EdxlfbUnboundedPreceding;
