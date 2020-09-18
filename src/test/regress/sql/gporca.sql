@@ -536,8 +536,6 @@ insert into orca.t_date values('01-03-2012'::date,9,'tag1','tag2');
 set optimizer_enable_partial_index=on;
 set optimizer_enable_space_pruning=off;
 set optimizer_enable_constant_expression_evaluation=on;
-set optimizer_enumerate_plans=on;
-set optimizer_plan_id = 2;
 -- start_ignore
 analyze orca.t_date;
 -- end_ignore
@@ -575,8 +573,6 @@ insert into orca.t_text values('01-03-2012'::date,9,'ugly','tag2');
 
 set optimizer_enable_space_pruning=off;
 set optimizer_enable_constant_expression_evaluation=on;
-set optimizer_enumerate_plans=on;
-set optimizer_plan_id = 2;
 -- start_ignore
 analyze orca.t_text;
 -- end_ignore
@@ -607,8 +603,6 @@ set optimizer_enable_partial_index=on;
 set optimizer_enable_space_pruning=off;
 set optimizer_enable_constant_expression_evaluation=on;
 set optimizer_use_external_constant_expression_evaluation_for_ints = on;
-set optimizer_enumerate_plans=on;
-set optimizer_plan_id = 2;
 -- start_ignore
 analyze orca.t_ceeval_ints;
 -- end_ignore
