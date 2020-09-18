@@ -5733,6 +5733,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_DTM_RECOVERED);
 	}
 
+	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_DTX_RECOVERY) && DtxRecoveryPID() != 0)
+	{
+		signal_child(DtxRecoveryPID(), SIGINT);
+	}
+
 	/*
 	 * Try to advance postmaster's state machine, if a child requests it.
 	 *

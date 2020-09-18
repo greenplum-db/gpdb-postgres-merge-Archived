@@ -91,6 +91,7 @@ int							gp_resgroup_memory_policy = RESMANAGER_MEMORY_POLICY_NONE;
 bool						gp_log_resgroup_memory = false;
 int							gp_resgroup_memory_policy_auto_fixed_mem;
 bool						gp_resgroup_print_operator_memory_limits = false;
+bool						gp_resgroup_debug_wait_queue = true;
 int							memory_spill_ratio = 20;
 int							gp_resource_group_queuing_timeout = 0;
 
@@ -357,6 +358,7 @@ static bool procIsWaiting(const PGPROC *proc);
 static void procWakeup(PGPROC *proc);
 static int slotGetId(const ResGroupSlotData *slot);
 static void groupWaitQueueValidate(const ResGroupData *group);
+static void groupWaitProcValidate(PGPROC *proc, PROC_QUEUE *head);
 static void groupWaitQueuePush(ResGroupData *group, PGPROC *proc);
 static PGPROC *groupWaitQueuePop(ResGroupData *group);
 static void groupWaitQueueErase(ResGroupData *group, PGPROC *proc);
@@ -3485,9 +3487,53 @@ groupWaitQueueValidate(const ResGroupData *group)
 
 	waitQueue = &group->waitProcs;
 
+	if (gp_resgroup_debug_wait_queue)
+	{
+		if (waitQueue->size == 0)
+		{
+			if (waitQueue->links.next != &waitQueue->links ||
+				waitQueue->links.prev != &waitQueue->links)
+				elog(PANIC, "resource group wait queue is corrupted");
+		}
+		else
+		{
+			PGPROC *nextProc = (PGPROC *)waitQueue->links.next;
+			PGPROC *prevProc = (PGPROC *)waitQueue->links.prev;
+
+			if (!nextProc->mppIsWriter ||
+				!prevProc->mppIsWriter ||
+				nextProc->links.prev != &waitQueue->links ||
+				prevProc->links.next != &waitQueue->links)
+				elog(PANIC, "resource group wait queue is corrupted");
+		}
+
+		return;
+	}
+
 	AssertImply(waitQueue->size == 0,
 				waitQueue->links.next == &waitQueue->links &&
 				waitQueue->links.prev == &waitQueue->links);
+}
+
+static void
+groupWaitProcValidate(PGPROC *proc, PROC_QUEUE *head)
+{
+	PGPROC *nextProc = (PGPROC *)proc->links.next;
+	PGPROC *prevProc = (PGPROC *)proc->links.prev;
+
+	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+	if (!gp_resgroup_debug_wait_queue)
+		return;
+
+	if (!proc->mppIsWriter ||
+		((PROC_QUEUE *)nextProc != head && !nextProc->mppIsWriter) ||
+		((PROC_QUEUE *)prevProc != head && !prevProc->mppIsWriter) ||
+		nextProc->links.prev != &proc->links ||
+		prevProc->links.next != &proc->links)
+		elog(PANIC, "resource group wait queue is corrupted");
+
+	return;
 }
 
 /*
@@ -3509,6 +3555,7 @@ groupWaitQueuePush(ResGroupData *group, PGPROC *proc)
 	headProc = (PGPROC *) &waitQueue->links;
 
 	SHMQueueInsertBefore(&headProc->links, &proc->links);
+	groupWaitProcValidate(proc, waitQueue);
 
 	waitQueue->size++;
 
@@ -3532,6 +3579,7 @@ groupWaitQueuePop(ResGroupData *group)
 	waitQueue = &group->waitProcs;
 
 	proc = (PGPROC *) waitQueue->links.next;
+	groupWaitProcValidate(proc, waitQueue);
 	Assert(groupWaitQueueFind(group, proc));
 	Assert(proc->resSlot == NULL);
 
@@ -3559,6 +3607,7 @@ groupWaitQueueErase(ResGroupData *group, PGPROC *proc)
 
 	waitQueue = &group->waitProcs;
 
+	groupWaitProcValidate(proc, waitQueue);
 	SHMQueueDelete(&proc->links);
 
 	waitQueue->size--;

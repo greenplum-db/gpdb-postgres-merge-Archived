@@ -36,8 +36,12 @@
 #include "tcop/tcopprot.h"
 #include "libpq-int.h"
 
-volatile bool *shmDtmStarted;
-volatile bool *shmCleanupBackends;
+#define MAX_FREQ_CHECK_TIMES 12
+static int frequent_check_times;
+
+volatile bool *shmDtmStarted = NULL;
+volatile bool *shmCleanupBackends = NULL;
+volatile pid_t *shmDtxRecoveryPid = NULL;
 
 /* transactions need recover */
 TMGXACT_LOG *shmCommittedGxactArray;
@@ -692,16 +696,37 @@ AbortOrphanedPreparedTransactions()
 {
 	HTAB	   *htab;
 
+#ifdef FAULT_INJECTOR
+	if (SIMPLE_FAULT_INJECTOR("before_orphaned_check") == FaultInjectorTypeSkip)
+		return;
+#endif
+
+	StartTransactionCommand();
 	htab = gatherRMInDoubtTransactions(gp_dtx_recovery_prepared_period, false);
 
 	/* in case an error happens somehow. */
-	if (htab == NULL)
-		return;
+	if (htab != NULL)
+	{
+		abortOrphanedTransactions(htab);
 
-	abortOrphanedTransactions(htab);
+		/* get rid of the hashtable */
+		hash_destroy(htab);
+	}
 
-	/* get rid of the hashtable */
-	hash_destroy(htab);
+	CommitTransactionCommand();
+	DisconnectAndDestroyAllGangs(true);
+
+	SIMPLE_FAULT_INJECTOR("after_orphaned_check");
+}
+
+static void
+sigIntHandler(SIGNAL_ARGS)
+{
+	if (frequent_check_times == 0)
+		frequent_check_times = MAX_FREQ_CHECK_TIMES;
+
+	if (MyProc)
+		SetLatch(MyLatch);
 }
 
 static void
@@ -713,18 +738,25 @@ sigHupHandler(SIGNAL_ARGS)
 		SetLatch(MyLatch);
 }
 
+pid_t
+DtxRecoveryPID(void)
+{
+	return *shmDtxRecoveryPid;
+}
+
 /*
  * DtxRecoveryMain
  */
 void
 DtxRecoveryMain(Datum main_arg)
 {
-	int frequent_check_times;
+	*shmDtxRecoveryPid = MyProcPid;
 
 	/*
 	 * reread postgresql.conf if requested
 	 */
 	pqsignal(SIGHUP, sigHupHandler);
+	pqsignal(SIGINT, sigIntHandler);
 
 	/* We're now ready to receive signals */
 	BackgroundWorkerUnblockSignals();
@@ -756,9 +788,7 @@ DtxRecoveryMain(Datum main_arg)
 	 * with inteval 5 seconds simply.
 	 */
 	if (*shmCleanupBackends)
-		frequent_check_times = 12;
-	else
-		frequent_check_times = 0;
+		frequent_check_times = MAX_FREQ_CHECK_TIMES;
 
 	while (true)
 	{
@@ -771,16 +801,9 @@ DtxRecoveryMain(Datum main_arg)
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
-		else
-		{
-			SIMPLE_FAULT_INJECTOR("before_orphaned_check");
 
-			/* Find orphaned prepared transactions and abort them. */
-			StartTransactionCommand();
-			AbortOrphanedPreparedTransactions();
-			CommitTransactionCommand();
-			DisconnectAndDestroyAllGangs(true);
-		}
+		/* Find orphaned prepared transactions and abort them. */
+		AbortOrphanedPreparedTransactions();
 
 		/* GPDB_12_MERGE_FIXME: Create a new WaitEventIPC member for this? */
 		rc = WaitLatch(&MyProc->procLatch,

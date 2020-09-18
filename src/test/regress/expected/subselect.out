@@ -778,7 +778,7 @@ select '1'::text in (select '1'::name union all select '1'::name);
 --
 -- GPDB_92_MERGE_FIXME: ORCA cannot decorrelate this query, and generates
 -- correct-but-slow plan that takes 45 minutes. Revisit this when ORCA can
--- reorer anti-joins
+-- reorder anti-joins
 set optimizer to off;
 select a.thousand from tenk1 a, tenk1 b
 where a.thousand = b.thousand

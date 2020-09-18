@@ -513,44 +513,46 @@ explain (costs off, timing off, summary off, analyze) select count(*) from
 	  union all
 	  select * from t, pt where tid + 2 = ptid
 	  ) foo;
-                                                  QUERY PLAN                                                   
----------------------------------------------------------------------------------------------------------------
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
                ->  Append (actual rows=14 loops=1)
-                     ->  Hash Join (actual rows=8 loops=1)
-                           Hash Cond: (pt_1_prt_2.ptid = t.tid)
-                           ->  Append (actual rows=8 loops=1)
-                                 Partition Selectors: $0
-                                 ->  Seq Scan on pt_1_prt_2 (actual rows=5 loops=1)
-                                 ->  Seq Scan on pt_1_prt_3 (actual rows=3 loops=1)
-                                 ->  Seq Scan on pt_1_prt_4 (never executed)
-                                 ->  Seq Scan on pt_1_prt_5 (never executed)
-                                 ->  Seq Scan on pt_1_prt_6 (never executed)
-                                 ->  Seq Scan on pt_1_prt_junk_data (never executed)
-                           ->  Hash (actual rows=2 loops=1)
-                                 Buckets: 262144  Batches: 1  Memory Usage: 2049kB
-                                 ->  Partition Selector (selector id: $0) (actual rows=2 loops=1)
-                                       ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=2 loops=1)
-                                             ->  Seq Scan on t (actual rows=2 loops=1)
-                     ->  Hash Join (actual rows=7 loops=1)
-                           Hash Cond: (pt_1_prt_2_1.ptid = (t_1.tid + 2))
-                           ->  Append (actual rows=7 loops=1)
-                                 Partition Selectors: $1
-                                 ->  Seq Scan on pt_1_prt_2 pt_1_prt_2_1 (never executed)
-                                 ->  Seq Scan on pt_1_prt_3 pt_1_prt_3_1 (never executed)
-                                 ->  Seq Scan on pt_1_prt_4 pt_1_prt_4_1 (actual rows=5 loops=1)
-                                 ->  Seq Scan on pt_1_prt_5 pt_1_prt_5_1 (actual rows=5 loops=1)
-                                 ->  Seq Scan on pt_1_prt_6 pt_1_prt_6_1 (never executed)
-                                 ->  Seq Scan on pt_1_prt_junk_data pt_1_prt_junk_data_1 (never executed)
-                           ->  Hash (actual rows=2 loops=1)
-                                 Buckets: 262144  Batches: 1  Memory Usage: 2049kB
-                                 ->  Partition Selector (selector id: $1) (actual rows=2 loops=1)
-                                       ->  Broadcast Motion 3:3  (slice3; segments: 3) (actual rows=2 loops=1)
-                                             ->  Seq Scan on t t_1 (actual rows=2 loops=1)
+                     ->  Subquery Scan on "*SELECT* 1" (actual rows=8 loops=1)
+                           ->  Hash Join (actual rows=8 loops=1)
+                                 Hash Cond: (pt_1_prt_2.ptid = t.tid)
+                                 ->  Append (actual rows=8 loops=1)
+                                       Partition Selectors: $0
+                                       ->  Seq Scan on pt_1_prt_2 (actual rows=5 loops=1)
+                                       ->  Seq Scan on pt_1_prt_3 (actual rows=3 loops=1)
+                                       ->  Seq Scan on pt_1_prt_4 (never executed)
+                                       ->  Seq Scan on pt_1_prt_5 (never executed)
+                                       ->  Seq Scan on pt_1_prt_6 (never executed)
+                                       ->  Seq Scan on pt_1_prt_junk_data (never executed)
+                                 ->  Hash (actual rows=2 loops=1)
+                                       Buckets: 262144  Batches: 1  Memory Usage: 2049kB
+                                       ->  Partition Selector (selector id: $0) (actual rows=2 loops=1)
+                                             ->  Broadcast Motion 3:3  (slice2; segments: 3) (actual rows=2 loops=1)
+                                                   ->  Seq Scan on t (actual rows=2 loops=1)
+                     ->  Subquery Scan on "*SELECT* 2" (actual rows=7 loops=1)
+                           ->  Hash Join (actual rows=7 loops=1)
+                                 Hash Cond: (pt_1_prt_2_1.ptid = (t_1.tid + 2))
+                                 ->  Append (actual rows=7 loops=1)
+                                       Partition Selectors: $1
+                                       ->  Seq Scan on pt_1_prt_2 pt_1_prt_2_1 (never executed)
+                                       ->  Seq Scan on pt_1_prt_3 pt_1_prt_3_1 (never executed)
+                                       ->  Seq Scan on pt_1_prt_4 pt_1_prt_4_1 (actual rows=5 loops=1)
+                                       ->  Seq Scan on pt_1_prt_5 pt_1_prt_5_1 (actual rows=5 loops=1)
+                                       ->  Seq Scan on pt_1_prt_6 pt_1_prt_6_1 (never executed)
+                                       ->  Seq Scan on pt_1_prt_junk_data pt_1_prt_junk_data_1 (never executed)
+                                 ->  Hash (actual rows=2 loops=1)
+                                       Buckets: 262144  Batches: 1  Memory Usage: 2049kB
+                                       ->  Partition Selector (selector id: $1) (actual rows=2 loops=1)
+                                             ->  Broadcast Motion 3:3  (slice3; segments: 3) (actual rows=2 loops=1)
+                                                   ->  Seq Scan on t t_1 (actual rows=2 loops=1)
  Optimizer: Postgres query optimizer
-(35 rows)
+(37 rows)
 
 select count(*) from
 	( select * from t, pt where tid = ptid
