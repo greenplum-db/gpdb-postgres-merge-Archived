@@ -3521,7 +3521,7 @@ groupWaitProcValidate(PGPROC *proc, PROC_QUEUE *head)
 	PGPROC *nextProc = (PGPROC *)proc->links.next;
 	PGPROC *prevProc = (PGPROC *)proc->links.prev;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	if (!gp_resgroup_debug_wait_queue)
 		return;
