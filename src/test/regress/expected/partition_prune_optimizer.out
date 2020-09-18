@@ -1921,13 +1921,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 6
          ->  Seq Scan on ab_a2_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 2) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 2) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a2_b3 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 2) AND (a <= 2) AND (b <= 3))
  Optimizer: Postgres query optimizer
 (10 rows)
 
@@ -1936,19 +1935,18 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (1, 2, 3);
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 3
          ->  Seq Scan on ab_a1_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a1_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a1_b3 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a2_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
          ->  Seq Scan on ab_a2_b3 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
+               Filter: ((a >= 1) AND (a <= 2) AND (b <= 3))
  Optimizer: Postgres query optimizer
 (16 rows)
 
@@ -1988,11 +1986,10 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 4
          ->  Seq Scan on ab_a2_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 2) AND (b < 3))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 2) AND (b < 3))
  Optimizer: Postgres query optimizer
 (8 rows)
 
@@ -2001,15 +1998,14 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 2
          ->  Seq Scan on ab_a2_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 4) AND (b < 3))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 4) AND (b < 3))
          ->  Seq Scan on ab_a3_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 4) AND (b < 3))
          ->  Seq Scan on ab_a3_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
+               Filter: ((a >= 2) AND (a <= 4) AND (b < 3))
  Optimizer: Postgres query optimizer
 (12 rows)
 
@@ -2049,13 +2045,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 6
          ->  Seq Scan on ab_a2_b1 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
+               Filter: ((a >= 2) AND (a <= 2) AND (b < $0))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
+               Filter: ((a >= 2) AND (a <= 2) AND (b < $0))
          ->  Seq Scan on ab_a2_b3 (never executed)
-               Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
+               Filter: ((a >= 2) AND (a <= 2) AND (b < $0))
  Optimizer: Postgres query optimizer
 (12 rows)
 
@@ -2094,13 +2089,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
    ->  Append (never executed)
-         Subplans Removed: 6
          ->  Seq Scan on ab_a1_b2 (never executed)
-               Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
+               Filter: ((b >= 2) AND (b <= 2) AND (a < $0))
          ->  Seq Scan on ab_a2_b2 (never executed)
-               Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
+               Filter: ((b >= 2) AND (b <= 2) AND (a < $0))
          ->  Seq Scan on ab_a3_b2 (never executed)
-               Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
+               Filter: ((b >= 2) AND (b <= 2) AND (a < $0))
  Optimizer: Postgres query optimizer
 (12 rows)
 
@@ -2234,21 +2228,20 @@ execute ab_q4 (1, 8);
 (1 row)
 
 select explain_parallel_append('execute ab_q4 (2, 2)');
-                         explain_parallel_append                         
--------------------------------------------------------------------------
+                        explain_parallel_append                         
+------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
                ->  Append (never executed)
-                     Subplans Removed: 6
                      ->  Seq Scan on ab_a2_b1 (never executed)
-                           Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
+                           Filter: ((a >= 2) AND (a <= 2) AND (b < 4))
                      ->  Seq Scan on ab_a2_b2 (never executed)
-                           Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
+                           Filter: ((a >= 2) AND (a <= 2) AND (b < 4))
                      ->  Seq Scan on ab_a2_b3 (never executed)
-                           Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
+                           Filter: ((a >= 2) AND (a <= 2) AND (b < 4))
  Optimizer: Postgres query optimizer
-(12 rows)
+(11 rows)
 
 -- Test run-time pruning with IN lists.
 prepare ab_q5 (int, int, int) as
@@ -2285,60 +2278,64 @@ execute ab_q5 (1, 2, 3);
     
 (1 row)
 
+-- start_ignore
+-- GPDB_12_MERGE_FIXME: Planner's output file expects a 3:1 Gather
+-- motion, but in this case even though we fallback, the Gather motion
+-- is 1:1. Investigate why. 
+-- end_ignore
 select explain_parallel_append('execute ab_q5 (1, 1, 1)');
-                            explain_parallel_append                            
--------------------------------------------------------------------------------
+                             explain_parallel_append                              
+----------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+   ->  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
                ->  Append (never executed)
-                     Subplans Removed: 6
                      ->  Seq Scan on ab_a1_b1 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{1,1,1}'::integer[])))
                      ->  Seq Scan on ab_a1_b2 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{1,1,1}'::integer[])))
                      ->  Seq Scan on ab_a1_b3 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{1,1,1}'::integer[])))
  Optimizer: Postgres query optimizer
 (12 rows)
 
+-- start_ignore
+-- GPDB_12_MERGE_FIXME: Planner's output file expects a 3:1 Gather
+-- motion, but in this case even though we fallback, the Gather motion
+-- is 1:1. Investigate why. 
+-- end_ignore
 select explain_parallel_append('execute ab_q5 (2, 3, 3)');
-                            explain_parallel_append                            
--------------------------------------------------------------------------------
+                             explain_parallel_append                              
+----------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
+   ->  Gather Motion 1:1  (slice1; segments: 1) (actual rows=1 loops=1)
          ->  Partial Aggregate (actual rows=1 loops=1)
                ->  Append (never executed)
-                     Subplans Removed: 3
                      ->  Seq Scan on ab_a2_b1 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
                      ->  Seq Scan on ab_a2_b2 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
                      ->  Seq Scan on ab_a2_b3 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
                      ->  Seq Scan on ab_a3_b1 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
                      ->  Seq Scan on ab_a3_b2 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
                      ->  Seq Scan on ab_a3_b3 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+                           Filter: ((b < 4) AND (a = ANY ('{2,3,3}'::integer[])))
  Optimizer: Postgres query optimizer
 (18 rows)
 
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
 select explain_parallel_append('execute ab_q5 (33, 44, 55)');
-                            explain_parallel_append                            
--------------------------------------------------------------------------------
- Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather Motion 3:1  (slice1; segments: 3) (actual rows=3 loops=1)
-         ->  Partial Aggregate (actual rows=1 loops=1)
-               ->  Append (never executed)
-                     Subplans Removed: 8
-                     ->  Seq Scan on ab_a1_b1 (never executed)
-                           Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
+       explain_parallel_append        
+--------------------------------------
+ Aggregate (actual rows=1 loops=1)
+   ->  Result (actual rows=0 loops=1)
+         One-Time Filter: false
  Optimizer: Postgres query optimizer
-(8 rows)
+(4 rows)
 
 -- Test Parallel Append with PARAM_EXEC Params
 select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
@@ -2645,40 +2642,39 @@ select * from (select * from ab where a = 1 union all select * from ab) ab where
      ->  Result (actual rows=1 loops=1)
    ->  Append (never executed)
          ->  Append (never executed)
-               ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b2 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b3 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                            Index Cond: (a = 1)
-         ->  Append (never executed)
-               ->  Seq Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b2 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b3 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b2 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b3 (never executed)
-                     Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b3 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b3 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b3 (never executed)
+               Filter: (b = $0)
  Optimizer: Postgres query optimizer
 (40 rows)
 
@@ -2692,17 +2688,17 @@ select * from (select * from ab where a = 1 union all (values(10,5)) union all s
      ->  Result (actual rows=1 loops=1)
    ->  Append (never executed)
          ->  Append (never executed)
-               ->  Bitmap Heap Scan on ab_a1_b1 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b2 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b3 (never executed)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
                      Recheck Cond: (a = 1)
                      Filter: (b = $0)
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
@@ -2711,25 +2707,24 @@ select * from (select * from ab where a = 1 union all (values(10,5)) union all s
                One-Time Filter: (gp_execution_segment() = 1)
                ->  Result (never executed)
                      One-Time Filter: (5 = $0)
-         ->  Append (never executed)
-               ->  Seq Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b2 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a2_b3 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b1 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b2 (never executed)
-                     Filter: (b = $0)
-               ->  Seq Scan on ab_a3_b3 (never executed)
-                     Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a1_b3 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a2_b3 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b1 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b2 (never executed)
+               Filter: (b = $0)
+         ->  Seq Scan on ab_a3_b3 (never executed)
+               Filter: (b = $0)
  Optimizer: Postgres query optimizer
 (44 rows)
 
@@ -2755,24 +2750,21 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
    InitPlan 1 (returns $0)  (slice2)
      ->  Result (actual rows=1 loops=1)
    ->  Append (never executed)
-         ->  Append (never executed)
-               Subplans Removed: 6
-               ->  Seq Scan on ab_a1_b1 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
-               ->  Seq Scan on ab_a1_b2 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
-               ->  Seq Scan on ab_a1_b3 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
+         Subplans Removed: 12
+         ->  Seq Scan on ab_a1_b1 (never executed)
+               Filter: ((a = $1) AND (b = $0))
+         ->  Seq Scan on ab_a1_b2 (never executed)
+               Filter: ((a = $1) AND (b = $0))
+         ->  Seq Scan on ab_a1_b3 (never executed)
+               Filter: ((a = $1) AND (b = $0))
          ->  Seq Scan on xy_1 (never executed)
                Filter: ((x = $1) AND (y = $0))
-         ->  Append (never executed)
-               Subplans Removed: 6
-               ->  Seq Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
-               ->  Seq Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
-               ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
-                     Filter: ((a = $1) AND (b = $0))
+         ->  Seq Scan on ab_a1_b1 ab_a1_b1_1 (never executed)
+               Filter: ((a = $1) AND (b = $0))
+         ->  Seq Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
+               Filter: ((a = $1) AND (b = $0))
+         ->  Seq Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
+               Filter: ((a = $1) AND (b = $0))
  Optimizer: Postgres query optimizer
 (23 rows)
 
@@ -3041,7 +3033,6 @@ order by tbl1.col1, tprt.col1;
   505 |  505
 (2 rows)
 
-reset enable_seqscan;
 -- Multiple partitions
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off)
@@ -3202,6 +3193,7 @@ order by tbl1.col1, tprt.col1;
  4400 | 4500
 (1 row)
 
+reset enable_seqscan;
 -- No matching partition
 delete from tbl1;
 insert into tbl1 values (10000);
@@ -3346,10 +3338,8 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   ->  Append (never executed)
-         Subplans Removed: 1
-         ->  Seq Scan on listp_1_1 (never executed)
-               Filter: (b = ANY (ARRAY[$1, $2]))
+   ->  Seq Scan on listp_1_1 (never executed)
+         Filter: (b = ANY ('{1,1}'::integer[]))
  Optimizer: Postgres query optimizer
 (6 rows)
 
@@ -3357,23 +3347,18 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   ->  Append (never executed)
-         Subplans Removed: 1
-         ->  Seq Scan on listp_2_1 (never executed)
-               Filter: (b = ANY (ARRAY[$1, $2]))
+   ->  Seq Scan on listp_2_1 (never executed)
+         Filter: (b = ANY ('{2,2}'::integer[]))
  Optimizer: Postgres query optimizer
 (6 rows)
 
 -- Try with no matching partitions. One subplan should remain in this case,
 -- but it shouldn't be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (0,0);
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   ->  Append (never executed)
-         Subplans Removed: 1
-         ->  Seq Scan on listp_1_1 (never executed)
-               Filter: (b = ANY (ARRAY[$1, $2]))
+             QUERY PLAN              
+-------------------------------------
+ Result (actual rows=0 loops=1)
+   One-Time Filter: false
  Optimizer: Postgres query optimizer
 (6 rows)
 
@@ -3407,26 +3392,21 @@ execute q1 (1,2,3,4);
 
 -- Both partitions allowed by IN clause, but one disallowed by <> clause
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   ->  Append (never executed)
-         Subplans Removed: 1
-         ->  Seq Scan on listp_1_1 (never executed)
-               Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
+   ->  Seq Scan on listp_1_1 (never executed)
+         Filter: ((b = ANY ('{1,2}'::integer[])) AND (2 <> b) AND (0 <> b))
  Optimizer: Postgres query optimizer
 (6 rows)
 
 -- Both partitions allowed by IN clause, then both excluded again by <> clauses.
 -- One subplan will remain in this case, but it should not be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   ->  Append (never executed)
-         Subplans Removed: 1
-         ->  Seq Scan on listp_1_1 (never executed)
-               Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
+             QUERY PLAN              
+-------------------------------------
+ Result (actual rows=0 loops=1)
+   One-Time Filter: false
  Optimizer: Postgres query optimizer
 (6 rows)
 
@@ -3724,12 +3704,11 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
    Merge Key: ma_test_p2.b
    ->  Merge Append (actual rows=1 loops=1)
          Sort Key: ma_test_p2.b
-         Subplans Removed: 1
          ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1 loops=1)
-               Filter: ((a >= $1) AND ((a % 10) = 5))
+               Filter: ((a >= 15) AND ((a % 10) = 5))
                Rows Removed by Filter: 1
          ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
-               Filter: ((a >= $1) AND ((a % 10) = 5))
+               Filter: ((a >= 15) AND ((a % 10) = 5))
                Rows Removed by Filter: 2
  Optimizer: Postgres query optimizer
 (12 rows)
@@ -3746,12 +3725,9 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
 -------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3) (actual rows=1 loops=1)
    Merge Key: ma_test_p3.b
-   ->  Merge Append (actual rows=1 loops=1)
-         Sort Key: ma_test_p3.b
-         Subplans Removed: 2
-         ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
-               Filter: ((a >= $1) AND ((a % 10) = 5))
-               Rows Removed by Filter: 2
+   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 (actual rows=1 loops=1)
+         Filter: ((a >= 25) AND ((a % 10) = 5))
+         Rows Removed by Filter: 2
  Optimizer: Postgres query optimizer
 (9 rows)
 
@@ -3763,15 +3739,13 @@ execute mt_q1(25);
 
 -- Ensure MergeAppend behaves correctly when no subplans match
 explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3) (actual rows=0 loops=1)
-   Merge Key: ma_test_p1.b
-   ->  Merge Append (never executed)
-         Sort Key: ma_test_p1.b
-         Subplans Removed: 2
-         ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 (never executed)
-               Filter: ((a >= $1) AND ((a % 10) = 5))
+               QUERY PLAN                
+-----------------------------------------
+ Sort (actual rows=0 loops=1)
+   Sort Key: b
+   Sort Method:  quicksort  Memory: 50kB
+   ->  Result (actual rows=0 loops=1)
+         One-Time Filter: false
  Optimizer: Postgres query optimizer
 (8 rows)
 
@@ -4258,10 +4232,9 @@ explain (costs off) execute q (1, 1);
    InitPlan 1 (returns $0)  (slice2)
      ->  Result
    ->  Append
-         ->  Append
-               Subplans Removed: 1
-               ->  Seq Scan on p1
-                     Filter: ((a = $1) AND (b = $2) AND (c = $0))
+         Subplans Removed: 1
+         ->  Seq Scan on p1
+               Filter: ((a = $1) AND (b = $2) AND (c = $0))
          ->  Seq Scan on q111
                Filter: ((a = $1) AND (b = $2) AND (c = $0))
          ->  Result
