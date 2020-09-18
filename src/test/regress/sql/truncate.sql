@@ -270,6 +270,7 @@ CREATE TABLE truncpart_2 PARTITION OF truncpart FOR VALUES FROM (100) TO (200)
 CREATE TABLE truncpart_2_1 PARTITION OF truncpart_2 FOR VALUES FROM (100) TO (150);
 CREATE TABLE truncpart_2_d PARTITION OF truncpart_2 DEFAULT;
 
+-- GPDB: this doesn't fail in GPDB, because GPDB doesn't enforce primary keys.
 TRUNCATE TABLE truncprim;	-- should fail
 
 select tp_ins_data();
