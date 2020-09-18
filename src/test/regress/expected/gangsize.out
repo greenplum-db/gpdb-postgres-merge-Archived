@@ -1,3 +1,4 @@
+set optimizer=off;
 set allow_system_table_mods = true;
 create temp table random_2_0 (a int, b int, c int, d int) distributed randomly;
 update gp_distribution_policy set numsegments = 2 where localoid = 'random_2_0'::regclass;
@@ -218,3 +219,4 @@ INFO:  (slice 0) Dispatch command to ALL contents: 0 1 2
 INFO:  (slice 1) Dispatch command to PARTIAL contents: 0 1
 abort;
 INFO:  Distributed transaction command 'Distributed Abort (No Prepared)' to ALL contents: 0 1 2
+reset optimizer;
