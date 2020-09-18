@@ -721,7 +721,7 @@ analyze p;
 select count_operator('select * from (select * from p1 union all select * from p2) as p_all, t where p_all.b=t.b;','Partition Selector');
  count_operator 
 ----------------
-              0
+              2
 (1 row)
 
 select count_operator('select * from (select * from p1 union select * from p2) as p_all, t where p_all.b=t.b;','Partition Selector');
