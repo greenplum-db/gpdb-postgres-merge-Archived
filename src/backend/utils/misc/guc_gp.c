@@ -3418,7 +3418,19 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&listenerBacklog,
-		128, 0, 65535,
+		/*
+		 * GPDB_12_MERGE_FIXME: in order to make case DML_over_joins
+		 * pass under tcp interconnect mode, enlarge this GUC's default
+		 * value to 256 as a work-around. Without this change, the case
+		 * will throw warnings like:
+		 *   +HINT:  Try enlarging the gp_interconnect_tcp_listener_backlog GUC value and OS net.core.somaxconn parameter
+		 *   +WARNING:  SetupTCPInterconnect: too many expected incoming connections(144), Interconnect setup might possibly fail
+		 * This is because the plan fallback from orca to planner, and planner
+		 * removes the motion under modifytable plannode by the PR: https://github.com/greenplum-db/gpdb/pull/9183
+		 * We should consider to remove the locus check in the PR 9183 and that would fix the case.
+		 * Also we should find out why orca fallback to planner for this simple case.
+		 */
+		256, 0, 65535,
 		NULL, NULL, NULL
 	},
 
