@@ -3253,6 +3253,10 @@ PartitionPruneInfoFromPartitionSelector(
 	std::copy(relation->rd_partdesc->oids, relation->rd_partdesc->oids + relation->rd_partdesc->nparts,
 			  pinfo->relid_map);
 
+	// GPDB_12_MERGE_FIXME: this is still pretty much a hack. Notice the btree
+	// support function is blindly picked from the relation definition. When the
+	// constant used in the equal filter is of a different type from that of the
+	// partition boundaries, this will be wrong.
 	pinfo->exec_pruning_steps = PartPruneStepsFromEqFilters(
 		eq_filters, relation->rd_partkey->partsupfunc[0].fn_oid,
 		translator_dxl_to_scalar, md_accessor);
