@@ -2,7 +2,7 @@
 -- GPDB_12_MERGE_FIXME: delete the _optimizer answer file
 -- The only diff between the planner and ORCA answer files are:
 -- INFO:  GPORCA failed to produce a plan, falling back to planner
--- DETAIL:  Feature not supported: Unsupported window frame option: RANGE BETWEEN OFFSET PRECEDING / FOLLOWING
+-- DETAIL:  Feature not supported: window frame RANGE with OFFSET PRECEDING or FOLLOWING
 -- end_ignore
 --
 -- STANDARD DATA FOR olap_* TESTS.
