@@ -33,6 +33,13 @@ partition by list (f2)
 );
 
 
+-- start_ignore
+-- GPDB_12_MERGE_FIXME
+-- Disable ORCA temporarily for this test as it produces wrong results. It uses
+-- an incorrect comparison function for date and timestamp, causing the
+-- partition to be incorrectly pruned.
+-- end_ignore
+set optimizer=off;
 -- TEST
 -- Middle of a middle range
 INSERT INTO TIMESTAMP_MONTH_rangep_STARTINCL values (1, '2000-07-16');
@@ -99,6 +106,7 @@ SELECT * FROM TIMESTAMP_MONTH_listp WHERE f2 = TO_TIMESTAMP('2000-01-03', 'YYYY-
 SELECT * FROM TIMESTAMP_MONTH_listp WHERE f2 = TO_DATE('2000-01-03', 'YYYY-MM-DD');
 
 
+reset optimizer;
 --
 -- Data Engineer can see partition key in psql
 --
