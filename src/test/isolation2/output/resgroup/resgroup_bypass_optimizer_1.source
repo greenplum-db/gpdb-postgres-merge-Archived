@@ -170,7 +170,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 0       
- rg_bypass_test | 1        | 13      
+ rg_bypass_test | 1        | 12      
 (2 rows)
 61: SELECT * FROM eat_memory_on_qd_large;
 ERROR:  Out of memory
@@ -211,7 +211,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 4       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61: SELECT * FROM eat_memory_on_one_slice;
  count 
@@ -222,7 +222,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 8       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61: SELECT * FROM eat_memory_on_one_slice;
 ERROR:  Out of memory  (seg0 slice1 127.0.0.1:25432 pid=336)
@@ -242,7 +242,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 0       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61q: ... <quitting>
 
@@ -265,7 +265,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 4       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61: SELECT * FROM eat_memory_on_slices;
  count 
@@ -276,7 +276,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 8       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61: SELECT * FROM eat_memory_on_slices;
 ERROR:  Out of memory  (seg0 slice2 127.0.0.1:25432 pid=354)
@@ -296,7 +296,7 @@ SELECT * FROM memory_result;
  rsgname        | ismaster | avg_mem 
 ----------------+----------+---------
  rg_bypass_test | 0        | 0       
- rg_bypass_test | 1        | 1       
+ rg_bypass_test | 1        | 0       
 (2 rows)
 61q: ... <quitting>
 
