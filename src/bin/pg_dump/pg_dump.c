@@ -60,7 +60,6 @@
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type_d.h"
-#include "catalog/gp_distribution_policy.h"
 #include "libpq/libpq-fs.h"
 #include "storage/block.h"
 
