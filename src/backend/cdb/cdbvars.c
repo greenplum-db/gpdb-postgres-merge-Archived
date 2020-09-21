@@ -21,7 +21,6 @@
 
 #include "miscadmin.h"
 #include "utils/guc.h"
-#include "catalog/gp_segment_configuration.h"
 #include "cdb/cdbvars.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"

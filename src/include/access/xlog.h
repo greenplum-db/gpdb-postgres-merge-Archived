@@ -17,7 +17,6 @@
 #include "access/xlogreader.h"
 #include "datatype/timestamp.h"
 #include "access/xlog_internal.h"
-#include "catalog/gp_segment_configuration.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"
 #include "storage/buf.h"

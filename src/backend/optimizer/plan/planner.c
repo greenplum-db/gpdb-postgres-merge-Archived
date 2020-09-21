@@ -69,7 +69,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-#include "catalog/gp_segment_configuration.h"
 #include "catalog/pg_proc.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"

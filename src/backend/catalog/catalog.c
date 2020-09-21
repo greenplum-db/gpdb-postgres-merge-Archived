@@ -57,7 +57,6 @@
 
 #include "catalog/gp_configuration_history.h"
 #include "catalog/gp_id.h"
-#include "catalog/gp_segment_configuration.h"
 #include "catalog/gp_version_at_initdb.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_largeobject_metadata.h"
