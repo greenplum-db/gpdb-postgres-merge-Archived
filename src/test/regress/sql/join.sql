@@ -1950,7 +1950,6 @@ drop table join_ut1;
 begin;
 
 -- GPDB: persuade the planner to choose same plan as in upstream.
-set local random_page_cost=4;
 set local enable_nestloop=on;
 
 -- GPDB: in upstream, there's a unique index on 'c', but in GPDB you can't

@@ -1,13 +1,6 @@
 --
 -- Test inheritance features
 --
-
--- start_ignore
--- Change random_pag_cost to match upstream's default, to get the same plans
--- as in upstream.
-set random_page_cost = 4;
--- end_ignore
-
 CREATE TABLE a (aa TEXT);
 CREATE TABLE b (bb TEXT) INHERITS (a);
 CREATE TABLE c (cc TEXT) INHERITS (a);

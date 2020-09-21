@@ -1,8 +1,3 @@
--- start_ignore
--- Set random_page_cost to the upstream default, to get same plans as in
--- upstream.
-set random_page_cost = 4;
--- end_ignore
 /*
  * 1.1. test CREATE INDEX with buffered build
  */

@@ -4,15 +4,12 @@
 
 -- start_ignore
 -- GPDB: With the default settings, the planner chooses different plans some
--- of the queries than in upstream. That is because:
--- 1) Default large (different as PG's) random_page_cost makes planner
---    incline to seq scan.
--- 2) Low vis fraction estimation (pg_class.relallvisible) on GP causes higher
---    index only scan cost so bitmap index scan outperforms index only scan.
+-- of the queries than in upstream. That is beause low vis fraction
+-- estimation (pg_class.relallvisible) on GP causes higher index only scan
+-- cost so bitmap index scan outperforms index only scan.
 --
--- Set 'random_page_cost' to match the upstream default value here. In
--- addition, some tests do 'enable_sort=off' or 'enable_bitmapscan=off'.
-set random_page_cost = 4;
+-- Some tests do 'enable_sort=off' or 'enable_bitmapscan=off' to get the same
+-- plans as in upstream.
 -- end_ignore
 
 -- Make both a standalone composite type and a table rowtype
