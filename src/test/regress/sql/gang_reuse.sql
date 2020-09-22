@@ -19,6 +19,7 @@ set optimizer_enable_motion_broadcast to off;
 set optimizer_force_multistage_agg to on;
 
 create table test_gang_reuse_t1 (c1 int, c2 int);
+analyze test_gang_reuse_t1;
 
 -- this query will create 3 reader gangs with ids C, D and E, we expect they
 -- will always be reused in the same order
