@@ -690,12 +690,15 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
         cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx,
 									queryDesc->estate, es);
 
-    /*
+	/*
 	 * Show non-default GUC settings that might have affected the plan as well
 	 * as optimizer settings etc.
-     */
+	 *
+	 * GPDB_12_MERGE_FIXME: This overlaps with the output you get with the
+	 * new uptream "SETTINGS on" option.
+	 */
 	ExplainOpenGroup("Settings", "Settings", true, es);
-	
+
 	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
 		ExplainPropertyStringInfo("Optimizer", es, "Postgres query optimizer");
 #ifdef USE_ORCA
