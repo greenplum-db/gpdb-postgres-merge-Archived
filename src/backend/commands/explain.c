@@ -683,11 +683,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	if (es->analyze)
 		ExplainPrintTriggers(es, queryDesc);
 
-    /*
-     * Display per-slice and whole-query statistics.
-     */
-    if (es->analyze)
-        cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx,
+	/*
+	 * Display per-slice and whole-query statistics.
+	 */
+	if (es->analyze)
+		cdbexplain_showExecStatsEnd(queryDesc->plannedstmt, queryDesc->showstatctx,
 									queryDesc->estate, es);
 
 	/*
