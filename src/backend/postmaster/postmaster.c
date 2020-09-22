@@ -2666,7 +2666,15 @@ retry1:
 				break;
 			}
 
-			/* Allow connections if hot_standby is on */
+			/*
+			 * Allow connections if hot_standby is on and our postmaster is
+			 * acting as a standby.
+			 *
+			 * GPDB_12_MERGE_FIXME: checking a GUC is not a good idea here.
+			 * In upstream, postmaster allows hot-standby connections based on
+			 * pmState in canAcceptConnections.  We should revert to that
+			 * logic.
+			 */
 			if (EnableHotStandby)
 				break;
 
