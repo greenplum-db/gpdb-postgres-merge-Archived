@@ -37,8 +37,10 @@
 
 #include "common/logging.h"
 #include "common/restricted_token.h"
+#include "common/string.h"
 #include "common/username.h"
 #include "getopt_long.h"
+#include "lib/stringinfo.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
 #include "pg_config_paths.h"
 #include "portability/instr_time.h"
@@ -459,36 +461,33 @@ string_matches_pattern(const char *str, const char *pattern)
 }
 
 /*
- * Replace all occurrences of a string in a string with a different string.
+ * Replace all occurrences of "replace" in "string" with "replacement".
+ * The StringInfo will be suitably enlarged if necessary.
  *
- * The caller is responsible for keeping track if the string has to be freed.
+ * Note: this is optimized on the assumption that most calls will find
+ * no more than one occurrence of "replace", and quite likely none.
  */
-char *
-replace_string(char *orig, size_t *len, const char *replace, const char *replacement)
+void
+replace_string(StringInfo string, const char *replace, const char *replacement)
 {
+	int			pos = 0;
 	char	   *ptr;
-	char	   *string = orig;
-	ssize_t		overflow_len = strlen(replacement) - strlen(replace);
 
-	while ((ptr = strstr(string, replace)) != NULL)
+	while ((ptr = strstr(string->data + pos, replace)) != NULL)
 	{
-		char	   *dup = pg_strdup(string);
+		/* Must copy the remainder of the string out of the StringInfo */
+		char	   *suffix = pg_strdup(ptr + strlen(replace));
 
-		if (overflow_len > 0 &&
-			((ptr + strlen(ptr) + overflow_len) > (string + *len - 1)))
-		{
-			*len *= 2;
-			string = repalloc(string, *len);
-			ptr = strstr(string, replace);
-		}
-
-		strlcpy(string, dup, ptr - string + 1);
-		strcat(string, replacement);
-		strcat(string, dup + (ptr - string) + strlen(replace));
-		free(dup);
+		/* Truncate StringInfo at start of found string ... */
+		string->len = ptr - string->data;
+		/* ... and append the replacement (this restores the trailing '\0') */
+		appendStringInfoString(string, replacement);
+		/* Next search should start after the replacement */
+		pos = string->len;
+		/* Put back the remainder of the string */
+		appendStringInfoString(string, suffix);
+		free(suffix);
 	}
-
-	return string;
 }
 
 typedef struct replacements
@@ -543,28 +542,26 @@ detectCgroupMountPoint(char *cgdir, int len)
 #endif
 }
 
-static char *
-convert_line(char *line, size_t *len, replacements *repls)
+static void
+convert_line(StringInfo line, replacements *repls)
 {
-	line = replace_string(line, len, "@cgroup_mnt_point@", repls->cgroup_mnt_point);
-	line = replace_string(line, len, "@abs_srcdir@", repls->abs_srcdir);
-	line = replace_string(line, len, "@abs_builddir@", repls->abs_builddir);
-	line = replace_string(line, len, "@testtablespace@", repls->testtablespace);
-	line = replace_string(line, len, "@libdir@", repls->dlpath);
-	line = replace_string(line, len, "@DLSUFFIX@", repls->dlsuffix);
-	line = replace_string(line, len, "@bindir@", repls->bindir);
-	line = replace_string(line, len, "@hostname@", repls->content_zero_hostname);
-	line = replace_string(line, len, "@curusername@", (char *) repls->username);
+	replace_string(line, "@cgroup_mnt_point@", repls->cgroup_mnt_point);
+	replace_string(line, "@abs_srcdir@", repls->abs_srcdir);
+	replace_string(line, "@abs_builddir@", repls->abs_builddir);
+	replace_string(line, "@testtablespace@", repls->testtablespace);
+	replace_string(line, "@libdir@", repls->dlpath);
+	replace_string(line, "@DLSUFFIX@", repls->dlsuffix);
+	replace_string(line, "@bindir@", repls->bindir);
+	replace_string(line, "@hostname@", repls->content_zero_hostname);
+	replace_string(line, "@curusername@", (char *) repls->username);
 	if (repls->amname)
 	{
-		line = replace_string(line, len, "@amname@", repls->amname);
+		replace_string(line, "@amname@", repls->amname);
 		if (strcmp(repls->amname, "ao_row") == 0)
-			line = replace_string(line, len, "@aoseg@", "aoseg");
+			replace_string(line, "@aoseg@", "aoseg");
 		else
-			line = replace_string(line, len, "@aoseg@", "aocsseg");
+			replace_string(line, "@aoseg@", "aocsseg");
 	}
-
-	return line;
 }
 
 /*
@@ -607,10 +604,8 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 		FILE	   *infile,
 				   *outfile_row,
 				   *outfile_col;
-		char	   *input_line;
-		char	   *converted_row;
-		size_t		input_line_len;
-		size_t		converted_row_len;
+		StringInfoData line;
+		StringInfoData line_row;
 		bool		has_tokens = false;
 
 		/* reject filenames not finishing in ".source" */
@@ -666,56 +661,30 @@ generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *
 			exit(2);
 		}
 
-		input_line_len = 1024;
-		input_line = palloc(input_line_len);
+		initStringInfo(&line);
+		initStringInfo(&line_row);
 
-		converted_row = palloc(input_line_len);
-		converted_row_len = input_line_len;
-
-		while (fgets(input_line, input_line_len, infile))
+		while (pg_get_line_append(infile, &line))
 		{
-			char   *converted_col = input_line;
-			size_t	converted_col_len = input_line_len;
-
-			Assert(converted_row_len == input_line_len);
-			strcpy(converted_row, input_line);
-
+			appendStringInfoString(&line_row, line.data);
 			repls->amname = "ao_row";
-			converted_row = convert_line(converted_row, &converted_row_len, repls);
-			fputs(converted_row, outfile_row);
-
+			convert_line(&line_row, repls);
 			repls->amname = "ao_column";
-			converted_col = convert_line(converted_col, &converted_col_len, repls);
-			fputs(converted_col, outfile_col);
-
-			/*
-			 * Either the column version changed only or both, because the
-			 * string "ao_column" is larger than "ao_row". Use the extended new
-			 * length for the subsequent inputs and grow the row version if
-			 * needed.
-			 */
-			if (input_line != converted_col)
-			{
-				input_line_len = converted_col_len;
-				input_line = converted_col;
-
-				if (converted_col_len > converted_row_len)
-				{
-					converted_row_len = converted_col_len;
-					converted_row = repalloc(converted_row, converted_row_len);
-				}
-			}
-
+			convert_line(&line, repls);
+			fputs(line.data, outfile_col);
+			fputs(line_row.data, outfile_row);
 			/*
 			 * Remember if there are any more tokens that we didn't recognize.
 			 * They need to be handled by the gpstringsubs.pl script
 			 */
-			if (!has_tokens && strstr(input_line, "@gp") != NULL)
+			if (!has_tokens && strstr(line.data, "@gp") != NULL)
 				has_tokens = true;
+			resetStringInfo(&line);
+			resetStringInfo(&line_row);
 		}
-		pfree(converted_row);
-		pfree(input_line);
 
+		pfree(line.data);
+		pfree(line_row.data);
 		fclose(infile);
 		fclose(outfile_row);
 		fclose(outfile_col);
@@ -840,8 +809,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 		char		prefix[MAXPGPATH];
 		FILE	   *infile,
 				   *outfile;
-		char	   *line;
-		size_t		line_len;
+		StringInfoData line;
 		bool		has_tokens = false;
 		struct stat fst;
 
@@ -899,21 +867,24 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 			exit(2);
 		}
 
-		line_len = 1024;
-		line = palloc0(line_len);
-		while (fgets(line, line_len, infile))
+		initStringInfo(&line);
+
+		while (pg_get_line_append(infile, &line))
 		{
-			line = convert_line(line, &line_len, &repls);
-			fputs(line, outfile);
+			convert_line(&line, &repls);
+			fputs(line.data, outfile);
 
 			/*
 			 * Remember if there are any more tokens that we didn't recognize.
 			 * They need to be handled by the gpstringsubs.pl script
 			 */
-			if (!has_tokens && strstr(line, "@gp") != NULL)
+			if (!has_tokens && strstr(line.data, "@gp") != NULL)
 				has_tokens = true;
+
+			resetStringInfo(&line);
 		}
-		pfree(line);
+
+		pfree(line.data);
 		fclose(infile);
 		fclose(outfile);
 

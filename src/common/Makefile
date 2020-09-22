@@ -48,8 +48,8 @@ LIBS += $(PTHREAD_LIBS)
 
 OBJS_COMMON = base64.o config_info.o controldata_utils.o d2s.o exec.o f2s.o \
 	file_perm.o ip.o keywords.o kwlookup.o link-canary.o md5.o \
-	pg_lzcompress.o pgfnames.o psprintf.o relpath.o \
-	rmtree.o saslprep.o scram-common.o string.o unicode_norm.o \
+	pg_get_line.o pg_lzcompress.o pgfnames.o psprintf.o relpath.o \
+	rmtree.o saslprep.o scram-common.o string.o stringinfo.o unicode_norm.o \
 	username.o wait_error.o
 
 ifeq ($(with_openssl),yes)
