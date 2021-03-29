@@ -2453,6 +2453,32 @@ get_rel_relstorage(Oid relid)
 		return '\0';
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * get_rel_persistence
+ *
+ *		Returns the relpersistence associated with a given relation.
+ */
+char
+get_rel_persistence(Oid relid)
+{
+	HeapTuple   tp;
+	Form_pg_class reltup;
+	char        result;
+
+	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+	result = reltup->relpersistence;
+	ReleaseSysCache(tp);
+
+	return result;
+}
+
+
+>>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 /*				---------- TYPE CACHE ----------						 */
 
 /*
@@ -3673,6 +3699,7 @@ get_range_subtype(Oid rangeOid)
 }
 
 /*
+<<<<<<< HEAD
  * relation_exists
  *	  Is there a relation with the given oid
  */
@@ -3885,12 +3912,33 @@ get_check_constraint_relid(Oid oidCheckconstraint)
 		Oid			result;
 
 		result = contup->conrelid;
+=======
+ * get_range_collation
+ *		Returns the collation of a given range type
+ *
+ * Returns InvalidOid if the type is not a range type,
+ * or if its subtype is not collatable.
+ */
+Oid
+get_range_collation(Oid rangeOid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_range rngtup = (Form_pg_range) GETSTRUCT(tp);
+		Oid			result;
+
+		result = rngtup->rngcollation;
+>>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 		ReleaseSysCache(tp);
 		return result;
 	}
 	else
 		return InvalidOid;
 }
+<<<<<<< HEAD
 
 /*
  * get_check_constraint_oids
@@ -4373,3 +4421,5 @@ child_triggers(Oid relationId, int32 triggerType)
 	/* no child triggers matching the given type */
 	return found;
 }
+=======
+>>>>>>> 30ffdd24d7222bc01183a56d536c236240674516

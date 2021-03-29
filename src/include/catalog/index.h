@@ -90,10 +90,14 @@ extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
+<<<<<<< HEAD
 extern bool CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 				 Oid *collations1, Oid *collations2,
 				 Oid *opfamilies1, Oid *opfamilies2,
 				 AttrNumber *attmap, int maplen);
+=======
+extern IndexInfo *BuildDummyIndexInfo(Relation index);
+>>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
 			   TupleTableSlot *slot,
