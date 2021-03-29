@@ -483,8 +483,7 @@ DefineIndex(Oid relationId,
 	 * relation.  To avoid lock upgrade hazards, that lock should be at least
 	 * as strong as the one we take here.
 	 */
-<<<<<<< HEAD
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
 
 	/*
 	 * Appendoptimized tables need block directory relation for index
@@ -508,9 +507,6 @@ DefineIndex(Oid relationId,
 			lockmode = ShareRowExclusiveLock; /* Relation is AO, and has no block directory */
 	}
 
-=======
-	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	rel = heap_open(relationId, lockmode);
 
 	relationId = RelationGetRelid(rel);
@@ -836,13 +832,8 @@ DefineIndex(Oid relationId,
 	 * A valid stmt->oldNode implies that we already have a built form of the
 	 * index.  The caller should also decline any index build.
 	 */
-<<<<<<< HEAD
-	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !stmt->concurrent));
-	
-=======
 	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !concurrent));
 
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	/*
 	 * Make the catalog entries for the index, including constraints. Then, if
 	 * not skip_build || concurrent, actually build the index.
@@ -856,9 +847,8 @@ DefineIndex(Oid relationId,
 					 coloptions, reloptions, stmt->primary,
 					 stmt->isconstraint, stmt->deferrable, stmt->initdeferred,
 					 allowSystemTableMods,
-<<<<<<< HEAD
-					 skip_build || stmt->concurrent,
-					 stmt->concurrent, !check_rights,
+					 skip_build || concurrent,
+					 concurrent, !check_rights,
 					 &createdConstraintId);
 
 	if (shouldDispatch)
@@ -877,17 +867,12 @@ DefineIndex(Oid relationId,
 		if (!indexInfo->ii_BrokenHotChain)
 			cdb_sync_indcheckxmin_with_segments(indexRelationId);
 	}
-=======
-					 skip_build || concurrent,
-					 concurrent, !check_rights);
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
 		CreateComments(indexRelationId, RelationRelationId, 0,
 					   stmt->idxcomment);
 
-<<<<<<< HEAD
 	if (partitioned)
 	{
 		/*
@@ -1113,10 +1098,7 @@ DefineIndex(Oid relationId,
 		return indexRelationId;
 	}
 
-	if (!stmt->concurrent)
-=======
 	if (!concurrent)
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		if (need_longlock)
