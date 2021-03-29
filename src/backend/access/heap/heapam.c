@@ -2018,12 +2018,8 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		heapTuple->t_len = ItemIdGetLength(lp);
 #if 0
 		heapTuple->t_tableOid = RelationGetRelid(relation);
-<<<<<<< HEAD
 #endif
-		ItemPointerSetOffsetNumber(&heapTuple->t_self, offnum);
-=======
 		ItemPointerSet(&heapTuple->t_self, blkno, offnum);
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.

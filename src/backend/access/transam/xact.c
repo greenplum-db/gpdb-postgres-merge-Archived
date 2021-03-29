@@ -2685,7 +2685,13 @@ CommitTransaction(void)
 	PreCommit_Notify();
 
 	/*
-<<<<<<< HEAD
+	 * Mark serializable transaction as complete for predicate locking
+	 * purposes.  This should be done as late as we can put it and still allow
+	 * errors to be raised for failure patterns found at commit.
+	 */
+	PreCommit_CheckForSerializationFailure();
+
+	/*
 	 * Prepare all QE.
 	 */
 	prepareDtxTransaction();
@@ -2708,13 +2714,6 @@ CommitTransaction(void)
 				(errcode(ERRCODE_FAULT_INJECT),
 				 errmsg("Raise an error as directed by Debug_abort_after_distributed_prepared")));
 	}
-=======
-	 * Mark serializable transaction as complete for predicate locking
-	 * purposes.  This should be done as late as we can put it and still allow
-	 * errors to be raised for failure patterns found at commit.
-	 */
-	PreCommit_CheckForSerializationFailure();
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
