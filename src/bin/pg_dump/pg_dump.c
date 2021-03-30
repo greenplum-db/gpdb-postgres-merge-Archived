@@ -16112,10 +16112,6 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	}
 	else
 	{
-<<<<<<< HEAD
-		error_unsupported_server_version(fout);
-	}
-=======
 		/* In the rule case, just print pg_get_ruledef's result verbatim */
 		if (fout->remoteVersion >= 70300)
 		{
@@ -16125,12 +16121,8 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 		}
 		else
 		{
-			/* Rule name was unique before 7.3 ... */
-			appendPQExpBuffer(query,
-							  "SELECT pg_get_ruledef('%s') AS definition",
-							  rinfo->dobj.name);
+			error_unsupported_server_version(fout);
 		}
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
