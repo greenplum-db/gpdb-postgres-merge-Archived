@@ -1286,7 +1286,6 @@ RemoveRelations(DropStmt *drop)
 			continue;
 		}
 
-<<<<<<< HEAD
 		if (drop->removeType == OBJECT_EXTTABLE || drop->removeType == OBJECT_TABLE)
 			CheckDropRelStorage(rel, drop->removeType);
 
@@ -1305,7 +1304,8 @@ RemoveRelations(DropStmt *drop)
 					errhint("Table \"%s\" is a child partition of table \"%s\". To drop it, use ALTER TABLE \"%s\"%s...",
 							get_rel_name(relOid), get_rel_name(master),
 							get_rel_name(master), pretty ? pretty : "" )));
-=======
+		}
+
 		/*
 		 * Decide if concurrent mode needs to be used here or not.  The
 		 * relation persistence cannot be known without its OID.
@@ -1316,7 +1316,6 @@ RemoveRelations(DropStmt *drop)
 			Assert(list_length(drop->objects) == 1 &&
 				   drop->removeType == OBJECT_INDEX);
 			flags |= PERFORM_DELETION_CONCURRENTLY;
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 		}
 
 		/* OK, we're ready to delete this one */
