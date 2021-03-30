@@ -400,9 +400,9 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		return -1.0;
 
 	/* check that it's a histogram, not just a dummy entry */
-	if (nhist < 2)
+	if (hslot.nvalues < 2)
 	{
-		free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
+		free_attstatsslot(&hslot);
 		return -1.0;
 	}
 
