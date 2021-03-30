@@ -371,14 +371,10 @@ struct pg_conn
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 	char	   *krbsrvname;		/* Kerberos service name */
-<<<<<<< HEAD
-#endif
-    char       *gpconntype; /* type of connection */
-    char       *gpqeid;        /* MPP: session id & startup info for qExec */
-=======
 	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
+    char       *gpconntype; /* type of connection */
+    char       *gpqeid;        /* MPP: session id & startup info for qExec */
 
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
