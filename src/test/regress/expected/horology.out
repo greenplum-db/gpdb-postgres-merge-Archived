@@ -3029,21 +3029,13 @@ SELECT to_timestamp('20000-1116', 'YYYY-MMDD');
  Thu Nov 16 00:00:00 20000 PST
 (1 row)
 
-<<<<<<< HEAD
-SELECT to_timestamp('1997 AD 11 16', 'YYYY BC MM DD');
-=======
 SELECT to_timestamp('1997 A.D. 11 16', 'YYYY B.C. MM DD');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
          to_timestamp         
 ------------------------------
  Sun Nov 16 00:00:00 1997 PST
 (1 row)
 
-<<<<<<< HEAD
-SELECT to_timestamp('1997 BC 11 16', 'YYYY BC MM DD');
-=======
 SELECT to_timestamp('1997 B.C. 11 16', 'YYYY B.C. MM DD');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
           to_timestamp           
 ---------------------------------
  Tue Nov 16 00:00:00 1997 PST BC
@@ -3133,28 +3125,18 @@ SELECT to_timestamp('  20050302', 'YYYYMMDD');
  Wed Mar 02 00:00:00 2005 PST
 (1 row)
 
-<<<<<<< HEAD
-SELECT to_timestamp('2011-12-18 11:38 AM', 'YYYY-MM-DD HH12:MI PM');
-=======
 SELECT to_timestamp('2011-12-18 11:38 A.M.', 'YYYY-MM-DD HH12:MI P.M.');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
          to_timestamp         
 ------------------------------
  Sun Dec 18 11:38:00 2011 PST
 (1 row)
 
-<<<<<<< HEAD
-SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
-=======
 SELECT to_timestamp('2011-12-18 11:38 P.M.', 'YYYY-MM-DD HH12:MI P.M.');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
          to_timestamp         
 ------------------------------
  Sun Dec 18 23:38:00 2011 PST
 (1 row)
 
-<<<<<<< HEAD
-=======
 SELECT to_timestamp('2011-12-18 11:38 PST', 'YYYY-MM-DD HH12:MI TZ');  -- NYI
 ERROR:  "TZ"/"tz"/"OF" format patterns are not supported in to_date
 SELECT to_timestamp('2018-11-02 12:34:56.025', 'YYYY-MM-DD HH24:MI:SS.MS');
@@ -3181,7 +3163,6 @@ SELECT to_date('2458872', 'J');
  01-23-2020
 (1 row)
 
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 --
 -- Check handling of multiple spaces in format and/or input
 --

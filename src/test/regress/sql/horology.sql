@@ -613,13 +613,8 @@ SELECT to_timestamp('19971116', 'YYYYMMDD');
 
 SELECT to_timestamp('20000-1116', 'YYYY-MMDD');
 
-<<<<<<< HEAD
-SELECT to_timestamp('1997 AD 11 16', 'YYYY BC MM DD');
-SELECT to_timestamp('1997 BC 11 16', 'YYYY BC MM DD');
-=======
 SELECT to_timestamp('1997 A.D. 11 16', 'YYYY B.C. MM DD');
 SELECT to_timestamp('1997 B.C. 11 16', 'YYYY B.C. MM DD');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 SELECT to_timestamp('9-1116', 'Y-MMDD');
 
@@ -649,10 +644,6 @@ SELECT to_timestamp(' 2005 03 02', 'YYYYMMDD');
 
 SELECT to_timestamp('  20050302', 'YYYYMMDD');
 
-<<<<<<< HEAD
-SELECT to_timestamp('2011-12-18 11:38 AM', 'YYYY-MM-DD HH12:MI PM');
-SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
-=======
 SELECT to_timestamp('2011-12-18 11:38 A.M.', 'YYYY-MM-DD HH12:MI P.M.');
 SELECT to_timestamp('2011-12-18 11:38 P.M.', 'YYYY-MM-DD HH12:MI P.M.');
 
@@ -663,7 +654,6 @@ SELECT to_timestamp('2018-11-02 12:34:56.025', 'YYYY-MM-DD HH24:MI:SS.MS');
 SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
 SELECT to_date('3 4 21 01', 'W MM CC YY');
 SELECT to_date('2458872', 'J');
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 --
 -- Check handling of multiple spaces in format and/or input
