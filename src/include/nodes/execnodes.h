@@ -2131,12 +2131,9 @@ typedef struct ValuesScanState
 	int			array_len;
 	int			curr_idx;
 	int			marked_idx;
-<<<<<<< HEAD
-	bool		cdb_want_ctid;	/* true => ctid is referenced in targetlist */
-=======
 	/* in back branches, put this at the end to avoid ABI break: */
 	List	  **exprstatelists;
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
+	bool		cdb_want_ctid;	/* true => ctid is referenced in targetlist */
 } ValuesScanState;
 
 /* ----------------
