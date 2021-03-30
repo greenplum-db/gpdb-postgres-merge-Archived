@@ -514,8 +514,6 @@ invoke_agg_trans_func(AggState *aggstate,
 			newVal = datumCopyWithMemManager(transValue, newVal, transtypeByVal,
 											 transtypeLen, mem_manager);
 		}
-<<<<<<< HEAD
-=======
 		else
 		{
 			/*
@@ -525,10 +523,6 @@ invoke_agg_trans_func(AggState *aggstate,
 			 */
 			newVal = (Datum) 0;
 		}
-
-		if (!pergroupstate->transValueIsNull)
-			pfree(DatumGetPointer(pergroupstate->transValue));
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	}
 
 	*transValueIsNull = fcinfo->isnull;
