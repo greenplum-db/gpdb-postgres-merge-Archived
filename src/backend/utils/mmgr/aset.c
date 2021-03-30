@@ -1615,72 +1615,11 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 							  sizeof(chunk->requested_size));
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
-	{
 		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p (%s:%d)",
 				 set->header.name, chunk, CDB_MCXT_WHERE(&set->header));
-	}
 #endif
 
-<<<<<<< HEAD
-	/*
-	 * Chunk sizes are aligned to power of 2 in AllocSetAlloc(). Maybe the
-	 * allocated area already is >= the new size.  (In particular, we always
-	 * fall out here if the requested size is a decrease.)
-	 */
-	if (oldsize >= size)
-	{
-		/* isHeader is set to false as we should never require realloc for shared header */
-		AllocFreeInfo(set, chunk, false);
-
-#ifdef MEMORY_CONTEXT_CHECKING
-		Size		oldrequest = chunk->requested_size;
-
-#ifdef RANDOMIZE_ALLOCATED_MEMORY
-		/* We can only fill the extra space if we know the prior request */
-		if (size > oldrequest)
-			randomize_mem((char *) pointer + oldrequest,
-						  size - oldrequest);
-#endif
-
-		chunk->requested_size = size;
-		VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
-								   sizeof(chunk->requested_size));
-
-		/*
-		 * If this is an increase, mark any newly-available part UNDEFINED.
-		 * Otherwise, mark the obsolete part NOACCESS.
-		 */
-		if (size > oldrequest)
-			VALGRIND_MAKE_MEM_UNDEFINED((char *) pointer + oldrequest,
-										size - oldrequest);
-		else
-			VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size,
-									   oldsize - size);
-
-		/* set mark to catch clobber of "unused" space */
-		if (size < oldsize)
-			set_sentinel(pointer, size);
-
-#else							/* !MEMORY_CONTEXT_CHECKING */
-
-		/*
-		 * We don't have the information to determine whether we're growing
-		 * the old request or shrinking it, so we conservatively mark the
-		 * entire new allocation DEFINED.
-		 */
-		VALGRIND_MAKE_MEM_NOACCESS(pointer, oldsize);
-		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
-#endif
-
-		/* isHeader is set to false as we should never require realloc for shared header */
-		AllocAllocInfo(set, chunk, false);
-
-		return pointer;
-	}
-
-=======
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	if (oldsize > set->allocChunkLimit)
 	{
 		/*
@@ -1691,7 +1630,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		AllocBlock	block = (AllocBlock) (((char *) chunk) - ALLOC_BLOCKHDRSZ);
 		Size		chksize;
 		Size		blksize;
-        Size        oldblksize;
+		Size		oldblksize;
 
 		/*
 		 * Try to verify that we have a sane block pointer: it should
@@ -1704,14 +1643,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			(oldsize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
 
-<<<<<<< HEAD
 		/* isHeader is set to false as we should never require realloc for shared header */
 		AllocFreeInfo(set, chunk, false);
 
-		/* Do the realloc */
-        oldblksize = UserPtr_GetUserPtrSize(block);
-		chksize = MAXALIGN(size);
-=======
 		/*
 		 * Even if the new request is less than set->allocChunkLimit, we stick
 		 * with the single-chunk block approach.  Therefore we need
@@ -1722,7 +1656,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		chksize = MAXALIGN(chksize);
 
 		/* Do the realloc */
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
+		oldblksize = UserPtr_GetUserPtrSize(block);
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) gp_realloc(block, blksize);
 		if (block == NULL)
@@ -1799,6 +1733,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	 */
 	else if (oldsize >= size)
 	{
+		/* isHeader is set to false as we should never require realloc for shared header */
+		AllocFreeInfo(set, chunk, false);
+
 #ifdef MEMORY_CONTEXT_CHECKING
 		Size		oldrequest = chunk->requested_size;
 
@@ -1837,6 +1774,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		VALGRIND_MAKE_MEM_NOACCESS(pointer, oldsize);
 		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
 #endif
+
+		/* isHeader is set to false as we should never require realloc for shared header */
+		AllocAllocInfo(set, chunk, false);
 
 		return pointer;
 	}
