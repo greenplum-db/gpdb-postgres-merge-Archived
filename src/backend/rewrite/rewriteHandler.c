@@ -2474,14 +2474,10 @@ relation_is_updatable(Oid reloid,
 
 #define ALL_EVENTS ((1 << CMD_INSERT) | (1 << CMD_UPDATE) | (1 << CMD_DELETE))
 
-<<<<<<< HEAD
-	rel = try_relation_open(reloid, AccessShareLock, false);
-=======
 	/* Since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
-	rel = try_relation_open(reloid, AccessShareLock);
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
+	rel = try_relation_open(reloid, AccessShareLock, false);
 
 	/*
 	 * If the relation doesn't exist, return zero rather than throwing an
@@ -2492,7 +2488,13 @@ relation_is_updatable(Oid reloid,
 	if (rel == NULL)
 		return 0;
 
-<<<<<<< HEAD
+	/* If we detect a recursive view, report that it is not updatable */
+	if (list_member_oid(outer_reloids, RelationGetRelid(rel)))
+	{
+		relation_close(rel, AccessShareLock);
+		return 0;
+	}
+
 	/* If this is an external table, check if it's writeable */
 	if (rel->rd_rel->relkind == RELKIND_RELATION &&
 		rel->rd_rel->relstorage == RELSTORAGE_EXTERNAL)
@@ -2507,13 +2509,6 @@ relation_is_updatable(Oid reloid,
 		pfree(extentry);
 		relation_close(rel, AccessShareLock);
 		return events;
-=======
-	/* If we detect a recursive view, report that it is not updatable */
-	if (list_member_oid(outer_reloids, RelationGetRelid(rel)))
-	{
-		relation_close(rel, AccessShareLock);
-		return 0;
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	}
 
 	/* If the relation is a table, it is always updatable */
