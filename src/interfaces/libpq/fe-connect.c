@@ -3134,12 +3134,8 @@ freePGconn(PGconn *conn)
 		free(conn->krbsrvname);
 	if (conn->gsslib)
 		free(conn->gsslib);
-<<<<<<< HEAD
-#endif
 	if (conn->gpqeid)			/* CDB */
 		free(conn->gpqeid);
-=======
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->last_query)
 		free(conn->last_query);
