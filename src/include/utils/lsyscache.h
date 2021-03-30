@@ -162,11 +162,8 @@ extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
 extern char get_rel_relstorage(Oid relid);
 extern Oid	get_rel_tablespace(Oid relid);
-<<<<<<< HEAD
-extern char *get_type_name(Oid typid);
-=======
 extern char get_rel_persistence(Oid relid);
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
+extern char *get_type_name(Oid typid);
 extern bool get_typisdefined(Oid typid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
