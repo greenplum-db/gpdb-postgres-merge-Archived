@@ -1033,7 +1033,6 @@ typedef NameData *Name;
  * !PG_USE_INLINE.
  */
 
-
 /* declarations which are only visible when not inlining and in the .c file */
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE static inline
@@ -1041,14 +1040,13 @@ typedef NameData *Name;
 #define STATIC_IF_INLINE
 #endif   /* PG_USE_INLINE */
 
-<<<<<<< HEAD
 /* declarations which are marked inline when inlining, extern otherwise */
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE_DECLARE static inline
 #else
 #define STATIC_IF_INLINE_DECLARE extern
 #endif   /* PG_USE_INLINE */
-=======
+
 /*
  * Macros for range-checking float values before converting to integer.
  * We must be careful here that the boundary values are expressed exactly
@@ -1072,7 +1070,6 @@ typedef NameData *Name;
 	((num) >= (float8) PG_INT32_MIN && (num) < -((float8) PG_INT32_MIN))
 #define FLOAT8_FITS_IN_INT64(num) \
 	((num) >= (float8) PG_INT64_MIN && (num) < -((float8) PG_INT64_MIN))
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 
 /* ----------------------------------------------------------------
