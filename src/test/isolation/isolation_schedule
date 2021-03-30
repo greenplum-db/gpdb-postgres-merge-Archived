@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # GPDB_91_MERGE_FIXME: GPDB acquires ExclusiveLock for update and delete SQL
 # statements.  This invalidates most of the isolation tests from upstream below.
 # E.g. an UPDATE step executed by isolationtester never returns because another
@@ -21,6 +20,7 @@
 #test: two-ids
 #test: multiple-row-versions
 #test: index-only-scan
+#test: predicate-lock-hot-tuple
 #test: fk-contention
 #test: fk-deadlock
 #test: fk-deadlock2
@@ -31,31 +31,6 @@
 #test: read-write-unique-2
 #test: read-write-unique-3
 #test: read-write-unique-4
-=======
-test: read-write-unique
-test: read-write-unique-2
-test: read-write-unique-3
-test: read-write-unique-4
-test: simple-write-skew
-test: receipt-report
-test: temporal-range-integrity
-test: project-manager
-test: classroom-scheduling
-test: total-cash
-test: referential-integrity
-test: ri-trigger
-test: partial-index
-test: two-ids
-test: multiple-row-versions
-test: index-only-scan
-test: predicate-lock-hot-tuple
-test: fk-contention
-test: fk-deadlock
-test: fk-deadlock2
-test: eval-plan-qual
-test: lock-update-delete
-test: lock-update-traversal
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 test: inherit-temp
 test: delete-abort-savept
 #test: delete-abort-savept-2
