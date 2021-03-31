@@ -1627,19 +1627,18 @@ ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
 DETAIL:  Failing row contains (15).
 --end_ignore
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
-<<<<<<< HEAD
-                   QUERY PLAN                    
--------------------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Insert on base_tbl b
    ->  Result
-         SubPlan 1  (slice0; segments: 1)
-           ->  Result
-                 Filter: (r.a = b.a)
-                 ->  Materialize
-                       ->  Seq Scan on ref_tbl r
-         SubPlan 2  (slice0; segments: 1)
+   SubPlan 1  (slice0; segments: 1)
+     ->  Result
+           Filter: (r.a = b.a)
            ->  Materialize
-                 ->  Seq Scan on ref_tbl r_1
+                 ->  Seq Scan on ref_tbl r
+   SubPlan 2  (slice0; segments: 1)
+     ->  Materialize
+           ->  Seq Scan on ref_tbl r_1
  Optimizer: Postgres query optimizer
 (11 rows)
 
@@ -1655,44 +1654,16 @@ EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
                      ->  Seq Scan on ref_tbl r
                      ->  Hash
                            ->  Seq Scan on base_tbl b
-         SubPlan 1  (slice1; segments: 3)
-           ->  Result
-                 Filter: (r_1.a = b.a)
-                 ->  Materialize
-                       ->  Seq Scan on ref_tbl r_1
-         SubPlan 2  (slice1; segments: 3)
+   SubPlan 1  (slice0; segments: 3)
+     ->  Result
+           Filter: (r_1.a = b.a)
            ->  Materialize
-                 ->  Seq Scan on ref_tbl r_2
+                 ->  Seq Scan on ref_tbl r_1
+   SubPlan 2  (slice0; segments: 3)
+     ->  Materialize
+           ->  Seq Scan on ref_tbl r_2
  Optimizer: Postgres query optimizer
 (18 rows)
-=======
-                       QUERY PLAN                        
----------------------------------------------------------
- Insert on base_tbl b
-   ->  Result
-   SubPlan 1
-     ->  Index Only Scan using ref_tbl_pkey on ref_tbl r
-           Index Cond: (a = b.a)
-   SubPlan 2
-     ->  Seq Scan on ref_tbl r_1
-(7 rows)
-
-EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
-                        QUERY PLAN                         
------------------------------------------------------------
- Update on base_tbl b
-   ->  Hash Semi Join
-         Hash Cond: (b.a = r.a)
-         ->  Seq Scan on base_tbl b
-         ->  Hash
-               ->  Seq Scan on ref_tbl r
-   SubPlan 1
-     ->  Index Only Scan using ref_tbl_pkey on ref_tbl r_1
-           Index Cond: (a = b.a)
-   SubPlan 2
-     ->  Seq Scan on ref_tbl r_2
-(11 rows)
->>>>>>> 30ffdd24d7222bc01183a56d536c236240674516
 
 DROP TABLE base_tbl, ref_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
