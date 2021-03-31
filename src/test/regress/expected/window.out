@@ -2073,10 +2073,12 @@ EXPLAIN (costs off) SELECT * FROM pg_temp.f(2);
 ------------------------------------------------------
  Subquery Scan on f
    ->  WindowAgg
+         Order By: s.s
          ->  Sort
                Sort Key: s.s
                ->  Function Scan on generate_series s
-(5 rows)
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 SELECT * FROM pg_temp.f(2);
     f    
