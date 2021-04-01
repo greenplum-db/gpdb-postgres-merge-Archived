@@ -2518,14 +2518,15 @@ Table "public.func_index_heap"
  f1     | text | 
  f2     | text | 
 Indexes:
-    "func_index_index" UNIQUE, btree (textcat(f1, f2))
+    "func_index_index" btree (textcat(f1, f2))
+Distributed by: (f1)
 
 \d func_index_index
  Index "public.func_index_index"
  Column  | Type |   Definition    
 ---------+------+-----------------
  textcat | text | textcat(f1, f2)
-unique, btree, for table "public.func_index_heap"
+btree, for table "public.func_index_heap"
 
 --
 -- Same test, expressional index
@@ -2548,14 +2549,15 @@ Table "public.func_index_heap"
  f1     | text | 
  f2     | text | 
 Indexes:
-    "func_index_index" UNIQUE, btree ((f1 || f2))
+    "func_index_index" btree ((f1 || f2))
+Distributed by: (f1)
 
 \d func_index_index
 Index "public.func_index_index"
  Column | Type | Definition 
 --------+------+------------
  expr   | text | (f1 || f2)
-unique, btree, for table "public.func_index_heap"
+btree, for table "public.func_index_heap"
 
 -- this should fail because of unsafe column type (anonymous record)
 create index on func_index_heap ((f1 || f2), (row(f1, f2)));
