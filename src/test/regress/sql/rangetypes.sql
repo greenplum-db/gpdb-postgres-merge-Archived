@@ -121,7 +121,9 @@ select numrange(1.0, 2.0) * numrange(1.5, 3.0);
 select numrange(1.0, 2.0) * numrange(2.5, 3.0);
 
 create table numrange_test2(nr numrange);
-create index numrange_test2_hash_idx on numrange_test2 using hash (nr);
+-- GPDB_94_MERGE_FIXME: why GPDB 6 doesn't support hash index?
+-- create index numrange_test2_hash_idx on numrange_test2 using hash (nr);
+create index numrange_test2_hash_idx on numrange_test2 (nr);
 
 INSERT INTO numrange_test2 VALUES('[, 5)');
 INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2));
