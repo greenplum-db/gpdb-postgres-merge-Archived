@@ -2105,10 +2105,6 @@ query_tree_walker(Query *query,
 		return true;
 	if (walker(query->havingQual, context))
 		return true;
-	if (walker(query->groupClause, context))
-		return true;
-	if (walker(query->windowClause, context))
-		return true;
 	if (walker(query->limitOffset, context))
 		return true;
 	if (walker(query->limitCount, context))
