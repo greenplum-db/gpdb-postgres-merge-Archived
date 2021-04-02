@@ -1722,7 +1722,11 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		AllocAllocInfo(set, chunk, false /* We should never require realloc for shared header */);
 
-		MemoryContextNoteAlloc(&set->header, blksize - oldblksize); /*CDB*/
+		if (blksize > oldblksize)
+			MemoryContextNoteAlloc(&set->header, blksize - oldblksize); /*CDB*/
+		else if (blksize < oldblksize)
+			MemoryContextNoteFree(&set->header, oldblksize - blksize); /*CDB*/
+
 		return pointer;
 	}
 
