@@ -12242,7 +12242,7 @@ format_table_function_columns(Archive *fout, const FuncInfo *finfo, int nallargs
 	for (j = 0; j < nallargs; j++)
 	{
 		Oid			typid;
-		char	   *typname;
+		const char *typname;
 
 		/*
 		 * argmodes are checked in format_function_arguments, it isn't necessary
@@ -12258,7 +12258,6 @@ format_table_function_columns(Archive *fout, const FuncInfo *finfo, int nallargs
 							  first_column ? "" : ", ",
 							  fmtId(argnames[j]),
 							  typname);
-			free(typname);
 			first_column = false;
 		}
 	}
@@ -19880,7 +19879,7 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	/* see if we have the result cached in the type's TypeInfo record */
 	typeInfo = findTypeByOid(oid);
 	if (typeInfo && typeInfo->ftypname)
-		return pg_strdup(typeInfo->ftypname);
+		return typeInfo->ftypname;
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SELECT pg_catalog.format_type('%u'::pg_catalog.oid, NULL)",
@@ -19894,9 +19893,14 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	PQclear(res);
 	destroyPQExpBuffer(query);
 
-	/* cache a copy for later requests */
+	/*
+	 * Cache the result for re-use in later requests, if possible.  If we
+	 * don't have a TypeInfo for the type, the string will be leaked once the
+	 * caller is done with it ... but that case really should not happen, so
+	 * leaking if it does seems acceptable.
+	 */
 	if (typeInfo)
-		typeInfo->ftypname = pg_strdup(result);
+		typeInfo->ftypname = result;
 
 	return result;
 }
