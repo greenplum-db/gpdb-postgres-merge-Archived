@@ -6,7 +6,11 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
+<<<<<<< HEAD
 use Test::More tests => 106 + 15;
+=======
+use Test::More tests => 107;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -36,7 +40,7 @@ if (open my $badchars, '>>', "$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
 }
 
 $node->set_replication_conf();
-system_or_bail 'pg_ctl', '-D', $pgdata, 'reload';
+$node->reload;
 
 command_fails(['pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup fails without specifiying the target greenplum db id');
@@ -68,8 +72,8 @@ $node->restart;
 
 # Write some files to test that they are not copied.
 foreach my $filename (
-	qw(backup_label tablespace_map postgresql.auto.conf.tmp current_logfiles.tmp)
-  )
+	qw(backup_label tablespace_map postgresql.auto.conf.tmp
+	current_logfiles.tmp global/pg_internal.init.123))
 {
 	open my $file, '>>', "$pgdata/$filename";
 	print $file "DONOTCOPY";
@@ -138,7 +142,7 @@ foreach my $dirname (
 # These files should not be copied.
 foreach my $filename (
 	qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map current_logfiles.tmp
-	global/pg_internal.init))
+	global/pg_internal.init global/pg_internal.init.123))
 {
 	ok(!-f "$tempdir/backup/$filename", "$filename not copied");
 }
@@ -503,17 +507,22 @@ my $file_corrupt2 = $node->safe_psql('postgres',
 	q{SELECT b INTO corrupt2 FROM generate_series(1,2) AS b; ALTER TABLE corrupt2 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt2')}
 );
 
-# set page header and block sizes
-my $pageheader_size = 24;
+# get block size for corruption steps
 my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 
 # induce corruption
+<<<<<<< HEAD
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt1";
 seek($file, $pageheader_size, 0);
 syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
+=======
+$node->stop;
+$node->corrupt_page_checksum($file_corrupt1, 0);
+$node->start;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt" ],
@@ -524,16 +533,17 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt");
 
 # induce further corruption in 5 more blocks
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt1";
+$node->stop;
 for my $i (1 .. 5)
 {
-	my $offset = $pageheader_size + $i * $block_size;
-	seek($file, $offset, 0);
-	syswrite($file, "\0\0\0\0\0\0\0\0\0");
+	$node->corrupt_page_checksum($file_corrupt1, $i * $block_size);
 }
+<<<<<<< HEAD
 close $file;
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
+=======
+$node->start;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt2" ],
@@ -544,12 +554,18 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
+<<<<<<< HEAD
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt2";
 seek($file, $pageheader_size, 0);
 syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
+=======
+$node->stop;
+$node->corrupt_page_checksum($file_corrupt2, 0);
+$node->start;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt3" ],

@@ -53,8 +53,13 @@ static int64 max_step_wait = 300 * USECS_PER_SEC;
 static void check_testspec(TestSpec *testspec);
 static void run_testspec(TestSpec *testspec);
 static void run_all_permutations(TestSpec *testspec);
+<<<<<<< HEAD
 static void run_all_permutations_recurse(TestSpec *testspec, int nsteps,
 										 PermutationStep **steps);
+=======
+static void run_all_permutations_recurse(TestSpec *testspec, int *piles,
+										 int nsteps, PermutationStep **steps);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static void run_named_permutations(TestSpec *testspec);
 static void run_permutation(TestSpec *testspec, int nsteps,
 							PermutationStep **steps);
@@ -155,10 +160,21 @@ main(int argc, char **argv)
 
 	for (i = 0; i < nconns; i++)
 	{
+<<<<<<< HEAD
 		if (i == 0)
 			conns[i].sessionname = "control connection";
 		else
 			conns[i].sessionname = testspec->sessions[i - 1]->name;
+=======
+		const char *sessionname;
+
+		if (i == 0)
+			sessionname = "control connection";
+		else
+			sessionname = testspec->sessions[i - 1]->name;
+
+		conns[i].sessionname = sessionname;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		conns[i].conn = PQconnectdb(conninfo);
 		if (PQstatus(conns[i].conn) != CONNECTION_OK)
@@ -183,6 +199,29 @@ main(int argc, char **argv)
 								 blackholeNoticeProcessor,
 								 NULL);
 
+<<<<<<< HEAD
+=======
+		/*
+		 * Similarly, append the session name to application_name to make it
+		 * easier to map spec file sessions to log output and
+		 * pg_stat_activity. The reason to append instead of just setting the
+		 * name is that we don't know the name of the test currently running.
+		 */
+		res = PQexecParams(conns[i].conn,
+						   "SELECT set_config('application_name',\n"
+						   "  current_setting('application_name') || '/' || $1,\n"
+						   "  false)",
+						   1, NULL,
+						   &sessionname,
+						   NULL, NULL, 0);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, "setting of application name failed: %s",
+					PQerrorMessage(conns[i].conn));
+			exit(1);
+		}
+
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		/* Save each connection's backend PID for subsequent use. */
 		conns[i].backend_pid = PQbackendPID(conns[i].conn);
 		conns[i].backend_pid_str = psprintf("%d", conns[i].backend_pid);
@@ -361,9 +400,15 @@ check_testspec(TestSpec *testspec)
 				fprintf(stderr, "unused step name: %s\n", allsteps[i]->name);
 		}
 	}
+<<<<<<< HEAD
 }
 
 static int *piles;
+=======
+
+	free(allsteps);
+}
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 /*
  * Run the permutations specified in the spec, or all if none were
@@ -388,6 +433,10 @@ run_all_permutations(TestSpec *testspec)
 	int			i;
 	PermutationStep *steps;
 	PermutationStep **stepptrs;
+<<<<<<< HEAD
+=======
+	int		   *piles;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Count the total number of steps in all sessions */
 	nsteps = 0;
@@ -413,11 +462,24 @@ run_all_permutations(TestSpec *testspec)
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
+<<<<<<< HEAD
 	run_all_permutations_recurse(testspec, 0, stepptrs);
 }
 
 static void
 run_all_permutations_recurse(TestSpec *testspec, int nsteps, PermutationStep **steps)
+=======
+	run_all_permutations_recurse(testspec, piles, 0, stepptrs);
+
+	free(steps);
+	free(stepptrs);
+	free(piles);
+}
+
+static void
+run_all_permutations_recurse(TestSpec *testspec, int *piles,
+							 int nsteps, PermutationStep **steps)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 {
 	int			i;
 	bool		found = false;
@@ -439,7 +501,7 @@ run_all_permutations_recurse(TestSpec *testspec, int nsteps, PermutationStep **s
 
 			piles[i]++;
 
-			run_all_permutations_recurse(testspec, nsteps + 1, steps);
+			run_all_permutations_recurse(testspec, piles, nsteps + 1, steps);
 
 			piles[i]--;
 
@@ -1090,23 +1152,13 @@ step_has_blocker(PermutationStep *pstep)
 static void
 printResultSet(PGresult *res)
 {
-	int			nFields;
-	int			i,
-				j;
+	PQprintOpt	popt;
 
-	/* first, print out the attribute names */
-	nFields = PQnfields(res);
-	for (i = 0; i < nFields; i++)
-		printf("%-15s", PQfname(res, i));
-	printf("\n\n");
-
-	/* next, print out the rows */
-	for (i = 0; i < PQntuples(res); i++)
-	{
-		for (j = 0; j < nFields; j++)
-			printf("%-15s", PQgetvalue(res, i, j));
-		printf("\n");
-	}
+	memset(&popt, 0, sizeof(popt));
+	popt.header = true;
+	popt.align = true;
+	popt.fieldSep = "|";
+	PQprint(stdout, res, &popt);
 }
 
 /* notice processor for regular user sessions */

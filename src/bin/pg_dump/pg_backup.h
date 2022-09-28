@@ -58,6 +58,7 @@ typedef enum _teSection
 	SECTION_POST_DATA			/* stuff to be processed after data */
 } teSection;
 
+<<<<<<< HEAD
 /* We need one enum entry per prepared query in pg_dump */
 enum _dumpPreparedQueries
 {
@@ -75,6 +76,8 @@ enum _dumpPreparedQueries
 	NUM_PREP_QUERIES			/* must be last */
 };
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 /* Parameters needed by ConnectDatabase; same for dump and restore */
 typedef struct _connParams
 {
@@ -139,12 +142,9 @@ typedef struct _restoreOptions
 	SimpleStringList tableNames;
 
 	int			useDB;
-	char	   *dbname;			/* subject to expand_dbname */
-	char	   *pgport;
-	char	   *pghost;
-	char	   *username;
+	ConnParams	cparams;		/* parameters to use if useDB */
+
 	int			noDataForFailedTables;
-	trivalue	promptPassword;
 	int			exit_on_error;
 	int			compression;
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
@@ -160,10 +160,7 @@ typedef struct _restoreOptions
 
 typedef struct _dumpOptions
 {
-	const char *dbname;			/* subject to expand_dbname */
-	const char *pghost;
-	const char *pgport;
-	const char *username;
+	ConnParams	cparams;
 
 	int			binary_upgrade;
 
@@ -281,7 +278,11 @@ typedef int DumpId;
  * Function pointer prototypes for assorted callback methods.
  */
 
+<<<<<<< HEAD
 typedef int (*DataDumperPtr) (Archive *AH, const void *userArg);
+=======
+typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 typedef void (*SetupWorkerPtrType) (Archive *AH);
 
@@ -289,6 +290,7 @@ typedef void (*SetupWorkerPtrType) (Archive *AH);
  * Main archiver interface.
  */
 
+<<<<<<< HEAD
 extern void ConnectDatabase(Archive *AH,
 							const char *dbname,
 							const char *pghost,
@@ -296,6 +298,11 @@ extern void ConnectDatabase(Archive *AH,
 							const char *username,
 							trivalue prompt_password,
 							bool binary_upgrade);
+=======
+extern void ConnectDatabase(Archive *AHX,
+							const ConnParams *cparams,
+							bool isReconnect);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 

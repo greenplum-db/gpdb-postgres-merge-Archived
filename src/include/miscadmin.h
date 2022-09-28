@@ -57,6 +57,15 @@
  * allowing die interrupts: HOLD_CANCEL_INTERRUPTS() and
  * RESUME_CANCEL_INTERRUPTS().
  *
+ * Note that ProcessInterrupts() has also acquired a number of tasks that
+ * do not necessarily cause a query-cancel-or-die response.  Hence, it's
+ * possible that it will just clear InterruptPending and return.
+ *
+ * INTERRUPTS_PENDING_CONDITION() can be checked to see whether an
+ * interrupt needs to be serviced, without trying to do so immediately.
+ * Some callers are also interested in INTERRUPTS_CAN_BE_PROCESSED(),
+ * which tells whether ProcessInterrupts is sure to clear the interrupt.
+ *
  * Special mechanisms are used to let an interrupt be accepted when we are
  * waiting for a lock or when we are waiting for command input (but, of
  * course, only if the interrupt holdoff counter is zero).  See the
@@ -138,10 +147,20 @@ CancelRequested()
 	return InterruptPending && (ProcDiePending || QueryCancelPending);
 }
 
+/* Test whether an interrupt is pending */
 #ifndef WIN32
+#define INTERRUPTS_PENDING_CONDITION() \
+	(unlikely(InterruptPending))
+#else
+#define INTERRUPTS_PENDING_CONDITION() \
+	(unlikely(UNBLOCKED_SIGNAL_QUEUE()) ? pgwin32_dispatch_queued_signals() : 0, \
+	 unlikely(InterruptPending))
+#endif
 
+/* Service interrupt, if one is pending and it's safe to service it now */
 #define CHECK_FOR_INTERRUPTS() \
 do { \
+<<<<<<< HEAD
 	if (InterruptPending) \
 		ProcessInterrupts(__FILE__, __LINE__); \
 	BackoffBackendTick(); \
@@ -159,7 +178,16 @@ do { \
 		ProcessInterrupts(__FILE__, __LINE__); \
 } while(0)
 #endif							/* WIN32 */
+=======
+	if (INTERRUPTS_PENDING_CONDITION()) \
+		ProcessInterrupts(); \
+} while(0)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
+/* Is ProcessInterrupts() guaranteed to clear InterruptPending? */
+#define INTERRUPTS_CAN_BE_PROCESSED() \
+	(InterruptHoldoffCount == 0 && CritSectionCount == 0 && \
+	 QueryCancelHoldoffCount == 0)
 
 #define HOLD_INTERRUPTS() \
 do { \

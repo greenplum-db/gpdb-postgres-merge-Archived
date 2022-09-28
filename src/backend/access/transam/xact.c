@@ -31,6 +31,7 @@
 #include "access/xloginsert.h"
 #include "access/xact_storage_tablespace.h"
 #include "access/xlogutils.h"
+#include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_enum.h"
 #include "catalog/storage.h"
@@ -50,6 +51,7 @@
 #include "replication/logical.h"
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
+#include "replication/snapbuild.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
@@ -1616,6 +1618,7 @@ RecordTransactionCommit(void)
 		 * delayChkpt flag avoids this situation by blocking checkpointer until a
 		 * backend has finished updating the state.
 		 */
+		Assert(!MyPgXact->delayChkpt);
 		START_CRIT_SECTION();
 		MyPgXact->delayChkpt = true;
 
@@ -2803,6 +2806,14 @@ CommitTransaction(void)
 	AtEOXact_LargeObject(true);
 
 	/*
+	 * Insert notifications sent by NOTIFY commands into the queue.  This
+	 * should be late in the pre-commit sequence to minimize time spent
+	 * holding the notify-insertion lock.  However, this could result in
+	 * creating a snapshot, so we must do it before serializable cleanup.
+	 */
+	PreCommit_Notify();
+
+	/*
 	 * Mark serializable transaction as complete for predicate locking
 	 * purposes.  This should be done as late as we can put it and still allow
 	 * errors to be raised for failure patterns found at commit.  This is not
@@ -2812,6 +2823,7 @@ CommitTransaction(void)
 	if (!is_parallel_worker)
 		PreCommit_CheckForSerializationFailure();
 
+<<<<<<< HEAD
 	/*
 	 * Insert notifications sent by NOTIFY commands into the queue.  This
 	 * should be late in the pre-commit sequence to minimize time spent
@@ -2843,6 +2855,8 @@ CommitTransaction(void)
 				 errmsg("Raise an error as directed by Debug_abort_after_distributed_prepared")));
 	}
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -3113,14 +3127,14 @@ PrepareTransaction(void)
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
 
+	/* NOTIFY requires no work at this point */
+
 	/*
 	 * Mark serializable transaction as complete for predicate locking
 	 * purposes.  This should be done as late as we can put it and still allow
 	 * errors to be raised for failure patterns found at commit.
 	 */
 	PreCommit_CheckForSerializationFailure();
-
-	/* NOTIFY will be handled below */
 
 	/*
 	 * In Postgres, XACT_FLAGS_ACCESSEDTEMPNAMESPACE is used to error out if
@@ -3259,6 +3273,13 @@ PrepareTransaction(void)
 	XactLastRecEnd = 0;
 
 	/*
+	 * Transfer our locks to a dummy PGPROC.  This has to be done before
+	 * ProcArrayClearTransaction().  Otherwise, a GetLockConflicts() would
+	 * conclude "xact already committed or aborted" for our locks.
+	 */
+	PostPrepare_Locks(xid);
+
+	/*
 	 * Let others know about no transaction in progress by me.  This has to be
 	 * done *after* the prepared transaction has been marked valid, else
 	 * someone may think it is unlocked and recyclable.
@@ -3304,7 +3325,6 @@ PrepareTransaction(void)
 
 	PostPrepare_MultiXact(xid);
 
-	PostPrepare_Locks(xid);
 	PostPrepare_PredicateLocks(xid);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
@@ -3468,6 +3488,12 @@ AbortTransaction(void)
 	 * take care of rolling them back if need be.)
 	 */
 	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
+
+	/* Forget about any active REINDEX. */
+	ResetReindexState(s->nestingLevel);
+
+	/* Reset snapshot export state. */
+	SnapBuildResetExportedSnapshotState();
 
 	/* If in parallel mode, clean up workers and exit parallel mode. */
 	if (IsInParallelMode())
@@ -4015,6 +4041,13 @@ CommitTransactionCommand(void)
 				Assert(s->parent == NULL);
 				CommitTransaction();
 				s->blockState = TBLOCK_DEFAULT;
+				if (s->chain)
+				{
+					StartTransaction();
+					s->blockState = TBLOCK_INPROGRESS;
+					s->chain = false;
+					RestoreTransactionCharacteristics();
+				}
 			}
 			else if (s->blockState == TBLOCK_PREPARE)
 			{
@@ -4296,6 +4329,9 @@ AbortCurrentTransaction(void)
  *	could issue more commands and possibly cause a failure after the statement
  *	completes).  Subtransactions are verboten too.
  *
+ *	We must also set XACT_FLAGS_NEEDIMMEDIATECOMMIT in MyXactFlags, to ensure
+ *	that postgres.c follows through by committing after the statement is done.
+ *
  *	isTopLevel: passed down from ProcessUtility to determine whether we are
  *	inside a function.  (We will always fail if this is false, but it's
  *	convenient to centralize the check here instead of making callers do it.)
@@ -4337,7 +4373,9 @@ PreventInTransactionBlock(bool isTopLevel, const char *stmtType)
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
 		CurrentTransactionState->blockState != TBLOCK_STARTED)
 		elog(FATAL, "cannot prevent transaction chain");
-	/* all okay */
+
+	/* All okay.  Set the flag to make sure the right thing happens later. */
+	MyXactFlags |= XACT_FLAGS_NEEDIMMEDIATECOMMIT;
 }
 
 /*
@@ -4434,6 +4472,13 @@ IsInTransactionBlock(bool isTopLevel)
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
 		CurrentTransactionState->blockState != TBLOCK_STARTED)
 		return true;
+
+	/*
+	 * If we tell the caller we're not in a transaction block, then inform
+	 * postgres.c that it had better commit when the statement is done.
+	 * Otherwise our report could be a lie.
+	 */
+	MyXactFlags |= XACT_FLAGS_NEEDIMMEDIATECOMMIT;
 
 	return false;
 }
@@ -4841,7 +4886,11 @@ EndTransactionBlock(bool chain)
 						 errmsg("%s can only be used in transaction blocks",
 								"COMMIT AND CHAIN")));
 			else
+<<<<<<< HEAD
 				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
+=======
+				ereport(WARNING,
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 						 errmsg("there is no transaction in progress")));
 			result = true;
@@ -4964,7 +5013,11 @@ UserAbortTransactionBlock(bool chain)
 						 errmsg("%s can only be used in transaction blocks",
 								"ROLLBACK AND CHAIN")));
 			else
+<<<<<<< HEAD
 				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
+=======
+				ereport(WARNING,
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_ABORT_PENDING;
@@ -5972,6 +6025,7 @@ CommitSubTransaction(void)
 	AfterTriggerEndSubXact(true);
 	AtSubCommit_Portals(s->subTransactionId,
 						s->parent->subTransactionId,
+						s->parent->nestingLevel,
 						s->parent->curTransactionOwner);
 	AtEOSubXact_LargeObject(true, s->subTransactionId,
 							s->parent->subTransactionId);
@@ -6112,6 +6166,14 @@ AbortSubTransaction(void)
 	 * AbortTransaction.)
 	 */
 	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
+
+	/* Forget about any active REINDEX. */
+	ResetReindexState(s->nestingLevel);
+
+	/*
+	 * No need for SnapBuildResetExportedSnapshotState() here, snapshot
+	 * exports are not supported in subtransactions.
+	 */
 
 	/* Exit from parallel mode, if necessary. */
 	if (IsInParallelMode())
@@ -6430,8 +6492,9 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	{
 		if (FullTransactionIdIsValid(s->fullTransactionId))
 			workspace[i++] = XidFromFullTransactionId(s->fullTransactionId);
-		memcpy(&workspace[i], s->childXids,
-			   s->nChildXids * sizeof(TransactionId));
+		if (s->nChildXids > 0)
+			memcpy(&workspace[i], s->childXids,
+				   s->nChildXids * sizeof(TransactionId));
 		i += s->nChildXids;
 	}
 	Assert(i == nxids);
@@ -7223,6 +7286,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
  * dtx recovery.
  */
 static void
+<<<<<<< HEAD
 xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
 							 TransactionId xid,
 							 XLogRecPtr lsn,
@@ -7236,6 +7300,10 @@ xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
 
 static void
 xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
+=======
+xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
+				XLogRecPtr lsn)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 {
 	TransactionId max_xid;
 
@@ -7286,9 +7354,22 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
+<<<<<<< HEAD
 	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
 	DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
 	DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_abort);
+=======
+	if (parsed->nrels > 0)
+	{
+		/*
+		 * See comments about update of minimum recovery point on truncation,
+		 * in xact_redo_commit().
+		 */
+		XLogFlush(lsn);
+
+		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
+	}
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 static void
@@ -7335,7 +7416,7 @@ xact_redo(XLogReaderState *record)
 		xl_xact_parsed_abort parsed;
 
 		ParseAbortRecord(XLogRecGetInfo(record), xlrec, &parsed);
-		xact_redo_abort(&parsed, XLogRecGetXid(record));
+		xact_redo_abort(&parsed, XLogRecGetXid(record), record->EndRecPtr);
 	}
 	else if (info == XLOG_XACT_ABORT_PREPARED)
 	{
@@ -7343,7 +7424,7 @@ xact_redo(XLogReaderState *record)
 		xl_xact_parsed_abort parsed;
 
 		ParseAbortRecord(XLogRecGetInfo(record), xlrec, &parsed);
-		xact_redo_abort(&parsed, parsed.twophase_xid);
+		xact_redo_abort(&parsed, parsed.twophase_xid, record->EndRecPtr);
 
 		/* Delete TwoPhaseState gxact entry and/or 2PC file. */
 		LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);

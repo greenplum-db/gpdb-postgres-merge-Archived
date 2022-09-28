@@ -22,32 +22,44 @@ teardown
   DROP FUNCTION ctoast_large_val();
 }
 
-session "s1"
+session s1
 setup
 {
   BEGIN ISOLATION LEVEL READ COMMITTED;
   SELECT pg_advisory_xact_lock(1);
 }
-step "s1commit" { COMMIT; }
+step s1commit { COMMIT; }
 
-session "s2"
+session s2
 setup
 {
   SET default_transaction_isolation = 'read committed';
 }
+<<<<<<< HEAD
 step "s2insert" {
   select pg_advisory_xact_lock_shared(1); 
+=======
+step s2insert {
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
   INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
 }
 
-session "s3"
+session s3
 setup
 {
   SET default_transaction_isolation = 'read committed';
 }
+<<<<<<< HEAD
 step "s3insert" {
   select pg_advisory_xact_lock_shared(1); 
+=======
+step s3insert {
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
   INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
 }
 
-permutation "s2insert" "s3insert" "s1commit"
+# s1's commit will release s2 and s3 at the same time, so there's a
+# race condition as to which finishes first.  Annotate the permutation
+# to always report s2 first.
+
+permutation s2insert s3insert(s2insert) s1commit

@@ -30,6 +30,11 @@
 #include "catalog/pg_collation.h"
 #include "common/hashfn.h"
 #include "utils/builtins.h"
+<<<<<<< HEAD
+=======
+#include "utils/float.h"
+#include "utils/hashutils.h"
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #include "utils/pg_locale.h"
 
 /*
@@ -159,6 +164,16 @@ hashfloat4(PG_FUNCTION_ARGS)
 	 */
 	key8 = key;
 
+	/*
+	 * Similarly, NaNs can have different bit patterns but they should all
+	 * compare as equal.  For backwards-compatibility reasons we force them to
+	 * have the hash value of a standard float8 NaN.  (You'd think we could
+	 * replace key with a float4 NaN and then widen it; but on some old
+	 * platforms, that way produces a different bit pattern.)
+	 */
+	if (isnan(key8))
+		key8 = get_float8_nan();
+
 	return hash_any((unsigned char *) &key8, sizeof(key8));
 }
 
@@ -173,6 +188,8 @@ hashfloat4extended(PG_FUNCTION_ARGS)
 	if (key == (float4) 0)
 		PG_RETURN_UINT64(seed);
 	key8 = key;
+	if (isnan(key8))
+		key8 = get_float8_nan();
 
 	return hash_any_extended((unsigned char *) &key8, sizeof(key8), seed);
 }
@@ -190,6 +207,14 @@ hashfloat8(PG_FUNCTION_ARGS)
 	if (key == (float8) 0)
 		PG_RETURN_UINT32(0);
 
+	/*
+	 * Similarly, NaNs can have different bit patterns but they should all
+	 * compare as equal.  For backwards-compatibility reasons we force them to
+	 * have the hash value of a standard NaN.
+	 */
+	if (isnan(key))
+		key = get_float8_nan();
+
 	return hash_any((unsigned char *) &key, sizeof(key));
 }
 
@@ -202,6 +227,8 @@ hashfloat8extended(PG_FUNCTION_ARGS)
 	/* Same approach as hashfloat8 */
 	if (key == (float8) 0)
 		PG_RETURN_UINT64(seed);
+	if (isnan(key))
+		key = get_float8_nan();
 
 	return hash_any_extended((unsigned char *) &key, sizeof(key), seed);
 }

@@ -780,6 +780,7 @@ _outIndexOnlyScan(StringInfo str, const IndexOnlyScan *node)
 
 	WRITE_OID_FIELD(indexid);
 	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(recheckqual);
 	WRITE_NODE_FIELD(indexorderby);
 	WRITE_NODE_FIELD(indextlist);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
@@ -1022,7 +1023,13 @@ _outHashJoin(StringInfo str, const HashJoin *node)
 	_outJoinPlanInfo(str, (const Join *) node);
 
 	WRITE_NODE_FIELD(hashclauses);
+<<<<<<< HEAD
 	WRITE_NODE_FIELD(hashqualclauses);
+=======
+	WRITE_NODE_FIELD(hashoperators);
+	WRITE_NODE_FIELD(hashcollations);
+	WRITE_NODE_FIELD(hashkeys);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 static void
@@ -1166,7 +1173,12 @@ _outHash(StringInfo str, const Hash *node)
 	WRITE_NODE_TYPE("HASH");
 
 	_outPlanInfo(str, (const Plan *) node);
+<<<<<<< HEAD
 	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
+=======
+
+	WRITE_NODE_FIELD(hashkeys);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	WRITE_OID_FIELD(skewTable);
 	WRITE_INT_FIELD(skewColumn);
 	WRITE_BOOL_FIELD(skewInherit);
@@ -4102,6 +4114,7 @@ _outTableLikeClause(StringInfo str, const TableLikeClause *node)
 
 	WRITE_NODE_FIELD(relation);
 	WRITE_UINT_FIELD(options);
+	WRITE_OID_FIELD(relationOid);
 }
 
 static void

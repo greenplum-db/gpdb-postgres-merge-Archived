@@ -38,6 +38,7 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
+<<<<<<< HEAD
 #include "access/tableam.h"
 #include "catalog/pg_appendonly.h"
 #include "libpq-fe.h"
@@ -49,6 +50,10 @@
 
 /* Divide by two and round towards positive infinity. */
 #define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
+=======
+/* Divide by two and round away from zero */
+#define half_rounded(x)   (((x) + ((x) < 0 ? -1 : 1)) / 2)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 static int64 calculate_total_relation_size(Relation rel);
 
@@ -794,25 +799,29 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
-		size >>= 9;				/* keep one extra bit for rounding */
+		/*
+		 * We use divide instead of bit shifting so that behavior matches for
+		 * both positive and negative size values.
+		 */
+		size /= (1 << 9);		/* keep one extra bit for rounding */
 		if (Abs(size) < limit2)
 			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
 					 half_rounded(size));
 		else
 		{
-			size >>= 10;
+			size /= (1 << 10);
 			if (Abs(size) < limit2)
 				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
 						 half_rounded(size));
 			else
 			{
-				size >>= 10;
+				size /= (1 << 10);
 				if (Abs(size) < limit2)
 					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
 							 half_rounded(size));
 				else
 				{
-					size >>= 10;
+					size /= (1 << 10);
 					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
 							 half_rounded(size));
 				}
@@ -881,15 +890,19 @@ numeric_half_rounded(Numeric n)
 }
 
 static Numeric
-numeric_shift_right(Numeric n, unsigned count)
+numeric_truncated_divide(Numeric n, int64 divisor)
 {
 	Datum		d = NumericGetDatum(n);
-	Datum		divisor_int64;
 	Datum		divisor_numeric;
 	Datum		result;
 
+<<<<<<< HEAD
 	divisor_int64 = Int64GetDatum((int64) (1LL << count));
 	divisor_numeric = DirectFunctionCall1(int8_numeric, divisor_int64);
+=======
+	divisor_numeric = DirectFunctionCall1(int8_numeric,
+										  Int64GetDatum(divisor));
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
@@ -912,8 +925,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 	else
 	{
 		/* keep one extra bit for rounding */
-		/* size >>= 9 */
-		size = numeric_shift_right(size, 9);
+		/* size /= (1 << 9) */
+		size = numeric_truncated_divide(size, 1 << 9);
 
 		if (numeric_is_less(numeric_absolute(size), limit2))
 		{
@@ -922,8 +935,9 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* size >>= 10 */
-			size = numeric_shift_right(size, 10);
+			/* size /= (1 << 10) */
+			size = numeric_truncated_divide(size, 1 << 10);
+
 			if (numeric_is_less(numeric_absolute(size), limit2))
 			{
 				size = numeric_half_rounded(size);
@@ -931,8 +945,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				/* size >>= 10 */
-				size = numeric_shift_right(size, 10);
+				/* size /= (1 << 10) */
+				size = numeric_truncated_divide(size, 1 << 10);
 
 				if (numeric_is_less(numeric_absolute(size), limit2))
 				{
@@ -941,8 +955,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 				}
 				else
 				{
-					/* size >>= 10 */
-					size = numeric_shift_right(size, 10);
+					/* size /= (1 << 10) */
+					size = numeric_truncated_divide(size, 1 << 10);
 					size = numeric_half_rounded(size);
 					result = psprintf("%s TB", numeric_to_cstring(size));
 				}
@@ -1176,7 +1190,11 @@ pg_filenode_relation(PG_FUNCTION_ARGS)
 {
 	Oid			reltablespace = PG_GETARG_OID(0);
 	Oid			relfilenode = PG_GETARG_OID(1);
-	Oid			heaprel = InvalidOid;
+	Oid			heaprel;
+
+	/* test needed so RelidByRelfilenode doesn't misbehave */
+	if (!OidIsValid(relfilenode))
+		PG_RETURN_NULL();
 
 	heaprel = RelidByRelfilenode(reltablespace, relfilenode);
 

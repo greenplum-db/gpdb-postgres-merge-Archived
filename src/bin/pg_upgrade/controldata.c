@@ -183,7 +183,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	}
 
 	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
-	if (GET_MAJOR_VERSION(cluster->bin_version) < 1000)
+	if (GET_MAJOR_VERSION(cluster->bin_version) <= 906)
 		resetwal_bin = "pg_resetxlog\" -n";
 	else
 		resetwal_bin = "pg_resetwal\" -n";
@@ -603,7 +603,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	}
 
 	/* verify that we got all the mandatory pg_control data */
+<<<<<<< HEAD
 	if (!got_xid || !got_gxid || !got_oid ||
+=======
+	if (!got_xid || !got_oid ||
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		!got_multi || !got_oldestxid ||
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||

@@ -41,18 +41,32 @@ pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node
 	/* Order according to distance comparison */
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
+<<<<<<< HEAD
 		if (na[i])
 		{
 			if (!nb[i])
 				return -1;
 		}
 		else if (nb[i])
+=======
+		if (sa->distances[i].isnull)
+		{
+			if (!sb->distances[i].isnull)
+				return -1;
+		}
+		else if (sb->distances[i].isnull)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		{
 			return 1;
 		}
 		else
 		{
+<<<<<<< HEAD
 			int			cmp = -float8_cmp_internal(da[i], db[i]);
+=======
+			int			cmp = -float8_cmp_internal(sa->distances[i].value,
+												   sb->distances[i].value);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 			if (cmp != 0)
 				return cmp;
@@ -100,8 +114,12 @@ gistbeginscan(Relation r, int nkeys, int norderbys)
 	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
+<<<<<<< HEAD
 	so->distanceValues = palloc(sizeof(double) * scan->numberOfOrderBys);
 	so->distanceNulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+=======
+	so->distances = palloc(sizeof(so->distances[0]) * scan->numberOfOrderBys);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	so->qual_ok = true;			/* in case there are zero keys */
 	if (scan->numberOfOrderBys > 0)
 	{

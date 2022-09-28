@@ -139,16 +139,22 @@ typedef struct GISTSearchItem
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
 
+<<<<<<< HEAD
 	/*
 	 * This data structure is followed by arrays of distance values and
 	 * distance null flags.  Size of both arrays is
 	 * IndexScanDesc->numberOfOrderBys. See macros below for accessing those
 	 * arrays.
 	 */
+=======
+	/* numberOfOrderBys entries */
+	IndexOrderByDistance distances[FLEXIBLE_ARRAY_MEMBER];
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } GISTSearchItem;
 
 #define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
 
+<<<<<<< HEAD
 #define SizeOfGISTSearchItem(n_distances) (DOUBLEALIGN(sizeof(GISTSearchItem)) + \
 	(sizeof(double) + sizeof(bool)) * (n_distances))
 
@@ -162,6 +168,11 @@ typedef struct GISTSearchItem
 
 #define GISTSearchItemDistanceNulls(item, n_distances) \
 	((bool *) ((Pointer) (item) + DOUBLEALIGN(sizeof(GISTSearchItem)) + sizeof(double) * (n_distances)))
+=======
+#define SizeOfGISTSearchItem(n_distances) \
+	(offsetof(GISTSearchItem, distances) + \
+	 sizeof(IndexOrderByDistance) * (n_distances))
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 /*
  * GISTScanOpaqueData: private state for a scan of a GiST index
@@ -177,8 +188,12 @@ typedef struct GISTScanOpaqueData
 	bool		firstCall;		/* true until first gistgettuple call */
 
 	/* pre-allocated workspace arrays */
+<<<<<<< HEAD
 	double	   *distanceValues; /* output area for gistindex_keytest */
 	bool	   *distanceNulls;
+=======
+	IndexOrderByDistance *distances;	/* output area for gistindex_keytest */
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* info about killed items if any (killedItems is NULL if never used) */
 	OffsetNumber *killedItems;	/* offset numbers of killed items */
@@ -444,11 +459,11 @@ extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 
 /* gistxlog.c */
 extern XLogRecPtr gistXLogPageDelete(Buffer buffer,
-									 TransactionId xid, Buffer parentBuffer,
+									 FullTransactionId xid, Buffer parentBuffer,
 									 OffsetNumber downlinkOffset);
 
 extern void gistXLogPageReuse(Relation rel, BlockNumber blkno,
-							  TransactionId latestRemovedXid);
+							  FullTransactionId latestRemovedXid);
 
 extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 								 OffsetNumber *todelete, int ntodelete,
@@ -491,8 +506,7 @@ extern bool gistPageRecyclable(Page page);
 extern void gistfillbuffer(Page page, IndexTuple *itup, int len,
 						   OffsetNumber off);
 extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
-extern IndexTuple *gistjoinvector(
-								  IndexTuple *itvec, int *len,
+extern IndexTuple *gistjoinvector(IndexTuple *itvec, int *len,
 								  IndexTuple *additvec, int addlen);
 extern IndexTupleData *gistfillitupvec(IndexTuple *vec, int veclen, int *memlen);
 

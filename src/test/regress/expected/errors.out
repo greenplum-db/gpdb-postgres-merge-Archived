@@ -50,6 +50,11 @@ select distinct on (foobar) * from pg_database;
 ERROR:  column "foobar" does not exist
 LINE 1: select distinct on (foobar) * from pg_database;
                             ^
+-- grouping with FOR UPDATE
+select null from pg_database group by datname for update;
+ERROR:  FOR UPDATE is not allowed with GROUP BY clause
+select null from pg_database group by grouping sets (()) for update;
+ERROR:  FOR UPDATE is not allowed with GROUP BY clause
 --
 -- DELETE
 -- missing relation name (this had better not wildcard!)
@@ -452,6 +457,7 @@ NULL);
 ERROR:  syntax error at or near "NUL"
 LINE 16: ...L, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 I...
                                                               ^
+<<<<<<< HEAD
 -- Check that stack depth detection mechanism works and
 -- max_stack_depth is not set too high
 create function infinite_recurse() returns int as
@@ -474,3 +480,5 @@ select 1; -- test that this works
         1
 (1 row)
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

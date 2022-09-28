@@ -37,6 +37,10 @@ select * from pg_database where pg_database.datname = nonesuch;
 -- bad attribute name in select distinct on
 select distinct on (foobar) * from pg_database;
 
+-- grouping with FOR UPDATE
+select null from pg_database group by datname for update;
+select null from pg_database group by grouping sets (()) for update;
+
 
 --
 -- DELETE
@@ -378,6 +382,7 @@ INT4
 UNIQUE
 NOT
 NULL);
+<<<<<<< HEAD
 
 -- Check that stack depth detection mechanism works and
 -- max_stack_depth is not set too high
@@ -395,3 +400,5 @@ create function infinite_recurse() returns int as
 select infinite_recurse();
 -- end_ignore
 select 1; -- test that this works
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

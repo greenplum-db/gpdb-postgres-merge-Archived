@@ -1326,7 +1326,10 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		AllocBlock	block = (AllocBlock) (((char *) chunk) - ALLOC_BLOCKHDRSZ);
 		Size		chksize;
 		Size		blksize;
+<<<<<<< HEAD
 		Size		oldblksize;
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/*
 		 * Try to verify that we have a sane block pointer: it should
@@ -1349,18 +1352,26 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		chksize = MAXALIGN(chksize);
 
 		/* Do the realloc */
+<<<<<<< HEAD
 		oldblksize = UserPtr_GetUserPtrSize(block);
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) gp_realloc(block, blksize);
+=======
+		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+		block = (AllocBlock) realloc(block, blksize);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		if (block == NULL)
 		{
 			/* Disallow external access to private part of chunk header. */
 			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
 			return NULL;
 		}
+<<<<<<< HEAD
 
 		context->mem_allocated += blksize - oldblksize;
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
 		/* Update pointers since block has likely been moved */
@@ -1414,11 +1425,14 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		/* Disallow external access to private part of chunk header. */
 		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
 
+<<<<<<< HEAD
 		if (chksize > oldsize)
 			MEMORY_ACCOUNT_INC_ALLOCATED(set, chksize - oldsize);
 		else
 			MEMORY_ACCOUNT_DEC_ALLOCATED(set, oldsize - chksize);
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		return pointer;
 	}
 
@@ -1469,11 +1483,14 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		/* Disallow external access to private part of chunk header. */
 		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
 
+<<<<<<< HEAD
 		/*
 		 * no need to update memory accounting summaries, since chunk->size
 		 * didn't change
 		 */
 
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		return pointer;
 	}
 	else

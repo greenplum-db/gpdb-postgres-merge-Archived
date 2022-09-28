@@ -206,6 +206,13 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	inserts => {
+		dump_cmd => [
+			'pg_dump',                     '--no-sync',
+			"--file=$tempdir/inserts.sql", '-a',
+			'--inserts',                   'postgres',
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall', '-v', "--file=$tempdir/pg_dumpall_globals.sql",
@@ -264,7 +271,8 @@ my %pgdump_runs = (
 			'--no-sync',
 			"--file=$tempdir/only_dump_test_table.sql",
 			'--table=dump_test.test_table',
-			'--lock-wait-timeout=1000000',
+			'--lock-wait-timeout='
+			  . (1000 * $TestLib::timeout_default),
 			'postgres',
 		],
 	},
@@ -576,6 +584,7 @@ my %tests = (
 		unlike => { no_owner => 1, },
 	},
 
+<<<<<<< HEAD
 # Disabled, because GPDB doesn't support large objects
 #	'ALTER LARGE OBJECT ... OWNER TO' => {
 #		regexp => qr/^ALTER LARGE OBJECT \d+ OWNER TO .+;/m,
@@ -592,6 +601,24 @@ my %tests = (
 #			schema_only => 1,
 #		},
 #	},
+=======
+	'ALTER LARGE OBJECT ... OWNER TO' => {
+		regexp => qr/^ALTER LARGE OBJECT \d+ OWNER TO .+;/m,
+		like   => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_pre_data       => 1,
+			test_schema_plus_blobs => 1,
+		},
+		unlike => {
+			no_blobs    => 1,
+			no_owner    => 1,
+			schema_only => 1,
+		},
+	},
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
 		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .+;/m,
@@ -901,6 +928,7 @@ my %tests = (
 		},
 	},
 
+<<<<<<< HEAD
 # Disabled, because GPDB doesn't support large objects
 #	'BLOB create (using lo_from_bytea)' => {
 #		create_order => 50,
@@ -941,6 +969,48 @@ my %tests = (
 #			schema_only    => 1,
 #		},
 #	},
+=======
+	'BLOB create (using lo_from_bytea)' => {
+		create_order => 50,
+		create_sql =>
+		  'SELECT pg_catalog.lo_from_bytea(0, \'\\x310a320a330a340a350a360a370a380a390a\');',
+		regexp => qr/^SELECT pg_catalog\.lo_create\('\d+'\);/m,
+		like   => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_pre_data       => 1,
+			test_schema_plus_blobs => 1,
+		},
+		unlike => {
+			schema_only => 1,
+			no_blobs    => 1,
+		},
+	},
+
+	'BLOB load (using lo_from_bytea)' => {
+		regexp => qr/^
+			\QSELECT pg_catalog.lo_open\E \('\d+',\ \d+\);\n
+			\QSELECT pg_catalog.lowrite(0, \E
+			\Q'\x310a320a330a340a350a360a370a380a390a');\E\n
+			\QSELECT pg_catalog.lo_close(0);\E
+			/xm,
+		like => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_data           => 1,
+			test_schema_plus_blobs => 1,
+		},
+		unlike => {
+			binary_upgrade => 1,
+			no_blobs       => 1,
+			schema_only    => 1,
+		},
+	},
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	'COMMENT ON DATABASE postgres' => {
 		regexp => qr/^COMMENT ON DATABASE postgres IS .+;/m,
@@ -1050,6 +1120,7 @@ my %tests = (
 		like      => { %full_runs, section_pre_data => 1, },
 	},
 
+<<<<<<< HEAD
 # Disabled, because GPDB doesn't support large objects
 #	'COMMENT ON LARGE OBJECT ...' => {
 #		create_order => 65,
@@ -1075,6 +1146,33 @@ my %tests = (
 #			schema_only => 1,
 #		},
 #	},
+=======
+	'COMMENT ON LARGE OBJECT ...' => {
+		create_order => 65,
+		create_sql   => 'DO $$
+						 DECLARE myoid oid;
+						 BEGIN
+							SELECT loid FROM pg_largeobject INTO myoid;
+							EXECUTE \'COMMENT ON LARGE OBJECT \' || myoid || \' IS \'\'comment on large object\'\';\';
+						 END;
+						 $$;',
+		regexp => qr/^
+			\QCOMMENT ON LARGE OBJECT \E[0-9]+\Q IS 'comment on large object';\E
+			/xm,
+		like => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_pre_data       => 1,
+			test_schema_plus_blobs => 1,
+		},
+		unlike => {
+			no_blobs    => 1,
+			schema_only => 1,
+		},
+	},
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	'COMMENT ON PUBLICATION pub1' => {
 		create_order => 55,
@@ -1266,6 +1364,27 @@ my %tests = (
 		},
 	},
 
+	'COPY test_third_table' => {
+		create_order => 7,
+		create_sql =>
+		  'INSERT INTO dump_test.test_third_table VALUES (123, DEFAULT, 456);',
+		regexp => qr/^
+			\QCOPY dump_test.test_third_table (f1, "F3") FROM stdin;\E
+			\n123\t456\n\\\.\n
+			/xm,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			data_only    => 1,
+			section_data => 1,
+		},
+		unlike => {
+			binary_upgrade           => 1,
+			exclude_dump_test_schema => 1,
+			schema_only              => 1,
+		},
+	},
+
 	'COPY test_fourth_table' => {
 		create_order => 7,
 		create_sql =>
@@ -1357,10 +1476,22 @@ my %tests = (
 		like => { column_inserts => 1, },
 	},
 
+	'INSERT INTO test_third_table (colnames)' => {
+		regexp =>
+		  qr/^INSERT INTO dump_test\.test_third_table \(f1, "F3"\) VALUES \(123, 456\);\n/m,
+		like => { column_inserts => 1, },
+	},
+
+	'INSERT INTO test_third_table' => {
+		regexp =>
+		  qr/^INSERT INTO dump_test\.test_third_table VALUES \(123, DEFAULT, 456, DEFAULT\);\n/m,
+		like => { inserts => 1, },
+	},
+
 	'INSERT INTO test_fourth_table' => {
 		regexp =>
 		  qr/^(?:INSERT INTO dump_test\.test_fourth_table DEFAULT VALUES;\n){2}/m,
-		like => { column_inserts => 1, rows_per_insert => 1, },
+		like => { column_inserts => 1, inserts => 1, rows_per_insert => 1, },
 	},
 
 	'INSERT INTO test_fifth_table' => {
@@ -2475,6 +2606,110 @@ my %tests = (
 		},
 	},
 
+	'Creation of row-level trigger in partitioned table' => {
+		create_order => 92,
+		create_sql   => 'CREATE TRIGGER test_trigger
+		   AFTER INSERT ON dump_test.measurement
+		   FOR EACH ROW EXECUTE PROCEDURE dump_test.trigger_func()',
+		regexp => qr/^
+			\QCREATE TRIGGER test_trigger AFTER INSERT ON dump_test.measurement \E
+			\QFOR EACH ROW \E
+			\QEXECUTE FUNCTION dump_test.trigger_func();\E
+			/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+		},
+	},
+
+	'Disabled trigger on partition is altered' => {
+		create_order => 93,
+		create_sql =>
+		  'CREATE TABLE dump_test_second_schema.measurement_y2006m3
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-03-01\') TO (\'2006-04-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m3 DISABLE TRIGGER test_trigger;
+						CREATE TABLE dump_test_second_schema.measurement_y2006m4
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-04-01\') TO (\'2006-05-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m4 ENABLE REPLICA TRIGGER test_trigger;
+						CREATE TABLE dump_test_second_schema.measurement_y2006m5
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-05-01\') TO (\'2006-06-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m5 ENABLE ALWAYS TRIGGER test_trigger;
+						',
+		regexp => qr/^
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m3 DISABLE TRIGGER test_trigger;\E
+			/xm,
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	'Replica trigger on partition is altered' => {
+		regexp => qr/^
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m4 ENABLE REPLICA TRIGGER test_trigger;\E
+			/xm,
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	'Always trigger on partition is altered' => {
+		regexp => qr/^
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m5 ENABLE ALWAYS TRIGGER test_trigger;\E
+			/xm,
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	# We should never see the creation of a trigger on a partition
+	'Disabled trigger on partition is not created' => {
+		regexp => qr/CREATE TRIGGER test_trigger.*ON dump_test_second_schema/,
+		like   => {},
+		unlike => { %full_runs, %dump_test_schema_runs },
+	},
+
+	# Triggers on partitions should not be dropped individually
+	'Triggers on partitions are not dropped' => {
+		regexp => qr/DROP TRIGGER test_trigger.*ON dump_test_second_schema/,
+		like   => {}
+	},
+
+	'CREATE TABLE test_third_table_generated_cols' => {
+		create_order => 6,
+		create_sql   => 'CREATE TABLE dump_test.test_third_table (
+						f1 int, junk int,
+						g1 int generated always as (f1 * 2) stored,
+						"F3" int,
+						g2 int generated always as ("F3" * 3) stored
+					);
+					ALTER TABLE dump_test.test_third_table DROP COLUMN junk;',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_third_table (\E\n
+			\s+\Qf1 integer,\E\n
+			\s+\Qg1 integer GENERATED ALWAYS AS ((f1 * 2)) STORED,\E\n
+			\s+\Q"F3" integer,\E\n
+			\s+\Qg2 integer GENERATED ALWAYS AS (("F3" * 3)) STORED\E\n
+			\);\n
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { binary_upgrade => 1, exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE TABLE test_fourth_table_zero_col' => {
 		create_order => 6,
 		create_sql   => 'CREATE TABLE dump_test.test_fourth_table (
@@ -3102,9 +3337,12 @@ my %tests = (
 	},
 
 	'GRANT SELECT ON TABLE measurement_y2006m2' => {
-		create_order => 92,
-		create_sql   => 'GRANT SELECT ON
-						   TABLE dump_test_second_schema.measurement_y2006m2
+		create_order => 94,
+		create_sql   => 'GRANT SELECT ON TABLE
+						   dump_test_second_schema.measurement_y2006m2,
+						   dump_test_second_schema.measurement_y2006m3,
+						   dump_test_second_schema.measurement_y2006m4,
+						   dump_test_second_schema.measurement_y2006m5
 						   TO regress_dump_test_role;',
 		regexp =>
 		  qr/^\QGRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress_dump_test_role;\E/m,
@@ -3116,6 +3354,7 @@ my %tests = (
 		unlike => { no_privs => 1, },
 	},
 
+<<<<<<< HEAD
 # Disabled, because GPDB doesn't support large objects
 #	'GRANT ALL ON LARGE OBJECT ...' => {
 #		create_order => 60,
@@ -3143,6 +3382,35 @@ my %tests = (
 #			schema_only => 1,
 #		},
 #	},
+=======
+	'GRANT ALL ON LARGE OBJECT ...' => {
+		create_order => 60,
+		create_sql   => 'DO $$
+						 DECLARE myoid oid;
+						 BEGIN
+							SELECT loid FROM pg_largeobject INTO myoid;
+							EXECUTE \'GRANT ALL ON LARGE OBJECT \' || myoid || \' TO regress_dump_test_role;\';
+						 END;
+						 $$;',
+		regexp => qr/^
+			\QGRANT ALL ON LARGE OBJECT \E[0-9]+\Q TO regress_dump_test_role;\E
+			/xm,
+		like => {
+			%full_runs,
+			column_inserts         => 1,
+			data_only              => 1,
+			inserts                => 1,
+			section_pre_data       => 1,
+			test_schema_plus_blobs => 1,
+			binary_upgrade         => 1,
+		},
+		unlike => {
+			no_blobs    => 1,
+			no_privs    => 1,
+			schema_only => 1,
+		},
+	},
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	'GRANT INSERT(col1) ON TABLE test_second_table' => {
 		create_order => 8,

@@ -210,7 +210,11 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 								 ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 										 Index scanrelid, Oid indexid,
+<<<<<<< HEAD
 										 List *indexqual, List *indexqualorig,
+=======
+										 List *indexqual, List *recheckqual,
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 										 List *indexorderby,
 										 List *indextlist,
 										 ScanDirection indexscandir);
@@ -256,10 +260,19 @@ static NestLoop *make_nestloop(List *tlist,
 							   JoinType jointype, bool inner_unique);
 static HashJoin *make_hashjoin(List *tlist,
 							   List *joinclauses, List *otherclauses,
+<<<<<<< HEAD
 							   List *hashclauses, Plan *lefttree,
 							   Plan *righttree, JoinType jointype,
 							   bool inner_unique);
+=======
+							   List *hashclauses,
+							   List *hashoperators, List *hashcollations,
+							   List *hashkeys,
+							   Plan *lefttree, Plan *righttree,
+							   JoinType jointype, bool inner_unique);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static Hash *make_hash(Plan *lefttree,
+					   List *hashkeys,
 					   Oid skewTable,
 					   AttrNumber skewColumn,
 					   bool skewInherit);
@@ -946,6 +959,22 @@ use_physical_tlist(PlannerInfo *root, Path *path, int flags)
 		if (bms_nonempty_difference(phinfo->ph_needed, rel->relids) &&
 			bms_is_subset(phinfo->ph_eval_at, rel->relids))
 			return false;
+	}
+
+	/*
+	 * For an index-only scan, the "physical tlist" is the index's indextlist.
+	 * We can only return that without a projection if all the index's columns
+	 * are returnable.
+	 */
+	if (path->pathtype == T_IndexOnlyScan)
+	{
+		IndexOptInfo *indexinfo = ((IndexPath *) path)->indexinfo;
+
+		for (i = 0; i < indexinfo->ncolumns; i++)
+		{
+			if (!indexinfo->canreturn[i])
+				return false;
+		}
 	}
 
 	/*
@@ -2033,6 +2062,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 		 */
 		subplan = create_plan_recurse(root, best_path->subpath,
 									  CP_IGNORE_TLIST);
+		Assert(is_projection_capable_plan(subplan));
 		tlist = build_path_tlist(root, &best_path->path);
 	}
 	else
@@ -2654,10 +2684,13 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	ListCell   *lc;
 
 	/*
-	 * WindowAgg can project, so no need to be terribly picky about child
-	 * tlist, but we do need grouping columns to be available
+	 * Choice of tlist here is motivated by the fact that WindowAgg will be
+	 * storing the input rows of window frames in a tuplestore; it therefore
+	 * behooves us to request a small tlist to avoid wasting space. We do of
+	 * course need grouping columns to be available.
 	 */
-	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+	subplan = create_plan_recurse(root, best_path->subpath,
+								  CP_LABEL_TLIST | CP_SMALL_TLIST);
 
 	tlist = build_path_tlist(root, &best_path->path);
 
@@ -3412,7 +3445,8 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *indexclauses = best_path->indexclauses;
 	List	   *indexorderbys = best_path->indexorderbys;
 	Index		baserelid = best_path->path.parent->relid;
-	Oid			indexoid = best_path->indexinfo->indexoid;
+	IndexOptInfo *indexinfo = best_path->indexinfo;
+	Oid			indexoid = indexinfo->indexoid;
 	List	   *qpqual;
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
@@ -3542,6 +3576,24 @@ create_indexscan_plan(PlannerInfo *root,
 		}
 	}
 
+	/*
+	 * For an index-only scan, we must mark indextlist entries as resjunk if
+	 * they are columns that the index AM can't return; this cues setrefs.c to
+	 * not generate references to those columns.
+	 */
+	if (indexonly)
+	{
+		int			i = 0;
+
+		foreach(l, indexinfo->indextlist)
+		{
+			TargetEntry *indextle = (TargetEntry *) lfirst(l);
+
+			indextle->resjunk = !indexinfo->canreturn[i];
+			i++;
+		}
+	}
+
 	/* Finally ready to build the plan node */
 	if (indexonly)
 		scan_plan = (Scan *) make_indexonlyscan(tlist,
@@ -3551,7 +3603,7 @@ create_indexscan_plan(PlannerInfo *root,
 												fixed_indexquals,
 												stripped_indexquals,
 												fixed_indexorderbys,
-												best_path->indexinfo->indextlist,
+												indexinfo->indextlist,
 												best_path->indexscandir);
 	else
 		scan_plan = (Scan *) make_indexscan(tlist,
@@ -4326,6 +4378,22 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	}
 	if (lc == NULL)				/* shouldn't happen */
 		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
+<<<<<<< HEAD
+=======
+	if (ndx >= list_length(cteroot->cte_plan_ids))
+		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
+	if (plan_id <= 0)
+		elog(ERROR, "no plan was made for CTE \"%s\"", rte->ctename);
+	foreach(lc, cteroot->init_plans)
+	{
+		ctesplan = (SubPlan *) lfirst(lc);
+		if (ctesplan->plan_id == plan_id)
+			break;
+	}
+	if (lc == NULL)				/* shouldn't happen */
+		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * In PostgreSQL, we use the index to look up the plan ID in the
@@ -5397,12 +5465,20 @@ create_hashjoin_plan(PlannerInfo *root,
 	List	   *joinclauses;
 	List	   *otherclauses;
 	List	   *hashclauses;
+	List	   *hashoperators = NIL;
+	List	   *hashcollations = NIL;
+	List	   *inner_hashkeys = NIL;
+	List	   *outer_hashkeys = NIL;
 	Oid			skewTable = InvalidOid;
 	AttrNumber	skewColumn = InvalidAttrNumber;
 	bool		skewInherit = false;
+<<<<<<< HEAD
 	bool		partition_selectors_created;
 
 	push_partition_selector_candidate_for_join(root, &best_path->jpath);
+=======
+	ListCell   *lc;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * HashJoin can project, so we don't have to demand exact tlists from the
@@ -5502,9 +5578,28 @@ create_hashjoin_plan(PlannerInfo *root,
 	}
 
 	/*
+	 * Collect hash related information. The hashed expressions are
+	 * deconstructed into outer/inner expressions, so they can be computed
+	 * separately (inner expressions are used to build the hashtable via Hash,
+	 * outer expressions to perform lookups of tuples from HashJoin's outer
+	 * plan in the hashtable). Also collect operator information necessary to
+	 * build the hashtable.
+	 */
+	foreach(lc, hashclauses)
+	{
+		OpExpr	   *hclause = lfirst_node(OpExpr, lc);
+
+		hashoperators = lappend_oid(hashoperators, hclause->opno);
+		hashcollations = lappend_oid(hashcollations, hclause->inputcollid);
+		outer_hashkeys = lappend(outer_hashkeys, linitial(hclause->args));
+		inner_hashkeys = lappend(inner_hashkeys, lsecond(hclause->args));
+	}
+
+	/*
 	 * Build the hash node and hash join node.
 	 */
 	hash_plan = make_hash(inner_plan,
+						  inner_hashkeys,
 						  skewTable,
 						  skewColumn,
 						  skewInherit);
@@ -5531,6 +5626,9 @@ create_hashjoin_plan(PlannerInfo *root,
 							  joinclauses,
 							  otherclauses,
 							  hashclauses,
+							  hashoperators,
+							  hashcollations,
+							  outer_hashkeys,
 							  outer_plan,
 							  (Plan *) hash_plan,
 							  best_path->jpath.jointype,
@@ -6246,7 +6344,11 @@ make_indexonlyscan(List *qptlist,
 				   Index scanrelid,
 				   Oid indexid,
 				   List *indexqual,
+<<<<<<< HEAD
 				   List *indexqualorig,
+=======
+				   List *recheckqual,
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 				   List *indexorderby,
 				   List *indextlist,
 				   ScanDirection indexscandir)
@@ -6261,7 +6363,11 @@ make_indexonlyscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->indexid = indexid;
 	node->indexqual = indexqual;
+<<<<<<< HEAD
 	node->indexqualorig = indexqualorig;
+=======
+	node->recheckqual = recheckqual;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	node->indexorderby = indexorderby;
 	node->indextlist = indextlist;
 	node->indexorderdir = indexscandir;
@@ -6651,6 +6757,9 @@ make_hashjoin(List *tlist,
 			  List *joinclauses,
 			  List *otherclauses,
 			  List *hashclauses,
+			  List *hashoperators,
+			  List *hashcollations,
+			  List *hashkeys,
 			  Plan *lefttree,
 			  Plan *righttree,
 			  JoinType jointype,
@@ -6664,7 +6773,13 @@ make_hashjoin(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->hashclauses = hashclauses;
+<<<<<<< HEAD
 	node->hashqualclauses = NIL;
+=======
+	node->hashoperators = hashoperators;
+	node->hashcollations = hashcollations;
+	node->hashkeys = hashkeys;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	node->join.jointype = jointype;
 	node->join.inner_unique = inner_unique;
 	node->join.joinqual = joinclauses;
@@ -6674,6 +6789,7 @@ make_hashjoin(List *tlist,
 
 Hash *
 make_hash(Plan *lefttree,
+		  List *hashkeys,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
 		  bool skewInherit)
@@ -6686,6 +6802,7 @@ make_hash(Plan *lefttree,
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 
+	node->hashkeys = hashkeys;
 	node->skewTable = skewTable;
 	node->skewColumn = skewColumn;
 	node->skewInherit = skewInherit;

@@ -163,6 +163,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 							schemaName)));
 			return InvalidOid;
 		}
+<<<<<<< HEAD
 	}
 
 	/* Create the schema's namespace */
@@ -198,6 +199,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	else
 	{
 		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 
 	/*

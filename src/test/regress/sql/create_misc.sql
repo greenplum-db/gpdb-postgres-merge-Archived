@@ -194,6 +194,10 @@ INSERT INTO f_star (class, f)
 
 INSERT INTO f_star (class) VALUES ('f');
 
+<<<<<<< HEAD
+=======
+-- Analyze the X_star tables for better plan stability in later tests
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 ANALYZE a_star;
 ANALYZE b_star;
 ANALYZE c_star;

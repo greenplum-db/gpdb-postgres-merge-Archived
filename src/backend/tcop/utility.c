@@ -1161,8 +1161,12 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_CreateForeignTableStmt:
 				{
 					List	   *stmts;
+<<<<<<< HEAD
 					ListCell   *l;
 					List	   *more_stmts = NIL;
+=======
+					RangeVar   *table_rv = NULL;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 					/* Run parse analysis ... */
 					/*
@@ -1179,20 +1183,35 @@ ProcessUtilitySlow(ParseState *pstate,
 						stmts = transformCreateStmt((CreateStmt *) parsetree,
 													queryString);
 
+<<<<<<< HEAD
 					/* ... and do it */
 			process_more_stmts:
 					foreach(l, stmts)
+=======
+					/*
+					 * ... and do it.  We can't use foreach() because we may
+					 * modify the list midway through, so pick off the
+					 * elements one at a time, the hard way.
+					 */
+					while (stmts != NIL)
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 					{
-						Node	   *stmt = (Node *) lfirst(l);
+						Node	   *stmt = (Node *) linitial(stmts);
+
+						stmts = list_delete_first(stmts);
 
 						if (IsA(stmt, CreateStmt))
 						{
 							CreateStmt *cstmt = (CreateStmt *) stmt;
+<<<<<<< HEAD
 							char		relKind = RELKIND_RELATION;
+=======
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 							List *options = NIL;
 
+<<<<<<< HEAD
 							/*
 							 * If this T_CreateStmt was dispatched and we're a QE
 							 * receiving it, extract the relkind and relstorage from
@@ -1248,6 +1267,16 @@ ProcessUtilitySlow(ParseState *pstate,
 								more_stmts = list_concat(more_stmts, parts);
 							}
 
+=======
+							/* Remember transformed RangeVar for LIKE */
+							table_rv = cstmt->relation;
+
+							/* Create the table itself */
+							address = DefineRelation(cstmt,
+													 RELKIND_RELATION,
+													 InvalidOid, NULL,
+													 queryString);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
@@ -1258,6 +1287,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							 */
 							CommandCounterIncrement();
 
+<<<<<<< HEAD
 							if (relKind != RELKIND_COMPOSITE_TYPE)
 							{
 								/*
@@ -1273,6 +1303,21 @@ ProcessUtilitySlow(ParseState *pstate,
 								(void) heap_reloptions(RELKIND_TOASTVALUE,
 													   toast_options,
 													   true);
+=======
+							/*
+							 * parse and validate reloptions for the toast
+							 * table
+							 */
+							toast_options = transformRelOptions((Datum) 0,
+																cstmt->options,
+																"toast",
+																validnsps,
+																true,
+																false);
+							(void) heap_reloptions(RELKIND_TOASTVALUE,
+												   toast_options,
+												   true);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 								NewRelationCreateToastTable(address.objectId,
 															toast_options);
@@ -1308,10 +1353,16 @@ ProcessUtilitySlow(ParseState *pstate,
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
+							CreateForeignTableStmt *cstmt = (CreateForeignTableStmt *) stmt;
+
+							/* Remember transformed RangeVar for LIKE */
+							table_rv = cstmt->base.relation;
+
 							/* Create the table itself */
-							address = DefineRelation((CreateStmt *) stmt,
+							address = DefineRelation(&cstmt->base,
 													 RELKIND_FOREIGN_TABLE,
 													 InvalidOid, NULL,
+<<<<<<< HEAD
 													 queryString,
 													 true,
 													 true,
@@ -1319,9 +1370,30 @@ ProcessUtilitySlow(ParseState *pstate,
 							CreateForeignTable((CreateForeignTableStmt *) stmt,
 											   address.objectId,
 											   false /* skip_permission_checks */);
+=======
+													 queryString);
+							CreateForeignTable(cstmt,
+											   address.objectId);
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
+						}
+						else if (IsA(stmt, TableLikeClause))
+						{
+							/*
+							 * Do delayed processing of LIKE options.  This
+							 * will result in additional sub-statements for us
+							 * to process.  Those should get done before any
+							 * remaining actions, so prepend them to "stmts".
+							 */
+							TableLikeClause *like = (TableLikeClause *) stmt;
+							List	   *morestmts;
+
+							Assert(table_rv != NULL);
+
+							morestmts = expandTableLikeClause(table_rv, like);
+							stmts = list_concat(morestmts, stmts);
 						}
 						else
 						{
@@ -1349,7 +1421,7 @@ ProcessUtilitySlow(ParseState *pstate,
 						}
 
 						/* Need CCI between commands */
-						if (lnext(l) != NULL)
+						if (stmts != NIL)
 							CommandCounterIncrement();
 					}
 					if (more_stmts)
@@ -1652,6 +1724,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
 					Oid			relid;
 					LOCKMODE	lockmode;
+					bool		is_alter_table;
 
 					if (stmt->concurrent)
 						PreventInTransactionBlock(isTopLevel,
@@ -1721,6 +1794,17 @@ ProcessUtilitySlow(ParseState *pstate,
 						list_free(inheritors);
 					}
 
+					/*
+					 * If the IndexStmt is already transformed, it must have
+					 * come from generateClonedIndexStmt, which in current
+					 * usage means it came from expandTableLikeClause rather
+					 * than from original parse analysis.  And that means we
+					 * must treat it like ALTER TABLE ADD INDEX, not CREATE.
+					 * (This is a bit grotty, but currently it doesn't seem
+					 * worth adding a separate bool field for the purpose.)
+					 */
+					is_alter_table = stmt->transformed;
+
 					/* Run parse analysis ... */
 					stmt = transformIndexStmt(relid, stmt, queryString);
 
@@ -1732,7 +1816,7 @@ ProcessUtilitySlow(ParseState *pstate,
 									InvalidOid, /* no predefined OID */
 									InvalidOid, /* no parent index */
 									InvalidOid, /* no parent constraint */
-									false,	/* is_alter_table */
+									is_alter_table,
 									true,	/* check_rights */
 									true,	/* check_not_in_use */
 									false,	/* skip_build */
@@ -1921,6 +2005,12 @@ ProcessUtilitySlow(ParseState *pstate,
 
 			case T_CreateOpFamilyStmt:
 				address = DefineOpFamily((CreateOpFamilyStmt *) parsetree);
+
+				/*
+				 * DefineOpFamily calls EventTriggerCollectSimpleCommand
+				 * directly.
+				 */
+				commandCollected = true;
 				break;
 
 			case T_CreateTransformStmt:

@@ -423,7 +423,11 @@ restart:
 			 */
 			if (pageHeader->xlp_info & XLP_FIRST_IS_OVERWRITE_CONTRECORD)
 			{
+<<<<<<< HEAD
 				state->overwrittenRecPtr = state->currRecPtr;
+=======
+				state->overwrittenRecPtr = RecPtr;
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 				ResetDecoder(state);
 				RecPtr = targetPagePtr;
 				goto restart;
@@ -1007,7 +1011,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 			 *
 			 * Note that record headers are MAXALIGN'ed
 			 */
-			if (MAXALIGN(header->xlp_rem_len) > (XLOG_BLCKSZ - pageHeaderSize))
+			if (MAXALIGN(header->xlp_rem_len) >= (XLOG_BLCKSZ - pageHeaderSize))
 				tmpRecPtr = targetPagePtr + XLOG_BLCKSZ;
 			else
 			{
@@ -1456,7 +1460,7 @@ XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len)
 /*
  * Restore a full-page image from a backup block attached to an XLOG record.
  *
- * Returns the buffer number containing the page.
+ * Returns true if a full-page image is restored.
  */
 bool
 RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
