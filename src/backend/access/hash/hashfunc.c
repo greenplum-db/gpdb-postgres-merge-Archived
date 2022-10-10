@@ -28,13 +28,9 @@
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
-#include "common/hashfn.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
-=======
 #include "utils/float.h"
 #include "utils/hashutils.h"
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #include "utils/pg_locale.h"
 
 /*
