@@ -51,8 +51,8 @@
 /* We need eight bytes per xact */
 #define SUBTRANS_XACTS_PER_PAGE (BLCKSZ / sizeof(SubTransData))
 
-#define TransactionIdToPage(xid) ((xid) / (uint32) SUBTRANS_XACTS_PER_PAGE)
-#define TransactionIdToEntry(xid) ((xid) % (uint32) SUBTRANS_XACTS_PER_PAGE)
+#define TransactionIdToPage(xid) ((xid) / (TransactionId) SUBTRANS_XACTS_PER_PAGE)
+#define TransactionIdToEntry(xid) ((xid) % (TransactionId) SUBTRANS_XACTS_PER_PAGE)
 
 
 /*
@@ -182,6 +182,7 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	return subData.topMostParent;
 }
 
+
 /*
  * Initialization of shared memory for SUBTRANS
  */
@@ -241,11 +242,7 @@ BootStrapSUBTRANS(void)
 static int
 ZeroSUBTRANSPage(int pageno)
 {
-	int result;
-
-	result = SimpleLruZeroPage(SubTransCtl, pageno);
-
-	return result;
+	return SimpleLruZeroPage(SubTransCtl, pageno);
 }
 
 /*
@@ -376,6 +373,7 @@ TruncateSUBTRANS(TransactionId oldestXact)
 	 */
 	TransactionIdRetreat(oldestXact);
 	cutoffPage = TransactionIdToPage(oldestXact);
+
 	SimpleLruTruncate(SubTransCtl, cutoffPage);
 }
 
@@ -390,17 +388,10 @@ SubTransPagePrecedes(int page1, int page2)
 	TransactionId xid1;
 	TransactionId xid2;
 
-<<<<<<< HEAD
-	xid1 = ((uint32) page1) * SUBTRANS_XACTS_PER_PAGE;
-	xid1 += FirstNormalTransactionId;
-	xid2 = ((uint32) page2) * SUBTRANS_XACTS_PER_PAGE;
-	xid2 += FirstNormalTransactionId;
-=======
 	xid1 = ((TransactionId) page1) * SUBTRANS_XACTS_PER_PAGE;
 	xid1 += FirstNormalTransactionId + 1;
 	xid2 = ((TransactionId) page2) * SUBTRANS_XACTS_PER_PAGE;
 	xid2 += FirstNormalTransactionId + 1;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	return (TransactionIdPrecedes(xid1, xid2) &&
 			TransactionIdPrecedes(xid1, xid2 + SUBTRANS_XACTS_PER_PAGE - 1));

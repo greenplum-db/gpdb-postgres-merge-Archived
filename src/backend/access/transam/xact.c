@@ -2823,14 +2823,6 @@ CommitTransaction(void)
 	if (!is_parallel_worker)
 		PreCommit_CheckForSerializationFailure();
 
-<<<<<<< HEAD
-	/*
-	 * Insert notifications sent by NOTIFY commands into the queue.  This
-	 * should be late in the pre-commit sequence to minimize time spent
-	 * holding the notify-insertion lock.
-	 */
-	PreCommit_Notify();
-
 	/*
 	 * Prepare all QE.
 	 */
@@ -2855,8 +2847,6 @@ CommitTransaction(void)
 				 errmsg("Raise an error as directed by Debug_abort_after_distributed_prepared")));
 	}
 
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -4886,11 +4876,7 @@ EndTransactionBlock(bool chain)
 						 errmsg("%s can only be used in transaction blocks",
 								"COMMIT AND CHAIN")));
 			else
-<<<<<<< HEAD
 				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
-=======
-				ereport(WARNING,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 						 errmsg("there is no transaction in progress")));
 			result = true;
@@ -5013,11 +4999,7 @@ UserAbortTransactionBlock(bool chain)
 						 errmsg("%s can only be used in transaction blocks",
 								"ROLLBACK AND CHAIN")));
 			else
-<<<<<<< HEAD
 				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
-=======
-				ereport(WARNING,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_ABORT_PENDING;
@@ -7247,6 +7229,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	if (parsed->ndeldbs > 0)
 	{
 		XLogFlush(lsn);
+
 		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
 	}
 
@@ -7286,7 +7269,6 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
  * dtx recovery.
  */
 static void
-<<<<<<< HEAD
 xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
 							 TransactionId xid,
 							 XLogRecPtr lsn,
@@ -7298,12 +7280,18 @@ xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
 	redoDistributedCommitRecord(parsed->distribXid);
 }
 
+/*
+ * Be careful with the order of execution, as with xact_redo_commit().
+ * The two functions are similar but differ in key places.
+ *
+ * Note also that an abort can be for a subtransaction and its children,
+ * not just for a top level abort. That means we have to consider
+ * topxid != xid, whereas in commit we would find topxid == xid always
+ * because subtransaction commit is never WAL logged.
+ */
 static void
-xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
-=======
 xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 				XLogRecPtr lsn)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 {
 	TransactionId max_xid;
 
@@ -7354,11 +7342,6 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-<<<<<<< HEAD
-	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
-	DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
-	DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_abort);
-=======
 	if (parsed->nrels > 0)
 	{
 		/*
@@ -7369,7 +7352,15 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 
 		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
 	}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+
+	if (parsed->ndeldbs > 0)
+	{
+		XLogFlush(lsn);
+
+		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
+	}
+
+	DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_abort);
 }
 
 static void
