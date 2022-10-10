@@ -369,12 +369,7 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 		if (!pg_class_ownercheck(tableOid, save_userid))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-			pgstat_progress_end_command();
-			return false;
-=======
 			goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		}
 
 		/*
@@ -388,12 +383,7 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-			pgstat_progress_end_command();
-			return false;
-=======
 			goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		}
 
 		if (OidIsValid(indexOid))
@@ -404,12 +394,7 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(indexOid)))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				pgstat_progress_end_command();
-				return false;
-=======
 				goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			}
 
 			/*
@@ -419,24 +404,14 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				pgstat_progress_end_command();
-				return false;
-=======
 				goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			}
 			indexForm = (Form_pg_index) GETSTRUCT(tuple);
 			if (!indexForm->indisclustered)
 			{
 				ReleaseSysCache(tuple);
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				pgstat_progress_end_command();
-				return false;
-=======
 				goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			}
 			ReleaseSysCache(tuple);
 		}
@@ -490,12 +465,7 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 		!RelationIsPopulated(OldHeap))
 	{
 		relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-		pgstat_progress_end_command();
-		return false;
-=======
 		goto out;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 
 	/*
@@ -917,12 +887,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
 									 &isNull);
 		if (isNull)
 			reloptions = (Datum) 0;
-<<<<<<< HEAD
-		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode);
-=======
 
 		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode, toastid);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		ReleaseSysCache(tuple);
 	}
