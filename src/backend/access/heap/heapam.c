@@ -3078,13 +3078,11 @@ heap_update_internal(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	Assert(ItemPointerIsValid(otid));
 
-<<<<<<< HEAD
 	gp_expand_protect_catalog_changes(relation);
-=======
+
 	/* Cheap, simplistic check that the tuple matches the rel's rowtype. */
 	Assert(HeapTupleHeaderGetNatts(newtup->t_data) <=
 		   RelationGetNumberOfAttributes(relation));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combocid.
