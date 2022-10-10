@@ -1161,35 +1161,13 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 		{
 			char	   *otherDesc = getObjectDescription(&extra->dependee);
 
-<<<<<<< HEAD
 			if (msglevel == NOTICE && Gp_role == GP_ROLE_EXECUTE)
 			{
 				ereport(DEBUG1,
 						(errmsg("%s depends on %s",
 								objDesc, otherDesc)));
 			}
-			else
-			{
-				if (numReportedClient < MAX_REPORTED_DEPS)
-				{
-					/* separate entries with a newline */
-					if (clientdetail.len != 0)
-						appendStringInfoChar(&clientdetail, '\n');
-					appendStringInfo(&clientdetail, _("%s depends on %s"),
-									 objDesc, otherDesc);
-					numReportedClient++;
-				}
-				else
-					numNotReportedClient++;
-				/* separate entries with a newline */
-				if (logdetail.len != 0)
-					appendStringInfoChar(&logdetail, '\n');
-				appendStringInfo(&logdetail, _("%s depends on %s"),
-								 objDesc, otherDesc);
-				pfree(otherDesc);
-			}
-=======
-			if (otherDesc)
+			else if (otherDesc)
 			{
 				if (numReportedClient < MAX_REPORTED_DEPS)
 				{
@@ -1211,7 +1189,6 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 			}
 			else
 				numNotReportedClient++;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			ok = false;
 		}
 		else
@@ -2293,14 +2270,6 @@ find_expr_references_walker(Node *node,
 							   context->addrs);
 		}
 
-<<<<<<< HEAD
-		/* query_tree_walker ignores ORDER BY etc, but we need those opers */
-		find_expr_references_walker((Node *) query->sortClause, context);
-		find_expr_references_walker((Node *) query->groupClause, context);
-		find_expr_references_walker((Node *) query->distinctClause, context);
-
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		/* Examine substructure of query */
 		context->rtables = lcons(query->rtable, context->rtables);
 		result = query_tree_walker(query,

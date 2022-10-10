@@ -2762,17 +2762,14 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 
-<<<<<<< HEAD
-		if (add_column_mode && !attgenerated && cookedMissingVal && *cookedMissingVal)
+		if (rel->rd_rel->relkind == RELKIND_RELATION && add_column_mode &&
+			!attgenerated && cookedMissingVal && *cookedMissingVal)
 		{
 			missingval = *missingval_p;
 			missingIsNull = *missingIsNull_p;
 		}
-		else if (add_column_mode && !attgenerated)
-=======
-		if (rel->rd_rel->relkind == RELKIND_RELATION  && add_column_mode &&
-			!attgenerated)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+		else if (rel->rd_rel->relkind == RELKIND_RELATION && add_column_mode &&
+				 !attgenerated)
 		{
 			expr2 = expression_planner(expr2);
 			estate = CreateExecutorState();
