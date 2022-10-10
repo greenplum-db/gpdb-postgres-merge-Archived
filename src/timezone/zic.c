@@ -131,10 +131,7 @@ static void dolink(const char *, const char *, bool);
 static char **getfields(char *buf);
 static zic_t gethms(const char *string, const char *errstring);
 static zic_t getsave(char *, bool *);
-<<<<<<< HEAD
-=======
 static void inexpires(char **, int);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static void infile(const char *filename);
 static void inleap(char **fields, int nfields);
 static void inlink(char **fields, int nfields);
@@ -651,21 +648,6 @@ want_bloat(void)
 #define ZIC_BLOAT_DEFAULT "slim"
 #endif
 
-/* -1 if the TZif output file should be slim, 0 if default, 1 if the
-   output should be fat for backward compatibility.  Currently the
-   default is fat, although this may change.  */
-static int	bloat;
-
-static bool
-want_bloat(void)
-{
-	return 0 <= bloat;
-}
-
-#ifndef ZIC_BLOAT_DEFAULT
-#define ZIC_BLOAT_DEFAULT "fat"
-#endif
-
 int
 main(int argc, char **argv)
 {
@@ -806,9 +788,6 @@ main(int argc, char **argv)
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
 		usage(stderr, EXIT_FAILURE);	/* usage message by request */
 	if (bloat == 0)
-<<<<<<< HEAD
-		bloat = strcmp(ZIC_BLOAT_DEFAULT, "slim") == 0 ? -1 : 1;
-=======
 	{
 		static char const bloat_default[] = ZIC_BLOAT_DEFAULT;
 
@@ -819,7 +798,6 @@ main(int argc, char **argv)
 		else
 			abort();			/* Configuration error.  */
 	}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	if (directory == NULL)
 		directory = "data";
 	if (tzdefault == NULL)
