@@ -70,16 +70,15 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	XLogRecPtr	restartRedoPtr;
 	TimeLineID	restartTli;
 
-<<<<<<< HEAD
+	/* GPDB: contentId of segment */
 	char        contentid[12];  /* sign, 10 digits and '\0' */
-=======
+
 	/*
 	 * Ignore restore_command when not in archive recovery (meaning
 	 * we are in crash recovery).
 	 */
 	if (!ArchiveRecoveryRequested)
 		goto not_available;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* In standby mode, restore_command might not be supplied */
 	if (recoveryRestoreCommand == NULL || strcmp(recoveryRestoreCommand, "") == 0)
