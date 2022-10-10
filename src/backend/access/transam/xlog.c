@@ -8161,19 +8161,10 @@ StartupXLOG(void)
 	/* Reload shared-memory state for prepared transactions */
 	RecoverPreparedTransactions();
 
-<<<<<<< HEAD
-	if(IsNormalProcessingMode())
+	/* Greenplum extra logging */
+	if (IsNormalProcessingMode())
 		ereport(LOG, (errmsg("database system is ready")));
 
-	/*
-	 * Shutdown the recovery environment. This must occur after
-	 * RecoverPreparedTransactions(), see notes for lock_twophase_recover()
-	 */
-	if (standbyState != STANDBY_DISABLED)
-		ShutdownRecoveryTransactionEnvironment();
-
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Shut down xlogreader */
 	if (readFile >= 0)
 	{
