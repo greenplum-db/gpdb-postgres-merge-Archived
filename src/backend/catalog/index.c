@@ -3694,7 +3694,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 				 errmsg("cannot reindex temporary tables of other sessions")));
 
 	/*
-<<<<<<< HEAD
 	 * Two-phase commit is not supported for transactions that change
 	 * relfilenode mappings. We can get away without two-phase commit, if
 	 * we're not already running in a transaction block, but if we are,
@@ -3703,7 +3702,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && RelationIsMapped(heapRelation))
 		PreventInTransactionBlock(true, "REINDEX of a catalog table");
-=======
+
+	/*
 	 * Don't allow reindex of an invalid index on TOAST table.  This is a
 	 * leftover from a failed REINDEX CONCURRENTLY, and if rebuilt it would
 	 * not be possible to drop it anymore.
@@ -3713,7 +3713,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot reindex invalid index on TOAST table")));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * Also check for active uses of the index in the current transaction; we
@@ -3940,11 +3939,8 @@ reindex_relation(Oid relid, int flags, int options)
 	List	   *indexIds;
 	char		persistence;
 	bool		result;
-<<<<<<< HEAD
 	bool relIsAO = false;
-=======
 	ListCell   *indexId;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	int			i;
 
 	/*
