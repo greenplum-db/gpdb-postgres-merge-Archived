@@ -875,13 +875,8 @@ index_getprocinfo(Relation irel,
  */
 void
 index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
-<<<<<<< HEAD
-									 double *distanceValues,
-									 bool *distanceNulls, bool recheckOrderBy)
-=======
 									 IndexOrderByDistance *distances,
 									 bool recheckOrderBy)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 {
 	int			i;
 
@@ -889,22 +884,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 
 	scan->xs_recheckorderby = recheckOrderBy;
 
-<<<<<<< HEAD
-	if (!distanceValues)
-	{
-		Assert(!scan->xs_recheckorderby);
-
-		for (i = 0; i < scan->numberOfOrderBys; i++)
-		{
-			scan->xs_orderbyvals[i] = (Datum) 0;
-			scan->xs_orderbynulls[i] = true;
-		}
-
-		return;
-	}
-
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
 		if (distanceNulls && distanceNulls[i])
@@ -919,10 +898,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			if (!scan->xs_orderbynulls[i])
 				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-<<<<<<< HEAD
-			scan->xs_orderbyvals[i] = Float8GetDatum(distanceValues[i]);
-			scan->xs_orderbynulls[i] = false;
-=======
 			if (distances && !distances[i].isnull)
 			{
 				scan->xs_orderbyvals[i] = Float8GetDatum(distances[i].value);
@@ -933,7 +908,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 				scan->xs_orderbyvals[i] = (Datum) 0;
 				scan->xs_orderbynulls[i] = true;
 			}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		}
 		else if (orderByTypes[i] == FLOAT4OID)
 		{
@@ -943,10 +917,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			if (!scan->xs_orderbynulls[i])
 				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-<<<<<<< HEAD
-			scan->xs_orderbyvals[i] = Float4GetDatum((float4) distanceValues[i]);
-			scan->xs_orderbynulls[i] = false;
-=======
 			if (distances && !distances[i].isnull)
 			{
 				scan->xs_orderbyvals[i] = Float4GetDatum((float4) distances[i].value);
@@ -957,7 +927,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 				scan->xs_orderbyvals[i] = (Datum) 0;
 				scan->xs_orderbynulls[i] = true;
 			}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		}
 		else
 		{
