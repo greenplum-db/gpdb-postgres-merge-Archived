@@ -80,12 +80,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 	 * friendlier error message.  The unique index provides a backstop against
 	 * race conditions.
 	 */
-<<<<<<< HEAD
-	oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-=======
 	oid = GetSysCacheOid3(COLLNAMEENCNSP,
 						  Anum_pg_collation_oid,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 						  PointerGetDatum(collname),
 						  Int32GetDatum(collencoding),
 						  ObjectIdGetDatum(collnamespace));
@@ -133,22 +129,14 @@ CollationCreate(const char *collname, Oid collnamespace,
 	 * concurrent changes fooling this check.
 	 */
 	if (collencoding == -1)
-<<<<<<< HEAD
-		oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-=======
 		oid = GetSysCacheOid3(COLLNAMEENCNSP,
 							  Anum_pg_collation_oid,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							  PointerGetDatum(collname),
 							  Int32GetDatum(GetDatabaseEncoding()),
 							  ObjectIdGetDatum(collnamespace));
 	else
-<<<<<<< HEAD
-		oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-=======
 		oid = GetSysCacheOid3(COLLNAMEENCNSP,
 							  Anum_pg_collation_oid,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							  PointerGetDatum(collname),
 							  Int32GetDatum(-1),
 							  ObjectIdGetDatum(collnamespace));
@@ -169,11 +157,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 			checkMembershipInCurrentExtension(&myself);
 
 			/* OK to skip */
-<<<<<<< HEAD
-			heap_close(rel, NoLock);
-=======
 			table_close(rel, NoLock);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("collation \"%s\" already exists, skipping",
