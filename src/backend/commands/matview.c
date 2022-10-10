@@ -299,7 +299,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 */
 	SetMatViewPopulatedState(matviewRel, !stmt->skipData);
 
-<<<<<<< HEAD
 	/*
 	 * The stored query was rewritten at the time of the MV definition, but
 	 * has not been scribbled on by the planner.
@@ -316,21 +315,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	dataQuery->parentStmtType = PARENTSTMTTYPE_REFRESH_MATVIEW;
 
-	relowner = matviewRel->rd_rel->relowner;
-
-	/*
-	 * Switch to the owner's userid, so that any functions are run as that
-	 * user.  Also arrange to make GUC variable changes local to this command.
-	 * Don't lock it down too tight to create a temporary table just yet.  We
-	 * will switch modes when we are about to execute user code.
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(relowner,
-						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-	save_nestlevel = NewGUCNestLevel();
-
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
 	if (concurrent)
 	{
@@ -354,23 +338,15 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	dest = CreateTransientRelDestReceiver(OIDNewHeap, matviewOid, concurrent, relpersistence,
 										  stmt->skipData);
 
-<<<<<<< HEAD
 	/*
-	 * Now lock down security-restricted operations.
-	 */
-	SetUserIdAndSecContext(relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-
-	refreshClause = MakeRefreshClause(concurrent, stmt->skipData, stmt->relation);
-
-	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
-	/* Generate the data, if wanted. */
-	/*
+	 * Generate the data, if wanted.
+	 *
 	 * In GPDB, we call refresh_matview_datafill() even when WITH NO DATA was
 	 * specified, because it will dispatch the operation to the segments.
 	 */
+	refreshClause = MakeRefreshClause(concurrent, stmt->skipData, stmt->relation);
+	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
+
 	processed = refresh_matview_datafill(dest, dataQuery, queryString, refreshClause);
 
 	/* Make the matview match the newly generated data. */
@@ -827,14 +803,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 					 "(SELECT 1 FROM %s newdata2 WHERE newdata2.* IS NOT NULL "
 					 "AND newdata2.* OPERATOR(pg_catalog.*=) newdata.* "
 					 "AND newdata2.ctid OPERATOR(pg_catalog.<>) "
-<<<<<<< HEAD
 					 "newdata.ctid and newdata2.gp_segment_id = "
 					 "newdata.gp_segment_id)",
-					 tempname, tempname);
-=======
-					 "newdata.ctid)",
 					 tempname, tempname, tempname);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	if (SPI_execute(querybuf.data, false, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 	if (SPI_processed > 0)
@@ -866,11 +837,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 	appendStringInfo(&querybuf,
 					 "CREATE TEMP TABLE %s AS "
-<<<<<<< HEAD
-					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.* "
-=======
-					 "SELECT mv.ctid AS tid, newdata.*::%s AS newdata "
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.*::%s AS newdata "
 					 "FROM %s mv FULL JOIN %s newdata ON (",
 					 diffname, tempname, matviewname, tempname);
 
@@ -996,16 +963,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 
 	appendStringInfoString(&querybuf,
-<<<<<<< HEAD
-						   " AND newdata OPERATOR(pg_catalog.*=) mv) "
-						   "WHERE newdata IS NULL OR mv IS NULL "
-						   "ORDER BY tid ");
-	appendStringInfoString(&querybuf, distributed);
-=======
 						   " AND newdata.* OPERATOR(pg_catalog.*=) mv.*) "
 						   "WHERE newdata.* IS NULL OR mv.* IS NULL "
 						   "ORDER BY tid");
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	appendStringInfoString(&querybuf, distributed);
 
 	/* Create the temporary "diff" table. */
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_UTILITY)
