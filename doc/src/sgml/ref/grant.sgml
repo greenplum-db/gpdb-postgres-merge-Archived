@@ -89,15 +89,10 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   | PUBLIC
   | CURRENT_USER
   | SESSION_USER
-<<<<<<< HEAD
-
-GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replaceable class="parameter">role_name</replaceable> [, ...] [ WITH ADMIN OPTION ]
 
 GRANT { SELECT | INSERT | ALL [PRIVILEGES] } 
     ON PROTOCOL <replaceable>protocolname</replaceable>
     TO <replaceable class="parameter">username</replaceable>
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 </synopsis>
  </refsynopsisdiv>
 
