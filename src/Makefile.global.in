@@ -484,11 +484,8 @@ with_temp_install = \
 	$(with_temp_install_extra)
 
 ifeq ($(enable_tap_tests),yes)
-<<<<<<< HEAD
-=======
 
 ifndef PGXS
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 define prove_installcheck
 rm -rf '$(CURDIR)'/tmp_check
 $(MKDIR_P) '$(CURDIR)'/tmp_check
