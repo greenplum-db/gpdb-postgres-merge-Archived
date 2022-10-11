@@ -2354,11 +2354,7 @@ dbase_redo(XLogReaderState *record)
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) XLogRecGetData(record);
 		char	   *src_path;
 		char	   *dst_path;
-<<<<<<< HEAD
-		char	   *parentdir;
-=======
 		char	   *parent_path;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		struct stat st;
 
 		src_path = GetDatabasePath(xlrec->src_db_id, xlrec->src_tablespace_id);
@@ -2379,30 +2375,6 @@ dbase_redo(XLogReaderState *record)
 		}
 
 		/*
-<<<<<<< HEAD
-		 * It is possible that the tablespace was later dropped, but we are
-		 * re-redoing database create before that. In that case,
-		 * either src_path or dst_path is probably missing here and needs to
-		 * be created. We create directories here so that copy_dir() won't
-		 * fail, but do not bother to create the symlink under pg_tblspc
-		 * if the tablespace is not global/default.
-		 */
-		if (stat(src_path, &st) != 0 && pg_mkdir_p(src_path, S_IRWXU) != 0)
-		{
-			ereport(WARNING,
-					(errmsg("can not recursively create directory \"%s\"",
-							src_path)));
-		}
-		parentdir = pstrdup(dst_path);
-		get_parent_directory(parentdir);
-		if (stat(parentdir, &st) != 0 && pg_mkdir_p(parentdir, S_IRWXU) != 0)
-		{
-			ereport(WARNING,
-					(errmsg("can not recursively create directory \"%s\"",
-							parentdir)));
-		}
-		pfree(parentdir);
-=======
 		 * If the parent of the target path doesn't exist, create it now. This
 		 * enables us to create the target underneath later.  Note that if
 		 * the database dir is not in a tablespace, the parent will always
@@ -2429,7 +2401,6 @@ dbase_redo(XLogReaderState *record)
 		 */
 		if (stat(src_path, &st) < 0 && errno == ENOENT)
 			recovery_create_dbdir(src_path, false);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/*
 		 * Force dirty buffers out to disk, to ensure source database is
