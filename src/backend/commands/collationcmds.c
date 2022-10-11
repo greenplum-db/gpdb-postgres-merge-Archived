@@ -603,16 +603,14 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to import system collations"))));
 
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_DISPATCH)
 		ereport(ERROR,
 					(errmsg("must be dispatcher to import system collations")));
-=======
+
 	if (!SearchSysCacheExists1(NAMESPACEOID, ObjectIdGetDatum(nspid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema with OID %u does not exist", nspid)));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Load collations known to libc, using "locale -a" to enumerate them */
 #ifdef READ_LOCALE_A_OUTPUT

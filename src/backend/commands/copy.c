@@ -6606,10 +6606,7 @@ CopyReadLineText(CopyState cstate)
 				 * special meaning.
 				 */
 				raw_buf_ptr++;
-<<<<<<< HEAD
-=======
 				c = c2;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			}
 		}
 		/*
