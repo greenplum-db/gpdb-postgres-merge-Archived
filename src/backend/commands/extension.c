@@ -908,8 +908,6 @@ execute_extension_script(Node *stmt,
 								 GUC_ACTION_SAVE, true, 0, false);
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Similarly disable check_function_bodies, to ensure that SQL functions
 	 * won't be parsed during creation.
 	 */
@@ -948,7 +946,6 @@ execute_extension_script(Node *stmt,
 							 GUC_ACTION_SAVE, true, 0, false);
 
 	/*
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	 * Set creating_extension and related variables so that
 	 * recordDependencyOnCurrentExtension and other functions do the right
 	 * things.  On failure, ensure we reset these variables.
