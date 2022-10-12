@@ -1792,9 +1792,6 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
 								repl_val, repl_null, repl_repl);
 	}
-<<<<<<< HEAD
-	if (parallel_item)
-		procForm->proparallel = interpret_func_parallel(parallel_item);
 	if (describe_item)
 	{
 		elog(ERROR, "cannot change DESCRIBE function");
@@ -1844,9 +1841,8 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 							 procForm->prolang);
 	validate_sql_exec_location(exec_location,
 							   procForm->proretset);
-=======
+
 	/* DO NOT put more touches of procForm below here; it's now dangling. */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Do the update */
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
