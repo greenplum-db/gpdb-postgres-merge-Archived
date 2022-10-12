@@ -256,18 +256,13 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	plan_list = cplan->stmt_list;
 
 	/*
-<<<<<<< HEAD
-	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
-	 * so that we can modify its destination (yech, but this has always been
-	 * ugly).  For regular EXECUTE we can just use the cached query, since the
-	 * executor is read-only.
-=======
 	 * DO NOT add any logic that could possibly throw an error between
 	 * GetCachedPlan and PortalDefineQuery, or you'll leak the plan refcount.
 	 */
 	PortalDefineQuery(portal,
 					  NULL,
 					  query_string,
+					  entry->plansource->sourceTag,
 					  entry->plansource->commandTag,
 					  plan_list,
 					  cplan);
@@ -281,7 +276,6 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	 * a case (do we really want to suppress execution?) and how to pass down
 	 * the OID-determining eflags (PortalStart won't handle them in such a
 	 * case, and for that matter it's not clear the executor will either).
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	 *
 	 * In GPDB, we use the current parameter values in the planning, because
 	 * that potentially gives a better plan. It also means that we have to
@@ -311,7 +305,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
 
-		/*GPDB: Save the target information in PlannedStmt */
+		/* GPDB: Save the target information in PlannedStmt */
 		pstmt->intoClause = copyObject(intoClause);
 
 		/* Set appropriate eflags */
@@ -330,17 +324,6 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 		count = FETCH_ALL;
 	}
 
-<<<<<<< HEAD
-	PortalDefineQuery(portal,
-					  NULL,
-					  query_string,
-					  entry->plansource->sourceTag,
-					  entry->plansource->commandTag,
-					  plan_list,
-					  cplan);
-
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/*
 	 * Run the portal as appropriate.
 	 */
