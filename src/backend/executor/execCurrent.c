@@ -564,11 +564,6 @@ search_plan_tree(PlanState *node, Oid table_oid,
 		return NULL;
 	switch (nodeTag(node))
 	{
-<<<<<<< HEAD
-		/*
-		 * Relation scan nodes can all be treated alike
-		 */
-=======
 			/*
 			 * Relation scan nodes can all be treated alike: check to see if
 			 * they are scanning the specified table.
@@ -579,7 +574,6 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			 * relationship of such a node's current output tuple to the
 			 * children's current outputs.)
 			 */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		case T_SeqScanState:
 		case T_SampleScanState:
 		case T_IndexScanState:

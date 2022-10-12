@@ -41,14 +41,10 @@ ExecScanFetch(ScanState *node,
 
 	CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 	if (QueryFinishPending)
 		return NULL;
 
-	if (estate->es_epqTupleSlot != NULL)
-=======
 	if (estate->es_epq_active != NULL)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	{
 		EPQState   *epqstate = estate->es_epq_active;
 

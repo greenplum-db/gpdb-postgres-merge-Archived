@@ -1503,12 +1503,8 @@ lreplace:;
 										   mtstate->rootResultRelInfo, slot);
 
 			ret_slot = ExecInsert(mtstate, slot, planSlot,
-<<<<<<< HEAD
-								  estate, canSetTag, false /* splitUpdate */);
-=======
 								  orig_slot, resultRelInfo,
-								  estate, canSetTag);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+								  estate, canSetTag, false /* splitUpdate */);
 
 			/* Revert ExecPrepareTupleRouting's node change. */
 			estate->es_result_relation_info = resultRelInfo;
@@ -2626,12 +2622,8 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
-<<<<<<< HEAD
-								  estate, node->canSetTag, false /* splitUpdate */);
-=======
 								  NULL, estate->es_result_relation_info,
-								  estate, node->canSetTag);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+								  estate, node->canSetTag, false /* splitUpdate */);
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
 					estate->es_result_relation_info = resultRelInfo;

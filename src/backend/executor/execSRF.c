@@ -262,15 +262,10 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 			 */
 			if (first_time)
 			{
-<<<<<<< HEAD
-				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-				tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
-=======
 				MemoryContext oldcontext =
 					MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
-				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+				tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
 				rsinfo.setResult = tupstore;
 				if (!returnsTuple)
 				{

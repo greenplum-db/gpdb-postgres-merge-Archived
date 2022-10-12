@@ -69,13 +69,8 @@ static inline void BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 static inline void BitmapAdjustPrefetchTarget(BitmapHeapScanState *node);
 static inline void BitmapPrefetch(BitmapHeapScanState *node,
 								  TableScanDesc scan);
-<<<<<<< HEAD
-static bool BitmapShouldInitializeSharedState(
-											  ParallelBitmapHeapState *pstate);
-static void ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node);
-=======
 static bool BitmapShouldInitializeSharedState(ParallelBitmapHeapState *pstate);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+static void ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node);
 
 
 /*

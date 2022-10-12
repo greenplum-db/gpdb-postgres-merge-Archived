@@ -2465,13 +2465,10 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			_SPI_current->processed = 0;
 			_SPI_current->tuptable = NULL;
 
-<<<<<<< HEAD
 			/* GPDB: Mark all queries as SPI inner query for extension usage */
 			stmt->metricsQueryType = SPI_INNER_QUERY;
 
-=======
 			/* Check for unsupported cases. */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			if (stmt->utilityStmt)
 			{
 				if (IsA(stmt->utilityStmt, CopyStmt))

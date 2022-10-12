@@ -492,7 +492,6 @@ vacuum(List *relations, VacuumParams *params,
 					 */
 					CommandCounterIncrement();
 				}
-<<<<<<< HEAD
 
 #ifdef FAULT_INJECTOR
 				if (IsAutoVacuumWorkerProcess())
@@ -502,8 +501,6 @@ vacuum(List *relations, VacuumParams *params,
 						"", vrel->relation->relname);
 				}
 #endif
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			}
 		}
 	}
