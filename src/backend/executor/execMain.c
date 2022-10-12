@@ -145,28 +145,8 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 										   TupleDesc tupdesc,
 										   Bitmapset *modifiedCols,
 										   int maxfieldlen);
-<<<<<<< HEAD
-static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
-							  Plan *planTree);
-
-static void AdjustReplicatedTableCounts(EState *estate);
-
-/*
- * Note that GetAllUpdatedColumns() also exists in commands/trigger.c.  There does
- * not appear to be any good header to put it into, given the structures that
- * it uses, so we let them be duplicated.  Be sure to update both if one needs
- * to be changed, however.
- */
-#define GetInsertedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->insertedCols)
-#define GetUpdatedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
-#define GetAllUpdatedColumns(relinfo, estate) \
-	(bms_union(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols, \
-			   exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->extraUpdatedCols))
-=======
 static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+static void AdjustReplicatedTableCounts(EState *estate);
 
 /* end of local decls */
 
@@ -2707,7 +2687,6 @@ ExecutePlan(EState *estate,
 		 * process so we just end the loop...
 		 */
 		if (TupIsNull(slot))
-<<<<<<< HEAD
 		{
 			/*
 			 * We got end-of-stream. We need to mark it since with a cursor
@@ -2716,11 +2695,8 @@ ExecutePlan(EState *estate,
 			 * received in order to do the right cleanup.
 			 */
 			estate->es_got_eos = true;
-			/* Allow nodes to release or shut down resources. */
-			(void) ExecShutdownNode(planstate);
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			break;
+		}
 
 		/*
 		 * If we have a junk filter, then project a new tuple with the junk
@@ -2798,7 +2774,7 @@ ExecutePlan(EState *estate,
 	 * If we know we won't need to back up, we can release resources at this
 	 * point.
 	 */
-	if (!(estate->es_top_eflags & EXEC_FLAG_BACKWARD))
+	if (!(estate->es_top_eflags & EXEC_FLAG_BACKWARD) || estate->es_got_eos)
 		(void) ExecShutdownNode(planstate);
 
 	if (use_parallel_mode)
@@ -3826,13 +3802,8 @@ EvalPlanQualBegin(EPQState *epqstate)
 			 * by the subplan, just in case they got reset since
 			 * EvalPlanQualStart (see comments therein).
 			 */
-<<<<<<< HEAD
-			ExecSetParamPlanMulti(planstate->plan->extParam,
-								  GetPerTupleExprContext(parentestate), NULL);
-=======
 			ExecSetParamPlanMulti(rcplanstate->plan->extParam,
-								  GetPerTupleExprContext(parentestate));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+								  GetPerTupleExprContext(parentestate), NULL);
 
 			i = list_length(parentestate->es_plannedstmt->paramExecTypes);
 
