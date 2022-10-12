@@ -497,16 +497,11 @@ PersistHoldablePortal(Portal portal)
 		 * disabled for no-scroll cursors.  But someday we might need to track
 		 * the offset between the holdStore and the cursor's nominal position
 		 * explicitly.
+		 *
+		 * Greenplum doesn't allow scanning backwards in MPP! skip this call
+		 * and skip the reset position call few lines down.
 		 */
-<<<<<<< HEAD
-		/*
-		 * We don't allow scanning backwards in MPP! skip this call and 
-		 * skip the reset position call few lines down.
-		 */
-		if (Gp_role == GP_ROLE_UTILITY)
-			ExecutorRewind(queryDesc);
-=======
-		if (portal->cursorOptions & CURSOR_OPT_SCROLL)
+		if (portal->cursorOptions & CURSOR_OPT_SCROLL && Gp_role == GP_ROLE_UTILITY)
 		{
 			ExecutorRewind(queryDesc);
 		}
@@ -523,7 +518,6 @@ PersistHoldablePortal(Portal portal)
 			if (portal->atEnd)
 				direction = NoMovementScanDirection;
 		}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/*
 		 * Change the destination to output to the tuplestore.  Note we tell
@@ -561,7 +555,7 @@ PersistHoldablePortal(Portal portal)
 		 * don't want to reset the position because we are already in
 		 * the position we need to be. Allow this only in utility mode.
 		 */
-		if(Gp_role == GP_ROLE_UTILITY)
+		if (Gp_role == GP_ROLE_UTILITY)
 		{
 			if (portal->atEnd)
 			{
@@ -576,19 +570,17 @@ PersistHoldablePortal(Portal portal)
 			{
 				tuplestore_rescan(portal->holdStore);
 
-<<<<<<< HEAD
-=======
-			/*
-			 * In the no-scroll case, the start of the tuplestore is exactly
-			 * where we want to be, so no repositioning is wanted.
-			 */
-			if (portal->cursorOptions & CURSOR_OPT_SCROLL)
-			{
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
-				if (!tuplestore_skiptuples(portal->holdStore,
-										   portal->portalPos,
-										   true))
-					elog(ERROR, "unexpected end of tuple stream");
+				/*
+				 * In the no-scroll case, the start of the tuplestore is exactly
+				 * where we want to be, so no repositioning is wanted.
+				 */
+				if (portal->cursorOptions & CURSOR_OPT_SCROLL)
+				{
+					if (!tuplestore_skiptuples(portal->holdStore,
+											   portal->portalPos,
+											   true))
+						elog(ERROR, "unexpected end of tuple stream");
+				}
 			}
 		}
 	}
