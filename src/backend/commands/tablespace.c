@@ -247,11 +247,8 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	char	   *location = NULL;
 	Oid			ownerId;
 	Datum		newOptions;
-<<<<<<< HEAD
 	List       *nonContentOptions = NIL;
-=======
 	bool		in_place;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Must be super user */
 	if (!superuser())
@@ -778,11 +775,6 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 		tablespaceoid, GpIdentity.dbid);
 
 	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
-<<<<<<< HEAD
-	location_with_dbid_dir = psprintf("%s/%d", location, GpIdentity.dbid);
-	location_with_version_dir = psprintf("%s/%s", location_with_dbid_dir,
-										 GP_TABLESPACE_VERSION_DIRECTORY);
-=======
 
 	/*
 	 * If we're asked to make an 'in place' tablespace, create the directory
@@ -800,9 +792,9 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 							linkloc)));
 	}
 
-	location_with_version_dir = psprintf("%s/%s", in_place ? linkloc : location,
-										 TABLESPACE_VERSION_DIRECTORY);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	location_with_dbid_dir = psprintf("%s/%d", in_place ? linkloc : location, GpIdentity.dbid);
+	location_with_version_dir = psprintf("%s/%s", in_place ? linkloc : location_with_dbid_dir,
+										 GP_TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.  If this fails,
@@ -890,11 +882,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 	/*
 	 * Create the symlink under PGDATA
 	 */
-<<<<<<< HEAD
-	if (symlink(location_with_dbid_dir, linkloc) < 0)
-=======
-	if (!in_place && symlink(location, linkloc) < 0)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	if (!in_place && symlink(location_with_dbid_dir, linkloc) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create symbolic link \"%s\": %m",
