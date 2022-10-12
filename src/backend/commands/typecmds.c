@@ -3253,19 +3253,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	pstate->p_ref_hook_state = (void *) domVal;
 
 	/*
-<<<<<<< HEAD
-	 * GPDB: transformExpr scribbles on the input, but we need to keep it intact
-	 * because we dispatch it afterwards.
-	 */
-	constr = (Constraint *) copyObject(constr);
-	expr = transformExpr(pstate, constr->raw_expr, EXPR_KIND_DOMAIN_CHECK);
-=======
 	 * Transform the expression; first we must copy the input, in case it's in
 	 * plan cache.
 	 */
 	expr = transformExpr(pstate, copyObject(constr->raw_expr),
 						 EXPR_KIND_DOMAIN_CHECK);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * Make sure it yields a boolean result.
