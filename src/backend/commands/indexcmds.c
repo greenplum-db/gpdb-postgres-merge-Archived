@@ -85,18 +85,6 @@
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
-<<<<<<< HEAD
-				  Oid *typeOidP,
-				  Oid *collationOidP,
-				  Oid *classOidP,
-				  int16 *colOptionP,
-				  List *attList,
-				  List *exclusionOpNames,
-				  Oid relId,
-				  const char *accessMethodName, Oid accessMethodId,
-				  bool amcanorder,
-				  bool isconstraint);
-=======
 							  Oid *typeOidP,
 							  Oid *collationOidP,
 							  Oid *classOidP,
@@ -113,7 +101,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
 							 List *colnames, List *exclusionOpNames,
 							 bool primary, bool isconstraint);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static char *ChooseIndexNameAddition(List *colnames);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 											Oid relId, Oid oldRelId, void *arg);
@@ -616,11 +603,14 @@ DefineIndex(Oid relationId,
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
-<<<<<<< HEAD
-	int			save_nestlevel = -1;
-	bool		shouldDispatch;
+	Oid			root_save_userid;
+	int			root_save_sec_context;
+	int			root_save_nestlevel;
 	int			i;
 
+	root_save_nestlevel = NewGUCNestLevel();
+
+	bool		shouldDispatch;
 	if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode())
 		shouldDispatch = true;
 	else
@@ -641,14 +631,6 @@ DefineIndex(Oid relationId,
 	 */
 	if (is_alter_table)
 		shouldDispatch = false;
-=======
-	Oid			root_save_userid;
-	int			root_save_sec_context;
-	int			root_save_nestlevel;
-	int			i;
-
-	root_save_nestlevel = NewGUCNestLevel();
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * Some callers need us to run with an empty default_tablespace; this is a
@@ -734,8 +716,7 @@ DefineIndex(Oid relationId,
 	 * parallel workers under the control of certain particular ambuild
 	 * functions will need to be updated, too.
 	 */
-<<<<<<< HEAD
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
 
 	/*
 	 * Appendoptimized tables need block directory relation for index
@@ -761,9 +742,6 @@ DefineIndex(Oid relationId,
 	}
 	table_close(rel, NoLock);
 
-=======
-	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	rel = table_open(relationId, lockmode);
 
 	/*
@@ -1397,7 +1375,6 @@ DefineIndex(Oid relationId,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * In the QD, remember the chosen index name and stash it with the
 	 * chosen OIDs, so that it's dispatched to the QE later.
 	 */
@@ -1407,14 +1384,14 @@ DefineIndex(Oid relationId,
 												  relationId,
 												  indexRelationName);
 	}
-=======
+
+	/*
 	 * Roll back any GUC changes executed by index functions, and keep
 	 * subsequent changes local to this command.  This is essential if some
 	 * index function changed a behavior-affecting GUC, e.g. search_path.
 	 */
 	AtEOXact_GUC(false, root_save_nestlevel);
 	root_save_nestlevel = NewGUCNestLevel();
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
@@ -1639,13 +1616,9 @@ DefineIndex(Oid relationId,
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
-<<<<<<< HEAD
 								skip_build, quiet, is_new_table);
-=======
-								skip_build, quiet);
 					SetUserIdAndSecContext(child_save_userid,
 										   child_save_sec_context);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 				}
 
 				pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_DONE,
@@ -1707,7 +1680,6 @@ DefineIndex(Oid relationId,
 		return address;
 	}
 
-<<<<<<< HEAD
 	stmt->idxname = indexRelationName;
 	if (shouldDispatch)
 	{
@@ -1726,13 +1698,10 @@ DefineIndex(Oid relationId,
 			cdb_sync_indcheckxmin_with_segments(indexRelationId);
 	}
 
-	if (!stmt->concurrent)
-=======
 	AtEOXact_GUC(false, root_save_nestlevel);
 	SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 
 	if (!concurrent)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		table_close(rel, NoLock);
@@ -2924,15 +2893,13 @@ ReindexIndex(ReindexStmt *stmt, bool isTopLevel)
 	persistence = get_rel_persistence(indOid);
 	relkind = get_rel_relkind(indOid);
 
-
-<<<<<<< HEAD
 	if (relkind == RELKIND_PARTITIONED_INDEX)
 		ReindexPartitions(indOid, options, concurrent, isTopLevel);
-	else if (concurrent &&
-			 persistence != RELPERSISTENCE_TEMP)
+	else if (concurrent && persistence != RELPERSISTENCE_TEMP)
 		ReindexRelationConcurrently(indOid, options);
 	else
-		reindex_index(indOid, false, persistence, options);
+		reindex_index(indOid, false, persistence,
+					  options | REINDEXOPT_REPORT_PROGRESS);
 
 	/*
 	 * Reindex on partitioned index will do the reindex for each index in
@@ -2955,16 +2922,6 @@ ReindexIndex(ReindexStmt *stmt, bool isTopLevel)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	persistence = irel->rd_rel->relpersistence;
-	index_close(irel, NoLock);
-
-	if (concurrent && persistence != RELPERSISTENCE_TEMP)
-		ReindexRelationConcurrently(indOid, options);
-	else
-		reindex_index(indOid, false, persistence,
-					  options | REINDEXOPT_REPORT_PROGRESS);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*
@@ -3051,7 +3008,6 @@ ReindexTable(ReindexStmt *stmt, bool isTopLevel)
 	bool		result;
 
 	/*
-<<<<<<< HEAD
 	 * On QE, we already know the table relation oid since we set it before
 	 * dispatch the reindex statement. reindex_relation will take care of the lock directly.
 	 * Other checks should already done on QD when calling RangeVarGetRelidExtended.
@@ -3066,8 +3022,6 @@ ReindexTable(ReindexStmt *stmt, bool isTopLevel)
 	}
 
 	/*
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	 * The lock level used here should match reindex_relation().
 	 *
 	 * If it's a temporary table, we will perform a non-concurrent reindex,
@@ -3080,14 +3034,9 @@ ReindexTable(ReindexStmt *stmt, bool isTopLevel)
 									   0,
 									   RangeVarCallbackOwnsTable, NULL);
 
-<<<<<<< HEAD
 	if (get_rel_relkind(heapOid) == RELKIND_PARTITIONED_TABLE)
 		ReindexPartitions(heapOid, options, concurrent, isTopLevel);
-	else if (concurrent &&
-			 get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
-=======
-	if (concurrent && get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	else if (concurrent && get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
 	{
 		result = ReindexRelationConcurrently(heapOid, options);
 
@@ -3454,12 +3403,8 @@ ReindexMultipleInternal(List *relids, int options, bool concurrent)
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
 
-<<<<<<< HEAD
 		/* check if the relation still exists */
 		if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relid)))
-=======
-		if (concurrent && get_rel_persistence(relid) != RELPERSISTENCE_TEMP)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		{
 			PopActiveSnapshot();
 			CommitTransactionCommand();
