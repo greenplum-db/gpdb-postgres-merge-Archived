@@ -904,13 +904,12 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 															 CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-<<<<<<< HEAD
 	
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now. Create
 	 * the triggers to back them as 'disabled'.
 	 */
-	char		tgenabled = TRIGGER_FIRES_ON_ORIGIN;
+	char		tgenabled = trigger_fires_when;
 	if (isInternal)
 	{
 		if (RI_FKey_trigger_type(funcoid))
@@ -928,9 +927,6 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 			elog(WARNING, "unrecognized internal trigger function %u", funcoid);
 	}
 	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(tgenabled);
-=======
-	values[Anum_pg_trigger_tgenabled - 1] = trigger_fires_when;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal || in_partition);
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
@@ -3456,17 +3452,13 @@ GetTupleForTrigger(EState *estate,
 {
 	Relation	relation = relinfo->ri_RelationDesc;
 
-<<<<<<< HEAD
 	/* these should be rejected when you try to create such triggers, but let's check */
 	if (RelationIsAppendOptimized(relation))
 		elog(ERROR, "UPDATE and DELETE triggers are not supported on append-only tables");
 
 	Assert(RelationIsHeap(relation));
 
-	if (newSlot != NULL)
-=======
 	if (epqslot != NULL)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	{
 		TM_Result	test;
 		TM_FailureData tmfd;
