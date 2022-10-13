@@ -1107,9 +1107,7 @@ typedef struct HashJoin
 {
 	Join		join;
 	List	   *hashclauses;
-<<<<<<< HEAD
 	List	   *hashqualclauses;
-=======
 	List	   *hashoperators;
 	List	   *hashcollations;
 
@@ -1118,7 +1116,6 @@ typedef struct HashJoin
 	 * perform lookups in the hashtable over the inner plan.
 	 */
 	List	   *hashkeys;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } HashJoin;
 
 #define SHARE_ID_NOT_SHARED (-1)
@@ -1207,8 +1204,6 @@ typedef struct Agg
 	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
-	bool		combineStates;	/* input tuples contain transition states */
-	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	Oid		   *grpCollations;
 	long		numGroups;		/* estimated number of groups in input */

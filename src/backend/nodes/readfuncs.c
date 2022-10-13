@@ -3150,13 +3150,10 @@ _readHashJoin(void)
 	ReadCommonJoin(&local_node->join);
 
 	READ_NODE_FIELD(hashclauses);
-<<<<<<< HEAD
 	READ_NODE_FIELD(hashqualclauses);
-=======
 	READ_NODE_FIELD(hashoperators);
 	READ_NODE_FIELD(hashcollations);
 	READ_NODE_FIELD(hashkeys);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	READ_DONE();
 }
@@ -3352,11 +3349,8 @@ _readHash(void)
 
 	ReadCommonPlan(&local_node->plan);
 
-<<<<<<< HEAD
-    READ_BOOL_FIELD(rescannable);           /*CDB*/
-=======
+	READ_BOOL_FIELD(rescannable); /*CDB*/
 	READ_NODE_FIELD(hashkeys);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	READ_OID_FIELD(skewTable);
 	READ_INT_FIELD(skewColumn);
 	READ_BOOL_FIELD(skewInherit);
