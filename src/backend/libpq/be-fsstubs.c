@@ -257,20 +257,11 @@ be_lo_creat(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId;
 
-<<<<<<< HEAD
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("large objects are not supported")));
 
-	/*
-	 * We don't actually need to store into fscxt, but create it anyway to
-	 * ensure that AtEOXact_LargeObject knows there is state to clean up
-	 */
-	CreateFSContext();
-
-=======
 	lo_cleanup_needed = true;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	lobjId = inv_create(InvalidOid);
 
 	PG_RETURN_OID(lobjId);
@@ -281,20 +272,11 @@ be_lo_create(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 
-<<<<<<< HEAD
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("large objects are not supported")));
 
-	/*
-	 * We don't actually need to store into fscxt, but create it anyway to
-	 * ensure that AtEOXact_LargeObject knows there is state to clean up
-	 */
-	CreateFSContext();
-
-=======
 	lo_cleanup_needed = true;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	lobjId = inv_create(lobjId);
 
 	PG_RETURN_OID(lobjId);

@@ -815,7 +815,6 @@ ClientAuthentication(Port *port)
 
 		case uaGSS:
 #ifdef ENABLE_GSS
-<<<<<<< HEAD
 			if (check_valid_until_for_gssapi(port) == STATUS_ERROR)
 			{
 				ereport(FATAL,
@@ -824,13 +823,11 @@ ClientAuthentication(Port *port)
 							port->user_name)));
 			}
 
-=======
 			/* We might or might not have the gss workspace already */
 			if (port->gss == NULL)
 				port->gss = (pg_gssinfo *)
 					MemoryContextAllocZero(TopMemoryContext,
 										   sizeof(pg_gssinfo));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			port->gss->auth = true;
 
 			/*
@@ -1539,13 +1536,8 @@ pg_GSS_recvauth(Port *port)
 		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 		{
 			gss_delete_sec_context(&lmin_s, &port->gss->ctx, GSS_C_NO_BUFFER);
-<<<<<<< HEAD
-			pg_GSS_error_be(ERROR,
-						 _("accepting GSS security context failed"),
-=======
-			pg_GSS_error(_("accepting GSS security context failed"),
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
-						 maj_stat, min_stat);
+			pg_GSS_error_be(_("accepting GSS security context failed"),
+							maj_stat, min_stat);
 			return STATUS_ERROR;
 		}
 
@@ -1584,14 +1576,9 @@ pg_GSS_checkauth(Port *port)
 	 */
 	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
 	if (maj_stat != GSS_S_COMPLETE)
-<<<<<<< HEAD
-		pg_GSS_error_be(ERROR,
-					 _("retrieving GSS user name failed"),
-=======
 	{
-		pg_GSS_error(_("retrieving GSS user name failed"),
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
-					 maj_stat, min_stat);
+		pg_GSS_error_be(_("retrieving GSS user name failed"),
+						maj_stat, min_stat);
 		return STATUS_ERROR;
 	}
 

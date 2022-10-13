@@ -82,12 +82,6 @@ static uint32 PqGSSMaxPktSize;	/* Maximum size we can encrypt and fit the
  * transport negotiation is complete).
  *
  * On success, returns the number of data bytes consumed (possibly less than
-<<<<<<< HEAD
- * len).  On failure, returns -1 with errno set appropriately.  (For fatal
- * errors, we may just elog and exit, if errno wouldn't be sufficient to
- * describe the error.)  For retryable errors, caller should call again
- * (passing the same data) once the socket is ready.
-=======
  * len).  On failure, returns -1 with errno set appropriately.  For retryable
  * errors, caller should call again (passing the same data) once the socket
  * is ready.
@@ -96,7 +90,6 @@ static uint32 PqGSSMaxPktSize;	/* Maximum size we can encrypt and fit the
  * since it would try to write to the client, probably resulting in infinite
  * recursion.  Instead, use elog(COMMERROR) to log extra info about the
  * failure if necessary, and then return an errno indicating connection loss.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  */
 ssize_t
 be_gssapi_write(Port *port, void *ptr, size_t len)
@@ -120,16 +113,11 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 	 * again, so if it offers a len less than that, something is wrong.
 	 */
 	if (len < PqGSSSendConsumed)
-<<<<<<< HEAD
-		elog(FATAL, "GSSAPI caller failed to retransmit all data needing to be retried");
-
-=======
 	{
 		elog(COMMERROR, "GSSAPI caller failed to retransmit all data needing to be retried");
 		errno = ECONNRESET;
 		return -1;
 	}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Discount whatever source data we already encrypted. */
 	bytes_to_encrypt = len - PqGSSSendConsumed;
 	bytes_encrypted = PqGSSSendConsumed;
@@ -212,21 +200,8 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 		major = gss_wrap(&minor, gctx, 1, GSS_C_QOP_DEFAULT,
 						 &input, &conf_state, &output);
 		if (major != GSS_S_COMPLETE)
-<<<<<<< HEAD
-			pg_GSS_error_be(FATAL, gettext_noop("GSSAPI wrap error"), major, minor);
-
-		if (conf_state == 0)
-			ereport(FATAL,
-					(errmsg("outgoing GSSAPI message would not use confidentiality")));
-
-		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
-			ereport(FATAL,
-					(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
-							(size_t) output.length,
-							PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
-=======
 		{
-			pg_GSS_error(_("GSSAPI wrap error"), major, minor);
+			pg_GSS_error_be(_("GSSAPI wrap error"), major, minor);
 			errno = ECONNRESET;
 			return -1;
 		}
@@ -246,7 +221,6 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 			errno = ECONNRESET;
 			return -1;
 		}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		bytes_encrypted += input.length;
 		bytes_to_encrypt -= input.length;
@@ -278,17 +252,11 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
  * transport negotiation is complete).
  *
  * Returns the number of data bytes read, or on failure, returns -1
-<<<<<<< HEAD
- * with errno set appropriately.  (For fatal errors, we may just elog and
- * exit, if errno wouldn't be sufficient to describe the error.)  For
- * retryable errors, caller should call again once the socket is ready.
-=======
  * with errno set appropriately.  For retryable errors, caller should call
  * again once the socket is ready.
  *
  * We treat fatal errors the same as in be_gssapi_write(), even though the
  * argument about infinite recursion doesn't apply here.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  */
 ssize_t
 be_gssapi_read(Port *port, void *ptr, size_t len)
@@ -378,12 +346,6 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 		input.length = ntohl(*(uint32 *) PqGSSRecvBuffer);
 
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
-<<<<<<< HEAD
-			ereport(FATAL,
-					(errmsg("oversize GSSAPI packet sent by the client (%zu > %zu)",
-							(size_t) input.length,
-							PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))));
-=======
 		{
 			ereport(COMMERROR,
 					(errmsg("oversize GSSAPI packet sent by the client (%zu > %zu)",
@@ -392,7 +354,6 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 			errno = ECONNRESET;
 			return -1;
 		}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/*
 		 * Read as much of the packet as we are able to on this call into
@@ -424,16 +385,8 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 
 		major = gss_unwrap(&minor, gctx, &input, &output, &conf_state, NULL);
 		if (major != GSS_S_COMPLETE)
-<<<<<<< HEAD
-			pg_GSS_error_be(FATAL, gettext_noop("GSSAPI unwrap error"),
-						 major, minor);
-
-		if (conf_state == 0)
-			ereport(FATAL,
-					(errmsg("incoming GSSAPI message did not use confidentiality")));
-=======
 		{
-			pg_GSS_error(_("GSSAPI unwrap error"), major, minor);
+			pg_GSS_error_be(_("GSSAPI unwrap error"), major, minor);
 			errno = ECONNRESET;
 			return -1;
 		}
@@ -444,7 +397,6 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 			errno = ECONNRESET;
 			return -1;
 		}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		memcpy(PqGSSResultBuffer, output.value, output.length);
 		PqGSSResultLength = output.length;
@@ -547,15 +499,12 @@ secure_open_gssapi(Port *port)
 				minor;
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Allocate subsidiary Port data for GSSAPI operations.
 	 */
 	port->gss = (pg_gssinfo *)
 		MemoryContextAllocZero(TopMemoryContext, sizeof(pg_gssinfo));
 
 	/*
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	 * Allocate buffers and initialize state variables.  By malloc'ing the
 	 * buffers at this point, we avoid wasting static data space in processes
 	 * that will never use them, and we ensure that the buffers are
@@ -616,12 +565,6 @@ secure_open_gssapi(Port *port)
 		 * Verify on our side that the client doesn't do something funny.
 		 */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE)
-<<<<<<< HEAD
-			ereport(FATAL,
-					(errmsg("oversize GSSAPI packet sent by the client (%zu > %d)",
-							(size_t) input.length,
-							PQ_GSS_RECV_BUFFER_SIZE)));
-=======
 		{
 			ereport(COMMERROR,
 					(errmsg("oversize GSSAPI packet sent by the client (%zu > %d)",
@@ -629,7 +572,6 @@ secure_open_gssapi(Port *port)
 							PQ_GSS_RECV_BUFFER_SIZE)));
 			return -1;
 		}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/*
 		 * Get the rest of the packet so we can pass it to GSSAPI to accept
@@ -649,11 +591,7 @@ secure_open_gssapi(Port *port)
 									   NULL, NULL);
 		if (GSS_ERROR(major))
 		{
-<<<<<<< HEAD
-			pg_GSS_error_be(ERROR, gettext_noop("could not accept GSSAPI security context"),
-=======
-			pg_GSS_error(_("could not accept GSSAPI security context"),
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+			pg_GSS_error_be(_("could not accept GSSAPI security context"),
 						 major, minor);
 			gss_release_buffer(&minor, &output);
 			return -1;
@@ -679,12 +617,6 @@ secure_open_gssapi(Port *port)
 			uint32		netlen = htonl(output.length);
 
 			if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
-<<<<<<< HEAD
-				ereport(FATAL,
-						(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
-								(size_t) output.length,
-								PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
-=======
 			{
 				ereport(COMMERROR,
 						(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
@@ -693,7 +625,6 @@ secure_open_gssapi(Port *port)
 				gss_release_buffer(&minor, &output);
 				return -1;
 			}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 			memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
 			PqGSSSendLength += sizeof(uint32);
@@ -754,15 +685,10 @@ secure_open_gssapi(Port *port)
 								&PqGSSMaxPktSize);
 
 	if (GSS_ERROR(major))
-<<<<<<< HEAD
-		pg_GSS_error_be(FATAL, gettext_noop("GSSAPI size check error"),
-					 major, minor);
-=======
 	{
-		pg_GSS_error(_("GSSAPI size check error"), major, minor);
+		pg_GSS_error_be(_("GSSAPI size check error"), major, minor);
 		return -1;
 	}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	port->gss->enc = true;
 
