@@ -2163,14 +2163,13 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 										(Index) 0,
 										rtoffset);
 
-<<<<<<< HEAD
 		hj->hashqualclauses = fix_join_expr(root,
 											hj->hashqualclauses,
 											outer_itlist,
 											inner_itlist,
 											(Index) 0,
 											rtoffset);
-=======
+
 		/*
 		 * HashJoin's hashkeys are used to look for matching tuples from its
 		 * outer plan (not the Hash node!) in the hashtable.
@@ -2180,7 +2179,6 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 											   outer_itlist,
 											   OUTER_VAR,
 											   rtoffset);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 
 	/*

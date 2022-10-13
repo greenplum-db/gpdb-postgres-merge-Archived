@@ -89,14 +89,9 @@ static List *generate_subquery_params(PlannerInfo *root, List *tlist,
 									  List **paramIds);
 static Node *convert_testexpr_mutator(Node *node,
 									  convert_testexpr_context *context);
-<<<<<<< HEAD
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
-static bool testexpr_is_hashable(Node *testexpr);
-=======
-static bool subplan_is_hashable(Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr, List *param_ids);
 static bool test_opexpr_is_hashable(OpExpr *testexpr, List *param_ids);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static bool hash_ok_operator(OpExpr *expr);
 #if 0
 /*
@@ -724,13 +719,8 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		 */
 		if (subLinkType == ANY_SUBLINK &&
 			splan->parParam == NIL &&
-<<<<<<< HEAD
 			subplan_is_hashable(root, plan) &&
-			testexpr_is_hashable(splan->testexpr))
-=======
-			subplan_is_hashable(plan) &&
 			testexpr_is_hashable(splan->testexpr, splan->paramIds))
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			splan->useHashTable = true;
 
 		/*
