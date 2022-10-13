@@ -210,11 +210,8 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 								 ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 										 Index scanrelid, Oid indexid,
-<<<<<<< HEAD
 										 List *indexqual, List *indexqualorig,
-=======
-										 List *indexqual, List *recheckqual,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+										 List *recheckqual,
 										 List *indexorderby,
 										 List *indextlist,
 										 ScanDirection indexscandir);
@@ -260,17 +257,11 @@ static NestLoop *make_nestloop(List *tlist,
 							   JoinType jointype, bool inner_unique);
 static HashJoin *make_hashjoin(List *tlist,
 							   List *joinclauses, List *otherclauses,
-<<<<<<< HEAD
-							   List *hashclauses, Plan *lefttree,
-							   Plan *righttree, JoinType jointype,
-							   bool inner_unique);
-=======
 							   List *hashclauses,
 							   List *hashoperators, List *hashcollations,
 							   List *hashkeys,
 							   Plan *lefttree, Plan *righttree,
 							   JoinType jointype, bool inner_unique);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static Hash *make_hash(Plan *lefttree,
 					   List *hashkeys,
 					   Oid skewTable,
@@ -4378,22 +4369,6 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	}
 	if (lc == NULL)				/* shouldn't happen */
 		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
-<<<<<<< HEAD
-=======
-	if (ndx >= list_length(cteroot->cte_plan_ids))
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
-	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
-	if (plan_id <= 0)
-		elog(ERROR, "no plan was made for CTE \"%s\"", rte->ctename);
-	foreach(lc, cteroot->init_plans)
-	{
-		ctesplan = (SubPlan *) lfirst(lc);
-		if (ctesplan->plan_id == plan_id)
-			break;
-	}
-	if (lc == NULL)				/* shouldn't happen */
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * In PostgreSQL, we use the index to look up the plan ID in the
@@ -5472,13 +5447,10 @@ create_hashjoin_plan(PlannerInfo *root,
 	Oid			skewTable = InvalidOid;
 	AttrNumber	skewColumn = InvalidAttrNumber;
 	bool		skewInherit = false;
-<<<<<<< HEAD
+	ListCell   *lc;
 	bool		partition_selectors_created;
 
 	push_partition_selector_candidate_for_join(root, &best_path->jpath);
-=======
-	ListCell   *lc;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/*
 	 * HashJoin can project, so we don't have to demand exact tlists from the
@@ -6344,11 +6316,8 @@ make_indexonlyscan(List *qptlist,
 				   Index scanrelid,
 				   Oid indexid,
 				   List *indexqual,
-<<<<<<< HEAD
 				   List *indexqualorig,
-=======
 				   List *recheckqual,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 				   List *indexorderby,
 				   List *indextlist,
 				   ScanDirection indexscandir)
@@ -6363,11 +6332,8 @@ make_indexonlyscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->indexid = indexid;
 	node->indexqual = indexqual;
-<<<<<<< HEAD
 	node->indexqualorig = indexqualorig;
-=======
 	node->recheckqual = recheckqual;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	node->indexorderby = indexorderby;
 	node->indextlist = indextlist;
 	node->indexorderdir = indexscandir;
@@ -6773,13 +6739,10 @@ make_hashjoin(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->hashclauses = hashclauses;
-<<<<<<< HEAD
 	node->hashqualclauses = NIL;
-=======
 	node->hashoperators = hashoperators;
 	node->hashcollations = hashcollations;
 	node->hashkeys = hashkeys;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	node->join.jointype = jointype;
 	node->join.inner_unique = inner_unique;
 	node->join.joinqual = joinclauses;
