@@ -624,12 +624,9 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #search_path = '"$user", public'	# schema names
 #row_security = on
 #default_tablespace = ''		# a tablespace name, '' uses the default
-<<<<<<< HEAD
-=======
 #temp_tablespaces = ''			# a list of tablespace names, '' uses
 					# only default tablespace
 #default_table_access_method = 'heap'
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
@@ -788,13 +785,8 @@ gp_vmem_protect_limit = 8192  #Virtual memory limit (in MB).
 
 #include_dir = '...'			# include files ending in '.conf' from
 					# a directory, e.g., 'conf.d'
-<<<<<<< HEAD
-#include_if_exists = ''			# include file only if it exists
-#include = 'special.conf'				# include file
-=======
 #include_if_exists = '...'		# include file only if it exists
 #include = '...'			# include file
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 
 #------------------------------------------------------------------------------

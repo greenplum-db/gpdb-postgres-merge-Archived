@@ -210,11 +210,8 @@ DecodeXLogOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		case XLOG_FPW_CHANGE:
 		case XLOG_FPI_FOR_HINT:
 		case XLOG_FPI:
-<<<<<<< HEAD
 		case XLOG_NEXTRELFILENODE:
-=======
 		case XLOG_OVERWRITE_CONTRECORD:
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			break;
 		default:
 			elog(ERROR, "unexpected RM_XLOG_ID record type: %u", info);

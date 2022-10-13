@@ -201,13 +201,11 @@ StartupProcExit(int code, Datum arg)
 void
 StartupProcessMain(void)
 {
-<<<<<<< HEAD
 	am_startup = true;
-=======
+
 	/* Arrange to clean up at startup process exit */
 	on_shmem_exit(StartupProcExit, 0);
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/*
 	 * Properly accept or ignore signals the postmaster might send us.
 	 */

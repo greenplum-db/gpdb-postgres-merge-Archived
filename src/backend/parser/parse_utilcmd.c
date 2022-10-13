@@ -97,12 +97,8 @@ typedef struct
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
 	List	   *ixconstraints;	/* index-creating constraints */
-<<<<<<< HEAD
 	List	   *attr_encodings; /* List of ColumnReferenceStorageDirectives */
-	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
-=======
 	List	   *likeclauses;	/* LIKE clauses that need post-processing */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	List	   *extstats;		/* cloned extended statistics */
 	List	   *blist;			/* "before list" of things to do before
 								 * creating the table */
@@ -1038,18 +1034,13 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  * transformTableLikeClause
  *
  * Change the LIKE <srctable> portion of a CREATE TABLE statement into
-<<<<<<< HEAD
- * column definitions which recreate the user defined column portions of
- * <srctable>.
- *
- * GPDB: if forceBareCol is true we disallow inheriting any indexes/constr/defaults.
-=======
  * column definitions that recreate the user defined column portions of
  * <srctable>.  Also, if there are any LIKE options that we can't fully
  * process at this point, add the TableLikeClause to cxt->likeclauses, which
  * will cause utility.c to call expandTableLikeClause() after the new
  * table has been created.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+ * 
+ * GPDB: if forceBareCol is true we disallow inheriting any indexes/constr/defaults.
  */
 static void
 transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause,
@@ -1233,51 +1224,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Likewise, copy indexes if requested
-	 */
-	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
-		relation->rd_rel->relhasindex)
-	{
-		List	   *parent_indexes;
-		ListCell   *l;
-
-		parent_indexes = RelationGetIndexList(relation);
-
-		foreach(l, parent_indexes)
-		{
-			Oid			parent_index_oid = lfirst_oid(l);
-			Relation	parent_index;
-			IndexStmt  *index_stmt;
-
-			parent_index = index_open(parent_index_oid, AccessShareLock);
-
-			/* Build CREATE INDEX statement to recreate the parent_index */
-			index_stmt = generateClonedIndexStmt(cxt->relation,
-												 parent_index,
-												 attmap, tupleDesc->natts,
-												 NULL);
-
-			/* Copy comment on index, if requested */
-			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
-			{
-				comment = GetComment(parent_index_oid, RelationRelationId, 0);
-
-				/*
-				 * We make use of IndexStmt's idxcomment option, so as not to
-				 * need to know now what name the index will have.
-				 */
-				index_stmt->idxcomment = comment;
-			}
-
-			/* Save it in the inh_indexes list for the time being */
-			cxt->inh_indexes = lappend(cxt->inh_indexes, index_stmt);
-
-			index_close(parent_index, AccessShareLock);
-		}
-	}
-
-	/*
 	 * GPDB_12_MERGE_FIXME:
 	 * 		This is wrong and creates unspecified behaviour when multiple like
 	 * 		clauses are present in the statement.
@@ -1331,11 +1277,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
-	 * Likewise, copy extended statistics if requested
-=======
 	 * We may copy extended statistics if requested, since the representation
 	 * of CreateStatsStmt doesn't depend on column numbers.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	 */
 	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
 	{
@@ -4368,12 +4311,8 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
-<<<<<<< HEAD
-	cxt.inh_indexes = NIL;
 	cxt.attr_encodings = NIL;
-=======
 	cxt.likeclauses = NIL;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;

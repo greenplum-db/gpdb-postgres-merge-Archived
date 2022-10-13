@@ -1386,17 +1386,11 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 int
 mdsyncfiletag(const FileTag *ftag, char *path)
 {
-<<<<<<< HEAD
 	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId, 0);
-	MdfdVec    *v;
-	char	   *p;
-=======
-	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
 	File		file;
 	bool		need_to_close;
 	int			result,
 				save_errno;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* See if we already have the file open, or need to open it. */
 	if (ftag->segno < reln->md_num_open_segs[ftag->forknum])

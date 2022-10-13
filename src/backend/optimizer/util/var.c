@@ -187,9 +187,6 @@ cdb_walk_vars(Node                         *node,
 Relids
 pull_varnos(Node *node)
 {
-<<<<<<< HEAD
-	return pull_varnos_of_level(node, 0);
-=======
 	return pull_varnos_new(NULL, node);
 }
 
@@ -212,7 +209,6 @@ pull_varnos_new(PlannerInfo *root, Node *node)
 									0);
 
 	return context.varnos;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*

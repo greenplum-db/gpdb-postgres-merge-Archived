@@ -53,13 +53,10 @@
 #include "optimizer/optimizer.h"
 #include "parser/parse_node.h"
 #include "parser/parse_agg.h"
+#include "parser/parse_cte.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
-<<<<<<< HEAD
-#include "parser/parse_cte.h"
-=======
 #include "parser/parse_relation.h"
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #include "parser/parser.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
@@ -7689,11 +7686,9 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_NextValueExpr:
 		case T_NullIfExpr:
 		case T_Aggref:
-<<<<<<< HEAD
-=======
+		/* GPDB_12_12_MERGE_FIXME, GroupingFunc and WindowFunc are not considered as simple nodes by Greenplum, I doubt there is any difference */
 		case T_GroupingFunc:
 		case T_WindowFunc:
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		case T_FuncExpr:
 			/* function-like: name(..) or name[..] */
 			return true;
