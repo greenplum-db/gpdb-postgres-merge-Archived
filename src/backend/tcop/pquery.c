@@ -1977,7 +1977,6 @@ DoPortalRewind(Portal portal)
 }
 
 /*
-<<<<<<< HEAD
  * Initializes the corresponding BackoffBackendEntry for this backend
  */
 static void
@@ -1990,7 +1989,9 @@ PortalBackoffEntryInit(Portal portal)
 		/* Initialize the SHM backend entry */
 		BackoffBackendEntryInit(gp_session_id, gp_command_count, portal->queueId);
 	}
-=======
+}
+
+/*
  * PlannedStmtRequiresSnapshot - what it says on the tin
  */
 bool
@@ -2069,5 +2070,4 @@ EnsurePortalSnapshotExists(void)
 	PushActiveSnapshotWithLevel(GetTransactionSnapshot(), portal->createLevel);
 	/* PushActiveSnapshotWithLevel might have copied the snapshot */
 	portal->portalSnapshot = GetActiveSnapshot();
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }

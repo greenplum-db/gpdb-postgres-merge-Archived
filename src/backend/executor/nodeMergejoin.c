@@ -1196,11 +1196,6 @@ ExecMergeJoin_guts(PlanState *pstate)
 					 *	no more inners, no more matches are possible.
 					 * ----------------
 					 */
-<<<<<<< HEAD
-					if (compareResult <= 0 && !((MergeJoin*)node->js.ps.plan)->unique_outer)
-						elog(ERROR, "Mergejoin: compareResult > 0, bad plan ?");
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 					innerTupleSlot = node->mj_InnerTupleSlot;
 
 					/* reload comparison data for current inner */

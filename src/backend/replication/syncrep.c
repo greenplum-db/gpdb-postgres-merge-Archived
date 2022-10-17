@@ -671,19 +671,13 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	 * Nothing more to do if we are not managing a sync standby or there are
 	 * not enough synchronous standbys.
 	 */
-<<<<<<< HEAD
 	if (IS_QUERY_DISPATCHER())
 	{
 		if (list_length(sync_standbys) == 0)
 			return false;
 	}
 	else if (!(*am_sync) ||
-		SyncRepConfig == NULL ||
-		list_length(sync_standbys) < SyncRepConfig->num_sync)
-=======
-	if (!(*am_sync) ||
 		num_standbys < SyncRepConfig->num_sync)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	{
 		pfree(sync_standbys);
 		return false;

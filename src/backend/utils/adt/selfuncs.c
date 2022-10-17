@@ -5516,9 +5516,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	{
 		bool		use_mcvs = have_data;
 
-<<<<<<< HEAD
-		fmgr_info(opfuncoid, &opproc);
-
 		/*
 		 * GPDB: See the identical check, above, for histogram data.
 		 */
@@ -5526,10 +5523,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			elog(ERROR, "invalid MCV array of type %s, for attribute of type %s",
 				 format_type_be(sslot.valuetype), format_type_be(vardata->atttype));
 
-		for (i = 0; i < sslot.nvalues; i++)
-=======
 		if (!have_data)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		{
 			double		sumcommon = 0.0;
 			double		nullfrac;

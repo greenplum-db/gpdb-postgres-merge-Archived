@@ -587,7 +587,6 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 	return pg_ls_dir(fcinfo);
 }
 
-<<<<<<< HEAD
 /* ------------------------------------
  * pg_file_write_internal - Workhorse for pg_file_write functions.
  *
@@ -1057,15 +1056,12 @@ pg_logdir_ls_v1_1(PG_FUNCTION_ARGS)
 	return (pg_logdir_ls_internal(fcinfo));
 }
 
-/* Generic function to return a directory listing of files */
-=======
 /*
  * Generic function to return a directory listing of files.
  *
  * If the directory isn't there, silently return an empty set if missing_ok.
  * Other unreadable-directory cases throw an error.
  */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static Datum
 pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 {

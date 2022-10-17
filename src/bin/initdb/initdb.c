@@ -3298,8 +3298,8 @@ main(int argc, char *argv[])
 		{"waldir", required_argument, NULL, 'X'},
 		{"wal-segsize", required_argument, NULL, 12},
 		{"data-checksums", no_argument, NULL, 'k'},
-        {"max_connections", required_argument, NULL, 1001},     /*CDB*/
-        {"shared_buffers", required_argument, NULL, 1003},      /*CDB*/
+		{"max_connections", required_argument, NULL, 1001},     /*CDB*/
+		{"shared_buffers", required_argument, NULL, 1003},      /*CDB*/
 		{"allow-group-access", no_argument, NULL, 'g'},
 		{NULL, 0, NULL, 0}
 	};
@@ -3309,6 +3309,7 @@ main(int argc, char *argv[])
 	 * their short version value
 	 */
 	int			c;
+	int			option_index;
 	char	   *effective_user;
 	PQExpBuffer start_db_cmd;
 	char		pg_ctl_path[MAXPGPATH];
@@ -3346,11 +3347,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "dD:E:kL:nNU:WA:sST:X:g", long_options, NULL)) != -1)
-=======
 	while ((c = getopt_long(argc, argv, "A:dD:E:gkL:nNsST:U:WX:", long_options, &option_index)) != -1)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	{
 		switch (c)
 		{

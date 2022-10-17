@@ -9341,70 +9341,66 @@ ShowAllGUCConfig(DestReceiver *dest)
 }
 
 /*
-<<<<<<< HEAD
- * return if the option were modified (w.r.t. config file)
+ * return if the option is different from its boot value
  */
 bool is_guc_modified(struct config_generic *conf)
 {
+	bool modified = false;
+
 	switch (conf->vartype)
 	{
-		case PGC_BOOL:
-			{
-				struct config_bool *lconf = (struct config_bool *) conf;
+	case PGC_BOOL:
+		{
+			struct config_bool *lconf = (struct config_bool *) conf;
 
-				return (lconf->boot_val != *(lconf->variable));
-			}
-			break;
+			modified = (lconf->boot_val != *(lconf->variable));
+		}
+		break;
 
-		case PGC_INT:
-			{
-				struct config_int *lconf = (struct config_int *) conf;
+	case PGC_INT:
+		{
+			struct config_int *lconf = (struct config_int *) conf;
 
-				return (lconf->boot_val != *(lconf->variable));
-			}
-			break;
+			modified = (lconf->boot_val != *(lconf->variable));
+		}
+		break;
 
-		case PGC_REAL:
-			{
-				struct config_real *lconf = (struct config_real *) conf;
+	case PGC_REAL:
+		{
+			struct config_real *lconf = (struct config_real *) conf;
 
-				return (lconf->boot_val != *(lconf->variable));
-			}
-			break;
+			modified = (lconf->boot_val != *(lconf->variable));
+		}
+		break;
 
-		case PGC_STRING:
-			{
-				struct config_string *lconf = (struct config_string *) conf;
+	case PGC_STRING:
+		{
+			struct config_string *lconf = (struct config_string *) conf;
 
-				return (strcmp(lconf->boot_val, *(lconf->variable)) != 0);
-			}
-			break;
+			modified = (strcmp(lconf->boot_val, *(lconf->variable)) != 0);
+		}
+		break;
 
-		case PGC_ENUM:
-			{
-				struct config_enum *lconf = (struct config_enum *) conf;
+	case PGC_ENUM:
+		{
+			struct config_enum *lconf = (struct config_enum *) conf;
 
-				return (lconf->boot_val != *(lconf->variable));
-			}
-			break;
+			modified = (lconf->boot_val != *(lconf->variable));
+		}
+		break;
 
-		default:
-			elog(ERROR, "unexpected GUC type: %d", conf->vartype);
+	default:
+		elog(ERROR, "unexpected GUC type: %d", conf->vartype);
 	}
 
-	return false;
+	return modified;
 }
 
 /*
- * Returns an array of modified GUC options to show in EXPLAIN. Only options
- * related to query planning (marked with GUC_EXPLAIN), with values different
- * from built-in defaults.
-=======
  * Return an array of modified GUC options to show in EXPLAIN.
  *
  * We only report options related to query planning (marked with GUC_EXPLAIN),
  * with values different from their built-in defaults.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  */
 struct config_generic **
 get_explain_guc_options(int *num)
@@ -9433,65 +9429,8 @@ get_explain_guc_options(int *num)
 			 !is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_SETTINGS)))
 			continue;
 
-<<<<<<< HEAD
-		/* only parameters explicitly marked for inclusion in explain */
-		if (!(conf->flags & GUC_EXPLAIN))
-			continue;
-
 		/* skip GUC variables that match the built-in default */
 		if (!is_guc_modified(conf))
-=======
-		/* return only options that are different from their boot values */
-		modified = false;
-
-		switch (conf->vartype)
-		{
-			case PGC_BOOL:
-				{
-					struct config_bool *lconf = (struct config_bool *) conf;
-
-					modified = (lconf->boot_val != *(lconf->variable));
-				}
-				break;
-
-			case PGC_INT:
-				{
-					struct config_int *lconf = (struct config_int *) conf;
-
-					modified = (lconf->boot_val != *(lconf->variable));
-				}
-				break;
-
-			case PGC_REAL:
-				{
-					struct config_real *lconf = (struct config_real *) conf;
-
-					modified = (lconf->boot_val != *(lconf->variable));
-				}
-				break;
-
-			case PGC_STRING:
-				{
-					struct config_string *lconf = (struct config_string *) conf;
-
-					modified = (strcmp(lconf->boot_val, *(lconf->variable)) != 0);
-				}
-				break;
-
-			case PGC_ENUM:
-				{
-					struct config_enum *lconf = (struct config_enum *) conf;
-
-					modified = (lconf->boot_val != *(lconf->variable));
-				}
-				break;
-
-			default:
-				elog(ERROR, "unexpected GUC type: %d", conf->vartype);
-		}
-
-		if (!modified)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			continue;
 
 		/* OK, report it */

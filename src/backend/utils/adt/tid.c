@@ -34,11 +34,8 @@
 #include "parser/parsetree.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
-=======
 #include "utils/hashutils.h"
 #include "utils/lsyscache.h"
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/varlena.h"
