@@ -1335,34 +1335,8 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 
 	if (!ExecHashJoinReloadHashTable(hjstate))
 	{
-<<<<<<< HEAD
 		/* We no longer continue as we couldn't load the batch */
 		return false;
-=======
-		if (BufFileSeek(innerFile, 0, 0L, SEEK_SET))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not rewind hash-join temporary file")));
-
-		while ((slot = ExecHashJoinGetSavedTuple(hjstate,
-												 innerFile,
-												 &hashvalue,
-												 hjstate->hj_HashTupleSlot)))
-		{
-			/*
-			 * NOTE: some tuples may be sent to future batches.  Also, it is
-			 * possible for hashtable->nbatch to be increased here!
-			 */
-			ExecHashTableInsert(hashtable, slot, hashvalue);
-		}
-
-		/*
-		 * after we build the hash table, the inner batch file is no longer
-		 * needed
-		 */
-		BufFileClose(innerFile);
-		hashtable->innerBatchFile[curbatch] = NULL;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 
 	/*
@@ -1519,12 +1493,8 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 					  HashJoinTable hashtable, BufFile **fileptr,
 					  MemoryContext bfCxt)
 {
-<<<<<<< HEAD
-	BufFile	   *file = *fileptr;
-	size_t		written;
-=======
 	BufFile    *file = *fileptr;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	size_t		written;
 
 	if (hashtable->work_set == NULL)
 	{
@@ -1562,7 +1532,6 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 		MemoryContextSwitchTo(oldcxt);
 	}
 
-<<<<<<< HEAD
 	written = BufFileWrite(file, (void *) &hashvalue, sizeof(uint32));
 	if (written != sizeof(uint32))
 	{
@@ -1578,10 +1547,6 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 				(errcode_for_file_access(),
 				 errmsg("could not write to temporary file: %m")));
 	}
-=======
-	BufFileWrite(file, (void *) &hashvalue, sizeof(uint32));
-	BufFileWrite(file, (void *) tuple, tuple->t_len);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*
@@ -1614,20 +1579,16 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	 * cheating.
 	 */
 	nread = BufFileRead(file, (void *) header, sizeof(header));
-	if (nread != sizeof(header))				/* end of file */
+	if (nread == 0)				/* end of file */
 	{
 		ExecClearTuple(tupleSlot);
 		return NULL;
 	}
-<<<<<<< HEAD
-
-=======
 	if (nread != sizeof(header))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read from hash-join temporary file: read only %zu of %zu bytes",
 						nread, sizeof(header))));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	*hashvalue = header[0];
 	tuple = (MinimalTuple) palloc(header[1]);
 	tuple->t_len = header[1];
@@ -1698,7 +1659,12 @@ ExecReScanHashJoin(HashJoinState *node)
 		else
 		{
 			/* must destroy and rebuild hash table */
-<<<<<<< HEAD
+			HashState  *hashNode = castNode(HashState, innerPlanState(node));
+
+			/* for safety, be sure to clear child plan node's pointer too */
+			Assert(hashNode->hashtable == node->hj_HashTable);
+			hashNode->hashtable = NULL;
+
 			if (!node->hj_HashTable->eagerlyReleased)
 			{
 				HashState  *hashState = (HashState *) innerPlanState(node);
@@ -1706,15 +1672,7 @@ ExecReScanHashJoin(HashJoinState *node)
 				ExecHashTableDestroy(hashState, node->hj_HashTable);
 			}
 			pfree(node->hj_HashTable);
-=======
-			HashState  *hashNode = castNode(HashState, innerPlanState(node));
 
-			/* for safety, be sure to clear child plan node's pointer too */
-			Assert(hashNode->hashtable == node->hj_HashTable);
-			hashNode->hashtable = NULL;
-
-			ExecHashTableDestroy(node->hj_HashTable);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			node->hj_HashTable = NULL;
 			node->hj_JoinState = HJ_BUILD_HASHTABLE;
 
