@@ -160,29 +160,12 @@ CancelRequested()
 /* Service interrupt, if one is pending and it's safe to service it now */
 #define CHECK_FOR_INTERRUPTS() \
 do { \
-<<<<<<< HEAD
-	if (InterruptPending) \
+	if (INTERRUPTS_PENDING_CONDITION()) \
 		ProcessInterrupts(__FILE__, __LINE__); \
 	BackoffBackendTick(); \
 	ReportOOMConsumption(); \
 	RedZoneHandler_DetectRunawaySession();\
 } while(0)
-
-#else							/* WIN32 */
-
-#define CHECK_FOR_INTERRUPTS() \
-do { \
-	if (UNBLOCKED_SIGNAL_QUEUE()) \
-		pgwin32_dispatch_queued_signals(); \
-	if (InterruptPending) \
-		ProcessInterrupts(__FILE__, __LINE__); \
-} while(0)
-#endif							/* WIN32 */
-=======
-	if (INTERRUPTS_PENDING_CONDITION()) \
-		ProcessInterrupts(); \
-} while(0)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 /* Is ProcessInterrupts() guaranteed to clear InterruptPending? */
 #define INTERRUPTS_CAN_BE_PROCESSED() \

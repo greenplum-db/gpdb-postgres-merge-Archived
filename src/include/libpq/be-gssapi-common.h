@@ -22,11 +22,7 @@
 #include <gssapi/gssapi.h>
 #endif
 
-<<<<<<< HEAD
-void		pg_GSS_error_be(int severity, const char *errmsg,
-=======
-extern void pg_GSS_error(const char *errmsg,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+extern void pg_GSS_error_be(const char *errmsg,
 						 OM_uint32 maj_stat, OM_uint32 min_stat);
 
 #endif							/* ENABLE_GSS */

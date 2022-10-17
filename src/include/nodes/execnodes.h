@@ -971,12 +971,9 @@ typedef struct SubPlanState
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 	ExprState  *cur_eq_comp;	/* equality comparator for LHS vs. table */
-<<<<<<< HEAD
+	int			numCols;		/* number of columns being hashed */
 
 	Tuplestorestate *ts_state;
-=======
-	int			numCols;		/* number of columns being hashed */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } SubPlanState;
 
 /* ----------------
@@ -2762,13 +2759,10 @@ typedef struct HashState
 	PlanState	ps;				/* its first field is NodeTag */
 	HashJoinTable hashtable;	/* hash table for the hashjoin */
 	List	   *hashkeys;		/* list of ExprState nodes */
-<<<<<<< HEAD
 	bool		hs_keepnull;	/* Keep nulls */
 	bool		hs_quit_if_hashkeys_null;	/* quit building hash table if hashkeys are all null */
 	bool		hs_hashkeys_null;	/* found an instance wherein hashkeys are all null */
 	/* hashkeys is same as parent's hj_InnerHashKeys */
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	SharedHashInfo *shared_info;	/* one entry per worker */
 	HashInstrumentation *hinstrument;	/* this worker's entry */

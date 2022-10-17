@@ -657,16 +657,12 @@ typedef struct DynamicIndexScan
  * indextlist, which represents the contents of the index as a targetlist
  * with one TLE per index column.  Vars appearing in this list reference
  * the base table, and this is the only field in the plan node that may
-<<<<<<< HEAD
- * contain such Vars.
- *
- * GPDB: We need indexqualorig to determine direct dispatch, however there
- * is no need to dispatch it.
-=======
  * contain such Vars.  Also, for the convenience of setrefs.c, TLEs in
  * indextlist are marked as resjunk if they correspond to columns that
  * the index AM cannot reconstruct.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+ * 
+ * GPDB: We need indexqualorig to determine direct dispatch, however there
+ * is no need to dispatch it.
  * ----------------
  */
 typedef struct IndexOnlyScan
@@ -1367,16 +1363,13 @@ typedef struct GatherMerge
 typedef struct Hash
 {
 	Plan		plan;
-<<<<<<< HEAD
 	bool		rescannable;            /* CDB: true => save rows for rescan */
-=======
 
 	/*
 	 * List of expressions to be hashed for tuples from Hash's outer plan,
 	 * needed to put them into the hashtable.
 	 */
 	List	   *hashkeys;		/* hash keys for the hashjoin condition */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	Oid			skewTable;		/* outer join key's table OID, or InvalidOid */
 	AttrNumber	skewColumn;		/* outer join key's column #, or zero */
 	bool		skewInherit;	/* is outer join rel an inheritance tree? */

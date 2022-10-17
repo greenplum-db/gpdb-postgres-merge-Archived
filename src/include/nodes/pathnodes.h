@@ -1025,11 +1025,7 @@ struct IndexOptInfo
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
 	bool		amcanparallel;	/* does AM support parallel scan? */
-<<<<<<< HEAD
-
-=======
 	bool		amcanmarkpos;	/* does AM support mark/restore? */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
 	void		(*amcostestimate) ();	/* AM's cost estimator */
 };

@@ -187,12 +187,7 @@ extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 								   uint16 procnum);
 extern void index_store_float8_orderby_distances(IndexScanDesc scan,
 												 Oid *orderByTypes,
-<<<<<<< HEAD
-												 double *distanceValues,
-												 bool *distanceNulls,
-=======
 												 IndexOrderByDistance *distances,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 												 bool recheckOrderBy);
 
 /*

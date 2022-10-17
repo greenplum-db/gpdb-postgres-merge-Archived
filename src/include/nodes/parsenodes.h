@@ -1996,7 +1996,7 @@ typedef enum AlterTableType
 	AT_AddIdentity,				/* ADD IDENTITY */
 	AT_SetIdentity,				/* SET identity column options */
 	AT_DropIdentity,			/* DROP IDENTITY */
-<<<<<<< HEAD
+	AT_CookedColumnDefault		/* add a pre-cooked column default */
 
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
@@ -2011,9 +2011,6 @@ typedef enum AlterTableType
 	AT_PartSetTemplate,			/* Set Subpartition Template */
 	AT_PartSplit,				/* Split */
 	AT_PartTruncate				/* Truncate */
-=======
-	AT_CookedColumnDefault		/* add a pre-cooked column default */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -2037,7 +2034,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
-<<<<<<< HEAD
+	bool		recurse;		/* exec-time recursion */
 
 	/*
 	 * Extra information dispatched from QD to QEs in AT_SetDistributedBy and
@@ -2049,10 +2046,6 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	const char *queryString;
 
 	GpPolicy   *policy;
-
-=======
-	bool		recurse;		/* exec-time recursion */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } AlterTableCmd;
 
 typedef enum GpAlterPartitionIdType
