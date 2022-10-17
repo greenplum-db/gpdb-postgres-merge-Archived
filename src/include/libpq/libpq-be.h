@@ -74,11 +74,7 @@ typedef struct
 typedef enum CAC_state
 {
 	CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY,
-<<<<<<< HEAD
-	CAC_WAITBACKUP, CAC_MIRROR_READY, CAC_RESET
-=======
 	CAC_SUPERUSER
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 } CAC_state;
 
 

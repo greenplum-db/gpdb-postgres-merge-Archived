@@ -45,12 +45,9 @@
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
 #include "commands/async.h"
-#include "commands/prepare.h"
-<<<<<<< HEAD
 #include "commands/extension.h"
+#include "commands/prepare.h"
 #include "executor/spi.h"
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 #include "jit/jit.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -3807,16 +3804,11 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
  * then clear the flag and accept the interrupt.  Called only when
  * InterruptPending is true.
  *
-<<<<<<< HEAD
- * Parameters filename and lineno contain the file name and the line number where
- * ProcessInterrupts was invoked, respectively.
-=======
  * Note: if INTERRUPTS_CAN_BE_PROCESSED() is true, then ProcessInterrupts
  * is guaranteed to clear the InterruptPending flag before returning.
  * (This is not the same as guaranteeing that it's still clear when we
  * return; another interrupt could have arrived.  But we promise that
  * any pre-existing one will have been serviced.)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  */
 void
 ProcessInterrupts(const char* filename, int lineno)
@@ -5294,7 +5286,6 @@ PostgresMain(int argc, char *argv[],
 		firstchar = ReadCommand(&input_message);
 
 		/*
-<<<<<<< HEAD
 		 * Reset QueryFinishPending flag, so that if we received a delayed
 		 * query finish requested after we had already finished processing
 		 * the previous command, we don't prematurely finish the next
@@ -5305,38 +5296,9 @@ PostgresMain(int argc, char *argv[],
 		IdleTracker_ActivateProcess();
 
 		/*
-		 * (4) disable async signal conditions again.
-=======
 		 * (4) turn off the idle-in-transaction timeout, if active.  We do
 		 * this before step (5) so that any last-moment timeout is certain to
 		 * be detected in step (5).
-		 */
-		if (disable_idle_in_transaction_timeout)
-		{
-			disable_timeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT, false);
-			disable_idle_in_transaction_timeout = false;
-		}
-
-		/*
-		 * (5) disable async signal conditions again.
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
-		 *
-		 * Query cancel is supposed to be a no-op when there is no query in
-		 * progress, so if a query cancel arrived while we were idle, just
-		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
-		 * it's called when DoingCommandRead is set, so check for interrupts
-		 * before resetting DoingCommandRead.
-		 */
-		CHECK_FOR_INTERRUPTS();
-		DoingCommandRead = false;
-
-		/*
-<<<<<<< HEAD
-		 * (5) turn off the idle-in-transaction and idle-session timeouts, if
-		 * active.
-		 *
-		 * At most one of these two will be active, so there's no need to
-		 * worry about combining the timeout.c calls into one.
 		 */
 		if (idle_in_transaction_timeout_enabled)
 		{
@@ -5350,8 +5312,18 @@ PostgresMain(int argc, char *argv[],
 		}
 
 		/*
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+		 * (5) disable async signal conditions again.
+		 *
+		 * Query cancel is supposed to be a no-op when there is no query in
+		 * progress, so if a query cancel arrived while we were idle, just
+		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
+		 * it's called when DoingCommandRead is set, so check for interrupts
+		 * before resetting DoingCommandRead.
+		 */
+		CHECK_FOR_INTERRUPTS();
+		DoingCommandRead = false;
+
+		/*
 		 * (6) check for any other interesting events that happened while we
 		 * slept.
 		 */
