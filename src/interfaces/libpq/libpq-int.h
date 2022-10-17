@@ -405,15 +405,11 @@ struct pg_conn
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 	char	   *krbsrvname;		/* Kerberos service name */
-<<<<<<< HEAD
-#endif
-    char       *gpconntype; /* type of connection */
-    char       *gpqeid;        /* MPP: session id & startup info for qExec */
-    char       *diffoptions;  /* MPP: transfer changed GUCs(require sync) from QD to QEs */
-=======
 	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	char *gpconntype;			/* type of connection */
+	char *gpqeid;				/* MPP: session id & startup info for qExec */
+	char *diffoptions;			/* MPP: transfer changed GUCs(require sync) from QD to QEs */
 
 	/* Type of connection to make.  Possible values: any, read-write. */
 	char	   *target_session_attrs;

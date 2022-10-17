@@ -536,10 +536,7 @@ pqDropConnection(PGconn *conn, bool flushInput)
 			free(conn->gss_ResultBuffer);
 			conn->gss_ResultBuffer = NULL;
 		}
-<<<<<<< HEAD
-=======
 		conn->gssenc = false;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 #endif
 #ifdef ENABLE_SSPI
@@ -4108,14 +4105,10 @@ freePGconn(PGconn *conn)
 		free(conn->krbsrvname);
 	if (conn->gsslib)
 		free(conn->gsslib);
-<<<<<<< HEAD
-#endif
 	if (conn->gpqeid)			/* CDB */
 		free(conn->gpqeid);
-=======
 	if (conn->connip)
 		free(conn->connip);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->last_query)
 		free(conn->last_query);

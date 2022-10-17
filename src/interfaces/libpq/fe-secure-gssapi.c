@@ -657,21 +657,11 @@ pqsecure_open_gss(PGconn *conn)
 		 * We're done - hooray!  Set flag to tell the low-level I/O routines
 		 * to do GSS wrapping/unwrapping.
 		 */
-<<<<<<< HEAD
-#ifdef USE_SSL
-		conn->allow_ssl_try = false;
-#endif
-=======
 		conn->gssenc = true;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/* Clean up */
 		gss_release_cred(&minor, &conn->gcred);
 		conn->gcred = GSS_C_NO_CREDENTIAL;
-<<<<<<< HEAD
-		conn->gssenc = true;
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		gss_release_buffer(&minor, &output);
 
 		/*
