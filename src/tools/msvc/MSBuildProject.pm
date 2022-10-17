@@ -45,9 +45,6 @@ EOF
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>$self->{guid}</ProjectGuid>
-<<<<<<< HEAD
-    <WindowsTargetPlatformVersion>$sdkversion</WindowsTargetPlatformVersion>
-=======
 EOF
 	# Check whether WindowsSDKVersion env variable is present.
 	# Add WindowsTargetPlatformVersion node if so.
@@ -61,7 +58,6 @@ EOF
 EOF
 	}
 	print $f <<EOF;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
   </PropertyGroup>
   <Import Project="\$(VCTargetsPath)\\Microsoft.Cpp.Default.props" />
 EOF

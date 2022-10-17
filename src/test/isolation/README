@@ -23,15 +23,9 @@ you can do something like
     ./pg_isolation_regress fk-contention fk-deadlock
 (look into the specs/ subdirectory to see the available tests).
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
-The prepared-transactions test requires the server's
-max_prepared_transactions parameter to be set to at least 3; therefore it
-is not run by default.  To include it in the test run, use
-================================
 Certain tests require the server's max_prepared_transactions parameter to be
 set to at least 3; therefore they are not run by default.  To include them in
 the test run, use
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
     make check-prepared-txns
 or
     make installcheck-prepared-txns
