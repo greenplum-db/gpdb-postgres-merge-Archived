@@ -386,15 +386,9 @@ ScanPgRelation(Oid targetRelId, bool indexOK, bool force_non_historic)
 	 * need to register the snapshot.
 	 */
 	if (force_non_historic)
-<<<<<<< HEAD
 		snapshot = GetNonHistoricCatalogSnapshot(
 			RelationRelationId,
 			DistributedTransactionContext);
-	else
-		snapshot = GetCatalogSnapshot(RelationRelationId);
-=======
-		snapshot = GetNonHistoricCatalogSnapshot(RelationRelationId);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	pg_class_scan = systable_beginscan(pg_class_desc, ClassOidIndexId,
 									   indexOK && criticalRelcachesBuilt,
@@ -2518,14 +2512,9 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_pdcxt);
 	if (relation->rd_partcheckcxt)
 		MemoryContextDelete(relation->rd_partcheckcxt);
-<<<<<<< HEAD
-	if (relation->rd_fdwroutine)
-		pfree(relation->rd_fdwroutine);
 	if (relation->rd_cdbpolicy)
 		pfree(relation->rd_cdbpolicy);
 
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	pfree(relation);
 }
 

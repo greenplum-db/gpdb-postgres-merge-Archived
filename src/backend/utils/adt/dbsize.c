@@ -38,7 +38,6 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "access/tableam.h"
 #include "catalog/pg_appendonly.h"
 #include "libpq-fe.h"
@@ -48,12 +47,8 @@
 #include "cdb/cdbvars.h"
 #include "utils/snapmgr.h"
 
-/* Divide by two and round towards positive infinity. */
-#define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
-=======
 /* Divide by two and round away from zero */
 #define half_rounded(x)   (((x) + ((x) < 0 ? -1 : 1)) / 2)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 static int64 calculate_total_relation_size(Relation rel);
 
@@ -896,13 +891,8 @@ numeric_truncated_divide(Numeric n, int64 divisor)
 	Datum		divisor_numeric;
 	Datum		result;
 
-<<<<<<< HEAD
-	divisor_int64 = Int64GetDatum((int64) (1LL << count));
-	divisor_numeric = DirectFunctionCall1(int8_numeric, divisor_int64);
-=======
 	divisor_numeric = DirectFunctionCall1(int8_numeric,
 										  Int64GetDatum(divisor));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
