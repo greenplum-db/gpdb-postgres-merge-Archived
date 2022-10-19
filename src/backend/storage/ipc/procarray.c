@@ -502,19 +502,20 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 			ProcArrayGroupClearXid(proc, latestXid);
 	}
 
-<<<<<<< HEAD
-	/*
-	 * If we have no XID, we don't need to lock, since we won't affect
-	 * anyone else's calculation of a snapshot.  We might change their
-	 * estimate of global xmin, but that's OK.
-	 *
-	 * NB: this may reset the pgxact and tmGxact twice (not including the xid
-	 * and gxid), it should be no harm to the correctness, just an easy way to
-	 * handle the cases like: there's a valid distributed XID but no local XID.
-	 */
-	Assert(!TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
-	Assert(!TransactionIdIsValid(allTmGxact[proc->pgprocno].gxid));
-=======
+	/* Greenplum always clears the PGPROC entry, see the function comment */
+	{
+		/*
+		 * If we have no XID, we don't need to lock, since we won't affect
+		 * anyone else's calculation of a snapshot.  We might change their
+		 * estimate of global xmin, but that's OK.
+		 *
+		 * NB: this may reset the pgxact and tmGxact twice (not including the xid
+		 * and gxid), it should be no harm to the correctness, just an easy way to
+		 * handle the cases like: there's a valid distributed XID but no local XID.
+		 */
+		Assert(!TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
+		Assert(!TransactionIdIsValid(allTmGxact[proc->pgprocno].gxid));
+
 		proc->lxid = InvalidLocalTransactionId;
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
@@ -525,19 +526,12 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		proc->delayChkptEnd = false;
 
 		proc->recoveryConflictPending = false;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
-	proc->lxid = InvalidLocalTransactionId;
-	pgxact->xmin = InvalidTransactionId;
-	/* must be cleared with xid/xmin: */
-	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-	pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
-	proc->recoveryConflictPending = false;
+		Assert(pgxact->nxids == 0);
+		Assert(pgxact->overflowed == false);
 
-	Assert(pgxact->nxids == 0);
-	Assert(pgxact->overflowed == false);
-
-	resetTmGxact();
+		resetTmGxact();
+	}
 }
 
 /*
@@ -659,15 +653,11 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 		PGXACT	   *pgxact = &allPgXact[nextidx];
 		TMGXACT	   *tmGxact = &allTmGxact[nextidx];
 
-<<<<<<< HEAD
-		if (TransactionIdIsValid(proc->procArrayGroupMemberXid))
-			ProcArrayEndTransactionInternal(proc, pgxact, proc->procArrayGroupMemberXid);
+		if (TransactionIdIsValid(nextproc->procArrayGroupMemberXid))
+			ProcArrayEndTransactionInternal(nextproc, pgxact, nextproc->procArrayGroupMemberXid);
 
 		if (TransactionIdIsValid(tmGxact->gxid))
 			ProcArrayEndGxact(tmGxact);
-=======
-		ProcArrayEndTransactionInternal(nextproc, pgxact, nextproc->procArrayGroupMemberXid);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		/* Move to next proc in list. */
 		nextidx = pg_atomic_read_u32(&nextproc->procArrayGroupNext);
@@ -3203,7 +3193,6 @@ HaveVirtualXIDsDelayingChkptGuts(VirtualTransactionId *vxids, int nvxids,
 }
 
 /*
-<<<<<<< HEAD
  * MPP: Special code to update the command id in the SharedLocalSnapshot
  * when we are in SERIALIZABLE isolation mode.
  */
@@ -3245,7 +3234,9 @@ UpdateSerializableCommandId(CommandId curcid)
 
 		LWLockRelease(SharedLocalSnapshotSlot->slotLock);
 	}
-=======
+}
+
+/*
  * HaveVirtualXIDsDelayingChkpt -- Are any of the specified VXIDs delaying
  * the start of a checkpoint?
  */
@@ -3265,7 +3256,6 @@ HaveVirtualXIDsDelayingChkptEnd(VirtualTransactionId *vxids, int nvxids)
 {
 	return HaveVirtualXIDsDelayingChkptGuts(vxids, nvxids,
 											DELAY_CHKPT_COMPLETE);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*
