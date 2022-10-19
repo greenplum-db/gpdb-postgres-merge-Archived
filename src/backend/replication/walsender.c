@@ -254,11 +254,8 @@ static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
 static void ProcessStandbyHSFeedbackMessage(void);
 static void ProcessRepliesIfAny(void);
-<<<<<<< HEAD
-static const char *WalSndGetStateString(WalSndState state);
-=======
 static void ProcessPendingWrites(void);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+static const char *WalSndGetStateString(WalSndState state);
 static void WalSndKeepalive(bool requestReply);
 static void WalSndKeepaliveIfNecessary(void);
 static void WalSndCheckTimeOut(void);
@@ -2410,14 +2407,10 @@ InitWalSenderSlot(void)
 			walsnd->writeLag = -1;
 			walsnd->flushLag = -1;
 			walsnd->applyLag = -1;
-<<<<<<< HEAD
-			walsnd->state = WALSNDSTATE_STARTUP;
 			/* Will be decided in hand-shake */
 			walsnd->xlogCleanUpTo = InvalidXLogRecPtr;
 			walsnd->caughtup_within_range = false;
-=======
 			walsnd->sync_standby_priority = 0;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			walsnd->latch = &MyProc->procLatch;
 			walsnd->replyTime = 0;
 			SpinLockRelease(&walsnd->mutex);
@@ -3727,13 +3720,8 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 */
 			if (priority == 0)
 				values[10] = CStringGetTextDatum("async");
-<<<<<<< HEAD
-			else if (list_member_int(sync_standbys, i))
-				values[10] = (IS_QUERY_DISPATCHER() || SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY) ?
-=======
 			else if (is_sync_standby)
-				values[10] = SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY ?
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+				values[10] = (IS_QUERY_DISPATCHER() || SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY) ?
 					CStringGetTextDatum("sync") : CStringGetTextDatum("quorum");
 			else
 				values[10] = CStringGetTextDatum("potential");

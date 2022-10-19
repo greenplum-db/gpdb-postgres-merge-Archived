@@ -1713,8 +1713,6 @@ RemoveRelations(DropStmt *drop)
 		}
 
 		/*
-<<<<<<< HEAD
-=======
 		 * Decide if concurrent mode needs to be used here or not.  The
 		 * callback retrieved the rel's persistence for us.
 		 */
@@ -1738,7 +1736,6 @@ RemoveRelations(DropStmt *drop)
 							rel->relname)));
 
 		/*
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		 * If we're told to drop a partitioned index, we must acquire lock on
 		 * all the children of its parent partitioned table before proceeding.
 		 * Otherwise we'd try to lock the child index partitions before their
@@ -3953,12 +3950,6 @@ RenameRelation(RenameStmt *stmt)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
-				(errmsg("relation \"%s\" does not exist, skipping",
-						stmt->relation->relname)));
-		return InvalidObjectAddress;
-=======
 		LOCKMODE	lockmode;
 		char		relkind;
 		bool		obj_is_index;
@@ -3972,8 +3963,8 @@ RenameRelation(RenameStmt *stmt)
 
 		if (!OidIsValid(relid))
 		{
-			ereport(NOTICE,
-					(errmsg("relation \"%s\" does not exist, skipping",
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
+					(errmsWRITEg("relation \"%s\" does not exist, skipping",
 							stmt->relation->relname)));
 			return InvalidObjectAddress;
 		}
@@ -3992,7 +3983,6 @@ RenameRelation(RenameStmt *stmt)
 
 		UnlockRelationOid(relid, lockmode);
 		is_index_stmt = obj_is_index;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	}
 
 	/*
@@ -5002,11 +4992,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DropConstraint: /* DROP CONSTRAINT */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATCheckPartitionsNotInUse(rel, lockmode);
-<<<<<<< HEAD
-			/* Recursion occurs during execution phase */
-=======
 			/* Other recursion occurs during execution phase */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
 				cmd->subtype = AT_DropConstraintRecurse;
@@ -6758,7 +6744,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				 * Now, evaluate any expressions whose inputs come from the
 				 * new tuple.  We assume these columns won't reference each
 				 * other, so that there's no ordering dependency.
-<<<<<<< HEAD
 				 */
 				econtext->ecxt_scantuple = newslot;
 
@@ -6778,8 +6763,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				/*
 				 * Constraints might reference the tableoid column, so
 				 * initialize t_tableOid before evaluating them.
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 				 */
 				econtext->ecxt_scantuple = newslot;
 
@@ -7796,7 +7779,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		{
 			NewColumnValue *newval;
 
-<<<<<<< HEAD
 			/* If QE, AlteredTableInfo streamed from QD already contains newvals */
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
@@ -7804,12 +7786,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				newval->attnum = attribute.attnum;
 				newval->expr = expression_planner(defval);
 				newval->is_generated = (colDef->generated != '\0');
-=======
-			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
-			newval->attnum = attribute.attnum;
-			newval->expr = expression_planner(defval);
-			newval->is_generated = (colDef->generated != '\0');
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 				/*
 				 * tab is null if this is called by "create or replace view" which
@@ -15665,8 +15641,8 @@ ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   char fires_when, bool skip_system, bool recurse,
 						   LOCKMODE lockmode)
 {
-<<<<<<< HEAD
-	EnableDisableTrigger(rel, trigname, fires_when, skip_system, lockmode);
+	EnableDisableTriggerNew(rel, trigname, fires_when, skip_system, recurse,
+							lockmode);
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH && MetaTrackValidKindNsp(rel->rd_rel))
@@ -15696,10 +15672,6 @@ ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   "ALTER", 
 						   subtype);
 	}
-=======
-	EnableDisableTriggerNew(rel, trigname, fires_when, skip_system, recurse,
-							lockmode);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*
@@ -21037,13 +21009,12 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	 */
 	CacheInvalidateRelcache(rel);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	MetaTrackUpdObject(RelationRelationId,
 					   RelationGetRelid(partRel),
 					   GetUserId(),
 					   "PARTITION", "DETACH");
-=======
+
 	/*
 	 * If the partition we just detached is partitioned itself, invalidate
 	 * relcache for all descendent partitions too to ensure that their
@@ -21062,7 +21033,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 			CacheInvalidateRelcacheByRelid(lfirst_oid(cell));
 		}
 	}
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partRel));
 
