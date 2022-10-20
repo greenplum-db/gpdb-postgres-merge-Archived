@@ -1161,12 +1161,8 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_CreateForeignTableStmt:
 				{
 					List	   *stmts;
-<<<<<<< HEAD
-					ListCell   *l;
 					List	   *more_stmts = NIL;
-=======
 					RangeVar   *table_rv = NULL;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 					/* Run parse analysis ... */
 					/*
@@ -1183,18 +1179,13 @@ ProcessUtilitySlow(ParseState *pstate,
 						stmts = transformCreateStmt((CreateStmt *) parsetree,
 													queryString);
 
-<<<<<<< HEAD
-					/* ... and do it */
 			process_more_stmts:
-					foreach(l, stmts)
-=======
 					/*
 					 * ... and do it.  We can't use foreach() because we may
 					 * modify the list midway through, so pick off the
 					 * elements one at a time, the hard way.
 					 */
 					while (stmts != NIL)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 					{
 						Node	   *stmt = (Node *) linitial(stmts);
 
@@ -1203,15 +1194,11 @@ ProcessUtilitySlow(ParseState *pstate,
 						if (IsA(stmt, CreateStmt))
 						{
 							CreateStmt *cstmt = (CreateStmt *) stmt;
-<<<<<<< HEAD
 							char		relKind = RELKIND_RELATION;
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 							List *options = NIL;
 
-<<<<<<< HEAD
 							/*
 							 * If this T_CreateStmt was dispatched and we're a QE
 							 * receiving it, extract the relkind and relstorage from
@@ -1247,8 +1234,12 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * created the toast and other auxiliary tables
 							 * yet.
 							 */
+
+							/* Remember transformed RangeVar for LIKE */
+							table_rv = cstmt->relation;
+
 							/* Create the table itself */
-							address = DefineRelation((CreateStmt *) stmt,
+							address = DefineRelation(cstmt,
 													 relKind,
 													 ((CreateStmt *) stmt)->ownerid, NULL,
 													 queryString, false, true,
@@ -1267,16 +1258,6 @@ ProcessUtilitySlow(ParseState *pstate,
 								more_stmts = list_concat(more_stmts, parts);
 							}
 
-=======
-							/* Remember transformed RangeVar for LIKE */
-							table_rv = cstmt->relation;
-
-							/* Create the table itself */
-							address = DefineRelation(cstmt,
-													 RELKIND_RELATION,
-													 InvalidOid, NULL,
-													 queryString);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
@@ -1287,7 +1268,6 @@ ProcessUtilitySlow(ParseState *pstate,
 							 */
 							CommandCounterIncrement();
 
-<<<<<<< HEAD
 							if (relKind != RELKIND_COMPOSITE_TYPE)
 							{
 								/*
@@ -1295,7 +1275,7 @@ ProcessUtilitySlow(ParseState *pstate,
 								 * table
 								 */
 								toast_options = transformRelOptions((Datum) 0,
-																	((CreateStmt *) stmt)->options,
+																	cstmt->options,
 																	"toast",
 																	validnsps,
 																	true,
@@ -1303,25 +1283,11 @@ ProcessUtilitySlow(ParseState *pstate,
 								(void) heap_reloptions(RELKIND_TOASTVALUE,
 													   toast_options,
 													   true);
-=======
-							/*
-							 * parse and validate reloptions for the toast
-							 * table
-							 */
-							toast_options = transformRelOptions((Datum) 0,
-																cstmt->options,
-																"toast",
-																validnsps,
-																true,
-																false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 								NewRelationCreateToastTable(address.objectId,
 															toast_options);
 							}
+
 							if (Gp_role == GP_ROLE_DISPATCH)
 							{
 								CdbDispatchUtilityStatement((Node *) stmt,
@@ -1362,19 +1328,13 @@ ProcessUtilitySlow(ParseState *pstate,
 							address = DefineRelation(&cstmt->base,
 													 RELKIND_FOREIGN_TABLE,
 													 InvalidOid, NULL,
-<<<<<<< HEAD
 													 queryString,
 													 true,
 													 true,
 													 NULL);
-							CreateForeignTable((CreateForeignTableStmt *) stmt,
+							CreateForeignTable(cstmt,
 											   address.objectId,
 											   false /* skip_permission_checks */);
-=======
-													 queryString);
-							CreateForeignTable(cstmt,
-											   address.objectId);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
