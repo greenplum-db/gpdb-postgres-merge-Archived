@@ -49,26 +49,24 @@ MultiXactTruncationLock				41
 OldSnapshotTimeMapLock				42
 LogicalRepWorkerLock				43
 CLogTruncationLock					44
-<<<<<<< HEAD
-
-# Additional individual locks in GPDB
-SharedSnapshotLock					45
-DistributedLogControlLock			46
-# 47 is available; was formerly AOSegFileLock
-ResQueueLock						48
-ResGroupLock						49
-ErrorLogLock						50
-SessionStateLock					51
-RelfilenodeGenLock					52
-WorkFileManagerLock					53
-DistributedLogTruncateLock			54
-TwophaseCommitLock				55
-ShareInputScanLock				56
-FTSReplicationStatusLock			57
-GxidBumpLock						58
-ParallelCursorEndpointLock			59
-=======
 # 45 was CLogTruncationLock until removal of BackendRandomLock
 WrapLimitsVacuumLock				46
 NotifyQueueTailLock					47
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+
+# GPDB_12_12_MERGE_FIXME  Shift all GPDB locks to avoid overlap, is it OK?
+# Additional individual locks in GPDB
+SharedSnapshotLock					65
+DistributedLogControlLock			66
+# 47 is available; was formerly AOSegFileLock
+ResQueueLock						68
+ResGroupLock						69
+ErrorLogLock						70
+SessionStateLock					71
+RelfilenodeGenLock					72
+WorkFileManagerLock					73
+DistributedLogTruncateLock			74
+TwophaseCommitLock				75
+ShareInputScanLock				76
+FTSReplicationStatusLock			77
+GxidBumpLock						78
+ParallelCursorEndpointLock			79

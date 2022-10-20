@@ -3435,43 +3435,6 @@ LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 }
 
 /*
-<<<<<<< HEAD
- * Prepare for prepare, while we're still in a transaction.
- *
- * This marks LOCALLOCK objects on temporary tables, so that we can
- * ignore them while writing the prepare record. Figuring out which
- * tables are temporary requires catalog access, hence we must do this
- * before we start actually preparing.
- *
- * If new locks are taken after this, they will be considered as
- * not temp.
- */
-void
-PrePrepare_Locks(void)
-{
-	HASH_SEQ_STATUS status;
-	LOCALLOCK  *locallock;
-
-	/*
-	 * Scan the local locks, and set the 'istemptable' flags.
-	 */
-	hash_seq_init(&status, LockMethodLocalHash);
-	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
-	{
-		LOCALLOCKOWNER *lockOwners = locallock->lockOwners;
-		bool		haveSessionLock;
-		bool		haveXactLock;
-		int			i;
-
-		locallock->istemptable = false;
-
-		/*
-		 * Skip locks that would be ignored by AtPrepare_Locks() anyway.
-		 *
-		 * NOTE: these conditions should be kept in sync with AtPrepare_Locks()!
-		 */
-
-=======
  * CheckForSessionAndXactLocks
  *		Check to see if transaction holds both session-level and xact-level
  *		locks on the same object; if so, throw an error.
@@ -3526,7 +3489,6 @@ CheckForSessionAndXactLocks(void)
 		bool		found;
 		int			i;
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		/*
 		 * Ignore VXID locks.  We don't want those to be held by prepared
 		 * transactions, since they aren't meaningful after a restart.
@@ -3538,7 +3500,83 @@ CheckForSessionAndXactLocks(void)
 		if (locallock->nLocks <= 0)
 			continue;
 
-<<<<<<< HEAD
+		/* Otherwise, find or make an entry in lockhtab */
+		hentry = (PerLockTagEntry *) hash_search(lockhtab,
+												 (void *) &locallock->tag.lock,
+												 HASH_ENTER, &found);
+		if (!found)				/* initialize, if newly created */
+			hentry->sessLock = hentry->xactLock = false;
+
+		/* Scan to see if we hold lock at session or xact level or both */
+		for (i = locallock->numLockOwners - 1; i >= 0; i--)
+		{
+			if (lockOwners[i].owner == NULL)
+				hentry->sessLock = true;
+			else
+				hentry->xactLock = true;
+		}
+
+		/*
+		 * We can throw error immediately when we see both types of locks; no
+		 * need to wait around to see if there are more violations.
+		 */
+		if (hentry->sessLock && hentry->xactLock)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot PREPARE while holding both session-level and transaction-level locks on the same object")));
+	}
+
+	/* Success, so clean up */
+	hash_destroy(lockhtab);
+}
+
+/*
+ * Prepare for prepare, while we're still in a transaction.
+ *
+ * This marks LOCALLOCK objects on temporary tables, so that we can
+ * ignore them while writing the prepare record. Figuring out which
+ * tables are temporary requires catalog access, hence we must do this
+ * before we start actually preparing.
+ *
+ * If new locks are taken after this, they will be considered as
+ * not temp.
+ */
+void
+PrePrepare_Locks(void)
+{
+	HASH_SEQ_STATUS status;
+	LOCALLOCK  *locallock;
+
+	/*
+	 * Scan the local locks, and set the 'istemptable' flags.
+	 */
+	hash_seq_init(&status, LockMethodLocalHash);
+	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+	{
+		LOCALLOCKOWNER *lockOwners = locallock->lockOwners;
+		bool		haveSessionLock;
+		bool		haveXactLock;
+		int			i;
+
+		locallock->istemptable = false;
+
+		/*
+		 * Skip locks that would be ignored by AtPrepare_Locks() anyway.
+		 *
+		 * NOTE: these conditions should be kept in sync with AtPrepare_Locks()!
+		 */
+
+		/*
+		 * Ignore VXID locks.  We don't want those to be held by prepared
+		 * transactions, since they aren't meaningful after a restart.
+		 */
+		if (locallock->tag.lock.locktag_type == LOCKTAG_VIRTUALTRANSACTION)
+			continue;
+
+		/* Ignore it if we don't actually hold the lock */
+		if (locallock->nLocks <= 0)
+			continue;
+
 		/* Scan to see whether we hold it at session or transaction level */
 		haveSessionLock = haveXactLock = false;
 		for (i = locallock->numLockOwners - 1; i >= 0; i--)
@@ -3587,36 +3625,6 @@ CheckForSessionAndXactLocks(void)
 		locallock->istemptable = LockTagIsTemp(&locallock->tag.lock);
 	}
 
-=======
-		/* Otherwise, find or make an entry in lockhtab */
-		hentry = (PerLockTagEntry *) hash_search(lockhtab,
-												 (void *) &locallock->tag.lock,
-												 HASH_ENTER, &found);
-		if (!found)				/* initialize, if newly created */
-			hentry->sessLock = hentry->xactLock = false;
-
-		/* Scan to see if we hold lock at session or xact level or both */
-		for (i = locallock->numLockOwners - 1; i >= 0; i--)
-		{
-			if (lockOwners[i].owner == NULL)
-				hentry->sessLock = true;
-			else
-				hentry->xactLock = true;
-		}
-
-		/*
-		 * We can throw error immediately when we see both types of locks; no
-		 * need to wait around to see if there are more violations.
-		 */
-		if (hentry->sessLock && hentry->xactLock)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot PREPARE while holding both session-level and transaction-level locks on the same object")));
-	}
-
-	/* Success, so clean up */
-	hash_destroy(lockhtab);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 
 /*
