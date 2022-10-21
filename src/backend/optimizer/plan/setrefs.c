@@ -1355,8 +1355,6 @@ set_indexonlyscan_references(PlannerInfo *root,
 					   rtoffset);
 	/* indexqual is already transformed to reference index columns */
 	plan->indexqual = fix_scan_list(root, plan->indexqual, rtoffset);
-	/* indexqualorig is already transformed to reference index columns */
-	plan->indexqualorig = fix_scan_list(root, plan->indexqualorig, rtoffset);
 	/* indexorderby is already transformed to reference index columns */
 	plan->indexorderby = fix_scan_list(root, plan->indexorderby, rtoffset);
 	/* indextlist must NOT be transformed to reference index columns */

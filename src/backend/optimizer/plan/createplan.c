@@ -210,7 +210,7 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 								 ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 										 Index scanrelid, Oid indexid,
-										 List *indexqual, List *indexqualorig,
+										 List *indexqual,
 										 List *recheckqual,
 										 List *indexorderby,
 										 List *indextlist,
@@ -3593,7 +3593,6 @@ create_indexscan_plan(PlannerInfo *root,
 												indexoid,
 												fixed_indexquals,
 												stripped_indexquals,
-												stripped_indexquals,
 												fixed_indexorderbys,
 												indexinfo->indextlist,
 												best_path->indexscandir);
@@ -6317,7 +6316,6 @@ make_indexonlyscan(List *qptlist,
 				   Index scanrelid,
 				   Oid indexid,
 				   List *indexqual,
-				   List *indexqualorig,
 				   List *recheckqual,
 				   List *indexorderby,
 				   List *indextlist,
@@ -6333,7 +6331,6 @@ make_indexonlyscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->indexid = indexid;
 	node->indexqual = indexqual;
-	node->indexqualorig = indexqualorig;
 	node->recheckqual = recheckqual;
 	node->indexorderby = indexorderby;
 	node->indextlist = indextlist;
