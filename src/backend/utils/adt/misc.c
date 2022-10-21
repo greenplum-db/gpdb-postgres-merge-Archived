@@ -254,7 +254,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		location = psprintf("base");
 	else
 		location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
-							TABLESPACE_VERSION_DIRECTORY);
+							GP_TABLESPACE_VERSION_DIRECTORY);
 
 	dirdesc = AllocateDir(location);
 

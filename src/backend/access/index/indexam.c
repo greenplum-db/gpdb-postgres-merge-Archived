@@ -886,11 +886,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
-		if (distanceNulls && distanceNulls[i])
-		{
-			scan->xs_orderbyvals[i] = (Datum) 0;
-			scan->xs_orderbynulls[i] = true;
-		}
 		if (orderByTypes[i] == FLOAT8OID)
 		{
 #ifndef USE_FLOAT8_BYVAL

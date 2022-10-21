@@ -2604,6 +2604,13 @@ transformDistributedBy(ParseState *pstate,
 	 * Even CREATE TABLE LIKE clause includes only constraints, not indexes, we still
 	 * check the uniqueness to compute the distribution keys.
 	 */
+	/*
+	 * GPDB_12_12_MERGE_FIXME upstream processes index statements after here in
+	 * expandTableLikeClause(), but no before here in transformTableLikeClause()
+	 *
+	 * Need to move this logic or move/copy the index statements processing?
+	 */
+#if 0
 	foreach(lc, cxt->inh_indexes)
 	{
 		IndexStmt  *index_stmt;
@@ -2671,6 +2678,7 @@ transformDistributedBy(ParseState *pstate,
 
 		distrkeys = new_distrkeys;
 	}
+#endif
 
 	if (gp_create_table_random_default_distribution && NIL == distrkeys)
 	{

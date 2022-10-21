@@ -910,6 +910,21 @@ pg_file_length(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64((int64) fst.st_size);
 }
 
+/*
+ * GPDB_12_12_MERGE_FIXME, upstream removed directory_fctx
+ *
+ * commit 2a89455aade3e917b6b0d02d9ce385049d0525eb
+ * Author: Tom Lane <tgl@sss.pgh.pa.us>
+ * Date:   Mon Mar 16 21:05:29 2020 -0400
+ * 
+ *     Avoid holding a directory FD open across assorted SRF calls.
+ */
+
+typedef struct
+{
+       char       *location;
+       DIR                *dirdesc;
+} directory_fctx;
 
 static Datum
 pg_logdir_ls_internal(FunctionCallInfo fcinfo)

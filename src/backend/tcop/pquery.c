@@ -1350,7 +1350,7 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 
 	/* check if this utility statement need to be involved into resource queue
 	 * mgmt */
-	ResHandleUtilityStmt(portal, utilityStmt);
+	ResHandleUtilityStmt(portal, pstmt->utilityStmt);
 
 	ProcessUtility(pstmt,
 				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",

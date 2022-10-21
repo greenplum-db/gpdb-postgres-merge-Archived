@@ -151,8 +151,8 @@ extern pthread_t main_tid;
 #define ereport_domain(elevel, domain, ...)	\
 	do { \
 		pg_prevent_errno_in_scope(); \
-		if (errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
-			__VA_ARGS__, errfinish(0); \
+		if (errstart(elevel, domain)) \
+			__VA_ARGS__, errfinish(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
@@ -161,8 +161,8 @@ extern pthread_t main_tid;
 	do { \
 		const int elevel_ = (elevel); \
 		pg_prevent_errno_in_scope(); \
-		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
-			__VA_ARGS__, errfinish(0); \
+		if (errstart(elevel_, domain)) \
+			__VA_ARGS__, errfinish(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)

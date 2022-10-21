@@ -854,10 +854,13 @@ execute_extension_script(Node *stmt,
 						 Oid extensionOid, ExtensionControlFile *control,
 						 const char *from_version,
 						 const char *version,
+						 List *requiredSchemas,
 						 const char *schemaName, Oid schemaOid)
 {
 	char	   *filename;
 	int			save_nestlevel;
+	StringInfoData pathbuf;
+	ListCell   *lc;
 
 	AssertState(Gp_role != GP_ROLE_EXECUTE);
 	AssertImply(Gp_role == GP_ROLE_DISPATCH, stmt != NULL &&
@@ -1688,6 +1691,7 @@ CreateExtensionInternal(char *extensionName,
 	{
 		execute_extension_script((Node *) stmt, extensionOid, control,
 							 oldVersionName, versionName,
+							 requiredSchemas,
 							 schemaName, schemaOid);
 
 		/*
@@ -3389,6 +3393,7 @@ ApplyExtensionUpdates(Oid extensionOid,
 			 */
 			execute_extension_script(stmt, extensionOid, control,
 									 oldVersionName, versionName,
+									 requiredSchemas,
 									 schemaName, schemaOid);
 		}
 		else

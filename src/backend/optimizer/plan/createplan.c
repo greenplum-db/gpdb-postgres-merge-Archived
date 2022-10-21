@@ -3593,6 +3593,7 @@ create_indexscan_plan(PlannerInfo *root,
 												indexoid,
 												fixed_indexquals,
 												stripped_indexquals,
+												stripped_indexquals,
 												fixed_indexorderbys,
 												indexinfo->indextlist,
 												best_path->indexscandir);

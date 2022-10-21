@@ -1812,6 +1812,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 									   mtstate->rootResultRelInfo, slot);
 
 		slot = ExecInsert(mtstate, slot, planSlot,
+						  NULL, estate->es_result_relation_info,
 						  estate, mtstate->canSetTag,
 						  true /* splitUpdate */);
 
@@ -1826,6 +1827,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 	else
 	{
 		slot = ExecInsert(mtstate, slot, planSlot,
+						  NULL, estate->es_result_relation_info,
 						  estate, mtstate->canSetTag,
 						  true /* splitUpdate */);
 	}

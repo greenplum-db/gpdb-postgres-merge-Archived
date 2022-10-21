@@ -3964,7 +3964,7 @@ RenameRelation(RenameStmt *stmt)
 		if (!OidIsValid(relid))
 		{
 			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
-					(errmsWRITEg("relation \"%s\" does not exist, skipping",
+					(errmsg("relation \"%s\" does not exist, skipping",
 							stmt->relation->relname)));
 			return InvalidObjectAddress;
 		}
@@ -8550,7 +8550,9 @@ ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
 					  true);
 
-	(void) StoreAttrDefault(rel, attnum, newDefault, true, false);
+	(void) StoreAttrDefault(rel, attnum, newDefault,
+							NULL, NULL, NULL, /* missing val stuff */
+							true, false);
 
 	ObjectAddressSubSet(address, RelationRelationId,
 						RelationGetRelid(rel), attnum);

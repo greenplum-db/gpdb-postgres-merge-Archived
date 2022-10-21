@@ -8584,7 +8584,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				Query			*subquery = (Query*) tabexpr->subquery;
 
 				appendStringInfo(buf, "TABLE(");
-				get_query_def(subquery, buf, context->namespaces, NULL,
+				get_query_def(subquery, buf, context->namespaces, NULL, false,
 							  context->prettyFlags, context->wrapColumn,
 							  context->indentLevel);
 				appendStringInfoChar(buf, ')');
