@@ -1,3 +1,4 @@
+		"allow_in_place_tablespaces",
 		"allow_segment_DML",
 		"allow_system_table_mods",
 		"application_name",
