@@ -416,14 +416,7 @@ RestoreArchive(Archive *AHX)
 		AHX->minRemoteVersion = 0;
 		AHX->maxRemoteVersion = 9999999;
 
-<<<<<<< HEAD
-		ConnectDatabase(AHX, ropt->dbname,
-						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->promptPassword,
-						false);
-=======
-		ConnectDatabase(AHX, &ropt->cparams, false);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+		ConnectDatabase(AHX, &ropt->cparams, false, false);
 
 		/*
 		 * If we're talking to the DB directly, don't send comments since they
@@ -4227,14 +4220,7 @@ restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list)
 	/*
 	 * Now reconnect the single parent connection.
 	 */
-<<<<<<< HEAD
-	ConnectDatabase((Archive *) AH, ropt->dbname,
-					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->promptPassword,
-					false);
-=======
-	ConnectDatabase((Archive *) AH, &ropt->cparams, true);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+	ConnectDatabase((Archive *) AH, &ropt->cparams, true, false);
 
 	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
@@ -4899,57 +4885,12 @@ CloneArchive(ArchiveHandle *AH)
 	 * Connect our new clone object to the database, using the same connection
 	 * parameters used for the original connection.
 	 */
-	ConnectDatabase((Archive *) clone, &clone->public.ropt->cparams, true);
+	ConnectDatabase((Archive *) clone, &clone->public.ropt->cparams, true, false);
 
 	/* re-establish fixed state */
 	if (AH->mode == archModeRead)
-<<<<<<< HEAD
-	{
-		RestoreOptions *ropt = AH->public.ropt;
-
-		Assert(AH->connection == NULL);
-
-		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, ropt->dbname,
-						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->promptPassword, false);
-
-		/* re-establish fixed state */
-		_doSetFixedOutputState(clone);
-	}
-	else
-	{
-		PQExpBufferData connstr;
-		char	   *pghost;
-		char	   *pgport;
-		char	   *username;
-
-		Assert(AH->connection != NULL);
-
-		/*
-		 * Even though we are technically accessing the parent's database
-		 * object here, these functions are fine to be called like that
-		 * because all just return a pointer and do not actually send/receive
-		 * any data to/from the database.
-		 */
-		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, PQdb(AH->connection));
-		pghost = PQhost(AH->connection);
-		pgport = PQport(AH->connection);
-		username = PQuser(AH->connection);
-
-		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, connstr.data,
-						pghost, pgport, username, TRI_NO, false);
-
-		termPQExpBuffer(&connstr);
-		/* setupDumpWorker will fix up connection state */
-	}
-=======
 		_doSetFixedOutputState(clone);
 	/* in write case, setupDumpWorker will fix up connection state */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Let the format-specific code have a chance too */
 	clone->ClonePtr(clone);

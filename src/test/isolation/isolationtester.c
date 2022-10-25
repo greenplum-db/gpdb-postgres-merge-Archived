@@ -53,13 +53,8 @@ static int64 max_step_wait = 300 * USECS_PER_SEC;
 static void check_testspec(TestSpec *testspec);
 static void run_testspec(TestSpec *testspec);
 static void run_all_permutations(TestSpec *testspec);
-<<<<<<< HEAD
-static void run_all_permutations_recurse(TestSpec *testspec, int nsteps,
-										 PermutationStep **steps);
-=======
 static void run_all_permutations_recurse(TestSpec *testspec, int *piles,
 										 int nsteps, PermutationStep **steps);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static void run_named_permutations(TestSpec *testspec);
 static void run_permutation(TestSpec *testspec, int nsteps,
 							PermutationStep **steps);
@@ -160,12 +155,6 @@ main(int argc, char **argv)
 
 	for (i = 0; i < nconns; i++)
 	{
-<<<<<<< HEAD
-		if (i == 0)
-			conns[i].sessionname = "control connection";
-		else
-			conns[i].sessionname = testspec->sessions[i - 1]->name;
-=======
 		const char *sessionname;
 
 		if (i == 0)
@@ -174,7 +163,6 @@ main(int argc, char **argv)
 			sessionname = testspec->sessions[i - 1]->name;
 
 		conns[i].sessionname = sessionname;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 		conns[i].conn = PQconnectdb(conninfo);
 		if (PQstatus(conns[i].conn) != CONNECTION_OK)
@@ -199,8 +187,6 @@ main(int argc, char **argv)
 								 blackholeNoticeProcessor,
 								 NULL);
 
-<<<<<<< HEAD
-=======
 		/*
 		 * Similarly, append the session name to application_name to make it
 		 * easier to map spec file sessions to log output and
@@ -221,7 +207,6 @@ main(int argc, char **argv)
 			exit(1);
 		}
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		/* Save each connection's backend PID for subsequent use. */
 		conns[i].backend_pid = PQbackendPID(conns[i].conn);
 		conns[i].backend_pid_str = psprintf("%d", conns[i].backend_pid);
@@ -400,15 +385,9 @@ check_testspec(TestSpec *testspec)
 				fprintf(stderr, "unused step name: %s\n", allsteps[i]->name);
 		}
 	}
-<<<<<<< HEAD
-}
-
-static int *piles;
-=======
 
 	free(allsteps);
 }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 /*
  * Run the permutations specified in the spec, or all if none were
@@ -433,10 +412,7 @@ run_all_permutations(TestSpec *testspec)
 	int			i;
 	PermutationStep *steps;
 	PermutationStep **stepptrs;
-<<<<<<< HEAD
-=======
 	int		   *piles;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	/* Count the total number of steps in all sessions */
 	nsteps = 0;
@@ -462,13 +438,6 @@ run_all_permutations(TestSpec *testspec)
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
-<<<<<<< HEAD
-	run_all_permutations_recurse(testspec, 0, stepptrs);
-}
-
-static void
-run_all_permutations_recurse(TestSpec *testspec, int nsteps, PermutationStep **steps)
-=======
 	run_all_permutations_recurse(testspec, piles, 0, stepptrs);
 
 	free(steps);
@@ -479,7 +448,6 @@ run_all_permutations_recurse(TestSpec *testspec, int nsteps, PermutationStep **s
 static void
 run_all_permutations_recurse(TestSpec *testspec, int *piles,
 							 int nsteps, PermutationStep **steps)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 {
 	int			i;
 	bool		found = false;

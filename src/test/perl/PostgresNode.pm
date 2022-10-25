@@ -522,17 +522,6 @@ sub init
 		{
 			print $conf "wal_level = replica\n";
 		}
-<<<<<<< HEAD
-		print $conf "max_wal_senders = 5\n";
-		print $conf "max_replication_slots = 5\n";
-		# PG sets this to 128MB but that makes checkpoint too frequent for GPDB. 
-		# 512MB corresponds to the ratio of GPDB seg size (64) over PG seg size (16).
-		print $conf "max_wal_size = 512MB\n";
-		print $conf "shared_buffers = 1MB\n";
-		print $conf "wal_log_hints = on\n";
-		print $conf "hot_standby = on\n";
-		print $conf "max_connections = 20\n";
-=======
 		print $conf "max_wal_senders = 10\n";
 		print $conf "max_replication_slots = 10\n";
 		print $conf "wal_log_hints = on\n";
@@ -541,8 +530,9 @@ sub init
 		print $conf "shared_buffers = 1MB\n";
 		print $conf "max_connections = 10\n";
 		# limit disk space consumption, too:
-		print $conf "max_wal_size = 128MB\n";
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+		# PG sets this to 128MB but that makes checkpoint too frequent for GPDB. 
+		# 512MB corresponds to the ratio of GPDB seg size (64) over PG seg size (16).
+		print $conf "max_wal_size = 512MB\n";
 	}
 	else
 	{
@@ -637,16 +627,12 @@ sub backup
 	my $name        = $self->name;
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
-<<<<<<< HEAD
-	TestLib::system_or_bail('pg_basebackup', '-D', $backup_path, '-h',
-		$self->host, '-p', $self->port, '--no-sync', '--target-gp-dbid', 99);
-=======
 	TestLib::system_or_bail(
 		'pg_basebackup', '-D', $backup_path, '-h',
 		$self->host,     '-p', $self->port,  '--checkpoint',
 		'fast',          '--no-sync',
+		'--target-gp-dbid', 99,
 		@{ $params{backup_options} });
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	print "# Backup finished\n";
 	return;
 }
@@ -1060,13 +1046,8 @@ primary_conninfo='$root_connstr'
 # Internal routine to enable archive recovery command on a standby node
 sub enable_restoring
 {
-<<<<<<< HEAD
-	my ($self, $root_node, $standby) = @_;
-	my $path = TestLib::perl2host($root_node->archive_dir);
-=======
 	my ($self, $root_node) = @_;
 	my $path = $root_node->archive_dir;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	my $name = $self->name;
 
 	print "### Enabling WAL restore for node \"$name\"\n";

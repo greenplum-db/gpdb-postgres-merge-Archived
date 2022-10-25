@@ -208,18 +208,12 @@ typedef struct _typeInfo
 	 * result of format_type(), which will be quoted if needed, and might be
 	 * schema-qualified too.
 	 */
-<<<<<<< HEAD
-	char		*ftypname;
-	const char  *rolname;
-	char		*typacl;
-=======
 	char	   *ftypname;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *typacl;
 	char	   *rtypacl;
 	char	   *inittypacl;
 	char	   *initrtypacl;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
@@ -464,11 +458,7 @@ typedef struct _indxInfo
 								 * contains both key and nonkey attributes */
 	bool		indisclustered;
 	bool		indisreplident;
-<<<<<<< HEAD
-	Oid			parentidx;		/* if partitioned, parent index OID */
-=======
 	Oid			parentidx;		/* if a partition, parent index OID */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	SimplePtrList partattaches;	/* if partitioned, partition attach objects */
 
 	/* if there is an associated constraint object, its dumpId: */
@@ -746,10 +736,7 @@ extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
 extern ExtensionInfo *findExtensionByOid(Oid oid);
 extern PublicationInfo *findPublicationByOid(Oid oid);
-<<<<<<< HEAD
 extern IndxInfo	*findIndexByOid(Oid oid);
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 extern void recordExtensionMembership(CatalogId catId, ExtensionInfo *ext);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);

@@ -210,14 +210,9 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		/* Scan individual REVOKE ACL items */
 		for (i = 0; i < nrevokeitems; i++)
 		{
-<<<<<<< HEAD
 			if (!parseAclItem(revokeitems[i],
 							  type, name, subname, remoteVersion,
 							  grantee, grantor, privs, privswgo))
-=======
-			if (!parseAclItem(raclitems[i], type, name, subname, remoteVersion,
-							  grantee, grantor, privs, NULL))
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			{
 				ok = false;
 				break;

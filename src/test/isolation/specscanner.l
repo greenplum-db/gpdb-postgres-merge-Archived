@@ -36,10 +36,6 @@ static void addlitchar(char c);
 %x sql
 %x qident
 
-digit			[0123456789]
-
-self			[,()*]
-
 non_newline		[^\n\r]
 space			[ \t\r\f]
 
@@ -64,10 +60,7 @@ self			[,()*]
 	}
 %}
 
-<<<<<<< HEAD
-=======
  /* Keywords (must appear before the {identifier} rule!) */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 notices			{ return NOTICES; }
 permutation		{ return PERMUTATION; }
 session			{ return SESSION; }
@@ -75,17 +68,7 @@ setup			{ return SETUP; }
 step			{ return STEP; }
 teardown		{ return TEARDOWN; }
 
-<<<<<<< HEAD
-{digit}+		{
-					yylval.integer = atoi(yytext);
-					return INTEGER;
-				}
-
-{self}			{ return yytext[0]; }
-
-=======
  /* Whitespace and comments */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }
 {space}			{ /* ignore */ }

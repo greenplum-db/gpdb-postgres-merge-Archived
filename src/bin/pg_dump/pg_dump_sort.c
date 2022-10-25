@@ -22,7 +22,7 @@
 #include "catalog/pg_class_d.h"
 
 /*
-* Sort priority for database object types.
+ * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
  *
  * Triggers, event triggers, and materialized views are intentionally sorted
@@ -49,105 +49,8 @@
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
  * must sort between them.
  */
-
-/* This enum lists the priority levels in order */
-enum dbObjectTypePriorities
-{
-	PRIO_NAMESPACE = 1,
-	PRIO_PROCLANG,
-	PRIO_COLLATION,
-	PRIO_TRANSFORM,
-	PRIO_EXTENSION,
-	PRIO_TYPE,					/* used for DO_TYPE and DO_SHELL_TYPE */
-	PRIO_FUNC,
-	PRIO_AGG,
-	PRIO_ACCESS_METHOD,
-	PRIO_OPERATOR,
-	PRIO_OPFAMILY,				/* used for DO_OPFAMILY and DO_OPCLASS */
-	PRIO_CAST,
-	PRIO_CONVERSION,
-	PRIO_TSPARSER,
-	PRIO_TSTEMPLATE,
-	PRIO_TSDICT,
-	PRIO_TSCONFIG,
-	PRIO_FDW,
-	PRIO_FOREIGN_SERVER,
-	PRIO_TABLE,
-	PRIO_TABLE_ATTACH,
-	PRIO_DUMMY_TYPE,
-	PRIO_ATTRDEF,
-	PRIO_BLOB,
-	PRIO_PRE_DATA_BOUNDARY,		/* boundary! */
-	PRIO_TABLE_DATA,
-	PRIO_SEQUENCE_SET,
-	PRIO_BLOB_DATA,
-	PRIO_POST_DATA_BOUNDARY,	/* boundary! */
-	PRIO_CONSTRAINT,
-	PRIO_INDEX,
-	PRIO_INDEX_ATTACH,
-	PRIO_STATSEXT,
-	PRIO_RULE,
-	PRIO_TRIGGER,
-	PRIO_FK_CONSTRAINT,
-	PRIO_POLICY,
-	PRIO_PUBLICATION,
-	PRIO_PUBLICATION_REL,
-	PRIO_SUBSCRIPTION,
-	PRIO_DEFAULT_ACL,			/* done in ACL pass */
-	PRIO_EVENT_TRIGGER,			/* must be next to last! */
-	PRIO_REFRESH_MATVIEW		/* must be last! */
-};
-
-/* This table is indexed by enum DumpableObjectType */
 static const int dbObjectTypePriority[] =
 {
-<<<<<<< HEAD
-	PRIO_NAMESPACE,				/* DO_NAMESPACE */
-	PRIO_EXTENSION,				/* DO_EXTENSION */
-	PRIO_TYPE,					/* DO_TYPE */
-	PRIO_TYPE,					/* DO_SHELL_TYPE */
-	PRIO_FUNC,					/* DO_FUNC */
-	PRIO_AGG,					/* DO_AGG */
-	PRIO_OPERATOR,				/* DO_OPERATOR */
-	PRIO_ACCESS_METHOD,			/* DO_ACCESS_METHOD */
-	PRIO_OPFAMILY,				/* DO_OPCLASS */
-	PRIO_OPFAMILY,				/* DO_OPFAMILY */
-	PRIO_COLLATION,				/* DO_COLLATION */
-	PRIO_CONVERSION,			/* DO_CONVERSION */
-	PRIO_TABLE,					/* DO_TABLE */
-	PRIO_TABLE_ATTACH,			/* DO_TABLE_ATTACH */
-	PRIO_ATTRDEF,				/* DO_ATTRDEF */
-	PRIO_INDEX,					/* DO_INDEX */
-	PRIO_INDEX_ATTACH,			/* DO_INDEX_ATTACH */
-	PRIO_STATSEXT,				/* DO_STATSEXT */
-	PRIO_RULE,					/* DO_RULE */
-	PRIO_TRIGGER,				/* DO_TRIGGER */
-	PRIO_CONSTRAINT,			/* DO_CONSTRAINT */
-	PRIO_FK_CONSTRAINT,			/* DO_FK_CONSTRAINT */
-	PRIO_PROCLANG,				/* DO_PROCLANG */
-	PRIO_CAST,					/* DO_CAST */
-	PRIO_TABLE_DATA,			/* DO_TABLE_DATA */
-	PRIO_SEQUENCE_SET,			/* DO_SEQUENCE_SET */
-	PRIO_DUMMY_TYPE,			/* DO_DUMMY_TYPE */
-	PRIO_TSPARSER,				/* DO_TSPARSER */
-	PRIO_TSDICT,				/* DO_TSDICT */
-	PRIO_TSTEMPLATE,			/* DO_TSTEMPLATE */
-	PRIO_TSCONFIG,				/* DO_TSCONFIG */
-	PRIO_FDW,					/* DO_FDW */
-	PRIO_FOREIGN_SERVER,		/* DO_FOREIGN_SERVER */
-	PRIO_DEFAULT_ACL,			/* DO_DEFAULT_ACL */
-	PRIO_TRANSFORM,				/* DO_TRANSFORM */
-	PRIO_BLOB,					/* DO_BLOB */
-	PRIO_BLOB_DATA,				/* DO_BLOB_DATA */
-	PRIO_PRE_DATA_BOUNDARY,		/* DO_PRE_DATA_BOUNDARY */
-	PRIO_POST_DATA_BOUNDARY,	/* DO_POST_DATA_BOUNDARY */
-	PRIO_EVENT_TRIGGER,			/* DO_EVENT_TRIGGER */
-	PRIO_REFRESH_MATVIEW,		/* DO_REFRESH_MATVIEW */
-	PRIO_POLICY,				/* DO_POLICY */
-	PRIO_PUBLICATION,			/* DO_PUBLICATION */
-	PRIO_PUBLICATION_REL,		/* DO_PUBLICATION_REL */
-	PRIO_SUBSCRIPTION			/* DO_SUBSCRIPTION */
-=======
 	1,							/* DO_NAMESPACE */
 	4,							/* DO_EXTENSION */
 	5,							/* DO_TYPE */
@@ -192,7 +95,6 @@ static const int dbObjectTypePriority[] =
 	35,							/* DO_PUBLICATION */
 	36,							/* DO_PUBLICATION_REL */
 	37							/* DO_SUBSCRIPTION */
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 };
 
 static DumpId preDataBoundId;
@@ -349,6 +251,7 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	/* Usually shouldn't get here, but if we do, sort by OID */
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);
 }
+
 
 /*
  * Sort the given objects into a safe dump order using dependency

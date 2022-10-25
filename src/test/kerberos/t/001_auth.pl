@@ -19,11 +19,7 @@ use Test::More;
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-<<<<<<< HEAD
 	plan tests => 19;
-=======
-	plan tests => 18;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 }
 else
 {
@@ -181,11 +177,7 @@ sub test_access
 	# need to connect over TCP/IP for Kerberos
 	my ($res, $stdoutres, $stderrres) = $node->psql(
 		'postgres',
-<<<<<<< HEAD
-		"$query",
-=======
 		undef,
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		extra_params => [
 			'-XAtd',
 			$node->connstr('postgres')
@@ -211,11 +203,8 @@ sub test_access
 # As above, but test for an arbitrary query result.
 sub test_query
 {
-<<<<<<< HEAD
-=======
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	my ($node, $role, $query, $expected, $gssencmode, $test_name) = @_;
 
 	# need to connect over TCP/IP for Kerberos

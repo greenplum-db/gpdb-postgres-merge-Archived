@@ -43,29 +43,6 @@ step vac_analyze_all_parts	{ VACUUM (ANALYZE, SKIP_LOCKED) parted; }
 step vac_full_specified		{ VACUUM (SKIP_LOCKED, FULL) part1, part2; }
 step vac_full_all_parts		{ VACUUM (SKIP_LOCKED, FULL) parted; }
 
-<<<<<<< HEAD
-permutation "lock_share" "vac_specified" "commit"
-permutation "lock_share" "vac_all_parts" "commit"
-permutation "lock_share" "analyze_specified" "commit"
-permutation "lock_share" "analyze_all_parts" "commit"
-permutation "lock_share" "vac_analyze_specified" "commit"
-permutation "lock_share" "vac_analyze_all_parts" "commit"
-permutation "lock_share" "vac_full_specified" "commit"
-permutation "lock_share" "vac_full_all_parts" "commit"
-permutation "lock_access_exclusive" "vac_specified" "commit"
-permutation "lock_access_exclusive" "vac_all_parts" "commit"
-permutation "lock_access_exclusive" "analyze_specified" "commit"
-# GPDB: This blocks in GPDB, because the ANALYZE tries to acquire inherited
-# sample on segments, which blocks. We consider that OK, even though it's
-# different from upstream. Even in PostgreSQL, the documentation for
-# SKIP_LOCKED says that it may still block if it needs to acquire sample
-# rows from the partitions.
-#permutation "lock_access_exclusive" "analyze_all_parts" "commit"
-permutation "lock_access_exclusive" "vac_analyze_specified" "commit"
-#permutation "lock_access_exclusive" "vac_analyze_all_parts" "commit"
-permutation "lock_access_exclusive" "vac_full_specified" "commit"
-permutation "lock_access_exclusive" "vac_full_all_parts" "commit"
-=======
 permutation lock_share vac_specified commit
 permutation lock_share vac_all_parts commit
 permutation lock_share analyze_specified commit
@@ -77,9 +54,13 @@ permutation lock_share vac_full_all_parts commit
 permutation lock_access_exclusive vac_specified commit
 permutation lock_access_exclusive vac_all_parts commit
 permutation lock_access_exclusive analyze_specified commit
-permutation lock_access_exclusive analyze_all_parts commit
+# GPDB: This blocks in GPDB, because the ANALYZE tries to acquire inherited
+# sample on segments, which blocks. We consider that OK, even though it's
+# different from upstream. Even in PostgreSQL, the documentation for
+# SKIP_LOCKED says that it may still block if it needs to acquire sample
+# rows from the partitions.
+#permutation lock_access_exclusive analyze_all_parts commit
 permutation lock_access_exclusive vac_analyze_specified commit
-permutation lock_access_exclusive vac_analyze_all_parts commit
+#permutation lock_access_exclusive vac_analyze_all_parts commit
 permutation lock_access_exclusive vac_full_specified commit
 permutation lock_access_exclusive vac_full_all_parts commit
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

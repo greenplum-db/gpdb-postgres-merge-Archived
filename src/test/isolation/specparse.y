@@ -49,11 +49,7 @@ TestSpec		parseresult;			/* result of parsing is left here */
 %type <permutationstep> permutation_step
 %type <blocker> blocker
 
-<<<<<<< HEAD
-%token <str> sqlblock string_literal
-=======
 %token <str> sqlblock identifier
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 %token <integer> INTEGER
 %token NOTICES PERMUTATION SESSION SETUP STEP TEARDOWN TEST
 
@@ -215,11 +211,7 @@ permutation_step_list:
 		;
 
 permutation_step:
-<<<<<<< HEAD
-			string_literal
-=======
 			identifier
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			{
 				$$ = pg_malloc(sizeof(PermutationStep));
 				$$->name = $1;
@@ -227,11 +219,7 @@ permutation_step:
 				$$->nblockers = 0;
 				$$->step = NULL;
 			}
-<<<<<<< HEAD
-			| string_literal '(' blocker_list ')'
-=======
 			| identifier '(' blocker_list ')'
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			{
 				$$ = pg_malloc(sizeof(PermutationStep));
 				$$->name = $1;
@@ -258,11 +246,7 @@ blocker_list:
 		;
 
 blocker:
-<<<<<<< HEAD
-			string_literal
-=======
 			identifier
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			{
 				$$ = pg_malloc(sizeof(PermutationStepBlocker));
 				$$->stepname = $1;
@@ -271,11 +255,7 @@ blocker:
 				$$->step = NULL;
 				$$->target_notices = -1;
 			}
-<<<<<<< HEAD
-			| string_literal NOTICES INTEGER
-=======
 			| identifier NOTICES INTEGER
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 			{
 				$$ = pg_malloc(sizeof(PermutationStepBlocker));
 				$$->stepname = $1;

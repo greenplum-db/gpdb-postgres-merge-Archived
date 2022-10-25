@@ -126,10 +126,10 @@ static const struct exclude_list_item excludeFiles[] =
 	{"postmaster.pid", false},
 	{"postmaster.opts", false},
 
-	GP_INTERNAL_AUTO_CONF_FILE_NAME,
+	{GP_INTERNAL_AUTO_CONF_FILE_NAME, false},
 
 	/* GPDB: Default gpbackup directory (top-level directory) */
-	"backups",
+	{"backups", false},
 
 	/* end of list */
 	{NULL, false}
@@ -263,12 +263,6 @@ void
 process_target_file(const char *path, file_type_t type, size_t size,
 					const char *link_target)
 {
-<<<<<<< HEAD
-=======
-	bool		exists;
-	file_entry_t key;
-	file_entry_t *key_ptr;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	filemap_t  *map = filemap;
 	file_entry_t *entry;
 
@@ -283,7 +277,6 @@ process_target_file(const char *path, file_type_t type, size_t size,
 	 * should not be copied but also should not be removed, then a separate
 	 * function for those would be better.
 	 */
-<<<<<<< HEAD
 	{
 		const char *filename = last_dir_separator(path);
 		if (filename == NULL)
@@ -298,8 +291,6 @@ process_target_file(const char *path, file_type_t type, size_t size,
 			strcmp(path, "backups") == 0)
 			return;
 	}
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	if (map->array == NULL)
 	{
@@ -536,6 +527,16 @@ filemap_list_to_array(filemap_t *map)
 	map->narray = narray;
 	map->nlist = 0;
 	map->first = map->last = NULL;
+}
+
+void
+filemap_finalize(void)
+{
+	filemap_t  *map = filemap;
+
+	filemap_list_to_array(map);
+	qsort(map->array, map->narray, sizeof(file_entry_t *),
+		  final_filemap_cmp);
 }
 
 static const char *

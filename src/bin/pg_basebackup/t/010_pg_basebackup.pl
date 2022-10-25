@@ -6,11 +6,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 106 + 15;
-=======
-use Test::More tests => 107;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+use Test::More tests => 107 + 15;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -511,18 +507,9 @@ my $file_corrupt2 = $node->safe_psql('postgres',
 my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 
 # induce corruption
-<<<<<<< HEAD
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt1";
-seek($file, $pageheader_size, 0);
-syswrite($file, "\0\0\0\0\0\0\0\0\0");
-close $file;
-system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
-=======
 $node->stop;
 $node->corrupt_page_checksum($file_corrupt1, 0);
-$node->start;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt" ],
@@ -538,12 +525,7 @@ for my $i (1 .. 5)
 {
 	$node->corrupt_page_checksum($file_corrupt1, $i * $block_size);
 }
-<<<<<<< HEAD
-close $file;
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
-=======
-$node->start;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt2" ],
@@ -554,18 +536,9 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
-<<<<<<< HEAD
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt2";
-seek($file, $pageheader_size, 0);
-syswrite($file, "\0\0\0\0\0\0\0\0\0");
-close $file;
-system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
-=======
 $node->stop;
 $node->corrupt_page_checksum($file_corrupt2, 0);
-$node->start;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
 $node->command_checks_all(
 	[ 'pg_basebackup', '--target-gp-dbid', '123', '-D', "$tempdir/backup_corrupt3" ],

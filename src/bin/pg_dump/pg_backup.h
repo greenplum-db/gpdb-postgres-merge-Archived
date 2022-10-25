@@ -26,6 +26,9 @@
 #include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
+#define GPDB5_MAJOR_PGVERSION 80300
+#define GPDB6_MAJOR_PGVERSION 90400
+#define GPDB7_MAJOR_PGVERSION 120000
 
 typedef enum trivalue
 {
@@ -58,7 +61,6 @@ typedef enum _teSection
 	SECTION_POST_DATA			/* stuff to be processed after data */
 } teSection;
 
-<<<<<<< HEAD
 /* We need one enum entry per prepared query in pg_dump */
 enum _dumpPreparedQueries
 {
@@ -76,8 +78,6 @@ enum _dumpPreparedQueries
 	NUM_PREP_QUERIES			/* must be last */
 };
 
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 /* Parameters needed by ConnectDatabase; same for dump and restore */
 typedef struct _connParams
 {
@@ -278,11 +278,7 @@ typedef int DumpId;
  * Function pointer prototypes for assorted callback methods.
  */
 
-<<<<<<< HEAD
-typedef int (*DataDumperPtr) (Archive *AH, const void *userArg);
-=======
 typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 typedef void (*SetupWorkerPtrType) (Archive *AH);
 
@@ -290,19 +286,10 @@ typedef void (*SetupWorkerPtrType) (Archive *AH);
  * Main archiver interface.
  */
 
-<<<<<<< HEAD
-extern void ConnectDatabase(Archive *AH,
-							const char *dbname,
-							const char *pghost,
-							const char *pgport,
-							const char *username,
-							trivalue prompt_password,
-							bool binary_upgrade);
-=======
 extern void ConnectDatabase(Archive *AHX,
 							const ConnParams *cparams,
-							bool isReconnect);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+							bool isReconnect,
+							bool binary_upgrade);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 

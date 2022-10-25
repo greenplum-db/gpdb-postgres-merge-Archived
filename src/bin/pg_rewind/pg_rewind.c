@@ -405,18 +405,9 @@ main(int argc, char **argv)
 	if (showprogress)
 		pg_log_info("reading WAL in target");
 	extractPageMap(datadir_target, chkptrec, lastcommontliIndex,
-<<<<<<< HEAD
-				   ControlFile_target.checkPoint);
-=======
 				   target_wal_endrec);
 	filemap_finalize();
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
-	/*
-	 * We have collected all information we need from both systems. Decide
-	 * what to do with each file.
-	 */
-	decide_file_actions();
 	if (showprogress)
 		calculate_totals();
 

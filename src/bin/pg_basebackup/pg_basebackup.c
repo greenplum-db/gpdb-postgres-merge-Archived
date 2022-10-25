@@ -1759,6 +1759,23 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	 */
 }
 
+/*
+ * Escape a string so that it can be used as a value in a key-value pair
+ * a configuration file.
+ */
+static char *
+escape_quotes(const char *src)
+{
+	char	   *result = escape_single_quotes_ascii(src);
+
+	if (!result)
+	{
+		pg_log_error("out of memory");
+		exit(1);
+	}
+	return result;
+}
+
 static void
 add_to_exclude_list(PQExpBufferData *buf, const char *exclude)
 {
@@ -1797,9 +1814,42 @@ build_exclude_list(void)
 		FILE	   *file = fopen(filename, "r");
 		char		str[MAXPGPATH];
 
-<<<<<<< HEAD
 		if (file == NULL)
-=======
+		{
+			pg_log_error("could not open exclude-from file \"%s\": %m",
+						 filename);
+			exit(1);
+		}
+
+		/*
+		 * Each line contains a pathname to exclude.
+		 *
+		 * We must use fgets() instead of fscanf("%s") to correctly handle the
+		 * spaces in the filenames.
+		 */
+		while (fgets(str, sizeof(str), file))
+		{
+			/* Remove all trailing \r and \n */
+			for (int len = strlen(str);
+				 len > 0 && (str[len - 1] == '\r' || str[len - 1] == '\n');
+				 len--)
+				str[len - 1] = '\0';
+
+			add_to_exclude_list(&buf, str);
+		}
+
+		fclose(file);
+	}
+
+	if (PQExpBufferDataBroken(buf))
+	{
+		pg_log_error("out of memory");
+		exit(1);
+	}
+
+	return buf.data;
+}
+
 /*
  * Create a configuration file in memory using a PQExpBuffer
  */
@@ -1924,41 +1974,15 @@ WriteRecoveryConf(void)
 		snprintf(filename, MAXPGPATH, "%s/%s", basedir, "standby.signal");
 		cf = fopen(filename, "w");
 		if (cf == NULL)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 		{
-			pg_log_error("could not open exclude-from file \"%s\": %m",
-						 filename);
+			pg_log_error("could not create file \"%s\": %m", filename);
 			exit(1);
 		}
 
-		/*
-		 * Each line contains a pathname to exclude.
-		 *
-		 * We must use fgets() instead of fscanf("%s") to correctly handle the
-		 * spaces in the filenames.
-		 */
-		while (fgets(str, sizeof(str), file))
-		{
-			/* Remove all trailing \r and \n */
-			for (int len = strlen(str);
-				 len > 0 && (str[len - 1] == '\r' || str[len - 1] == '\n');
-				 len--)
-				str[len - 1] = '\0';
-
-			add_to_exclude_list(&buf, str);
-		}
-
-		fclose(file);
+		fclose(cf);
 	}
-
-	if (PQExpBufferDataBroken(buf))
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
-
-	return buf.data;
 }
+
 
 static void
 BaseBackup(void)

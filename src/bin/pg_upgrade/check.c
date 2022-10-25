@@ -161,36 +161,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
 
-	/* 
-	 * GPDB: 9.5 removed the support for 8.3, we need to keep it to support upgrading
-	 * from GPDB 5
-	 */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) == 803)
-	{
-		old_8_3_check_for_name_data_type_usage(&old_cluster);
-		old_8_3_check_for_tsquery_usage(&old_cluster);
-		old_8_3_check_ltree_usage(&old_cluster);
-		check_hash_partition_usage();
-		if (user_opts.check)
-		{
-			old_8_3_rebuild_tsvector_tables(&old_cluster, true);
-			old_8_3_invalidate_hash_gin_indexes(&old_cluster, true);
-			old_8_3_invalidate_bpchar_pattern_ops_indexes(&old_cluster, true);
-		}
-		else
-		{
-			/*
-			 * While we have the old server running, create the script to
-			 * properly restore its sequence values but we report this at the
-			 * end.
-			 */
-			*sequence_script_file_name =
-				old_8_3_create_sequence_script(&old_cluster);
-		}
-
-		old_GPDB5_check_for_unsupported_distribution_key_data_types();
-	}
-
 	/* For now, the issue exists only for Greenplum 6.x/PostgreSQL 9.4 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904)
 	{
@@ -294,9 +264,6 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 			check_ok();
 		}
 
-		old_8_3_rebuild_tsvector_tables(&new_cluster, false);
-		old_8_3_invalidate_hash_gin_indexes(&new_cluster, false);
-		old_8_3_invalidate_bpchar_pattern_ops_indexes(&new_cluster, false);
 	}
 
 	/* GPDB_90_MERGE_FIXME: See earlier comment on large objects */
@@ -1205,79 +1172,6 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 
 	snprintf(output_path, sizeof(output_path), "tables_using_reg.txt");
 
-<<<<<<< HEAD
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_nspname,
-					i_relname,
-					i_attname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-		/*
-		 * While several relkinds don't store any data, e.g. views, they can
-		 * be used to define data types of other columns, so we check all
-		 * relkinds.
-		 */
-		res = executeQueryOrDie(conn,
-								"SELECT n.nspname, c.relname, a.attname "
-								"FROM	pg_catalog.pg_class c, "
-								"		pg_catalog.pg_namespace n, "
-								"		pg_catalog.pg_attribute a, "
-								"		pg_catalog.pg_type t "
-								"WHERE	c.oid = a.attrelid AND "
-								"		NOT a.attisdropped AND "
-								"       a.atttypid = t.oid AND "
-								"       t.typnamespace = "
-								"           (SELECT oid FROM pg_namespace "
-								"            WHERE nspname = 'pg_catalog') AND"
-								"		t.typname IN ( "
-		/* regclass.oid is preserved, so 'regclass' is OK */
-								"           'regconfig', "
-								"           'regdictionary', "
-								"           'regnamespace', "
-								"           'regoper', "
-								"           'regoperator', "
-								"           'regproc', "
-								"           'regprocedure', "
-								"						'pg_catalog.regconfig'::pg_catalog.regtype::pg_catalog.text, "
-								"						'pg_catalog.regdictionary'::pg_catalog.regtype::pg_catalog.text "
-								"			) AND "
-								"		c.relnamespace = n.oid AND "
-							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
-
-		ntups = PQntuples(res);
-		i_nspname = PQfnumber(res, "nspname");
-		i_relname = PQfnumber(res, "relname");
-		i_attname = PQfnumber(res, "attname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			found = true;
-			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n",
-						 output_path, strerror(errno));
-			if (!db_used)
-			{
-				fprintf(script, "Database: %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  %s.%s.%s\n",
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_relname),
-					PQgetvalue(res, rowno, i_attname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-		fclose(script);
-=======
 	/*
 	 * Note: older servers will not have all of these reg* types, so we have
 	 * to write the query like this rather than depending on casts to regtype.
@@ -1301,7 +1195,6 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	/* pg_type.oid is (mostly) preserved, so 'regtype' is OK */
 									   "         )",
 									   output_path);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 	if (found)
 	{

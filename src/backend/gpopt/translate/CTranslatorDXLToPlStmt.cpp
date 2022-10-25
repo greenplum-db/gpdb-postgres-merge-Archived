@@ -942,7 +942,7 @@ CTranslatorDXLToPlStmt::TranslateDXLIndexOnlyScan(
 		&index_strategy_list, &index_subtype_list);
 
 	index_scan->indexqual = index_cond;
-	index_scan->indexqualorig = index_orig_cond;
+	// index_scan->indexqualorig = index_orig_cond;
 	SetParamIds(plan);
 
 	return (Plan *) index_scan;

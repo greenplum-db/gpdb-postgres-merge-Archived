@@ -41,7 +41,6 @@ typedef long pgpid_t;
 /* postgres version ident string */
 #define PM_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 
-
 typedef enum
 {
 	SMART_MODE,
@@ -169,14 +168,10 @@ static void free_readfile(char **optlines);
 static pgpid_t start_postmaster(void);
 static void read_post_opts(void);
 
-<<<<<<< HEAD
 static bool is_secondary_instance(const char *pg_data);
-static WaitPMResult wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint);
-=======
 static WaitPMResult wait_for_postmaster_start(pgpid_t pm_pid, bool do_checkpoint);
 static bool wait_for_postmaster_stop(void);
 static bool wait_for_postmaster_promote(void);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static bool postmaster_is_alive(pid_t pid);
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
@@ -465,12 +460,8 @@ free_readfile(char **optlines)
 static pgpid_t
 start_postmaster(void)
 {
-<<<<<<< HEAD
-	char		launcher[MAXPGPATH] = "";
-	char		cmd[MAXPGPATH];
-=======
+	char	   *launcher;
 	char	   *cmd;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 #ifndef WIN32
 	pgpid_t		pm_pid;
@@ -512,10 +503,12 @@ start_postmaster(void)
 	if (wrapper != NULL)
 	{
 		if (wrapper_args != NULL)
-			snprintf(launcher, MAXPGPATH, "%s %s", wrapper, wrapper_args);
+			launcher = psprintf("%s %s", wrapper, wrapper_args);
 		else
-			snprintf(launcher, MAXPGPATH, "%s", wrapper);
+			launcher = psprintf("%s", wrapper);
 	}
+	else
+		launcher = "";
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
@@ -523,21 +516,12 @@ start_postmaster(void)
 	 * has the same PID as the current child process.
 	 */
 	if (log_file != NULL)
-<<<<<<< HEAD
-		snprintf(cmd, MAXPGPATH, "exec %s \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
-				 launcher, exec_path, pgdata_opt, post_opts,
-				 DEVNULL, log_file);
-	else
-		snprintf(cmd, MAXPGPATH, "exec %s \"%s\" %s%s < \"%s\" 2>&1",
-				 launcher, exec_path, pgdata_opt, post_opts, DEVNULL);
-=======
-		cmd = psprintf("exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
-					   exec_path, pgdata_opt, post_opts,
+		cmd = psprintf("exec %s \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
+					   launcher, exec_path, pgdata_opt, post_opts,
 					   DEVNULL, log_file);
 	else
-		cmd = psprintf("exec \"%s\" %s%s < \"%s\" 2>&1",
-					   exec_path, pgdata_opt, post_opts, DEVNULL);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+		cmd = psprintf("exec %s \"%s\" %s%s < \"%s\" 2>&1",
+					   launcher, exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 

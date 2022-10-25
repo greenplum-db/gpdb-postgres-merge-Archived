@@ -348,8 +348,6 @@ my %tests = (
 		},
 	},
 
-<<<<<<< HEAD
-=======
 	'REVOKE ALL ON FUNCTION wgo_then_no_access' => {
 		create_order => 3,
 		create_sql   => q{
@@ -389,7 +387,6 @@ my %tests = (
 		unlike => { no_privs => 1, },
 	},
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	'CREATE ACCESS METHOD regress_test_am' => {
 		regexp => qr/^
 			\QCREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;\E

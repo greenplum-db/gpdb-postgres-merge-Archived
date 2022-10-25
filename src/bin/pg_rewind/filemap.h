@@ -97,9 +97,9 @@ typedef struct filemap_t
 	/*
 	 * After processing all the remote files, the entries in the linked list
 	 * are moved to this array. After processing local files, too, all the
-	 * local entries are added to the array by decide_file_actions(), and
-	 * sorted in the final order. After decide_file_actions(), all the entries
-	 * are in the array, and the linked list is empty.
+	 * local entries are added to the array by filemap_finalize, and sorted in
+	 * the final order. After filemap_finalize, all the entries are in the
+	 * array, and the linked list is empty.
 	 */
 	file_entry_t **array;
 	int			narray;			/* current length of array */
@@ -128,6 +128,6 @@ extern void process_target_wal_aofile_change(RelFileNode rnode,
 extern void process_target_wal_block_change(ForkNumber forknum,
 											RelFileNode rnode,
 											BlockNumber blkno);
-extern void decide_file_actions(void);
+extern void filemap_finalize(void);
 
 #endif							/* FILEMAP_H */

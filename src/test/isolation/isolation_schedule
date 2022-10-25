@@ -52,7 +52,6 @@
 #############################################################
 
 test: read-only-anomaly
-<<<<<<< HEAD
 #test: read-only-anomaly-2
 #test: read-only-anomaly-3
 #test: read-write-unique
@@ -71,65 +70,28 @@ test: read-only-anomaly
 #test: two-ids
 #test: multiple-row-versions
 #test: index-only-scan
-=======
-test: read-only-anomaly-2
-test: read-only-anomaly-3
-test: read-write-unique
-test: read-write-unique-2
-test: read-write-unique-3
-test: read-write-unique-4
-test: simple-write-skew
-test: receipt-report
-test: temporal-range-integrity
-test: project-manager
-test: classroom-scheduling
-test: total-cash
-test: referential-integrity
-test: ri-trigger
-test: partial-index
-test: two-ids
-test: multiple-row-versions
-test: index-only-scan
 test: predicate-lock-hot-tuple
 test: update-conflict-out
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 test: deadlock-simple
 test: deadlock-hard
 test: deadlock-soft
 test: deadlock-soft-2
-<<<<<<< HEAD
 #test: fk-contention
 #test: fk-deadlock
 #test: fk-deadlock2
 #test: fk-partitioned-1
 #test: fk-partitioned-2
 #test: eval-plan-qual
+#test: eval-plan-qual-trigger
 #test: lock-update-delete
 #test: lock-update-traversal
 test: inherit-temp
+test: temp-schema-cleanup
 #test: insert-conflict-do-nothing
 #test: insert-conflict-do-nothing-2
 #test: insert-conflict-do-update
 #test: insert-conflict-do-update-2
 #test: insert-conflict-do-update-3
-=======
-test: fk-contention
-test: fk-deadlock
-test: fk-deadlock2
-test: fk-partitioned-1
-test: fk-partitioned-2
-test: eval-plan-qual
-test: eval-plan-qual-trigger
-test: lock-update-delete
-test: lock-update-traversal
-test: inherit-temp
-test: temp-schema-cleanup
-test: insert-conflict-do-nothing
-test: insert-conflict-do-nothing-2
-test: insert-conflict-do-update
-test: insert-conflict-do-update-2
-test: insert-conflict-do-update-3
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 test: insert-conflict-toast
 test: insert-conflict-specconflict
 test: delete-abort-savept
@@ -140,12 +102,12 @@ test: delete-abort-savept
 #test: lock-committed-update
 #test: lock-committed-keyupdate
 test: update-locked-tuple
-<<<<<<< HEAD
 #test: reindex-concurrently
 #test: propagate-lock-delete
 #test: tuplelock-conflict
 #test: tuplelock-update
 #test: tuplelock-upgrade-no-deadlock
+#test: tuplelock-partition
 #test: freeze-the-dead
 #test: nowait
 #test: nowait-2
@@ -156,24 +118,6 @@ test: update-locked-tuple
 #test: skip-locked-2
 #test: skip-locked-3
 #test: skip-locked-4
-=======
-test: reindex-concurrently
-test: propagate-lock-delete
-test: tuplelock-conflict
-test: tuplelock-update
-test: tuplelock-upgrade-no-deadlock
-test: tuplelock-partition
-test: freeze-the-dead
-test: nowait
-test: nowait-2
-test: nowait-3
-test: nowait-4
-test: nowait-5
-test: skip-locked
-test: skip-locked-2
-test: skip-locked-3
-test: skip-locked-4
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 test: drop-index-concurrently-1
 #test: multiple-cic
 test: alter-table-1
@@ -190,25 +134,17 @@ test: timeouts
 test: vacuum-concurrent-drop
 test: vacuum-conflict
 test: vacuum-skip-locked
-<<<<<<< HEAD
 #test: predicate-hash
 #test: predicate-gist
 #test: predicate-gin
 
+test: partition-concurrent-attach
 test: partition-drop-index-locking
 
 # GPDB_12_MERGE_FEATURE_NOT_SUPPORTED: Disabled test partition-key-update-1
 # because it fails when test errors from ExecLockRows. The reason is that
 # GPDB disabled triggers for foreign keys.
 #test: partition-key-update-1
-=======
-test: predicate-hash
-test: predicate-gist
-test: predicate-gin
-test: partition-concurrent-attach
-test: partition-drop-index-locking
-test: partition-key-update-1
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 test: partition-key-update-2
 test: partition-key-update-3
 test: partition-key-update-4

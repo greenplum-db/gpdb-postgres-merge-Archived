@@ -22,8 +22,6 @@
 #include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 
-<<<<<<< HEAD
-=======
 
 /*
  * Write a simple string to stderr --- must be safe in a signal handler.
@@ -40,7 +38,6 @@
 
 #define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 static PGcancel *volatile cancelConn = NULL;
 bool		CancelRequested = false;
 
