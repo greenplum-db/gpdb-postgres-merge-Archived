@@ -508,7 +508,9 @@ start_postmaster(void)
 			launcher = psprintf("%s", wrapper);
 	}
 	else
+	{
 		launcher = "";
+	}
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass

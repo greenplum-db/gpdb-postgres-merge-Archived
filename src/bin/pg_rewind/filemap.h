@@ -129,5 +129,6 @@ extern void process_target_wal_block_change(ForkNumber forknum,
 											RelFileNode rnode,
 											BlockNumber blkno);
 extern void filemap_finalize(void);
+// GPDB_12_12_MERGE_FIXME decide_file_actions or filemap_finalize
 
 #endif							/* FILEMAP_H */

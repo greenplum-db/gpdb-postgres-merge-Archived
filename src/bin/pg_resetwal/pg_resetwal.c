@@ -1548,24 +1548,24 @@ usage(void)
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -c, --commit-timestamp-ids=XID,XID\n"
-			 "                                 set oldest and newest transactions bearing\n"
-			 "                                 commit timestamp (zero means no change)\n"));
-	printf(_(" [-D, --pgdata=]DATADIR          data directory\n"));
-	printf(_("  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"));
-	printf(_("  -f, --force                    force update to be done\n"));
-	printf(_("  -k data_checksum_version       set data_checksum_version\n"));
-	printf(_("  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"));
-	printf(_("  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"));
-	printf(_("  -n, --dry-run                  no update, just show what would be done\n"));
-	printf(_("  -o, --next-oid=OID             set next OID\n"));
-	printf(_("  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"));
+			 "                                   set oldest and newest transactions bearing\n"
+			 "                                   commit timestamp (zero means no change)\n"));
+	printf(_(" [-D, --pgdata=]DATADIR            data directory\n"));
+	printf(_("  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"));
+	printf(_("  -f, --force                      force update to be done\n"));
+	printf(_("  -k data_checksum_version         set data_checksum_version\n"));
+	printf(_("  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"));
+	printf(_("  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"));
+	printf(_("  -n, --dry-run                    no update, just show what would be done\n"));
+	printf(_("  -o, --next-oid=OID               set next OID\n"));
+	printf(_("  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"));
 	printf(_("  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"));
-	printf(_("  -r RELFILENODE                 set next RELFILENODE\n"));
-	printf(_("      --system-identifier=ID     set database system identifier\n"));
-	printf(_("  -V, --version                  output version information, then exit\n"));
-	printf(_("  -x, --next-transaction-id=XID  set next transaction ID\n"));
-	printf(_("      --next-gxid=GXID           set next distributed transaction ID\n"));
-	printf(_("      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"));
-	printf(_("  -?, --help                     show this help, then exit\n"));
+	printf(_("  -r RELFILENODE                   set next RELFILENODE\n"));
+	printf(_("      --system-identifier=ID       set database system identifier\n"));
+	printf(_("  -V, --version                    output version information, then exit\n"));
+	printf(_("  -x, --next-transaction-id=XID    set next transaction ID\n"));
+	printf(_("      --next-gxid=GXID             set next distributed transaction ID\n"));
+	printf(_("      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"));
+	printf(_("  -?, --help                       show this help, then exit\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }

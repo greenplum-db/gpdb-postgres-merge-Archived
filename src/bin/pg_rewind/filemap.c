@@ -529,6 +529,7 @@ filemap_list_to_array(filemap_t *map)
 	map->first = map->last = NULL;
 }
 
+/* GPDB_12_12_MERGE_FIXME needed? */
 void
 filemap_finalize(void)
 {

@@ -274,7 +274,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getPolicies(fout, tblinfo, numTables);
 
 	pg_log_info("reading publications");
-	getPublications(fout, &numPublications);
+	(void) getPublications(fout, &numPublications);
 
 	pg_log_info("reading publication membership");
 	getPublicationTables(fout, tblinfo, numTables);

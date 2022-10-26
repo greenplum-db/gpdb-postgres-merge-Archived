@@ -278,7 +278,7 @@ static DumpableObject *createBoundaryObjects(void);
 static void addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 									DumpableObject *boundaryObjs);
 
-static void addConstrChildIdxDeps(DumpableObject *dobj, IndxInfo *refidx);
+static void addConstrChildIdxDeps(DumpableObject *dobj, const IndxInfo *refidx);
 static void getDomainConstraints(Archive *fout, TypeInfo *tyinfo);
 static void getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, char relkind);
 static void makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo);
@@ -294,7 +294,7 @@ static char *convertTSFunction(Archive *fout, Oid funcOid);
 static const char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
 static void getBlobs(Archive *fout);
 static void dumpBlob(Archive *fout, const BlobInfo *binfo);
-static int	dumpBlobs(Archive *fout, void *arg);
+static int	dumpBlobs(Archive *fout, const void *arg);
 static void dumpPolicy(Archive *fout, const PolicyInfo *polinfo);
 static void dumpPublication(Archive *fout, const PublicationInfo *pubinfo);
 static void dumpPublicationTable(Archive *fout, const PublicationRelInfo *pubrinfo);
@@ -2072,7 +2072,7 @@ selectDumpableObject(DumpableObject *dobj, Archive *fout)
  */
 
 static int
-dumpTableData_copy(Archive *fout, void *dcontext)
+dumpTableData_copy(Archive *fout, const void *dcontext)
 {
 	TableDataInfo *tdinfo = (TableDataInfo *) dcontext;
 	TableInfo  *tbinfo = tdinfo->tdtable;
@@ -2103,7 +2103,6 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 
 	if (tdinfo->filtercond)
 	{
-		/* Note: this syntax is only supported in 8.2 and up */
 		appendPQExpBufferStr(q, "COPY (SELECT ");
 		/* klugery to get rid of parens in column list */
 		if (strlen(column_list) > 2)
@@ -2226,7 +2225,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
  * E'' strings, or dollar-quoted strings.  So don't emit anything like that.
  */
 static int
-dumpTableData_insert(Archive *fout, void *dcontext)
+dumpTableData_insert(Archive *fout, const void *dcontext)
 {
 	TableDataInfo *tdinfo = (TableDataInfo *) dcontext;
 	TableInfo  *tbinfo = tdinfo->tdtable;
@@ -3738,7 +3737,7 @@ dumpBlob(Archive *fout, const BlobInfo *binfo)
  *	dump the data contents of all large objects
  */
 static int
-dumpBlobs(Archive *fout, void *arg)
+dumpBlobs(Archive *fout, const void *arg)
 {
 	const char *blobQry;
 	const char *blobFetchQry;
@@ -7770,7 +7769,7 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
  * valid.
  */
 static void
-addConstrChildIdxDeps(DumpableObject *dobj, IndxInfo *refidx)
+addConstrChildIdxDeps(DumpableObject *dobj, const IndxInfo *refidx)
 {
 	SimplePtrListCell *cell;
 
@@ -7999,13 +7998,15 @@ getRules(Archive *fout, int *numRules)
 void
 getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 {
-	int			i,
-				j;
 	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer tbloids = createPQExpBuffer();
 	PGresult   *res;
+	int			ntups;
+	int			curtblindx;
 	TriggerInfo *tginfo;
 	int			i_tableoid,
 				i_oid,
+				i_tgrelid,
 				i_tgname,
 				i_tgfname,
 				i_tgtype,
@@ -8016,13 +8017,20 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_tgconstrrelid,
 				i_tgconstrrelname,
 				i_tgenabled,
-				i_tgisinternal,
 				i_tgdeferrable,
 				i_tginitdeferred,
 				i_tgdef;
-	int			ntups;
 
-	for (i = 0; i < numTables; i++)
+	/*
+	 * We want to perform just one query against pg_trigger.  However, we
+	 * mustn't try to select every row of the catalog and then sort it out on
+	 * the client side, because some of the server-side functions we need
+	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
+	 * build an array of the OIDs of tables we care about (and now have lock
+	 * on!), and use a WHERE clause to constrain which rows are selected.
+	 */
+	appendPQExpBufferChar(tbloids, '{');
+	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
@@ -8030,143 +8038,105 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 			continue;
 
-		pg_log_info("reading triggers for table \"%s.%s\"",
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->dobj.name);
+		/* OK, we need info for this table */
+		if (tbloids->len > 1)	/* do we have more than the '{'? */
+			appendPQExpBufferChar(tbloids, ',');
+		appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+	}
+	appendPQExpBufferChar(tbloids, '}');
 
-		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 130000)
+	resetPQExpBuffer(query);
+  if (fout->remoteVersion >= 90000)
+	{
+		/* See above about pretty=true in pg_get_triggerdef */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, t.tgname, "
+						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+						  "t.tgenabled, t.tableoid, t.oid "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "WHERE NOT t.tgisinternal "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+	else
+	{
+		/*
+		 * We ignore triggers that are tied to a foreign-key constraint
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, tgname, "
+						  "tgfoid::pg_catalog.regproc AS tgfname, "
+						  "tgtype, tgnargs, tgargs, tgenabled, "
+						  "false as tgisinternal, "
+						  "tgisconstraint, tgconstrname, tgdeferrable, "
+						  "tgconstrrelid, tginitdeferred, t.tableoid, t.oid, "
+						  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "WHERE tgconstraint = 0 "
+						  "ORDER BY t.tgrelid, t.tgname",
+							tbloids->data);
+	}
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_tgrelid = PQfnumber(res, "tgrelid");
+	i_tgname = PQfnumber(res, "tgname");
+	i_tgfname = PQfnumber(res, "tgfname");
+	i_tgtype = PQfnumber(res, "tgtype");
+	i_tgnargs = PQfnumber(res, "tgnargs");
+	i_tgargs = PQfnumber(res, "tgargs");
+	i_tgisconstraint = PQfnumber(res, "tgisconstraint");
+	i_tgconstrname = PQfnumber(res, "tgconstrname");
+	i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
+	i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
+	i_tgenabled = PQfnumber(res, "tgenabled");
+	i_tgdeferrable = PQfnumber(res, "tgdeferrable");
+	i_tginitdeferred = PQfnumber(res, "tginitdeferred");
+	i_tgdef = PQfnumber(res, "tgdef");
+
+	tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
+
+	/*
+	 * Outer loop iterates once per table, not once per row.  Incrementing of
+	 * j is handled by the inner loop.
+	 */
+	curtblindx = -1;
+	for (int j = 0; j < ntups;)
+	{
+		Oid			tgrelid = atooid(PQgetvalue(res, j, i_tgrelid));
+		TableInfo  *tbinfo = NULL;
+		int			numtrigs;
+
+		/* Count rows for this table */
+		for (numtrigs = 1; numtrigs < ntups - j; numtrigs++)
+			if (atooid(PQgetvalue(res, j + numtrigs, i_tgrelid)) != tgrelid)
+				break;
+
+		/*
+		 * Locate the associated TableInfo; we rely on tblinfo[] being in OID
+		 * order.
+		 */
+		while (++curtblindx < numTables)
 		{
-			/*
-			 * NB: think not to use pretty=true in pg_get_triggerdef.  It
-			 * could result in non-forward-compatible dumps of WHEN clauses
-			 * due to under-parenthesization.
-			 *
-			 * NB: We need to see tgisinternal triggers in partitions, in case
-			 * the tgenabled flag has been changed from the parent.
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
-							  "FROM pg_catalog.pg_trigger t "
-							  "LEFT JOIN pg_catalog.pg_trigger u ON u.oid = t.tgparentid "
-							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT t.tgisinternal OR t.tgenabled != u.tgenabled)",
-							  tbinfo->dobj.catId.oid);
+			tbinfo = &tblinfo[curtblindx];
+			if (tbinfo->dobj.catId.oid == tgrelid)
+				break;
 		}
-		else if (fout->remoteVersion >= 110000)
-		{
-			/*
-			 * NB: We need to see tgisinternal triggers in partitions, in case
-			 * the tgenabled flag has been changed from the parent. No
-			 * tgparentid in version 11-12, so we have to match them via
-			 * pg_depend.
-			 *
-			 * See above about pretty=true in pg_get_triggerdef.
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
-							  "FROM pg_catalog.pg_trigger t "
-							  "LEFT JOIN pg_catalog.pg_depend AS d ON "
-							  " d.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
-							  " d.refclassid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
-							  " d.objid = t.oid "
-							  "LEFT JOIN pg_catalog.pg_trigger AS pt ON pt.oid = refobjid "
-							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT t.tgisinternal%s)",
-							  tbinfo->dobj.catId.oid,
-							  tbinfo->ispartition ?
-							  " OR t.tgenabled != pt.tgenabled" : "");
-		}
-		else if (fout->remoteVersion >= 90000)
-		{
-			/* See above about pretty=true in pg_get_triggerdef */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, false as tgisinternal, "
-							  "t.tableoid, t.oid "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND NOT tgisinternal",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 80300)
-		{
-			/*
-			 * We ignore triggers that are tied to a foreign-key constraint
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT tgname, "
-							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "tgtype, tgnargs, tgargs, tgenabled, "
-							  "false as tgisinternal, "
-							  "tgisconstraint, tgconstrname, tgdeferrable, "
-							  "tgconstrrelid, tginitdeferred, tableoid, oid, "
-							  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND tgconstraint = 0",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			/*
-			 * We ignore triggers that are tied to a foreign-key constraint,
-			 * but in these versions we have to grovel through pg_constraint
-			 * to find out
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT tgname, "
-							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "tgtype, tgnargs, tgargs, tgenabled, "
-							  "false as tgisinternal, "
-							  "tgisconstraint, tgconstrname, tgdeferrable, "
-							  "tgconstrrelid, tginitdeferred, tableoid, oid, "
-							  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT tgisconstraint "
-							  " OR NOT EXISTS"
-							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
-							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
-							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
-							  tbinfo->dobj.catId.oid);
-		}
+		if (curtblindx >= numTables)
+			fatal("unrecognized table OID %u", tgrelid);
 
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		/* Save data for this table */
+		tbinfo->triggers = tginfo + j;
+		tbinfo->numTriggers = numtrigs;
 
-		ntups = PQntuples(res);
-
-		i_tableoid = PQfnumber(res, "tableoid");
-		i_oid = PQfnumber(res, "oid");
-		i_tgname = PQfnumber(res, "tgname");
-		i_tgfname = PQfnumber(res, "tgfname");
-		i_tgtype = PQfnumber(res, "tgtype");
-		i_tgnargs = PQfnumber(res, "tgnargs");
-		i_tgargs = PQfnumber(res, "tgargs");
-		i_tgisconstraint = PQfnumber(res, "tgisconstraint");
-		i_tgconstrname = PQfnumber(res, "tgconstrname");
-		i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
-		i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
-		i_tgenabled = PQfnumber(res, "tgenabled");
-		i_tgisinternal = PQfnumber(res, "tgisinternal");
-		i_tgdeferrable = PQfnumber(res, "tgdeferrable");
-		i_tginitdeferred = PQfnumber(res, "tginitdeferred");
-		i_tgdef = PQfnumber(res, "tgdef");
-
-		tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
-
-		tbinfo->numTriggers = ntups;
-		tbinfo->triggers = tginfo;
-
-		for (j = 0; j < ntups; j++)
+		for (int c = 0; c < numtrigs; c++, j++)
 		{
 			tginfo[j].dobj.objType = DO_TRIGGER;
 			tginfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
@@ -8176,7 +8146,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			tginfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			tginfo[j].tgtable = tbinfo;
 			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled));
-			tginfo[j].tgisinternal = *(PQgetvalue(res, j, i_tgisinternal)) == 't';
 			if (i_tgdef >= 0)
 			{
 				tginfo[j].tgdef = pg_strdup(PQgetvalue(res, j, i_tgdef));
@@ -8229,11 +8198,12 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				}
 			}
 		}
-
-		PQclear(res);
 	}
 
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(tbloids);
 }
 
 /*
@@ -12272,7 +12242,7 @@ format_table_function_columns(Archive *fout, const FuncInfo *finfo, int nallargs
 	for (j = 0; j < nallargs; j++)
 	{
 		Oid			typid;
-		char		*typname;
+		char	   *typname;
 
 		/*
 		 * argmodes are checked in format_function_arguments, it isn't necessary
@@ -12370,6 +12340,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	char	   *callbackfunc;
 	char	   *prodataaccess;
 	char	   *proexeclocation;
+	char	   *rettypename;
 	int			nallargs;
 	char	  **allargtypes = NULL;
 	char	  **argmodes = NULL;
@@ -12595,10 +12566,12 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		appendPQExpBuffer(q, " RETURNS %s", funcresult);
 	else if (!is_returns_table_function(nallargs, argmodes))
 	{
+		rettypename = getFormattedTypeName(fout, finfo->prorettype,
+										   zeroAsOpaque);
 		appendPQExpBuffer(q, " RETURNS %s%s",
 						  (proretset[0] == 't') ? "SETOF " : "",
-						  getFormattedTypeName(fout, finfo->prorettype,
-											   zeroAsOpaque));
+						  rettypename);
+		free(rettypename);
 	}
 	else
 	{
@@ -15590,6 +15563,13 @@ dumpDefaultACL(Archive *fout, const DefaultACLInfo *daclinfo)
  * 'owner' is the owner, NULL if there is no owner (for languages).
  * 'dacl' is the DumpableAcl struct fpr the object.
  *
+<<<<<<< HEAD
+=======
+ * NB: initacls/initracls are needed because extensions can set privileges on
+ * an object during the extension's script file and we record those into
+ * pg_init_privs as that object's initial privileges.
+ *
+>>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  * Returns the dump ID assigned to the ACL TocEntry, or InvalidDumpId if
  * no ACL entry was created.
  *----------
@@ -19877,6 +19857,8 @@ addDistributedByOld(Archive *fout, PQExpBuffer q, const TableInfo *tbinfo, int a
  *
  * This does not guarantee to schema-qualify the output, so it should not
  * be used to create the target object name for CREATE or ALTER commands.
+ *
+ * Note that the result is cached and must not be freed by the caller.
  */
 static const char *
 getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
@@ -19901,7 +19883,7 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	/* see if we have the result cached in the type's TypeInfo record */
 	typeInfo = findTypeByOid(oid);
 	if (typeInfo && typeInfo->ftypname)
-		return typeInfo->ftypname;
+		return pg_strdup(typeInfo->ftypname);
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SELECT pg_catalog.format_type('%u'::pg_catalog.oid, NULL)",
@@ -19915,14 +19897,9 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	PQclear(res);
 	destroyPQExpBuffer(query);
 
-	/*
-	 * Cache the result for re-use in later requests, if possible.  If we
-	 * don't have a TypeInfo for the type, the string will be leaked once the
-	 * caller is done with it ... but that case really should not happen, so
-	 * leaking if it does seems acceptable.
-	 */
+	/* cache a copy for later requests */
 	if (typeInfo)
-		typeInfo->ftypname = result;
+		typeInfo->ftypname = pg_strdup(result);
 
 	return result;
 }
