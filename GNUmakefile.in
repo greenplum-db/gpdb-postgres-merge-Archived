@@ -120,8 +120,8 @@ create-demo-cluster:
 destroy-demo-cluster:
 	$(MAKE) -C gpAux/gpdemo destroy-demo-cluster
 
-check check-tests installcheck installcheck-parallel installcheck-tests: CHECKPREP_TOP=src/test/regress
-check check-tests installcheck installcheck-parallel installcheck-tests: submake-generated-headers
+check-tests installcheck installcheck-parallel installcheck-tests: CHECKPREP_TOP=src/test/regress
+check-tests installcheck installcheck-parallel installcheck-tests: submake-generated-headers
 	$(MAKE) -C src/test/regress $@
 
 check:
