@@ -161,12 +161,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
 
-	/* 
-	 * GPDB: 9.5 removed the support for 8.3, we need to keep it to support upgrading
-	 * from GPDB 5
-	 *
-	 * GPDB_12_12_MERGE_FIXME I removed it, fine?
-	 */
 	/* For now, the issue exists only for Greenplum 6.x/PostgreSQL 9.4 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904)
 	{

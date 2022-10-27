@@ -183,7 +183,6 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 				/* transfer primary file */
 				transfer_relfile(&maps[mapnum], "", vm_must_add_frozenbit);
 
-				/* GPDB_12_12_MERGE_FIXME removed the >= 8.4 check here, lose 5->7 upgrade */
 				/*
 				 * Copy/link any fsm and vm files, if they exist
 				 */
