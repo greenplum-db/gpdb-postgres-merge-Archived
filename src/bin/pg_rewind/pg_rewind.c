@@ -406,8 +406,12 @@ main(int argc, char **argv)
 		pg_log_info("reading WAL in target");
 	extractPageMap(datadir_target, chkptrec, lastcommontliIndex,
 				   target_wal_endrec);
-	filemap_finalize();
 
+	/*
+	 * We have collected all information we need from both systems. Decide
+	 * what to do with each file.
+	 */
+	decide_file_actions();
 	if (showprogress)
 		calculate_totals();
 

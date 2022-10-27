@@ -529,17 +529,6 @@ filemap_list_to_array(filemap_t *map)
 	map->first = map->last = NULL;
 }
 
-/* GPDB_12_12_MERGE_FIXME needed? */
-void
-filemap_finalize(void)
-{
-	filemap_t  *map = filemap;
-
-	filemap_list_to_array(map);
-	qsort(map->array, map->narray, sizeof(file_entry_t *),
-		  final_filemap_cmp);
-}
-
 static const char *
 action_to_str(file_action_t action)
 {
