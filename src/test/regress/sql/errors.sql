@@ -382,23 +382,3 @@ INT4
 UNIQUE
 NOT
 NULL);
-<<<<<<< HEAD
-
--- Check that stack depth detection mechanism works and
--- max_stack_depth is not set too high
-create function infinite_recurse() returns int as
-'select infinite_recurse()' language sql CONTAINS SQL;
-\set VERBOSITY terse
--- start_matchsubs
--- # mpp-2756
--- m/(ERROR|WARNING|CONTEXT|NOTICE):.*stack depth limit exceeded\s+at\s+character/
--- s/\s+at\s+character.*//
--- m/ERROR:.*GPDB exception. Aborting Pivotal Optimizer \(GPORCA\).*/
--- s/ERROR:.*GPDB exception. Aborting Pivotal Optimizer \(GPORCA\).*//
--- end_matchsubs
--- start_ignore
-select infinite_recurse();
--- end_ignore
-select 1; -- test that this works
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

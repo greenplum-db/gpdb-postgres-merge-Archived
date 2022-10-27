@@ -15563,13 +15563,10 @@ dumpDefaultACL(Archive *fout, const DefaultACLInfo *daclinfo)
  * 'owner' is the owner, NULL if there is no owner (for languages).
  * 'dacl' is the DumpableAcl struct fpr the object.
  *
-<<<<<<< HEAD
-=======
  * NB: initacls/initracls are needed because extensions can set privileges on
  * an object during the extension's script file and we record those into
  * pg_init_privs as that object's initial privileges.
  *
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
  * Returns the dump ID assigned to the ACL TocEntry, or InvalidDumpId if
  * no ACL entry was created.
  *----------

@@ -585,7 +585,15 @@ select v||'a', case when grouping(v||'a') = 1 then 1 else 0 end, count(*)
   from unnest(array[1,1], array['a','b']) u(i,v)
  group by rollup(i, v||'a') order by 1,3;
 
-<<<<<<< HEAD
+-- test handling of outer GroupingFunc within subqueries
+explain (costs off)
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
+
+explain (costs off)
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
+
 --
 -- Compare results between plans using sorting and plans using hash
 -- aggregation. Force spilling in both cases by setting work_mem low
@@ -711,16 +719,6 @@ group by rollup (a) order by a;
 select a, b, rank(b) within group (order by b nulls last)
 from (values (1,1),(1,4),(1,5),(3,1),(3,2)) v(a,b)
 group by rollup (a,b) order by a;
-=======
--- test handling of outer GroupingFunc within subqueries
-explain (costs off)
-select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
-select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
-
-explain (costs off)
-select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
-select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 -- end
 reset optimizer_trace_fallback;

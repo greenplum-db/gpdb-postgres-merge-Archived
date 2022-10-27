@@ -336,15 +336,6 @@ create table hp3 partition of hp for values with (modulus 4, remainder 3);
 create table hp1 partition of hp for values with (modulus 4, remainder 1);
 create table hp2 partition of hp for values with (modulus 4, remainder 2);
 
-<<<<<<< HEAD
-insert into hp values (null, null);
-insert into hp values (1, null);
-insert into hp values (1, 'xxx');
-insert into hp values (null, 'xxx');
-insert into hp values (2, 'xxx');
-insert into hp values (1, 'abcde');
-select tableoid::regclass, * from hp;
-=======
 insert into hp values (null, null, 0);
 insert into hp values (1, null, 1);
 insert into hp values (1, 'xxx', 2);
@@ -352,7 +343,6 @@ insert into hp values (null, 'xxx', 3);
 insert into hp values (2, 'xxx', 4);
 insert into hp values (1, 'abcde', 5);
 select tableoid::regclass, * from hp order by c;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 -- partial keys won't prune, nor would non-equality conditions
 explain (costs off) select * from hp where a = 1;

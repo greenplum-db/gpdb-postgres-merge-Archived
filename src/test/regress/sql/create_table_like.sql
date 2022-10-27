@@ -170,9 +170,6 @@ SELECT s.stxname, objsubid, description FROM pg_description, pg_statistic_ext s 
 CREATE TABLE inh_error1 () INHERITS (ctlt1, ctlt4);
 CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 
-<<<<<<< HEAD
-DROP TABLE ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctlb, ctla, ctlt1, ctlt2, ctlt3, ctlt4 CASCADE;
-=======
 -- Check that LIKE isn't confused by a system catalog of the same name
 CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);
 \d+ public.pg_attrdef
@@ -187,7 +184,6 @@ CREATE TABLE ctlt1 (LIKE ctlt1 INCLUDING ALL);
 ROLLBACK;
 
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 
 /* LIKE with other relation kinds */

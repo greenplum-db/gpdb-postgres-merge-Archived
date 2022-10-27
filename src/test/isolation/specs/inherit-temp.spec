@@ -24,19 +24,6 @@ setup
 {
   CREATE TEMPORARY TABLE inh_temp_child_s1 () INHERITS (inh_parent);
 }
-<<<<<<< HEAD
-step "s1_begin" { BEGIN; }
-step "s1_truncate_p" { TRUNCATE inh_parent; }
-step "s1_select_p" { SELECT a FROM inh_parent ORDER BY a; }
-step "s1_select_c" { SELECT a FROM inh_temp_child_s1 ORDER BY a; }
-step "s1_insert_p" { INSERT INTO inh_parent VALUES (1), (2); }
-step "s1_insert_c" { INSERT INTO inh_temp_child_s1 VALUES (3), (4); }
-step "s1_update_p" { UPDATE inh_parent SET a = 11 WHERE a = 1; }
-step "s1_update_c" { UPDATE inh_parent SET a = 13 WHERE a IN (3, 5); }
-step "s1_delete_p" { DELETE FROM inh_parent WHERE a = 2; }
-step "s1_delete_c" { DELETE FROM inh_parent WHERE a IN (4, 6); }
-step "s1_commit" { COMMIT; }
-=======
 step s1_begin { BEGIN; }
 step s1_truncate_p { TRUNCATE inh_parent; }
 step s1_select_p { SELECT a FROM inh_parent; }
@@ -48,7 +35,6 @@ step s1_update_c { UPDATE inh_parent SET a = 13 WHERE a IN (3, 5); }
 step s1_delete_p { DELETE FROM inh_parent WHERE a = 2; }
 step s1_delete_c { DELETE FROM inh_parent WHERE a IN (4, 6); }
 step s1_commit { COMMIT; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 teardown
 {
   DROP TABLE inh_temp_child_s1;
@@ -60,21 +46,12 @@ setup
 {
   CREATE TEMPORARY TABLE inh_temp_child_s2 () INHERITS (inh_parent);
 }
-<<<<<<< HEAD
-step "s2_truncate_p" { TRUNCATE inh_parent; }
-step "s2_select_p" { SELECT a FROM inh_parent ORDER BY a; }
-step "s2_select_c" { SELECT a FROM inh_temp_child_s2 ORDER BY a; }
-step "s2_insert_c" { INSERT INTO inh_temp_child_s2 VALUES (5), (6); }
-step "s2_update_c" { UPDATE inh_parent SET a = 15 WHERE a IN (3, 5); }
-step "s2_delete_c" { DELETE FROM inh_parent WHERE a IN (4, 6); }
-=======
 step s2_truncate_p { TRUNCATE inh_parent; }
 step s2_select_p { SELECT a FROM inh_parent; }
 step s2_select_c { SELECT a FROM inh_temp_child_s2; }
 step s2_insert_c { INSERT INTO inh_temp_child_s2 VALUES (5), (6); }
 step s2_update_c { UPDATE inh_parent SET a = 15 WHERE a IN (3, 5); }
 step s2_delete_c { DELETE FROM inh_parent WHERE a IN (4, 6); }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 teardown
 {
   DROP TABLE inh_temp_child_s2;

@@ -66,11 +66,7 @@ teardown
  DROP FUNCTION noisy_oper(text, anynonarray, text, anynonarray)
 }
 
-<<<<<<< HEAD
-session "s1"
-=======
 session s1
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNING'; }
 # wx1 then wx2 checks the basic case of re-fetching up-to-date values
 step wx1	{ UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance; }
@@ -107,21 +103,12 @@ step upsert1	{
 # writep2/returningp1 tests a memory allocation issue
 # writep3a/writep3b tests updates touching more than one table
 
-<<<<<<< HEAD
-step "readp1"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
-step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
-step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
-step "writep3a"	{ UPDATE p SET b = -b WHERE c = 0; }
-step "c1"	{ COMMIT; }
-step "r1"	{ ROLLBACK; }
-=======
 step readp1		{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
 step writep1	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step writep2	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step writep3a	{ UPDATE p SET b = -b WHERE c = 0; }
 step c1		{ COMMIT; }
 step r1		{ ROLLBACK; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 # these tests are meant to exercise EvalPlanQualFetchRowMark,
 # ie, handling non-locked tables in an EvalPlanQual recheck
@@ -131,11 +118,7 @@ step partiallock	{
 	  WHERE a1.accountid = a2.accountid
 	  FOR UPDATE OF a1;
 }
-<<<<<<< HEAD
-step "lockwithvalues"	{
-=======
 step lockwithvalues	{
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	-- Reference rowmark column that differs in type from targetlist at some attno.
 	-- See CAHU7rYZo_C4ULsAx_LAj8az9zqgrD8WDd4hTegDTMM1LMqrBsg@mail.gmail.com
 	SELECT a1.*, v.id FROM accounts a1, (values('checking'::text, 'nan'::text),('savings', 'nan')) v(id, notnumeric)
@@ -206,19 +189,11 @@ step simplepartupdate_noroute {
 }
 
 
-<<<<<<< HEAD
-session "s2"
-setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNING'; }
-step "wx2"	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; }
-step "wy2"	{ UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; }
-step "d2"	{ DELETE FROM accounts WHERE accountid = 'checking'; }
-=======
 session s2
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNING'; }
 step wx2	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; }
 step wy2	{ UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; }
 step d2	{ DELETE FROM accounts WHERE accountid = 'checking'; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 step upsert2	{
 	WITH upsert AS
@@ -234,13 +209,8 @@ step returningp1 {
 	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
 	  SELECT * FROM u;
 }
-<<<<<<< HEAD
-step "writep3b"	{ UPDATE p SET b = -b WHERE c = 0; }
-step "readforss"	{
-=======
 step writep3b	{ UPDATE p SET b = -b WHERE c = 0; }
 step readforss	{
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 	SELECT ta.id AS ta_id, ta.value AS ta_value,
 		(SELECT ROW(tb.id, tb.value)
 		 FROM table_b tb WHERE ta.id = tb.id) AS tb_row
@@ -286,11 +256,7 @@ step delwcte  { WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE
 step delwctefail  { WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *, update_checking(999)) DELETE FROM accounts a USING doup RETURNING *; }
 
 # Check that nested EPQ works correctly
-<<<<<<< HEAD
-step "wnested2" {
-=======
 step wnested2 {
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
     UPDATE accounts SET balance = balance - 1200
     WHERE noisy_oper('upid', accountid, '=', 'checking')
     AND noisy_oper('up', balance, '>', 200.0)
@@ -302,17 +268,6 @@ step wnested2 {
         FOR UPDATE
     );
 }
-<<<<<<< HEAD
-
-step "c2"	{ COMMIT; }
-step "r2"	{ ROLLBACK; }
-
-session "s3"
-setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNING'; }
-step "read"	{ SELECT * FROM accounts ORDER BY accountid; }
-step "read_ext"	{ SELECT * FROM accounts_ext ORDER BY accountid; }
-step "read_a"	{ SELECT * FROM table_a ORDER BY id; }
-=======
 
 step c2	{ COMMIT; }
 step r2	{ ROLLBACK; }
@@ -322,7 +277,6 @@ setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNIN
 step read	{ SELECT * FROM accounts ORDER BY accountid; }
 step read_ext	{ SELECT * FROM accounts_ext ORDER BY accountid; }
 step read_a	{ SELECT * FROM table_a ORDER BY id; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 # this test exercises EvalPlanQual with a CTE, cf bug #14328
 step readwcte	{
@@ -397,22 +351,6 @@ permutation wx1 delwcte c1 c2 read
 # previously updated by a different cid
 permutation wx1 delwctefail c1 c2 read
 
-<<<<<<< HEAD
-permutation "upsert1" "upsert2" "c1" "c2" "read"
-permutation "readp1" "writep1" "readp2" "c1" "c2"
-permutation "writep2" "returningp1" "c1" "c2"
-permutation "writep3a" "writep3b" "c1" "c2"
-permutation "wx2" "partiallock" "c2" "c1" "read"
-permutation "wx2" "lockwithvalues" "c2" "c1" "read"
-permutation "wx2_ext" "partiallock_ext" "c2" "c1" "read_ext"
-permutation "updateforss" "readforss" "c1" "c2"
-permutation "updateforcip" "updateforcip2" "c1" "c2" "read_a"
-permutation "updateforcip" "updateforcip3" "c1" "c2" "read_a"
-permutation "wrtwcte" "readwcte" "c1" "c2"
-permutation "wrjt" "selectjoinforupdate" "c2" "c1"
-permutation "wrjt" "selectresultforupdate" "c2" "c1"
-permutation "wrtwcte" "multireadwcte" "c1" "c2"
-=======
 permutation upsert1 upsert2 c1 c2 read
 permutation readp1 writep1 readp2 c1 c2
 permutation writep2 returningp1 c1 c2
@@ -427,7 +365,6 @@ permutation wrtwcte readwcte c1 c2
 permutation wrjt selectjoinforupdate c2 c1
 permutation wrjt selectresultforupdate c2 c1
 permutation wrtwcte multireadwcte c1 c2
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 permutation simplepartupdate complexpartupdate c1 c2
 permutation simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2

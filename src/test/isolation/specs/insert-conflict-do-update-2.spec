@@ -29,15 +29,9 @@ setup
 {
   BEGIN ISOLATION LEVEL READ COMMITTED;
 }
-<<<<<<< HEAD
-step "insert2" { INSERT INTO upsert(key, payload) VALUES('FOOFOO', 'insert2') ON CONFLICT (lower(key)) DO UPDATE set key = EXCLUDED.key, payload = upsert.payload || ' updated by insert2'; }
-step "select2" { SELECT * FROM upsert; }
-step "c2" { COMMIT; }
-=======
 step insert2 { INSERT INTO upsert(key, payload) VALUES('FOOFOO', 'insert2') ON CONFLICT (lower(key)) DO UPDATE set key = EXCLUDED.key, payload = upsert.payload || ' updated by insert2'; }
 step select2 { SELECT * FROM upsert; }
 step c2 { COMMIT; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 # One session (session 2) block-waits on another (session 1) to determine if it
 # should proceed with an insert or update.  The user can still usefully UPDATE

@@ -16,32 +16,13 @@ teardown
     drop table tlu_job;
 }
 
-<<<<<<< HEAD
-session "s0"
-step "s0_begin" { begin; }
-step "s0_keyshare" { select id from tlu_job where id = 1 for key share;}
-step "s0_rollback" { rollback; }
-=======
 session s0
 step s0_begin { begin; }
 step s0_keyshare { select id from tlu_job where id = 1 for key share;}
 step s0_rollback { rollback; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 session s1
 setup { begin; }
-<<<<<<< HEAD
-step "s1_keyshare" { select id from tlu_job where id = 1 for key share;}
-step "s1_share" { select id from tlu_job where id = 1 for share; }
-step "s1_fornokeyupd" { select id from tlu_job where id = 1 for no key update; }
-step "s1_update" { update tlu_job set name = 'b' where id = 1;  }
-step "s1_savept_e" { savepoint s1_e; }
-step "s1_savept_f" { savepoint s1_f; }
-step "s1_rollback_e" { rollback to s1_e; }
-step "s1_rollback_f" { rollback to s1_f; }
-step "s1_rollback" { rollback; }
-step "s1_commit" { commit; }
-=======
 step s1_keyshare { select id from tlu_job where id = 1 for key share;}
 step s1_share { select id from tlu_job where id = 1 for share; }
 step s1_fornokeyupd { select id from tlu_job where id = 1 for no key update; }
@@ -52,25 +33,15 @@ step s1_rollback_e { rollback to s1_e; }
 step s1_rollback_f { rollback to s1_f; }
 step s1_rollback { rollback; }
 step s1_commit { commit; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 session s2
 setup { begin; }
-<<<<<<< HEAD
-step "s2_for_keyshare" { select id from tlu_job where id = 1 for key share; }
-step "s2_fornokeyupd" { select id from tlu_job where id = 1 for no key update; }
-step "s2_for_update" { select id from tlu_job where id = 1 for update; }
-step "s2_update" { update tlu_job set name = 'b' where id = 1; }
-step "s2_delete" { delete from tlu_job where id = 1; }
-step "s2_rollback" { rollback; }
-=======
 step s2_for_keyshare { select id from tlu_job where id = 1 for key share; }
 step s2_fornokeyupd { select id from tlu_job where id = 1 for no key update; }
 step s2_for_update { select id from tlu_job where id = 1 for update; }
 step s2_update { update tlu_job set name = 'b' where id = 1; }
 step s2_delete { delete from tlu_job where id = 1; }
 step s2_rollback { rollback; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 session s3
 setup { begin; }

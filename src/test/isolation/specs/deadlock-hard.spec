@@ -62,19 +62,11 @@ step s7a7	{ LOCK TABLE a7; }
 step s7a8	{ LOCK TABLE a8; }
 step s7c	{ COMMIT; }
 
-<<<<<<< HEAD
-session "s8"
-setup		{ BEGIN; SET deadlock_timeout = '10ms'; }
-step "s8a8"	{ LOCK TABLE a8; }
-step "s8a1"	{ LOCK TABLE a1; }
-step "s8c"	{ COMMIT; }
-=======
 session s8
 setup		{ BEGIN; SET deadlock_timeout = '10ms'; }
 step s8a8	{ LOCK TABLE a8; }
 step s8a1	{ LOCK TABLE a1; }
 step s8c	{ COMMIT; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 # Note: when s8a1 detects the deadlock and fails, s7a8 is released, making
 # it timing-dependent which query completion is received first by the tester.
@@ -84,8 +76,4 @@ step s8c	{ COMMIT; }
 # dummy blocking mark to s8a1 to ensure it will be reported as "waiting"
 # regardless of that.
 
-<<<<<<< HEAD
-permutation "s1a1" "s2a2" "s3a3" "s4a4" "s5a5" "s6a6" "s7a7" "s8a8" "s1a2" "s2a3" "s3a4" "s4a5" "s5a6" "s6a7" "s7a8"("s8a1") "s8a1"(*) "s8c" "s7c" "s6c" "s5c" "s4c" "s3c" "s2c" "s1c"
-=======
 permutation s1a1 s2a2 s3a3 s4a4 s5a5 s6a6 s7a7 s8a8 s1a2 s2a3 s3a4 s4a5 s5a6 s6a7 s7a8(s8a1) s8a1(*) s8c s7c s6c s5c s4c s3c s2c s1c
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

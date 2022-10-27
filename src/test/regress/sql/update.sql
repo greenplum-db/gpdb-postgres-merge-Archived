@@ -132,8 +132,6 @@ DROP FUNCTION xid_current();
 DROP TABLE update_test;
 DROP TABLE upsert_test;
 
-<<<<<<< HEAD
-=======
 -- Test ON CONFLICT DO UPDATE with partitioned table and non-identical children
 
 CREATE TABLE upsert_test (
@@ -158,7 +156,6 @@ WITH aaa AS (SELECT 1 AS ctea, ' Foo' AS cteb) INSERT INTO upsert_test
 DROP TABLE upsert_test;
 
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 ---------------------------
 -- UPDATE with row movement
 ---------------------------

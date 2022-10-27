@@ -13,19 +13,11 @@ teardown
   DROP TABLE a1, a2;
 }
 
-<<<<<<< HEAD
-session "s1"
-setup		{ BEGIN; SET deadlock_timeout = '10ms'; }
-step "s1a"	{ LOCK TABLE a1 IN SHARE UPDATE EXCLUSIVE MODE; }
-step "s1b"	{ LOCK TABLE a2 IN SHARE UPDATE EXCLUSIVE MODE; }
-step "s1c"	{ COMMIT; }
-=======
 session s1
 setup		{ BEGIN; SET deadlock_timeout = '10ms'; }
 step s1a	{ LOCK TABLE a1 IN SHARE UPDATE EXCLUSIVE MODE; }
 step s1b	{ LOCK TABLE a2 IN SHARE UPDATE EXCLUSIVE MODE; }
 step s1c	{ COMMIT; }
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 session s2
 setup		{ BEGIN; SET deadlock_timeout = '100s'; }
@@ -48,8 +40,4 @@ step s4c	{ COMMIT; }
 # releases s1 from its blocked state.  To ensure that happens even in
 # very slow (CLOBBER_CACHE_ALWAYS) cases, apply a (*) annotation.
 
-<<<<<<< HEAD
-permutation "s1a" "s2a" "s2b" "s3a" "s4a" "s1b"(*) "s1c" "s2c" "s3c" "s4c"
-=======
 permutation s1a s2a s2b s3a s4a s1b(*) s1c s2c s3c s4c
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda

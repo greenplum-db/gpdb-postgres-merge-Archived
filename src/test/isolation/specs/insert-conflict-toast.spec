@@ -35,12 +35,8 @@ setup
 {
   SET default_transaction_isolation = 'read committed';
 }
-<<<<<<< HEAD
-step "s2insert" {
-  select pg_advisory_xact_lock_shared(1); 
-=======
 step s2insert {
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+  select pg_advisory_xact_lock_shared(1);
   INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
 }
 
@@ -49,12 +45,8 @@ setup
 {
   SET default_transaction_isolation = 'read committed';
 }
-<<<<<<< HEAD
-step "s3insert" {
-  select pg_advisory_xact_lock_shared(1); 
-=======
 step s3insert {
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+  select pg_advisory_xact_lock_shared(1);
   INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
 }
 

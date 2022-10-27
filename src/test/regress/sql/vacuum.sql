@@ -85,12 +85,8 @@ CREATE TABLE no_index_cleanup (i INT PRIMARY KEY, t TEXT);
 CREATE INDEX no_index_cleanup_idx ON no_index_cleanup(t);
 ALTER TABLE no_index_cleanup ALTER COLUMN t SET STORAGE EXTERNAL;
 INSERT INTO no_index_cleanup(i, t) VALUES (generate_series(1,30),
-<<<<<<< HEAD
-    repeat('1234567890',300));
-ANALYZE no_index_cleanup;
-=======
     repeat('1234567890',269));
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
+ANALYZE no_index_cleanup;
 -- index cleanup option is ignored if VACUUM FULL
 VACUUM (INDEX_CLEANUP TRUE, FULL TRUE) no_index_cleanup;
 VACUUM (FULL TRUE) no_index_cleanup;
