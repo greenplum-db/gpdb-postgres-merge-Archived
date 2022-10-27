@@ -83,7 +83,7 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname)
 	PGconn	   *oldConn = AH->connection;
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* GPDB_12_12_MERGE_FIXME double check */
+	/* GPDB_12_12_MERGE_FIXME double check, don't know if it works, or put the binary_upgrade into cparams? */
 	/* only binary upgrade mode sets the options */
 	bool binary_upgade = oldConn->pgoptions != NULL;
 

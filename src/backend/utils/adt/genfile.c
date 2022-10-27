@@ -911,7 +911,7 @@ pg_file_length(PG_FUNCTION_ARGS)
 }
 
 /*
- * GPDB_12_12_MERGE_FIXME, upstream removed directory_fctx
+ * GPDB_12_12_MERGE_FIXME, upstream removed directory_fctx, but we still need it, refactor to align with upstream
  *
  * commit 2a89455aade3e917b6b0d02d9ce385049d0525eb
  * Author: Tom Lane <tgl@sss.pgh.pa.us>

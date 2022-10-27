@@ -682,18 +682,12 @@ copy_xact_xlog_xid(void)
 					  GET_MAJOR_VERSION(new_cluster.major_version) <= 906 ?
 					  "pg_clog" : "pg_xact");
 
-#if 0
-	/*
-	 * GPDB: FIXME: If we want to support upgrades from 5X -> 7X and above, we
-	 * would need to construct the old_cluster.controldata.chkpnt_oldstxid
-	 * ourselves as the 5X control file doesn't carry that field.
-	 */
 	prep_status("Setting oldest XID for new cluster");
+#if 0
 	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
 			  "\"%s/pg_resetwal\" --binary-upgrade -f -u %u \"%s\"",
-	/* GPDB_12_12_MERGE_FIXME --binary-upgrade or not */
+	/* GPDB_12_12_MERGE_FIXME --binary-upgrade or not, greenplum has it */
 #endif
-	prep_status("Setting oldest XID for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
 			  "\"%s/pg_resetwal\" -f -u %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_oldstxid,

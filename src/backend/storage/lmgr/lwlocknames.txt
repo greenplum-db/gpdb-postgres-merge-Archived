@@ -53,7 +53,7 @@ CLogTruncationLock					44
 WrapLimitsVacuumLock				46
 NotifyQueueTailLock					47
 
-# GPDB_12_12_MERGE_FIXME  Shift all GPDB locks to avoid overlap, is it OK?
+# GPDB_12_12_MERGE_FIXME  Postgres added 46 and 47, so shift all GPDB locks to avoid overlap, is it OK? If OK, re number these
 # Additional individual locks in GPDB
 SharedSnapshotLock					65
 DistributedLogControlLock			66

@@ -2606,8 +2606,7 @@ transformDistributedBy(ParseState *pstate,
 	 */
 	/*
 	 * GPDB_12_12_MERGE_FIXME upstream processes index statements after here in
-	 * expandTableLikeClause(), but no before here in transformTableLikeClause()
-	 *
+	 * expandTableLikeClause(), but not before here in transformTableLikeClause()
 	 * Need to move this logic or move/copy the index statements processing?
 	 */
 #if 0
