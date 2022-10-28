@@ -1,3 +1,4 @@
+/* items in this file should be ordered */
 		"allow_in_place_tablespaces",
 		"bytea_output",
 		"client_min_messages",
