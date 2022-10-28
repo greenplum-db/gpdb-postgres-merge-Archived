@@ -209,7 +209,7 @@ typedef struct _typeInfo
 	 * schema-qualified too.
 	 */
 	char	   *ftypname;
-	char	   *rolname;		/* name of owner, or empty string */
+	const char *rolname;		/* name of owner, or empty string */
 	char	   *typacl;
 	char	   *rtypacl;
 	char	   *inittypacl;

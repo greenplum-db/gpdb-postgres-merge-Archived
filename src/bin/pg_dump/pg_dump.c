@@ -12339,7 +12339,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	char	   *callbackfunc;
 	char	   *prodataaccess;
 	char	   *proexeclocation;
-	char	   *rettypename;
+	const char *rettypename;
 	int			nallargs;
 	char	  **allargtypes = NULL;
 	char	  **argmodes = NULL;
@@ -12570,7 +12570,6 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		appendPQExpBuffer(q, " RETURNS %s%s",
 						  (proretset[0] == 't') ? "SETOF " : "",
 						  rettypename);
-		free(rettypename);
 	}
 	else
 	{
