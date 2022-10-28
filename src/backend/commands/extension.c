@@ -854,13 +854,10 @@ execute_extension_script(Node *stmt,
 						 Oid extensionOid, ExtensionControlFile *control,
 						 const char *from_version,
 						 const char *version,
-						 List *requiredSchemas,
 						 const char *schemaName, Oid schemaOid)
 {
 	char	   *filename;
 	int			save_nestlevel;
-	StringInfoData pathbuf;
-	ListCell   *lc;
 
 	AssertState(Gp_role != GP_ROLE_EXECUTE);
 	AssertImply(Gp_role == GP_ROLE_DISPATCH, stmt != NULL &&
@@ -918,35 +915,6 @@ execute_extension_script(Node *stmt,
 		(void) set_config_option("check_function_bodies", "off",
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
-
-	/*
-	 * Set up the search path to have the target schema first, making it be
-	 * the default creation target namespace.  Then add the schemas of any
-	 * prerequisite extensions, unless they are in pg_catalog which would be
-	 * searched anyway.  (Listing pg_catalog explicitly in a non-first
-	 * position would be bad for security.)  Finally add pg_temp to ensure
-	 * that temp objects can't take precedence over others.
-	 *
-	 * Note: it might look tempting to use PushOverrideSearchPath for this,
-	 * but we cannot do that.  We have to actually set the search_path GUC in
-	 * case the extension script examines or changes it.  In any case, the
-	 * GUC_ACTION_SAVE method is just as convenient.
-	 */
-	initStringInfo(&pathbuf);
-	appendStringInfoString(&pathbuf, quote_identifier(schemaName));
-	foreach(lc, requiredSchemas)
-	{
-		Oid			reqschema = lfirst_oid(lc);
-		char	   *reqname = get_namespace_name(reqschema);
-
-		if (reqname && strcmp(reqname, "pg_catalog") != 0)
-			appendStringInfo(&pathbuf, ", %s", quote_identifier(reqname));
-	}
-	appendStringInfoString(&pathbuf, ", pg_temp");
-
-	(void) set_config_option("search_path", pathbuf.data,
-							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_SAVE, true, 0, false);
 
 	/*
 	 * Set creating_extension and related variables so that
@@ -1691,7 +1659,6 @@ CreateExtensionInternal(char *extensionName,
 	{
 		execute_extension_script((Node *) stmt, extensionOid, control,
 							 oldVersionName, versionName,
-							 requiredSchemas,
 							 schemaName, schemaOid);
 
 		/*
@@ -3393,7 +3360,6 @@ ApplyExtensionUpdates(Oid extensionOid,
 			 */
 			execute_extension_script(stmt, extensionOid, control,
 									 oldVersionName, versionName,
-									 requiredSchemas,
 									 schemaName, schemaOid);
 		}
 		else
