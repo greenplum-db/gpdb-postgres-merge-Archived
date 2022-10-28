@@ -673,7 +673,7 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	 */
 	if (IS_QUERY_DISPATCHER())
 	{
-		if (list_length(sync_standbys) == 0)
+		if (num_standbys == 0)
 			return false;
 	}
 	else if (!(*am_sync) ||

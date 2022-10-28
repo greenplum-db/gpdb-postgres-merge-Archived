@@ -970,8 +970,8 @@ _readAlteredTableInfo(void)
 	READ_NODE_FIELD(changedIndexDefs);
 	unwrapStringList(local_node->changedIndexDefs);
 
-	READ_CHAR_FIELD(replicaIdentityIndex);
-	READ_CHAR_FIELD(clusterOnIndex);
+	READ_NODE_FIELD(replicaIdentityIndex);
+	READ_NODE_FIELD(clusterOnIndex);
 
 	READ_DONE();
 }

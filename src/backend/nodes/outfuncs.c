@@ -3493,8 +3493,8 @@ _outAlteredTableInfo(StringInfo str, const AlteredTableInfo *node)
 	WRITE_NODE_FIELD(changedIndexDefs);
 	unwrapStringList(node->changedIndexDefs);
 
-	WRITE_CHAR_FIELD(replicaIdentityIndex);
-	WRITE_CHAR_FIELD(clusterOnIndex);
+	WRITE_NODE_FIELD(replicaIdentityIndex);
+	WRITE_NODE_FIELD(clusterOnIndex);
 }
 
 static void

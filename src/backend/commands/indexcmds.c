@@ -985,7 +985,7 @@ DefineIndex(Oid relationId,
 				 errmsg("access method \"%s\" does not support exclusion constraints",
 						accessMethodName)));
 
-    if  (stmt->unique && RelationIsAppendOptimized(rel))
+	if (stmt->unique && RelationIsAppendOptimized(rel))
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("append-only tables do not support unique indexes")));
