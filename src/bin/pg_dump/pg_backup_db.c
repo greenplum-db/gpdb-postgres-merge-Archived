@@ -83,10 +83,6 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname)
 	PGconn	   *oldConn = AH->connection;
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* GPDB_12_12_MERGE_FIXME double check, don't know if it works, or put the binary_upgrade into cparams? */
-	/* only binary upgrade mode sets the options */
-	bool binary_upgade = oldConn->pgoptions != NULL;
-
 	/*
 	 * Save the dbname, if given, in override_dbname so that it will also
 	 * affect any later reconnection attempt.
@@ -101,7 +97,7 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname)
 	 */
 	AH->connection = NULL;		/* dodge error check in ConnectDatabase */
 
-	ConnectDatabase((Archive *) AH, &ropt->cparams, true, binary_upgade);
+	ConnectDatabase((Archive *) AH, &ropt->cparams, true, ropt->binary_upgrade);
 
 	PQfinish(oldConn);
 }

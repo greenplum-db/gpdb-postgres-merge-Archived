@@ -90,7 +90,6 @@ typedef struct _connParams
 	/* If not NULL, this overrides the dbname obtained from command line */
 	/* (but *only* the DB name, not anything else in the connstring) */
 	char	   *override_dbname;
-	// GPDB_12_12_MERGE_FIXME bool binary_upgrade? Check ReconnectToServer()
 } ConnParams;
 
 typedef struct _restoreOptions
