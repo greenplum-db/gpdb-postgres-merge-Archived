@@ -651,7 +651,7 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	*am_sync = false;
 
 	/* Quick out if not even configured to be synchronous */
-	if (SyncRepConfig == NULL)
+	if (!IS_QUERY_DISPATCHER() && SyncRepConfig == NULL)
 		return false;
 
 	/* Get standbys that are considered as synchronous at this moment */
@@ -826,7 +826,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 		palloc(max_wal_senders * sizeof(SyncRepStandbyData));
 
 	/* Quick exit if sync replication is not requested */
-	if (SyncRepConfig == NULL)
+	if (!IS_QUERY_DISPATCHER() && SyncRepConfig == NULL)
 		return 0;
 
 	/* Collect raw data from shared memory */
@@ -842,6 +842,23 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 		stby = *standbys + n;
 
 		SpinLockAcquire(&walsnd->mutex);
+
+		if (IS_QUERY_DISPATCHER())
+		{
+			if ((walsnd->pid != 0)
+				&& ((walsnd->state == WALSNDSTATE_STREAMING)
+					|| (walsnd->state == WALSNDSTATE_CATCHUP &&
+						walsnd->caughtup_within_range)))
+			{
+				/* OK, it's a candidate */
+				stby->walsnd_index = i;
+				stby->is_me = true;
+				n++;
+
+				continue;
+			}
+		}
+
 		stby->pid = walsnd->pid;
 		state = walsnd->state;
 		stby->write = walsnd->write;
