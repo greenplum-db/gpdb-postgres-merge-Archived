@@ -829,12 +829,41 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Get distribute key of matview */
-	distributed =  TextDatumGetCString(DirectFunctionCall1(pg_get_table_distributedby,
+	distributed = TextDatumGetCString(DirectFunctionCall1(pg_get_table_distributedby,
 														   ObjectIdGetDatum(matviewOid)));
 
 	/* Start building the query for creating the diff table. */
 	resetStringInfo(&querybuf);
-
+	/*
+	 * GPDB_12_12_MERGE_FIXME
+	 *
+	 * QUOTE:
+	 * Note: here and below, we use "tablename.*::tablerowtype" as a hack to
+	 * keep ".*" from being expanded into multiple columns in a SELECT list.
+	 * Compare ruleutils.c's get_variable().
+	 *
+	 * Greenplum needs to expand it instead for DISTRIBUTED BY (), but
+	 * expanding will fail the case testing ambiguity.
+	 *
+	 * commit 1ff1e4a60646c9732abe16ee5cbb5ffcb30d89a1
+	 * Author: Tom Lane <tgl@sss.pgh.pa.us>
+	 * Date:   Sat Aug 7 13:29:32 2021 -0400
+	 * 
+	 *     Really fix the ambiguity in REFRESH MATERIALIZED VIEW CONCURRENTLY.
+	 * 
+	 *     Rather than trying to pick table aliases that won't conflict with
+	 *     any possible user-defined matview column name, adjust the queries'
+	 *     syntax so that the aliases are only used in places where they can't be
+	 *     mistaken for column names.  Mostly this consists of writing "alias.*"
+	 *     not just "alias", which adds clarity for humans as well as machines.
+	 *     We do have the issue that "SELECT alias.*" acts differently from
+	 *     "SELECT alias", but we can use the same hack ruleutils.c uses for
+	 *     whole-row variables in SELECT lists: write "alias.*::compositetype".
+	 * 
+	 *     We might as well revert to the original aliases after doing this;
+	 *     they're a bit easier to read.
+	 *
+	 */
 	appendStringInfo(&querybuf,
 					 "CREATE TEMP TABLE %s AS "
 					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.*::%s AS newdata "
@@ -960,12 +989,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	 */
 	Assert(foundUniqueIndex);
 
-
-
 	appendStringInfoString(&querybuf,
 						   " AND newdata.* OPERATOR(pg_catalog.*=) mv.*) "
 						   "WHERE newdata.* IS NULL OR mv.* IS NULL "
-						   "ORDER BY tid");
+						   "ORDER BY tid "); /* GPDB: tailing space matters */
 	appendStringInfoString(&querybuf, distributed);
 
 	/* Create the temporary "diff" table. */
@@ -993,8 +1020,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	appendStringInfo(&querybuf,
 					 "DELETE FROM %s mv WHERE ctid OPERATOR(pg_catalog.=) ANY "
 					 "(SELECT diff.tid FROM %s diff "
-					 "WHERE diff.tid = mv.ctid and diff.sid = mv.gp_segment_id and"
-	 				 " diff.tid IS NOT NULL)",
+					 "WHERE diff.tid IS NOT NULL "
+					 "AND diff.tid = mv.ctid AND diff.sid = mv.gp_segment_id "
+					 "AND diff.newdata IS NULL)",
 					 matviewname, diffname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_DELETE)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);

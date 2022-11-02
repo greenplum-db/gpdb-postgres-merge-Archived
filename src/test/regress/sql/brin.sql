@@ -515,8 +515,8 @@ DELETE FROM brintest_3;
 -- We need to wait a bit for all transactions to complete, so that the
 -- vacuum actually removes the TOAST rows. Creating an index concurrently
 -- is a one way to achieve that, because it does exactly such wait.
-CREATE INDEX CONCURRENTLY brin_test_temp_idx ON brintest_3(a);
-DROP INDEX brin_test_temp_idx;
+-- CREATE INDEX CONCURRENTLY brin_test_temp_idx ON brintest_3(a);
+-- DROP INDEX brin_test_temp_idx;
 
 -- vacuum the table, to discard TOAST data
 VACUUM brintest_3;

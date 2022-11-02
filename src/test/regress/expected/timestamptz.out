@@ -2163,7 +2163,6 @@ SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, 'PST8PDT');
 (1 row)
 
 RESET TimeZone;
-<<<<<<< HEAD
 -- MPP-18998
 create table dttm_com
 (id int primary key,
@@ -2181,7 +2180,6 @@ select id from dttm_com where d1 <> current_date;
 ----
 (0 rows)
 
-=======
 -- generate_series for timestamptz
 select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
@@ -2242,7 +2240,6 @@ select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
 ERROR:  step size cannot equal zero
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 --
 -- Test behavior with a dynamic (time-varying) timezone abbreviation.
 -- These tests rely on the knowledge that MSK (Europe/Moscow standard time)

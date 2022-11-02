@@ -723,12 +723,8 @@ CREATE TABLE gtest27 (
     b int,
     x int GENERATED ALWAYS AS ((a + b) * 2) STORED
 );
-<<<<<<< HEAD
 ALTER TABLE gtest27 SET DISTRIBUTED RANDOMLY;
-INSERT INTO gtest27 (a) VALUES (3), (4);
-=======
 INSERT INTO gtest27 (a, b) VALUES (3, 7), (4, 11);
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 ALTER TABLE gtest27 ALTER COLUMN a TYPE text;  -- error
 ERROR:  cannot alter type of a column used by a generated column
 DETAIL:  Column "a" is used by generated column "x".
