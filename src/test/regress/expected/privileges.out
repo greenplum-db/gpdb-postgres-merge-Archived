@@ -660,8 +660,8 @@ SET SESSION AUTHORIZATION regress_priv_user1;
 DROP TABLE t1;
 -- check error reporting with column privs on a partitioned table
 CREATE TABLE errtst(a text, b text NOT NULL, c text, secret1 text, secret2 text) PARTITION BY LIST (a);
-CREATE TABLE errtst_part_1(secret2 text, c text, a text, b text NOT NULL, secret1 text);
-CREATE TABLE errtst_part_2(secret1 text, secret2 text, a text, c text, b text NOT NULL);
+CREATE TABLE errtst_part_1(secret2 text, c text, a text, b text NOT NULL, secret1 text) DISTRIBUTED BY (a);
+CREATE TABLE errtst_part_2(secret1 text, secret2 text, a text, c text, b text NOT NULL) DISTRIBUTED BY (a);
 ALTER TABLE errtst ATTACH PARTITION errtst_part_1 FOR VALUES IN ('aaa');
 ALTER TABLE errtst ATTACH PARTITION errtst_part_2 FOR VALUES IN ('aaaa');
 GRANT SELECT (a, b, c) ON TABLE errtst TO regress_priv_user2;
@@ -1403,12 +1403,13 @@ CREATE INDEX sro_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)))
 	WHERE sro_ifun(a + 10) > sro_ifun(10);
 DROP INDEX sro_idx;
 -- Do the same concurrently
-CREATE INDEX CONCURRENTLY sro_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)))
+CREATE INDEX sro_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)))
 	WHERE sro_ifun(a + 10) > sro_ifun(10);
 -- REINDEX
 REINDEX TABLE sro_tab;
 REINDEX INDEX sro_idx;
 REINDEX TABLE CONCURRENTLY sro_tab;
+ERROR:  REINDEX CONCURRENTLY is not supported
 DROP INDEX sro_idx;
 -- CLUSTER
 CREATE INDEX sro_cluster_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)));
@@ -1423,11 +1424,8 @@ SELECT brin_desummarize_range('sro_brin', 0);
 (1 row)
 
 SELECT brin_summarize_range('sro_brin', 0);
- brin_summarize_range 
-----------------------
-                    1
-(1 row)
-
+ERROR:  Greenplum could not summarize indicated page range  (seg0 slice1 127.0.0.1:40000 pid=1132546)
+CONTEXT:  SQL function "brin_summarize_range" statement 1
 DROP TABLE sro_tab;
 -- Check with a partitioned table
 CREATE TABLE sro_ptab (a int) PARTITION BY RANGE (a);
@@ -1438,10 +1436,8 @@ INSERT INTO sro_ptab VALUES (1), (2), (3);
 CREATE INDEX sro_pidx ON sro_ptab ((sro_ifun(a) + sro_ifun(0)))
 	WHERE sro_ifun(a + 10) > sro_ifun(10);
 REINDEX TABLE sro_ptab;
-WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "sro_ptab"
-NOTICE:  table "sro_ptab" has no indexes to reindex
 REINDEX INDEX CONCURRENTLY sro_pidx;
-ERROR:  REINDEX is not yet implemented for partitioned indexes
+ERROR:  REINDEX CONCURRENTLY is not supported
 SET SESSION AUTHORIZATION regress_sro_user;
 CREATE FUNCTION unwanted_grant() RETURNS void LANGUAGE sql AS
 	'GRANT regress_priv_group2 TO regress_sro_user';
@@ -1474,8 +1470,8 @@ REFRESH MATERIALIZED VIEW sro_mv;
 ERROR:  cannot fire deferred trigger within security-restricted operation
 CONTEXT:  SQL function "mv_action" statement 1
 BEGIN; SET CONSTRAINTS ALL IMMEDIATE; REFRESH MATERIALIZED VIEW sro_mv; COMMIT;
-ERROR:  must have admin option on role "regress_priv_group2"
-CONTEXT:  SQL function "unwanted_grant" statement 1
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
+CONTEXT:  SQL function "unwanted_grant" during startup
 SQL statement "SELECT unwanted_grant()"
 PL/pgSQL function sro_trojan() line 1 at PERFORM
 SQL function "mv_action" statement 1
