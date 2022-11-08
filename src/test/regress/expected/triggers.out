@@ -250,11 +250,7 @@ select * from trigtest;
 (1 row)
 
 update trigtest set a = 2 where a = 1 returning *;
- a | b |   c   | d  
----+---+-------+----
- 1 | t | xyzzy | 42
-(1 row)
-
+ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
 select * from trigtest;
  a | b |   c   | d  
 ---+---+-------+----
@@ -269,11 +265,7 @@ select * from trigtest;
 (1 row)
 
 update trigtest set a = 2 where a = 1 returning *;
- a |   c   | d  
----+-------+----
- 1 | xyzzy | 42
-(1 row)
-
+ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
 select * from trigtest;
  a |   c   | d  
 ---+-------+----
@@ -2119,6 +2111,7 @@ alter table parted_stmt_trig disable trigger trig_ins_after_parent;
 insert into parted_stmt_trig values (1);
 NOTICE:  trigger trig_ins_before_child on parted_stmt_trig1 BEFORE INSERT for ROW
 NOTICE:  trigger trig_ins_after_child on parted_stmt_trig1 AFTER INSERT for ROW
+NOTICE:  trigger trig_ins_after_parent on parted_stmt_trig1 AFTER INSERT for ROW
 alter table parted_stmt_trig enable trigger trig_ins_after_parent;
 insert into parted_stmt_trig values (1);
 NOTICE:  trigger trig_ins_before_child on parted_stmt_trig1 BEFORE INSERT for ROW
@@ -2413,27 +2406,27 @@ create trigger tg after insert on parent
   for each row execute procedure trig_nothing();
 create trigger tg_stmt after insert on parent
   for statement execute procedure trig_nothing();
+ERROR:  Triggers for statements are not yet supported
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text, tgname;
- tgrelid | tgname  | tgenabled 
----------+---------+-----------
- child1  | tg      | O
- parent  | tg      | O
- parent  | tg_stmt | O
-(3 rows)
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | O
+(2 rows)
 
 alter table only parent enable always trigger tg;	-- no recursion because ONLY
 alter table parent enable always trigger tg_stmt;	-- no recursion because statement trigger
+ERROR:  trigger "tg_stmt" for table "parent" does not exist
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text, tgname;
- tgrelid | tgname  | tgenabled 
----------+---------+-----------
- child1  | tg      | O
- parent  | tg      | A
- parent  | tg_stmt | A
-(3 rows)
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | A
+(2 rows)
 
 -- The following is a no-op for the parent trigger but not so
 -- for the child trigger, so recursion should be applied.
@@ -2441,12 +2434,11 @@ alter table parent enable always trigger tg;
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text, tgname;
- tgrelid | tgname  | tgenabled 
----------+---------+-----------
- child1  | tg      | A
- parent  | tg      | A
- parent  | tg_stmt | A
-(3 rows)
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | A
+ parent  | tg     | A
+(2 rows)
 
 drop table parent, child1;
 -- Verify that firing state propagates correctly on creation, too
@@ -2460,6 +2452,8 @@ ERROR:  except
 CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 ALTER TABLE trgfire DISABLE TRIGGER tg;
 INSERT INTO trgfire VALUES (1);
+ERROR:  except
+CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 CREATE TABLE trgfire2 PARTITION OF trgfire FOR VALUES FROM (10) TO (20);
 INSERT INTO trgfire VALUES (11);
 CREATE TABLE trgfire3 (LIKE trgfire);
@@ -2492,17 +2486,9 @@ INSERT INTO trgfire VALUES (1);
 ERROR:  except
 CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 INSERT INTO trgfire VALUES (11);
-ERROR:  except
-CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 INSERT INTO trgfire VALUES (21);
-ERROR:  except
-CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 INSERT INTO trgfire VALUES (30);
-ERROR:  except
-CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 INSERT INTO trgfire VALUES (40);
-ERROR:  except
-CONTEXT:  PL/pgSQL function tgf() line 1 at RAISE
 DROP TABLE trgfire;
 DROP FUNCTION tgf();
 --
@@ -3081,6 +3067,7 @@ end; $$;
 create trigger but_trigger after update on convslot_test_child
 referencing new table as new_table
 for each statement execute function trigger_function2();
+ERROR:  Triggers for statements are not yet supported
 update convslot_test_parent set col1 = col1 || '1';
 NOTICE:  trigger = but_trigger, new table = (11,tutu), (31,tutu)
 create or replace function trigger_function3()
@@ -3097,12 +3084,14 @@ end; $$;
 create trigger but_trigger2 after update on convslot_test_child
 referencing old table as old_table new table as new_table
 for each statement execute function trigger_function3();
+ERROR:  Triggers for statements are not yet supported
 update convslot_test_parent set col1 = col1 || '1';
 NOTICE:  trigger = but_trigger, new table = (111,tutu), (311,tutu)
 NOTICE:  trigger = but_trigger2, old_table = (11,tutu), (31,tutu), new table = (111,tutu), (311,tutu)
 create trigger bdt_trigger after delete on convslot_test_child
 referencing old table as old_table
 for each statement execute function trigger_function1();
+ERROR:  Triggers for statements are not yet supported
 delete from convslot_test_parent;
 NOTICE:  trigger = bdt_trigger, old_table = (111,tutu), (311,tutu)
 drop table convslot_test_child, convslot_test_parent;
