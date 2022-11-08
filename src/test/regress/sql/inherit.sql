@@ -885,8 +885,8 @@ drop table range_parted;
 -- Check that we allow access to a child table's statistics when the user
 -- has permissions only for the parent table.
 create table permtest_parent (a int, b text, c text) partition by list (a);
-create table permtest_child (b text, c text, a int) partition by list (b);
-create table permtest_grandchild (c text, b text, a int);
+create table permtest_child (b text, c text, a int) partition by list (b) distributed by (a);
+create table permtest_grandchild (c text, b text, a int) distributed by (a);
 alter table permtest_child attach partition permtest_grandchild for values in ('a');
 alter table permtest_parent attach partition permtest_child for values in (1);
 create index on permtest_parent (left(c, 3));
@@ -953,7 +953,7 @@ CREATE TABLE errtst_child_reorder (
     partid int not null,
     CONSTRAINT shdata_small CHECK(shdata < 3),
     CHECK(data < 10)
-);
+) distributed by (partid);
 
 ALTER TABLE errtst_child_fastdef ADD COLUMN data int NOT NULL DEFAULT 0;
 ALTER TABLE errtst_child_fastdef ADD CONSTRAINT errtest_child_fastdef_data_check CHECK (data < 10);
