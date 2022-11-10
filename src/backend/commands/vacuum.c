@@ -1620,7 +1620,8 @@ vac_update_datfrozenxid(void)
 	 * avoids calling vac_truncate_clog() with a datfrozenxid preceding a
 	 * datfrozenxid passed to an earlier vac_truncate_clog() call.
 	 */
-	LockDatabaseFrozenIds(ExclusiveLock);
+	// GPDB_12_12_MERGE_FIXME: @(interma) next line will hang on uao vacuum cases
+	// LockDatabaseFrozenIds(ExclusiveLock);
 
 	/*
 	 * Initialize the "min" calculation with GetOldestXmin, which is a
