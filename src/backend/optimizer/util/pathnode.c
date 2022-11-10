@@ -4149,6 +4149,8 @@ create_projection_path_with_quals(PlannerInfo *root,
 
 		Assert(subpp->path.parent == rel);
 		subpath = subpp->subpath;
+		if (subpp->cdb_restrict_clauses != NIL)
+			restrict_clauses = list_concat_unique(restrict_clauses, subpp->cdb_restrict_clauses);
 		Assert(!IsA(subpath, ProjectionPath));
 	}
 
