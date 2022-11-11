@@ -3409,17 +3409,21 @@ explain (verbose, costs off)
 select * from
   (select 1 as x) ss1 left join (select 2 as y) ss2 on (true),
   lateral (select ss2.y as z limit 1) ss3;
-        QUERY PLAN         
----------------------------
+             QUERY PLAN              
+-------------------------------------
  Nested Loop
    Output: 1, (2), ((2))
    ->  Result
          Output: 2
-   ->  Limit
+   ->  Materialize
          Output: ((2))
-         ->  Result
-               Output: (2)
-(8 rows)
+         ->  Limit
+               Output: ((2))
+               ->  Result
+                     Output: (2)
+ Optimizer: Postgres query optimizer
+ Settings: optimizer = 'off'
+(12 rows)
 
 select * from
   (select 1 as x) ss1 left join (select 2 as y) ss2 on (true),
@@ -3440,15 +3444,17 @@ select * from
            union all
            select a as b) as t3
 where b;
-              QUERY PLAN               
----------------------------------------
+                 QUERY PLAN                  
+---------------------------------------------
  Nested Loop
    ->  Result
-   ->  Append
-         ->  Result
-         ->  Result
-               One-Time Filter: (true)
-(6 rows)
+   ->  Materialize
+         ->  Append
+               ->  Result
+               ->  Result
+                     One-Time Filter: (true)
+ Optimizer: Postgres query optimizer
+(8 rows)
 
 select * from
   (select 0 as z) as t1
