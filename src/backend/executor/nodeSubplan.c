@@ -818,12 +818,21 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 											   subplan->plan_id - 1);
 
 	/*
-	 * This check can fail if the planner mistakenly puts a parallel-unsafe
-	 * subplan into a parallelized subquery; see ExecSerializePlan.
+	 * Greenplum specific behavior:
+	 *   Greenplum preprcess initplans before dispatching the main plan,
+	 *   so QEs never need to ExecInitSubPlan for initplans.
+	 *   Only do the following check when on QD or it is not initplan.
 	 */
-	if (sstate->planstate == NULL)
-		elog(ERROR, "subplan \"%s\" was not initialized",
-			 subplan->plan_name);
+	if (Gp_role == GP_ROLE_DISPATCH || !subplan->is_initplan)
+	{
+		/*
+		 * This check can fail if the planner mistakenly puts a parallel-unsafe
+		 * subplan into a parallelized subquery; see ExecSerializePlan.
+		 */
+		if (sstate->planstate == NULL)
+			elog(ERROR, "subplan \"%s\" was not initialized",
+				 subplan->plan_name);
+	}
 
 	/* Link to parent's state, too */
 	sstate->parent = parent;
