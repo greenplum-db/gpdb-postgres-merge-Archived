@@ -6902,17 +6902,6 @@ getTables(Archive *fout, int *numTables)
 		 * with considerable savings in FE/BE overhead. It does come at the cost of some increased
 		 * memory usage in both FE and BE, which we will be able to tolerate.
 		 */
-		if (tblinfo[i].dobj.dump &&
-			(tblinfo[i].relkind == RELKIND_RELATION ||
-			 tblinfo[i].relkind == RELKIND_PARTITIONED_TABLE) &&
-			(tblinfo[i].dobj.dump & DUMP_COMPONENTS_REQUIRING_LOCK))
-		{
-			resetPQExpBuffer(query);
-			appendPQExpBuffer(query,
-							  "LOCK TABLE %s IN ACCESS SHARE MODE",
-							  fmtQualifiedDumpable(&tblinfo[i]));
-			ExecuteSqlStatement(fout, query->data);
-		}
 
 		if ((tblinfo[i].dobj.dump & DUMP_COMPONENTS_REQUIRING_LOCK) &&
 			(tblinfo[i].relkind == RELKIND_RELATION ||
@@ -6920,21 +6909,21 @@ getTables(Archive *fout, int *numTables)
 		{
 			if (!lockTableDumped)
 				appendPQExpBuffer(query,
-						"LOCK TABLE %s ",
-						fmtQualifiedDumpable(&tblinfo[i]));
+								  "LOCK TABLE %s ",
+								  fmtQualifiedDumpable(&tblinfo[i]));
 			else
 				appendPQExpBuffer(query,
-						",%s ",
-						fmtQualifiedDumpable(&tblinfo[i]));
+								  ",%s ",
+								  fmtQualifiedDumpable(&tblinfo[i]));
 			lockTableDumped = true;
 		}
 	}
 	/* Are there any tables to lock? */
 	if (lockTableDumped)
 	{
-	appendPQExpBuffer(query,
-			"IN ACCESS SHARE MODE");
-	ExecuteSqlStatement(fout, query->data);
+		appendPQExpBuffer(query,
+						  "IN ACCESS SHARE MODE");
+		ExecuteSqlStatement(fout, query->data);
 	}
 
 	if (dopt->lockWaitTimeout)
