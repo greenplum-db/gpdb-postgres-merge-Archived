@@ -3286,9 +3286,10 @@ ExecEndModifyTable(ModifyTableState *node)
 			resultRelInfo->ri_FdwRoutine->EndForeignModify(node->ps.state,
 														   resultRelInfo);
 		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_dml_finish(resultRelInfo->ri_RelationDesc);
+			appendonly_dml_finish(resultRelInfo->ri_RelationDesc,
+								  node->operation);
 		else if(RelationIsAoCols(resultRelInfo->ri_RelationDesc))
-			aoco_dml_finish(resultRelInfo->ri_RelationDesc);
+			aoco_dml_finish(resultRelInfo->ri_RelationDesc, node->operation);
 	}
 
 	/*

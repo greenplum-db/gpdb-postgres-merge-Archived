@@ -394,7 +394,7 @@ extern void appendonly_insert(
 		MemTuple instup, 
 		AOTupleId *aoTupleId);
 extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
-extern void appendonly_dml_finish(Relation relation);
+extern void appendonly_dml_finish(Relation relation, CmdType operation);
 
 extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel);
 extern TM_Result appendonly_delete(

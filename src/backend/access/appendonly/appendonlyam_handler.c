@@ -228,7 +228,7 @@ appendonly_dml_init(Relation relation, CmdType operation)
  * This function should be called exactly once per relation.
  */
 void
-appendonly_dml_finish(Relation relation)
+appendonly_dml_finish(Relation relation, CmdType operation)
 {
 	AppendOnlyDMLState *state;
 
@@ -722,7 +722,7 @@ appendonly_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 appendonly_finish_bulk_insert(Relation relation, int options)
 {
-	/* nothing for ao tables */
+	appendonly_dml_finish(relation, CMD_INSERT);
 }
 
 

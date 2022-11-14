@@ -260,7 +260,7 @@ aoco_dml_init(Relation relation, CmdType operation)
  * This function should be called exactly once per relation.
  */
 void
-aoco_dml_finish(Relation relation)
+aoco_dml_finish(Relation relation, CmdType operation)
 {
 	AOCODMLState *state;
 
@@ -827,8 +827,10 @@ aoco_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 aoco_finish_bulk_insert(Relation relation, int options)
 {
-	/* nothing for co tables */
+	aoco_dml_finish(relation, CMD_INSERT);
 }
+
+
 
 
 /* ------------------------------------------------------------------------

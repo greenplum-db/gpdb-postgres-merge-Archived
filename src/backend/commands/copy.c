@@ -4221,7 +4221,7 @@ CopyFrom(CopyState cstate)
 	/*
 	 * GPDB_12_MERGE_FIXME: We still have to perform the initialization
 	 * here for AO relations. It is preferreable by all means to perform the
-	 * initialization via the table AM API, however it simply does not
+	 * initialization via the table AP API, however it simply does not
 	 * provide a good enough interface for this yet.
 	 */
 	if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
@@ -4755,17 +4755,6 @@ CopyFrom(CopyState cstate)
 	/* Tear down the multi-insert buffer data */
 	if (insertMethod != CIM_SINGLE)
 		CopyMultiInsertInfoCleanup(&multiInsertInfo);
-
-	/*
-	 * GPDB_12_MERGE_FIXME: We still have to perform the finish here for AO
-	 * relations. It is preferreable by all means to perform the finish via the
-	 * table AM API, however it simply does not provide a good enough interface
-	 * for this yet.
-	 */
-	if (RelationIsAoRows(target_resultRelInfo->ri_RelationDesc))
-		appendonly_dml_finish(target_resultRelInfo->ri_RelationDesc);
-	else if (RelationIsAoCols(target_resultRelInfo->ri_RelationDesc))
-		aoco_dml_finish(target_resultRelInfo->ri_RelationDesc);
 
 	ExecCloseIndices(target_resultRelInfo);
 
