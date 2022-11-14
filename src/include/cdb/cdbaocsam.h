@@ -352,6 +352,6 @@ extern void aocs_addcol_setfirstrownum(AOCSAddColumnDesc desc,
 		int64 firstRowNum);
 
 extern void aoco_dml_init(Relation relation, CmdType operation);
-extern void aoco_dml_finish(Relation relation, CmdType operation);
+extern void aoco_dml_finish(Relation relation);
 
 #endif   /* AOCSAM_H */

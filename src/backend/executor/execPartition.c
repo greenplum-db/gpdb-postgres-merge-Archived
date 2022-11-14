@@ -1247,9 +1247,9 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 		 * appendoptimized table, ensure the DML operation is finished.
 		 */
 		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_dml_finish(resultRelInfo->ri_RelationDesc, mtstate->operation);
+			appendonly_dml_finish(resultRelInfo->ri_RelationDesc);
 		if (RelationIsAoCols(resultRelInfo->ri_RelationDesc))
-			aoco_dml_finish(resultRelInfo->ri_RelationDesc, mtstate->operation);
+			aoco_dml_finish(resultRelInfo->ri_RelationDesc);
 
 		ExecCloseIndices(resultRelInfo);
 		table_close(resultRelInfo->ri_RelationDesc, NoLock);
