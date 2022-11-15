@@ -1046,7 +1046,7 @@ primary_conninfo='$root_connstr'
 # Internal routine to enable archive recovery command on a standby node
 sub enable_restoring
 {
-	my ($self, $root_node) = @_;
+	my ($self, $root_node, $standby) = @_;
 	my $path = $root_node->archive_dir;
 	my $name = $self->name;
 
