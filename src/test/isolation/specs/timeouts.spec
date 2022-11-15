@@ -13,7 +13,7 @@ teardown
 
 session s1
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step rdtbl	{ SELECT * FROM accounts; }
+step rdtbl	{ SELECT * FROM accounts ORDER BY accountid; }
 step wrtbl	{ UPDATE accounts SET balance = balance + 100; }
 teardown	{ ABORT; }
 

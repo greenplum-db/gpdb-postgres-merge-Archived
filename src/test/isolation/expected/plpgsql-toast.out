@@ -43,10 +43,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  length(x) = 6000
 step assign1: <... completed>
 
@@ -93,10 +89,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  length(x) = 6000
 step assign2: <... completed>
 
@@ -144,10 +136,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  length(r) = 6004
 step assign3: <... completed>
 
@@ -194,10 +182,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  length(r) = 6004
 step assign4: <... completed>
 
@@ -246,10 +230,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  length(r) = 6002
 step assign5: <... completed>
 

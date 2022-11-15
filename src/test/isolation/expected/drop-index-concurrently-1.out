@@ -17,14 +17,10 @@ QUERY PLAN
 Sort                                          
   Sort Key: id                                
   ->  Index Scan using test_dc_data on test_dc
-<<<<<<< HEAD
-        Index Cond: (data = 34)
-Optimizer: Postgres query optimizer
-=======
         Index Cond: (data = 34)               
-(4 rows)
+Optimizer: Postgres query optimizer           
+(5 rows)
 
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 step explains: EXPLAIN (COSTS OFF) EXECUTE getrow_seq;
 QUERY PLAN                                 
 -------------------------------------------
@@ -32,19 +28,14 @@ Sort
   Sort Key: id, data                       
   ->  Seq Scan on test_dc                  
         Filter: ((data)::text = '34'::text)
-<<<<<<< HEAD
-Optimizer: Postgres query optimizer
-step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
-id             data           
-=======
-(4 rows)
+Optimizer: Postgres query optimizer        
+(5 rows)
 
 step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
 id|data
 --+----
 34|  34
 (1 row)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 
 step drop: DROP INDEX CONCURRENTLY test_dc_data; <waiting ...>
 step insert2: INSERT INTO test_dc(data) SELECT * FROM generate_series(1, 100);

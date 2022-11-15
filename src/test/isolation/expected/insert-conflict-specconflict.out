@@ -46,10 +46,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  called for k1
 s1: NOTICE:  blocking 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
@@ -58,10 +54,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s2: NOTICE:  called for k1
 s2: NOTICE:  blocking 2
 step controller_show: SELECT * FROM upserttest;
@@ -88,10 +80,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  called for k1
 s1: NOTICE:  blocking 2
 s1: NOTICE:  called for k1
@@ -150,10 +138,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  called for k1
 s1: NOTICE:  blocking 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
@@ -162,10 +146,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s2: NOTICE:  called for k1
 s2: NOTICE:  blocking 2
 step controller_show: SELECT * FROM upserttest;
@@ -192,10 +172,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s2: NOTICE:  called for k1
 s2: NOTICE:  blocking 2
 s2: NOTICE:  called for k1
@@ -256,10 +232,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s1: NOTICE:  called for k1
 s1: NOTICE:  blocking 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
@@ -268,10 +240,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s2: NOTICE:  called for k1
 s2: NOTICE:  blocking 2
 step controller_show: SELECT * FROM upserttest;
@@ -297,10 +265,6 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-<<<<<<< HEAD
-t              
-=======
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 s2: NOTICE:  called for k1
 s2: NOTICE:  blocking 2
 s2: NOTICE:  called for k1
