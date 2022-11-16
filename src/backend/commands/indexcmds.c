@@ -628,8 +628,13 @@ DefineIndex(Oid relationId,
 	/*
 	 * Also don't dispatch this if it's part of an ALTER TABLE. We will dispatch
 	 * the whole ALTER TABLE command later.
+	 *
+	 * See comments in ProcessUtilitySlow of T_IndexStmt. if stmt->transformed
+	 * is true, it means that it came from expandTableLikeClause and this is
+	 * the reason the is_alter_table is true here. For such case, we do not touch
+	 * shouldDispatch here.
 	 */
-	if (is_alter_table)
+	if (is_alter_table && !stmt->transformed)
 		shouldDispatch = false;
 
 	/*
