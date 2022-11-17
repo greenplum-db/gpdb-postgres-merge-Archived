@@ -1467,29 +1467,31 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
                      Filter: (a = 1)
    ->  Materialize
          ->  Aggregate
-               ->  Materialize
-                     ->  Gather Motion 3:1  (slice2; segments: 3)
-                           ->  Append
-                                 ->  Seq Scan on mc3p0 t2
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p1 t2_1
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p2 t2_2
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p3 t2_3
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p4 t2_4
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p5 t2_5
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p6 t2_6
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p7 t2_7
-                                       Filter: ((c = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p_default t2_8
-                                       Filter: ((c = 1) AND (abs(b) = 1))
+               ->  Result
+                     Filter: (t2.a = t1.b)
+                     ->  Materialize
+                           ->  Gather Motion 3:1  (slice2; segments: 3)
+                                 ->  Append
+                                       ->  Seq Scan on mc3p0 t2
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p1 t2_1
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p2 t2_2
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p3 t2_3
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p4 t2_4
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p5 t2_5
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p6 t2_6
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p7 t2_7
+                                             Filter: ((c = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p_default t2_8
+                                             Filter: ((c = 1) AND (abs(b) = 1))
  Optimizer: Postgres query optimizer
-(33 rows)
+(35 rows)
 
 -- pruning should work fine, because values for a prefix of keys (a, b) are
 -- available
@@ -1507,15 +1509,17 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
                      Filter: (a = 1)
    ->  Materialize
          ->  Aggregate
-               ->  Materialize
-                     ->  Gather Motion 1:1  (slice2; segments: 1)
-                           ->  Append
-                                 ->  Seq Scan on mc3p0 t2
-                                       Filter: ((a = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p1 t2_1
-                                       Filter: ((a = 1) AND (abs(b) = 1))
-                                 ->  Seq Scan on mc3p_default t2_2
-                                       Filter: ((a = 1) AND (abs(b) = 1))
+               ->  Result
+                     Filter: (t2.c = t1.b)
+                     ->  Materialize
+                           ->  Gather Motion 1:1  (slice2; segments: 1)
+                                 ->  Append
+                                       ->  Seq Scan on mc3p0 t2
+                                             Filter: ((a = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p1 t2_1
+                                             Filter: ((a = 1) AND (abs(b) = 1))
+                                       ->  Seq Scan on mc3p_default t2_2
+                                             Filter: ((a = 1) AND (abs(b) = 1))
  Optimizer: Postgres query optimizer
 (21 rows)
 
