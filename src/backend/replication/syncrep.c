@@ -854,9 +854,10 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 				stby->walsnd_index = i;
 				stby->is_me = true;
 				n++;
-
-				continue;
 			}
+
+			SpinLockRelease(&walsnd->mutex);
+			continue;
 		}
 
 		stby->pid = walsnd->pid;
@@ -895,7 +896,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 	 * have too many candidates then return only the num_sync ones of highest
 	 * priority.
 	 */
-	if (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY &&
+	if (!IS_QUERY_DISPATCHER() && SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY &&
 		n > SyncRepConfig->num_sync)
 	{
 		/* Sort by priority ... */
