@@ -850,8 +850,8 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 					|| (walsnd->state == WALSNDSTATE_CATCHUP &&
 						walsnd->caughtup_within_range)))
 			{
-				/* OK, it's a candidate */
 				stby->walsnd_index = i;
+				stby->pid = walsnd->pid;
 				stby->is_me = true;
 				n++;
 			}
