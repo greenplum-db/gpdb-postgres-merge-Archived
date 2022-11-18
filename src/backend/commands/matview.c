@@ -332,8 +332,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * it against access by any other process until commit (by which time it
 	 * will be gone).
 	 */
-	OIDNewHeap = make_new_heap(matviewOid, tableSpace, matviewRel->rd_rel->relam, relpersistence,
-							   ExclusiveLock, false, true);
+	OIDNewHeap = make_new_heap_with_colname(matviewOid, tableSpace, matviewRel->rd_rel->relam, relpersistence,
+							   ExclusiveLock, false, true, "_$");
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap, matviewOid, concurrent, relpersistence,
 										  stmt->skipData);
@@ -758,6 +758,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	char	   *tempname;
 	char	   *diffname;
 	TupleDesc	tupdesc;
+	TupleDesc       newHeapDesc;
 	bool		foundUniqueIndex;
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
@@ -830,40 +831,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 	/* Get distribute key of matview */
 	distributed = TextDatumGetCString(DirectFunctionCall1(pg_get_table_distributedby,
-														   ObjectIdGetDatum(matviewOid)));
+														   ObjectIdGetDatum(tempOid)));
 
 	/* Start building the query for creating the diff table. */
 	resetStringInfo(&querybuf);
-	/*
-	 * GPDB_12_12_MERGE_FIXME
-	 *
-	 * QUOTE:
-	 * Note: here and below, we use "tablename.*::tablerowtype" as a hack to
-	 * keep ".*" from being expanded into multiple columns in a SELECT list.
-	 * Compare ruleutils.c's get_variable().
-	 *
-	 * Greenplum needs to expand it instead for DISTRIBUTED BY (), but
-	 * expanding will fail the case testing ambiguity.
-	 *
-	 * commit 1ff1e4a60646c9732abe16ee5cbb5ffcb30d89a1
-	 * Author: Tom Lane <tgl@sss.pgh.pa.us>
-	 * Date:   Sat Aug 7 13:29:32 2021 -0400
-	 * 
-	 *     Really fix the ambiguity in REFRESH MATERIALIZED VIEW CONCURRENTLY.
-	 * 
-	 *     Rather than trying to pick table aliases that won't conflict with
-	 *     any possible user-defined matview column name, adjust the queries'
-	 *     syntax so that the aliases are only used in places where they can't be
-	 *     mistaken for column names.  Mostly this consists of writing "alias.*"
-	 *     not just "alias", which adds clarity for humans as well as machines.
-	 *     We do have the issue that "SELECT alias.*" acts differently from
-	 *     "SELECT alias", but we can use the same hack ruleutils.c uses for
-	 *     whole-row variables in SELECT lists: write "alias.*::compositetype".
-	 * 
-	 *     We might as well revert to the original aliases after doing this;
-	 *     they're a bit easier to read.
-	 *
-	 */
 	appendStringInfo(&querybuf,
 					 "CREATE TEMP TABLE %s AS "
 					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.*::%s AS newdata "
@@ -877,6 +848,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	 * include all rows.
 	 */
 	tupdesc = matviewRel->rd_att;
+	newHeapDesc = tempRel->rd_att;
 	opUsedForQual = (Oid *) palloc0(sizeof(Oid) * relnatts);
 	foundUniqueIndex = false;
 
@@ -911,6 +883,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 				int			attnum = indexStruct->indkey.values[i];
 				Oid			opclass = indclass->values[i];
 				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+				Form_pg_attribute newattr = TupleDescAttr(newHeapDesc, attnum - 1);
 				Oid			attrtype = attr->atttypid;
 				HeapTuple	cla_ht;
 				Form_pg_opclass cla_tup;
@@ -961,7 +934,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 					appendStringInfoString(&querybuf, " AND ");
 
 				leftop = quote_qualified_identifier("newdata",
-													NameStr(attr->attname));
+													NameStr(newattr->attname));
 				rightop = quote_qualified_identifier("mv",
 													 NameStr(attr->attname));
 
@@ -1030,10 +1003,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	/* Inserts go last. */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf, "INSERT INTO %s SELECT", matviewname);
-	for (int i = 0; i < tupdesc->natts; ++i)
+	for (int i = 0; i < newHeapDesc->natts; ++i)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-		if (i == tupdesc->natts - 1)
+		Form_pg_attribute attr = TupleDescAttr(newHeapDesc, i);
+		if (i == newHeapDesc->natts - 1)
 			appendStringInfo(&querybuf, " %s", NameStr(attr->attname));
 		else
 			appendStringInfo(&querybuf, " %s,", NameStr(attr->attname));
