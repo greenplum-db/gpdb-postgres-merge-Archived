@@ -111,11 +111,14 @@ static bool SyncRepGetSyncRecPtr(XLogRecPtr *writePtr,
 static void SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr,
 									   XLogRecPtr *flushPtr,
 									   XLogRecPtr *applyPtr,
-									   List *sync_standbys);
+									   SyncRepStandbyData *sync_standbys,
+									   int num_standbys);
 static void SyncRepGetNthLatestSyncRecPtr(XLogRecPtr *writePtr,
 										  XLogRecPtr *flushPtr,
 										  XLogRecPtr *applyPtr,
-										  List *sync_standbys, uint8 nth);
+										  SyncRepStandbyData *sync_standbys,
+										  int num_standbys,
+										  uint8 nth);
 static int	SyncRepGetStandbyPriority(void);
 static List *SyncRepGetSyncStandbysPriority(bool *am_sync);
 static List *SyncRepGetSyncStandbysQuorum(bool *am_sync);
@@ -637,40 +640,46 @@ static bool
 SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 					 XLogRecPtr *applyPtr, bool *am_sync)
 {
-	List	   *sync_standbys;
+	SyncRepStandbyData *sync_standbys;
+	int			num_standbys;
+	int			i;
 
+	/* Initialize default results */
 	*writePtr = InvalidXLogRecPtr;
 	*flushPtr = InvalidXLogRecPtr;
 	*applyPtr = InvalidXLogRecPtr;
 	*am_sync = false;
 
-	/*
-	 * GPDB_12_12_MERGE_FIXME, roll back to this commit and fix it
-	 *
-	 * commit d522c81f5160012579c90380095835f8872dba46
-	 * Author: Adam Lee <adlee@vmware.com>
-	 * Date:   Tue Nov 1 16:00:18 2022 +0800
-	 * 
-	 *     Update SyncRepGetCandidateStandbys() to add Greenplum standby check
-	 */
+	/* Quick out if not even configured to be synchronous */
+	if (!IS_QUERY_DISPATCHER() && SyncRepConfig == NULL)
+		return false;
 
 	/* Get standbys that are considered as synchronous at this moment */
-	sync_standbys = SyncRepGetSyncStandbys(am_sync);
+	num_standbys = SyncRepGetCandidateStandbys(&sync_standbys);
+
+	/* Am I among the candidate sync standbys? */
+	for (i = 0; i < num_standbys; i++)
+	{
+		if (sync_standbys[i].is_me)
+		{
+			*am_sync = true;
+			break;
+		}
+	}
 
 	/*
-	 * Quick exit if we are not managing a sync standby or there are not
-	 * enough synchronous standbys.
+	 * Nothing more to do if we are not managing a sync standby or there are
+	 * not enough synchronous standbys.
 	 */
 	if (IS_QUERY_DISPATCHER())
 	{
-		if (list_length(sync_standbys) == 0)
+		if (num_standbys == 0)
 			return false;
 	}
 	else if (!(*am_sync) ||
-		SyncRepConfig == NULL ||
-		list_length(sync_standbys) < SyncRepConfig->num_sync)
+		num_standbys < SyncRepConfig->num_sync)
 	{
-		list_free(sync_standbys);
+		pfree(sync_standbys);
 		return false;
 	}
 
@@ -691,15 +700,16 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 		SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
 	{
 		SyncRepGetOldestSyncRecPtr(writePtr, flushPtr, applyPtr,
-								   sync_standbys);
+								   sync_standbys, num_standbys);
 	}
 	else
 	{
 		SyncRepGetNthLatestSyncRecPtr(writePtr, flushPtr, applyPtr,
-									  sync_standbys, SyncRepConfig->num_sync);
+									  sync_standbys, num_standbys,
+									  SyncRepConfig->num_sync);
 	}
 
-	list_free(sync_standbys);
+	pfree(sync_standbys);
 	return true;
 }
 
@@ -707,27 +717,24 @@ SyncRepGetSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
  * Calculate the oldest Write, Flush and Apply positions among sync standbys.
  */
 static void
-SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
-						   XLogRecPtr *applyPtr, List *sync_standbys)
+SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr,
+						   XLogRecPtr *flushPtr,
+						   XLogRecPtr *applyPtr,
+						   SyncRepStandbyData *sync_standbys,
+						   int num_standbys)
 {
-	ListCell   *cell;
+	int			i;
 
 	/*
 	 * Scan through all sync standbys and calculate the oldest Write, Flush
-	 * and Apply positions.
+	 * and Apply positions.  We assume *writePtr et al were initialized to
+	 * InvalidXLogRecPtr.
 	 */
-	foreach(cell, sync_standbys)
+	for (i = 0; i < num_standbys; i++)
 	{
-		WalSnd	   *walsnd = &WalSndCtl->walsnds[lfirst_int(cell)];
-		XLogRecPtr	write;
-		XLogRecPtr	flush;
-		XLogRecPtr	apply;
-
-		SpinLockAcquire(&walsnd->mutex);
-		write = walsnd->write;
-		flush = walsnd->flush;
-		apply = walsnd->apply;
-		SpinLockRelease(&walsnd->mutex);
+		XLogRecPtr	write = sync_standbys[i].write;
+		XLogRecPtr	flush = sync_standbys[i].flush;
+		XLogRecPtr	apply = sync_standbys[i].apply;
 
 		if (XLogRecPtrIsInvalid(*writePtr) || *writePtr > write)
 			*writePtr = write;
@@ -743,38 +750,36 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
  * standbys.
  */
 static void
-SyncRepGetNthLatestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
-							  XLogRecPtr *applyPtr, List *sync_standbys, uint8 nth)
+SyncRepGetNthLatestSyncRecPtr(XLogRecPtr *writePtr,
+							  XLogRecPtr *flushPtr,
+							  XLogRecPtr *applyPtr,
+							  SyncRepStandbyData *sync_standbys,
+							  int num_standbys,
+							  uint8 nth)
 {
-	ListCell   *cell;
 	XLogRecPtr *write_array;
 	XLogRecPtr *flush_array;
 	XLogRecPtr *apply_array;
-	int			len;
-	int			i = 0;
+	int			i;
 
-	len = list_length(sync_standbys);
-	write_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * len);
-	flush_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * len);
-	apply_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * len);
+	/* Should have enough candidates, or somebody messed up */
+	Assert(nth > 0 && nth <= num_standbys);
 
-	foreach(cell, sync_standbys)
+	write_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
+	flush_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
+	apply_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
+
+	for (i = 0; i < num_standbys; i++)
 	{
-		WalSnd	   *walsnd = &WalSndCtl->walsnds[lfirst_int(cell)];
-
-		SpinLockAcquire(&walsnd->mutex);
-		write_array[i] = walsnd->write;
-		flush_array[i] = walsnd->flush;
-		apply_array[i] = walsnd->apply;
-		SpinLockRelease(&walsnd->mutex);
-
-		i++;
+		write_array[i] = sync_standbys[i].write;
+		flush_array[i] = sync_standbys[i].flush;
+		apply_array[i] = sync_standbys[i].apply;
 	}
 
 	/* Sort each array in descending order */
-	qsort(write_array, len, sizeof(XLogRecPtr), cmp_lsn);
-	qsort(flush_array, len, sizeof(XLogRecPtr), cmp_lsn);
-	qsort(apply_array, len, sizeof(XLogRecPtr), cmp_lsn);
+	qsort(write_array, num_standbys, sizeof(XLogRecPtr), cmp_lsn);
+	qsort(flush_array, num_standbys, sizeof(XLogRecPtr), cmp_lsn);
+	qsort(apply_array, num_standbys, sizeof(XLogRecPtr), cmp_lsn);
 
 	/* Get Nth latest Write, Flush, Apply positions */
 	*writePtr = write_array[nth - 1];
@@ -821,7 +826,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 		palloc(max_wal_senders * sizeof(SyncRepStandbyData));
 
 	/* Quick exit if sync replication is not requested */
-	if (SyncRepConfig == NULL)
+	if (!IS_QUERY_DISPATCHER() && SyncRepConfig == NULL)
 		return 0;
 
 	/* Collect raw data from shared memory */
@@ -837,6 +842,23 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 		stby = *standbys + n;
 
 		SpinLockAcquire(&walsnd->mutex);
+
+		if (IS_QUERY_DISPATCHER())
+		{
+			if ((walsnd->pid != 0)
+				&& ((walsnd->state == WALSNDSTATE_STREAMING)
+					|| (walsnd->state == WALSNDSTATE_CATCHUP &&
+						walsnd->caughtup_within_range)))
+			{
+				/* OK, it's a candidate */
+				stby->walsnd_index = i;
+				stby->is_me = true;
+				n++;
+
+				continue;
+			}
+		}
+
 		stby->pid = walsnd->pid;
 		state = walsnd->state;
 		stby->write = walsnd->write;
