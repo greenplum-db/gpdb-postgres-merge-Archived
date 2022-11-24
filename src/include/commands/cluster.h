@@ -31,7 +31,6 @@ extern Oid make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
 						 bool createAoBlockDirectory,
 						 bool makeCdbPolicy);
 extern Oid make_new_heap_with_colname(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
-									  List *NewEncodings,
 									  char relpersistence,
 									  LOCKMODE lockmode,
 									  bool createAoBlockDirectory,
