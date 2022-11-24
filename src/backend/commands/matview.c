@@ -796,17 +796,21 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	 * Note: here and below, we use "tablename.*::tablerowtype" as a hack to
 	 * keep ".*" from being expanded into multiple columns in a SELECT list.
 	 * Compare ruleutils.c's get_variable().
+	 *
+	 * Greenplum doesn't use this hack since it needs to expand and get the
+	 * distribution columns.
+	 *
 	 */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
-					 "SELECT newdata.*::%s FROM %s newdata "
-					 "WHERE newdata.* IS NOT NULL AND EXISTS "
-					 "(SELECT 1 FROM %s newdata2 WHERE newdata2.* IS NOT NULL "
-					 "AND newdata2.* OPERATOR(pg_catalog.*=) newdata.* "
+					 "SELECT newdata FROM %s newdata "
+					 "WHERE newdata IS NOT NULL AND EXISTS "
+					 "(SELECT 1 FROM %s newdata2 WHERE newdata2 IS NOT NULL "
+					 "AND newdata2 OPERATOR(pg_catalog.*=) newdata "
 					 "AND newdata2.ctid OPERATOR(pg_catalog.<>) "
 					 "newdata.ctid and newdata2.gp_segment_id = "
 					 "newdata.gp_segment_id)",
-					 tempname, tempname, tempname);
+					 tempname, tempname);
 	if (SPI_execute(querybuf.data, false, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 	if (SPI_processed > 0)
@@ -837,9 +841,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
 					 "CREATE TEMP TABLE %s AS "
-					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.*::%s AS newdata "
+					 "SELECT mv.ctid AS tid, mv.gp_segment_id as sid, newdata.* "
 					 "FROM %s mv FULL JOIN %s newdata ON (",
-					 diffname, tempname, matviewname, tempname);
+					 diffname, matviewname, tempname);
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and look up
@@ -994,8 +998,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 					 "DELETE FROM %s mv WHERE ctid OPERATOR(pg_catalog.=) ANY "
 					 "(SELECT diff.tid FROM %s diff "
 					 "WHERE diff.tid IS NOT NULL "
-					 "AND diff.tid = mv.ctid AND diff.sid = mv.gp_segment_id "
-					 "AND diff.newdata IS NULL)",
+					 "AND diff.tid = mv.ctid AND diff.sid = mv.gp_segment_id)",
 					 matviewname, diffname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_DELETE)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
