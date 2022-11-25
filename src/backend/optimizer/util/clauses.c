@@ -4588,10 +4588,10 @@ large_const(Expr *expr, Size max_size)
 }
 
 /*
- * the whitelist of stable functions which prorettype==ANY
+ * the list of stable functions which prorettype==ANY
  */
-static bool
-in_stable_retany_whitelist(Oid procid)
+static inline bool
+in_stable_retany_funclist(Oid procid)
 {
 	switch (procid)
 	{
@@ -4657,6 +4657,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 		return NULL;
 
 	/*
+	 * https://github.com/greenplum-db/gpdb/issues/14499
 	 * Don't pre-evaluate when it's a stable function which prorettype==ANY
 	 * If it's in the FROM clause, pre-evaluting it will cause an ERROR, example:
 	 * ```
@@ -4666,7 +4667,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	 * ```
 	 */
 	if (funcform->prorettype == ANYELEMENTOID && funcform->provolatile == PROVOLATILE_STABLE)
-		if (in_stable_retany_whitelist(funcform->oid))
+		if (in_stable_retany_funclist(funcform->oid))
 			return NULL;
 
 	/*
