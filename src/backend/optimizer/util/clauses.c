@@ -4588,6 +4588,31 @@ large_const(Expr *expr, Size max_size)
 }
 
 /*
+ * the whitelist of stable functions which prorettype==ANY
+ */
+static bool
+in_stable_retany_whitelist(Oid procid)
+{
+	switch (procid)
+	{
+	case 3209: /* jsonb_populate_record */
+	case 3475: /* jsonb_populate_recordset */
+	case 3960: /* json_populate_record */
+	case 3961: /* json_populate_recordset */
+		return true;
+		break;
+	default:
+		/*
+		 * only 4 functions now, let's use Assert() to help to notice
+		 * more functions in future.
+		 */
+		Assert(false);
+		break;
+	}
+	return false;
+}
+
+/*
  * evaluate_function: try to pre-evaluate a function call
  *
  * We can do this if the function is strict and has any constant-null inputs
@@ -4630,6 +4655,19 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	 */
 	if (funcform->prorettype == RECORDOID)
 		return NULL;
+
+	/*
+	 * Don't pre-evaluate when it's a stable function which prorettype==ANY
+	 * If it's in the FROM clause, pre-evaluting it will cause an ERROR, example:
+	 * ```
+	 * 	demo=# SELECT * FROM  json_populate_record(null::record, '{"x": 776}') AS (x int, y int);
+	 *	psql: ERROR:  could not determine row type for result of json_populate_record
+	 *	HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
+	 * ```
+	 */
+	if (funcform->prorettype == ANYELEMENTOID && funcform->provolatile == PROVOLATILE_STABLE)
+		if (in_stable_retany_whitelist(funcform->oid))
+			return NULL;
 
 	/*
 	 * Check for constant inputs and especially constant-NULL inputs.
