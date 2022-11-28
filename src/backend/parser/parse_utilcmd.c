@@ -97,6 +97,7 @@ typedef struct
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
 	List	   *ixconstraints;	/* index-creating constraints */
+	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
 	List	   *attr_encodings; /* List of ColumnReferenceStorageDirectives */
 	List	   *likeclauses;	/* LIKE clauses that need post-processing */
 	List	   *extstats;		/* cloned extended statistics */
@@ -292,6 +293,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
+	cxt.inh_indexes = NIL;
 	cxt.likeclauses = NIL;
 	cxt.extstats = NIL;
 	cxt.attr_encodings = stmt->attr_encodings;
@@ -1107,6 +1109,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	tupleDesc = RelationGetDescr(relation);
 
 	/*
+	 * Initialize column number map for map_variable_attnos().  We need this
+	 * since dropped columns in the source table aren't copied, so the new
+	 * table can have different column numbers.
+	 */
+	AttrNumber *attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
+
+	/*
 	 * Insert the copied attributes into the cxt for the new table definition.
 	 * We must do this now so that they appear in the table in the relative
 	 * position where the LIKE clause is, as required by SQL99.
@@ -1151,7 +1160,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 * Add to column list
 		 */
 		cxt->columns = lappend(cxt->columns, def);
-
+		attmap[parent_attno - 1] = list_length(cxt->columns);
 		/*
 		 * Although we don't transfer the column's default/generation
 		 * expression now, we need to mark it GENERATED if appropriate.
@@ -1314,6 +1323,52 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		list_free(parent_extstats);
 	}
 
+	/*
+	 * Copy indexes for the perpuse of choosing distributed-by keys.
+	 * postgreSQL processes index statements after here in expandTableLikeClause(),
+	 * but we need indexes in transformDistributedBy() which is before expandTableLikeClause(),
+	 * So we both retain the index statements processing here and expandTableLikeClause.
+	 * the process here is just used by transformDistributedBy().
+	 */
+
+	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
+		relation->rd_rel->relhasindex)
+	{
+		List	   *parent_indexes;
+		ListCell   *l;
+
+		parent_indexes = RelationGetIndexList(relation);
+
+		foreach(l, parent_indexes)
+		{
+			Oid			parent_index_oid = lfirst_oid(l);
+			Relation	parent_index;
+			IndexStmt  *index_stmt;
+
+			parent_index = index_open(parent_index_oid, AccessShareLock);
+
+			/* Build CREATE INDEX statement to recreate the parent_index */
+			index_stmt = generateClonedIndexStmt(stmt->relation, parent_index,
+												 attmap, tupleDesc->natts, NULL);
+
+			/* Copy comment on index, if requested */
+			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
+			{
+				comment = GetComment(parent_index_oid, RelationRelationId, 0);
+
+				/*
+				 * We make use of IndexStmt's idxcomment option, so as not to
+				 * need to know now what name the index will have.
+				 */
+				index_stmt->idxcomment = comment;
+			}
+
+			/* Save it in the inh_indexes list for the time being */
+			cxt->inh_indexes = lappend(cxt->inh_indexes, index_stmt);
+
+			index_close(parent_index, AccessShareLock);
+		}
+	}
 	/*
 	 * Close the parent rel, but keep our AccessShareLock on it until xact
 	 * commit.  That will prevent someone else from deleting or ALTERing the
@@ -2193,6 +2248,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
+	cxt.inh_indexes = NIL;
 	cxt.attr_encodings = NIL;
 	cxt.pkey = NULL;
 	cxt.rel = NULL;
@@ -2604,12 +2660,6 @@ transformDistributedBy(ParseState *pstate,
 	 * Even CREATE TABLE LIKE clause includes only constraints, not indexes, we still
 	 * check the uniqueness to compute the distribution keys.
 	 */
-	/*
-	 * GPDB_12_12_MERGE_FIXME upstream processes index statements after here in
-	 * expandTableLikeClause(), but not before here in transformTableLikeClause()
-	 * Need to move this logic or move/copy the index statements processing?
-	 */
-#if 0
 	foreach(lc, cxt->inh_indexes)
 	{
 		IndexStmt  *index_stmt;
@@ -2677,7 +2727,6 @@ transformDistributedBy(ParseState *pstate,
 
 		distrkeys = new_distrkeys;
 	}
-#endif
 
 	if (gp_create_table_random_default_distribution && NIL == distrkeys)
 	{
@@ -4318,6 +4367,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
+	cxt.inh_indexes = NIL;
 	cxt.attr_encodings = NIL;
 	cxt.likeclauses = NIL;
 	cxt.extstats = NIL;
