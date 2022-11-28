@@ -1324,13 +1324,12 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
-	 * Copy indexes for the perpuse of choosing distributed-by keys.
-	 * postgreSQL processes index statements after here in expandTableLikeClause(),
+	 * Copy indexes for Greenplum choosing distributed-by keys.
+	 * PostgreSQL processes index statements after here in expandTableLikeClause(),
 	 * but we need indexes in transformDistributedBy() which is before expandTableLikeClause(),
 	 * So we both retain the index statements processing here and expandTableLikeClause.
 	 * the process here is just used by transformDistributedBy().
 	 */
-
 	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
 		relation->rd_rel->relhasindex)
 	{

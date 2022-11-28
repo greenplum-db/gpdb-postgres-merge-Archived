@@ -360,8 +360,8 @@ SELECT * FROM test1;
 (3 rows)
 
 SELECT * FROM pg_cursors;
- name | statement | is_holdable | is_binary | is_scrollable | creation_time 
-------+-----------+-------------+-----------+---------------+---------------
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time | is_parallel 
+------+-----------+-------------+-----------+---------------+---------------+-------------
 (0 rows)
 
 -- like bug #17050, but with implicit cursor
@@ -385,8 +385,8 @@ SELECT * FROM test1;
 (3 rows)
 
 SELECT * FROM pg_cursors;
- name | statement | is_holdable | is_binary | is_scrollable | creation_time 
-------+-----------+-------------+-----------+---------------+---------------
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time | is_parallel 
+------+-----------+-------------+-----------+---------------+---------------+-------------
 (0 rows)
 
 -- commit inside block with exception handler
