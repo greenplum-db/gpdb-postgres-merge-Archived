@@ -507,7 +507,9 @@ my $file_corrupt2 = $node->safe_psql('postgres',
 my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 
 # induce corruption
-$node->stop;
+# Greenplum invokes pg_ctl to start, haven't defined $self->{_pid}
+# $node->stop;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 $node->corrupt_page_checksum($file_corrupt1, 0);
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
@@ -520,7 +522,9 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt");
 
 # induce further corruption in 5 more blocks
-$node->stop;
+# Greenplum invokes pg_ctl to start, haven't defined $self->{_pid}
+# $node->stop;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 for my $i (1 .. 5)
 {
 	$node->corrupt_page_checksum($file_corrupt1, $i * $block_size);
@@ -536,7 +540,9 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
-$node->stop;
+# Greenplum invokes pg_ctl to start, haven't defined $self->{_pid}
+# $node->stop;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 $node->corrupt_page_checksum($file_corrupt2, 0);
 system_or_bail 'pg_ctl', '-o', '-c gp_role=utility --gp_dbid=1 --gp_contentid=-1', '-D', $pgdata, 'start';
 
