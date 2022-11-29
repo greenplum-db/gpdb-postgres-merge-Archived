@@ -271,7 +271,8 @@ DETAIL:  Key (xx)=(10) already exists.
 DROP TABLE inhg;
 /* Multiple primary keys creation should fail */
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, PRIMARY KEY(x)); /* fails */
-ERROR:  multiple primary keys for table "inhg" are not allowed
+ERROR:  UNIQUE or PRIMARY KEY definitions are incompatible with each other
+HINT:  When there are multiple PRIMARY KEY / UNIQUE constraints, they must have at least one column in common.
 CREATE TABLE inhz (xx text DEFAULT 'text', yy int UNIQUE);
 CREATE UNIQUE INDEX inhz_xx_idx on inhz (xx) WHERE xx <> 'test';
 ERROR:  UNIQUE index must contain all columns in the table's distribution key
@@ -451,9 +452,6 @@ CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 ERROR:  column "a" has a storage parameter conflict
 DETAIL:  MAIN versus EXTENDED
-<<<<<<< HEAD
-DROP TABLE ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctlb, ctla, ctlt1, ctlt2, ctlt3, ctlt4 CASCADE;
-=======
 -- Check that LIKE isn't confused by a system catalog of the same name
 CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);
 \d+ public.pg_attrdef
@@ -494,7 +492,6 @@ Statistics objects:
 
 ROLLBACK;
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 NOTICE:  drop cascades to table inhe
 /* LIKE with other relation kinds */
 CREATE TABLE ctlt4 (a int, b text);
