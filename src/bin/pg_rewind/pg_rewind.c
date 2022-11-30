@@ -412,6 +412,7 @@ main(int argc, char **argv)
 	 * what to do with each file.
 	 */
 	decide_file_actions();
+
 	if (showprogress)
 		calculate_totals();
 

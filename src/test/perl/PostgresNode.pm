@@ -528,7 +528,7 @@ sub init
 		print $conf "hot_standby = on\n";
 		# conservative settings to ensure we can run multiple postmasters:
 		print $conf "shared_buffers = 1MB\n";
-		print $conf "max_connections = 10\n";
+		print $conf "max_connections = 20\n";
 		# limit disk space consumption, too:
 		# PG sets this to 128MB but that makes checkpoint too frequent for GPDB. 
 		# 512MB corresponds to the ratio of GPDB seg size (64) over PG seg size (16).
