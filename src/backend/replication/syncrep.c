@@ -852,7 +852,10 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 			{
 				stby->walsnd_index = i;
 				stby->pid = walsnd->pid;
-				stby->is_me = true;
+				stby->is_me = (walsnd == MyWalSnd);
+				stby->write = walsnd->write;
+				stby->flush = walsnd->flush;
+				stby->apply = walsnd->apply;
 				n++;
 			}
 
