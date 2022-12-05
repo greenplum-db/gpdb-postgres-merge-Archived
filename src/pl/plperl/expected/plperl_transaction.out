@@ -193,15 +193,17 @@ SELECT * FROM pg_cursors;
 (0 rows)
 
 -- check handling of an error during COMMIT
+-- FOREIGN KEY constraints are not supported in GPDB, simulate an error instead
 CREATE TABLE testpk (id int PRIMARY KEY);
 CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
 DO LANGUAGE plperl $$
 # this insert will fail during commit:
 spi_exec_query("INSERT INTO testfk VALUES (0)");
+spi_exec_query("select gp_inject_fault('start_prepare', 'error', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0");
 spi_commit();
 elog(WARNING, 'should not get here');
 $$;
-ERROR:  insert or update on table "testfk" violates foreign key constraint "testfk_f1_fkey" at line 4.
+ERROR:  fault triggered, fault name:'start_prepare' fault type:'error'  (seg0 127.0.1.1:7002 pid=1781127) at line 5.
 CONTEXT:  PL/Perl anonymous code block
 SELECT * FROM testpk;
  id 
@@ -213,9 +215,16 @@ SELECT * FROM testfk;
 ----
 (0 rows)
 
+select gp_inject_fault('start_prepare', 'reset', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0;
+ gp_inject_fault 
+-----------------
+ Success:
+(1 row)
+
 DO LANGUAGE plperl $$
 # this insert will fail during commit:
 spi_exec_query("INSERT INTO testfk VALUES (0)");
+spi_exec_query("select gp_inject_fault('start_prepare', 'error', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0");
 eval {
     spi_commit();
 };
@@ -226,8 +235,7 @@ if ($@) {
 spi_exec_query("INSERT INTO testpk VALUES (1)");
 spi_exec_query("INSERT INTO testfk VALUES (1)");
 $$;
-INFO:  insert or update on table "testfk" violates foreign key constraint "testfk_f1_fkey" at line 5.
-
+INFO:  fault triggered, fault name:'start_prepare' fault type:'error'  (seg0 127.0.1.1:7002 pid=1781127) at line 6.
 SELECT * FROM testpk;
  id 
 ----
@@ -238,6 +246,12 @@ SELECT * FROM testfk;
  f1 
 ----
   1
+(1 row)
+
+select gp_inject_fault('start_prepare', 'reset', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0;
+ gp_inject_fault 
+-----------------
+ Success:
 (1 row)
 
 DROP TABLE test1;

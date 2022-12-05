@@ -95,6 +95,7 @@ SELECT * FROM test1;
 
 
 -- check handling of an error during COMMIT
+-- FOREIGN KEY constraints are not supported in GPDB, simulate an error instead
 CREATE TABLE testpk (id int PRIMARY KEY);
 CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
 
@@ -103,6 +104,7 @@ LANGUAGE pltcl
 AS $$
 # this insert will fail during commit:
 spi_exec "INSERT INTO testfk VALUES (0)"
+spi_exec "select gp_inject_fault('start_prepare', 'error', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0"
 commit
 elog WARNING "should not get here"
 $$;
@@ -111,12 +113,14 @@ CALL transaction_testfk();
 
 SELECT * FROM testpk;
 SELECT * FROM testfk;
+select gp_inject_fault('start_prepare', 'reset', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0;
 
 CREATE OR REPLACE PROCEDURE transaction_testfk()
 LANGUAGE pltcl
 AS $$
 # this insert will fail during commit:
 spi_exec "INSERT INTO testfk VALUES (0)"
+spi_exec "select gp_inject_fault('start_prepare', 'error', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0"
 if [catch {commit} msg] {
     elog INFO $msg
 }
@@ -129,6 +133,7 @@ CALL transaction_testfk();
 
 SELECT * FROM testpk;
 SELECT * FROM testfk;
+select gp_inject_fault('start_prepare', 'reset', dbid) from gp_segment_configuration where role = 'p' and status = 'u' and content = 0;
 
 
 DROP TABLE test1;
