@@ -4606,6 +4606,10 @@ in_stable_retany_funclist(Oid procid)
 		 * only 4 functions now, let's use Assert() to help to notice
 		 * more functions in future.
 		 */
+		/*
+		 * GPDB_12_12_MERGE_FIXME: this Assert may impact UDFs,
+		 * we need a better solution here.
+		 */
 		Assert(false);
 		break;
 	}
