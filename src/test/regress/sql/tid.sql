@@ -4,8 +4,8 @@ CREATE TABLE tid_tab (a int);
 
 -- min() and max() for TIDs
 INSERT INTO tid_tab VALUES (1), (2);
-SELECT min(ctid) FROM tid_tab;
-SELECT max(ctid) FROM tid_tab;
+SELECT min(ctid) FROM tid_tab WHERE gp_segment_id = 0;
+SELECT max(ctid) FROM tid_tab WHERE gp_segment_id = 0;
 TRUNCATE tid_tab;
 
 -- Tests for currtid() and currtid2() with various relation kinds
