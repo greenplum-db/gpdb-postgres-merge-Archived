@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 35;
+use Test::More tests => 34;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -385,8 +385,3 @@ chomp($phys_restart_lsn_post);
 ok(($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
 	"physical slot advance persists across restarts");
 
-# Check if the previous segment gets correctly recycled after the
-# server stopped cleanly, causing a shutdown checkpoint to be generated.
-my $master_data = $node_master->data_dir;
-ok(!-f "$master_data/pg_wal/$segment_removed",
-	"WAL segment $segment_removed recycled after physical slot advancing");
