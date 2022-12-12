@@ -2979,13 +2979,14 @@ CommitTransaction(void)
 	DoPendingDbDeletes(true);
 
 	/*
-	 * Only QD holds the session level lock this long for a movedb operation.
+	 * QE has released the session level lock before Prepare Transaction.Only QD
+	 * and utility server hold the session lock this long for a movedb operation.
 	 * This is to prevent another transaction from moving database objects into
 	 * the source database oid directory while it is being deleted. We don't
 	 * worry about aborts as we release session level locks automatically during
 	 * an abort as opposed to a commit.
 	 */
-	if(Gp_role == GP_ROLE_DISPATCH)
+	if(Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 		MoveDbSessionLockRelease();
 
 	AtCommit_TablespaceStorage();
