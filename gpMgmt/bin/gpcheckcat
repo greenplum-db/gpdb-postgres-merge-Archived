@@ -13,8 +13,8 @@ Usage: gpcheckcat [<option>] [dbname]
     -S option                : shared table options (none, only)
     -O                       : Online
     -l                       : list all tests
-    -R test | 'test1, test2' : run this particular test(s) (quoted, comma seperated list for multiple tests)
-    -s test | 'test1, test2' : skip this particular test(s) (quoted, comma seperated list for multiple tests)
+    -R test | 'test1, test2' : run this particular test(s) (quoted, comma separated list for multiple tests)
+    -s test | 'test1, test2' : skip this particular test(s) (quoted, comma separated list for multiple tests)
     -C catname               : run cross consistency, FK and ACL tests for this catalog table
 
     Test subset options are mutually exclusive, use only one of '-R', '-s', or '-C'.
@@ -392,7 +392,7 @@ class execThread(Thread):
 def processThread(threads):
     batch = []
     for th in threads:
-        logger.debug('waiting on thread %s' % th.getName())
+        logger.debug('waiting on thread %s' % th.name)
         th.join()
         if th.error:
             setError(ERROR_NOREPAIR)
@@ -422,7 +422,7 @@ def connect2run(qry, col=None):
         thread = execThread(c, db, qry)
         thread.start()
         logger.debug('launching query thread %s for dbid %i' %
-                     (thread.getName(), dbid))
+                     (thread.name, dbid))
         threads.append(thread)
 
         # we don't want too much going on at once
@@ -1420,7 +1420,7 @@ def checkAOSegVpinfo():
         thread = checkAOSegVpinfoThread(cfg, db_connection)
         thread.start()
         logger.debug('launching check thread %s for dbid %i' %
-                     (thread.getName(), dbid))
+                     (thread.name, dbid))
         threads.append(thread)
 
         if (i % GV.opt['-B']) == 0:
@@ -2236,6 +2236,7 @@ TableMainColumn['pg_attribute_encoding'] = ['attrelid', 'pg_class']
 TableMainColumn['pg_auth_members'] = ['roleid', 'pg_authid']
 TableMainColumn['pg_autovacuum'] = ['vacrelid', 'pg_class']
 TableMainColumn['pg_compression'] = ['compname', 'pg_compression']
+TableMainColumn['pg_db_role_setting'] = ['setdatabase', 'pg_database']
 TableMainColumn['pg_depend'] = ['objid', 'pg_class']
 TableMainColumn['pg_foreign_table'] = ['ftrelid', 'pg_class']
 TableMainColumn['pg_index'] = ['indexrelid', 'pg_class']
