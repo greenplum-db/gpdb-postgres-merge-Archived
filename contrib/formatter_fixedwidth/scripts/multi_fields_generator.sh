@@ -5,7 +5,7 @@
 # Generate a multi field large file test dataset.
 # It's used by readable_query33 test case and could avoid uploading a large file.
 
-for x in {1..50000};do
+for x in {40001..50000};do
     n=$(( $x % 2 ))
     if [ $n = 0 ] ; then
         printf "%010d2.7182.71828185\n" $x;
