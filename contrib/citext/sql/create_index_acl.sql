@@ -47,12 +47,19 @@ CREATE COLLATION s.coll (LOCALE="C");
 CREATE TABLE s.x (y s.citext);
 ALTER TABLE s.x OWNER TO regress_minimal;
 -- Empty-table DefineIndex()
-CREATE UNIQUE INDEX u0rows ON s.x USING btree
-  ((s.index_this_expr(y, s.const())) COLLATE s.coll s.citext_pattern_ops)
-  WHERE s.index_row_if(y);
-ALTER TABLE s.x ADD CONSTRAINT e0rows EXCLUDE USING btree
-  ((s.index_this_expr(y, s.const())) COLLATE s.coll WITH s.=)
-  WHERE (s.index_row_if(y));
+-- GPDB does not allow execute non-SELECT statement on QEs.
+-- The following 2 cases throw an error, and can not achieve the test objectives as postgresSQL does.
+-- This needs to be commented out.
+-- ERROR: function cannot execute on a QE slice because it issues a non-SELECT statement (seg1 127.0.1.1:8003 pid=186596)
+-- CONTEXT: SQL function "setter" during startup
+-- SQL function "const" statement 1
+
+--CREATE UNIQUE INDEX u0rows ON s.x USING btree
+--  ((s.index_this_expr(y, s.const())) COLLATE s.coll s.citext_pattern_ops)
+--  WHERE s.index_row_if(y);
+--ALTER TABLE s.x ADD CONSTRAINT e0rows EXCLUDE USING btree
+--  ((s.index_this_expr(y, s.const())) COLLATE s.coll WITH s.=)
+--  WHERE (s.index_row_if(y));
 -- Make the table nonempty.
 INSERT INTO s.x VALUES ('foo'), ('bar');
 -- If the INSERT runs the planner on index expressions, a search_path change
@@ -62,12 +69,20 @@ INSERT INTO s.x VALUES ('foo'), ('bar');
 RESET search_path;
 -- For a nonempty table, owner needs permissions throughout ii_Expressions.
 GRANT EXECUTE ON FUNCTION s.index_this_expr TO regress_minimal;
-CREATE UNIQUE INDEX u2rows ON s.x USING btree
-  ((s.index_this_expr(y, s.const())) COLLATE s.coll s.citext_pattern_ops)
-  WHERE s.index_row_if(y);
-ALTER TABLE s.x ADD CONSTRAINT e2rows EXCLUDE USING btree
-  ((s.index_this_expr(y, s.const())) COLLATE s.coll WITH s.=)
-  WHERE (s.index_row_if(y));
+
+-- GPDB does not allow execute non-SELECT statement on QEs.
+-- The following 2 cases throw an error, and can not achieve the test objectives as postgresSQL does.
+-- This needs to be commented out.
+-- ERROR: function cannot execute on a QE slice because it issues a non-SELECT statement (seg1 127.0.1.1:8003 pid=186596)
+-- CONTEXT: SQL function "setter" during startup
+-- SQL function "const" statement 1
+
+--CREATE UNIQUE INDEX u2rows ON s.x USING btree
+--  ((s.index_this_expr(y, s.const())) COLLATE s.coll s.citext_pattern_ops)
+--  WHERE s.index_row_if(y);
+--ALTER TABLE s.x ADD CONSTRAINT e2rows EXCLUDE USING btree
+--  ((s.index_this_expr(y, s.const())) COLLATE s.coll WITH s.=)
+--  WHERE (s.index_row_if(y));
 -- Shall not find s.coll via search_path, despite the s.const->public.setter
 -- call having set search_path=s during expression planning.  Suppress the
 -- message itself, which depends on the database encoding.
