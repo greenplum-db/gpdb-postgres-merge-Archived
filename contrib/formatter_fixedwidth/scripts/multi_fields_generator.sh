@@ -8,8 +8,8 @@
 for x in {1..50000};do
     n=$(( $x % 2 ))
     if [ $n = 0 ] ; then
-        echo `echo $x | awk '{printf("%010d2.7182.71828185",$0)}'`
+        printf "%010d2.7182.71828185\n" $x;
     else
-        echo `echo $x | awk '{printf("%010d3.1413.14159267",$0)}'`
+        printf "%010d3.1413.14159267\n" $x;
     fi
 done
