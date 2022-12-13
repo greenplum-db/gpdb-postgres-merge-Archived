@@ -1654,18 +1654,26 @@ DefineIndex(Oid relationId,
 		stmt->idxname = indexRelationName;
 		if (shouldDispatch)
 		{
+			Oid			save_userid;
+			int			save_sec_context;
 			/* make sure the QE uses the same index name that we chose */
 			stmt->oldNode = InvalidOid;
 			Assert(stmt->relation != NULL);
 
 			stmt->tableSpace = get_tablespace_name(tablespaceId);
-
+			/*
+			 * Switch to login user, so that the connection to QEs use the
+			 * same user as the connection to QD.
+			 */
+			GetUserIdAndSecContext(&save_userid, &save_sec_context);
+			SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 			CdbDispatchUtilityStatement((Node *) stmt,
 										DF_CANCEL_ON_ERROR |
 										DF_WITH_SNAPSHOT |
 										DF_NEED_TWO_PHASE,
 										GetAssignedOidsForDispatch(),
 										NULL);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 
 		/*
@@ -1683,15 +1691,24 @@ DefineIndex(Oid relationId,
 	stmt->idxname = indexRelationName;
 	if (shouldDispatch)
 	{
+		Oid			save_userid;
+		int			save_sec_context;
 		/* make sure the QE uses the same index name that we chose */
 		stmt->oldNode = InvalidOid;
 		Assert(stmt->relation != NULL);
+		/*
+		 * Switch to login user, so that the connection to QEs use the
+		 * same user as the connection to QD.
+		 */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
 									DF_WITH_SNAPSHOT |
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 
 		/* Set indcheckxmin in the master, if it was set on any segment */
 		if (!indexInfo->ii_BrokenHotChain)

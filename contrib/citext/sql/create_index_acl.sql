@@ -92,3 +92,14 @@ ALTER TABLE s.x ADD CONSTRAINT underqualified EXCLUDE USING btree
   WHERE (s.index_row_if(y));
 \set VERBOSITY default
 ROLLBACK;
+
+-- before dispatch stmt to QEs, switching user to login user,
+-- so that the connection to QEs use the same user as the connection to QD.
+-- pass the permission check of schema on QEs.
+CREATE ROLE regress_minimal;
+CREATE SCHEMA s;
+create table s.t(tc1 int);
+alter table s.t owner to regress_minimal;
+create index idx on s.t(tc1);
+drop schema s cascade;
+drop role regress_minimal;
