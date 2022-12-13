@@ -246,7 +246,7 @@ COMMIT;
 -- and after clustering on clstr_expression_minus_a
 CLUSTER clstr_expression USING clstr_expression_minus_a;
 WITH rows AS
-  (SELECT ctid, lag(a) OVER (ORDER BY ctid) AS la, a FROM clstr_expression)
+  (SELECT ctid, lag(a) OVER (ORDER BY ctid) AS la, a FROM clstr_expression WHERE gp_segment_id = 0)
 SELECT * FROM rows WHERE la < a;
 BEGIN;
 SET LOCAL enable_seqscan = false;
@@ -259,7 +259,7 @@ COMMIT;
 -- and after clustering on clstr_expression_upper_b
 CLUSTER clstr_expression USING clstr_expression_upper_b;
 WITH rows AS
-  (SELECT ctid, lag(b) OVER (ORDER BY ctid) AS lb, b FROM clstr_expression)
+  (SELECT ctid, lag(b) OVER (ORDER BY ctid) AS lb, b FROM clstr_expression WHERE gp_segment_id = 0)
 SELECT * FROM rows WHERE upper(lb) > upper(b);
 BEGIN;
 SET LOCAL enable_seqscan = false;
