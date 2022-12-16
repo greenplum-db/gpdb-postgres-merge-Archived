@@ -3943,9 +3943,9 @@ RenameRelation(RenameStmt *stmt)
 	 * escalation.  However, because ALTER INDEX can be used with any relation
 	 * type, we mustn't believe without verification.
 	 */
+	LOCKMODE	lockmode;
 	for (;;)
 	{
-		LOCKMODE	lockmode;
 		char		relkind;
 		bool		obj_is_index;
 
@@ -3984,7 +3984,7 @@ RenameRelation(RenameStmt *stmt)
 	 * Grab an exclusive lock on the target table, index, sequence
 	 * or view, which we will NOT release until end of transaction.
 	 */
-	targetrelation = relation_open(relid, AccessExclusiveLock);
+	targetrelation = relation_open(relid, lockmode);
 	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 
 	/* Do the work */
