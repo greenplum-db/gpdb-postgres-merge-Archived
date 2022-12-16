@@ -1081,6 +1081,8 @@ drop table atacc1;
 create table atacc1 (a int primary key);
 alter table atacc1 add constraint atacc1_fkey foreign key (a) references atacc1 (a) not valid;
 alter table atacc1 validate constraint atacc1_fkey, alter a type bigint;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 drop table atacc1;
 -- we've also seen issues with check constraints being validated at the wrong
 -- time when there's a pending table rewrite.
@@ -4465,8 +4467,8 @@ create trigger xtrig
   after update on bar1
   referencing old table as old
   for each statement execute procedure xtrig();
+ERROR:  Triggers for statements are not yet supported
 update bar1 set a = a + 1;
-INFO:  a=1, b=1
 /* End test case for bug #16242 */
 -- Test that ALTER TABLE rewrite preserves a clustered index
 -- for normal indexes and indexes on constraints.
@@ -4485,6 +4487,8 @@ select indexrelid::regclass, indisclustered from pg_index
 (2 rows)
 
 alter table alttype_cluster alter a type bigint;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 select indexrelid::regclass, indisclustered from pg_index
   where indrelid = 'alttype_cluster'::regclass
   order by indexrelid::regclass::text;
@@ -4506,6 +4510,8 @@ select indexrelid::regclass, indisclustered from pg_index
 (2 rows)
 
 alter table alttype_cluster alter a type int;
+ERROR:  cannot alter column with primary key or unique constraint
+HINT:  DROP the constraint first, and recreate it after the ALTER
 select indexrelid::regclass, indisclustered from pg_index
   where indrelid = 'alttype_cluster'::regclass
   order by indexrelid::regclass::text;
