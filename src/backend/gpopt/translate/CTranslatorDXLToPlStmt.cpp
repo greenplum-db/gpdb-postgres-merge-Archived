@@ -629,6 +629,32 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 	return plan_return;
 }
 
+//---------------------------------------------------------------------------
+//	@function:
+//		CTranslatorDXLToPlStmt::SetHashKeysVarnoWalker
+//
+//	@doc:
+//		Walker to set inner var to outer.
+//
+//---------------------------------------------------------------------------
+BOOL
+CTranslatorDXLToPlStmt::SetHashKeysVarnoWalker(Node *node, void *context)
+{
+	if (nullptr == node)
+	{
+		return false;
+	}
+
+	if (IsA(node, Var) && ((Var *) node)->varno == INNER_VAR)
+	{
+		((Var *) node)->varno = OUTER_VAR;
+		return false;
+	}
+
+	return gpdb::WalkExpressionTree(
+		node, (BOOL(*)()) CTranslatorDXLToPlStmt::SetHashKeysVarnoWalker,
+		context);
+}
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -1418,6 +1444,47 @@ CTranslatorDXLToPlStmt::TranslateDXLHashJoin(
 	}
 
 	GPOS_ASSERT(NIL != hashjoin->hashclauses);
+
+	/*
+	 * The following code is copied from create_hashjoin_plan
+	 *
+	 * Collect hash related information. The hashed expressions are
+	 * deconstructed into outer/inner expressions, so they can be computed
+	 * separately (inner expressions are used to build the hashtable via Hash,
+	 * outer expressions to perform lookups of tuples from HashJoin's outer
+	 * plan in the hashtable). Also collect operator information necessary to
+	 * build the hashtable.
+	 */
+	List *hashoperators = NIL;
+	List *hashcollations = NIL;
+	List *outer_hashkeys = NIL;
+	List *inner_hashkeys = NIL;
+	ListCell *lc;
+	foreach (lc, hashjoin->hashclauses)
+	{
+		OpExpr *hclause = lfirst_node(OpExpr, lc);
+
+		hashoperators = lappend_oid(hashoperators, hclause->opno);
+		hashcollations = lappend_oid(hashcollations, hclause->inputcollid);
+		outer_hashkeys = lappend(outer_hashkeys, linitial(hclause->args));
+		inner_hashkeys = lappend(inner_hashkeys, lsecond(hclause->args));
+	}
+
+	hashjoin->hashoperators = hashoperators;
+	hashjoin->hashcollations = hashcollations;
+	/*
+	 * The following code is a little differnt from Postgres Legacy Planner:
+	 *   * In Postgres Legacy Planner will fix variable's varno late in set_plan_references, like
+	 *     set the varno to OUTER_VAR  or INNER_VAR.
+	 *   * ORCA here, the outer_hashkeys and inner_hashkeys are already the fixed version as Planner.
+	 *     outer_hashkeys can be directly set to hashjoin, however, inner_hashkeys is used for
+	 *     the right child, Hash Plan, standing at Hash Plan, it only has lefttree (no righttree),
+	 *     so if we want to set Hash Plan's hashkeys field, we need to walk the inner_hashkeys and
+	 *     replace every INNER_VARs to OUTER_VARS.
+	 */
+	hashjoin->hashkeys = outer_hashkeys;
+	SetHashKeysVarnoWalker((Node *) inner_hashkeys, nullptr);
+	((Hash *) right_plan)->hashkeys = inner_hashkeys;
 
 	plan->lefttree = left_plan;
 	plan->righttree = right_plan;
