@@ -8054,7 +8054,8 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 						  "FROM (unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
 						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid)) "
 						  "LEFT JOIN pg_catalog.pg_trigger u ON u.oid = t.tgparentid "
-						  "WHERE NOT t.tgisinternal OR t.tgenabled != u.tgenabled",
+						  "WHERE NOT t.tgisinternal OR t.tgenabled != u.tgenabled "
+						  "ORDER BY t.tgrelid, t.tgname",
 						  tbloids->data);
 	}
 	else if (fout->remoteVersion >= 110000)
@@ -8082,7 +8083,8 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 						  " d.refclassid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
 						  " d.objid = t.oid "
 						  "LEFT JOIN pg_catalog.pg_trigger AS pt ON pt.oid = refobjid "
-						  "WHERE NOT t.tgisinternal OR t.tgenabled != pt.tgenabled",
+						  "WHERE NOT t.tgisinternal OR t.tgenabled != pt.tgenabled "
+						  "ORDER BY t.tgrelid, t.tgname",
 						  tbloids->data);
 	}
 	else if (fout->remoteVersion >= 90000)
@@ -8116,7 +8118,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
 						  "WHERE tgconstraint = 0 "
 						  "ORDER BY t.tgrelid, t.tgname",
-							tbloids->data);
+						  tbloids->data);
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
