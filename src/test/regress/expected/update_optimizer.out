@@ -473,6 +473,9 @@ UPDATE range_parted set c = 95 WHERE a = 'b' and b > 10 and c > 100 returning (r
 -- computed by referring to the source partition plan's output tuple.  Also,
 -- a trigger on the destination relation may change the tuple, which must be
 -- reflected in the RETURNING output, so we test that too.
+-- GPDB disallow the INSERT trigger on a SplitUpdate. Therefore, change the
+-- distribution key to avoid split updates.
+ALTER TABLE range_parted SET DISTRIBUTED BY (c);
 CREATE TABLE part_c_1_c_20 (LIKE range_parted);
 NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 ALTER TABLE part_c_1_c_20 DROP a, DROP b, ADD a text, ADD b bigint;
@@ -505,6 +508,7 @@ DETAIL:  Partition key of the failing row contains (a, b) = (c, 1).
 
 DROP TABLE part_c_1_c_20;
 DROP FUNCTION trigfunc;
+ALTER TABLE range_parted SET DISTRIBUTED BY (a);
 -- Transition tables with update row movement
 :init_range_parted;
 CREATE FUNCTION trans_updatetrigfunc() RETURNS trigger LANGUAGE plpgsql AS
