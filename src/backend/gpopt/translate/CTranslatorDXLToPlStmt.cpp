@@ -1446,7 +1446,9 @@ CTranslatorDXLToPlStmt::TranslateDXLHashJoin(
 	GPOS_ASSERT(NIL != hashjoin->hashclauses);
 
 	/*
-	 * The following code is copied from create_hashjoin_plan
+	 * The following code is copied from create_hashjoin_plan, only difference is
+	 * we have to deep copy the inner hashkeys since later we will modify it for
+	 * Hash Plannode.
 	 *
 	 * Collect hash related information. The hashed expressions are
 	 * deconstructed into outer/inner expressions, so they can be computed
@@ -1467,7 +1469,8 @@ CTranslatorDXLToPlStmt::TranslateDXLHashJoin(
 		hashoperators = lappend_oid(hashoperators, hclause->opno);
 		hashcollations = lappend_oid(hashcollations, hclause->inputcollid);
 		outer_hashkeys = lappend(outer_hashkeys, linitial(hclause->args));
-		inner_hashkeys = lappend(inner_hashkeys, lsecond(hclause->args));
+		inner_hashkeys =
+			lappend(inner_hashkeys, gpdb::CopyObject(lsecond(hclause->args)));
 	}
 
 	hashjoin->hashoperators = hashoperators;
