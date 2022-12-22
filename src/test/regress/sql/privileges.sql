@@ -918,16 +918,11 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
 	RETURN 2;
 END$$;
--- GPDB_12_12_MERGE_FIXME ORCA has the below issue
--- CREATE MATERIALIZED VIEW sro_index_mv AS SELECT 1 AS c;
--- NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entry.
--- start_ignore
-CREATE MATERIALIZED VIEW sro_index_mv AS SELECT 1 AS c;
+CREATE MATERIALIZED VIEW sro_index_mv AS SELECT 1 AS c DISTRIBUTED BY (c);
 CREATE UNIQUE INDEX ON sro_index_mv (c) WHERE unwanted_grant_nofail(1) > 0;
 \c -
 REFRESH MATERIALIZED VIEW CONCURRENTLY sro_index_mv;
 REFRESH MATERIALIZED VIEW sro_index_mv;
--- end_ignore
 
 DROP OWNED BY regress_sro_user;
 DROP ROLE regress_sro_user;
