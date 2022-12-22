@@ -354,12 +354,8 @@ select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
  Settings: enable_bitmapscan = 'off', enable_seqscan = 'off'
 (16 rows)
 
-select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
-   p   
--------
- (0,0)
-(1 row)
-
+-- GPDB_12_12_MERGE_FIXME, ORCA surprisingly supports this, but the ORDER BY is executed on the segments
+-- select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
 -- Clean up
 reset enable_seqscan;
 reset enable_bitmapscan;

@@ -159,7 +159,8 @@ select count(*) from gist_tbl;
 -- This case isn't supported, but it should at least EXPLAIN correctly.
 explain (verbose, costs off)
 select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
-select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
+-- GPDB_12_12_MERGE_FIXME, ORCA surprisingly supports this, but the ORDER BY is executed on the segments
+-- select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
 
 -- Clean up
 reset enable_seqscan;
