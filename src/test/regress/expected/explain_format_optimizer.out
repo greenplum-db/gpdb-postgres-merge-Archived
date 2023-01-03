@@ -646,10 +646,7 @@ Limit  (cost=0.00..431.00 rows=1 width=4)
   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=4)
         ->  Seq Scan on jit_explain_output  (cost=0.00..431.00 rows=1 width=4)
 Optimizer: Pivotal Optimizer (GPORCA)
-JIT:
-  Functions: 2
-  Options: Inlining false, Optimization false, Expressions true, Deforming true
-(7 rows)
+(4 rows)
 -- explain_processing_on
 -- Check explain anlyze text format output with jit enable 
 -- explain_processing_off
@@ -665,9 +662,8 @@ Planning Time: 5.824 ms
 Memory used:  128000kB
 JIT:
   Options: Inlining false, Optimization false, Expressions true, Deforming true.
-  (slice0): Functions: 2.00. Timing: 1.137 ms total.
-Execution Time: 1.597 ms
-(12 rows)
+Execution Time: 0.653 ms
+(11 rows)
 -- explain_processing_on
 -- Check explain analyze json format output with jit enable
 -- start_matchsubs
@@ -789,11 +785,6 @@ QUERY PLAN
           "Optimization": false,
           "Expressions": true,
           "Deforming": true
-        },
-        "slice": {
-          "slice": 0,
-          "functions": 2.00,
-          "Timing": 0.001
         }
     },
     "Execution Time": 1.221
