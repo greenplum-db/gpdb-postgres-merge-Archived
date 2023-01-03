@@ -23,8 +23,7 @@ ALTER TABLE [IF EXISTS] <name>
 ALTER TABLE ALL IN TABLESPACE <name> [ OWNED BY <role_name> [, ... ] ]
     SET TABLESPACE <new_tablespace> [ NOWAIT ]
 
-ALTER TABLE [IF EXISTS] [ONLY] <name> SET 
-     WITH (REORGANIZE=true|false)
+ALTER TABLE [IF EXISTS] [ONLY] <name>
    | DISTRIBUTED BY ({<column_name> [<opclass>]} [, ... ] )
    | DISTRIBUTED RANDOMLY
    | DISTRIBUTED REPLICATED 
@@ -38,7 +37,7 @@ where <action> is one of:
   ADD [COLUMN] <column_name data_type> [ DEFAULT <default_expr> ]
       [<column_constraint> [ ... ]]
       [ COLLATE <collation> ]
-      [ ENCODING ( <storage_parameter> [,...] ) ]
+      [ ENCODING ( <storage_directive [,...] ) ]
   DROP [COLUMN] [IF EXISTS] <column_name> [RESTRICT | CASCADE]
   ALTER [COLUMN] <column_name> [ SET DATA ] TYPE <type> [COLLATE <collation>] [USING <expression>]
   ALTER [COLUMN] <column_name> SET DEFAULT <expression>
@@ -47,6 +46,7 @@ where <action> is one of:
   ALTER [COLUMN] <column_name> SET STATISTICS <integer>
   ALTER [COLUMN] column SET ( <attribute_option> = <value> [, ... ] )
   ALTER [COLUMN] column RESET ( <attribute_option> [, ... ] )
+  ALTER [COLUMN] column SET ENCODNG ( storage_directive [, ...] )
   ADD <table_constraint> [NOT VALID]
   ADD <table_constraint_using_index>
   VALIDATE CONSTRAINT <constraint_name>
@@ -56,8 +56,10 @@ where <action> is one of:
   CLUSTER ON <index_name>
   SET WITHOUT CLUSTER
   SET WITHOUT OIDS
+  SET ACCESS METHOD <access_method>
   SET (<storage_parameter> = <value>)
   RESET (<storage_parameter> [, ... ])
+  SET  WITH (<storage_parameter> = <value>)
   INHERIT <parent_table>
   NO INHERIT <parent_table>
   OF `type_name`
@@ -140,17 +142,42 @@ and subpartition\_element is:
 [ TABLESPACE <tablespace> ]
 ```
 
-where storage\_parameter is:
+where storage_directive is:
 
 ```
-   appendoptimized={TRUE|FALSE}
-   blocksize={8192-2097152}
-   orientation={COLUMN|ROW}
-   compresstype={ZLIB|ZSTD|QUICKLZ|RLE_TYPE|NONE}
-   compresslevel={0-9}
-   fillfactor={10-100}
-   [oids=FALSE]
+   blocksize={8192-2097152}
+   compresstype={ZLIB|ZSTD|QUICKLZ|RLE_TYPE|NONE}
+   compresslevel={0-9}
+``` 
+
+where storage\_parameter when used with the `SET` command is:
+
 ```
+   blocksize={8192-2097152}
+   compresstype={ZLIB|ZSTD|QUICKLZ|RLE_TYPE|NONE}
+   compresslevel={0-9}
+   fillfactor={10-100}
+   checksum= {true | false }
+   analyze_hll_non_part_table={true | false }
+```
+
+where storage\_parameter when used with the `SET WITH` command is:
+
+```
+   appendoptimized={true | false }
+   blocksize={8192-2097152}
+   orientation={COLUMN|ROW}
+   compresstype={ZLIB|ZSTD|QUICKLZ|RLE_TYPE|NONE}
+   compresslevel={0-9}
+   fillfactor={10-100}
+   checksum={true | false }
+   reorganize={true | false }
+```
+
+  <p class="note">
+<strong>Note:</strong>
+Although you can specify the table's access method using the <code>appendoptimized</code> storage parameter, VMware recommends that you use <code>SET ACCESS METHOD &lt;access method></code> instead.
+</p>
 
 ## <a id="section3"></a>Description 
 
@@ -227,6 +254,14 @@ You must own the table to use `ALTER TABLE`. To change the schema or tablespace 
 
 ## <a id="section4"></a>Parameters 
 
+access method
+:   The method to use for accessing the table. Set to `heap` to access the table as a heap-storage table, `ao_row` to access the table as an append-optimized table with row-oriented storage (AO), or `ao_column` to access the table as an append-optimized table with column-oriented storage (AOCO).
+
+  <p class="note">
+<strong>Note:</strong>
+Although you can specify the table's access method using <code>SET &lt;storage_parameter></code>, VMware recommends that you use <code>SET ACCESS METHOD &lt;access_method></code> instead.
+</p>
+
 ONLY
 :   Only perform the operation on the table name specified. If the `ONLY` keyword is not used, the operation will be performed on the named table and any child table partitions associated with that table.
 
@@ -280,12 +315,15 @@ value
 :   The new value for the `FILLFACTOR` parameter, which is a percentage between 10 and 100. 100 is the default.
 
 DISTRIBUTED BY \(\{column\_name \[opclass\]\}\) \| DISTRIBUTED RANDOMLY \| DISTRIBUTED REPLICATED
-:   Specifies the distribution policy for a table. Changing a hash distribution policy causes the table data to be physically redistributed, which can be resource intensive. If you declare the same hash distribution policy or change from hash to random distribution, data will not be redistributed unless you declare `SET WITH (REORGANIZE=true)`.
+:   Specifies the distribution policy for a table. Changing a hash distribution policy causes the table data to be physically redistributed, which can be resource intensive. If you declare the same hash distribution policy or change from hash to random distribution, data will not be redistributed unless you declare `SET WITH (reorganize=true)`.
 
 :   Changing to or from a replicated distribution policy causes the table data to be redistributed.
 
-REORGANIZE=true\|false
-:   Use `REORGANIZE=true` when the hash distribution policy has not changed or when you have changed from a hash to a random distribution, and you want to redistribute the data anyways.
+analyze_hll_non_part_table=true|false
+:   Use `analyze_hll_non_part_table=true` to force collection of HLL statistics even if the table is not part of a partitioned table. The default is `false`.
+
+reorganize=true\|false
+:   Use `reorganize=true` when the hash distribution policy has not changed or when you have changed from a hash to a random distribution, and you want to redistribute the data anyway.
 
 parent\_table
 :   A parent table to associate or de-associate with this table.
@@ -336,12 +374,6 @@ ADD PARTITION
 
 EXCHANGE \[DEFAULT\] PARTITION
 :   Exchanges another table into the partition hierarchy into the place of an existing partition. In a multi-level partition design, you can only exchange the lowest level partitions \(those that contain data\).
-
-:   The Greenplum Database server configuration parameter `gp_enable_exchange_default_partition` controls availability of the `EXCHANGE DEFAULT PARTITION` clause. The default value for the parameter is `off`. The clause is not available and Greenplum Database returns an error if the clause is specified in an `ALTER TABLE` command.
-
-:   For information about the parameter, see [Server Configuration Parameters](../config_params/guc_config.html).
-
-    **Warning:** Before you exchange the default partition, you must ensure the data in the table to be exchanged, the new default partition, is valid for the default partition. For example, the data in the new default partition must not contain data that would be valid in other leaf child partitions of the partitioned table. Otherwise, queries against the partitioned table with the exchanged default partition that are run by GPORCA might return incorrect results.
 
 :   **WITH TABLE** table\_name - The name of the table you are swapping into the partition design. You can exchange a table where the table data is stored in the database. For example, the table is created with the `CREATE TABLE` command. The table must have the same number of columns, column order, column names, column types, and distribution policy as the parent table.
 
@@ -401,6 +433,7 @@ This table lists the `ALTER TABLE` operations that require a table rewrite when 
 |----------------------|---------------------------------|----------------|----|
 |`ALTER COLUMN TYPE`|Yes|Yes|Yes|
 |`ADD COLUMN`|No|Yes|Yes|
+| `ALTER COLUMN SET ENCODING`|Yes|N/A|N/A|
 
 **Note:** Dropping a system `oid` column also requires a table rewrite.
 

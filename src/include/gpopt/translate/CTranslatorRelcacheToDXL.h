@@ -34,7 +34,6 @@ extern "C" {
 #include "naucrates/md/CMDCheckConstraintGPDB.h"
 #include "naucrates/md/CMDFunctionGPDB.h"
 #include "naucrates/md/CMDPartConstraintGPDB.h"
-#include "naucrates/md/CMDRelationExternalGPDB.h"
 #include "naucrates/md/CMDRelationGPDB.h"
 #include "naucrates/md/CMDScalarOpGPDB.h"
 #include "naucrates/md/IMDFunction.h"
@@ -180,9 +179,8 @@ private:
 													IMDId *mdid);
 
 	// retrieve a GPDB metadata object from the relcache
-	static IMDCacheObject *RetrieveObjectGPDB(CMemoryPool *mp,
-											  CMDAccessor *md_accessor,
-											  IMDId *mdid);
+	static IMDCacheObject *RetrieveObjectGPDB(CMemoryPool *mp, IMDId *mdid,
+											  IMDCacheObject::Emdtype mdtype);
 
 	// retrieve relstats object from the relcache
 	static IMDCacheObject *RetrieveRelStats(CMemoryPool *mp, IMDId *mdid);
@@ -320,8 +318,8 @@ private:
 public:
 	// retrieve a metadata object from the relcache
 	static IMDCacheObject *RetrieveObject(CMemoryPool *mp,
-										  CMDAccessor *md_accessor,
-										  IMDId *mdid);
+										  CMDAccessor *md_accessor, IMDId *mdid,
+										  IMDCacheObject::Emdtype mdtype);
 
 	// retrieve a relation from the relcache
 	static IMDRelation *RetrieveRel(CMemoryPool *mp, CMDAccessor *md_accessor,

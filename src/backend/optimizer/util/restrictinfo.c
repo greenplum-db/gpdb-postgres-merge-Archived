@@ -107,9 +107,12 @@ make_restrictinfo_new(PlannerInfo *root,
 													   outer_relids,
 													   nullable_relids);
 
-	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
+	/* Shouldn't be an AND clause, else AND/OR flattening messed up.
+	 * Orca still generates "AND" clauses here, so we relax this restriction.
+	 */
+#if 0
 	Assert(!is_andclause(clause));
-
+#endif
 	return make_restrictinfo_internal(root,
 									  clause,
 									  NULL,

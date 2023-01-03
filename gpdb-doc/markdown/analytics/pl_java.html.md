@@ -96,7 +96,7 @@ See the *Greenplum Database Reference Guide* for information about the Greenplum
 
 ## <a id="topic_qx1_xcp_w3b"></a>Installing Java 
 
-PL/Java requires a Java runtime environment on each Greenplum Database host. Ensure that the same Java environment is at the same location on all hosts: masters and segments. The command `java -version` displays the Java version.
+PL/Java requires a Java runtime environment on each Greenplum Database host. Ensure that the same Java environment is at the same location on all hosts: coordinators and segments. The command `java -version` displays the Java version.
 
 The commands that you use to install Java depend on the host system operating system and Java version. This list describes how to install OpenJDK 8 or 11 \(Java 8 JDK or Java 11 JDK\) on RHEL/CentOS or Ubuntu.
 
@@ -168,7 +168,7 @@ To install and use PL/Java:
 
 Before you install the PL/Java extension, make sure that your Greenplum database is running, you have sourced `greenplum_path.sh`, and that the `$MASTER_DATA_DIRECTORY` and `$GPHOME` variables are set.
 
-1.  Download the PL/Java extension package from [VMware Tanzu Network](https://network.pivotal.io/products/pivotal-gpdb) then copy it to the master host.
+1.  Download the PL/Java extension package from [VMware Tanzu Network](https://network.pivotal.io/products/pivotal-gpdb) then copy it to the coordinator host.
 2.  Follow the instructions in [Verifying the Greenplum Database Software Download](../install_guide/verify_sw.html) to verify the integrity of the **Greenplum Procedural Languages PL/Java** software.
 3.  Install the software extension package by running the `gppkg` command. This example installs the PL/Java extension package on a Linux system:
     ```
@@ -186,10 +186,10 @@ Before you install the PL/Java extension, make sure that your Greenplum database
         export LD_LIBRARY_PATH=$GPHOME/lib:$GPHOME/ext/python/lib:$JAVA_HOME/lib/server:$LD_LIBRARY_PATH
         ```
 
-    This example [gpscp](../utility_guide/ref/gpscp.html) command copies the file to all hosts specified in the file `gphosts_file`.
+    This example [gpsync](../utility_guide/ref/gpsync.html) command copies the file to all hosts specified in the file `gphosts_file`.
 
     ```
-    $ gpscp -f gphosts_file $GPHOME/greenplum_path.sh 
+    $ gpsync -f gphosts_file $GPHOME/greenplum_path.sh 
     =:$GPHOME/greenplum_path.sh
     ```
 
@@ -216,16 +216,16 @@ Perform the following steps as the Greenplum Database administrator `gpadmin`.
 
     **Note:** The PL/Java `install.sql` script, used in previous releases to register the language, is deprecated.
 
-2.  Copy your Java archives \(JAR files\) to the same directory on all Greenplum Database hosts. This example uses the Greenplum Database `gpscp` utility to copy the file `myclasses.jar` to the directory `$GPHOME/lib/postgresql/java/`:
+2.  Copy your Java archives \(JAR files\) to the same directory on all Greenplum Database hosts. This example uses the Greenplum Database `gpsync` utility to copy the file `myclasses.jar` to the directory `$GPHOME/lib/postgresql/java/`:
 
     ```
-    $ gpscp -f gphosts_file myclasses.jar 
+    $ gpsync -f gphosts_file myclasses.jar 
     =:/usr/local/greenplum-db/lib/postgresql/java/
     ```
 
     The file `gphosts_file` contains a list of the Greenplum Database hosts.
 
-3.  Set the `pljava_classpath` server configuration parameter in the master `postgresql.conf` file. For this example, the parameter value is a colon \(:\) separated list of the JAR files. For example:
+3.  Set the `pljava_classpath` server configuration parameter in the coordinator `postgresql.conf` file. For this example, the parameter value is a colon \(:\) separated list of the JAR files. For example:
 
     ```
     $ gpconfig -c pljava_classpath -v 'examples.jar:myclasses.jar'
@@ -748,12 +748,12 @@ Create a JAR archive named analytics.jar that contains the class file and the ma
 jar cfm analytics.jar manifest.txt *.class
 ```
 
-Upload the jar file to the Greenplum master host.
+Upload the jar file to the Greenplum coordinator host.
 
-Run the `gpscp` utility to copy the jar file to the Greenplum Java directory. Use the `-f` option to specify the file that contains a list of the master and segment hosts.
+Run the `gpsync` utility to copy the jar file to the Greenplum Java directory. Use the `-f` option to specify the file that contains a list of the coordinator and segment hosts.
 
 ```
-gpscp -f gphosts_file analytics.jar 
+gpsync -f gphosts_file analytics.jar 
 =:/usr/local/greenplum-db/lib/postgresql/java/
 ```
 

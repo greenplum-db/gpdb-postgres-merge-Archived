@@ -280,9 +280,33 @@ The input argument is the name or the oid of an append-optimized table.
 |hidden\_tupcount|The number of hidden tuples in the entry.|
 |bitmap|A text representation of the visibility bitmap.|
 
+### <a id="topic_aoblkdir"></a>\_\_gp\_aoblkdir\(regclass\)
+
+For a given AO/AOCO table that had or has an index, this function returns a row for each block directory entry recorded in the block directory relation; it flattens the `minipage` column of block directory relations and returns a row for each `minipage` entry.
+
+The input argument is the name or the oid of an append-optimized table.
+
+You must execute this function in utility mode against every segment, or with `gp_dist_random()` as shown here:
+
+``` sql
+SELECT (gp_toolkit.__gp_aoblkdir('<table_name>')).*
+    FROM gp_dist_random('gp_id');
+```
+
+
+|Column|Description|
+|------|-----------|
+|tupleid|The tuple id of the block directory row containing this block directory entry.|
+|segno|The physical segment file number.|
+|columngroup\_no|The `attnum` of the column described by this `minipage` entry (always `0` for row-oriented tables).|
+|entry\_no|The entry serial number inside this `minipage` containing this block directory entry.|
+|first\_row\_no|The first row number of the rows covered by this block directory entry.|
+|file\_offset|The starting file offset of the rows covered by this block directory entry.|
+|row\_count|The count of rows covered by this block directory entry.|
+
 ## <a id="topic16"></a>Viewing Greenplum Database Server Log Files 
 
-Each component of a Greenplum Database system \(master, standby master, primary segments, and mirror segments\) keeps its own server log files. The `gp_log_*` family of views allows you to issue SQL queries against the server log files to find particular entries of interest. The use of these views require superuser permissions.
+Each component of a Greenplum Database system \(coordinator, standby coordinator, primary segments, and mirror segments\) keeps its own server log files. The `gp_log_*` family of views allows you to issue SQL queries against the server log files to find particular entries of interest. The use of these views require superuser permissions.
 
 -   [gp\_log\_command\_timings](#topic17)
 -   [gp\_log\_database](#topic18)
@@ -293,7 +317,7 @@ Each component of a Greenplum Database system \(master, standby master, primary 
 
 ### <a id="topic17"></a>gp\_log\_command\_timings 
 
-This view uses an external table to read the log files on the master and report the run time of SQL commands in a database session. The use of this view requires superuser permissions.
+This view uses an external table to read the log files on the coordinator and report the run time of SQL commands in a database session. The use of this view requires superuser permissions.
 
 |Column|Description|
 |------|-----------|
@@ -308,7 +332,7 @@ This view uses an external table to read the log files on the master and report 
 
 ### <a id="topic18"></a>gp\_log\_database 
 
-This view uses an external table to read the server log files of the entire Greenplum system \(master, segments, and mirrors\) and lists log entries associated with the current database. Associated log entries can be identified by the session id \(logsession\) and command id \(logcmdcount\). The use of this view requires superuser permissions.
+This view uses an external table to read the server log files of the entire Greenplum system \(coordinator, segments, and mirrors\) and lists log entries associated with the current database. Associated log entries can be identified by the session id \(logsession\) and command id \(logcmdcount\). The use of this view requires superuser permissions.
 
 |Column|Description|
 |------|-----------|
@@ -317,13 +341,13 @@ This view uses an external table to read the server log files of the entire Gree
 |logdatabase|The name of the database.|
 |logpid|The associated process id \(prefixed with "p"\).|
 |logthread|The associated thread count \(prefixed with "th"\).|
-|loghost|The segment or master host name.|
-|logport|The segment or master port.|
+|loghost|The segment or coordinator host name.|
+|logport|The segment or coordinator port.|
 |logsessiontime|Time session connection was opened.|
 |logtransaction|Global transaction id.|
 |logsession|The session identifier \(prefixed with "con"\).|
 |logcmdcount|The command number within a session \(prefixed with "cmd"\).|
-|logsegment|The segment content identifier \(prefixed with "seg" for primary or "mir" for mirror. The master always has a content id of -1\).|
+|logsegment|The segment content identifier \(prefixed with "seg" for primary or "mir" for mirror. The coordinator always has a content id of -1\).|
 |logslice|The slice id \(portion of the query plan being run\).|
 |logdistxact|Distributed transaction id.|
 |loglocalxact|Local transaction id.|
@@ -345,7 +369,7 @@ This view uses an external table to read the server log files of the entire Gree
 
 ### <a id="topic19"></a>gp\_log\_master\_concise 
 
-This view uses an external table to read a subset of the log fields from the master log file. The use of this view requires superuser permissions.
+This view uses an external table to read a subset of the log fields from the coordinator log file. The use of this view requires superuser permissions.
 
 |Column|Description|
 |------|-----------|
@@ -358,7 +382,7 @@ This view uses an external table to read a subset of the log fields from the mas
 
 ### <a id="topic20"></a>gp\_log\_system 
 
-This view uses an external table to read the server log files of the entire Greenplum system \(master, segments, and mirrors\) and lists all log entries. Associated log entries can be identified by the session id \(logsession\) and command id \(logcmdcount\). The use of this view requires superuser permissions.
+This view uses an external table to read the server log files of the entire Greenplum system \(coordinator, segments, and mirrors\) and lists all log entries. Associated log entries can be identified by the session id \(logsession\) and command id \(logcmdcount\). The use of this view requires superuser permissions.
 
 |Column|Description|
 |------|-----------|
@@ -367,13 +391,13 @@ This view uses an external table to read the server log files of the entire Gree
 |logdatabase|The name of the database.|
 |logpid|The associated process id \(prefixed with "p"\).|
 |logthread|The associated thread count \(prefixed with "th"\).|
-|loghost|The segment or master host name.|
-|logport|The segment or master port.|
+|loghost|The segment or coordinator host name.|
+|logport|The segment or coordinator port.|
 |logsessiontime|Time session connection was opened.|
 |logtransaction|Global transaction id.|
 |logsession|The session identifier \(prefixed with "con"\).|
 |logcmdcount|The command number within a session \(prefixed with "cmd"\).|
-|logsegment|The segment content identifier \(prefixed with "seg" for primary or "mir" for mirror. The master always has a content id of -1\).|
+|logsegment|The segment content identifier \(prefixed with "seg" for primary or "mir" for mirror. The coordinator always has a content id of -1\).|
 |logslice|The slice id \(portion of the query plan being run\).|
 |logdistxact|Distributed transaction id.|
 |loglocalxact|Local transaction id.|
@@ -395,7 +419,7 @@ This view uses an external table to read the server log files of the entire Gree
 
 ## <a id="topic21"></a>Checking Server Configuration Files 
 
-Each component of a Greenplum Database system \(master, standby master, primary segments, and mirror segments\) has its own server configuration file \(`postgresql.conf`\). The following `gp_toolkit` objects can be used to check parameter settings across all primary `postgresql.conf` files in the system:
+Each component of a Greenplum Database system \(coordinator, standby coordinator, primary segments, and mirror segments\) has its own server configuration file \(`postgresql.conf`\). The following `gp_toolkit` objects can be used to check parameter settings across all primary `postgresql.conf` files in the system:
 
 -   [gp\_param\_setting\('parameter\_name'\)](#topic22)
 -   [gp\_param\_settings\_seg\_value\_diffs](#topic23)
@@ -404,11 +428,11 @@ Each component of a Greenplum Database system \(master, standby master, primary 
 
 ### <a id="topic22"></a>gp\_param\_setting\('parameter\_name'\) 
 
-This function takes the name of a server configuration parameter and returns the `postgresql.conf` value for the master and each active segment. This function is accessible to all users.
+This function takes the name of a server configuration parameter and returns the `postgresql.conf` value for the coordinator and each active segment. This function is accessible to all users.
 
 |Column|Description|
 |------|-----------|
-|paramsegment|The segment content id \(only active segments are shown\). The master content id is always -1.|
+|paramsegment|The segment content id \(only active segments are shown\). The coordinator content id is always -1.|
 |paramname|The name of the parameter.|
 |paramvalue|The value of the parameter.|
 
@@ -472,12 +496,12 @@ This view is accessible to all users.
 |groupid|The ID of the resource group.|
 |groupname|The name of the resource group.|
 |concurrency|The concurrency \(`CONCURRENCY`\) value specified for the resource group.|
-|cpu\_rate\_limit|The CPU limit \(`CPU_RATE_LIMIT`\) value specified for the resource group, or -1.|
+|cpu\_rate\_limit|The CPU limit \(`cpu_hard_quota_limit`\) value specified for the resource group, or -1.|
 |memory\_limit|The memory limit \(`MEMORY_LIMIT`\) value specified for the resource group.|
 |memory\_shared\_quota|The shared memory quota \(`MEMORY_SHARED_QUOTA`\) value specified for the resource group.|
 |memory\_spill\_ratio|The memory spill ratio \(`MEMORY_SPILL_RATIO`\) value specified for the resource group.|
 |memory\_auditor|The memory auditor for the resource group.|
-|cpuset|The CPU cores reserved for the resource group, or -1.|
+|cpuset|The CPU cores reserved for the resource group on the master host and segment hosts, or -1.|
 
 ### <a id="topic31x"></a>gp\_resgroup\_status 
 
@@ -590,7 +614,7 @@ For the resource queues that have active workload, this view shows one row for e
 
 |Column|Description|
 |------|-----------|
-|resqprocpid|Process ID assigned to this statement \(on the master\).|
+|resqprocpid|Process ID assigned to this statement \(on the coordinator\).|
 |resqrole|User name.|
 |resqoid|Resource queue object id.|
 |resqname|Resource queue name.|

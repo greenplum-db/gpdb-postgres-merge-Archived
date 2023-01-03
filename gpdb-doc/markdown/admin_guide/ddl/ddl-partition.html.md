@@ -24,7 +24,7 @@ Greenplum Database supports:
 -   *list partitioning*: division of data based on a list of values, such as sales territory or product line.
 -   A combination of both types.
 
-![](../graphics/partitions.jpg "Example Multi-level Partition Design")
+![Example Multi-level Partition Design](../graphics/partitions.jpg "Example Multi-level Partition Design")
 
 ## <a id="topic64"></a>Table Partitioning in Greenplum Database 
 
@@ -483,25 +483,7 @@ You can exchange a partition using the `ALTER TABLE` command. Exchanging a parti
 
 You cannot exchange a partition with a replicated table. Exchanging a partition with a partitioned table or a child partition of a partitioned table is not supported.
 
-Partition exchange can be useful for data loading. For example, load a staging table and swap the loaded table into your partition design. You can use partition exchange to change the storage type of older partitions to append-optimized tables. For example:
-
-```
-CREATE TABLE jan12 (LIKE sales) WITH (appendoptimized=true);
-INSERT INTO jan12 SELECT * FROM sales_1_prt_1 ;
-ALTER TABLE sales EXCHANGE PARTITION FOR (DATE '2012-01-01') 
-WITH TABLE jan12;
-
-```
-
-**Note:** This example refers to the single-level definition of the table `sales`, before partitions were added and altered in the previous examples.
-
 **Warning:** If you specify the `WITHOUT VALIDATION` clause, you must ensure that the data in table that you are exchanging for an existing partition is valid against the constraints on the partition. Otherwise, queries against the partitioned table might return incorrect results.
-
-The Greenplum Database server configuration parameter `gp_enable_exchange_default_partition` controls availability of the `EXCHANGE DEFAULT PARTITION` clause. The default value for the parameter is `off`, the clause is not available and Greenplum Database returns an error if the clause is specified in an `ALTER TABLE` command.
-
-For information about the parameter, see "Server Configuration Parameters" in the *Greenplum Database Reference Guide*.
-
-**Warning:** Before you exchange the default partition, you must ensure the data in the table to be exchanged, the new default partition, is valid for the default partition. For example, the data in the new default partition must not contain data that would be valid in other leaf child partitions of the partitioned table. Otherwise, queries against the partitioned table with the exchanged default partition that are run by GPORCA might return incorrect results.
 
 ### <a id="topic84"></a>Splitting a Partition 
 

@@ -1,6 +1,7 @@
 --
 -- WINDOW FUNCTIONS
 --
+SET optimizer_trace_fallback=on;
 CREATE TEMPORARY TABLE empsalary (
     depname varchar,
     empno bigint,
@@ -4053,3 +4054,4 @@ SELECT * FROM pg_temp.f(2);
  {5}
 (5 rows)
 
+RESET optimizer_trace_fallback;

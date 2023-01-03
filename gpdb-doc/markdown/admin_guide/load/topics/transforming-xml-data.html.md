@@ -28,7 +28,7 @@ If you want to load the external data into a table in the Greenplum database, yo
 
 Accessing data in external XML files from within the database is a common example requiring transformation. The following diagram shows *gpfdist* performing a transformation on XML files on an ETL server.
 
-![](../../graphics/ext-tables-xml.png "External Tables using XML Transformations")
+![External Tables using XML Transformations](../../graphics/ext-tables-xml.png "External Tables using XML Transformations")
 
 Following are the high-level steps to set up a `gpfdist` transformation for external data files. The process is illustrated with an XML example.
 
@@ -173,7 +173,7 @@ java \
 
 The `input_transform.sh` file uses the Joost STX engine with the AWK interpreter. The following diagram shows the process flow as gpfdist runs the transformation.
 
-![](../../graphics/02-pipeline.png)
+![gpfdist process flow](../../graphics/02-pipeline.png)
 
 ## <a id="topic80"></a>Transfer the Data 
 
@@ -230,7 +230,7 @@ In the `gpload` control file, the optional parameter `MAX_LINE_LENGTH` specifies
 
 The following diagram shows the relationships between the `gpload` control file, the gpfdist configuration file, and the XML data file.
 
-![](../../graphics/03-gpload-files.jpg)
+![Relationships between gpload files](../../graphics/03-gpload-files.jpg)
 
 ### <a id="topic82"></a>Transforming with gpfdist and INSERT INTO SELECT FROM 
 
@@ -319,11 +319,11 @@ This setting specifies how to handle standard error output from the transformati
 
 ## <a id="topic91"></a>XML Transformation Examples 
 
-The following examples demonstrate the complete process for different types of XML data and STX transformations. Files and detailed instructions associated with these examples are in the GitHub repo `github.com://greenplum-db/gpdb` in the [gpMgmt/demo/gpfdist\_transform](https://github.com/greenplum-db/gpdb/blob/master/gpMgmt/demo/gpfdist_transform) directory. Read the README file in the *Before You Begin* section before you run the examples. The README file explains how to download the example data file used in the examples.
+The following examples demonstrate the complete process for different types of XML data and STX transformations. Files and detailed instructions associated with these examples are in the GitHub repo `github.com://greenplum-db/gpdb` in the [gpMgmt/demo/gpfdist\_transform](https://github.com/greenplum-db/gpdb/blob/coordinator/gpMgmt/demo/gpfdist_transform) directory. Read the README file in the *Before You Begin* section before you run the examples. The README file explains how to download the example data file used in the examples.
 
 ### <a id="topic32"></a>Command-based External Web Tables 
 
-The output of a shell command or script defines command-based web table data. Specify the command in the `EXECUTE` clause of `CREATE EXTERNAL WEB TABLE`. The data is current as of the time the command runs. The `EXECUTE` clause runs the shell command or script on the specified master, and/or segment host or hosts. The command or script must reside on the hosts corresponding to the host\(s\) defined in the `EXECUTE` clause.
+The output of a shell command or script defines command-based web table data. Specify the command in the `EXECUTE` clause of `CREATE EXTERNAL WEB TABLE`. The data is current as of the time the command runs. The `EXECUTE` clause runs the shell command or script on the specified coordinator, and/or segment host or hosts. The command or script must reside on the hosts corresponding to the host\(s\) defined in the `EXECUTE` clause.
 
 By default, the command is run on segment hosts when active segments have output rows to process. For example, if each segment host runs four primary segment instances that have output rows to process, the command runs four times per segment host. You can optionally limit the number of segment instances that run the web table command. All segments included in the web table definition in the `ON` clause run the command in parallel.
 
@@ -336,7 +336,7 @@ The command that you specify in the external table definition runs from the data
 
 ```
 
-Scripts must be executable by the `gpadmin` user and reside in the same location on the master or segment hosts.
+Scripts must be executable by the `gpadmin` user and reside in the same location on the coordinator or segment hosts.
 
 The following command defines a web table that runs a script. The script runs on each segment host where a segment has output rows to process.
 

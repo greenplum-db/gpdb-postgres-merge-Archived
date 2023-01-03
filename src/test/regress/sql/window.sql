@@ -1,6 +1,7 @@
 --
 -- WINDOW FUNCTIONS
 --
+SET optimizer_trace_fallback=on;
 
 CREATE TEMPORARY TABLE empsalary (
     depname varchar,
@@ -1405,3 +1406,4 @@ $$ LANGUAGE SQL STABLE;
 
 EXPLAIN (costs off) SELECT * FROM pg_temp.f(2);
 SELECT * FROM pg_temp.f(2);
+RESET optimizer_trace_fallback;

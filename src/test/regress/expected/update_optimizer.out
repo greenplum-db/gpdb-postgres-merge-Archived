@@ -477,34 +477,35 @@ UPDATE range_parted set c = 95 WHERE a = 'b' and b > 10 and c > 100 returning (r
 -- distribution key to avoid split updates.
 ALTER TABLE range_parted SET DISTRIBUTED BY (c);
 CREATE TABLE part_c_1_c_20 (LIKE range_parted);
-NOTICE:  table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution columns from LIKE table
 ALTER TABLE part_c_1_c_20 DROP a, DROP b, ADD a text, ADD b bigint;
-NOTICE:  dropping a column that is part of the distribution policy forces a NULL distribution policy
 ALTER TABLE range_parted ATTACH PARTITION part_c_1_c_20 FOR VALUES FROM ('c', 1) TO ('c', 20);
-ERROR:  distribution policy for "part_c_1_c_20" must be the same as that for "range_parted"
 CREATE FUNCTION trigfunc () RETURNS TRIGGER LANGUAGE plpgsql as $$ BEGIN NEW.e := 'in trigfunc()'; RETURN NEW; END; $$;
 CREATE TRIGGER trig BEFORE INSERT ON part_c_1_c_20 FOR EACH ROW EXECUTE FUNCTION trigfunc();
 UPDATE range_parted r set a = 'c' FROM (VALUES ('a', 1), ('a', 10), ('b', 12)) s(x, y) WHERE s.x = r.a AND s.y = r.b RETURNING tableoid::regclass, *;
-ERROR:  no partition of relation "range_parted" found for row  (seg2 slice1 127.0.0.1:40002 pid=46803)
-DETAIL:  Partition key of the failing row contains (a, b) = (c, 1).
+   tableoid    | a | b  |  c  | d |       e       | x | y  
+---------------+---+----+-----+---+---------------+---+----
+ part_c_1_c_20 | c |  1 |   1 | 1 | in trigfunc() | a |  1
+ part_c_1_c_20 | c | 10 | 200 | 1 | in trigfunc() | a | 10
+ part_c_1_c_20 | c | 12 |  96 | 1 | in trigfunc() | b | 12
+(3 rows)
+
 DROP TRIGGER trig ON part_c_1_c_20;
 DROP FUNCTION trigfunc;
 :init_range_parted;
 CREATE FUNCTION trigfunc () RETURNS TRIGGER LANGUAGE plpgsql as $$ BEGIN RETURN NULL; END; $$;
 CREATE TRIGGER trig BEFORE INSERT ON part_c_1_c_20 FOR EACH ROW EXECUTE FUNCTION trigfunc();
 UPDATE range_parted r set a = 'c' FROM (VALUES ('a', 1), ('a', 10), ('b', 12)) s(x, y) WHERE s.x = r.a AND s.y = r.b RETURNING tableoid::regclass, *;
-ERROR:  no partition of relation "range_parted" found for row  (seg2 slice1 127.0.0.1:40002 pid=46803)
-DETAIL:  Partition key of the failing row contains (a, b) = (c, 1).
+ tableoid | a | b | c | d | e | x | y 
+----------+---+---+---+---+---+---+---
+(0 rows)
+
 :show_data;
-    partname    | a | b  |  c  | d  | e 
-----------------+---+----+-----+----+---
- part_a_10_a_20 | a | 10 | 200 |  1 | 
- part_a_1_a_10  | a |  1 |   1 |  1 | 
- part_c_1_100   | b | 12 |  96 |  1 | 
- part_c_1_100   | b | 13 |  97 |  2 | 
- part_d_15_20   | b | 15 | 105 | 16 | 
- part_d_15_20   | b | 17 | 105 | 19 | 
-(6 rows)
+   partname   | a | b  |  c  | d  | e 
+--------------+---+----+-----+----+---
+ part_c_1_100 | b | 13 |  97 |  2 | 
+ part_d_15_20 | b | 15 | 105 | 16 | 
+ part_d_15_20 | b | 17 | 105 | 19 | 
+(3 rows)
 
 DROP TABLE part_c_1_c_20;
 DROP FUNCTION trigfunc;
@@ -966,8 +967,8 @@ INSERT into sub_parted VALUES (1,2,10);
 -- Test partition constraint violation when intermediate ancestor is used and
 -- constraint is inherited from upper root.
 UPDATE sub_parted set a = 2 WHERE c = 10;
-ERROR:  new row for relation "sub_part2" violates partition constraint
-DETAIL:  Failing row contains (2, 10, 2).
+ERROR:  new row for relation "sub_parted" violates partition constraint
+DETAIL:  Failing row contains (2, 2, 10).
 -- Test update-partition-key, where the unpruned partitions do not have their
 -- partition keys updated.
 SELECT tableoid::regclass::text, * FROM list_parted WHERE a = 2 ORDER BY 1;

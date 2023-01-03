@@ -226,6 +226,8 @@ typedef struct Query
 	 */
 	int			stmt_location;	/* start location, or -1 if unknown */
 	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
+
+	bool		expandMatViews; /* force expansion of materialized views during rewrite to treat as views */
 } Query;
 
 /****************************************************************************
@@ -1966,6 +1968,7 @@ typedef enum AlterTableType
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetAccessMethod,			/* SET ACCESS METHOD */
 	AT_SetTableSpace,			/* SET TABLESPACE */
+	AT_SetColumnEncoding,        /* SET ENCODING (...)*/
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
 	AT_ResetRelOptions,			/* RESET (...) -- AM specific parameters */
 	AT_ReplaceRelOptions,		/* replace reloption list in its entirety */

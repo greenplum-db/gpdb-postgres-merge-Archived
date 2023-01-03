@@ -249,23 +249,6 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 	 */
 	start_postmaster(&new_cluster, true);
 
-	if (GET_MAJOR_VERSION(old_cluster.major_version) == 803)
-	{
-		/* restore proper sequence values using file created from old server */
-		if (sequence_script_file_name)
-		{
-			prep_status("Adjusting sequences");
-			exec_prog(UTILITY_LOG_FILE, NULL, true, true,
-					  "%s \"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
-					  PG_OPTIONS_UTILITY_MODE_VERSION(new_cluster.major_version),
-					  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-					  sequence_script_file_name);
-			unlink(sequence_script_file_name);
-			check_ok();
-		}
-
-	}
-
 	/* GPDB_90_MERGE_FIXME: See earlier comment on large objects */
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)

@@ -675,6 +675,12 @@ typedef struct EState
 	/* partition oid that is being scanned, used by DynamicBitmapHeapScan/IndexScan */
 	int			partitionOid;
 
+	/*
+	 * GPDB: gp_bypass_unique_check is introduced so that routines, such as AO
+	 * vacuum, can avoid running uniqueness checks while inserting tuples.
+	 */
+	bool		gp_bypass_unique_check;
+
 } EState;
 
 struct PlanState;
@@ -1830,11 +1836,6 @@ typedef struct DynamicBitmapHeapScanState
 	BitmapHeapScanState *bhsState;
 
 	/*
-	 * The first partition requires initialization of expression states,
-	 * such as qual, regardless of whether we need to re-map varattno
-	 */
-	bool		firstPartition;
-	/*
 	 * lastRelOid is the last relation that corresponds to the
 	 * varattno mapping of qual and target list. Each time we open a new partition, we will
 	 * compare the last relation with current relation by using varattnos_map()
@@ -2118,11 +2119,6 @@ typedef struct DynamicSeqScanState
 	int			eflags;
 	SeqScanState *seqScanState;
 
-	/*
-	 * The first partition requires initialization of expression states,
-	 * such as qual and targetlist, regardless of whether we need to re-map varattno
-	 */
-	bool		firstPartition;
 	/*
 	 * lastRelOid is the last relation that corresponds to the
 	 * varattno mapping of qual and target list. Each time we open a new partition, we will

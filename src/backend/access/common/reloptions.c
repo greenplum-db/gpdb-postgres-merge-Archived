@@ -1440,7 +1440,10 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"vacuum_index_cleanup", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, vacuum_index_cleanup)},
 		{"vacuum_truncate", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, vacuum_truncate)}
+		offsetof(StdRdOptions, vacuum_truncate)},
+		{SOPT_ANALYZEHLL, RELOPT_TYPE_BOOL,
+		offsetof(StdRdOptions, analyze_hll_non_part_table)}
+
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
@@ -1456,7 +1459,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 
 	validate_and_refill_options(rdopts, options, numoptions, kind, validate);
 
-	pfree(options);
+	free_options_deep(options, numoptions);
 
 	return (bytea *) rdopts;
 }
@@ -1488,7 +1491,7 @@ view_reloptions(Datum reloptions, bool validate)
 	fillRelOptions((void *) vopts, sizeof(ViewOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
 
-	pfree(options);
+	free_options_deep(options, numoptions);
 
 	return (bytea *) vopts;
 }
@@ -1576,7 +1579,7 @@ attribute_reloptions(Datum reloptions, bool validate)
 	fillRelOptions((void *) aopts, sizeof(AttributeOpts), options, numoptions,
 				   validate, tab, lengthof(tab));
 
-	pfree(options);
+	free_options_deep(options, numoptions);
 
 	return (bytea *) aopts;
 }
@@ -1608,7 +1611,7 @@ tablespace_reloptions(Datum reloptions, bool validate)
 	fillRelOptions((void *) tsopts, sizeof(TableSpaceOpts), options, numoptions,
 				   validate, tab, lengthof(tab));
 
-	pfree(options);
+	free_options_deep(options, numoptions);
 
 	return (bytea *) tsopts;
 }

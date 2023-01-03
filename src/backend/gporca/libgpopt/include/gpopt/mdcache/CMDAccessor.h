@@ -37,10 +37,8 @@ namespace gpmd
 {
 class IMDCacheObject;
 class IMDRelation;
-class IMDRelationExternal;
 class IMDScalarOp;
 class IMDAggregate;
-class IMDTrigger;
 class IMDIndex;
 class IMDCheckConstraint;
 class IMDProvider;
@@ -223,7 +221,8 @@ private:
 	CDouble m_dFetchTime;
 
 	// interface to a MD cache object
-	const IMDCacheObject *GetImdObj(IMDId *mdid);
+	const IMDCacheObject *GetImdObj(IMDId *mdid,
+									IMDCacheObject::Emdtype mdtype);
 
 	// return the type corresponding to the given type info and source system id
 	const IMDType *RetrieveType(CSystemId sysid, IMDType::ETypeInfo type_info);
@@ -331,9 +330,6 @@ public:
 
 	// interface to an aggregate from the MD cache
 	const IMDAggregate *RetrieveAgg(IMDId *mdid);
-
-	// interface to a trigger from the MD cache
-	const IMDTrigger *RetrieveTrigger(IMDId *mdid);
 
 	// interface to an index from the MD cache
 	const IMDIndex *RetrieveIndex(IMDId *mdid);

@@ -98,7 +98,6 @@ extern "C" {
 #include "naucrates/md/IMDAggregate.h"
 #include "naucrates/md/IMDFunction.h"
 #include "naucrates/md/IMDIndex.h"
-#include "naucrates/md/IMDRelationExternal.h"
 #include "naucrates/md/IMDScalarOp.h"
 #include "naucrates/md/IMDType.h"
 #include "naucrates/md/IMDTypeBool.h"
@@ -182,6 +181,7 @@ CTranslatorDXLToPlStmt::GetPlannedStmtFromDXL(const CDXLNode *dxlnode,
 	topslice->directDispatch.contentIds = NIL;
 	topslice->directDispatch.haveProcessedAnyCalculations = false;
 
+	m_dxl_to_plstmt_context->m_orig_query = (Query *) orig_query;
 	m_dxl_to_plstmt_context->AddSlice(topslice);
 	m_dxl_to_plstmt_context->SetCurrentSlice(topslice);
 
@@ -320,7 +320,7 @@ CTranslatorDXLToPlStmt::TranslateDXLOperatorToPlan(
 					   dxlnode->GetOperator()->GetOpNameStr()->GetBuffer());
 		}
 		case EdxlopPhysicalTableScan:
-		case EdxlopPhysicalExternalScan:
+		case EdxlopPhysicalForeignScan:
 		{
 			plan = TranslateDXLTblScan(dxlnode, output_context,
 									   ctxt_translation_prev_siblings);
@@ -596,19 +596,20 @@ CTranslatorDXLToPlStmt::TranslateDXLTblScan(
 
 	Plan *plan = nullptr;
 	Plan *plan_return = nullptr;
-	if (IMDRelation::ErelstorageExternal == md_rel->RetrieveRelStorageType())
+
+	if (IMDRelation::ErelstorageForeign == md_rel->RetrieveRelStorageType())
 	{
 		OID oidRel = CMDIdGPDB::CastMdid(md_rel->MDId())->Oid();
 
-		// create foreign scan node
-		ForeignScan *foreign_scan = gpdb::CreateForeignScanForExternalTable(
-			oidRel, index, qual, targetlist);
+		ForeignScan *foreign_scan =
+			gpdb::CreateForeignScan(oidRel, index, qual, targetlist,
+									m_dxl_to_plstmt_context->m_orig_query, rte);
+		foreign_scan->scan.scanrelid = index;
 		plan = &(foreign_scan->scan.plan);
 		plan_return = (Plan *) foreign_scan;
 	}
 	else
 	{
-		// create seq scan node
 		SeqScan *seq_scan = MakeNode(SeqScan);
 		seq_scan->scanrelid = index;
 		plan = &(seq_scan->plan);
@@ -2680,16 +2681,23 @@ CTranslatorDXLToPlStmt::TranslateDXLAgg(
 
 	// Set the aggsplit for the agg node
 	ListCell *lc;
+	INT aggsplit = 0;
 	foreach (lc, plan->targetlist)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);
 		if (IsA(te->expr, Aggref))
 		{
 			Aggref *aggref = (Aggref *) te->expr;
-			agg->aggsplit = aggref->aggsplit;
-			break;
+
+			aggsplit |= aggref->aggsplit;
+
+			if (AGGSPLIT_INTERMEDIATE == aggsplit)
+			{
+				break;
+			}
 		}
 	}
+	agg->aggsplit = (AggSplit) aggsplit;
 
 	plan->lefttree = child_plan;
 
@@ -2928,16 +2936,28 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow(
 			{
 				window->frameOptions |= FRAMEOPTION_ROWS;
 			}
+			else if (EdxlfsGroups == window_frame->ParseDXLFrameSpec())
+			{
+				window->frameOptions |= FRAMEOPTION_GROUPS;
+			}
 			else
 			{
 				window->frameOptions |= FRAMEOPTION_RANGE;
 			}
 
-			if (window_frame->ParseFrameExclusionStrategy() != EdxlfesNulls)
+			if (window_frame->ParseFrameExclusionStrategy() ==
+				EdxlfesCurrentRow)
 			{
-				GPOS_RAISE(gpdxl::ExmaDXL,
-						   gpdxl::ExmiQuery2DXLUnsupportedFeature,
-						   GPOS_WSZ_LIT("EXCLUDE clause in window frame"));
+				window->frameOptions |= FRAMEOPTION_EXCLUDE_CURRENT_ROW;
+			}
+			else if (window_frame->ParseFrameExclusionStrategy() ==
+					 EdxlfesGroup)
+			{
+				window->frameOptions |= FRAMEOPTION_EXCLUDE_GROUP;
+			}
+			else if (window_frame->ParseFrameExclusionStrategy() == EdxlfesTies)
+			{
+				window->frameOptions |= FRAMEOPTION_EXCLUDE_TIES;
 			}
 
 			// translate the CDXLNodes representing the leading and trailing edge
@@ -2962,35 +2982,35 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow(
 					->ParseDXLFrameBoundary();
 			if (lead_boundary_type == EdxlfbUnboundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_PRECEDING;
 			}
 			if (lead_boundary_type == EdxlfbBoundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
 			}
 			if (lead_boundary_type == EdxlfbCurrentRow)
 			{
-				window->frameOptions |= FRAMEOPTION_END_CURRENT_ROW;
+				window->frameOptions |= FRAMEOPTION_START_CURRENT_ROW;
 			}
 			if (lead_boundary_type == EdxlfbBoundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
 			}
 			if (lead_boundary_type == EdxlfbUnboundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
 			}
 			if (lead_boundary_type == EdxlfbDelayedBoundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
 			}
 			if (lead_boundary_type == EdxlfbDelayedBoundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
 			}
 			if (0 != win_frame_leading_dxlnode->Arity())
 			{
-				window->endOffset =
+				window->startOffset =
 					(Node *) m_translator_dxl_to_scalar->TranslateDXLToScalar(
 						(*win_frame_leading_dxlnode)[0], &colid_var_mapping);
 			}
@@ -3004,38 +3024,44 @@ CTranslatorDXLToPlStmt::TranslateDXLWindow(
 					->ParseDXLFrameBoundary();
 			if (trail_boundary_type == EdxlfbUnboundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_PRECEDING;
 			}
 			if (trail_boundary_type == EdxlfbBoundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
 			}
 			if (trail_boundary_type == EdxlfbCurrentRow)
 			{
-				window->frameOptions |= FRAMEOPTION_START_CURRENT_ROW;
+				window->frameOptions |= FRAMEOPTION_END_CURRENT_ROW;
 			}
 			if (trail_boundary_type == EdxlfbBoundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
 			}
 			if (trail_boundary_type == EdxlfbUnboundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_END_UNBOUNDED_FOLLOWING;
 			}
 			if (trail_boundary_type == EdxlfbDelayedBoundedPreceding)
 			{
-				window->frameOptions |= FRAMEOPTION_START_OFFSET_PRECEDING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_PRECEDING;
 			}
 			if (trail_boundary_type == EdxlfbDelayedBoundedFollowing)
 			{
-				window->frameOptions |= FRAMEOPTION_START_OFFSET_FOLLOWING;
+				window->frameOptions |= FRAMEOPTION_END_OFFSET_FOLLOWING;
 			}
 			if (0 != win_frame_trailing_dxlnode->Arity())
 			{
-				window->startOffset =
+				window->endOffset =
 					(Node *) m_translator_dxl_to_scalar->TranslateDXLToScalar(
 						(*win_frame_trailing_dxlnode)[0], &colid_var_mapping);
 			}
+
+			window->startInRangeFunc = window_frame->PdxlnStartInRangeFunc();
+			window->endInRangeFunc = window_frame->PdxlnEndInRangeFunc();
+			window->inRangeColl = window_frame->PdxlnInRangeColl();
+			window->inRangeAsc = window_frame->PdxlnInRangeAsc();
+			window->inRangeNullsFirst = window_frame->PdxlnInRangeNullsFirst();
 
 			// cleanup
 			child_contexts->Release();
@@ -4268,6 +4294,15 @@ CTranslatorDXLToPlStmt::TranslateDXLDml(
 	IMDId *mdid_target_table = phy_dml_dxlop->GetDXLTableDescr()->MDId();
 	const IMDRelation *md_rel = m_md_accessor->RetrieveRel(mdid_target_table);
 
+	if (md_rel->IsPartitioned())
+	{
+		dml->forceTupleRouting = true;
+	}
+	else
+	{
+		dml->forceTupleRouting = false;
+	}
+
 	if (IMDRelation::EreldistrMasterOnly != md_rel->GetRelDistribution())
 	{
 		m_is_tgt_tbl_distributed = true;
@@ -4321,10 +4356,8 @@ CTranslatorDXLToPlStmt::TranslateDXLDml(
 	dml_target_list = target_list_with_dropped_cols;
 
 	// Add junk columns to the target list for the 'action', 'ctid',
-	// 'gp_segment_id', and tuple's 'oid'. The ModifyTable node will find
-	// these based on the resnames. ORCA also includes a similar column for
-	// partition Oid in the child's target list, but we don't use it for
-	// anything in GPDB.
+	// 'gp_segment_id'. The ModifyTable node will find these based
+	// on the resnames.
 	if (m_cmd_type == CMD_UPDATE && isSplit)
 	{
 		(void) AddJunkTargetEntryForColId(&dml_target_list, &child_context,
@@ -4347,7 +4380,7 @@ CTranslatorDXLToPlStmt::TranslateDXLDml(
 	// needed, as the child node could do the projection, but we don't have
 	// the information to determine that here. There's a step in the
 	// backend optimize_query() function to eliminate unnecessary Results
-	// throught the plan, hopefully this Result gets eliminated there.
+	// through the plan, hopefully this Result gets eliminated there.
 	Result *result = MakeNode(Result);
 	Plan *result_plan = &(result->plan);
 

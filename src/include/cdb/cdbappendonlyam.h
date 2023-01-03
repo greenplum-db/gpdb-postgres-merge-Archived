@@ -53,6 +53,8 @@
 #define DEFAULT_VARBLOCK_TEMPSPACE_LEN   	 (4 * 1024)
 #define DEFAULT_FS_SAFE_WRITE_SIZE			 (0)
 
+extern AppendOnlyBlockDirectory *GetAOBlockDirectory(Relation relation);
+
 /*
  * AppendOnlyInsertDescData is used for inserting data into append-only
  * relations. It serves an equivalent purpose as AppendOnlyScanDescData
@@ -343,8 +345,45 @@ typedef struct AppendOnlyFetchDescData
 
 typedef AppendOnlyFetchDescData *AppendOnlyFetchDesc;
 
+/*
+ * AppendOnlyDeleteDescData is used for delete data from append-only
+ * relations. It serves an equivalent purpose as AppendOnlyScanDescData
+ * (relscan.h) only that the later is used for scanning append-only
+ * relations.
+ */
+typedef struct AppendOnlyDeleteDescData
+{
+	/*
+	 * Relation to delete from
+	 */
+	Relation	aod_rel;
+
+	/*
+	 * Snapshot to use for meta data operations
+	 */
+	Snapshot	appendOnlyMetaDataSnapshot;
+
+	/*
+	 * visibility map
+	 */
+	AppendOnlyVisimap visibilityMap;
+
+	/*
+	 * Visimap delete support structure. Used to handle out-of-order deletes
+	 */
+	AppendOnlyVisimapDelete visiMapDelete;
+
+}			AppendOnlyDeleteDescData;
+
 typedef struct AppendOnlyDeleteDescData *AppendOnlyDeleteDesc;
 
+typedef struct AppendOnlyUniqueCheckDescData
+{
+	AppendOnlyBlockDirectory *blockDirectory;
+	AppendOnlyVisimap 		 *visimap;
+} AppendOnlyUniqueCheckDescData;
+
+typedef struct AppendOnlyUniqueCheckDescData *AppendOnlyUniqueCheckDesc;
 /*
  * Descriptor for fetches from table via an index.
  */
@@ -387,14 +426,16 @@ extern bool appendonly_fetch(
 	AOTupleId *aoTid,
 	TupleTableSlot *slot);
 extern void appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc);
-extern void appendonly_dml_init(Relation relation, CmdType operation);
-extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel, int segno);
+extern void appendonly_dml_init(Relation relation);
+extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel,
+												   int segno,
+												   int64 num_rows);
 extern void appendonly_insert(
 		AppendOnlyInsertDesc aoInsertDesc, 
 		MemTuple instup, 
 		AOTupleId *aoTupleId);
 extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
-extern void appendonly_dml_finish(Relation relation, CmdType operation);
+extern void appendonly_dml_finish(Relation relation);
 
 extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel);
 extern TM_Result appendonly_delete(

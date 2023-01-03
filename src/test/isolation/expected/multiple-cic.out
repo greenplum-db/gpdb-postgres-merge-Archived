@@ -17,12 +17,5 @@ step s2i:
  <waiting ...>
 step s1i: <... completed>
 step s2i: <... completed>
-<<<<<<< HEAD
 unlck          
-=======
-unlck
------
-t    
-(1 row)
->>>>>>> 7cd0d523d2581895e65cd0ebebc7e50caa8bbfda
 

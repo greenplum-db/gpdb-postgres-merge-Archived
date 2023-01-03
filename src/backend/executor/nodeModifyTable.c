@@ -59,6 +59,7 @@
 #include "utils/rel.h"
 
 #include "access/transam.h"
+#include "catalog/aocatalog.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
@@ -801,7 +802,6 @@ ExecDelete(ModifyTableState *mtstate,
 		   bool *tupleDeleted,
 		   TupleTableSlot **epqreturnslot)
 {
-	/* PlanGenerator planGen = estate->es_plannedstmt->planGen; */
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	TM_Result	result;
@@ -829,34 +829,7 @@ ExecDelete(ModifyTableState *mtstate,
 	/*
 	 * get information on the (current) result relation
 	 */
-	// GPDB_12_MERGE_FIXME: How to do this in new partitioning implementation?
-	// Can we change the way ORCA deletion plans work?
-#if 0
-	if (estate->es_result_partitions && planGen == PLANGEN_OPTIMIZER)
-	{
-		Assert(estate->es_result_partitions->part->parrelid);
-
-#ifdef USE_ASSERT_CHECKING
-		Oid parent = estate->es_result_partitions->part->parrelid;
-#endif
-
-		/* Obtain part for current tuple. */
-		resultRelInfo = slot_get_partition(planSlot, estate, true);
-		estate->es_result_relation_info = resultRelInfo;
-
-#ifdef USE_ASSERT_CHECKING
-		Oid part = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-#endif
-
-		Assert(parent != part);
-	}
-	else
-	{
-		resultRelInfo = estate->es_result_relation_info;
-	}
-#else
 	resultRelInfo = estate->es_result_relation_info;
-#endif
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW DELETE Triggers */
@@ -1779,7 +1752,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 
 	if (partition_constraint_failed)
 	{
-		TupleTableSlot *origSlot = slot;
+		TupleTableSlot *orig_slot = slot;
 		/*
 		 * When an UPDATE is run on a leaf partition, we will not have
 		 * partition tuple routing set up. In that case, fail with
@@ -1813,7 +1786,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 									   mtstate->rootResultRelInfo, slot);
 
 		slot = ExecInsert(mtstate, slot, planSlot,
-						  origSlot, resultRelInfo,
+						  orig_slot, resultRelInfo,
 						  estate, mtstate->canSetTag,
 						  true /* splitUpdate */);
 
@@ -2533,7 +2506,9 @@ ExecModifyTable(PlanState *pstate)
 				bool		isNull;
 
 				relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
-				if (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW)
+				if (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
+					relkind == RELKIND_PARTITIONED_TABLE ||
+					IsAppendonlyMetadataRelkind(relkind))
 				{
 					datum = ExecGetJunkAttribute(slot,
 												 junkfilter->jf_junkAttNo,
@@ -2627,11 +2602,16 @@ ExecModifyTable(PlanState *pstate)
 				slot = ExecInsert(node, slot, planSlot,
 								  NULL, estate->es_result_relation_info,
 								  estate, node->canSetTag, false /* splitUpdate */);
+
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
 					estate->es_result_relation_info = resultRelInfo;
 				break;
 			case CMD_UPDATE:
+				/* Prepare for tuple routing if needed. */
+				if (castNode(ModifyTable, node->ps.plan)->forceTupleRouting)
+					slot = ExecPrepareTupleRouting(node, estate, proute,
+												   resultRelInfo, slot);
 				if (!AttributeNumberIsValid(action_attno))
 				{
 					/* normal non-split UPDATE */
@@ -2654,14 +2634,22 @@ ExecModifyTable(PlanState *pstate)
 									  true /* splitUpdate */ ,
 									  NULL, NULL);
 				}
+				/* Revert ExecPrepareTupleRouting's state change. */
+				if (castNode(ModifyTable, node->ps.plan)->forceTupleRouting)
+					estate->es_result_relation_info = resultRelInfo;
 				break;
 			case CMD_DELETE:
+				if (castNode(ModifyTable, node->ps.plan)->forceTupleRouting)
+					planSlot = ExecPrepareTupleRouting(node, estate, proute,
+												   resultRelInfo, slot);
 				slot = ExecDelete(node, tupleid, segid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
 								  true, node->canSetTag,
 								  false /* changingPart */ ,
 								  false /* splitUpdate */ ,
 								  NULL, NULL);
+				if (castNode(ModifyTable, node->ps.plan)->forceTupleRouting)
+					estate->es_result_relation_info = resultRelInfo;
 				break;
 			default:
 				elog(ERROR, "unknown operation");
@@ -2797,6 +2785,25 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		CheckValidResultRel(resultRelInfo, operation);
 
 		/*
+		 * GPDB: We don't support SERIALIZABLE transaction isolation for
+		 * UPDATES/DELETES on AO/CO tables.
+		 */
+		if (IsolationUsesXactSnapshot() &&
+			RelationIsAppendOptimized(resultRelInfo->ri_RelationDesc))
+		{
+			if (operation == CMD_UPDATE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("updates on append-only tables are not "
+								   "supported in serializable transactions")));
+			else if (operation == CMD_DELETE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("deletes on append-only tables are not "
+								   "supported in serializable transactions")));
+		}
+
+		/*
 		 * If there are indices on the result relation, open them and save
 		 * descriptors in the result relation info, so that we can add new
 		 * index entries for the tuples we add/update.  We need not do this
@@ -2828,10 +2835,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExecInitExtraTupleSlot(mtstate->ps.state, ExecGetResultType(mtstate->mt_plans[i]),
 								   table_slot_callbacks(resultRelInfo->ri_RelationDesc));
 
-		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_dml_init(resultRelInfo->ri_RelationDesc, operation);
-		else if (RelationIsAoCols(resultRelInfo->ri_RelationDesc))
-			aoco_dml_init(resultRelInfo->ri_RelationDesc, operation);
+		if (resultRelInfo->ri_RelationDesc->rd_tableam)
+			table_dml_init(resultRelInfo->ri_RelationDesc);
 
 		/* Also let FDWs init themselves for foreign-table result rels */
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
@@ -2855,6 +2860,25 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	/* Get the target relation */
 	rel = (getTargetResultRelInfo(mtstate))->ri_RelationDesc;
+
+	/*
+	 * GPDB dynamic scan nodes optimize memory usage by avoiding the need to
+	 * maintain a data structure for every partition node. In the plan tree
+	 * this is represented as a single dynamic scan node as opposed to an
+	 * append over many leaf partitions. The different plan representations
+	 * require different execution paths in modify table.
+	 *
+	 * In the case of append, a basic scan on a leaf partition requires no
+	 * tuple routing unless an update to the partition key causes the tuple to
+	 * be routed to another relation.
+	 *
+	 * In the case of dynamic scan, the node hierarchy always requires tuple
+	 * routing to find the corresponding relation. If update to a partition key
+	 * causes the tuple to be routed, then we must perform tuple routing a
+	 * second time.
+	 */
+	if (node->forceTupleRouting)
+		update_tuple_routing_needed = true;
 
 	/*
 	 * If it's not a partitioned table after all, UPDATE tuple routing should
@@ -3053,7 +3077,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	{
 		PlanRowMark *rc = lfirst_node(PlanRowMark, l);
 		ExecRowMark *erm;
-		bool		isdistributed = false;
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)
@@ -3062,21 +3085,13 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * Like in preprocess_targetlist, ignore distributed tables.
 		 */
-		/*
-		 * GPDB_91_MERGE_FIXME: we are largely just ignoring locking altogether.
-		 * Perhaps that's OK as long as we take a full table lock on any UPDATEs
-		 * or DELETEs. But sure doesn't seem right. Can we do better?
-		 */
 		{
 			RangeTblEntry *rte = rt_fetch(rc->rti, estate->es_plannedstmt->rtable);
 
 			if (rte->rtekind == RTE_RELATION)
 			{
-				Relation relation = heap_open(rte->relid, NoLock);
-				if (GpPolicyIsPartitioned(relation->rd_cdbpolicy))
-					isdistributed = true;
-				heap_close(relation, NoLock);
-				if (isdistributed)
+				GpPolicy *policy = GpPolicyFetch(rte->relid);
+				if (GpPolicyIsPartitioned(policy))
 					continue;
 			}
 		}
@@ -3191,7 +3206,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
 					if (relkind == RELKIND_RELATION ||
 						relkind == RELKIND_MATVIEW ||
-						relkind == RELKIND_PARTITIONED_TABLE)
+						relkind == RELKIND_PARTITIONED_TABLE ||
+						IsAppendonlyMetadataRelkind(relkind))
 					{
 						j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
 						if (!AttributeNumberIsValid(j->jf_junkAttNo))
@@ -3286,11 +3302,8 @@ ExecEndModifyTable(ModifyTableState *node)
 			resultRelInfo->ri_FdwRoutine->EndForeignModify != NULL)
 			resultRelInfo->ri_FdwRoutine->EndForeignModify(node->ps.state,
 														   resultRelInfo);
-		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_dml_finish(resultRelInfo->ri_RelationDesc,
-								  node->operation);
-		else if(RelationIsAoCols(resultRelInfo->ri_RelationDesc))
-			aoco_dml_finish(resultRelInfo->ri_RelationDesc, node->operation);
+		if (resultRelInfo->ri_RelationDesc->rd_tableam)
+			table_dml_finish(resultRelInfo->ri_RelationDesc);
 	}
 
 	/*

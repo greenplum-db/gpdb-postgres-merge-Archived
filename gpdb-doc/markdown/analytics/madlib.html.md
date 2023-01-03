@@ -18,7 +18,7 @@ MADlib’s suite of SQL-based algorithms run at scale within a single Greenplum 
 
 MADlib is part of the database fabric with no changes to the Greenplum architecture. This makes it easy for database administrators to deploy and manage since it is not a separate daemon or separate software running outside the database.
 
-![](graphics/gp_greenplum_diagram.png "Greenplum MADlib Analytics Architecture")
+![Greenplum with MADlib](graphics/gp_greenplum_diagram.png "Greenplum MADlib Analytics Architecture")
 
 ## <a id="section_lmf_pv1_rqb"></a>Machine Learning 
 
@@ -68,7 +68,7 @@ If you have GPUs installed on some or across all hosts in the cluster, then the 
 Before you install the MADlib package, make sure that your Greenplum database is running, you have sourced `greenplum_path.sh`, and that the`$MASTER_DATA_DIRECTORY` and `$GPHOME` variables are set.
 
 1.  Download the MADlib extension package from [VMware Tanzu Network](https://network.pivotal.io/products/pivotal-gpdb).
-2.  Copy the MADlib package to the Greenplum Database master host.
+2.  Copy the MADlib package to the Greenplum Database coordinator host.
 3.  Follow the instructions in [Verifying the Greenplum Database Software Download](../install_guide/verify_sw.html) to verify the integrity of the **Greenplum Advanced Analytics MADlib** software.
 4.  Unpack the MADlib distribution package. For example:
 

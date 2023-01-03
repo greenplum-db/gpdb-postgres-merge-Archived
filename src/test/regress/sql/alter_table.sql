@@ -2936,7 +2936,6 @@ drop table at_test_sql_partop;
 drop operator class at_test_sql_partop using btree;
 drop function at_test_sql_partop;
 
-
 /* Test case for bug #16242 */
 
 -- We create a parent and child where the child has missing
@@ -3018,3 +3017,22 @@ insert into attach_parted_part1 values (2, 1);
 -- ...and doesn't when the partition is detached along with its own partition
 alter table target_parted detach partition attach_parted;
 insert into attach_parted_part1 values (2, 1);
+
+-- Test that altering owner of partition root should recurse into the child tables.
+create role atown_r1;
+create role atown_r2 in role atown_r1;
+set role atown_r2;
+create table atown_part(a int, b int) partition by range(a) (partition p1 start (1) end (100));
+select c.relname, r.rolname from pg_class c join pg_roles r on c.relowner = r.oid where relname like 'atown_part%';
+alter table atown_part owner to atown_r1;
+alter table atown_part add partition start(100) end(200);
+-- both existing and new child tables should have the new owner
+select c.relname, r.rolname from pg_class c join pg_roles r on c.relowner = r.oid where relname like 'atown_part%';
+-- should only alter the partition root with ONLY keyword
+alter table only atown_part owner to atown_r2;
+select c.relname, r.rolname from pg_class c join pg_roles r on c.relowner = r.oid where relname like 'atown_part%';
+
+drop table atown_part;
+reset role;
+drop role atown_r1;
+drop role atown_r2;

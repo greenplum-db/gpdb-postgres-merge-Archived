@@ -325,6 +325,11 @@ typedef struct TableAmRoutine
 									  TupleTableSlot *slot,
 									  bool *call_again, bool *all_dead);
 
+	/* See table_index_fetch_tuple_exists() for details */
+	bool		(*index_fetch_tuple_exists) (Relation rel,
+											 ItemPointer tid,
+											 Snapshot snapshot,
+											 bool *all_dead);
 
 	/* ------------------------------------------------------------------------
 	 * Callbacks for non-modifying operations on individual tuples
@@ -367,6 +372,15 @@ typedef struct TableAmRoutine
 													 ItemPointerData *items,
 													 int nitems);
 
+
+	/*
+	 * ------------------------------------------------------------------------
+	 * GPDB: DML state manipulation functions
+	 * ------------------------------------------------------------------------
+	 */
+	void		(*dml_init) (Relation rel);
+
+	void		(*dml_finish) (Relation rel);
 
 	/* ------------------------------------------------------------------------
 	 * Manipulations of physical tuples.
@@ -1080,6 +1094,24 @@ extern bool table_index_fetch_tuple_check(Relation rel,
 										  Snapshot snapshot,
 										  bool *all_dead);
 
+/*
+ * GPDB: Check if a tuple exists for a given tid obtained from an index.
+ * This is used to entertain unique index checks on AO/CO tables. For heap
+ * tables, the regular method of beginindexscan..fetchtuple..endindexscan
+ * can be used. Creating/destroying scan descriptors for AO/CO tables are
+ * too expensive to be done on a per-tuple basis.
+ *
+ * This has to have an identical signature to table_index_fetch_tuple_check().
+ */
+static inline bool
+table_index_fetch_tuple_exists(Relation rel,
+							   ItemPointer tid,
+							   Snapshot snapshot,
+							   bool *all_dead)
+{
+	return rel->rd_tableam->index_fetch_tuple_exists(rel, tid, snapshot,
+														   all_dead);
+}
 
 /* ------------------------------------------------------------------------
  * Functions for non-modifying operations on individual tuples
@@ -1155,6 +1187,36 @@ table_compute_xid_horizon_for_tuples(Relation rel,
 	return rel->rd_tableam->compute_xid_horizon_for_tuples(rel, items, nitems);
 }
 
+/*
+ * ------------------------------------------------------------------------
+ * GPDB: DML state manipulation functions
+ * ------------------------------------------------------------------------
+ */
+
+/*
+ * Gives an opportunity to the table AM to create some state to be used across
+ * the lifecycle of a DML or DML-like command. It is called once for every
+ * relation involved in the command (there can be multiple relations when there
+ * are partitioned tables are involved). It is called at the beginning of the
+ * command's execution.
+ */
+static inline void
+table_dml_init(Relation rel)
+{
+	rel->rd_tableam->dml_init(rel);
+}
+
+/*
+ * Gives an opportunity to the table AM to clean up any state allocated by
+ * table_dml_init(). It is called once for every relation involved in a DML
+ * or DML-like command (there can be multiple relations when there are partitioned
+ * tables are involved). It is called at the end of the command's execution.
+ */
+static inline void
+table_dml_finish(Relation rel)
+{
+	rel->rd_tableam->dml_finish(rel);
+}
 
 /* ----------------------------------------------------------------------------
  *  Functions for manipulations of physical tuples.

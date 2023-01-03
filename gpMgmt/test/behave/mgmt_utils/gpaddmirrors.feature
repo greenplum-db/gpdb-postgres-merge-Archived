@@ -5,6 +5,8 @@ Feature: Tests for gpaddmirrors
           And a tablespace is created with data
          When gpaddmirrors adds 3 mirrors
           And an FTS probe is triggered
+          #gpaddmirrors triggers full recovery where old replication slot is dropped and new one is created
+          And verify replication slot internal_wal_replication_slot is available on all the segments
           And the segments are synchronized
          Then verify the database has mirrors
           And the tablespace is valid
@@ -24,6 +26,8 @@ Feature: Tests for gpaddmirrors
         And an FTS probe is triggered
         And the segments are synchronized
         And verify the database has mirrors
+        #gpaddmirrors triggers full recovery where old replication slot is dropped and new one is created
+        And verify replication slot internal_wal_replication_slot is available on all the segments
         And the tablespace is valid
         And user stops all primary processes
         And user can start transactions
@@ -175,6 +179,18 @@ Feature: Tests for gpaddmirrors
 
         And all the segments are running
         And the segments are synchronized
+        And check segment conf: postgresql.conf
+        And all files in gpAdminLogs directory are deleted
+
+    Scenario: gpaddmirrors errors out if the directory for the mirror to be added is not empty
+        Given the cluster is generated with "3" primaries only
+        And all files in gpAdminLogs directory are deleted
+        And a gaddmirrors directory under '/tmp' with mode '0700' is created
+        And a gpaddmirrors input file is created
+        And edit the input file to add mirror with content 0,1,2 to a new non-empty directory with mode 0700
+        When the user runs gpaddmirrors with input file and additional args "-a"
+        Then gpaddmirrors should print "Segment directory '/tmp/.*' exists but is not empty!" to stdout
+        And all the segments are running
         And check segment conf: postgresql.conf
         And all files in gpAdminLogs directory are deleted
 

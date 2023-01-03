@@ -796,7 +796,6 @@ GCOV
 enable_debug
 enable_orafce
 enable_debug_extensions
-enable_pxf
 enable_gpfdist
 enable_strong_random
 enable_rpath
@@ -866,7 +865,6 @@ enable_spinlocks
 enable_atomics
 enable_strong_random
 enable_gpfdist
-enable_pxf
 enable_debug_extensions
 enable_orafce
 enable_debug
@@ -1570,7 +1568,6 @@ Optional Features:
   --disable-atomics       do not use atomic operations
   --disable-strong-random do not use a strong random number source
   --disable-gpfdist       do not use gpfdist
-  --disable-pxf           do not build pxf
   --disable-debug-extensions
                           exclude debug extensions in gpcontrib
   --enable-orafce         build with Oracle compatibility functions
@@ -3385,34 +3382,6 @@ if test "${enable_gpfdist+set}" = set; then :
 
 else
   enable_gpfdist=yes
-
-fi
-
-
-
-
-#
-# pxf
-#
-
-
-# Check whether --enable-pxf was given.
-if test "${enable_pxf+set}" = set; then :
-  enableval=$enable_pxf;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-pxf option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_pxf=yes
 
 fi
 
@@ -9854,7 +9823,7 @@ fi
 
 
 #
-# libcurl. Used for external table support and the PXF extension
+# libcurl. Used for external table support
 #
 
 
@@ -9881,10 +9850,6 @@ fi
 
 
 
-
-if test "$with_libcurl" = "no" && test "$enable_pxf" = "yes"; then
-  as_fn_error $? "libcurl is required by PXF" "$LINENO" 5
-fi
 
 if test "$with_libcurl" = "no" && test "$enable_gpcloud" = "yes"; then
   as_fn_error $? "libcurl is required by gpcloud" "$LINENO" 5

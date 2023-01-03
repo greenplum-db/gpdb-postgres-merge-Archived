@@ -18,7 +18,7 @@ If the ratio of hidden rows to total rows in a segment file is less than a thres
 
 You can use the `__gp_aovisimap_compaction_info()` function in the *gp\_toolkit* schema to investigate the effectiveness of a VACUUM operation on append-optimized tables.
 
-For information about the `__gp_aovisimap_compaction_info()` function see, "Checking Append-Optimized Tables" in the *Greenplum Database Reference Guide*.
+For information about the `__gp_aovisimap_compaction_info()` function, see [Checking Append-Optimized Tables](../../ref_guide/gp_toolkit.html#topic8).
 
 `VACUUM` can be deactivated for append-optimized tables using the `gp_appendonly_compaction` server configuration parameter.
 
@@ -161,7 +161,7 @@ For table columns with indexes, some operations such as bulk updates or inserts 
 
 Greenplum Database log output tends to be voluminous, especially at higher debug levels, and you do not need to save it indefinitely. Administrators should purge older log files periodically.
 
-Greenplum Database by default has log file rotation enabled for the master and segment database logs. Log files are created in the `log` subdirectory of the master and each segment data directory using the following naming convention: `gpdb-*YYYY*-*MM*-*DD_hhmmss*.csv`. Administrators need to implement scripts or programs to periodically clean up old log files in the `log` directory of the master and each segment instance.
+Greenplum Database by default has log file rotation enabled for the coordinator and segment database logs. Log files are created in the `log` subdirectory of the coordinator and each segment data directory using the following naming convention: `gpdb-*YYYY*-*MM*-*DD_hhmmss*.csv`. Administrators need to implement scripts or programs to periodically clean up old log files in the `log` directory of the coordinator and each segment instance.
 
 Log rotation can be triggered by the size of the current log file or the age of the current log file. The `log_rotation_size` configuration parameter sets the size of an individual log file that triggers log rotation. When the log file size is equal to or greater than the specified size, the file is closed and a new log file is created. The `log_rotation_size` value is specified in kilobytes. The default is 1048576 kilobytes, or 1GB. If `log_rotation_size` is set to 0, size-based rotation is deactivated.
 

@@ -41,7 +41,6 @@
 #include "naucrates/dxl/operators/CDXLScalarPartBoundOpen.h"
 #include "naucrates/dxl/operators/CDXLScalarPartDefault.h"
 #include "naucrates/dxl/operators/CDXLScalarPartListValues.h"
-#include "naucrates/dxl/operators/CDXLScalarPartOid.h"
 #include "naucrates/dxl/operators/CDXLScalarProjElem.h"
 #include "naucrates/dxl/operators/CDXLScalarProjList.h"
 #include "naucrates/dxl/operators/CDXLScalarValuesList.h"
@@ -713,57 +712,6 @@ CTranslatorExprToDXLUtils::PdxlnProjListFromChildProjList(
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CTranslatorExprToDXLUtils::PdxlnPrLPartitionSelector
-//
-//	@doc:
-//		Construct the project list of a partition selector
-//
-//---------------------------------------------------------------------------
-CDXLNode *
-CTranslatorExprToDXLUtils::PdxlnPrLPartitionSelector(
-	CMemoryPool *mp, CMDAccessor *md_accessor, CColumnFactory *col_factory,
-	ColRefToDXLNodeMap *phmcrdxln, BOOL fUseChildProjList,
-	CDXLNode *pdxlnPrLChild, CColRef *pcrOid, ULONG ulPartLevels,
-	BOOL fGeneratePartOid)
-{
-	GPOS_ASSERT_IMP(fUseChildProjList, nullptr != pdxlnPrLChild);
-
-	CDXLNode *pdxlnPrL = nullptr;
-	if (fUseChildProjList)
-	{
-		pdxlnPrL = PdxlnProjListFromChildProjList(mp, col_factory, phmcrdxln,
-												  pdxlnPrLChild);
-	}
-	else
-	{
-		pdxlnPrL =
-			GPOS_NEW(mp) CDXLNode(mp, GPOS_NEW(mp) CDXLScalarProjList(mp));
-	}
-
-	if (fGeneratePartOid)
-	{
-		// add to it the Oid column
-		if (nullptr == pcrOid)
-		{
-			const IMDTypeOid *pmdtype = md_accessor->PtMDType<IMDTypeOid>();
-			pcrOid = col_factory->PcrCreate(pmdtype, default_type_modifier);
-		}
-
-		CMDName *mdname = GPOS_NEW(mp) CMDName(mp, pcrOid->Name().Pstr());
-		CDXLScalarProjElem *pdxlopPrEl =
-			GPOS_NEW(mp) CDXLScalarProjElem(mp, pcrOid->Id(), mdname);
-		CDXLNode *pdxlnPrEl = GPOS_NEW(mp) CDXLNode(mp, pdxlopPrEl);
-		CDXLNode *pdxlnPartOid = GPOS_NEW(mp)
-			CDXLNode(mp, GPOS_NEW(mp) CDXLScalarPartOid(mp, ulPartLevels - 1));
-		pdxlnPrEl->AddChild(pdxlnPartOid);
-		pdxlnPrL->AddChild(pdxlnPrEl);
-	}
-
-	return pdxlnPrL;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
 //		CTranslatorExprToDXLUtils::PdxlnProjElem
 //
 //	@doc:
@@ -1246,8 +1194,7 @@ CTranslatorExprToDXLUtils::SetDirectDispatchInfo(
 	GPOS_ASSERT(nullptr != pdrgpdsBaseTables);
 
 	Edxlopid edxlopid = dxlnode->GetOperator()->GetDXLOperator();
-	if (EdxlopPhysicalCTAS == edxlopid || EdxlopPhysicalDML == edxlopid ||
-		EdxlopPhysicalRowTrigger == edxlopid)
+	if (EdxlopPhysicalCTAS == edxlopid || EdxlopPhysicalDML == edxlopid)
 	{
 		// direct dispatch for CTAS and DML handled elsewhere
 		// TODO:  - Oct 15, 2014; unify
@@ -1416,18 +1363,21 @@ CTranslatorExprToDXLUtils::PdxlddinfoSingleDistrKey(CMemoryPool *mp,
 	BOOL useRawValues = false;
 	CConstraint *pcnstrDistrCol = pcnstr->Pcnstr(mp, pcrDistrCol);
 	CConstraintInterval *pcnstrInterval;
-	if (pcnstrDistrCol == nullptr &&
-		(pcnstrInterval = dynamic_cast<CConstraintInterval *>(pcnstr)))
+	// Avoid direct dispatch when pcnstrDistrCol specifies a constant column
+	if (!CPredicateUtils::FConstColumn(pcnstrDistrCol, pcrDistrCol) &&
+		(pcnstrInterval = dynamic_cast<CConstraintInterval *>(
+			 pcnstr->GetConstraintOnSegmentId())) != nullptr)
 	{
-		if (pcnstrInterval->FConstraintOnSegmentId())
+		if (pcnstrDistrCol != nullptr)
 		{
-			// If the constraint is on gp_segment_id then we trick ourselves into
-			// considering the constraint as being on a distribution column.
-			pcnstrDistrCol = pcnstr;
-			pcnstrDistrCol->AddRef();
-			pcrDistrCol = pcnstrInterval->Pcr();
-			useRawValues = true;
+			pcnstrDistrCol->Release();
 		}
+		// If the constraint is on gp_segment_id then we trick ourselves into
+		// considering the constraint as being on a distribution column.
+		pcnstrDistrCol = pcnstrInterval;
+		pcnstrDistrCol->AddRef();
+		pcrDistrCol = pcnstrInterval->Pcr();
+		useRawValues = true;
 	}
 
 	CDXLDatum2dArray *pdrgpdrgpdxldatum = nullptr;

@@ -1947,7 +1947,7 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_EXPLAIN
 		},
 		&jit_enabled,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 

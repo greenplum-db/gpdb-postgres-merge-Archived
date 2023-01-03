@@ -55,7 +55,6 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 		{EdxltokenMDRequest, &CreateMDRequestParseHandler},
 		{EdxltokenTraceFlags, &CreateTraceFlagsParseHandler},
 		{EdxltokenOptimizerConfig, &CreateOptimizerCfgParseHandler},
-		{EdxltokenRelationExternal, &CreateMDRelationExtParseHandler},
 		{EdxltokenRelationCTAS, &CreateMDRelationCTASParseHandler},
 		{EdxltokenEnumeratorConfig, &CreateEnumeratorCfgParseHandler},
 		{EdxltokenStatisticsConfig, &CreateStatisticsCfgParseHandler},
@@ -70,7 +69,6 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 		{EdxltokenGPDBScalarOp, &CreateMDScalarOpParseHandler},
 		{EdxltokenGPDBFunc, &CreateMDFuncParseHandler},
 		{EdxltokenGPDBAgg, &CreateMDAggParseHandler},
-		{EdxltokenGPDBTrigger, &CreateMDTriggerParseHandler},
 		{EdxltokenCheckConstraint, &CreateMDChkConstraintParseHandler},
 		{EdxltokenRelationStats, &CreateRelStatsParseHandler},
 		{EdxltokenColumnStats, &CreateColStatsParseHandler},
@@ -91,7 +89,7 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 		{EdxltokenPhysicalBitmapTableScan, &CreateBitmapTableScanParseHandler},
 		{EdxltokenPhysicalDynamicBitmapTableScan,
 		 &CreateDynBitmapTableScanParseHandler},
-		{EdxltokenPhysicalExternalScan, &CreateExternalScanParseHandler},
+		{EdxltokenPhysicalForeignScan, &CreateForeignScanParseHandler},
 		{EdxltokenPhysicalHashJoin, &CreateHashJoinParseHandler},
 		{EdxltokenPhysicalNLJoin, &CreateNLJoinParseHandler},
 		{EdxltokenPhysicalMergeJoin, &CreateMergeJoinParseHandler},
@@ -183,7 +181,6 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 		 &CreateScSubPlanParamListParseHandler},
 		{EdxltokenScalarSubPlanParam, &CreateScSubPlanParamParseHandler},
 		{EdxltokenScalarOpList, &CreateScOpListParseHandler},
-		{EdxltokenScalarPartOid, &CreateScPartOidParseHandler},
 		{EdxltokenScalarPartDefault, &CreateScPartDefaultParseHandler},
 		{EdxltokenScalarPartBound, &CreateScPartBoundParseHandler},
 		{EdxltokenScalarPartBoundInclusion, &CreateScPartBoundInclParseHandler},
@@ -218,7 +215,7 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 
 		{EdxltokenQuery, &CreateQueryParseHandler},
 		{EdxltokenLogicalGet, &CreateLogicalGetParseHandler},
-		{EdxltokenLogicalExternalGet, &CreateLogicalExtGetParseHandler},
+		{EdxltokenLogicalForeignGet, &CreateLogicalForeignGetParseHandler},
 		{EdxltokenLogical, &CreateLogicalOpParseHandler},
 		{EdxltokenLogicalProject, &CreateLogicalProjParseHandler},
 		{EdxltokenLogicalSelect, &CreateLogicalSelectParseHandler},
@@ -242,7 +239,6 @@ CParseHandlerFactory::Init(CMemoryPool *mp)
 		{EdxltokenPhysicalDMLDelete, &CreatePhysicalDMLParseHandler},
 		{EdxltokenPhysicalDMLUpdate, &CreatePhysicalDMLParseHandler},
 		{EdxltokenPhysicalSplit, &CreatePhysicalSplitParseHandler},
-		{EdxltokenPhysicalRowTrigger, &CreatePhysicalRowTriggerParseHandler},
 		{EdxltokenPhysicalAssert, &CreatePhysicalAssertParseHandler},
 		{EdxltokenPhysicalCTEProducer, &CreatePhysicalCTEProdParseHandler},
 		{EdxltokenPhysicalCTEConsumer, &CreatePhysicalCTEConsParseHandler},
@@ -322,7 +318,6 @@ CParseHandlerFactory::GetParseHandler(CMemoryPool *mp,
 	// did not find the physical operator in the table
 	CWStringDynamic *str = CDXLUtils::CreateDynamicStringFromXMLChArray(
 		&dxl_memory_manager, token_identifier_str);
-	;
 
 	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiDXLUnrecognizedOperator,
 			   str->GetBuffer());
@@ -458,16 +453,6 @@ CParseHandlerFactory::CreateMDRelationParseHandler(
 		CParseHandlerMDRelation(mp, parse_handler_mgr, parse_handler_root);
 }
 
-// creates a parse handler for parsing external relation metadata
-CParseHandlerBase *
-CParseHandlerFactory::CreateMDRelationExtParseHandler(
-	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
-	CParseHandlerBase *parse_handler_root)
-{
-	return GPOS_NEW(mp) CParseHandlerMDRelationExternal(mp, parse_handler_mgr,
-														parse_handler_root);
-}
-
 // creates a parse handler for parsing CTAS relation metadata
 CParseHandlerBase *
 CParseHandlerFactory::CreateMDRelationCTASParseHandler(
@@ -556,16 +541,6 @@ CParseHandlerFactory::CreateMDAggParseHandler(
 {
 	return GPOS_NEW(mp)
 		CParseHandlerMDGPDBAgg(mp, parse_handler_mgr, parse_handler_root);
-}
-
-// creates a parse handler for parsing GPDB-specific trigger metadata
-CParseHandlerBase *
-CParseHandlerFactory::CreateMDTriggerParseHandler(
-	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
-	CParseHandlerBase *parse_handler_root)
-{
-	return GPOS_NEW(mp)
-		CParseHandlerMDGPDBTrigger(mp, parse_handler_mgr, parse_handler_root);
 }
 
 // creates a parse handler for parsing GPDB-specific cast metadata
@@ -707,14 +682,14 @@ CParseHandlerFactory::CreateDynBitmapTableScanParseHandler(
 		mp, parse_handler_mgr, parse_handler_root);
 }
 
-// creates a parse handler for parsing an external scan
+// creates a parse handler for parsing a foreign scan
 CParseHandlerBase *
-CParseHandlerFactory::CreateExternalScanParseHandler(
+CParseHandlerFactory::CreateForeignScanParseHandler(
 	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
 	CParseHandlerBase *parse_handler_root)
 {
 	return GPOS_NEW(mp)
-		CParseHandlerExternalScan(mp, parse_handler_mgr, parse_handler_root);
+		CParseHandlerForeignScan(mp, parse_handler_mgr, parse_handler_root);
 }
 
 // creates a parse handler for parsing a subquery scan
@@ -935,16 +910,6 @@ CParseHandlerFactory::CreateScOpListParseHandler(
 {
 	return GPOS_NEW(mp)
 		CParseHandlerScalarOpList(mp, parse_handler_mgr, parse_handler_root);
-}
-
-// creates a parse handler for parsing a scalar part OID
-CParseHandlerBase *
-CParseHandlerFactory::CreateScPartOidParseHandler(
-	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
-	CParseHandlerBase *parse_handler_root)
-{
-	return GPOS_NEW(mp)
-		CParseHandlerScalarPartOid(mp, parse_handler_mgr, parse_handler_root);
 }
 
 // creates a parse handler for parsing a scalar part default
@@ -1563,14 +1528,14 @@ CParseHandlerFactory::CreateLogicalGetParseHandler(
 		CParseHandlerLogicalGet(mp, parse_handler_mgr, parse_handler_root);
 }
 
-// creates a parse handler for parsing a logical external get operator
+// creates a parse handler for parsing a logical foreign get operator
 CParseHandlerBase *
-CParseHandlerFactory::CreateLogicalExtGetParseHandler(
+CParseHandlerFactory::CreateLogicalForeignGetParseHandler(
 	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
 	CParseHandlerBase *parse_handler_root)
 {
-	return GPOS_NEW(mp) CParseHandlerLogicalExternalGet(mp, parse_handler_mgr,
-														parse_handler_root);
+	return GPOS_NEW(mp) CParseHandlerLogicalForeignGet(mp, parse_handler_mgr,
+													   parse_handler_root);
 }
 
 // creates a parse handler for parsing a logical project operator
@@ -1941,16 +1906,6 @@ CParseHandlerFactory::CreatePhysicalSplitParseHandler(
 {
 	return GPOS_NEW(mp)
 		CParseHandlerPhysicalSplit(mp, parse_handler_mgr, parse_handler_root);
-}
-
-//	creates a parse handler for parsing a physical row trigger operator
-CParseHandlerBase *
-CParseHandlerFactory::CreatePhysicalRowTriggerParseHandler(
-	CMemoryPool *mp, CParseHandlerManager *parse_handler_mgr,
-	CParseHandlerBase *parse_handler_root)
-{
-	return GPOS_NEW(mp) CParseHandlerPhysicalRowTrigger(mp, parse_handler_mgr,
-														parse_handler_root);
 }
 
 // creates a parse handler for parsing a physical assert operator

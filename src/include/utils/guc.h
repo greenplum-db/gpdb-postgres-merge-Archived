@@ -325,7 +325,6 @@ extern int rep_lag_avoidance_threshold;
 extern bool gp_maintenance_mode;
 extern bool gp_maintenance_conn;
 extern bool allow_segment_DML;
-extern bool gp_allow_rename_relation_without_lock;
 
 extern bool gp_ignore_error_table;
 
@@ -483,6 +482,7 @@ extern bool optimizer_enable_outerjoin_rewrite;
 extern bool optimizer_enable_multiple_distinct_aggs;
 extern bool optimizer_enable_hashjoin_redistribute_broadcast_children;
 extern bool optimizer_enable_broadcast_nestloop_outer_child;
+extern bool optimizer_discard_redistribute_hashjoin;
 extern bool optimizer_enable_streaming_material;
 extern bool optimizer_enable_gather_on_segment_for_dml;
 extern bool optimizer_enable_assert_maxonerow;
@@ -540,6 +540,7 @@ extern int optimizer_join_arity_for_associativity_commutativity;
 extern int optimizer_cte_inlining_bound;
 extern int optimizer_push_group_by_below_setop_threshold;
 extern int optimizer_xform_bind_threshold;
+extern int optimizer_skew_factor;
 extern bool optimizer_force_multistage_agg;
 extern bool optimizer_force_three_stage_scalar_dqa;
 extern bool optimizer_force_expanded_distinct_aggs;
@@ -617,6 +618,7 @@ extern IndexCheckType gp_indexcheck_insert;
 #define SOPT_COMPTYPE      "compresstype"
 #define SOPT_COMPLEVEL     "compresslevel"
 #define SOPT_CHECKSUM      "checksum"
+#define SOPT_ANALYZEHLL    "analyze_hll_non_part_table"
 
 /*
  * Functions exported by guc.c

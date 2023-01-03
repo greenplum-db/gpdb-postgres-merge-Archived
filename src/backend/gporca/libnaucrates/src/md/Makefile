@@ -34,12 +34,10 @@ OBJS        = CDXLBucket.o \
               CMDProviderGeneric.o \
               CMDProviderMemory.o \
               CMDRelationCtasGPDB.o \
-              CMDRelationExternalGPDB.o \
               CMDRelationGPDB.o \
               CMDRequest.o \
               CMDScCmpGPDB.o \
               CMDScalarOpGPDB.o \
-              CMDTriggerGPDB.o \
               CMDTypeBoolGPDB.o \
               CMDTypeGenericGPDB.o \
               CMDTypeInt2GPDB.o \

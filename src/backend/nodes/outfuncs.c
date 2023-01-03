@@ -388,9 +388,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 
 	WRITE_UINT64_FIELD(query_mem);
 
-	WRITE_INT_FIELD(total_memory_coordinator);
-	WRITE_INT_FIELD(nsegments_coordinator);
-
 	WRITE_NODE_FIELD(intoClause);
 	WRITE_NODE_FIELD(copyIntoClause);
 	WRITE_NODE_FIELD(refreshClause);
@@ -589,6 +586,7 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_UINT_FIELD(exclRelRTI);
 	WRITE_NODE_FIELD(exclRelTlist);
 	WRITE_NODE_FIELD(isSplitUpdates);
+	WRITE_BOOL_FIELD(forceTupleRouting);
 }
 
 static void

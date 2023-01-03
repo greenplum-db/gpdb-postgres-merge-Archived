@@ -235,8 +235,39 @@ typedef struct AOCSFetchDescData
 
 typedef AOCSFetchDescData *AOCSFetchDesc;
 
-typedef struct AOCSUpdateDescData *AOCSUpdateDesc;
+/*
+ * AOCSDeleteDescData is used for delete data from AOCS relations.
+ * It serves an equivalent purpose as AppendOnlyScanDescData
+ * (relscan.h) only that the later is used for scanning append-only
+ * relations.
+ */
+typedef struct AOCSDeleteDescData
+{
+	/*
+	 * Relation to delete from
+	 */
+	Relation	aod_rel;
+
+	/*
+	 * visibility map
+	 */
+	AppendOnlyVisimap visibilityMap;
+
+	/*
+	 * Visimap delete support structure. Used to handle out-of-order deletes
+	 */
+	AppendOnlyVisimapDelete visiMapDelete;
+
+}			AOCSDeleteDescData;
 typedef struct AOCSDeleteDescData *AOCSDeleteDesc;
+
+typedef struct AOCSUniqueCheckDescData
+{
+	AppendOnlyBlockDirectory *blockDirectory;
+	AppendOnlyVisimap 		 *visimap;
+} AOCSUniqueCheckDescData;
+
+typedef struct AOCSUniqueCheckDescData *AOCSUniqueCheckDesc;
 
 /*
  * Descriptor for fetches from table via an index.
@@ -302,7 +333,7 @@ extern void aocs_rescan(AOCSScanDesc scan);
 extern void aocs_endscan(AOCSScanDesc scan);
 
 extern bool aocs_getnext(AOCSScanDesc scan, ScanDirection direction, TupleTableSlot *slot);
-extern AOCSInsertDesc aocs_insert_init(Relation rel, int segno);
+extern AOCSInsertDesc aocs_insert_init(Relation rel, int segno, int64 num_rows);
 extern void aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupleId);
 static inline void aocs_insert(AOCSInsertDesc idesc, TupleTableSlot *slot)
 {
@@ -318,12 +349,6 @@ extern bool aocs_fetch(AOCSFetchDesc aocsFetchDesc,
 					   AOTupleId *aoTupleId,
 					   TupleTableSlot *slot);
 extern void aocs_fetch_finish(AOCSFetchDesc aocsFetchDesc);
-
-extern AOCSUpdateDesc aocs_update_init(Relation rel, int segno);
-extern void aocs_update_finish(AOCSUpdateDesc desc);
-extern TM_Result aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
-			AOTupleId *oldTupleId, AOTupleId *newTupleId);
-
 extern AOCSDeleteDesc aocs_delete_init(Relation rel);
 extern TM_Result aocs_delete(AOCSDeleteDesc desc, 
 		AOTupleId *aoTupleId);
@@ -351,7 +376,7 @@ extern void aocs_addcol_emptyvpe(
 extern void aocs_addcol_setfirstrownum(AOCSAddColumnDesc desc,
 		int64 firstRowNum);
 
-extern void aoco_dml_init(Relation relation, CmdType operation);
-extern void aoco_dml_finish(Relation relation, CmdType operation);
+extern void aoco_dml_init(Relation relation);
+extern void aoco_dml_finish(Relation relation);
 
 #endif   /* AOCSAM_H */

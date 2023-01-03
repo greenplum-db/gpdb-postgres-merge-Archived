@@ -58,7 +58,6 @@ enum Edxltoken
 	EdxltokenCostModelType,
 	EdxltokenSegmentsForCosting,
 	EdxltokenHint,
-	EdxltokenMinNumOfPartsToRequireSortOnInsert,
 	EdxltokenJoinArityForAssociativityCommutativity,
 	EdxltokenArrayExpansionThreshold,
 	EdxltokenJoinOrderDPThreshold,
@@ -66,6 +65,7 @@ enum Edxltoken
 	EdxltokenEnforceConstraintsOnDML,
 	EdxltokenPushGroupByBelowSetopThreshold,
 	EdxltokenXformBindThreshold,
+	EdxltokenSkewFactor,
 	EdxltokenMaxStatsBuckets,
 	EdxltokenWindowOids,
 	EdxltokenOidRowNumber,
@@ -87,7 +87,7 @@ enum Edxltoken
 	EdxltokenPhysicalTableScan,
 	EdxltokenPhysicalBitmapTableScan,
 	EdxltokenPhysicalDynamicBitmapTableScan,
-	EdxltokenPhysicalExternalScan,
+	EdxltokenPhysicalForeignScan,
 	EdxltokenPhysicalIndexScan,
 	EdxltokenPhysicalIndexOnlyScan,
 	EdxltokenPhysicalHashJoin,
@@ -214,7 +214,6 @@ enum Edxltoken
 	EdxltokenPartLevelEqFilterList,
 	EdxltokenPartLevelFilterList,
 	EdxltokenPartLevel,
-	EdxltokenScalarPartOid,
 	EdxltokenScalarPartDefault,
 	EdxltokenScalarPartBound,
 	EdxltokenScalarPartBoundLower,
@@ -239,6 +238,7 @@ enum Edxltoken
 	EdxltokenWindowFrameSpec,
 	EdxltokenWindowFSRow,
 	EdxltokenWindowFSRange,
+	EdxltokenWindowFSGroups,
 
 	EdxltokenWindowLeadingBoundary,
 	EdxltokenWindowTrailingBoundary,
@@ -256,6 +256,12 @@ enum Edxltoken
 	EdxltokenWindowESCurrentRow,
 	EdxltokenWindowESGroup,
 	EdxltokenWindowESTies,
+
+	EdxltokenWindowStartInRangeOid,
+	EdxltokenWindowEndInRangeOid,
+	EdxltokenWindowInRangeColl,
+	EdxltokenWindowInRangeAsc,
+	EdxltokenWindowInRangeNullsFirst,
 
 	EdxltokenWindowrefOid,
 	EdxltokenWindowrefDistinct,
@@ -361,11 +367,9 @@ enum Edxltoken
 	EdxltokenGpSegmentIdColName,
 
 	EdxltokenActionColId,
-	EdxltokenOidColId,
 	EdxltokenCtidColId,
 	EdxltokenGpSegmentIdColId,
 	EdxltokenTupleOidColId,
-	EdxltokenInputSorted,
 	EdxltokenSplitUpdate,
 
 	EdxltokenInputSegments,
@@ -441,7 +445,6 @@ enum Edxltoken
 
 	// metadata-related constants
 	EdxltokenRelation,
-	EdxltokenRelationExternal,
 	EdxltokenRelationCTAS,
 	EdxltokenName,
 	EdxltokenSchema,
@@ -469,7 +472,7 @@ enum Edxltoken
 	EdxltokenRelStorageAppendOnlyCols,
 	EdxltokenRelStorageAppendOnlyRows,
 	EdxltokenRelStorageMixedPartitioned,
-	EdxltokenRelStorageExternal,
+	EdxltokenRelStorageForeign,
 	EdxltokenRelStorageCompositeType,
 
 	EdxltokenPartKeys,
@@ -588,17 +591,6 @@ enum Edxltoken
 	EdxltokenReturnsNullOnNullInput,
 	EdxltokenIsNDVPreserving,
 
-	EdxltokenTriggers,
-	EdxltokenTrigger,
-
-	EdxltokenGPDBTrigger,
-	EdxltokenGPDBTriggerRow,
-	EdxltokenGPDBTriggerBefore,
-	EdxltokenGPDBTriggerInsert,
-	EdxltokenGPDBTriggerDelete,
-	EdxltokenGPDBTriggerUpdate,
-	EdxltokenGPDBTriggerEnabled,
-
 	EdxltokenGPDBFunc,
 	EdxltokenGPDBFuncStability,
 	EdxltokenGPDBFuncStable,
@@ -639,7 +631,7 @@ enum Edxltoken
 	EdxltokenQueryOutput,
 	EdxltokenLogical,
 	EdxltokenLogicalGet,
-	EdxltokenLogicalExternalGet,
+	EdxltokenLogicalForeignGet,
 	EdxltokenLogicalProject,
 	EdxltokenLogicalSelect,
 	EdxltokenLogicalJoin,
@@ -667,7 +659,6 @@ enum Edxltoken
 	EdxltokenDirectDispatchIsRaw,
 	EdxltokenDirectDispatchKeyValue,
 	EdxltokenPhysicalSplit,
-	EdxltokenPhysicalRowTrigger,
 	EdxltokenPhysicalAssert,
 
 	EdxltokenErrorCode,

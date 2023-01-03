@@ -47,6 +47,7 @@
 #include "utils/xml.h"
 
 #include "cdb/cdbgang.h"
+#include "cdb/cdbvars.h"
 #include "optimizer/tlist.h"
 #include "optimizer/optimizer.h"
 
@@ -657,7 +658,21 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 		/* Wait for completion of all qExec processes. */
 		if (queryDesc->estate->dispatcherState && queryDesc->estate->dispatcherState->primaryResults)
+		{
 			cdbdisp_checkDispatchResult(queryDesc->estate->dispatcherState, DISPATCH_WAIT_NONE);
+			/*
+			 * If some QE throw errors, we might not receive stats from QEs,
+			 * In ExecutorEnd we will reThrow QE's error, In this situation,
+			 * there is no need to execute ExplainPrintPlan. reThrow error in advance.
+			 */
+			ErrorData  *qeError = NULL;
+			cdbdisp_getDispatchResults(queryDesc->estate->dispatcherState, &qeError);
+			if (qeError)
+			{
+				FlushErrorState();
+				ReThrowError(qeError);
+			}
+		}
 
 		/* run cleanup too */
 		ExecutorFinish(queryDesc);
@@ -702,8 +717,13 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	 * depending on build options.  Might want to separate that out from COSTS
 	 * at a later stage.
 	 */
-	if (es->costs)
-		ExplainPrintJITSummary(es, queryDesc);
+	if (gp_explain_jit && es->costs)
+	{
+		if (queryDesc->estate->dispatcherState && queryDesc->estate->dispatcherState->primaryResults)
+			cdbexplain_printJITSummary(es, queryDesc);
+		else
+			ExplainPrintJITSummary(es,queryDesc);
+	}
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
@@ -1079,6 +1099,9 @@ ExplainPrintJIT(ExplainState *es, int jit_flags,
 
 	/* don't print information if no JITing happened */
 	if (!ji || ji->created_functions == 0)
+		return;
+
+	if (!gp_explain_jit)
 		return;
 
 	/* calculate total time */

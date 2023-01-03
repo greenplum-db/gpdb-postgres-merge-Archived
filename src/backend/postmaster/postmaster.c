@@ -153,6 +153,8 @@
 #include "cdb/cdbendpoint.h"
 #include "cdb/ic_proxy_bgworker.h"
 #include "utils/metrics_utils.h"
+#include "utils/resgroup.h"
+#include "utils/resource_manager.h"
 
 /*
  * This is set in backends that are handling a GPDB specific message (FTS or
@@ -426,7 +428,11 @@ static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 
 #ifdef ENABLE_IC_PROXY
 	{"ic proxy process", "ic proxy process",
+#ifdef FAULT_INJECTOR
+	 BGWORKER_SHMEM_ACCESS,
+#else
 	 0,
+#endif
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if ic proxy process exits with non-zero code */
 	 "postgres", "ICProxyMain", 0, {0}, 0,
@@ -1509,6 +1515,14 @@ PostmasterMain(int argc, char *argv[])
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
 						LOG_METAINFO_DATAFILE)));
+
+	/*
+	 * If resource group enabled, init it. And before we fork the child processes,
+	 * add the parent process to the default system group (OID=6441), this must be
+	 * initialized before InitResManager().
+	 * */
+	if (IsResGroupEnabled())
+		initCgroup();
 
 	/*
 	 * If enabled, start up syslogger collection subprocess

@@ -144,9 +144,6 @@ typedef struct PlannedStmt
 	/* What is the memory reserved for this query's execution? */
 	uint64		query_mem;
 
-	int			total_memory_coordinator;	/* GPDB: The total usable virtual memory on coordinator node in MB */
-	int			nsegments_coordinator;		/* GPDB: The number of primary segments on coordinator node  */
-
 	/*
 	 * GPDB: Used to keep target information for CTAS and it is needed
 	 * to be dispatched to QEs.
@@ -409,6 +406,8 @@ typedef struct ModifyTable
 	Index		exclRelRTI;		/* RTI of the EXCLUDED pseudo relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 	List	   *isSplitUpdates;
+
+	bool		forceTupleRouting; /* dynamic scans require tuple routing */
 } ModifyTable;
 
 struct PartitionPruneInfo;		/* forward reference to struct below */
