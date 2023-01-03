@@ -1779,6 +1779,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 
 	if (partition_constraint_failed)
 	{
+		TupleTableSlot *origSlot = slot;
 		/*
 		 * When an UPDATE is run on a leaf partition, we will not have
 		 * partition tuple routing set up. In that case, fail with
@@ -1812,7 +1813,7 @@ ExecSplitUpdate_Insert(ModifyTableState *mtstate,
 									   mtstate->rootResultRelInfo, slot);
 
 		slot = ExecInsert(mtstate, slot, planSlot,
-						  NULL, estate->es_result_relation_info,
+						  origSlot, resultRelInfo,
 						  estate, mtstate->canSetTag,
 						  true /* splitUpdate */);
 
