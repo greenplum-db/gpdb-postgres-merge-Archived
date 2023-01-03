@@ -101,5 +101,12 @@ CREATE SCHEMA s;
 create table s.t(tc1 int);
 alter table s.t owner to regress_minimal;
 create index idx on s.t(tc1);
+
+--partition table
+create table s.part_table(a int, b varchar(40), c timestamp)
+partition by range (a) (start (1) end (1001) every (200));
+alter table s.part_table owner to regress_minimal;
+create index idx_part1 on s.part_table_1_prt_2(a);
+create index idx_part on s.part_table(a);
 drop schema s cascade;
 drop role regress_minimal;
