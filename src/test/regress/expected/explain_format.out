@@ -698,7 +698,10 @@ Limit  (cost=35.50..35.67 rows=10 width=4)
         ->  Limit  (cost=35.50..35.61 rows=10 width=4)
               ->  Seq Scan on jit_explain_output  (cost=0.00..355.00 rows=32100 width=4)
 Optimizer: Postgres query optimizer
-(5 rows)
+JIT:
+  Functions: 2
+  Options: Inlining false, Optimization false, Expressions true, Deforming true
+(8 rows)
 -- explain_processing_on
 -- Check explain anlyze text format output with jit enable 
 -- explain_processing_off
@@ -715,8 +718,10 @@ Planning Time: 0.158 ms
 Memory used:  128000kB
 JIT:
   Options: Inlining false, Optimization false, Expressions true, Deforming true.
-Execution Time: 0.999 ms
-(12 rows)
+  (slice0): Functions: 2.00. Timing: 1.381 ms total.
+  (slice1): Functions: 1.00 avg x 3 workers, 1.00 max (seg0). Timing: 0.830 ms avg x 3 workers, 0.854 ms max (seg1).
+Execution Time: 24.023 ms
+(14 rows)
 -- explain_processing_on
 -- Check explain analyze json format output with jit enable
 -- start_matchsubs
@@ -856,6 +861,26 @@ QUERY PLAN
           "Optimization": false,
           "Expressions": true,
           "Deforming": true
+        },
+        "slice": {
+          "slice": 0,
+          "functions": 2.00,
+          "Timing": 0.001
+        },
+        "slice": {
+          "slice": 1,
+          "Functions": {
+            "avg": 1.00,
+            "nworker": 3,
+            "max": 1.00,
+            "segid": 0
+          },
+          "Timing": {
+            "avg": 0.531,
+            "nworker": 3,
+            "max": 0.686,
+            "segid": 0
+          }
         }
     },
     "Execution Time": 2.889

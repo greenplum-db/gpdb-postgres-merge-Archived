@@ -33,8 +33,6 @@ endif # GCC
 
 SHLIB_EXPORTS = exports.txt
 
-SHLIB_EXPORTS = exports.txt
-
 OBJS= informix.o $(WIN32RES)
 
 PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
