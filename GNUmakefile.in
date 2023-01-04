@@ -83,6 +83,13 @@ endif
 install-docs:
 	$(MAKE) -C doc install
 
+$(call recurse,install-world,doc src config contrib gpcontrib,install)
+install-world:
+	+@echo "PostgreSQL, contrib, and documentation installation complete."
+
+# build src/ before contrib/
+install-world-contrib-recurse: install-world-src-recurse
+
 $(call recurse,install-world-bin,src config contrib gpcontrib,install)
 
 # build src/ before contrib/
@@ -146,6 +153,9 @@ check:
 	  . $(prefix)/greenplum_path.sh && . $(top_builddir)/gpAux/gpdemo/gpdemo-env.sh && $(MAKE) -C $(top_builddir) installcheck; \
 	fi
 
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin gpcontrib,check)
+$(call recurse,checkprep,  src/test src/pl src/interfaces/ecpg contrib src/bin gpcontrib)
+
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
 .PHONY: installcheck-world
@@ -155,7 +165,7 @@ check:
 # which probably indicates that we're relying on undefined behavior... we should
 # probably pull anything order-dependent out of recurse() and back into the
 # recipe body).
-ICW_TARGETS  = src/test src/pl src/interfaces/gppc src/interfaces/ecpg
+ICW_TARGETS  = src/test src/pl src/interfaces/gppc
 ICW_TARGETS += contrib/auto_explain contrib/citext contrib/btree_gin
 ICW_TARGETS += contrib/file_fdw contrib/formatter_fixedwidth
 ICW_TARGETS += contrib/extprotocol contrib/dblink contrib/pg_trgm

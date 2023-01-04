@@ -146,7 +146,7 @@ ecpg_start_test(const char *testname,
 			 outfile_stdout,
 			 outfile_stderr);
 
-	appnameenv = psprintf("PGAPPNAME=ecpg/%s", testname_dash);
+	appnameenv = psprintf("PGAPPNAME=ecpg/%s", testname_dash.data);
 	putenv(appnameenv);
 
 	pid = spawn_process(cmd);
