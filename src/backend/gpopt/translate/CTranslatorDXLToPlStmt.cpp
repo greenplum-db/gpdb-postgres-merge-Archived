@@ -1467,11 +1467,11 @@ CTranslatorDXLToPlStmt::TranslateDXLHashJoin(
 	{
 		OpExpr *hclause = lfirst_node(OpExpr, lc);
 
-		hashoperators = lappend_oid(hashoperators, hclause->opno);
-		hashcollations = lappend_oid(hashcollations, hclause->inputcollid);
-		outer_hashkeys = lappend(outer_hashkeys, linitial(hclause->args));
-		inner_hashkeys =
-			lappend(inner_hashkeys, gpdb::CopyObject(lsecond(hclause->args)));
+		hashoperators = gpdb::LAppendOid(hashoperators, hclause->opno);
+		hashcollations = gpdb::LAppendOid(hashcollations, hclause->inputcollid);
+		outer_hashkeys = gpdb::LAppend(outer_hashkeys, linitial(hclause->args));
+		inner_hashkeys = gpdb::LAppend(
+			inner_hashkeys, gpdb::CopyObject(lsecond(hclause->args)));
 	}
 
 	hashjoin->hashoperators = hashoperators;
