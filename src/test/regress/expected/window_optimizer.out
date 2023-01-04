@@ -4108,6 +4108,8 @@ EXPLAIN (costs off) SELECT * FROM pg_temp.f(2);
 (2 rows)
 
 SELECT * FROM pg_temp.f(2);
+INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Query Parameter not supported in DXL
     f    
 ---------
  {1,2,3}

@@ -2262,7 +2262,7 @@ DETAIL:  Feature not supported: Multi-argument UNNEST() or TABLE()
 explain (costs off)
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: Cube
+DETAIL:  Feature not supported: Grouping function with outer references
              QUERY PLAN              
 -------------------------------------
  MixedAggregate
@@ -2278,7 +2278,7 @@ DETAIL:  Feature not supported: Cube
 
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
 INFO:  GPORCA failed to produce a plan, falling back to planner
-DETAIL:  Feature not supported: Cube
+DETAIL:  Feature not supported: Grouping function with outer references
  grouping 
 ----------
         1
