@@ -163,6 +163,10 @@ s/\(dbsize\.c:\d+\)/\(dbsize\.c:XXX\)/
 m/ \(cdbdisp_async\.c.*\)/
 s/ \(cdbdisp_async\.c.*\)//
 
+# remove the parse_utilcmd suffix of some ERROR messages
+m/ \(parse_utilcmd\.c\:\d+\)/
+s/ \(parse_utilcmd\.c:\d+\)//
+
 # ignore establish time and segindex num
 m/ The shortest establish conn time: \d+\.\d+ ms, segindex: \d+,/
 s/ The shortest establish conn time: \d+\.\d+ ms, segindex: \d+,/ The shortest establish conn time: xx\.xx ms, segindex: xx,/
