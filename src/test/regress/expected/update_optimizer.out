@@ -906,11 +906,7 @@ insert into utrtest values (1, 'foo')
 
 insert into utrtest values (2, 'bar')
   returning *, tableoid::regclass, cmin;  -- fails
- a |  b  | tableoid | cmin 
----+-----+----------+------
- 2 | bar | utr2     |    0
-(1 row)
-
+ERROR:  cannot retrieve a system column in this context
 insert into utrtest values (2, 'bar')
   returning *, tableoid::regclass;
  a |  b  | tableoid 
@@ -922,27 +918,28 @@ update utrtest set b = b || b from (values (1), (2)) s(x) where a = s.x
   returning *, tableoid::regclass, cmin;
  a |   b    | x | tableoid | cmin 
 ---+--------+---+----------+------
- 2 | barbar | 2 | utr2     |    0
- 2 | barbar | 2 | utr2     |    0
  1 | foofoo | 1 | utr1     |    0
-(3 rows)
+ 2 | barbar | 2 | utr2     |    0
+(2 rows)
 
 update utrtest set a = 3 - a from (values (1), (2)) s(x) where a = s.x
   returning *, tableoid::regclass, cmin;  -- fails
-ERROR:  attribute 6 of type record has wrong type  (seg0 slice1 127.0.0.1:40000 pid=46802)
-DETAIL:  Table has type record, but query expects integer.
+ERROR:  cannot retrieve a system column in this context
 update utrtest set a = 3 - a from (values (1), (2)) s(x) where a = s.x
   returning *, tableoid::regclass;
-ERROR:  attribute 6 of type record has wrong type  (seg0 slice1 127.0.0.1:40000 pid=46802)
-DETAIL:  Table has type record, but query expects integer.
+ a |   b    | x | tableoid 
+---+--------+---+----------
+ 2 | foofoo | 1 | utr2
+ 1 | barbar | 2 | utr1
+(2 rows)
+
 delete from utrtest
   returning *, tableoid::regclass, cmin;
  a |   b    | tableoid | cmin 
 ---+--------+----------+------
- 1 | foofoo | utr1     |    0
- 2 | barbar | utr2     |    0
- 2 | barbar | utr2     |    0
-(3 rows)
+ 1 | barbar | utr1     |    0
+ 2 | foofoo | utr2     |    0
+(2 rows)
 
 drop table utrtest;
 --------------
