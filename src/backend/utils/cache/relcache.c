@@ -1268,7 +1268,6 @@ retry:
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
-		case RELKIND_PARTITIONED_TABLE:
 			Assert(relation->rd_rel->relam != InvalidOid);
 			RelationInitTableAccessMethod(relation);
 			break;
@@ -1286,6 +1285,9 @@ retry:
 		case RELKIND_AOBLOCKDIR:
 			Assert(relation->rd_rel->relam != InvalidOid);
 			RelationInitTableAccessMethod(relation);
+			break;
+		case RELKIND_PARTITIONED_TABLE:
+			Assert(relation->rd_rel->relam != InvalidOid);
 			break;
 	}
 
