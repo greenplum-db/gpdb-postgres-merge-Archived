@@ -933,8 +933,7 @@ order by 1,2;
 
 --
 -- variant where a PlaceHolderVar is needed at a join, but not above the join
--- GPDB_12_12_MERGE_FIXME: Greenplum does not fully support later join,
--- ignore the below cases.
+-- Greenplum does not fully support the lateral join, ignore the below case.
 --
 
 -- start_ignore
@@ -1673,8 +1672,7 @@ where ss.stringu2 !~* ss.case1;
 rollback;
 
 -- test case to expose miscomputation of required relid set for a PHV
--- GPDB_12_12_MERGE_FIXME: Greenplum does not fully support later join,
--- ignore the below cases.
+-- Greenplum does not fully support the lateral join, ignore the below case.
 -- start_ignore
 explain (verbose, costs off)
 select i8.*, ss.v, t.unique2
