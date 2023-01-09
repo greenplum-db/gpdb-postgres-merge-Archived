@@ -53,20 +53,18 @@ CLogTruncationLock					44
 WrapLimitsVacuumLock				46
 NotifyQueueTailLock					47
 
-# GPDB_12_12_MERGE_FIXME  Postgres added 46 and 47, so shift all GPDB locks to avoid overlap, is it OK? If OK, re number these
 # Additional individual locks in GPDB
-SharedSnapshotLock					65
-DistributedLogControlLock			66
-# 47 is available; was formerly AOSegFileLock
-ResQueueLock						68
-ResGroupLock						69
-ErrorLogLock						70
-SessionStateLock					71
-RelfilenodeGenLock					72
-WorkFileManagerLock					73
-DistributedLogTruncateLock			74
-TwophaseCommitLock				75
-ShareInputScanLock				76
-FTSReplicationStatusLock			77
-GxidBumpLock						78
-ParallelCursorEndpointLock			79
+SharedSnapshotLock	  		51
+DistributedLogControlLock 		52
+ResQueueLock		  		53
+ResGroupLock		  		54
+ErrorLogLock		  		55
+SessionStateLock	  		56
+RelfilenodeGenLock	  		57
+WorkFileManagerLock	  		58
+DistributedLogTruncateLock		59
+TwophaseCommitLock	  		60
+ShareInputScanLock	  		61
+FTSReplicationStatusLock  		62
+GxidBumpLock		  		63
+ParallelCursorEndpointLock		64
