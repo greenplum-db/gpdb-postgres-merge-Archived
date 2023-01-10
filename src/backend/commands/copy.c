@@ -4751,7 +4751,7 @@ CopyFrom(CopyState cstate)
 	if (insertMethod != CIM_SINGLE)
 		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 
-	if (resultRelInfo->ri_RelationDesc->rd_tableam)
+	if (target_resultRelInfo->ri_RelationDesc->rd_tableam)
 		table_dml_finish(target_resultRelInfo->ri_RelationDesc);
 
 	ExecCloseIndices(target_resultRelInfo);
