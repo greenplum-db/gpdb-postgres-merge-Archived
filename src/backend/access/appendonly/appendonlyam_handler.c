@@ -972,7 +972,7 @@ appendonly_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 appendonly_finish_bulk_insert(Relation relation, int options)
 {
-	/* nothing for ao tables */
+	appendonly_dml_finish(relation);
 }
 
 

@@ -1095,8 +1095,10 @@ aoco_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 static void
 aoco_finish_bulk_insert(Relation relation, int options)
 {
-	/* nothing for co tables */
+	aoco_dml_finish(relation);
 }
+
+
 
 
 /* ------------------------------------------------------------------------

@@ -3604,8 +3604,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  * The buffer must be flushed before cleanup.
  */
 static inline void
-CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
-							 CopyMultiInsertBuffer *buffer)
+CopyMultiInsertBufferCleanup(CopyMultiInsertBuffer *buffer)
 {
 	int			i;
 
@@ -3620,9 +3619,6 @@ CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
 	/* Since we only create slots on demand, just drop the non-null ones. */
 	for (i = 0; i < MAX_BUFFERED_TUPLES && buffer->slots[i] != NULL; i++)
 		ExecDropSingleTupleTableSlot(buffer->slots[i]);
-
-	table_finish_bulk_insert(buffer->resultRelInfo->ri_RelationDesc,
-							 miinfo->ti_options);
 
 	pfree(buffer);
 }
@@ -3675,7 +3671,7 @@ CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri)
 			buffer = (CopyMultiInsertBuffer *) linitial(miinfo->multiInsertBuffers);
 		}
 
-		CopyMultiInsertBufferCleanup(miinfo, buffer);
+		CopyMultiInsertBufferCleanup(buffer);
 		miinfo->multiInsertBuffers = list_delete_first(miinfo->multiInsertBuffers);
 	}
 }
@@ -3689,7 +3685,7 @@ CopyMultiInsertInfoCleanup(CopyMultiInsertInfo *miinfo)
 	ListCell   *lc;
 
 	foreach(lc, miinfo->multiInsertBuffers)
-		CopyMultiInsertBufferCleanup(miinfo, lfirst(lc));
+		CopyMultiInsertBufferCleanup(lfirst(lc));
 
 	list_free(miinfo->multiInsertBuffers);
 }
@@ -4656,6 +4652,9 @@ CopyFrom(CopyState cstate)
 	{
 		if (!CopyMultiInsertInfoIsEmpty(&multiInsertInfo))
 			CopyMultiInsertInfoFlush(&multiInsertInfo, NULL);
+
+		/* Tear down the multi-insert buffer data */
+		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 	}
 
 	/* Done, clean up */
@@ -4747,13 +4746,6 @@ CopyFrom(CopyState cstate)
 		target_resultRelInfo->ri_FdwRoutine->EndForeignInsert(estate,
 															  target_resultRelInfo);
 
-	/* Tear down the multi-insert buffer data */
-	if (insertMethod != CIM_SINGLE)
-		CopyMultiInsertInfoCleanup(&multiInsertInfo);
-
-	if (target_resultRelInfo->ri_RelationDesc->rd_tableam)
-		table_dml_finish(target_resultRelInfo->ri_RelationDesc);
-
 	ExecCloseIndices(target_resultRelInfo);
 
 	/* Close all the partitioned tables, leaf partitions, and their indices */
@@ -4766,6 +4758,45 @@ CopyFrom(CopyState cstate)
 	FreeDistributionData(distData);
 
 	FreeExecutorState(estate);
+
+	/*
+	 * GPDB_12_12_MERGE_FIXME we reverted the below commit, it calls
+	 * table_finish_bulk_insert multiple times and poisons AO workflow.
+	 *
+	 * commit f7c830f1ab2645236ac2d6103fb3a88518bdc4fc
+	 * commit b8ef33b2d14519da0d038e9d63f51a6714ef764a (REL_12_12)
+	 * Author: David Rowley <drowley@postgresql.org>
+	 * Date:   Wed Jul 10 16:03:04 2019 +1200
+	 *
+	 *     Fix missing calls to table_finish_bulk_insert during COPY, take 2
+	 *
+	 *     86b85044e abstracted calls to heap functions in COPY FROM to support a
+	 *     generic table AM.  However, when performing a copy into a partitioned
+	 *     table, this commit neglected to call table_finish_bulk_insert for each
+	 *     partition.  Before 86b85044e, when we always called the heap functions,
+	 *     there was no need to call heapam_finish_bulk_insert for partitions since
+	 *     it only did any work when performing a copy without WAL.  For partitioned
+	 *     tables, this was unsupported anyway, so there was no issue.  With
+	 *     pluggable storage, we can't make any assumptions about what the table AM
+	 *     might want to do in its equivalent function, so we'd better ensure we
+	 *     always call table_finish_bulk_insert each partition that's received a row.
+	 *
+	 *     For now, we make the table_finish_bulk_insert call whenever we evict a
+	 *     CopyMultiInsertBuffer out of the CopyMultiInsertInfo.  This does mean
+	 *     that it's possible that we call table_finish_bulk_insert multiple times
+	 *     per partition, which is not a problem other than being an inefficiency.
+	 *     Improving this requires a more invasive patch, so let's leave that for
+	 *     another day.
+	 *
+	 *     This also changes things so that we no longer needlessly call
+	 *     table_finish_bulk_insert when performing a COPY FROM for a non-partitioned
+	 *     table when not using multi-inserts.
+	 *
+	 *     Reported-by: Robert Haas
+	 *     Backpatch-through: 12
+	 *     Discussion: https://postgr.es/m/CA+TgmoYK=6BpxiJ0tN-p9wtH0BTAfbdxzHhwou0mdud4+BkYuQ@mail.gmail.com
+	 */
+	table_finish_bulk_insert(cstate->rel, ti_options);
 
 	return processed;
 }
