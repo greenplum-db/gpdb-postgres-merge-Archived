@@ -61,6 +61,9 @@ for dbid, datadir in db_instances.items():
 return rows
 $fn$;
 
+-- switch to unaligned output mode
+\pset format unaligned
+
 -- test truncate table and create table are in the same transaction for ao table
 begin;
 create table truncate_with_create_ao(a int, b int) with (appendoptimized = true, orientation = row) distributed by (a);

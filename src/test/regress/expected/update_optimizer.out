@@ -886,14 +886,8 @@ DROP TABLE list_parted;
 -- Test retrieval of system columns with non-consistent partition row types.
 -- This is only partially supported, as seen in the results.
 create table utrtest (a int, b text) partition by list (a);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create table utr1 (a int check (a in (1)), q text, b text);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create table utr2 (a int check (a in (2)), b text);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 alter table utr1 drop column q;
 alter table utrtest attach partition utr1 for values in (1);
 alter table utrtest attach partition utr2 for values in (2);
@@ -929,8 +923,8 @@ update utrtest set a = 3 - a from (values (1), (2)) s(x) where a = s.x
   returning *, tableoid::regclass;
  a |   b    | x | tableoid 
 ---+--------+---+----------
- 2 | foofoo | 1 | utr2
  1 | barbar | 2 | utr1
+ 2 | foofoo | 1 | utr2
 (2 rows)
 
 delete from utrtest
