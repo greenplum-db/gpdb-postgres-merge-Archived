@@ -11,7 +11,7 @@
 -- create FDW objects
 -- ===================================================================
 SET timezone = 'PST8PDT';
-set optimizer = off;
+set optimizer_trace_fallback = on;
 CREATE EXTENSION postgres_fdw;
 CREATE SERVER testserver1 FOREIGN DATA WRAPPER postgres_fdw;
 CREATE SERVER pgserver FOREIGN DATA WRAPPER postgres_fdw
