@@ -8004,9 +8004,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		 * pg_depend.
 		 *
 		 * See above about pretty=true in pg_get_triggerdef.
-		 *
-		 * GPDB_12_12_MERGE_FIXME: Greenplum lost the ispartition check
-		 * due to the tbloids trick.
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT t.tgrelid, t.tgname, "

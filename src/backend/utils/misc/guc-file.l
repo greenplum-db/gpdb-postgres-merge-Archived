@@ -442,10 +442,6 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 		if (item->ignore)
 			continue;
 
-		/* Ignore anything marked as ignorable */
-		if (item->ignore)
-			continue;
-
 		/* In SIGHUP cases in the postmaster, we want to report changes */
 		if (context == PGC_SIGHUP && applySettings && !IsUnderPostmaster)
 		{

@@ -7686,7 +7686,6 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_NextValueExpr:
 		case T_NullIfExpr:
 		case T_Aggref:
-		/* GPDB_12_12_MERGE_FIXME, GroupingFunc and WindowFunc are not considered as simple nodes by Greenplum, I doubt there is any difference */
 		case T_GroupingFunc:
 		case T_WindowFunc:
 		case T_FuncExpr:
